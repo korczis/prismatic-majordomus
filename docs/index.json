@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "f9864691c17586de8be6804d5e3db01e0ffc5b2a",
+  "commit": "0c11b36be30a315ecff6ff9b85d93ee33afedb9b",
   "source_version": "1.0.2",
-  "registry_fingerprint": "bb1ed6132c8cdc66bd6011cb6b0597a674f57b7960f5080746bed623c7112f37"
+  "registry_fingerprint": "a673f668ef088ea25677b8c82e170a64f9b017116cd76ee3246c5b71129000b1"
  },
  "counts": {
-  "pages": 6514,
-  "capabilities": 4025,
+  "pages": 6522,
+  "capabilities": 4029,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3851,
+  "mcp_resources": 3855,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1252
+   "count": 1256
   },
   {
    "kind": "knowledge",
@@ -15993,6 +15993,30 @@
    "route": "/cs/plan/i4602/",
    "title": "I4602 — A test that builds a repository under a hook never inherits the hook's repository",
    "description": "An adopter is told, before a push does the damage, when a test script it runs from a hook builds its own git repository without first dropping the variables git names as repository-local (`git rev-parse --local-env-vars`).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4606/",
+   "title": "I4606 — A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`",
+   "description": "Where a verdict fails closed for want of a CI secret (the design licence's `MAJORDOMUS_KIT_EVIDENCE_<KIT>`, and any adopter gate the fleet pack documents the same way), the finding says which secret store the run reads and gives the command for it: on a Dependabot run (`GITHUB_ACTOR=dependabot[bot]`) the Dependabot store, `gh secret set <NAME> --app dependabot`; otherwise the Actions store.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4612/",
+   "title": "I4612 — The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan`",
+   "description": "When an active skill is unenforced because no CI gate selected by a change to its SKILL.md runs `skills verify`, the finding's remedy says what an adopter does: declare `.ai/repo/ci/gates.yaml` (or extend it) with a gate whose `runs` contains `majordomus skills verify`, selected by a class matching the skill's path, and run that command in a CI job. `scripts/ci-plan` is named only where it exists.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4615/",
+   "title": "I4615 — Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared",
+   "description": "The check finding for required gates that never reported counts them correctly, reads cleanly, and gives `majordomus evidence --run-gates` as the remedy (the one command that runs each gate by its declared `runs` and records it), with `--gate <id> --exit <status>` for a verdict taken elsewhere.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4616/",
+   "title": "I4616 — An issue id the mesh allocator reserved for another session is refused locally: `plan validate` and the commit hook judge an id against the allocator, not only against git",
+   "description": "`majordomus plan validate` and the commit hook read the mesh allocator's reservations for issue ids and refuse a new issue record whose id is reserved for another session, naming the holder and the reservation's time; with no reachable allocator they say the id is unverified instead of silently accepting it.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33414,6 +33438,30 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4606/",
+   "title": "I4606 — A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`",
+   "description": "Where a verdict fails closed for want of a CI secret (the design licence's `MAJORDOMUS_KIT_EVIDENCE_<KIT>`, and any adopter gate the fleet pack documents the same way), the finding says which secret store the run reads and gives the command for it: on a Dependabot run (`GITHUB_ACTOR=dependabot[bot]`) the Dependabot store, `gh secret set <NAME> --app dependabot`; otherwise the Actions store.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4612/",
+   "title": "I4612 — The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan`",
+   "description": "When an active skill is unenforced because no CI gate selected by a change to its SKILL.md runs `skills verify`, the finding's remedy says what an adopter does: declare `.ai/repo/ci/gates.yaml` (or extend it) with a gate whose `runs` contains `majordomus skills verify`, selected by a class matching the skill's path, and run that command in a CI job. `scripts/ci-plan` is named only where it exists.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4615/",
+   "title": "I4615 — Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared",
+   "description": "The check finding for required gates that never reported counts them correctly, reads cleanly, and gives `majordomus evidence --run-gates` as the remedy (the one command that runs each gate by its declared `runs` and records it), with `--gate <id> --exit <status>` for a verdict taken elsewhere.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4616/",
+   "title": "I4616 — An issue id the mesh allocator reserved for another session is refused locally: `plan validate` and the commit hook judge an id against the allocator, not only against git",
+   "description": "`majordomus plan validate` and the commit hook read the mesh allocator's reservations for issue ids and refuse a new issue record whose id is reserved for another session, naming the holder and the reservation's time; with no reachable allocator they say the id is unverified instead of silently accepting it.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37358,7 +37406,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.2 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit f9864691c17586de8be6804d5e3db01e0ffc5b2a: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit 0c11b36be30a315ecff6ff9b85d93ee33afedb9b: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.2 — Rust API reference"
   },
   {
