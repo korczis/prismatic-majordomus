@@ -371,10 +371,7 @@ fn suite_cases_on_disk(root: &Path) -> usize {
         name: String::new(),
     }
     .source();
-    let dir = Path::new(&probe)
-        .parent()
-        .map(|d| root.join(d))
-        .unwrap_or_else(|| root.to_path_buf());
+    let dir = root.join(Path::new(&probe).parent().unwrap_or(Path::new("")));
     std::fs::read_dir(dir)
         .map(|entries| {
             entries
@@ -1152,6 +1149,50 @@ fn write_run_record(out: &Path, run_record: &EvidenceRunRecord) -> std::io::Resu
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A partial report keeps the evidence of the cases it did not run and is not whole; a
+    /// report naming every case keeps nothing and is whole, and one naming more than the
+    /// suite holds (a case since removed) is whole and keeps nothing rather than underflowing.
+    #[test]
+    fn suite_coverage_says_what_a_report_kept_and_whether_it_was_whole() {
+        let partial = SuiteCoverage {
+            in_report: 2,
+            on_disk: 10,
+        };
+        assert_eq!(partial.kept(), 8);
+        assert!(!partial.whole());
+        let whole = SuiteCoverage {
+            in_report: 10,
+            on_disk: 10,
+        };
+        assert_eq!(whole.kept(), 0);
+        assert!(whole.whole());
+        let over = SuiteCoverage {
+            in_report: 11,
+            on_disk: 10,
+        };
+        assert_eq!(over.kept(), 0);
+        assert!(over.whole());
+    }
+
+    /// The suite's cases are the `*.sh` files directly in its source directory; any other file
+    /// and a directory there are not cases, and a repository without the directory has none.
+    #[test]
+    fn suite_cases_on_disk_counts_only_shell_files_in_the_suite_directory() {
+        let tmp = tempfile::tempdir().unwrap();
+        assert_eq!(suite_cases_on_disk(tmp.path()), 0);
+        let probe = TestId {
+            runner: Runner::Suite,
+            name: String::new(),
+        }
+        .source();
+        let dir = tmp.path().join(Path::new(&probe).parent().unwrap());
+        std::fs::create_dir_all(dir.join("nested.sh")).unwrap();
+        std::fs::write(dir.join("01_alpha.sh"), "").unwrap();
+        std::fs::write(dir.join("02_beta.sh"), "").unwrap();
+        std::fs::write(dir.join("README.md"), "").unwrap();
+        assert_eq!(suite_cases_on_disk(tmp.path()), 2);
+    }
 
     fn git(dir: &Path, args: &[&str]) {
         let out = std::process::Command::new("git")
