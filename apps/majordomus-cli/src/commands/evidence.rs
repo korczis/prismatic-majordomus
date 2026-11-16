@@ -810,7 +810,8 @@ mod tests {
             "working_tree": "clean",
             "ledger": ".ai/repo/evidence/ledger.json",
             "unknown": ["crate:ghost"],
-            "dropped": [{ "producer": "crate", "what": "doc-tests x", "reason": "doc" }]
+            "dropped": [{ "producer": "crate", "what": "doc-tests x", "reason": "doc" }],
+            "suite_coverage": { "in_report": 1, "on_disk": 3 }
         });
         let mut all = ClosesAfter {
             lines: usize::MAX,
@@ -820,8 +821,8 @@ mod tests {
         record_text(&mut all, &v, Some(Path::new("run.json"))).unwrap();
         let total = String::from_utf8(all.held).unwrap().lines().count();
         assert_eq!(
-            total, 8,
-            "recorded, against, ledger, run, measured, one dropped, one unknown, run record"
+            total, 9,
+            "recorded, suite, against, ledger, run, measured, one dropped, one unknown, run record"
         );
 
         for lines in 0..total {
