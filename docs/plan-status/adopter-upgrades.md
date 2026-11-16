@@ -224,6 +224,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares lib/doctor.sh with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2654; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2700; they may not run concurrently |
@@ -679,6 +680,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4594; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares lib with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4415; they may not run concurrently |
@@ -689,3 +692,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4336` | shares lib/rules.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares apps/majordomus-cli/src/design/licence.rs with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4584; they may not run concurrently |
+| WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4595; they may not run concurrently |

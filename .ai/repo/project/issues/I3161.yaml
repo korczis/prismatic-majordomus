@@ -36,3 +36,10 @@ evidence_required:
   - "case_commit_hook_is_one_call"
 created_at: 2026-10-18
 updated_at: 2026-10-18
+evidence:
+  - covers: hook-budget-measured-on-an-adopter
+    type: manual
+    command: "git commit  # .githooks/pre-commit -> majordomus doctor (MAJORDOMUS_DOCTOR_CONTEXT=commit)"
+    result: "WARN budget doctor: 27438 ms, over the 20000 ms budget (policy benchmark.budget.doctor_ms). majordomus 1.0.1 on a small Zola repository: 873 tracked files, 31.29 MiB pack, 71 rules, 20 context documents. Host: Mac17,9, Apple M5 Pro, 18 cores, macOS 26.5.1, with other Claude sessions active. Load at that moment was not recorded. Commit 35d7350 at 2026-11-14T16:27:26Z."
+    url: "https://github.com/korczis/korczis.github.io/commit/35d7350a769ed0cc529791a4fcd81cd343df5072"
+    recorded_at: 2026-11-14T18:24:21Z
