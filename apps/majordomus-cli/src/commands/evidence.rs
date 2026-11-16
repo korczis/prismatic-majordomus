@@ -178,6 +178,23 @@ fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Re
         v["recorded"], v["passed"]
     )
     .map_err(Error::Transport)?;
+    // how much of the suite the report covered (I4600): a report cut short is said, not
+    // recorded as if it were the whole run
+    if let (Some(n), Some(all)) = (
+        v["suite_coverage"]["in_report"].as_u64(),
+        v["suite_coverage"]["on_disk"].as_u64(),
+    ) {
+        if n >= all {
+            writeln!(out, "suite        all {all} case(s) of the suite are in this report")
+        } else {
+            writeln!(
+                out,
+                "suite        {n} of {all} case(s) of the suite are in this report; the other {} keep their earlier evidence",
+                all - n
+            )
+        }
+        .map_err(Error::Transport)?;
+    }
     writeln!(
         out,
         "against      {} ({})",
@@ -676,6 +693,42 @@ mod tests {
     /// A recording prints one `dropped` line per entry, with its reason, after the ledger and
     /// before what the reports named that this repository lacks; one with nothing dropped
     /// prints no such line.
+    /// A recording from a suite report says how much of the suite the report covered (I4600):
+    /// a partial report names the cases that keep their earlier evidence, a whole one says so,
+    /// and a recording with no suite report prints no suite line.
+    #[test]
+    fn a_recording_says_how_much_of_the_suite_its_report_covered() {
+        let render = |coverage: Option<Value>| {
+            let mut v = json!({
+                "recorded": 1,
+                "passed": 1,
+                "commit": "0123456789abcdef0123456789abcdef01234567",
+                "working_tree": "clean",
+                "ledger": ".ai/repo/evidence/ledger.json"
+            });
+            if let Some(c) = coverage {
+                v["suite_coverage"] = c;
+            }
+            let mut buf = Vec::new();
+            record_text(&mut buf, &v, None).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let partial = render(Some(json!({ "in_report": 1, "on_disk": 3 })));
+        assert!(
+            partial.contains(
+                "suite        1 of 3 case(s) of the suite are in this report; the other 2 keep their earlier evidence"
+            ),
+            "{partial}"
+        );
+        let whole = render(Some(json!({ "in_report": 3, "on_disk": 3 })));
+        assert!(
+            whole.contains("suite        all 3 case(s) of the suite are in this report"),
+            "{whole}"
+        );
+        let none = render(None);
+        assert!(!none.contains("suite  "), "{none}");
+    }
+
     #[test]
     fn a_recording_lists_what_it_dropped_after_the_ledger() {
         let render = |v: Value| {

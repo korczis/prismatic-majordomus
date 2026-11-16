@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [adopter-upgrades](https://majordomus.dev/plan/adopter-upgrades/) | ACTIVE | 14/28 | 9 | 5 | 0 | 0 | 0 | An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean. |
+| [adopter-upgrades](https://majordomus.dev/plan/adopter-upgrades/) | ACTIVE | 14/29 | 10 | 5 | 0 | 0 | 0 | An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean. |
 
 ## Issues
 
@@ -41,6 +41,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4371](https://majordomus.dev/plan/i4371/) | BLOCKED | 3 | I3970, I4370 | An adopter's pull-request and trunk projection workflows are rendered from the tool by `majordomus update`, pinned to a release digest written into the workflow, with a read-only derive job apart from the writing one |
 | [I4591](https://majordomus.dev/plan/i4591/) | READY | 0 | — | mj_ms reads EPOCHREALTIME under any locale's decimal separator |
 | [I4598](https://majordomus.dev/plan/i4598/) | READY | 0 | — | A refusal for a path outside the scope names the remedies that exist |
+| [I4600](https://majordomus.dev/plan/i4600/) | READY | 0 | — | evidence record says how much of the suite its report covers |
 | [I4602](https://majordomus.dev/plan/i4602/) | READY | 0 | — | A test that builds a repository under a hook never inherits the hook's repository |
 | [I4618](https://majordomus.dev/plan/i4618/) | READY | 0 | — | The executable resolver borrows a same-generation executable another worktree built, before it refuses |
 
@@ -231,6 +232,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares test/cases with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4606; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4616; they may not run concurrently |
@@ -449,6 +451,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares share/skeleton with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares share/skeleton with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4606; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4616; they may not run concurrently |
@@ -706,6 +709,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4606; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4612; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4615; they may not run concurrently |
@@ -727,3 +731,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4336` | shares share/skeleton/policy.yaml with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares apps/majordomus-cli/src/design/licence.rs with I4606; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/skeleton/policy.yaml with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I4600` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4622; they may not run concurrently |
