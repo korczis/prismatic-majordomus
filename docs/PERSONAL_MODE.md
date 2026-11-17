@@ -270,7 +270,7 @@ the one edited source file as inside the scope, `finish --check` in the hook pas
 | instruction files are projections of the policy, and a projection's target is one line | [`lib/update.sh`](../lib/update.sh), [`claims/projection-generation.md`](claims/projection-generation.md), [`claims/region-projection.md`](claims/region-projection.md) |
 | a touched file outside the scope is a failure, and `finish` evaluates its contract line by line | [`claims/scope-enforcement.md`](claims/scope-enforcement.md), [`claims/finish-contract.md`](claims/finish-contract.md) |
 | a verification command that does nothing is refused | [`verification-integrity`](../.ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md) |
-| nothing performs a network call | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| the shell tool performs no network call | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
 | a personal layer changes nothing shared, and the command that says so checks it | [`lib/common.sh`](../lib/common.sh), [`test/cases/2979_a_personal_layer_changes_nothing_shared.sh`](../test/cases/2979_a_personal_layer_changes_nothing_shared.sh), [`claims/personal-layer-changes-nothing-shared.md`](claims/personal-layer-changes-nothing-shared.md) |
 | discovery can walk the work tree instead of asking the index | [`apps/majordomus-cli/src/cli.rs`](../apps/majordomus-cli/src/cli.rs), [`MCP.md`](MCP.md), [`the-server-sees-the-current-tree`](../.ai/repo/rules/project/the-server-sees-the-current-tree.v1.md) |
 | what a worker never reads is declared once | [`claims/scope-declared.md`](claims/scope-declared.md), [`SCOPE.md`](SCOPE.md) |
@@ -338,7 +338,7 @@ decided somewhere that can be read.
 |---|---|---|
 | a colleague | my tasks, their scope and my handovers are in a local directory git ignores; nothing of it is in the repository | `git status --short --ignored` in my clone |
 | a team lead | the repository, its review and its CI are exactly what they were; if it proves useful I will propose it as a pull request | [From personal to shared](#from-personal-to-shared) |
-| security | the tool performs no network call and calls no model; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
+| security | the tool calls no model and sends no telemetry, and its network use is the server, mesh and forge reads you start; the AI client I use is the one the organisation already allows, under the same data policy | [`claims/no-network.md`](claims/no-network.md), [`no-network-no-eval`](../.ai/repo/rules/project/no-network-no-eval.v1.md) |
 | an architect | the same lifecycle the committed adoption runs, with a private policy; no rule of the team's is restated or overridden | [`ADOPTION.md`](ADOPTION.md) |
 | whoever owns tooling policy | it is a local tool in the category of an editor configuration, and it stays subject to the policy on which tools may read this code | the organisation's policy, which this does not change |
 

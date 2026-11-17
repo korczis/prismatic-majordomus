@@ -46,6 +46,8 @@ pub const EXIT_DELETES: u8 = 11;
 pub const EXIT_UNAVAILABLE: u8 = 12;
 /// The queue's declared wait ran out.
 pub const EXIT_TIMED_OUT: u8 = 75;
+/// The run was stopped with `majordomus offload stop` (I3956).
+pub const EXIT_STOPPED: u8 = 14;
 
 /// Why an offload stopped, with the exit code the command answers.
 #[derive(Debug)]
@@ -84,6 +86,8 @@ pub struct OffloadReport {
     /// Every host's measurement, when the host was chosen rather than named.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub probe: Vec<HostReport>,
+    /// Who the run belonged to, as it was exported into it and recorded on the host (I3956).
+    pub owner: super::owner::RunOwner,
 }
 
 /// How a derive is asked for.
@@ -219,14 +223,29 @@ pub fn input_commit(worktree: &Path) -> Result<String, Refusal> {
 /// Prepare the host's worktree from the uploaded bundle, or — when the input is already in
 /// the base, so there was nothing to bundle — from the commit itself, which the host has
 /// once it has fetched origin. Arguments: checkout, worktrees directory, spool, tag, input.
+///
+/// This runs before the queue's lock is taken, and every offload to the host fetches into
+/// the same checkout: two arriving together race on git's ref locks, and git refuses the
+/// loser ("cannot lock ref", "Another git process seems to be running"), which failed a
+/// whole derive on 2026-10-29 (I4375). A fetch is therefore asked again, bounded:
+/// `MJ_OFFLOAD_FETCH_TRIES` attempts (default 5), `MJ_OFFLOAD_FETCH_BACKOFF` seconds times
+/// the attempt between them (default 3), and the last refusal is what the caller reports.
 const PREPARE: &str = r#"set -e
 c=$1; w=$2; spool=$3; tag=$4; input=$5
 case $c in /*) ;; *) c=$HOME/$c ;; esac
 case $w in /*) ;; *) w=$HOME/$w ;; esac
+fetch() {
+  n=1
+  until git fetch -q "$@"; do
+    [ "$n" -lt "${MJ_OFFLOAD_FETCH_TRIES:-5}" ] || return 1
+    sleep $(( n * ${MJ_OFFLOAD_FETCH_BACKOFF:-3} ))
+    n=$((n + 1))
+  done
+}
 cd "$c"
-git fetch -q origin
+fetch origin
 if [ -f "$spool/offload-$tag.bundle" ]; then
-  git fetch -q "$spool/offload-$tag.bundle" "refs/offload/in-$tag:refs/offload/$tag"
+  fetch "$spool/offload-$tag.bundle" "refs/offload/in-$tag:refs/offload/$tag"
 else
   git update-ref "refs/offload/$tag" "$input"
 fi
@@ -237,31 +256,107 @@ git checkout -q -f --detach "refs/offload/$tag"
 git clean -fdq"#;
 
 /// Derive on the host, under a lock the caller holds. Its own pid joins the lock's holders,
-/// so the lock stays held exactly as long as this derive runs. Arguments: lock, worktrees
+/// so the lock stays held exactly as long as this derive runs.
+///
+/// Everything the derive compiles stays in its own run directory, `<shared>-<tag>`, which
+/// the traps remove however the derive ends. Pinning the target directory alone is not
+/// that: the checkout declares a shared `build-dir`, so cargo kept every intermediate in the
+/// host's `build-shared/majordomus`, outside what the traps remove, and on 2026-10-18 that
+/// directory held 87 GB on lundra and the volume reached 0 bytes. The build directory is
+/// pinned to the run directory too. Arguments: lock, worktrees
 /// directory, tag, shared build directory, derive command, spool, PATH prefix
-/// (colon-separated), then the files to touch. Prints `target <dir>`, then `nothing` or
-/// `derived <sha>`; exit 10 when the derive fails, 13 when the lock is not there.
-const DERIVE: &str = r#"l=$1; w=$2; tag=$3; shared=$4; derive=$5; spool=$6; prefix=$7; shift 7
+/// (colon-separated), the commit the derived files may observe (exported to the derive as
+/// `MJ_DERIVE_OBSERVE`; empty leaves it unset), whether the caller holds standard input open
+/// (`1`: its end means the caller is gone, and the run is stopped), the run-record directory,
+/// the owner's session, peer, issue, host and pid ([`super::owner::RunOwner::args`]), then the
+/// files to touch; [`derive_command`] builds them. Prints `pid <shell>`, `target <dir>`,
+/// `group <pgid|none>`, then `nothing` or `derived <sha>`; exit 10 when the derive fails, 13
+/// when the lock is not there, 14 when `offload stop` stopped it, 129 when the caller went
+/// away.
+///
+/// Who owns the run (I3956): the owner is exported into every process the derive starts
+/// (`MAJORDOMUS_OWNER_*`, and the run's own tag as `MAJORDOMUS_OWNER_RUN`) and written, with
+/// the run's process group, into `<runs>/<tag>.run` — atomically, through a temporary file
+/// and a rename — for as long as the run lives; every ending this shell sees removes it, so
+/// a record that outlives its run is the evidence of a crash. The derive runs in a process
+/// group of its own: `setsid`, or Python's `os.setsid` where a host has no `setsid`. A child
+/// started with `&` by a non-interactive shell is never a group leader, so `setsid` makes
+/// the new group in the derive's own process and its pid is the group's id. A run that is
+/// stopped — its caller gone, a signal — is stopped as a group, `TERM` and then `KILL`, so no
+/// `rustc` under it is left running with init as its parent.
+const DERIVE: &str = r#"l=$1; w=$2; tag=$3; shared=$4; derive=$5; spool=$6; prefix=$7; observe=$8; held=$9
+runs=${10}; os=${11}; op=${12}; oi=${13}; oh=${14}; opid=${15}; shift 15
 [ -d "$l" ] || { echo "the lock $l is not held" >&2; exit 13; }
 echo "pid $$"
 : > "$l/$$"
 case $w in /*) ;; *) w=$HOME/$w ;; esac
 case $shared in /*) ;; *) shared=$HOME/$shared ;; esac
+case $runs in /*) ;; *) runs=$HOME/$runs ;; esac
 p=""; IFS=:; for e in $prefix; do case $e in /*) ;; *) e=$HOME/$e ;; esac; p="$p$e:"; done; unset IFS
 export PATH="$p$PATH"
 cd "$w/offload-$tag" || exit 13
-private="$shared-$tag"; log="$spool/offload-$tag.log"
-mkdir -p "$shared" "$spool"; rm -rf "$private"
+private="$shared-$tag"; log="$spool/offload-$tag.log"; record="$runs/$tag.run"
+mkdir -p "$shared" "$spool" "$runs"; rm -rf "$private"
 if [ "$(uname)" = Darwin ]; then cp -cR "$shared" "$private" 2>/dev/null || { rm -rf "$private"; mkdir -p "$private"; }
 else cp -a --reflink=always "$shared" "$private" 2>/dev/null || { rm -rf "$private"; mkdir -p "$private"; }; fi
-trap 'rm -rf "$private"' EXIT
-trap 'rm -rf "$private"; exit 129' HUP
-trap 'rm -rf "$private"; exit 130' INT
-trap 'rm -rf "$private"; exit 143' TERM
+child=""; pg=""; watch=""
+ended() {
+  [ -n "$watch" ] && kill "$watch" 2>/dev/null
+  rm -f "$record" "$record.tmp" "$runs/$tag.stopped"; rm -rf "$private"
+}
+stopped() {
+  if [ -n "$pg" ]; then
+    kill -TERM -"$pg" 2>/dev/null; i=0
+    while kill -0 -"$pg" 2>/dev/null && [ "$i" -lt 10 ]; do sleep 0.2; i=$((i+1)); done
+    kill -KILL -"$pg" 2>/dev/null
+  fi
+  [ -n "$child" ] && kill -TERM "$child" 2>/dev/null
+  ended
+}
+trap 'ended' EXIT
+trap 'stopped; exit 129' HUP
+trap 'stopped; exit 130' INT
+trap 'stopped; exit 143' TERM
+if [ "$held" = 1 ]; then
+  main=$$
+  exec 3<&0
+  ( while IFS= read -r _; do :; done <&3; kill -HUP "$main" 2>/dev/null ) &
+  watch=$!
+  exec 3<&- 0</dev/null
+fi
+MAJORDOMUS_OWNER_RUN=$tag; export MAJORDOMUS_OWNER_RUN
+for v in "MAJORDOMUS_OWNER_SESSION=$os" "MAJORDOMUS_OWNER_PEER=$op" "MAJORDOMUS_OWNER_ISSUE=$oi" \
+  "MAJORDOMUS_OWNER_HOST=$oh" "MAJORDOMUS_OWNER_PID=$opid"; do
+  case $v in *=) ;; *) export "$v" ;; esac
+done
 export CARGO_TARGET_DIR="$private"
+export CARGO_BUILD_BUILD_DIR="$private"
+[ -n "$observe" ] && { MJ_DERIVE_OBSERVE=$observe; export MJ_DERIVE_OBSERVE; }
 echo "target $private"
 for f in "$@"; do [ -e "$f" ] && touch "$f"; done
-if ! env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN "$derive" > "$log" 2>&1; then
+group='import os,sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])'
+if command -v setsid >/dev/null 2>&1; then how=setsid
+elif python3 -c 'import os' >/dev/null 2>&1; then how=python3
+else how=; fi
+case $how in
+  setsid) env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN setsid "$derive" > "$log" 2>&1 < /dev/null & ;;
+  python3) env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN python3 -c "$group" "$derive" > "$log" 2>&1 < /dev/null & ;;
+  *) env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN "$derive" > "$log" 2>&1 < /dev/null & ;;
+esac
+child=$!
+[ -n "$how" ] && pg=$child
+echo "group ${pg:-none}"
+{ echo "majordomus-offload-run/v1"; echo "tag $tag"; echo "pid $$"; echo "pgid $pg"
+  echo "started_at $(date +%s)"; echo "host $(hostname)"; echo "cwd $PWD"
+  echo "owner_session $os"; echo "owner_peer $op"; echo "owner_issue $oi"
+  echo "owner_host $oh"; echo "owner_pid $opid"; } > "$record.tmp" && mv -f "$record.tmp" "$record"
+rc=0; wait "$child" || rc=$?
+child=""
+if [ "$rc" != 0 ] && [ -f "$runs/$tag.stopped" ]; then
+  echo "the derive was stopped on $(hostname) by session $(cat "$runs/$tag.stopped")" >&2
+  exit 14
+fi
+if [ "$rc" != 0 ]; then
   echo "derive failed on $(hostname); the last lines of $log:" >&2
   grep -vE ' INFO |^ +(Compiling|Checking)' "$log" | tail -8 >&2
   exit 10
@@ -273,6 +368,59 @@ if [ -z "$sha" ]; then echo nothing; exit 0; fi
 git update-ref "refs/offload/$tag-derived" "$sha"
 git bundle create "$spool/offload-$tag-back.bundle" "refs/offload/$tag..refs/offload/$tag-derived" >/dev/null 2>&1
 echo "derived $sha""#;
+
+/// What [`derive_command`] builds the host's derive from: every value the [`DERIVE`] script
+/// takes, by name rather than by position.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct DeriveArgs<'a> {
+    /// The queue's lock directory, held by the caller.
+    pub lock: &'a str,
+    /// The host's worktrees directory.
+    pub worktrees: &'a str,
+    /// The run's tag.
+    pub tag: &'a str,
+    /// The shared build directory the run's own is cloned from.
+    pub shared: &'a str,
+    /// The derive command.
+    pub derive: &'a str,
+    /// The spool directory.
+    pub spool: &'a str,
+    /// The PATH prefix, colon-separated.
+    pub prefix: &'a str,
+    /// The commit the derived files may observe; empty leaves it unset.
+    pub observe: &'a str,
+    /// Whether the caller holds the script's standard input open for as long as it runs.
+    pub held: bool,
+    /// The host's run-record directory ([`super::owner::runs_directory`]).
+    pub runs: &'a str,
+    /// The owner, as [`super::owner::RunOwner::args`] gives it.
+    pub owner: &'a [String; 5],
+    /// The files to touch before the derive.
+    pub touch: &'a [String],
+}
+
+/// The host's derive as a script and its positional arguments, in the order [`DERIVE`]
+/// reads them: the one place that order is written.
+pub(crate) fn derive_command(a: &DeriveArgs) -> (&'static str, Vec<String>) {
+    let mut args: Vec<String> = [
+        a.lock,
+        a.worktrees,
+        a.tag,
+        a.shared,
+        a.derive,
+        a.spool,
+        a.prefix,
+        a.observe,
+        if a.held { "1" } else { "0" },
+        a.runs,
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    args.extend(a.owner.iter().cloned());
+    args.extend(a.touch.iter().cloned());
+    (DERIVE, args)
+}
 
 /// Upload: standard input to a spool file. Arguments: spool, file name.
 const UPLOAD: &str = r#"mkdir -p "$1" && cat > "$1/$2""#;
@@ -377,6 +525,22 @@ pub fn offload(
     let top = git(&worktree, &["rev-parse", "--show-toplevel"])?;
     let worktree = PathBuf::from(top.trim());
 
+    // The commit the derived files may observe: the worktree's HEAD, never the input. The
+    // input of a dirty tree is a `git stash create` snapshot and that of a merge in progress
+    // a `commit-tree` commit; neither reaches origin, so a derived file that named one
+    // (delivery.json's observed.commit) could not be checked anywhere else, and CI's
+    // `generate-site-data --check` called it stale (#1759, I3836). Read before the input, so
+    // a branch with no commit yet is refused here, by what it lacks, before anything is
+    // snapshot.
+    let observe = git(&worktree, &["rev-parse", "--verify", "HEAD"])
+        .map_err(|_| {
+            refuse(
+                EXIT_PRECONDITION,
+                "the worktree's branch has no commit yet: a derive observes HEAD, so commit first",
+            )
+        })?
+        .trim()
+        .to_string();
     let input = input_commit(&worktree)?;
     let (host, probe_reports) = pick_host(d, request.host.as_deref(), log)?;
     let remote = remote_of(&host);
@@ -475,18 +639,35 @@ pub fn offload(
     };
 
     let prefix = d.remote.path.join(":");
-    let mut args: Vec<&str> = vec![
-        &d.queue.lock,
-        &d.remote.worktrees,
-        &tag,
-        &d.remote.target,
-        &d.remote.derive,
+    let owner = super::owner::RunOwner::of_this_process(&worktree);
+    let runs = super::owner::runs_directory(&d.queue.directory);
+    let _ = writeln!(
+        log,
+        "derive-offload: {tag} runs for session {}, peer {}, issue {} (record {}:{runs}/{tag}.run; \
+         stop it with `majordomus offload stop {tag} --host {}`)",
+        owner.session.as_deref().unwrap_or("(unnamed)"),
+        owner.peer.as_deref().unwrap_or("(none)"),
+        owner.issue.as_deref().unwrap_or("(none)"),
+        host.id,
+        host.id
+    );
+    let (script, args) = derive_command(&DeriveArgs {
+        lock: &d.queue.lock,
+        worktrees: &d.remote.worktrees,
+        tag: &tag,
+        shared: &d.remote.target,
+        derive: &d.remote.derive,
         spool,
-        &prefix,
-    ];
-    args.extend(d.remote.touch.iter().map(String::as_str));
+        prefix: &prefix,
+        observe: &observe,
+        held: true,
+        runs: &runs,
+        owner: &owner.args(),
+        touch: &d.remote.touch,
+    });
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
     let out = remote
-        .run(DERIVE, &args, None)
+        .run_held(script, &args)
         .map_err(|e| refuse(EXIT_UNAVAILABLE, format!("{}: {e}", host.id)))?;
     let _ = log.write_all(out.stderr.as_bytes());
     // the derive's own pid file is dead now; release it with the holder's
@@ -514,6 +695,16 @@ pub fn offload(
     };
     match out.code {
         Some(0) => {}
+        Some(14) => {
+            cleanup(true);
+            return Err(refuse(
+                EXIT_STOPPED,
+                format!(
+                    "the derive was stopped on {} with `offload stop`; its worktree is kept there",
+                    host.id
+                ),
+            ));
+        }
         Some(10) => {
             cleanup(true);
             return Err(refuse(
@@ -550,6 +741,7 @@ pub fn offload(
         waited_seconds: waited,
         seconds: 0,
         probe: probe_reports,
+        owner,
     };
     let Some(sha) = derived else {
         cleanup(request.keep);
@@ -704,6 +896,7 @@ mod tests {
             waited_seconds: 0,
             seconds: 0,
             probe: Vec::new(),
+            owner: super::super::owner::RunOwner::default(),
         }
     }
 
@@ -761,5 +954,316 @@ mod tests {
             e.reason
         );
         assert!(r.staged.is_empty());
+    }
+
+    /// A held derive whose caller goes away is stopped as a group (I3956): while it runs, the
+    /// host's run record names its owner and its process group, the owner is in the derive's
+    /// environment, and when the caller's end of standard input closes, every process of the
+    /// group — a grandchild that would have outlived its parent included — is stopped and the
+    /// record removed. Measured on lundra 2026-10-22: a `rustc` survived its cargo and shell.
+    #[test]
+    fn a_held_derive_whose_caller_goes_is_stopped_as_a_group_and_its_record_removed() {
+        use std::io::Read;
+        let root = tempfile::tempdir().expect("a temporary directory");
+        let at = |p: &str| root.path().join(p);
+        let tag = "held1";
+        for d in ["lock", "wt/offload-held1", "target"] {
+            std::fs::create_dir_all(at(d)).unwrap();
+        }
+        // the derive: a grandchild that sleeps, its pid, its group and the owner written
+        // down, then waits
+        let derive = at("derive");
+        std::fs::write(
+            &derive,
+            format!(
+                "#!/bin/sh\nsleep 300 &\necho $! > {gc}\n\
+                 echo \"$$ $(ps -o pgid= -p $$ | tr -d ' ')\" > {group}\n\
+                 printf '%s|%s|%s|%s\\n' \"$MAJORDOMUS_OWNER_SESSION\" \"$MAJORDOMUS_OWNER_PEER\" \"$MAJORDOMUS_OWNER_ISSUE\" \"$MAJORDOMUS_OWNER_RUN\" > {env}\n\
+                 wait\n",
+                gc = at("grandchild").display(),
+                group = at("group").display(),
+                env = at("owner-env").display()
+            ),
+        )
+        .unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&derive, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let runs = at("runs");
+        let owner = ["claude-code-s9", "p2", "I3956", "mac", "24025"].map(String::from);
+        let (script, args) = derive_command(&DeriveArgs {
+            lock: at("lock").to_str().unwrap(),
+            worktrees: at("wt").to_str().unwrap(),
+            tag,
+            shared: at("target").to_str().unwrap(),
+            derive: derive.to_str().unwrap(),
+            spool: at("spool").to_str().unwrap(),
+            prefix: "",
+            observe: "",
+            held: true,
+            runs: runs.to_str().unwrap(),
+            owner: &owner,
+            touch: &[],
+        });
+        let mut child = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(script)
+            .arg("sh")
+            .args(&args)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .expect("sh runs");
+        let record = runs.join(format!("{tag}.run"));
+        let deadline = Instant::now() + Duration::from_secs(30);
+        while !(record.exists()
+            && at("grandchild").exists()
+            && at("owner-env").exists()
+            && at("group").exists())
+        {
+            assert!(Instant::now() < deadline, "the run never recorded itself");
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        let text = std::fs::read_to_string(&record).unwrap();
+        let r = crate::offload::owner::RunRecord::parse(&text).expect(&text);
+        assert_eq!(r.tag, tag);
+        assert_eq!(r.owner.session.as_deref(), Some("claude-code-s9"));
+        assert_eq!(
+            (r.owner.peer.as_deref(), r.owner.pid),
+            (Some("p2"), Some(24025))
+        );
+        assert!(r.cwd.ends_with("offload-held1"), "{text}");
+        assert!(r.started_at > 0 && !r.host.is_empty(), "{text}");
+        assert_eq!(r.owner.issue.as_deref(), Some("I3956"));
+        let seen = std::fs::read_to_string(at("owner-env")).unwrap();
+        assert_eq!(
+            seen, "claude-code-s9|p2|I3956|held1\n",
+            "the owner is in the derive's environment"
+        );
+        // the derive leads a process group of its own, and the record names that group
+        let group = std::fs::read_to_string(at("group")).unwrap();
+        let (pid, pgid) = group.trim().split_once(' ').expect(&group);
+        if let Some(recorded) = r.pgid {
+            assert_eq!(pid, pgid, "the derive is not its group's leader: {group}");
+            assert_eq!(pgid, recorded.to_string(), "{text}");
+        }
+        let grandchild: i32 = std::fs::read_to_string(at("grandchild"))
+            .unwrap()
+            .trim()
+            .parse()
+            .unwrap();
+        // the caller goes away: its end of standard input closes
+        drop(child.stdin.take());
+        let status = child.wait().expect("the run ends");
+        let mut out = String::new();
+        child
+            .stdout
+            .take()
+            .unwrap()
+            .read_to_string(&mut out)
+            .unwrap();
+        assert_eq!(
+            status.code(),
+            Some(129),
+            "a run whose caller went is stopped: {out}"
+        );
+        assert!(!record.exists(), "the record ends with the run");
+        assert!(!at("target-held1").exists(), "the run directory is removed");
+        if let Some(pgid) = r.pgid {
+            let deadline = Instant::now() + Duration::from_secs(10);
+            // SAFETY: kill with signal 0 only asks whether the pid exists
+            while unsafe { libc::kill(grandchild, 0) } == 0 {
+                assert!(
+                    Instant::now() < deadline,
+                    "the grandchild outlived its group: {out}"
+                );
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            assert!(out.contains(&format!("group {pgid}")), "{out}");
+        } else {
+            // a host with neither setsid nor Python has no group to stop; say so and clean up
+            // SAFETY: the pid was written by this test's own derive a moment ago
+            unsafe { libc::kill(grandchild, libc::SIGKILL) };
+            assert!(out.contains("group none"), "{out}");
+        }
+    }
+
+    /// The remote derive, run here exactly as a host runs it: whatever build directory the
+    /// caller's environment names, the derive compiles inside its own run directory, and
+    /// that directory is gone afterwards, whether the derive succeeds or fails. The shared
+    /// directory it was seeded from is left as it was.
+    #[test]
+    fn a_remote_derive_builds_only_inside_its_run_directory_and_removes_it() {
+        let root = tempfile::tempdir().expect("a temporary directory");
+        let at = |p: &str| root.path().join(p);
+        let decoy = at("build-shared");
+        std::fs::create_dir_all(&decoy).unwrap();
+        for (tag, outcome) in [("ok1", 0), ("bad1", 1)] {
+            let lock = at(&format!("lock-{tag}"));
+            std::fs::create_dir_all(&lock).unwrap();
+            let tree = at(&format!("wt/offload-{tag}"));
+            std::fs::create_dir_all(&tree).unwrap();
+            let git = |args: &[&str]| {
+                let out = std::process::Command::new("git")
+                    .current_dir(&tree)
+                    .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                    .args(args)
+                    .output()
+                    .expect("git runs");
+                assert!(out.status.success(), "git {args:?}: {out:?}");
+            };
+            git(&["init", "-q"]);
+            std::fs::write(tree.join("a"), "a").unwrap();
+            git(&["add", "-A"]);
+            git(&["commit", "-q", "-m", "a"]);
+            git(&["update-ref", &format!("refs/offload/{tag}"), "HEAD"]);
+            // the derive: says where it was told to build, compiles something there, and
+            // succeeds or fails as the case asks
+            let derive = at(&format!("derive-{tag}"));
+            std::fs::write(
+                &derive,
+                format!(
+                    "#!/bin/sh\nprintf '%s\\n%s\\n' \"$CARGO_BUILD_BUILD_DIR\" \"$CARGO_TARGET_DIR\" > {seen}\n\
+                     printf '%s %s\\n' \"$MAJORDOMUS_OWNER_SESSION\" \"$MAJORDOMUS_OWNER_ISSUE\" > {seen}-owner\n\
+                     mkdir -p \"$CARGO_BUILD_BUILD_DIR/debug/deps\" && : > \"$CARGO_BUILD_BUILD_DIR/debug/deps/x\"\n\
+                     exit {outcome}\n",
+                    seen = at(&format!("seen-{tag}")).display()
+                ),
+            )
+            .unwrap();
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&derive, std::fs::Permissions::from_mode(0o755)).unwrap();
+            let shared = at("target");
+            let (worktrees, spool, runs) = (at("wt"), at("spool"), at("runs"));
+            let owner = ["claude-code-s1", "", "I3956", "mac", ""].map(String::from);
+            let (script, args) = derive_command(&DeriveArgs {
+                lock: lock.to_str().unwrap(),
+                worktrees: worktrees.to_str().unwrap(),
+                tag,
+                shared: shared.to_str().unwrap(),
+                derive: derive.to_str().unwrap(),
+                spool: spool.to_str().unwrap(),
+                prefix: "",
+                observe: "",
+                held: false,
+                runs: runs.to_str().unwrap(),
+                owner: &owner,
+                touch: &[],
+            });
+            let out = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(script)
+                .arg("sh")
+                .args(&args)
+                .env("CARGO_BUILD_BUILD_DIR", &decoy)
+                .output()
+                .expect("sh runs");
+            let private = format!("{}-{tag}", shared.display());
+            let seen = std::fs::read_to_string(at(&format!("seen-{tag}"))).expect("the derive ran");
+            assert_eq!(
+                seen,
+                format!("{private}\n{private}\n"),
+                "{tag}: the build and target directories are the run's own"
+            );
+            assert!(
+                !std::path::Path::new(&private).exists(),
+                "{tag}: the run directory is removed: {out:?}"
+            );
+            assert_eq!(
+                std::fs::read_dir(&decoy).unwrap().count(),
+                0,
+                "{tag}: nothing lands in the caller's build directory"
+            );
+            assert!(shared.is_dir(), "{tag}: the shared seed stays");
+            let owner = std::fs::read_to_string(at(&format!("seen-{tag}-owner"))).unwrap();
+            assert_eq!(
+                owner, "claude-code-s1 I3956\n",
+                "{tag}: the derive sees its owner"
+            );
+            assert!(
+                !runs.join(format!("{tag}.run")).exists(),
+                "{tag}: the run record ends with the run"
+            );
+            let code = out.status.code();
+            if outcome == 0 {
+                assert_eq!(code, Some(0), "{out:?}");
+            } else {
+                assert_eq!(code, Some(i32::from(EXIT_DERIVE_FAILED)), "{out:?}");
+            }
+        }
+    }
+
+    /// The host's prepare, run here as a host runs it, against a `git` whose fetch is refused
+    /// the way a concurrent offload's ref lock refuses it: a fetch that loses the race is
+    /// asked again and the worktree is prepared; one that never wins fails the prepare after
+    /// its declared tries, with git's refusal on stderr for the caller to report (I4375).
+    #[test]
+    fn a_fetch_that_loses_a_ref_lock_race_is_asked_again_and_bounded() {
+        use std::os::unix::fs::PermissionsExt;
+        for (refusals, tries, prepared) in [(2, 5, true), (9, 3, false)] {
+            let root = tempfile::tempdir().expect("a temporary directory");
+            let at = |p: &str| root.path().join(p);
+            let (checkout, worktrees, spool, bin) = (at("c"), at("wt"), at("spool"), at("bin"));
+            for dir in [&checkout, &worktrees.join("offload-t"), &spool, &bin] {
+                std::fs::create_dir_all(dir).unwrap();
+            }
+            let count = at("fetches");
+            // every git subcommand succeeds but fetch, which is refused until it has been
+            // asked more than `refusals` times
+            std::fs::write(
+                bin.join("git"),
+                format!(
+                    "#!/bin/sh\n[ \"$1\" = fetch ] || exit 0\n\
+                     n=$(( $(cat {count} 2>/dev/null || echo 0) + 1 )); echo $n > {count}\n\
+                     [ $n -gt {refusals} ] && exit 0\n\
+                     echo \"error: cannot lock ref 'refs/remotes/origin/x': is at a but expected b\" >&2\n\
+                     exit 1\n",
+                    count = count.display()
+                ),
+            )
+            .unwrap();
+            std::fs::set_permissions(bin.join("git"), std::fs::Permissions::from_mode(0o755))
+                .unwrap();
+            let path = format!(
+                "{}:{}",
+                bin.display(),
+                std::env::var("PATH").unwrap_or_default()
+            );
+            let out = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(PREPARE)
+                .arg("sh")
+                .args([
+                    checkout.to_str().unwrap(),
+                    worktrees.to_str().unwrap(),
+                    spool.to_str().unwrap(),
+                    "t",
+                    "HEAD",
+                ])
+                .env("PATH", path)
+                .env("MJ_OFFLOAD_FETCH_TRIES", tries.to_string())
+                .env("MJ_OFFLOAD_FETCH_BACKOFF", "0")
+                .output()
+                .expect("sh runs");
+            let asked: u32 = std::fs::read_to_string(&count)
+                .unwrap()
+                .trim()
+                .parse()
+                .unwrap();
+            if prepared {
+                assert!(out.status.success(), "a lost race is asked again: {out:?}");
+                assert_eq!(asked, refusals + 1, "asked until it won, and no more");
+            } else {
+                assert!(
+                    !out.status.success(),
+                    "a fetch that never wins fails: {out:?}"
+                );
+                assert_eq!(asked, tries, "asked exactly its declared tries");
+                assert!(
+                    String::from_utf8_lossy(&out.stderr).contains("cannot lock ref"),
+                    "git's refusal reaches the caller: {out:?}"
+                );
+            }
+        }
     }
 }

@@ -13,8 +13,12 @@
 #
 # output (tab separated, first field is the record type):
 #   P  name  repository  default_branch  active_milestone
-#   M  id  status  order  priority  title  slug  counts  version  rank  depends  blocked_by \
+#   M  id  status  order  priority  title  slug  counts  last  rank  depends  blocked_by \
 #      dependents  claims
+#      `last` is the last accepted issue of a DONE milestone — its DONE issue with the latest
+#      completed_at, the greater id on a tie — and empty otherwise. The release that carried
+#      the milestone (released_in) is that issue's merge looked up in the release records,
+#      which is git's to answer and not this file's: lib/project.sh mj_pj_m_released_in.
 #   S  kind  status...                  the status vocabulary, one record per record kind
 #   R  from  to                          one record per milestone dependency edge, sorted
 #   I  id  milestone  status  wave  priority  profile  parallel_safe  title  slug \
@@ -48,9 +52,22 @@ BEGIN { FS = "\t"; OFS = "\t"
   split("plan_start plan_verify plan_done", SEALEV, " ")
   split("start verify done", SEALVERB, " ")
   MSTATUS = "PLANNED BLOCKED ACTIVE VERIFY DONE CANCELLED SUPERSEDED"
+  MTITLE_MAX = 255
+  # Whether length() counts characters (a UTF-8 aware awk) or bytes (BWK awk, mawk): "é" is
+  # two bytes, and chars() below must count it once either way.
+  UTF8_LENGTH = (length("\303\251") == 1)
 }
 
 function clean(s) { gsub(/\t/, " ", s); return s }
+# The number of characters in a UTF-8 string, whichever way this awk counts: in byte mode,
+# continuation bytes (10xxxxxx) are not counted. Compared byte by byte, because macOS awk
+# counts bytes under a UTF-8 locale yet will not match a byte range in a regular expression.
+function chars(s,   n, i, c, len) {
+  if (UTF8_LENGTH) return length(s)
+  len = length(s); n = 0
+  for (i = 1; i <= len; i++) { c = substr(s, i, 1); if (c < "\200" || c > "\277") n++ }
+  return n
+}
 
 # ---------------------------------------------------------------- ingest
 $1 == "P" { pkey[$2] = $3; next }
@@ -64,6 +81,7 @@ $1 == "M" {
   if (key ~ /^evidence_required\.[0-9]+$/) { mneed[id, ++mneedn[id]] = val }
   if (key ~ /^depends_on\.[0-9]+$/)        { mdep[id, ++mdepn[id]] = val }
   if (key ~ /^claims\.[0-9]+$/)            { mclaim[id, ++mclaimn[id]] = val }
+  delimiter(id, key, val)
   next
 }
 
@@ -78,6 +96,7 @@ $1 == "I" {
   if (key ~ /^evidence_required\.[0-9]+$/)   { need[id, ++needn[id]] = val }
   if (key ~ /^evidence\.[0-9]+\.covers$/)    { have[id, val] = 1; haven[id]++ }
   if (key ~ /^unsealed_stamps\.[0-9]+$/)     { unsealed[id, val] = 1 }
+  delimiter(id, key, val)
   next
 }
 
@@ -346,17 +365,35 @@ END {
     if (!(mstatus[mids[i]] in decl))
       finding("FAIL", "undeclared_status", mids[i], "is " mstatus[mids[i]] ", which the milestone status vocabulary does not declare")
 
+  # A milestone is projected to GitHub as "<id> — <title>" (scripts/github-sync title_of), and
+  # GitHub refuses a milestone title over MTITLE_MAX characters with HTTP 422. One such record
+  # turned master's github-projection red (run 39392245555, 282 characters), so the plan
+  # refuses it before it is ever projected (I2844; plan.rs MILESTONE_TITLE_MAX is the same).
+  for (i = 1; i <= mn; i++) {
+    id = mids[i]; tl = chars(id) + 3 + chars(m[id, "title"])
+    if (tl > MTITLE_MAX)
+      finding("FAIL", "milestone_title_too_long", id, "projects to GitHub as a " tl "-character title (\"" id " — <title>\"); GitHub's limit is " MTITLE_MAX)
+  }
+
   # ---------------------------------------------------------------- emit
   print "P", clean(pkey["name"]), clean(pkey["repository"]), clean(pkey["default_branch"]), best
   print "S", "issue", ISTATUS
   print "S", "milestone", MSTATUS
+  # the last accepted issue of every DONE milestone, which is what a release carried last
+  delete mlast
+  for (j = 1; j <= inum; j++) {
+    iid = iids[j]; mid = it[iid, "milestone"]
+    if (status[iid] != "DONE" || !(mid in mstatus) || mstatus[mid] != "DONE") continue
+    c = it[iid, "completed_at"]
+    if (!(mid in mlast) || c > mlastat[mid] || (c == mlastat[mid] && iid > mlast[mid])) { mlast[mid] = iid; mlastat[mid] = c }
+  }
   for (i = 1; i <= mn; i++) {
     id = mids[i]
     mdl = ""; for (k = 1; k <= mdepn[id]; k++) if ((id SUBSEP mdep[id, k]) in medge) mdl = mdl (mdl == "" ? "" : ",") mdep[id, k]
     mcl = ""; for (k = 1; k <= mclaimn[id]; k++) mcl = mcl (mcl == "" ? "" : ",") mclaim[id, k]
     mrd = ""; for (k = 1; k <= moutn[id]; k++) mrd = mrd (mrd == "" ? "" : ",") mout[id, k]
     print "M", id, mstatus[id], m[id, "order"], m[id, "priority"], clean(m[id, "title"]), m[id, "slug"], mrow[id], \
-          m[id, "version"], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl
+          mlast[id], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl
   }
   for (i = 1; i <= inum; i++) {
     id = iids[i]
@@ -389,6 +426,17 @@ function mcounts(id,   j, iid, tot, v, nsv, sv, cnt, out) {
   nsv = split(ISTATUS, sv, " ")
   for (v = 1; v <= nsv; v++) out = out "," sv[v] "=" (cnt[sv[v]] + 0)
   return out
+}
+
+# A record's prose is rendered into the site's plan pages, where a template delimiter left in
+# the text reaches the built HTML unresolved and fails the site job (I3009: I3007 on 10-18,
+# I3838 on 10-21). It is refused where it is written, named in words so that neither this file
+# nor the refusal holds one: the delimiters are built from a single brace.
+function delimiter(id, key, val,   b) {
+  b = "{"
+  if (index(val, b b))  finding("FAIL", "template_delimiter", id, key " holds a double brace, which the site renders raw on the record's plan page; describe the template syntax in words")
+  if (index(val, b "%")) finding("FAIL", "template_delimiter", id, key " holds a brace-percent, which the site renders raw on the record's plan page; describe the template syntax in words")
+  if (index(val, b "#")) finding("FAIL", "template_delimiter", id, key " holds a brace-hash, which the site renders raw on the record's plan page; describe the template syntax in words")
 }
 
 function finding(level, code, subject, message) {

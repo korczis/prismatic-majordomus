@@ -1,0 +1,44 @@
+id: I4304
+milestone: a-review-is-published-at-its-commit
+title: "A treemap shows where the findings concentrate, sized by lines and coloured from a sequential token ramp"
+slug: a-treemap-shows-finding-hotspots
+priority: p3
+profile: implementation
+parallel_safe: false
+objective: "Add a sequential and a diverging colour ramp to the design tokens, projected by majordomus generate; replace the vendored ECharts common build with a custom build that adds the treemap series, still fetched lazily; teach site/charts.js a data-chart=treemap figure drawn from a table of modules (lines, findings, findings per thousand lines); and put that figure over its table on the /quality/ page I4299 adds; amend ADR 0152's list of chart forms."
+why: "A reader of a review asks where the problems concentrate, and a table of 1850 findings does not answer it. scripts/site-build:231 vendors echarts.common.min.js, which holds the bar and line series only, and site/charts.js draws only those (site/charts.js:10). share/design/tokens.yaml declares categorical series tokens and no sequential or diverging ramp, so a chart coloured by a measure would have to invent colours, which project.design-tokens-declared-once refuses. ECharts already owns measured series (ADR 0135:69-71); the conclusion keeps it the only chart library and declines Chart.js."
+current_state: "On 81ef931a3e1 the site vendors the ECharts 6.0.0 common build, charts.js reads data-chart=bar|line, and tokens.yaml has no ramp."
+desired_state: "tokens.yaml declares a sequential and a diverging ramp, each step checked for contrast by design.contrast, which scripts/ci/design-check asks over MCP; the custom ECharts build adds treemap within the homepage budget; charts.js draws data-chart=treemap from a table whose first column is the module and whose numeric columns are area and colour; /quality/ shows the treemap over its table; ADR 0152 names the treemap among its forms."
+scope:
+  - ".ai/repo/project/issues/I4304.yaml"
+  - "share/design/tokens.yaml"
+  - "site/charts.js"
+  - "scripts/site-build"
+  - "package.json"
+  - "scripts/generate-site-data"
+  - "site/templates/quality.html"
+  - ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md"
+non_scope:
+  - "Any chart library other than ECharts"
+  - "Heatmaps, calendars or sankeys: each waits for a page that needs it"
+  - "Colouring /ui charts (I4313)"
+depends_on:
+  - "I4299"
+  - "I4316"
+serves:
+  - "a-review-is-seen-at-its-commit#hotspots-are-drawn-over-their-table"
+acceptance_criteria:
+  - "scripts/ci/design-check passes, with design.contrast measuring every step of both ramps in both themes"
+  - "The vendored ECharts build draws bar, line and treemap, and homepage-check passes"
+  - "scripts/generate-site-data writes the module table (module, lines, findings, findings per thousand lines) from the published report, and the treemap on /quality/ is drawn from that table beside it, and the page reads the same with JavaScript off"
+  - "ADR 0152 lists the treemap as an accepted chart form"
+validation:
+  - "scripts/ci/design-check"
+  - "scripts/site-build"
+  - "scripts/ci/homepage-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "treemap_is_drawn_over_its_table"
+risk: "Medium. A custom ECharts build adds a build step; #1294 and #933 also edit share/design/tokens.yaml and must be re-read before starting."
+created_at: 2026-10-28
+updated_at: 2026-10-28

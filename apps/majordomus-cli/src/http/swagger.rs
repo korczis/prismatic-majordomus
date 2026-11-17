@@ -44,6 +44,10 @@ pub const SWAGGER_CSS_SRI: &str =
 /// The one inline script the page runs: it starts the widget on the specification.
 const BOOT: &str = "window.ui = SwaggerUIBundle({ url: \"/openapi.json\", dom_id: \"#swagger-ui\", deepLinking: true });";
 
+/// Where the page names the checkout that is serving it: [`page_for`] puts the line there,
+/// and the page rendered once keeps the bare marker, which a browser shows as nothing.
+pub const CHECKOUT_MARKER: &str = "<!-- mj:checkout -->";
+
 /// The path the page loads the specification from.
 pub const SPEC_PATH: &str = "/openapi.json";
 
@@ -84,10 +88,15 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
    h2 beneath this one, so the order holds. Without them the page has neither, which is what
    the audit found the first time it was allowed to look at this surface. */
 .mj-api-title {{ margin: 0; padding: 1rem 1.25rem 0; color: var(--mj-fg); }}
+/* Which checkout answered: several servers share one machine, and a page that does not say
+   whose it is reads the same from all of them (I1031). */
+.mj-checkout {{ margin: 0; padding: 0.25rem 1.25rem 0; color: var(--mj-muted); font-size: 0.9rem; }}
+.mj-checkout .mono {{ font-family: var(--font-mono); }}
 </style>
 </head>
 <body>
 <h1 class="mj-api-title">Majordomus API</h1>
+{checkout}
 <main id="swagger-ui" data-mj-foreign="swagger-ui-dist@{v}"></main>
 <script src="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui-bundle.js" integrity="{bundle_sri}" crossorigin="anonymous"></script>
 <script>{boot}</script>
@@ -98,6 +107,7 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
         css_sri = SWAGGER_CSS_SRI,
         bundle_sri = SWAGGER_BUNDLE_SRI,
         boot = BOOT,
+        checkout = CHECKOUT_MARKER,
         tokens = crate::web::html::TOKENS
     )
 });
@@ -114,6 +124,23 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
 /// ```
 pub fn page() -> &'static str {
     PAGE.as_str()
+}
+
+/// The page as one server serves it: the shell, with the line naming the checkout that is
+/// serving it where [`CHECKOUT_MARKER`] stands. `checkout` is HTML the caller has escaped —
+/// the router renders it from the repository model (`crate::web::home::Checkout::line`),
+/// which names the checkout by its identity and never by where it sits on the host.
+///
+/// ```
+/// use majordomus_cli::http::swagger;
+/// let page = swagger::page_for("<p class=\"mj-checkout\">checkout 0123456789ab</p>");
+/// assert!(page.contains("checkout 0123456789ab"));
+/// assert!(!page.contains(swagger::CHECKOUT_MARKER), "the marker is replaced, not kept");
+/// assert_eq!(page.len() - swagger::page().len() + swagger::CHECKOUT_MARKER.len(),
+///     "<p class=\"mj-checkout\">checkout 0123456789ab</p>".len(), "nothing else changes");
+/// ```
+pub fn page_for(checkout: &str) -> String {
+    page().replacen(CHECKOUT_MARKER, checkout, 1)
 }
 
 /// Whether this shell may be offered as a link a reader can follow, in an environment

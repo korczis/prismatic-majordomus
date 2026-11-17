@@ -47,6 +47,116 @@ pub struct Vendor {
     /// crate reads the value, and the environment cache refuses to hold one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub credential_env: Option<String>,
+    /// How a call to this vendor can be paid: the sources the vendor offers, each with
+    /// the evidence it was read from. What the vendor *offers* is the distribution's;
+    /// which of them the owner *holds*, and any amount, is the owner's and never here.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub funding: Vec<FundingSource>,
+}
+
+/// One way a vendor lets a call be paid. A kind and a credential, never an amount: a
+/// price or a balance this tool cannot verify is a fact it must not state.
+///
+/// ```
+/// use majordomus_cli::models::{FundingKind, FundingSource, ModelCatalogue};
+///
+/// let c = ModelCatalogue::parse(concat!(
+///     "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    funding:\n",
+///     "      - id: grant\n        kind: credit_grant\n        credential_env: ACME_API_KEY\n",
+///     "        renews: monthly\n        claim_url: https://acme.example/claim\n",
+///     "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
+/// )).unwrap();
+/// let grant: &FundingSource = &c.vendors[0].funding[0];
+/// assert_eq!(grant.kind, FundingKind::CreditGrant);
+/// assert_eq!(grant.credential_env.as_deref(), Some("ACME_API_KEY"));
+/// assert!(c.diagnostics().is_empty());
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct FundingSource {
+    /// The source id, unique within its vendor.
+    pub id: String,
+    /// What kind of source it is.
+    pub kind: FundingKind,
+    /// The environment variable whose presence reaches this source. Two sources may
+    /// name the same one: a credit grant and metered billing are both reached through
+    /// one API credential, and nothing local tells them apart.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credential_env: Option<String>,
+    /// The period an allowance renews over, for a source that has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub renews: Option<Renewal>,
+    /// Where the owner claims or links the source, as the vendor published it. Shown as
+    /// evidence; Majordomus never follows it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub claim_url: Option<String>,
+    /// What the declaration stands on.
+    pub evidence: FundingEvidence,
+    /// One line a person needs when choosing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+}
+
+/// The kinds of funding source, in the order a policy most often prefers them.
+///
+/// ```
+/// use majordomus_cli::models::FundingKind;
+///
+/// let kind: FundingKind = serde_json::from_str(r#""credit_grant""#).unwrap();
+/// assert_eq!(kind, FundingKind::CreditGrant);
+/// assert!(serde_json::from_str::<FundingKind>(r#""voucher""#).is_err(), "the set is closed");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum FundingKind {
+    /// Inference on this machine; no money changes hands.
+    Local,
+    /// A recurring allowance of API usage that comes with something else the owner
+    /// pays for, such as the API credits a subscription plan includes.
+    CreditGrant,
+    /// A subscription seat, used through the client signed in with it.
+    Subscription,
+    /// Pay-as-you-go usage, billed by what was used.
+    Metered,
+}
+
+/// The period an allowance renews over.
+///
+/// ```
+/// use majordomus_cli::models::Renewal;
+///
+/// assert_eq!(serde_json::from_str::<Renewal>(r#""monthly""#).unwrap(), Renewal::Monthly);
+/// assert_eq!(serde_json::to_string(&Renewal::Monthly).unwrap(), r#""monthly""#);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Renewal {
+    /// Every calendar month, or every billing month, as the vendor states it.
+    Monthly,
+}
+
+/// Where a funding declaration was read, and when.
+///
+/// ```
+/// use majordomus_cli::models::FundingEvidence;
+///
+/// let e: FundingEvidence = serde_json::from_str(
+///     r#"{"url":"https://acme.example/docs","checked":"2026-10-21","quote":"Pay as you go."}"#,
+/// ).unwrap();
+/// assert_eq!(e.checked, "2026-10-21");
+/// assert!(serde_json::from_str::<FundingEvidence>(r#"{"url":"x","checked":"y","note":1}"#).is_err(),
+///     "a field the evidence does not declare is refused, so none could carry an amount");
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct FundingEvidence {
+    /// The page or record it was read from.
+    pub url: String,
+    /// The day it was read, `YYYY-MM-DD`.
+    pub checked: String,
+    /// The vendor's own words, verbatim, when a sentence settles it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quote: Option<String>,
 }
 
 /// Where a vendor's inference runs.
@@ -125,6 +235,11 @@ pub struct ModelCatalogue {
     /// those that qualify", an answer a person can verify by reading the file.
     #[serde(default)]
     pub models: Vec<ModelEntry>,
+    /// Funding sources [`ModelCatalogue::parse`] could not read, each naming its vendor
+    /// and source. They are set aside rather than failing the file: the advisor catalogue
+    /// loads the same file, and one bad source must not take every advisor down.
+    #[serde(skip)]
+    pub unread_funding: Vec<String>,
 }
 
 impl ModelCatalogue {
@@ -134,11 +249,67 @@ impl ModelCatalogue {
     pub fn load(share: &std::path::Path) -> Result<ModelCatalogue, String> {
         let path = share.join(MODELS_FILE);
         match std::fs::read_to_string(&path) {
-            Ok(text) => crate::metadata::yaml::parse_into(&text)
+            Ok(text) => ModelCatalogue::parse(&text)
                 .map_err(|reason| format!("{}: {reason}", path.display())),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(ModelCatalogue::default()),
             Err(e) => Err(format!("{}: {e}", path.display())),
         }
+    }
+
+    /// Parse a catalogue. A funding source without evidence, of a kind nobody declared,
+    /// or otherwise unreadable is set aside and reported by [`ModelCatalogue::diagnostics`]
+    /// naming its vendor and its id — a typed parse alone would fail the whole file and
+    /// say only that a field is missing somewhere.
+    ///
+    /// ```
+    /// use majordomus_cli::models::ModelCatalogue;
+    ///
+    /// let c = ModelCatalogue::parse(concat!(
+    ///     "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    funding:\n",
+    ///     "      - id: grant\n        kind: credit_grant\n",
+    ///     "models: []\n",
+    /// )).unwrap();
+    /// assert!(c.vendors[0].funding.is_empty(), "the unreadable source is set aside");
+    /// assert!(c.diagnostics()[0].contains("vendor 'acme' funding source 'grant' declares no evidence"));
+    /// ```
+    pub fn parse(text: &str) -> Result<ModelCatalogue, String> {
+        let mut map = crate::metadata::yaml::parse_mapping(text)?;
+        let unread = set_aside_unreadable_funding(&mut map);
+        let mut catalogue: ModelCatalogue =
+            serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| e.to_string())?;
+        catalogue.unread_funding = unread;
+        Ok(catalogue)
+    }
+
+    /// Every credential variable the catalogue names, the vendors' and their funding
+    /// sources', once each in declaration order: what no CI gate may depend on.
+    ///
+    /// ```
+    /// use majordomus_cli::models::ModelCatalogue;
+    ///
+    /// let c = ModelCatalogue::parse(concat!(
+    ///     "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    credential_env: ACME_KEY\n",
+    ///     "    funding:\n      - id: seat\n        kind: subscription\n        credential_env: ACME_SEAT\n",
+    ///     "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
+    ///     "      - id: metered\n        kind: metered\n        credential_env: ACME_KEY\n",
+    ///     "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
+    /// )).unwrap();
+    /// assert_eq!(c.credential_variables(), ["ACME_KEY", "ACME_SEAT"]);
+    /// ```
+    pub fn credential_variables(&self) -> Vec<&str> {
+        let mut names: Vec<&str> = Vec::new();
+        for vendor in &self.vendors {
+            let sources = vendor
+                .funding
+                .iter()
+                .filter_map(|s| s.credential_env.as_deref());
+            for name in vendor.credential_env.as_deref().into_iter().chain(sources) {
+                if !names.contains(&name) {
+                    names.push(name);
+                }
+            }
+        }
+        names
     }
 
     /// The entry a canonical id or an alias resolves to.
@@ -171,8 +342,127 @@ impl ModelCatalogue {
                 ));
             }
         }
+        findings.extend(self.unread_funding.iter().cloned());
+        for vendor in &self.vendors {
+            findings.extend(funding_findings(vendor));
+        }
         findings
     }
+}
+
+/// Take out of the raw mapping every funding source that cannot be read — no evidence,
+/// evidence without its page or day, a kind outside [`FundingKind`], or anything else the
+/// typed parse would refuse — and say why, naming the vendor and the source. Done before
+/// the typed parse, so that the rest of the catalogue still loads and the reason names
+/// what it means.
+fn set_aside_unreadable_funding(
+    map: &mut serde_json::Map<String, serde_json::Value>,
+) -> Vec<String> {
+    let mut unread = Vec::new();
+    let vendors = map.get_mut("vendors").and_then(|v| v.as_array_mut());
+    for vendor in vendors.into_iter().flatten() {
+        let vendor_id = vendor
+            .get("id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("?")
+            .to_string();
+        let Some(sources) = vendor.get_mut("funding").and_then(|f| f.as_array_mut()) else {
+            continue;
+        };
+        let mut i = 0;
+        sources.retain(|source| {
+            i += 1;
+            let named = match source.get("id").and_then(|v| v.as_str()) {
+                Some(id) => format!("vendor '{vendor_id}' funding source '{id}'"),
+                None => format!("vendor '{vendor_id}' funding source #{i}"),
+            };
+            let reasons = funding_unreadable(source);
+            for reason in &reasons {
+                unread.push(format!("{named} {reason}; it is set aside"));
+            }
+            reasons.is_empty()
+        });
+    }
+    unread
+}
+
+/// Why one raw funding source cannot be read; empty when it can.
+fn funding_unreadable(source: &serde_json::Value) -> Vec<String> {
+    let mut reasons = Vec::new();
+    match source.get("kind") {
+        None => reasons.push("declares no kind".to_string()),
+        Some(kind) if serde_json::from_value::<FundingKind>(kind.clone()).is_err() => {
+            reasons.push(format!("declares kind {kind}, which is not a funding kind"));
+        }
+        Some(_) => {}
+    }
+    match source.get("evidence") {
+        None => reasons.push("declares no evidence".to_string()),
+        Some(evidence) => {
+            for field in ["url", "checked"] {
+                let present = evidence
+                    .get(field)
+                    .and_then(|v| v.as_str())
+                    .is_some_and(|s| !s.trim().is_empty());
+                if !present {
+                    reasons.push(format!("has evidence without its {field}"));
+                }
+            }
+        }
+    }
+    if reasons.is_empty() {
+        if let Err(e) = serde_json::from_value::<FundingSource>(source.clone()) {
+            reasons.push(format!("cannot be read: {e}"));
+        }
+    }
+    reasons
+}
+
+/// A vendor's funding declarations that parse but do not agree with themselves or with
+/// the vendor: reported, never repaired.
+fn funding_findings(vendor: &Vendor) -> Vec<String> {
+    let mut findings = Vec::new();
+    let mut seen = std::collections::BTreeSet::new();
+    for source in &vendor.funding {
+        let named = format!("vendor '{}' funding source '{}'", vendor.id, source.id);
+        if !seen.insert(source.id.as_str()) {
+            findings.push(format!("{named} is declared twice"));
+        }
+        let local_vendor = vendor.inference == Inference::Local;
+        if local_vendor != (source.kind == FundingKind::Local) {
+            findings.push(format!(
+                "{named} is of kind {:?} on a vendor whose inference is {:?}",
+                source.kind, vendor.inference
+            ));
+        }
+        if source.kind == FundingKind::CreditGrant && source.renews.is_none() {
+            findings.push(format!(
+                "{named} is a credit grant that declares no renewal period"
+            ));
+        }
+        if source.kind != FundingKind::Local && source.credential_env.is_none() {
+            findings.push(format!(
+                "{named} names no credential variable that reaches it"
+            ));
+        }
+        if !is_iso_day(&source.evidence.checked) {
+            findings.push(format!(
+                "{named} has evidence checked '{}', which is not a YYYY-MM-DD day",
+                source.evidence.checked
+            ));
+        }
+    }
+    findings
+}
+
+fn is_iso_day(text: &str) -> bool {
+    let b = text.as_bytes();
+    b.len() == 10
+        && b[4] == b'-'
+        && b[7] == b'-'
+        && b.iter()
+            .enumerate()
+            .all(|(i, c)| i == 4 || i == 7 || c.is_ascii_digit())
 }
 
 /// What a task needs from a model. Every field empty means "the first available model".
@@ -471,6 +761,209 @@ models:
         let findings = c.diagnostics();
         assert!(findings.iter().any(|f| f.contains("names two models")));
         assert!(findings.iter().any(|f| f.contains("ghost")));
+    }
+
+    fn with_funding(source: &str) -> Result<ModelCatalogue, String> {
+        ModelCatalogue::parse(&format!(
+            "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    funding:\n{source}"
+        ))
+    }
+
+    const EVIDENCE: &str = "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n";
+
+    /// The one diagnostic that names `needle`, after the catalogue still loaded.
+    fn set_aside(source: &str, needle: &str) -> ModelCatalogue {
+        let c = with_funding(source).expect("one bad source does not fail the file");
+        let findings = c.diagnostics();
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.contains(needle) && f.ends_with("it is set aside")),
+            "{needle} in {findings:?}"
+        );
+        c
+    }
+
+    /// Proves I3660: a source the vendor declares without saying where it read it is
+    /// refused, the refusal names the vendor and the source, and the rest of the
+    /// catalogue still loads.
+    #[test]
+    fn test_a_funding_source_without_evidence_is_refused() {
+        let c = set_aside(
+            &format!(
+                "      - id: grant\n        kind: credit_grant\n        credential_env: ACME_API_KEY\n        renews: monthly\n\
+                 \x20     - id: metered\n        kind: metered\n        credential_env: ACME_API_KEY\n{EVIDENCE}"
+            ),
+            "vendor 'acme' funding source 'grant' declares no evidence",
+        );
+        let kept: Vec<&str> = c.vendors[0].funding.iter().map(|s| s.id.as_str()).collect();
+        assert_eq!(kept, ["metered"], "the readable source stays");
+
+        set_aside(
+            "      - id: grant\n        kind: credit_grant\n        credential_env: ACME_API_KEY\n        evidence:\n          url: https://acme.example/docs\n",
+            "'grant' has evidence without its checked",
+        );
+    }
+
+    #[test]
+    fn a_funding_source_of_an_unknown_kind_is_set_aside_by_name() {
+        set_aside(
+            &format!("      - id: voucher\n        kind: voucher\n        credential_env: ACME_API_KEY\n{EVIDENCE}"),
+            "vendor 'acme' funding source 'voucher' declares kind \"voucher\"",
+        );
+        set_aside(
+            &format!("      - id: grant\n        kind: metered\n        amount: 200\n{EVIDENCE}"),
+            "'grant' cannot be read",
+        );
+    }
+
+    /// No field of a funding declaration could carry what the owner pays or holds: the
+    /// catalogue states what a vendor offers, never an amount.
+    #[test]
+    fn no_field_of_the_catalogue_can_hold_an_amount() {
+        let schema = serde_json::to_value(schemars::schema_for!(ModelCatalogue)).unwrap();
+        let text = schema.to_string().to_lowercase();
+        assert!(
+            text.contains("\"claim_url\""),
+            "the schema carries the funding fields"
+        );
+        for word in [
+            "amount", "price", "balance", "cost", "currency", "usd", "limit", "cap\"",
+        ] {
+            assert!(
+                !text.contains(&format!("\"{word}")),
+                "the catalogue schema declares a field that could hold an amount: {word}"
+            );
+        }
+    }
+
+    #[test]
+    fn every_credential_variable_is_named_once() {
+        let c = with_funding(&format!(
+            "      - id: seat\n        kind: subscription\n        credential_env: ACME_SEAT\n{EVIDENCE}\
+             \x20     - id: metered\n        kind: metered\n        credential_env: ACME_API_KEY\n{EVIDENCE}"
+        ))
+        .unwrap();
+        let mut c = c;
+        c.vendors[0].credential_env = Some("ACME_API_KEY".into());
+        assert_eq!(c.credential_variables(), ["ACME_API_KEY", "ACME_SEAT"]);
+    }
+
+    #[test]
+    fn funding_that_disagrees_with_itself_is_reported_not_repaired() {
+        let c = with_funding(&format!(
+            "      - id: grant\n        kind: credit_grant\n        credential_env: ACME_API_KEY\n{EVIDENCE}\
+             \x20     - id: grant\n        kind: local\n        evidence:\n          url: x\n          checked: last week\n"
+        ))
+        .unwrap();
+        let findings = c.diagnostics();
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.contains("declares no renewal period")),
+            "{findings:?}"
+        );
+        assert!(
+            findings.iter().any(|f| f.contains("is declared twice")),
+            "{findings:?}"
+        );
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.contains("kind Local on a vendor whose inference is Remote")),
+            "{findings:?}"
+        );
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.contains("'last week', which is not a YYYY-MM-DD day")),
+            "{findings:?}"
+        );
+    }
+
+    /// One credential may reach two sources: a grant and metered billing both arrive
+    /// through the vendor's API key, and the catalogue says so rather than choosing.
+    #[test]
+    fn two_sources_may_share_one_credential() {
+        let c = with_funding(&format!(
+            "      - id: grant\n        kind: credit_grant\n        credential_env: ACME_API_KEY\n        renews: monthly\n{EVIDENCE}\
+             \x20     - id: metered\n        kind: metered\n        credential_env: ACME_API_KEY\n{EVIDENCE}"
+        ))
+        .unwrap();
+        assert!(c.diagnostics().is_empty(), "{:?}", c.diagnostics());
+        let json = serde_json::to_value(&c.vendors[0]).unwrap();
+        assert_eq!(json["funding"][0]["kind"], "credit_grant");
+        assert_eq!(json["funding"][1]["evidence"]["checked"], "2026-10-21");
+    }
+
+    #[test]
+    fn a_catalogue_that_is_no_mapping_or_no_catalogue_is_refused_with_a_reason() {
+        let not_yaml = ModelCatalogue::parse("- a\n- b\n").unwrap_err();
+        assert!(!not_yaml.is_empty(), "the unreadable text says why");
+        let not_a_catalogue = ModelCatalogue::parse("version: 1\nmodels: 3\n").unwrap_err();
+        assert!(
+            not_a_catalogue.contains("invalid type"),
+            "the typed parse refuses a models field that is no list: {not_a_catalogue}"
+        );
+    }
+
+    #[test]
+    fn a_vendor_without_funding_is_skipped_and_a_nameless_source_is_numbered() {
+        let c = ModelCatalogue::parse(&format!(
+            "version: 1\nvendors:\n  - id: bare\n    title: Bare\n  - id: acme\n    title: Acme\n    funding:\n\
+             \x20     - credential_env: ACME_API_KEY\n{EVIDENCE}"
+        ))
+        .unwrap();
+        assert_eq!(
+            c.diagnostics(),
+            ["vendor 'acme' funding source #1 declares no kind; it is set aside"]
+        );
+        assert!(
+            c.vendors[0].funding.is_empty(),
+            "the bare vendor holds none"
+        );
+        assert!(
+            c.vendors[1].funding.is_empty(),
+            "the unreadable source is gone"
+        );
+    }
+
+    #[test]
+    fn a_remote_source_without_a_credential_variable_is_reported() {
+        let c = with_funding(&format!(
+            "      - id: metered\n        kind: metered\n{EVIDENCE}"
+        ))
+        .unwrap();
+        assert_eq!(
+            c.diagnostics(),
+            ["vendor 'acme' funding source 'metered' names no credential variable that reaches it"]
+        );
+    }
+
+    /// The distribution's own catalogue loads, and every source it declares is sound.
+    #[test]
+    fn the_shipped_catalogue_declares_its_funding_soundly() {
+        let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let c = ModelCatalogue::load(&share).unwrap();
+        assert!(c.diagnostics().is_empty(), "{:?}", c.diagnostics());
+        let anthropic = c.vendors.iter().find(|v| v.id == "anthropic").unwrap();
+        for kind in [
+            FundingKind::Subscription,
+            FundingKind::CreditGrant,
+            FundingKind::Metered,
+        ] {
+            assert!(
+                anthropic.funding.iter().any(|s| s.kind == kind),
+                "anthropic declares {kind:?}"
+            );
+        }
+        for vendor in &c.vendors {
+            assert!(
+                !vendor.funding.is_empty(),
+                "vendor '{}' declares how it is paid",
+                vendor.id
+            );
+        }
     }
 
     #[test]

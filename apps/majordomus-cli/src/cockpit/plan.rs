@@ -714,7 +714,7 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
 /// capability page's "Run as an execution" uses — so it has an identity, a page of its own
 /// and events, and the issue page reads the record back once the execution has finished.
 /// Both routes come from the registry that declares them; this page names no path.
-fn moves(ctx: &Context, issue: &str, startable: bool) -> El {
+pub(crate) fn moves(ctx: &Context, issue: &str, startable: bool) -> El {
     // every fact about a capability is asked of `capabilities.describe`, the way every page
     // learns one, so this page reads no registry of its own (ADR 0089)
     let describe =

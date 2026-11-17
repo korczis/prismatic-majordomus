@@ -1,0 +1,44 @@
+id: I3356
+milestone: the-proof-scorecard-is-published
+title: "The site's economics page publishes the scorecard from the generated summary, failed and inconclusive tests and every loss in the same rows as passed ones, each linking its records"
+slug: the-site-publishes-the-scorecard
+priority: p1
+profile: implementation
+objective: "Carry the scorecard into the summary majordomus generate economics writes: a proof field in docs/generated/economics.{json,yaml}, a section in economics.md written by economics::report, the field in share/schemas/generated/economics-summary.schema.json, and rows in site/templates/economics.html from the data scripts/generate-site-data already copies. Each row carries its protocol, status, reason, counted sample against minimum, effect with interval and method, losses, the claim it settles, and links to its counted and uncounted records (trial records, runs, the T3 window record). Add a sentence to site/content-src/economics.md saying where the rows come from."
+why: "The owner's report of 2026-10-19 asks that every verdict be public, losses included. The economics page already renders only the generated summary through a path whose provenance is checked. The critique found that adoption and delivery readings had no surface but raw JSON, so each row links its records."
+current_state: "scripts/generate-site-data:1517-1529 copies docs/generated/economics.json into the site data. site/templates/economics.html renders verdict, metrics, pairs and hypotheses. The schema's required list (economics-summary.schema.json:7) has no proof field. Case 430 drives the economics pipeline end to end."
+desired_state: "The built /economics/ page shows six rows; failed, inconclusive and loss rows use the same markup as passed ones; with no plan the page says so."
+scope:
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "share/schemas/generated/economics-summary.schema.json"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+  - "site/templates/economics.html"
+  - "site/content-src/economics.md"
+  - "site/content/economics.md"
+  - "test/cases/430_economics.sh"
+non_scope:
+  - "A homepage section or link"
+  - "Restyling the page"
+  - "/ui (I3357)"
+depends_on:
+  - "I3355"
+serves:
+  - "the-product-proves-it-pays#losses-are-published"
+acceptance_criteria:
+  - "docs/generated/economics.json carries proof with six rows and totals summing to six, and the schema validates it"
+  - "Case 430 asserts one row per test with a data attribute naming its status, and a fixture with a failed test renders that row, its losses and its record links"
+  - "With no plan the page states it and renders no empty table"
+  - "scripts/site-check and majordomus economics check pass on the built site"
+validation:
+  - "majordomus generate --check"
+  - "bash test/run.sh 430_economics"
+  - "scripts/site-build"
+  - "scripts/site-check"
+evidence_required:
+  - "case_scorecard_rendered_with_losses"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,0 +1,51 @@
+id: I3408
+milestone: a-prompt-reaches-the-work-it-serves
+title: "A captured prompt is answered, on this machine only, with the existing intents and issues it matches or with no match, and the answer carries identities and never the prompt's text"
+slug: a-prompt-meets-the-existing-intent
+priority: p2
+profile: implementation
+objective: "Add a read-only capability, intents.matched, that declares the checkout-private field I3434 adds. Given a captured prompt's identity (provider and prompt id) or an episode, it reads the record from .ai/local/prompts and runs the I3251 brief over its text through a new matcher in apps/majordomus-cli/src/devcontext/intent_match.rs. It answers each existing intent and issue above the floor with the shared title terms and a confidence. The verdict is matched (one candidate), ambiguous (several, all kept as candidates) or unmatched. It never proposes an intent, never calls a model and never acts on the text."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks that existing intents be matched before any intent is proposed, that confidence not count as proof, and that ambiguous matches stay candidates (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/02_EVENTS_INTENTS.md, scenario A of prompts/00_MASTER.md, and the verification/ACCEPTANCE.md rows on an existing intent match and on provider prompt injection)."
+current_state: "intents.propose refuses only an existing id (apps/majordomus-cli/src/capability/builtin/intents.rs:585-591). .claude/skills/intent/SKILL.md:13 proposes the typed text verbatim. devcontext/select.rs:1310-1360 already scores term share with named terms. No Rust code reads the prompt archive, and lib/capture.sh:52-53 states that nothing retrieves from it."
+desired_state: "One deterministic, explainable matcher, reused from the brief. Its answer holds record identities, the terms that occur in the matched record's own title, and a confidence. A prompt in a language no record uses is answered unmatched. Nothing is written, and a caller beyond loopback is refused."
+scope:
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/devcontext/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/intents.md"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Running in the UserPromptSubmit hook or writing to its stdout"
+  - "Proposing or amending an intent (I3254)"
+  - "An LLM or embedding similarity (a later reasoning consultation through docs/REASONING.md)"
+  - "Publishing the answer to the site or to a snapshot"
+depends_on:
+  - "I3251"
+  - "I3406"
+  - "I3432"
+  - "I3434"
+serves:
+  - "a-change-reconciles-what-it-affects#a-prompt-meets-the-existing-intent"
+acceptance_criteria:
+  - "A prompt that rephrases an existing intent's title answers that intent as matched and proposes nothing"
+  - "A prompt matching two intents above the floor answers ambiguous with both"
+  - "A prompt matching nothing answers unmatched"
+  - "A prompt asking to ignore governance and force-promote every candidate answers only identities and changes nothing"
+  - "The serialised answer contains no substring of the prompt longer than one matched title term"
+  - "An unknown identity is refused as not found"
+  - "A caller beyond loopback is refused through I3434's field"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
+  - "bin/majordomus-cli generate --check"
+  - "majordomus capabilities describe intents.matched"
+evidence_required:
+  - "test_a_prompt_meets_the_existing_intent"
+created_at: 2026-10-19
+updated_at: 2026-10-19

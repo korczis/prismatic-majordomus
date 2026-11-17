@@ -1,0 +1,20 @@
+{#- The reader's language, chosen once (ADR 0218). Inline and before paint, so a reader who is
+    sent on never sees the page they are sent from.
+
+    - A reader who chose a language with the switch keeps it: the choice is stored under
+      `mj-lang`, and a later arrival on an English page from outside this site is sent to
+      that page's copy in the chosen language.
+    - A reader who has chosen nothing, arrives on an English page from outside this site, and
+      whose browser prefers a language the site declares is sent to that page's copy in it.
+      A link followed inside the site, a reload and a crawler that states no such preference
+      are never redirected, so every URL still means the page it names.
+
+    The languages are site/i18n/languages.json's and the copy's address is the English one with
+    the language as the first path segment, which is how the i18n pass of scripts/site-build
+    writes every copy. -#}
+{%- set languages = load_data(path="i18n/languages.json") -%}
+<script>(function(){try{var K="mj-lang",L={{ languages.languages | json_encode | safe }},S="{{ languages.source }}",B="{{ config.base_url | trim_end(pat="/") }}",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>

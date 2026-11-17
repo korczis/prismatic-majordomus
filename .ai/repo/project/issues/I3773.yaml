@@ -1,0 +1,43 @@
+id: "I3773"
+milestone: "truthful-plan-surfaces"
+title: "Every plan surface draws a milestone's progress as a bar of the issues it requires, a blocked milestone's bar says the gate is closed, and the roadmap no longer says a bar would be a lie"
+slug: "every-plan-surface-draws-progress-bars"
+priority: "p1"
+profile: "implementation"
+parallel_safe: false
+objective: "Settle the progress-bar doctrine the one way the owner chose on 2026-10-20: /roadmap/ (both languages), each /plan/<milestone>/ page and /ui draw, for every milestone, a bar of its done issues out of the issues it requires, with both numbers as text beside it; a BLOCKED milestone's bar is drawn in the blocked tone and captioned that its dependency, not its workload, holds it; a milestone that requires no issue draws no bar and says why; and the sentences on /roadmap/ that refuse a bar are withdrawn."
+why: "Campaign defect D22 (roadmap finding F20): /ui draws progress bars while /roadmap/, linked from the same navigation, explains that a bar would be a lie, so two surfaces of one product state opposite doctrines. The owner decided on 2026-10-20 that progress bars are shown on every surface and that the sentence refusing them is withdrawn. The original concern, a full bar inside a blocked milestone misleading a reader, is answered by drawing the gate with the bar rather than by drawing no bar."
+current_state: "site/templates/roadmap.html:122 ends 'That is why there is no percentage anywhere on this page - a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.', and site/content/roadmap.md:9-12 ends 'and why there is no progress bar on this page.' A /roadmap/ card shows 'done N of M' as text only (site/templates/roadmap.html:69-72, M = issues.required, which leaves cancelled issues out); a /plan/<milestone>/ page shows 'N of M issues done' as text only (site/templates/milestone.html:11). The site already draws a meter as an SVG in the figure component (site/templates/kit/content.html:165-174), because the site's policy refuses a style attribute. /ui draws a meter through apps/majordomus-cli/src/ui/view.rs:509-538 in the Milestones table (apps/majordomus-cli/src/ui/dashboard.rs:173-189) and the milestone inspector (apps/majordomus-cli/src/ui/milestone.rs:309-315), both over counts.total, which counts cancelled issues (M003 reads 12 of 17 there against 12 of 16 on /roadmap/); I3440 changes that denominator to the required issues. No surface draws a blocked milestone's bar differently from an open one's."
+desired_state: "One rule, stated once in site/content/roadmap.md and drawn on every surface: the bar is done out of required, cancelled issues excluded, with 'N of M' as text so the bar adds nothing the numbers do not say. /roadmap/ cards and /plan/<milestone>/ draw it with the kit's SVG meter (no style attribute); /ui keeps view::meter over I3440's denominator. A BLOCKED milestone's bar, on the site and in /ui, carries the blocked tone and the caption 'held by its dependencies' with a link to the first unaccepted one; a milestone with no required issue draws no bar and reads 'no issue of its own'. The withdrawn sentences are gone from roadmap.html and roadmap.md, and their Czech segments are dropped from the translation memory rather than left to resurface."
+scope:
+  - "site/templates/roadmap.html"
+  - "site/templates/milestone.html"
+  - "site/content/roadmap.md"
+  - "site/i18n/cs/memory"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "test/cases/3746_every_plan_surface_draws_progress_bars.sh"
+non_scope:
+  - "The public /roadmap/ itself, whose bars and dates I3751 delivers"
+  - "The denominator itself on /ui (required instead of total): I3440"
+  - "Bars for intents, issues or pull requests, which keep the meters they have"
+  - "Any percentage in the landing page's marketing copy, which homepage-check keeps refusing"
+  - "The dependency and claim prose of the same paragraph: I3751, which this issue follows"
+acceptance_criteria:
+  - "On a fixture plan, every milestone card on the built /roadmap/ and /cs/roadmap/ and every /plan/<milestone>/ page with required issues carries one meter whose fill equals done out of required and whose text reads 'N of M' with the same two numbers as roadmap.json"
+  - "A fixture BLOCKED milestone with every issue done draws a full bar in the blocked tone and names the dependency that holds it, on /roadmap/, on its /plan/ page and in /ui"
+  - "Neither the built /roadmap/ nor site/content/roadmap.md contains 'would be a lie' or 'no progress bar', in English or in Czech"
+  - "Negative: a fixture milestone with no required issue draws no meter on any surface, and a fixture card whose meter fill disagrees with its 'N of M' text is refused by the new case, naming the milestone"
+validation:
+  - "bash test/run.sh 3746_every_plan_surface_draws_progress_bars 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test dashboard"
+  - "scripts/site-build && scripts/site-check"
+  - "scripts/ui audit --only /ui/roadmap"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test_every_plan_surface_draws_progress_bars"
+depends_on:
+  - "I3751"
+  - "I3440"

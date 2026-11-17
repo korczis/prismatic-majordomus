@@ -18,8 +18,8 @@
 #      leaves unpublished, and one naming a source git does not track, are refused;
 #   6. site-check runs the check, and site-build ships the script it checks for.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
-command -v node >/dev/null || skip "node absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
+mj_runs node || skip "$(mj_runs_why node)"
 command -v jq >/dev/null || skip "jq absent"
 CHECK="$ROOT/scripts/lib/search-check.mjs"
 [ -x "$CHECK" ] || { echo "    $CHECK is missing or not executable"; exit 1; }
@@ -33,6 +33,8 @@ trap 'rm -rf "$S"' EXIT
 mkdir -p "$S/site"
 cp -R "$ROOT/site/content" "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" \
   "$ROOT/site/data" "$ROOT/site/config.toml" "$S/site/"
+# the layout reads the languages the site declares (site/i18n/languages.json, ADR 0218)
+mkdir -p "$S/site/i18n" && cp "$ROOT/site/i18n/languages.json" "$S/site/i18n/"
 # the stylesheets are Tailwind build products, ignored by git; the pages only link them
 [ -f "$S/site/static/app.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$S/site/static/app.css"
 [ -f "$S/site/static/kit.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$S/site/static/kit.css"

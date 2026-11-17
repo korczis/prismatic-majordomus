@@ -1,0 +1,36 @@
+id: I3022
+milestone: truthful-plan-surfaces
+title: "An empty knowledge queue is one sentence that says how a record arrives, not two empty tables"
+slug: an-empty-knowledge-queue-is-one-sentence
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When knowledge_base.candidates answers a total of zero and no candidate, /ui/knowledge draws one Awaiting review panel holding one sentence: nothing awaits review, and a record arrives when a session closes and the deriver writes it, or when majordomus knowledge observe records what was noticed."
+why: "The published /ui/knowledge (majordomus.dev, v0.29.0) drew two wide panels, By subject and Awaiting review, each an empty table with its own empty line; together they said the same thing twice and neither said how the queue fills."
+current_state: "screen() always draws By subject and Awaiting review; an empty queue renders two empty tables."
+desired_state: "An answered, empty queue renders a single panel with one sentence and its source; a queue that holds records or did not answer keeps both panels; a crate test pins it."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+acceptance_criteria:
+  - "An empty queue renders one panel, no table and no By subject panel"
+  - "The sentence names majordomus knowledge observe as code and still cites knowledge_base.candidates"
+  - "A queue holding a record, and an unanswered queue, keep both panels"
+validation:
+  - "cargo test --lib ui::knowledge"
+  - "scripts/ui audit --only /ui/knowledge"
+evidence_required:
+  - "empty_knowledge_queue_is_one_sentence"
+created_at: 2026-10-18
+updated_at: 2026-10-20T16:26:20Z
+started_at: 2026-10-20T16:14:59Z
+started_event: sha256:08ab03f0a7f9ec3c082e3c82c3bf4ad9edcd41782508da8c51c95d5740d3536b
+completed_at: 2026-10-20T16:26:20Z
+completed_event: sha256:03ab54ec5e4a3d2ca2ae7d123d5746b62929afbf258c02ec211cfb99b264fb96
+evidence:
+  - covers: empty_knowledge_queue_is_one_sentence
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::knowledge::an_empty_queue_is_one_sentence_not_two_empty_tables (82060296732)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:21:19Z

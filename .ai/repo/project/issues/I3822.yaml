@@ -1,0 +1,44 @@
+id: I3822
+milestone: fly-deployment
+title: "A deployment that names a provider is observed at its own URL, and is active only while it serves master"
+slug: a-provider-deployment-is-observed-at-its-url
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "served.observe defaults its url to the deployment object's provider.url and its identity to the object's health.liveness route when --deployment names an object with a provider; the publishing workflow observes after every push; the object's status moves from declared to active only on an observation that judged it serving master, and a stale or unreachable observation is a finding. ADR 0219 decision 5."
+why: "Today served.observe defaults to the Pages site and build.json; nothing ties an observation to the deployment object, so the hosted application's currency cannot be judged and its status is a hand-set word."
+current_state: "served.observe takes --url or falls back to site/config.toml's base_url with identity build.json; /api/v1/live already answers commit and dirty; the object's status is declared."
+desired_state: "majordomus served observe --deployment majordomus reads provider.url and health.liveness, judges the answer against master by containment and records it; case 3822 serves a fixture liveness answer and proves served, stale and unreachable verdicts; the status is set to active by a recorded observation, not by hand."
+scope:
+  - "apps/majordomus-cli/src/served.rs"
+  - "apps/majordomus-cli/src/capability/builtin/served.rs"
+  - ".ai/repo/deployments"
+  - "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh"
+  - ".ai/repo/project/issues/I3822.yaml"
+acceptance_criteria:
+  - "An object with a provider is observed at its url and liveness route without --url"
+  - "A deployment answering master is served, one answering an older commit is stale, one not answering is unreachable"
+  - "The status is active only while the newest observation is served"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3822_a_provider_deployment_is_observed_at_its_url"
+evidence_required:
+  - "observed_at_provider_url"
+depends_on:
+  - "I3821"
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-29T18:05:15Z
+started_at: 2026-10-29T18:03:29Z
+started_event: sha256:aec57f527c4a3c153cf6390e0c90e8ddd3f4cf561a7f0d5b4a46b0f37c4d055b
+verified_at: 2026-10-29T18:04:03Z
+verified_event: sha256:f8e78d5a487b75c9555f54972831f62da6cf6435b386ec731fb0ef615719ddb1
+completed_at: 2026-10-29T18:05:15Z
+completed_event: sha256:fe88b7f8aa3e68877698625ab872b2e7937d4b992552cc3b57ec3aa5e06888a0
+evidence:
+  - covers: observed_at_provider_url
+    type: ci
+    command: "bash test/run.sh 3822_a_provider_deployment_is_observed_at_its_url (validate suite-shard (2))"
+    result: "ok in master validate 40796031054 at 5370ee63d19, suite-shard (2) job 123213269262: case 3822 ok; served observe --deployment judges a fixture liveness answer serving B as served (0) with served show deriving status active, A as stale (10) with status declared, back to served and active, dirty null as malformed (12) and nothing as unreachable (12), each with status declared (C2, C3), and with no --url the probe goes to the object's provider url and health.liveness route and changes no tracked file (C1). Landed through #2368 (7cfc66626ff). src/served.rs, capability/builtin/served.rs and the case are unchanged from 7cfc66626ff to master 51b38035a71. The run is red only on rust (3) intent-check and interaction-probe-shard (5), neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40796031054/job/123213269262"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-29T18:04:48Z

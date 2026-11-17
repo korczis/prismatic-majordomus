@@ -1,0 +1,80 @@
+id: I4468
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "Every exemption is written in one grammar (scope, rule, reason, approver, an expiry or a removal condition, shrink-only) that generate inlines into each existing shape, and the README describes declared exemptions instead of denying them"
+slug: every-exemption-names-its-approver-and-its-end
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare the grammar of an exemption once, under share/schemas/majordomus/exemption/, with six fields: scope (the paths, units, ids or lines it covers), rule (the exact rule id@version it exempts from), reason, approver (who accepted it), expires_at or removal (a date, or the condition whose truth removes it; one of the two is required), and shrink_only (whether the covered set may only shrink without a new approval). `majordomus generate` inlines that grammar into each of the eleven existing exemption shapes, in the form each shape already has (a schema's properties, a JSONL object's keys, a baseline file's header, a marker's arguments), and `generate --check` refuses a shape that drifted from it. Each shape's existing reader then refuses an entry that lacks a required field, reports an entry past its expires_at, and refuses growth of a shrink_only set that carries no new approval. No new store: every exemption stays where it is written today. A ratchet baseline file is one exemption, declared in its header; its lines are its scope. The eleven shapes, at master 51b38035a71: (1) intent-binding exemption classes, .ai/repo/policy.yaml:39-53, given as `start --exempt <class> --because` and recorded as bound_exemption (lib/handover.sh:67); (2) release version-floor exemptions by path, .ai/repo/policy.yaml:61-70; (3) a directory contract's `children.exempt` (.ai/repo/rules/README.md:14-17 and :35-38); (4) a reviewed rule's `x-majordomus.reviewed_because` (share/schemas/majordomus/rule/rule.v1.proto:92, share/allow/rule.txt:21); (5) the 157 shell-unit exemptions of .ai/repo/automation/inventory.jsonl, each with a why and a removal; (6) a capability's benchmark WaiverReason (apps/majordomus-cli/src/capability/model.rs:181-207); (7) the ratchet baselines, the 16 .ai/repo/*-baseline.txt files plus .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/ci/gate-list-baseline.txt, .ai/repo/ci/github-drift-baseline.txt and .ai/repo/evidence/published-not-run.txt; (8) english-only's name, fixture and translation declarations, scripts/ci/english-only-allow.txt with its grammar at scripts/ci/english-only-check:30-36; (9) an unrun documented command's `<!-- majordomus:unrun <reason> -->` marker (scripts/ci/doc-command-check:32-35); (10) the version-label history, .ai/repo/version-label-history.txt (apps/majordomus-cli/src/release/version.rs:86); (11) the design check's path exemptions, written as reasons inside scripts/ci/design-check:36-57. Then README.md:211-213 says what master does: a doctrine is blocking or advisory, and what does not yet meet a rule is a declared exemption under that grammar, named, approved, bounded and shrink-only, rather than 'no baseline, and no override'."
+why: "Found by the P00 audit on master 51b38035a71 (H6, matrix row Exceptions): at least eleven ad hoc exemption shapes exist, none records an approver or an expiry, shrink-only is a per-gate header convention across about twenty baseline files, inventory.jsonl holds 157 shell exemptions and rust-quality-baseline.txt about 1850 lines, while README.md:211-213 says there is 'no baseline, and no override'. A reader cannot ask who accepted a debt, until when, or whether it may grow, and adopters invent shapes of their own (OSCILLA tags exemptions in ADRs). The owner decided question Q-H6 on 2026-10-30: option B, one grammar inlined by `majordomus generate` into each existing shape, no new store; and the README is reworded to describe declared, shrink-only exemptions under that grammar."
+current_state: "At master 51b38035a71 each of the eleven shapes has its own fields and its own reader: the policy classes carry an id and a description, release.exempt an id, a description and paths, inventory.jsonl a why and a removal, the baselines a prose header and lines, english-only-allow.txt and version-label-history.txt a reason per line, the unrun marker a reason, WaiverReason a typed reason, reviewed_because a sentence, children.exempt a path list, and design-check a comment. `git grep -i -E 'approver|expires_at' -- share/schemas` finds nothing. README.md:211-213 reads 'There is no third class, no severity ladder, no baseline, and no override.' I3116 plans a derived table of the ratchet baselines only, and I3117 had planned to qualify the same README sentence as the doctrine dispatch of lib/doctrine.sh and lib/check.sh."
+desired_state: "Every exemption the repository holds answers the same six questions in the same words, wherever it is written, and the README describes those declared exemptions instead of denying they exist. Enforced by case 4468."
+scope:
+  - ".ai/repo/project/issues/I4468.yaml"
+  - "share/schemas/majordomus/exemption"
+  - "share/schemas/majordomus/rule"
+  - "share/schemas/majordomus/context"
+  - "share/schemas/majordomus/policy"
+  - "share/allow"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "apps/majordomus-cli/src/automation"
+  - "apps/majordomus-cli/src/release/version.rs"
+  - "apps/majordomus-cli/src/rules"
+  - "lib"
+  - "scripts/ci"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/rules/README.md"
+  - ".ai/repo/automation/inventory.jsonl"
+  - ".ai/repo/version-label-history.txt"
+  - ".ai/repo/ci"
+  - ".ai/repo/evidence/published-not-run.txt"
+  - ".ai/repo/claim-proof-baseline.txt"
+  - ".ai/repo/commit-policy-baseline.txt"
+  - ".ai/repo/development-semantics-baseline.txt"
+  - ".ai/repo/diagram-baseline.txt"
+  - ".ai/repo/doc-command-baseline.txt"
+  - ".ai/repo/evidence-baseline.txt"
+  - ".ai/repo/lease-reader-baseline.txt"
+  - ".ai/repo/liveness-baseline.txt"
+  - ".ai/repo/mcp-tool-run-baseline.txt"
+  - ".ai/repo/order-baseline.txt"
+  - ".ai/repo/pipefail-baseline.txt"
+  - ".ai/repo/release-record-baseline.txt"
+  - ".ai/repo/rule-proof-baseline.txt"
+  - ".ai/repo/rust-quality-baseline.txt"
+  - ".ai/repo/source-pin-baseline.txt"
+  - ".ai/repo/ui-integrity-baseline.txt"
+  - "README.md"
+  - "docs/DOCTRINE.md"
+  - "docs/CLAIMS.yaml"
+  - "test/cases/4468_every_exemption_names_its_approver_and_its_end.sh"
+non_scope:
+  - "One exemption store or index the shapes are moved into: option C, decided against by the owner on 2026-10-30 (P00 question Q-H6)"
+  - "Paying down any exemption or baseline"
+  - "The derived table of the ratchet baselines with their trend: I3116, which reads these fields once they exist"
+  - "The model-invocation and expedited-landing sentences of README.md and docs/LAUNCH.md: I3117"
+  - "Rust lint `allow` attributes and shellcheck directives inside source files, which the rust-quality and shell baselines already cover as scope"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "The grammar is declared once under share/schemas/majordomus/exemption/ with the fields scope, rule, reason, approver, expires_at, removal and shrink_only, where scope, rule, reason and approver are required and one of expires_at or removal is required; no other file spells the field list by hand"
+  - "`majordomus generate` writes the grammar into each of the eleven shapes named in the objective, and `majordomus generate --check` fails when any one of them is edited away from it"
+  - "Every existing exemption of the eleven shapes is migrated in this change: the approver of an entry that has none is the owner, by the decision of 2026-10-30, and its removal is the condition its current reason or header states; no entry is dropped"
+  - "Case 4468: in a fixture, an exemption entry of each kind of shape (a policy class, an inventory.jsonl unit, a baseline header, a reason-per-line list) without an approver is refused by that shape's reader with the missing field named and the rule id, at the reader's existing exit code"
+  - "Case 4468: an entry whose expires_at is past is reported naming the entry, the rule and the date, and an entry with neither expires_at nor removal is refused"
+  - "Case 4468: adding a line to a shrink_only baseline without a new approval is refused, and removing one passes"
+  - "README.md:211-213 no longer says 'no baseline, and no override': it says a doctrine is blocking or advisory and that what does not yet meet a rule is a declared, shrink-only exemption naming its rule, reason, approver and expiry or removal condition; docs/CLAIMS.yaml binds that sentence to case 4468"
+  - "Before the change, case 4468 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4468_every_exemption_names_its_approver_and_its_end"
+  - "bin/majordomus-cli generate --check"
+  - "scripts/ci/claim-proof-check"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "exemption_grammar_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30

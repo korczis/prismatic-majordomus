@@ -204,6 +204,12 @@ pub enum WaiverReason {
     /// consulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,
     /// it simply does not exist yet where the benchmark runs.
     PublishedHistory,
+    /// The capability answers from a declaration this repository keeps about its own records
+    /// (the delivery board's lanes over this repository's milestones, share/board.yaml), and
+    /// refuses a record the declaration does not place. A benchmark fixture's records are in
+    /// no such declaration, so its honest answer there is a refusal, and timing it would time
+    /// an error path. The answer is proved over this repository by the capability's own tests.
+    RepositoryDeclaration,
 }
 
 /// What a repository must hold before a conditional benchmark requirement applies to it.
@@ -595,6 +601,15 @@ pub struct ExecutionPolicy {
     /// on another host; see [`ExecutionPolicy::admits_remote`].
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub signed_input: bool,
+    /// Whether only a caller on this machine may read it.
+    ///
+    /// A read that shows the mesh — its sessions, claims, handovers, nodes and journal — is
+    /// not the repository's to publish: a server reachable from another host would hand every
+    /// trusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read
+    /// answers a loopback caller only; a node reads the mesh through its own server, which the
+    /// journal already brings up to date. See [`ExecutionPolicy::admits_remote`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub local_only: bool,
 }
 
 impl ExecutionPolicy {
@@ -619,6 +634,7 @@ impl ExecutionPolicy {
                 cancellable: false,
                 concurrency: Concurrency::Unrestricted,
                 signed_input: false,
+                local_only: false,
             },
             // it changes this process's memory, so two of them are made to take turns
             CapabilityKind::Command => ExecutionPolicy {
@@ -626,6 +642,7 @@ impl ExecutionPolicy {
                 cancellable: false,
                 concurrency: Concurrency::Serial,
                 signed_input: false,
+                local_only: false,
             },
         }
     }
@@ -690,6 +707,24 @@ impl ExecutionPolicy {
         }
     }
 
+    /// The same policy, for a read only a caller on this machine may make.
+    ///
+    /// The fourth documented addition, and a narrowing: a query or resource whose answer is
+    /// the mesh's working state rather than the repository's (ADR 0220 decision 4).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Query).reads_only_locally();
+    /// assert!(p.local_only && !p.admits_remote());
+    /// assert_eq!(p.effect, Effect::Read);
+    /// ```
+    pub fn reads_only_locally(self) -> Self {
+        ExecutionPolicy {
+            local_only: true,
+            ..self
+        }
+    }
+
     /// May a caller on another host run this?
     ///
     /// A request that arrives from an address that is not loopback has proved nothing about
@@ -704,9 +739,10 @@ impl ExecutionPolicy {
     /// assert!(ExecutionPolicy::classify(CapabilityKind::Query).admits_remote());
     /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).admits_remote());
     /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Query).reads_only_locally().admits_remote());
     /// ```
     pub fn admits_remote(self) -> bool {
-        matches!(self.effect, Effect::Read) || self.signed_input
+        !self.local_only && (matches!(self.effect, Effect::Read) || self.signed_input)
     }
 
     /// Should a client ask before running this? True for anything that changes something.
@@ -1018,12 +1054,12 @@ pub struct CliExposure {
 ///
 /// ```
 /// use majordomus_cli::capability::SkillExposure;
-/// let s = SkillExposure { alias: "intent".into(), argument: "statement".into() };
+/// let s = SkillExposure { alias: "intent".into(), argument: "statement".into(), follow: None };
 /// assert!(s.validate().is_ok());
 /// // a name an agent product already owns is refused, and so is one that is not a name
-/// let taken = SkillExposure { alias: "review".into(), argument: "x".into() };
+/// let taken = SkillExposure { alias: "review".into(), argument: "x".into(), follow: None };
 /// assert!(taken.validate().unwrap_err().contains("reserved"));
-/// let shouted = SkillExposure { alias: "Intent".into(), argument: "x".into() };
+/// let shouted = SkillExposure { alias: "Intent".into(), argument: "x".into(), follow: None };
 /// assert!(shouted.validate().is_err());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -1032,6 +1068,12 @@ pub struct SkillExposure {
     pub alias: String,
     /// The input field the text typed after the name fills, verbatim.
     pub argument: String,
+    /// What the agent does with the answer, when that is more than reporting it: a
+    /// capability that answers a work order says here that the order is carried out. One
+    /// sentence of the declaration's own, written into every projected skill; absent, the
+    /// skill only reports the answer.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
 }
 
 /// Names a skill may not take: commands and bundled skills of the agent products that read
@@ -1084,6 +1126,7 @@ impl SkillExposure {
     /// let skill = |alias: &str, argument: &str| SkillExposure {
     ///     alias: alias.into(),
     ///     argument: argument.into(),
+    ///     follow: None,
     /// };
     /// assert!(skill("propose-intent", "statement").validate().is_ok());
     /// assert!(skill("-intent", "statement").validate().is_err());
@@ -1092,6 +1135,11 @@ impl SkillExposure {
     /// for reserved in RESERVED_SKILL_NAMES {
     ///     assert!(skill(reserved, "x").validate().unwrap_err().contains("reserved"));
     /// }
+    /// // what the agent does with the answer is a sentence, or nothing at all
+    /// let blank = SkillExposure { follow: Some(" ".into()), ..skill("step", "x") };
+    /// assert!(blank.validate().unwrap_err().contains("follow"));
+    /// let said = SkillExposure { follow: Some("Carry it out.".into()), ..skill("step", "x") };
+    /// assert!(said.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), String> {
         let a = self.alias.as_str();
@@ -1114,6 +1162,9 @@ impl SkillExposure {
         }
         if self.argument.is_empty() {
             return Err("names no input field for the typed text".into());
+        }
+        if self.follow.as_deref().is_some_and(|f| f.trim().is_empty()) {
+            return Err("declares a follow that says nothing; leave it out instead".into());
         }
         Ok(())
     }
@@ -1300,6 +1351,21 @@ impl crate::order::Ordered for Capability {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_skill_follows_with_a_sentence_or_not_at_all() {
+        let skill = |follow: Option<&str>| SkillExposure {
+            alias: "step".into(),
+            argument: "x".into(),
+            follow: follow.map(str::to_string),
+        };
+        assert!(skill(None).validate().is_ok());
+        assert!(skill(Some("Carry it out.")).validate().is_ok());
+        assert!(skill(Some("  "))
+            .validate()
+            .unwrap_err()
+            .contains("a follow that says nothing"));
+    }
 
     #[test]
     fn id_grammar() {

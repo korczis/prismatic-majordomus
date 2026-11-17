@@ -4,7 +4,7 @@ description = "A branch's derive run on another machine the repository declares 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 98
+weight = 100
 [extra]
 route = "/docs/cli/offload/"
 command = "majordomus offload"

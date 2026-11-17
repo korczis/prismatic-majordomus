@@ -42,9 +42,14 @@ use crate::order::{canonical, is_canonical, OrderKey, Ordered};
 pub(crate) const INVENTORY: &str = ".ai/repo/automation/inventory.jsonl";
 
 /// The directories whose shell units must be declared, each with its trailing separator.
+///
+/// `apps/majordomus-cli/assets/` holds the payloads the executable compiles in and installs
+/// on a host; they live in the package because the image's builder stage compiles the
+/// package alone, and they stay governed there.
 pub(crate) const GOVERNED: &[&str] = &[
     ".claude/hooks/",
     ".githooks/",
+    "apps/majordomus-cli/assets/",
     "bin/",
     "lib/",
     "scripts/",

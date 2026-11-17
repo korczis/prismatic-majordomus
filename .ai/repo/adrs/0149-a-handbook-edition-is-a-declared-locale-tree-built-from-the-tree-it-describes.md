@@ -15,7 +15,7 @@ related:
   - rule:project.the-handbook-is-built-from-the-tree
   - file:.ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md
   - file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md
-  - file:.ai/repo/rules/project/english-only.v3.md
+  - file:.ai/repo/rules/project/english-only.v4.md
   - file:.ai/repo/rules/project/the-handbook-is-built-from-the-tree.v1.md
   - file:scripts/ci/english-only-check
   - file:scripts/ci/english-only-allow.txt

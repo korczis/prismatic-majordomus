@@ -1,0 +1,32 @@
+id: I4362
+milestone: merging-and-referencing-are-enforced
+title: "adr next and case-numbers next answer within a declared bound in a linked worktree"
+slug: the-number-allocators-answer-within-a-bound
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus adr next` (lib/adr.sh) and `scripts/case-numbers next` declare the bound of their survey and keep it in a linked worktree of a repository with hundreds of refs and worktrees: past the bound each answers with what it surveyed, names every source it did not finish (the refs, the sibling worktrees, the board) and exits non-zero, rather than waiting without an end. The first step measures where the time goes in a linked worktree and records it in this issue before the code changes."
+why: "On 2026-10-28 `majordomus adr next` ran for more than five minutes in a linked worktree and was stopped, and `scripts/case-numbers next` ran past 120 s in another; a number allocator that never answers is worked around by taking a number by hand, which is how numbers collided that day (curated s-20261028215857-d010-3206646bca1a). Rule project.every-wait-is-bounded holds every wait to a declared bound; these two have none."
+current_state: "Verified at ab447585c29 by reading lib/adr.sh and scripts/case-numbers: each surveys this tree, every sibling worktree, every ref and the peer board, with no time bound and no partial answer."
+desired_state: "Both allocators answer within their declared bound in a linked worktree, and a case measures it over a fixture with many refs and worktrees."
+scope:
+  - "lib/adr.sh"
+  - "scripts/case-numbers"
+  - "test/cases/271_adr_allocation.sh"
+  - ".ai/repo/project/issues/I4362.yaml"
+non_scope:
+  - "The single survey of every number kind and the typed board claim, owned by I3974"
+acceptance_criteria:
+  - "In a linked worktree of a fixture repository with 300 refs and 20 worktrees, `adr next` and `case-numbers next` each answer within their declared bound (a case times them)"
+  - "A survey stopped at its bound exits non-zero and names each source it did not finish"
+  - "The measured cause of the 2026-10-28 waits is recorded in this issue"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 271_adr_allocation"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+depends_on: []
+serves:
+  - "merging-and-referencing-are-enforced#one-allocator"
+created_at: 2026-10-29
+updated_at: 2026-10-29

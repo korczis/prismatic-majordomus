@@ -240,6 +240,17 @@ fn live_work_that_serves_no_intent_is_named_with_the_missing_link() {
     let (code, v) = cli_json(&f, &["intent", "realization"]);
     assert_eq!(code, 0, "an orphan is a warning, not a refusal");
     assert_eq!(v["orphans"], 1);
+    // a live unit is never excused (ADR 0075, amendment of 2026-10-15)
+    assert_eq!(v["empty"], 0);
+    assert_eq!(v["before_intents"], 0);
+    assert_eq!(v["work"][0]["class"], "orphan");
+    let (code, out, err) = run_in(&f.root(), &["intent", "realization"], "");
+    assert_eq!(code, 0, "{err}");
+    assert!(out.contains("unlinked (orphan): "), "{out}");
+    assert!(
+        out.contains("1 serving no intent (0 empty records, 0 before the first intent)"),
+        "{out}"
+    );
     let finding = &v["findings"][0];
     assert_eq!(finding["code"], "work_serves_no_intent");
     assert_eq!(finding["subject"], "t-1");

@@ -7,7 +7,7 @@
 #
 #   - six `prs drain` processes released by one file, alternating between the primary
 #     checkout and a linked worktree, against one ready pull request
-#   - exactly one says it merged, the forge was asked once, master gained one merge commit
+#   - exactly one says it merged, the forge was asked once, master is the head (I3910)
 #   - every other one was refused by the lease (exit 12) or found nothing to merge (exit 0)
 #   - the trail each checkout reads is the same trail: one merge_succeeded, and as many
 #     leases given back as taken
@@ -49,6 +49,14 @@ case "\$1 \$2" in
       git fetch -q origin "refs/pull/\$3/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$3" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$3" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-\$n" ;;
   "pr view") if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
   # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
   # this repository, and no pull request mentions it. The list is this forge's own, unlogged
@@ -89,8 +97,8 @@ for p in $PIDS; do
 done
 PIDS=""
 [ "$merged" = 1 ] || { echo "    $merged executors say they merged #1, not 1"; tail -n 3 "$STATE"/out.*; exit 1; }
-[ "$(grep -c '^pr merge 1 ' "$STATE/log")" = 1 ] || { echo "    the forge was asked to merge #1 $(grep -c '^pr merge 1 ' "$STATE/log") times"; exit 1; }
-[ "$(git -C "$ORIGIN" rev-list --count --merges master)" = 1 ] || { echo "    master does not carry exactly one merge commit"; exit 1; }
+[ "$(grep -c '^pr merge\|^api -X' "$STATE/log")" = 1 ] || { echo "    the forge was asked to land #1 $(grep -c '^pr merge\|^api -X' "$STATE/log") times"; exit 1; }
+[ "$(git -C "$ORIGIN" rev-parse master)" = "$(git -C "$ORIGIN" rev-parse refs/pull/1/head)" ] || { echo "    master is not #1's head"; exit 1; }
 [ "$refused" -gt 0 ] || { echo "    no executor was refused: the processes never overlapped, so nothing raced"; exit 1; }
 [ ! -e "$LOCK" ] || { echo "    the lease was left behind: $(cat "$LOCK")"; exit 1; }
 

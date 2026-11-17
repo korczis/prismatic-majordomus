@@ -1,0 +1,52 @@
+id: I2780
+milestone: idd-workspace
+title: "The UI has an intent workspace: an intent, its milestones, issues, waves and graph on one screen"
+slug: the-ui-is-an-idd-workspace
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add /ui/idd to the UI's screens: the intents as a choice with stage and verdict, the chosen one's criteria, its milestones in the roadmap's order with status, its issues with status, wave, priority and what blocks them, the waves those issues occupy, and the dependency graph between them with a table beneath it, every entity a link to its existing inspector and every ready issue a link to the move that starts it."
+why: "On 2026-10-16 the owner asked to direct the work from the UI rather than from pasted prompts. Every answer the workspace needs is already a capability; what is missing is the one screen that starts from what the work is for."
+serves:
+  - the-owner-directs-work-from-the-ui#workspace-is-derived
+current_state: "No /ui/idd; the plan is read on four screens, the waves on none."
+desired_state: "/ui/idd answers with a hero, the intent choice, the criteria, milestones, issues, waves and graph panels, each naming its sources, and refuses an unknown intent by name."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests/ui_idd.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project"
+depends_on: []
+acceptance_criteria:
+  - "The intent the query names, or the first executing then planned one in intents.list's order, is shown, and the rule is printed"
+  - "Milestones, issues and waves come from plan.roadmap, plan.issues and plan.waves and no list of the screen's own"
+  - "An issue added to the plan appears with no other edit"
+  - "An intent that is not recorded is refused by name, and a capability that cannot answer says so in its panel"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+  - "cargo test --lib ui::"
+  - "cargo test --test ui_idd"
+evidence_required:
+  - "ui_idd_tests"
+created_at: 2026-10-16
+updated_at: 2026-10-17T21:36:20Z
+started_at: 2026-10-16T21:12:37Z
+started_event: sha256:da83452b38cd139d71c5d90d7e5ca56c062dbad34446d39aa840959e43583cfc
+verified_at: 2026-10-16T21:13:23Z
+verified_event: sha256:d901ca8456495a20970dff1cc4b909f5ef4175721d4232ea73c6d96a0f21db7e
+completed_at: 2026-10-17T21:36:20Z
+completed_event: sha256:1d1f6aa41f3b6aaa23b9234f6d9e4cce043c7f29985aa03c36a883e7733a2358
+evidence:
+  - covers: ui_idd_tests
+    type: test
+    command: "cargo test --test ui_idd"
+    result: "pass"
+    commit: d1162668036170d42b6c9038d82dfa67064ba561
+    recorded_at: 2026-10-16T21:13:18Z
+  - covers: ui_idd_tests
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd"
+    result: "4 passed, 0 failed on master 707a04c7ce8 (2026-10-17)"
+    commit: 707a04c7ce83ff9f2effd80e0c6dfc1829e49322
+    recorded_at: 2026-10-17T21:34:50Z

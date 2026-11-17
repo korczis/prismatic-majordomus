@@ -1,0 +1,10 @@
+[Unit]
+Description=Run disk-guard every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=5min
+AccuracySec=20s
+
+[Install]
+WantedBy=timers.target

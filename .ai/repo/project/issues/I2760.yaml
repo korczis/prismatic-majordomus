@@ -1,0 +1,44 @@
+id: I2760
+milestone: development-runtime
+title: "A scope entry is one path, and a path context would refuse is refused at start"
+slug: a-scope-entry-is-one-path
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Refuse at `start` every scope entry that the task record cannot hold as one path or that `context` would refuse, and stop a recorded entry that `context` cannot resolve from breaking `context` and every commit hook."
+why: "On 2026-10-15 a task in the worktree of #1170 was started with a pasted prompt as its scope. `start` normalised the comma-separated entry as one path, because it held no `..` and did not start with `/`, then joined the normalised paths with spaces. The record wrote each word as a scope path, about 270 of them, and three of them were a lone `/`. From then on `majordomus context` died with `refused-path '/'` at the first of them, and the pre-commit hook, which runs `context`, refused every commit in that worktree. On 2026-10-16 the repair lane found it only by reading the record, and had to close the task to commit."
+current_state: "`start` refuses an entry that is empty, absolute or escapes the repository, but accepts one holding whitespace and then splits it into words. `context` calls mj_ctxd_target for each recorded scope path, and mj_ctxd_target exits the process on a path it refuses."
+desired_state: "`start` refuses, before writing anything, an entry holding whitespace and any entry `context` would refuse (absolute, escaping, or resolving outside the repository through a link), naming the entry and the remedy. mj_ctxd_refusal answers why a path is refused without exiting; mj_ctxd_target dies on that answer exactly as before; `context` prints a recorded entry it refuses as refused and goes on with the rest, so an old or hand-edited record degrades one line rather than the whole briefing."
+scope:
+  - "lib/start.sh"
+  - "lib/context.sh"
+  - "lib/context_docs.sh"
+  - "test/cases/3160_a_scope_entry_is_one_path.sh"
+  - ".ai/repo/project/issues/I2760.yaml"
+depends_on: []
+acceptance_criteria:
+  - "majordomus start refuses a scope entry holding whitespace with exit 2, writes no task record, and names the entry"
+  - "majordomus start refuses a scope entry that resolves outside the repository through a symbolic link"
+  - "majordomus context, over a recorded scope that names `/`, prints that entry as refused, still prints the other scope paths' documents, and exits 0"
+  - "majordomus context resolve <outside path> still refuses with the same message and exit code"
+  - "case 3160 fails against master without the change"
+validation:
+  - "bash test/run.sh 3160_a_scope_entry_is_one_path 04_start_check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "scope_entry_case"
+created_at: 2026-10-16
+updated_at: 2026-10-17T18:25:46Z
+started_at: 2026-10-17T18:25:28Z
+started_event: sha256:ca9d0e43859faddedae36d1aa643b2a22379b151338e8f9b4540840c753cebef
+verified_at: 2026-10-17T18:25:39Z
+verified_event: sha256:0566b8b2dc5b23cd90c8d26e5f8c289b91303aa3841c069897a8d536c0109ec0
+completed_at: 2026-10-17T18:25:46Z
+completed_event: sha256:336b74d955850ffdfa6e627e7117f7062ed30869878503ab7da9d2fc51135e80
+evidence:
+  - covers: scope_entry_case
+    type: test
+    command: "bash test/run.sh --no-skips 3160_a_scope_entry_is_one_path 04_start_check"
+    result: "3160 and 04 ok, 0 skipped (code since 71474ebacc3, an ancestor of 4a4573690f8; re-run at 4a4573690f8)"
+    commit: 4a4573690f861473fad383b4ecfd6f868065c13a
+    recorded_at: 2026-10-17T18:25:36Z

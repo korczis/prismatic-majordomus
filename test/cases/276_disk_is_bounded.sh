@@ -27,6 +27,13 @@
 #
 # and that the bound on the other side refuses to start a build below the floor, while a
 # bound that cannot measure its own input lets the build run rather than stopping all work.
+#
+# On 2026-10-10 the same machine and a second one reached 99% with 270GB and 48GB of build
+# output the reaper would not touch: every branch was pushed and waiting to land, so none was
+# an ancestor of origin/master, and nothing ran the reaper anyway. So two more things are held:
+# a pushed, clean, unattended worktree's build output is reclaimed like a merged one's (an
+# unpushed one is still kept), and a build that starts below the reclaim mark runs the sweep
+# itself before the floor decides.
 . "$ROOT/test/lib.sh"
 
 REAPER="$ROOT/scripts/reap-orphans"
@@ -70,13 +77,19 @@ mkbuild() {
 
 addwt() { git -C "$FIX" worktree add -q -b "$1" "$WTS/$1" >/dev/null 2>&1 || return 1; mkbuild "$WTS/$1"; }
 
-for w in idle dirty live-by-command live-by-cwd ahead symlinked unmarked; do
+for w in idle dirty live-by-command live-by-cwd ahead pushed symlinked unmarked; do
   addwt "$w" || { echo "    could not add the $w worktree"; exit 2; }
 done
 
 # ahead: a commit origin/master does not have
 (
   cd "$WTS/ahead" && echo more > more.txt && git add more.txt && git commit -qm ahead
+) >/dev/null
+
+# pushed: a commit origin/master does not have, which IS on a remote — a branch waiting to land
+(
+  cd "$WTS/pushed" && echo queued > queued.txt && git add queued.txt && git commit -qm pushed \
+    && git update-ref refs/remotes/origin/pushed HEAD
 ) >/dev/null
 
 # dirty: authored work that was never committed. Merged-ness says nothing about it.
@@ -111,7 +124,9 @@ expect_grep 'idle.*would reclaim'
 expect_grep 'dirty.*keep — 1 uncommitted or untracked'
 expect_grep 'live-by-command.*keep — merged, but somebody is working in it'
 expect_grep 'live-by-cwd.*keep — merged, but somebody is working in it'
-expect_grep 'ahead.*keep — .* is not an ancestor of origin/master'
+expect_grep 'ahead.*keep — .* is neither on origin/master nor on any remote'
+expect_grep 'pushed.*would reclaim — published on origin/pushed, nobody in it'
+expect_grep 'idle.*would reclaim — merged, nobody in it'
 expect_grep 'symlinked.*keep — that build directory is not this worktree'
 expect_grep 'unmarked.*skip — carries no mark of cargo'
 # the measurement that decided each verdict is printed beside it, including for the ones
@@ -161,7 +176,8 @@ MJ_ROOT="$FIX" "$REAPER" --targets --reclaim > "$T/reclaim.txt" 2>&1 || rc=$?
 LAST_OUT="$(cat "$T/reclaim.txt")"
 [ "$rc" = 0 ] || { echo "    the sweep exited $rc, not 0:"; sed 's/^/      /' "$T/reclaim.txt"; exit 1; }
 expect_grep 'idle.*reclaimed'
-expect_grep 'reclaimed 1'
+expect_grep 'pushed.*reclaimed'
+expect_grep 'reclaimed 2'
 
 [ -e "$WTS/idle/apps/majordomus-cli/target" ] && { echo "    the idle worktree's build output survived"; exit 1; }
 # it removed build output and nothing else: the worktree, its sources and its git state stay
@@ -175,6 +191,8 @@ expect_file "$WTS/dirty/draft.rs"
 expect_file "$WTS/live-by-command/apps/majordomus-cli/target/MARKER"
 expect_file "$WTS/live-by-cwd/apps/majordomus-cli/target/MARKER"
 expect_file "$WTS/ahead/apps/majordomus-cli/target/MARKER"
+[ -e "$WTS/pushed/apps/majordomus-cli/target" ] && { echo "    the pushed worktree's build output survived"; exit 1; }
+expect_file "$WTS/pushed/queued.txt"
 expect_file "$T/shared-target/MARKER"
 [ -L "$WTS/symlinked/apps/majordomus-cli/target" ] || { echo "    it removed the symlink to a shared build directory"; exit 1; }
 
@@ -212,9 +230,12 @@ expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
 expect_grep 'MJ_MIN_FREE_MB_DEFAULT=[0-9]+' "$ROOT/lib/rust_bin.sh"
 expect_grep 'measured' "$ROOT/lib/rust_bin.sh"
 
+# Every call here has MAJORDOMUS_INCREMENTAL_IDLE_MIN=0: the floor's check first sweeps the
+# idle incremental sessions of the real build directory (I2713), which a case must not touch;
+# that sweep is proved against a fixture in test/cases/3080_idle_incremental_sessions_are_pruned.sh.
 # below the floor a build does not start, and the refusal says what to do instead
 rc=0
-out="$(MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(MAJORDOMUS_RECLAIM_BELOW_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 LAST_OUT="$out"
 [ "$rc" = 1 ] || { echo "    a build below the floor was allowed to start (exit $rc): $out"; exit 1; }
 expect_grep 'refusing to start this build'
@@ -224,13 +245,13 @@ expect_grep 'MAJORDOMUS_MIN_FREE_MB=0'
 
 # above it, nothing is said and nothing is stopped
 rc=0
-out="$(MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    a build with room refused to start: $out"; exit 1; }
 [ -z "$out" ] || { echo "    the bound is noisy when it has nothing to say: $out"; exit 1; }
 
 # and the override lifts it entirely
 rc=0
-out="$(MAJORDOMUS_MIN_FREE_MB=0 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=0 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    MAJORDOMUS_MIN_FREE_MB=0 did not lift the bound"; exit 1; }
 
 # a bound that cannot measure its own input says so and lets the build run. This is the
@@ -239,26 +260,73 @@ out="$(MAJORDOMUS_MIN_FREE_MB=0 mj_rust_space_check "$ROOT" "this build" 2>&1)" 
 printf '#!/bin/sh\nexit 0\n' > "$T/stub/df"
 chmod +x "$T/stub/df"
 rc=0
-out="$(PATH="$T/stub:$PATH" MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
+out="$(PATH="$T/stub:$PATH" MAJORDOMUS_RECLAIM_BELOW_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_MIN_FREE_MB=99999999 mj_rust_space_check "$ROOT" "this build" 2>&1)" || rc=$?
 LAST_OUT="$out"
 [ "$rc" = 0 ] || { echo "    an unmeasurable df stopped a build (exit $rc): $out"; exit 1; }
 expect_grep 'could not be measured'
 expect_grep 'starting anyway'
 rm "$T/stub/df"
 
+# ---------------------------------------------------------------- the build reclaims first
+# Below the reclaim mark a build runs the classified sweep itself, before the floor decides, so
+# nobody has to remember the command. Against the fixture, never this machine: the fixture
+# carries its own copy of the reaper, which the space check runs as the repository's.
+mkdir -p "$FIX/scripts" "$FIX/lib"
+cp "$ROOT/scripts/reap-orphans" "$FIX/scripts/"; cp "$ROOT"/lib/*.sh "$FIX/lib/"
+mkbuild "$WTS/idle"
+rc=0
+out="$(XDG_CACHE_HOME="$T/cache" CARGO_TARGET_DIR="$T/no-target" MAJORDOMUS_RECLAIM_BELOW_MB=99999999 \
+  MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$FIX" "this build" 2>&1)" || rc=$?
+LAST_OUT="$out"
+[ "$rc" = 0 ] || { echo "    a build above the floor was refused after reclaiming (exit $rc): $out"; exit 1; }
+expect_grep 'reclaiming unattended build output first'
+expect_grep 'reap-orphans: build output — reclaimed 1'
+[ -e "$WTS/idle/apps/majordomus-cli/target" ] && { echo "    the build started below the mark did not reclaim"; exit 1; }
+expect_file "$WTS/ahead/apps/majordomus-cli/target/MARKER"
+expect_file "$WTS/live-by-cwd/apps/majordomus-cli/target/MARKER"
+
+# once per interval, machine-wide: a second build a moment later does not sweep again
+mkbuild "$WTS/idle"
+out="$(XDG_CACHE_HOME="$T/cache" CARGO_TARGET_DIR="$T/no-target" MAJORDOMUS_RECLAIM_BELOW_MB=99999999 \
+  MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$FIX" "this build" 2>&1)" || true
+[ -z "$out" ] || { echo "    a second build inside the interval swept again: $out"; exit 1; }
+expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
+
+# and the mark at 0 turns it off: the suite runs with it off (test/run.sh)
+rm -rf "$T/cache"
+out="$(XDG_CACHE_HOME="$T/cache" CARGO_TARGET_DIR="$T/no-target" MAJORDOMUS_RECLAIM_BELOW_MB=0 \
+  MAJORDOMUS_MIN_FREE_MB=1 mj_rust_space_check "$FIX" "this build" 2>&1)" || true
+[ -z "$out" ] || { echo "    MAJORDOMUS_RECLAIM_BELOW_MB=0 still swept: $out"; exit 1; }
+expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
+
 # ---------------------------------------------------------------- at a real call site
-# The launcher builds when the executable it resolves is missing or stale. Below the floor it
-# must refuse before cargo starts rather than after the volume is full. The release profile is
-# used because a suite that has built the debug one would otherwise have nothing to build.
+# Amended for ADR 0224 (I3957): the launcher no longer builds at all, so it can no longer start
+# a build below the floor — it refuses a missing or stale executable with exit 12 naming the
+# explicit build, `just build`, and that recipe asks the floor first (.just/build.just, held by
+# scripts/ci/backlog-check). What is asserted here is the half that moved: below the floor, from
+# a person or from a hook, nothing compiles and the refusal names the build. The release
+# profile is used because a suite that has built the debug one would otherwise have nothing
+# missing to resolve.
 if [ ! -x "$ROOT/apps/majordomus-cli/target/release/majordomus" ] && [ -z "${CARGO_TARGET_DIR:-}" ]; then
-  rc=0
-  out="$(env -u MAJORDOMUS_BIN MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_MIN_FREE_MB=99999999 \
-    "$ROOT/bin/majordomus-cli" --version 2>&1)" || rc=$?
-  LAST_OUT="$out"
-  [ "$rc" = 12 ] || { echo "    the launcher started a build below the floor (exit $rc): $out"; exit 1; }
-  expect_grep 'refusing to start'
+  for hook in 0 1; do
+    rc=0
+    out="$(env -u MAJORDOMUS_BIN -u MAJORDOMUS_HOOK MAJORDOMUS_HOOK="$hook" MAJORDOMUS_RECLAIM_BELOW_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_MIN_FREE_MB=99999999 \
+      "$ROOT/bin/majordomus-cli" --version 2>&1)" || rc=$?
+    LAST_OUT="$out"
+    case "$rc" in
+      # a release of this tree's generation may answer; nothing else does
+      0) expect_grep 'answering through the installed release .* whose crate this tree carries unchanged' ;;
+      12) expect_grep 'run: just build' ;;
+      *) echo "    the launcher (hook=$hook) neither answered through a release of this generation nor refused (exit $rc): $out"; exit 1 ;;
+    esac
+    if printf '%s\n' "$out" | grep -q 'Compiling'; then
+      echo "    the launcher (hook=$hook) compiled below the floor: $out"; exit 1
+    fi
+  done
+  grep -q 'mj_rust_space_check' "$ROOT/.just/build.just" \
+    || { echo "    just build no longer asks the floor before it builds"; exit 1; }
 else
   echo "    (a release executable is already built: the launcher's refusal is not exercised)"
 fi
 
-echo "    ok: the reaper refuses six ways and removes only build output; a build below the floor does not start"
+echo "    ok: the reaper refuses six ways, reclaims landed and pushed build output only, a build below the mark reclaims first, and below the floor a build does not start, from a person or from a hook"

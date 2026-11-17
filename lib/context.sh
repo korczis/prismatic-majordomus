@@ -142,6 +142,20 @@ mj_ctx_outbox() {
     "$s" "$c" "$(mj_rel "$(mj_outbox_dir)")"
 }
 
+# The last events of the ledger, as many as the profile's context.recent_history_depth asks
+# for; none when it asks for none, or when there is no ledger yet.
+# majordomus-limit: history_events
+mj_ctx_history() {
+  local profile="$1" depth
+  depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
+  if [ "$depth" -gt 0 ] && [ -f "$MJ_STATE_DIR/ledger.jsonl" ]; then
+    { printf '## RECENT HISTORY (last %s events)\n' "$depth"
+      ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
+  else
+    mj_ctx_excl "history" "profile $profile sets context.recent_history_depth: $depth"
+  fi
+}
+
 mj_context_sections() {
   local prompt_name="$1" no_prompt="$2"
   : > "$MJ_CTX_TMP/excluded"
@@ -252,6 +266,9 @@ mj_context_sections() {
       { printf '## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\n'
         for sp in $(mj_ylist "$MJ_CUR_FLAT" scope); do
           case " $seen " in *" $sp "*) continue ;; esac; seen="$seen $sp"
+          # a recorded entry this cannot resolve costs its own line, not the briefing: a
+          # record written by hand or by an older `start` reaches here unjudged (I2760)
+          if ! mj_ctxd_judge "$sp"; then printf '%s  refused: %s\n' "$sp" "$MJ_CTXD_REFUSAL"; continue; fi
           mj_ctxd_target "$sp"; mj_ctxd_resolve "" ""
           chain="$(while IFS="$MJ_CTXD_TAB" read -r i _; do mj_ctxd "$i" id; done < "$MJ_CTXD_CHAIN" | paste -sd, - | sed 's/,/, /g')"
           rm -f "$MJ_CTXD_CHAIN" "$MJ_CTXD_EXCLUDED"
@@ -373,15 +390,7 @@ mj_context_sections() {
   fi
 
   # 9. recent history
-  if [ -n "$profile" ]; then
-    local depth; depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
-    if [ "$depth" -gt 0 ] && [ -f "$MJ_STATE_DIR/ledger.jsonl" ]; then
-      { printf '## RECENT HISTORY (last %s events)\n' "$depth"
-        ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
-    else
-      mj_ctx_excl "history" "profile $profile sets context.recent_history_depth: $depth"
-    fi
-  fi
+  [ -n "$profile" ] && mj_ctx_history "$profile"
 
   # 10. prompt asset. An asset whose body asks for {{CONTEXT}} is excluded rather than
   #     rendered: the result would be this same context nested inside itself, which is
@@ -427,6 +436,7 @@ mj_ctx_verification() {
 # and paths the selection can reach are compiled (mj_knowledge_nodes' keep list). When the
 # issue the task names is not a node — a record the index does not hold yet, or one the
 # schema refused — the section says the graph is stale and why, instead of vanishing.
+# majordomus-limit: knowledge_pointers
 mj_context_pointers() {
   local have_task="$1" profile="$2" issue on max maxi f p
   # no task, no profile to ask: silent, as every task-bound section is without a task
@@ -602,16 +612,23 @@ mj_peer_board() {
   bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || return 1
   share="$(mj_rust_share "$MJ_HOME")"
-  # a subshell, so that the share this tool would use is the executable's and not exported
-  # into everything `context` runs after it
-  status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-               "$bin" serve status --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 1
   # this checkout's server if it has one, else the primary's: the order this function asked
-  # for before, now answered rather than guessed
-  url="$(printf '%s' "$status" | jq -r '
-    [ (.servers[]? | select(.this_checkout == true)),
-      (.servers[]? | select(.primary == true)) ]
-    | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+  # for before, now answered rather than guessed. This checkout is asked alone first
+  # (`--checkouts this`: one lease, one probe), and every checkout only when it has no
+  # address, because the wide question probes every server of the repository and took more
+  # than ten seconds of every `context` and every doctor on a machine of many (I2995).
+  local which
+  for which in this repository; do
+    # a subshell, so that the share this tool would use is the executable's and not
+    # exported into everything `context` runs after it
+    status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+                 "$bin" serve status --repo "$MJ_ROOT" --checkouts "$which" --format json ) 2>/dev/null )" || return 1
+    url="$(printf '%s' "$status" | jq -r '
+      [ (.servers[]? | select(.this_checkout == true)),
+        (.servers[]? | select(.primary == true)) ]
+      | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+    [ -n "$url" ] && break
+  done
   [ -n "$url" ] || return 1
   # Nothing leaves this machine. SECURITY.md's "local only" carries exactly one exception
   # and this request is it, so the exception is only as wide as its guard: a lease naming

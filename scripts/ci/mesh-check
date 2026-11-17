@@ -100,7 +100,7 @@ schema_present=0
 [ -f "$root/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json" ] && schema_present=1
 rules_present=0
 [ -f "$root/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md" ] \
-  && [ -f "$root/.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md" ] && rules_present=1
+  && [ -f "$root/.ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md" ] && rules_present=1
 cooperation_schema=0
 grep -q '"cooperation"' "$root/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json" 2>/dev/null && cooperation_schema=1
 if [ "$kind_declared$schema_present$rules_present$cooperation_schema" != "1111" ]; then

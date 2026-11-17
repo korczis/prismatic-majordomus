@@ -60,8 +60,11 @@ Kinds, by source:
 - **executor**: `merged`, `merge_failed`, `verification_failed`, `refreshed`,
   `refresh_failed`, `closed`, `close_failed`, `repaired`, `repair_refused`, `lane_taken`,
   `lane_released`, `observe_failed`.
-- **github**: `pr_opened`, `pr_merged`, `pr_closed`; `run_failed` and `run_succeeded`, or
-  `deploy_*` and `release_*` when the workflow's name says so.
+- **github**: `pr_opened`, `pr_merged`, `pr_closed`; `run_failed`, `run_cancelled` and
+  `run_succeeded`, or `deploy_*` and `release_*` when the workflow's name says so. A cancelled
+  run is shown, never folded: on the trunk it asks for attention, on a branch it is news. A
+  failed deploy run whose `deploy` job succeeded is `deploy_needs_help`, naming the jobs that
+  failed: the site went out, and something around it asks for a person.
 
 ## The fold: what is not shown
 
@@ -112,6 +115,8 @@ position:
 - for GitHub, the last second read. Signals of one second are never split across pages.
 
 A cursor that cannot be read is refused with exit 10; it never restarts the stream silently.
+`--cursor-file FILE` keeps the cursor on disk: the command starts after the cursor the file
+holds and replaces it whole after every page, so a watcher that is restarted repeats nothing.
 Without a cursor, a page holds the newest `limit` signals of the last `since` seconds, and its
 cursor stands after everything read.
 
@@ -139,12 +144,15 @@ of one process, and nothing joins them into one feed.
 
 ```
 majordomus monitor [--follow] [--for NAMES] [--sources mesh,executor,github] [--since 30m]
-                   [--limit N] [--after CURSOR] [--match TEXT] [--count N] [--until KIND]
+                   [--limit N] [--after CURSOR] [--cursor-file FILE] [--match TEXT]
+                   [--count N] [--until KIND]
                    [--timeout 1h] [--interval SECONDS] [--format text|json]
 ```
 
 - `--follow` asks again every `--interval` seconds (default 2) with the last cursor and prints
   only what is new. A missing or restarted server is reported once, and the follow goes on.
+- `--cursor-file FILE` starts after the cursor the file holds (unless `--after` is given) and
+  writes each page's cursor back. A refused cursor names the file it came from.
 - `--count N` ends a follow after N signals.
 - `--until KIND` ends a follow at the first signal of that kind.
 - `--timeout` gives up with exit 10.

@@ -90,6 +90,10 @@ pub enum CapabilityError {
     /// The caller may not run this from where it is: a request from another host for a
     /// capability that changes something and does not authenticate its input (ADR 0126).
     Forbidden(String),
+    #[error("conflict: {0}")]
+    /// The request contradicts what the server already holds: an idempotency key sent again
+    /// with a different input, the message naming what the key already started (I4000).
+    Conflict(String),
 }
 
 impl CapabilityError {
@@ -105,6 +109,7 @@ impl CapabilityError {
     /// assert_eq!(CapabilityError::Refused("x".into()).code(), "refused");
     /// assert_eq!(CapabilityError::Internal("x".into()).code(), "internal");
     /// assert_eq!(CapabilityError::Forbidden("x".into()).code(), "forbidden");
+    /// assert_eq!(CapabilityError::Conflict("x".into()).code(), "conflict");
     /// ```
     pub fn code(&self) -> &'static str {
         match self {
@@ -113,6 +118,7 @@ impl CapabilityError {
             CapabilityError::Refused(_) => "refused",
             CapabilityError::Internal(_) => "internal",
             CapabilityError::Forbidden(_) => "forbidden",
+            CapabilityError::Conflict(_) => "conflict",
         }
     }
 
@@ -204,6 +210,27 @@ pub struct Context {
 static READINGS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 impl Context {
+    /// The repository this context's index was built from, answered from the process's
+    /// one discovery (I3014): a capability asks its context rather than opening the
+    /// repository again from the index's root, so a served call reads no manifest (I3016).
+    ///
+    /// It is an error, not a panic, when the root no longer holds a layer: a served
+    /// process outlives the checkout it was started in.
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let repository = ctx.repository().unwrap();
+    /// assert_eq!(repository.root(), repo.root().canonicalize().unwrap());
+    /// assert_eq!(repository.manifest().local.path, "local");
+    /// std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+    /// assert!(ctx.repository().is_err(), "the layer is gone from under the context");
+    /// ```
+    pub fn repository(&self) -> crate::error::Result<crate::repository::Repository> {
+        crate::repository::Repository::open(std::path::Path::new(&self.index.repository.root))
+    }
+
     /// A context over an index and a registry, with an empty board, a fresh executor and
     /// no caller.
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
@@ -529,7 +556,40 @@ impl Executable {
         self.capability.skill = Some(crate::capability::SkillExposure {
             alias: alias.into(),
             argument: argument.into(),
+            follow: None,
         });
+        self
+    }
+
+    /// Declare what the agent does with the answer of the skill declared by
+    /// [`Self::skill`], when that is more than reporting it. One sentence, written into every
+    /// projected skill; it does nothing on a capability that declares no skill.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In { text: String }
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out {}
+    /// fn order(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out {}) }
+    /// let declared = || capability! {
+    ///     id: "demo.order", kind: CapabilityKind::Query, title: "Order", description: "Orders.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: order,
+    /// };
+    /// let e = declared().skill("order", "text").follow("Carry the order out.");
+    /// assert_eq!(e.capability.skill.unwrap().follow.as_deref(), Some("Carry the order out."));
+    /// // without a skill there is nothing to follow
+    /// assert!(declared().follow("Carry it out.").capability.skill.is_none());
+    /// ```
+    pub fn follow(mut self, instruction: &str) -> Self {
+        if let Some(skill) = self.capability.skill.as_mut() {
+            skill.follow = Some(instruction.into());
+        }
         self
     }
 
@@ -558,6 +618,31 @@ impl Executable {
     /// ```
     pub fn authenticates_its_input(mut self) -> Self {
         self.capability.execution = self.capability.execution.authenticates_its_input();
+        self
+    }
+
+    /// The declaration, answering only a caller on this machine: a read that shows the
+    /// mesh's working state (ADR 0220 decision 4). See
+    /// [`crate::capability::ExecutionPolicy::reads_only_locally`].
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{CapabilityKind, Context, CapabilityError, Effect, Exposure, Stability};
+    /// use majordomus_cli::capability::builtin::Empty;
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Board { peers: usize }
+    /// fn board(_: &Context, _: Empty) -> Result<Board, CapabilityError> { Ok(Board { peers: 0 }) }
+    /// let e = capability! {
+    ///     id: "demo.board", kind: CapabilityKind::Query, title: "Board", description: "Who works here.",
+    ///     input: Empty, output: Board, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: board,
+    /// }.reads_only_locally();
+    /// let policy = e.capability.execution;
+    /// assert!(policy.local_only && !policy.admits_remote(), "a caller beyond loopback is refused");
+    /// assert_eq!(policy.effect, Effect::Read, "it is still a read");
+    /// ```
+    pub fn reads_only_locally(mut self) -> Self {
+        self.capability.execution = self.capability.execution.reads_only_locally();
         self
     }
 }

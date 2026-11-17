@@ -1,0 +1,42 @@
+id: I4411
+milestone: a-second-adopter-is-served
+title: "check and finish name the head they judged beside the task's start, and the scope line counts the layer's own paths instead of reporting them as none"
+slug: finish-names-the-head-it-judged-and-counts-the-layers-paths
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Two lines of `majordomus check` and `majordomus finish` say what they measured. The state line names the task's recorded start head and the HEAD it compared against it, with the distance: `advanced from 3e89654 to 4e6f74e (1 commit)`, not `advanced (head 3e89654)`, which prints only the start head. The scope line counts every path mj_git_touched returned. A path under the layer (.ai/) that the task's scope names is counted as within scope. A layer path the scope does not name is counted separately as admitted because it is the layer's: `0 touched file(s) within scope, and 54 of the layer (.ai/) admitted`. When the walk since the start head finds commits but returns no path, because every commit was a merge or a trunk commit not made here, the line says so: `0 touched file(s): 2 commit(s) since 3e89654 are merges or trunk commits this checkout did not make`. The existing prefix `N touched file(s), all within scope` stays for a task with no layer paths, so cases 108, 108b, 1073 and 25 still match."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29 with majordomus 1.0.0-alpha.8, filed from oscilla-b0's upstream candidates (item 2, 'finish judged the wrong commit'). Task t-20261029170639-6657 on chore/plan-charts-m062 (PR #269) started at 3e89654 (ledger task.started, 17:06:39Z), a merge of two other PR branches (#265, #251) made at 18:06:17 +0100. The plan commit 4e6f74ef, whose parent is 3e89654, changed 54 files, all under .ai/repo/project, and the task's scope was `.ai/repo/project`. `majordomus finish` (task.finished, 17:09:34Z, head 4e6f74ef) reported 0 touched file(s) and 'advanced (head 3e89654)'. The worker read this as finish judging the merge commit and losing the plan commit behind merges, and proposed a first-parent walk with trunk merges excluded. That walk already exists: mj_git_touched (lib/common.sh:470-525) follows the first parent with --no-merges, leaves out trunk commits this checkout did not make, and cases 108 and 108b prove it. Re-measured from OSCILLA's worktree and ledger, the commit was judged correctly. Both lines misreport it. The state line prints the recorded start head and never the HEAD it compared (lib/check.sh:157). The scope count skips every layer path before counting (lib/check.sh:226), so a task scoped to the layer and touching 54 layer files reports 0. Neither defect is OSCILLA-specific: any adopter whose plan work lives under .ai/ sees a finish that appears to have measured nothing, and cannot tell it from a finish that really found nothing."
+current_state: "Measured at origin/master 51b38035a71. lib/check.sh:157 prints `$label (head ${head:0:7})` with head = `mj_cur head`, the task's recorded start head, and the current HEAD appears nowhere on the line. lib/check.sh:226 `mj_is_ai_path \"$f\" && continue` drops layer paths before n_in or n_out is counted, so lib/check.sh:241 prints `0 touched file(s), all within scope` for a task whose whole change is under .ai/, even when its scope names that directory. No line distinguishes 'no commits since start' from 'commits that were all merges or foreign trunk commits' from 'only layer paths'. docs/claims/finish-contract.md:15-17, docs/claims/consistency-check.md:15 and docs/claims/divergence-label.md:15 show the same single-head form."
+desired_state: "The state line names both commits and the distance between them. The scope line's counts add up to the number of paths mj_git_touched returned, with layer paths shown inside or beside the scope count instead of vanishing. A walk that returns no path despite commits since the start head says why. Which paths refuse a push is unchanged: layer paths are still admitted and nothing new fails."
+scope:
+  - "lib/check.sh"
+  - "lib/common.sh"
+  - "docs/claims/finish-contract.md"
+  - "docs/claims/consistency-check.md"
+  - "docs/claims/divergence-label.md"
+  - "site/content/guarantees"
+  - "test/cases/4411_finish_names_the_head_it_judged_and_counts_the_layers_paths.sh"
+non_scope:
+  - "Changing which commits mj_git_touched walks: the first-parent, no-merges, foreign-trunk rule of lib/common.sh:470-525 stays as cases 108 and 108b prove it"
+  - "Refusing layer paths outside the scope: they stay admitted"
+  - "Recording an explicit commit for plan evidence (item 1 of the same OSCILLA list)"
+  - "OSCILLA itself: it is the evidence, read only"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4411: a task started at a merge commit, then one commit that touches only files under .ai/repo/project with scope .ai/repo/project, makes `majordomus finish --check` print a state line that names both the start head and the current HEAD by short id and says 1 commit, and a scope line that counts those files as within scope, not 0"
+  - "Case 4411: the same commit with scope `lib` prints `0 touched file(s) within scope, and N of the layer (.ai/) admitted` with N equal to the files the commit changed, and finish --check still exits 0"
+  - "Case 4411: a task whose only commits since start are a trunk merge prints a scope line that names the commit count and says they are merges or trunk commits this checkout did not make"
+  - "Cases 108, 108b, 1073 and 25 pass unchanged"
+  - "Before the change, case 4411 fails on the first criterion (0 touched files and a single head)"
+  - "docs/claims/finish-contract.md, consistency-check.md and divergence-label.md show the new lines, and their site/content/guarantees projections are regenerated"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4411_finish_names_the_head_it_judged_and_counts_the_layers_paths 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward 1073_a_path_with_a_space_is_one_path 25_continuity_lifecycle"
+  - "bin/majordomus plan validate"
+  - "just derive"
+evidence_required:
+  - "test"
+  - "finish_line_names_both_heads_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29

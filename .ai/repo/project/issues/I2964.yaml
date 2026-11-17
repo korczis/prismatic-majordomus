@@ -1,0 +1,36 @@
+id: I2964
+milestone: "development-runtime"
+title: "Every step that reads a surface into the published snapshot can ask the forge"
+slug: the-snapshot-reads-the-forge-with-a-token
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Give every Pages workflow step that reads the UI or the Cockpit into a snapshot (`web report`) the workflow's token, so that a page which asks GitHub through gh while it is rendered publishes what the forge says instead of the failure to ask, and hold that with a case that reads the workflow."
+why: "Truth sweep 2026-10-18 (f6, S3, verified): the published https://majordomus.dev/cockpit/monitor/ read 'Nothing happened in the last six hours.' beside its own source error 'gh pr failed: ... set the GH_TOKEN environment variable', while PR #1340 and #1356 merged and Pages deployed three times in that window. In .github/workflows/pages.yml the steps 'the forge, observed' and 'the evidence CI recorded' carry GH_TOKEN; 'the UI, read once at this commit' and 'the Cockpit, read once at this commit' carry none."
+current_state: "The two snapshot read steps run without GH_TOKEN; every page that asks gh while it is read publishes an empty or failed source."
+desired_state: "Both read steps carry GH_TOKEN; case 3362 refuses a pages.yml in which any step running `web report` lacks it, and proves its own parse by finding a mutated step."
+scope:
+  - ".github/workflows/pages.yml"
+  - "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
+depends_on: []
+acceptance_criteria:
+  - "Every pages.yml step that runs web report carries GH_TOKEN"
+  - "Case 3362 fails on a workflow where a snapshot read step lacks it, naming the step"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_every_snapshot_read_can_ask_the_forge"
+created_at: 2026-10-18
+updated_at: 2026-10-20T15:43:50Z
+started_at: 2026-10-20T15:42:48Z
+started_event: sha256:1c0e1f3e46a5645ff8eb0e570d7607c675bffba21b28ac14f6578f73c6e50fc1
+completed_at: 2026-10-20T15:43:50Z
+completed_event: sha256:6d9bab8220606d56406787e3eb7b65507a41eee26775378326e68e827b6416fd
+evidence:
+  - covers: case_every_snapshot_read_can_ask_the_forge
+    type: ci
+    command: "bash test/run.sh 3362_every_snapshot_read_can_ask_the_forge"
+    result: "ok in validate run 39192952944, job suite-shard (1) 117890213706, every job green at master dd4c0a87cba, which contains the fix 3aa828e5bf7"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944/job/117890213706"
+    commit: 9a5a9b77520bbe9504b04ff89235a6f232377788
+    recorded_at: 2026-10-20T15:43:30Z

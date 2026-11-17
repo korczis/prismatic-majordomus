@@ -24,27 +24,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}{{ project.name }} — {{ project.tagline | lower | trim_end(pat=".") }}{% endblock title %}</title>
-<meta name="description" content="{% block description %}{{ project.tagline }}{% endblock description %}">
-<link rel="canonical" href="{{ page_url }}">
-{#- A page that names a counterpart in another language links to it both ways round: itself
-    under its own language, and the counterpart under that one. Emitted through get_url, which
-    scripts/site-basepath-check requires of every route a template writes, and resolved as an
-    internal link by scripts/ci/link-check — so a counterpart that is not built is a finding
-    rather than a dead alternate. -#}
-{%- if page is defined and page.extra.alternate is defined %}
-<link rel="alternate" hreflang="{{ page_lang }}" href="{{ page_url }}">
-<link rel="alternate" hreflang="{{ page.extra.alternate_lang }}" href="{{ get_url(path=page.extra.alternate, trailing_slash=true) }}">
-{%- endif %}
-{#- Indexing: a page is kept out of search when its own front matter says so, or when it sits
-    below a section site/data/nav.toml lists under [indexing] unlisted — the receipts, reachable
-    and linked but not ranked. templates/sitemap.xml applies the same test, and
+{#- Indexing, first in the head, so that no title or description of any length pushes the
+    robots meta out of what a reader of the head sees (a several-KB issue objective did, I4370):
+    a page is kept out of search when its own front matter says so, or when it sits below a
+    section site/data/nav.toml lists under [indexing] unlisted — the receipts, reachable and
+    linked but not ranked. templates/sitemap.xml applies the same test, and
     scripts/ci/homepage-check holds the two to each other over every built page. -#}
 {%- set nav_declaration = load_data(path="data/nav.toml") -%}
 {%- set indexing = nav_declaration.indexing -%}
 {%- set path_parts = (current_path or "/") | split(pat="/") -%}
 {%- set unlisted = path_parts | length >= 4 and path_parts[1] in indexing.unlisted -%}
 {% if unlisted or (page is defined and page.extra.noindex is defined and page.extra.noindex) %}<meta name="robots" content="noindex">{% endif %}
+<title>{% block title %}{{ project.name }} — {{ project.tagline | trim_end(pat=".") }}{% endblock title %}</title>
+<meta name="description" content="{% block description %}{{ project.tagline }}{% endblock description %}">
+<link rel="canonical" href="{{ page_url }}">
+{#- A page that names a counterpart in another language links to it both ways round: itself
+    under its own language, and the counterpart under that one. Emitted through get_url, which
+    scripts/site-basepath-check requires of every route a template writes, and resolved as an
+    internal link by scripts/ci/link-check — so a counterpart that is not built is a finding
+    rather than a dead alternate. A page names its counterparts in [extra.translations]
+    (lang = "route/", for any number of languages) and gets one link per entry; the
+    two-language form, [extra] alternate and alternate_lang, is still read when it has no
+    table. scripts/site-check (check 21) holds every member of a group to naming the same
+    group back. -#}
+{%- if page is defined and page.extra.translations is defined %}
+<link rel="alternate" hreflang="{{ page_lang }}" href="{{ page_url }}">
+{%- for t_lang, t_path in page.extra.translations %}
+<link rel="alternate" hreflang="{{ t_lang }}" href="{{ get_url(path=t_path, trailing_slash=true) }}">
+{%- endfor %}
+{%- elif page is defined and page.extra.alternate is defined %}
+<link rel="alternate" hreflang="{{ page_lang }}" href="{{ page_url }}">
+<link rel="alternate" hreflang="{{ page.extra.alternate_lang }}" href="{{ get_url(path=page.extra.alternate, trailing_slash=true) }}">
+{%- endif %}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{ project.name }}">
 <meta property="og:title" content="{% block ogtitle %}{{ project.name }}{% endblock ogtitle %}">
@@ -63,10 +74,16 @@
 {% block kit %}{% endblock kit %}
 {#- Theme before paint: the one statement the design declaration generates for every surface (the Cockpit ships the same bytes). -#}
 <script>{{ design.theme.bootstrap | safe }}</script>
+{% include "partials/language-detect.html" %}
 </head>
 <body class="min-h-screen bg-neutral-primary text-body antialiased">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
 {% include "partials/navbar.html" %}
+{#- Said on every page that is not the English original, and on no English page: the i18n pass
+    reveals it in each translated copy and points its link at the original (ADR 0218). -#}
+<div data-i18n-notice hidden class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">This page was translated automatically from English, the only language this site is written in. <a href="{{ page_url }}" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Read the original</a>.</p>
+</div>
 <main id="main">
 {% block content %}{% endblock content %}
 </main>

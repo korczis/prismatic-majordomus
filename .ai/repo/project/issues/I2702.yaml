@@ -32,4 +32,17 @@ validation:
 evidence_required:
   - "stable_port_per_checkout_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-17T12:02:56Z
+started_at: 2026-10-17T12:02:17Z
+started_event: sha256:c53957b4ed4ce905814d639884d94f765d55dc9f1968f8aac17a11b8dd202d77
+verified_at: 2026-10-17T12:02:47Z
+verified_event: sha256:f82854cd059dda9f3f246f91271029bd94d835dacc0c4a0271f6c9f393793d94
+completed_at: 2026-10-17T12:02:56Z
+completed_event: sha256:92d6e46263b4fbe3645b5da4b46640fee9fcfb2539b5f448f0d7bb4681d58e2e
+evidence:
+  - covers: stable_port_per_checkout_test
+    type: test
+    command: "cargo test --test serve_lifecycle; bash test/run.sh --no-skips 190_entry_is_automatic"
+    result: "serve_lifecycle 17 passed incl. stable_port_per_checkout_test; case 190 ok, 0 skipped (code on master since b3f35a34a5f; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:02:37Z

@@ -1,0 +1,44 @@
+id: a-newcomer-reaches-a-first-verified-intent
+title: "A newcomer reaches an intent whose verdict is satisfied, in a repository of their own, using only what the getting-started page shows"
+slug: a-newcomer-reaches-a-first-verified-intent
+order: 209
+priority: p1
+problem: "T6 of the owner's report of 2026-10-19 asks that a new user complete a first verified intent without knowing internal doctrines, registries or command archaeology. Today that is impossible in a foreign repository: a test criterion must name a path under test/cases/ or apps/majordomus-cli/tests/ (apps/majordomus-cli/src/intent.rs:1092-1112), a command criterion is never met (intent.rs:1131-1135 derives NotDerivable), intents.propose writes no criterion (capability/builtin/intents.rs:15 and :590) and no command adds one, and the getting-started page (site/templates/getting-started.html:10-32) and docs/ADOPTION.md never mention an intent."
+outcome: "A criterion can cite the repository's own declared verification; documented commands take a newcomer from a proposal to a satisfied verdict; a scripted stage proves the path with zero undocumented commands; newcomer trials under a registered protocol are published on the T6 row."
+current_state: "intent.rs:1183-1193 test_id accepts a path under test/cases/ or apps/majordomus-cli/tests/, or suite: and crate: prefixes. apps/majordomus-cli/src/evidence/record.rs:1-10 records only test/run.sh reports and cargo test output. grep -n intent docs/ADOPTION.md returns nothing. Case 2978 holds intents.propose and case 367 holds satisfaction by evidence."
+desired_state: "A verify: reference resolves against the effective profile's verification commands; majordomus evidence record records such a run; an intent criterion writer exists; getting-started shows the path; case 1024 proves it; the T6 row reads a computed status."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "apps/majordomus-cli/src/commands/evidence.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+  - "test/cases/2978_an_intent_is_proposed_by_a_capability.sh"
+  - "site/templates/getting-started.html"
+  - "site/content/getting-started.md"
+  - "docs/ADOPTION.md"
+  - "scripts/ci/install-check"
+  - "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
+  - ".ai/repo/workflows"
+  - ".ai/repo/workflows/README.md"
+  - ".ai/repo/benchmarks"
+non_scope:
+  - "Planning milestones for a newcomer's intent; the verdict derives from criteria alone (ADR 0107)"
+  - "The ten-minute refusal bar of a-stranger-adopts-it-unaided"
+  - "Non-technical users"
+acceptance_criteria:
+  - "In a fixture repository with pytest-style tests, a criterion naming its declared verification becomes current after a recorded passing run and the verdict reads satisfied"
+  - "The scripted stage counts zero commands beyond the getting-started page"
+  - "Every newcomer trial is committed and published, failed ones included"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "Newcomer trials depend on real people; the milestone cannot close by effort alone"
+  - "A doctrine-reference count by pattern can miss paraphrase; it counts declared patterns and says so"
+  - "Adding a criterion writer touches the rule of ADR 0144 that a proposal carries no criterion; the writer is a separate capability so the proposal rule stands"
+created_at: 2026-10-19
+updated_at: 2026-10-19

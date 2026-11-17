@@ -155,7 +155,11 @@ jobs:
   publish:
     needs: [plan, build]
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # 40, not 20: on 2026-11-06 v1.0.0's publish (run 42298420467) spent 6.5 min in the checkout
+    # (the object store had 1,197 packs and 482k loose objects), 6 min building the executable and
+    # was cancelled by this bound 6 min into scripts/derive, with the release on GitHub and its
+    # metadata and record never published. The bound fits what the steps measurably take.
+    timeout-minutes: 40
     outputs:
       # the pull request that proposes the record; smoke names it when the record is unmerged
       record_pr: ${{ steps.record.outputs.record_pr }}
@@ -210,7 +214,12 @@ jobs:
               || { echo "::error::$tag exists but publishes no archive. Delete the release (gh release delete $tag) and rerun this workflow."; exit 1; }
             echo "adopted=true" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$tag" --title "$tag" --generate-notes dist/*.tar.gz
+            # a tag with a pre-release part is published as a prerelease and is never GitHub's
+            # "latest": release-record derives the same channel from the tag (ADR 0172 note)
+            flags=""
+            case "$tag" in *-*) flags="--prerelease --latest=false" ;; esac
+            # shellcheck disable=SC2086
+            gh release create "$tag" --title "$tag" --generate-notes $flags dist/*.tar.gz
             echo "adopted=false" >> "$GITHUB_OUTPUT"
           fi
           ls -l dist
@@ -536,6 +545,41 @@ jobs:
   # The published installer, from its published URL, installing the release that was just
   # published. This is the check that catches a release whose artifacts exist and whose
   # names the installer does not expect.
+  # The published homepage, read in a real browser for the tag this run published (I4530):
+  # GitHub's newest release is this tag and the page names it; the trust strip, the navbar
+  # badge, /releases/latest.json and the newest pre-release ahead of stable agree; the footer
+  # names /build.json's commit. The smoke matrix waits for the metadata file with curl; this is
+  # the page a person sees, and its screenshot is the run's artifact. It waits up to ten
+  # minutes for the Pages build the publish asked for.
+  live:
+    needs: [plan, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 3
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-site
+      - id: browser
+        name: the homepage in a real browser names this release
+        timeout-minutes: 12
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHROME_BIN: google-chrome
+          CI: "true"
+        run: scripts/release-probe --expect '${{ needs.plan.outputs.tag }}' --wait 600 --out target/release-probe
+      - name: the browser's reading, as an artifact
+        if: always() && steps.browser.outcome != 'skipped'
+        timeout-minutes: 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-probe
+          path: target/release-probe
+          if-no-files-found: ignore
+          retention-days: 90
+
   smoke:
     needs: [plan, publish]
     runs-on: ${{ matrix.runner }}
@@ -570,12 +614,26 @@ jobs:
           base="${base%/install.sh}"
           url="$(sed -n 's/.*"latest_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
           tag='${{ needs.plan.outputs.tag }}'
+          # A pre-release is never the latest release (I2829): its own tag file is waited on
+          # and, once served, latest.json must name another release. The pattern is the one
+          # scripts/site-deploy publishes by.
+          latest="$url"
+          if printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+            url="${url%latest.json}$tag.json"
+          fi
           echo "waiting for  $url"
           echo "to name      $tag"
           for attempt in $(seq 1 60); do
             if curl -fsSL --max-time 60 "$url" 2>/dev/null | grep -q "\"tag\": \"$tag\""; then
               echo "the site publishes $tag after $attempt attempt(s)"
               echo "site built from  $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
+              if [ "$url" != "$latest" ] && latest_tag="$(curl -fsSL --max-time 60 "$latest" 2>/dev/null | sed -n 's/.*"tag": "\([^" ]*\)".*/\1/p' | head -n 1)"; then
+                case "$latest_tag" in
+                  *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+                    echo "::error::$latest names the pre-release $latest_tag; a pre-release is never the latest release"
+                    exit 1 ;;
+                esac
+              fi
               exit 0
             fi
             sleep 15

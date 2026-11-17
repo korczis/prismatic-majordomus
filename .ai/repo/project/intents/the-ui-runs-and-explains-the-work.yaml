@@ -1,0 +1,39 @@
+id: the-ui-runs-and-explains-the-work
+title: "From the UI the owner runs any capability, reads first what needs them, finds any entity, and sees whose version and where a page's time went"
+statement: "Opening /ui, the owner first reads what needs them (what runs, what is blocked and why, what was verified, the next safe move), runs any capability of the registry through the form its input schema generates with the executor deciding whether it may run, finds any entity the registry addresses with the moves its status admits, and every version badge and every response says whose it is and where its time went."
+invariants:
+  - "A run started from the UI is an execution of the shared executor; the UI never decides whether a capability may run"
+  - "Every sentence, figure and badge is a projection of an existing capability; an unread source is said to be unread"
+non_goals:
+  - "A shell endpoint or a free-text command runner in the browser"
+  - "Running anything from the published site"
+  - "A new screen family"
+milestones:
+  - "the-ui-runs-and-explains"
+satisfaction:
+  - id: a-capability-runs-from-the-ui
+    criterion: "From /ui/capabilities a reader runs a capability through a form generated from its input schema, as an execution of the shared executor, is asked to confirm exactly when the executor's ExecutionPolicy::needs_confirmation holds (every effect but read, process_state included), sees the executor's refusal verbatim, and follows the run as an execution (planned proof: apps/majordomus-cli/tests/ui_capability_run.rs (to be written by I3225))"
+    evidence: command
+    ref: "majordomus intent explain the-ui-runs-and-explains-the-work"
+  - id: the-dashboard-leads-with-what-needs-the-owner
+    criterion: "The Dashboard's first panel states, each sentence linked to its record, what runs, what is blocked and on what, what evidence.report verifies at the presented revision and plan.next's one next move (planned proof: apps/majordomus-cli/tests/ui_dashboard_needs_the_owner.rs (to be written by I3230))"
+    evidence: command
+    ref: "majordomus intent explain the-ui-runs-and-explains-the-work"
+  - id: search-reaches-every-entity
+    criterion: "The UI's own search answers on /ui from every addressable kind, names from the search result's matched field why each result matched and, for an issue, offers the moves its status admits (planned proof: test/cases (a browser case in the ui job, numbered by scripts/case-numbers next, to be written by I3228))"
+    evidence: command
+    ref: "majordomus intent explain the-ui-runs-and-explains-the-work"
+  - id: a-response-says-where-its-time-went
+    criterion: "Every served /ui, /cockpit and /api response carries a Server-Timing header recorded for that request alone, in the same Phase vocabulary perf.counters reports; a streamed or upgraded response marks its entries partial (planned proof: apps/majordomus-cli/tests/http_server_timing.rs (to be written by I3226))"
+    evidence: command
+    ref: "majordomus intent explain the-ui-runs-and-explains-the-work"
+  - id: a-cheap-link-is-fetched-ahead
+    criterion: "A /ui link whose navigation cost, measured by Server-Timing, a prefetch removes is fetched ahead on hover or focus, and nothing is fetched ahead under Save-Data or for a route with no such measured cost (planned proof: test/cases (a browser case observing hover, focus and Save-Data, numbered by scripts/case-numbers next, to be written by I3227))"
+    evidence: command
+    ref: "majordomus intent explain the-ui-runs-and-explains-the-work"
+  - id: a-version-says-whose-it-is
+    criterion: "Every version badge on the site, /ui, /cockpit and the snapshots names whose version it is and, for an executable, how it stands to the latest published release (planned proof: apps/majordomus-cli/tests/ui_version_badge.rs (to be written by I3229))"
+    evidence: command
+    ref: "majordomus intent explain the-ui-runs-and-explains-the-work"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,32 @@
+id: I2848
+milestone: a-change-is-judged-in-minutes
+title: "A pre-push gate that runs the executable does not wait on another worktree's build"
+slug: a-pre-push-gate-does-not-wait-on-another-build
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "The before-push gates that run the executable (economics-claims runs `cargo run -- economics check`) use a binary that already exists for the commit's crate, or report the lock wait apart from the gate's own time, so a push is not held for half an hour behind another worktree's build."
+why: "Measured on 2026-10-21. #1753's pre-push at 86908522991 took 2872 s against a bound of 180 s, and 2158 s of that was economics-claims. .ai/repo/ci/structure-durations.tsv records the same gate at 6 s, so nearly all of it was the `cargo run` waiting for the shared build directory's lock while other sessions compiled. The branch changed no Rust: the crate was byte-identical to master's, and a shared master binary for it existed under ~/.cache/majordomus-master-bin. Nine concurrent pre-pushes on one machine had already led a3 and 9c to allow one push at a time."
+current_state: "economics-claims runs `cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check` (.ai/repo/ci/gates.yaml). It compiles or waits for the shared build lock even when MAJORDOMUS_BIN names a binary of an identical crate. run-plan reports the wait as the gate's own duration."
+desired_state: "A before-push gate that runs the executable uses MAJORDOMUS_BIN, or the bin/majordomus resolution, when it names a binary built from the same crate inputs, and builds only otherwise. run-plan reports time spent waiting for the build lock apart from the gate's own run. A case shows that a branch with no crate change runs economics-claims without invoking cargo."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci/run-plan"
+  - ".ai/repo/project/issues/I2848.yaml"
+non_scope:
+  - "The shared build directory's own locking and reclaim (I2713, I2787)"
+  - "The one-push-at-a-time rule between sessions, which is coordination on the board"
+serves:
+  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+acceptance_criteria:
+  - "With MAJORDOMUS_BIN naming a binary of the commit's crate, economics-claims runs no cargo process"
+  - "run-plan's summary states lock wait and gate time separately for a gate that built"
+  - "Case 3248 fails on a run-plan that calls cargo for economics-claims while a matching binary is named"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3248_a_pre_push_gate_does_not_wait_on_another_build"
+evidence_required:
+  - "a_pre_push_gate_reuses_the_binary_case"
+created_at: 2026-10-21
+updated_at: 2026-10-21

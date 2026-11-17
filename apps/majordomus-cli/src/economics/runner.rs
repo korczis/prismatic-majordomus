@@ -262,8 +262,8 @@ fn run_quiet(
     if let Some(s) = share {
         cmd.env("MAJORDOMUS_SHARE", s);
     }
-    let out = cmd
-        .output()
+    // the program may be one a moment old, as the treatment's majordomus can be
+    let out = crate::process::retrying_busy(|| cmd.output())
         .map_err(|e| format!("{}: {e}", program.display()))?;
     if !out.status.success() {
         return Err(format!(
@@ -360,14 +360,16 @@ mod groups {
     }
 }
 
-/// Start `cmd` as the leader of a process group of its own, recorded for [`groups`].
+/// Start `cmd` as the leader of a process group of its own, recorded for [`groups`]. A
+/// program whose file is still open for writing somewhere is waited for rather than refused
+/// (see [`crate::process`]).
 fn spawn_group(cmd: &mut Command) -> std::io::Result<(Child, groups::Registered)> {
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
     }
-    let child = cmd.spawn()?;
+    let child = crate::process::retrying_busy(|| cmd.spawn())?;
     let registered = groups::register(child.id());
     Ok((child, registered))
 }
@@ -456,12 +458,22 @@ fn benchmark_policy(text: &str, region: &[&str]) -> Result<String, String> {
     let mut text = text.to_string();
     for target in region {
         let line = format!("    target: {target}\n");
-        if !text.contains(&line) {
+        let Some(at) = text.find(&line) else {
             return Err(format!(
                 "the policy declares no projection with target {target}"
             ));
+        };
+        // init already declares a mode for a provider file the project wrote (I4257): that
+        // line is set to region, never followed by a second `mode` key
+        let after = at + line.len();
+        if text[after..].starts_with("    mode:") {
+            let end = text[after..]
+                .find('\n')
+                .map_or(text.len(), |n| after + n + 1);
+            text.replace_range(after..end, "    mode: region\n");
+        } else {
+            text.insert_str(after, "    mode: region\n");
         }
-        text = text.replace(&line, &format!("{line}    mode: region\n"));
     }
     let setting = "ensure_server_on_start: false";
     let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
@@ -635,22 +647,23 @@ fn configuration_digest(args: &[String]) -> String {
     crate::policy::sha256_hex(&masked.join(" "))
 }
 
-fn harness_version(harness: &Path) -> String {
+/// The version the harness reports, its first word on `--version`, or `unknown` when it
+/// answers with nothing. A harness that could not be started is an error naming why, never
+/// a version: read as `unknown`, a start that failed only once would look like the harness
+/// changing under the run.
+fn harness_version(harness: &Path) -> Result<String, String> {
     let mut cmd = Command::new(harness);
     cmd.arg("--version")
         .stdin(Stdio::null())
         .stderr(Stdio::null());
     clean_env(&mut cmd, None);
-    cmd.output()
-        .ok()
-        .map(|o| {
-            String::from_utf8_lossy(&o.stdout)
-                .split_whitespace()
-                .next()
-                .unwrap_or("unknown")
-                .to_string()
-        })
-        .unwrap_or_else(|| "unknown".into())
+    let out = crate::process::retrying_busy(|| cmd.output())
+        .map_err(|e| format!("{} --version: {e}", harness.display()))?;
+    Ok(String::from_utf8_lossy(&out.stdout)
+        .split_whitespace()
+        .next()
+        .unwrap_or("unknown")
+        .to_string())
 }
 
 /// Run one session and read its transcript. A session the timeout ended is recorded as
@@ -814,6 +827,8 @@ fn run_job(
     // it started from, and the end of the run is checked against it.
     let repository = super::revision(&opts.root)?;
     let inputs_at_start = inputs_digest(&opts.root, &suite.freshness_inputs)?;
+    // A dry run still starts the harness to ask its version, but runs no session and ignores
+    // a failure to answer: only a run that goes on to start sessions is refused by it.
     let harness_at_start = harness_version(&opts.harness);
     let task_dir = opts.root.join(DIR).join("tasks").join(&job.task.id);
     let mut extra: Vec<PathBuf> = vec![task_dir.join("task.yaml")];
@@ -849,6 +864,7 @@ fn run_job(
         workspace.remove()?;
         return Err("dry run".into());
     }
+    let harness_at_start = harness_at_start?;
     let transcripts = opts.work_dir.join(&suite.id).join(&id);
     std::fs::create_dir_all(&transcripts).map_err(|e| format!("{}: {e}", transcripts.display()))?;
     let bin = treatment.then_some(opts.majordomus.as_path());
@@ -937,7 +953,7 @@ fn run_job(
             &inputs_at_end[..12.min(inputs_at_end.len())]
         ));
     }
-    let harness_at_end = harness_version(&opts.harness);
+    let harness_at_end = harness_version(&opts.harness)?;
     if harness_at_end != harness_at_start {
         return Err(format!(
             "the harness changed while the run was in flight ({harness_at_start} at the start, \
@@ -2040,7 +2056,11 @@ mod tests {
         let mut opts = options(repo.path(), work.path());
         opts.session_timeout = Duration::from_secs(60);
         opts.harness = harness(probe.path(), "echo yes > solved", failed);
-        run(&opts, &decl, &|_| {}).unwrap();
+        let (_, failed) = run(&opts, &decl, &|_| {}).unwrap();
+        assert!(
+            failed.is_empty(),
+            "a run that was not recorded says why: {failed:?}"
+        );
         let r = record(repo.path(), "t--baseline--r1");
         assert!(!r.outcome.completed);
         let gate = &r.outcome.checks[0];
@@ -2095,6 +2115,158 @@ mod tests {
             ended(pid.trim()),
             "a process the session started outlived its timeout"
         );
+    }
+
+    /// A harness that cannot be started is an error that names it, never the version
+    /// `unknown`: a start that failed once would otherwise read as the harness changing
+    /// under the run.
+    #[test]
+    fn a_harness_that_cannot_start_has_no_version() {
+        let e = harness_version(Path::new("/nonexistent/harness")).unwrap_err();
+        assert!(e.starts_with("/nonexistent/harness --version: "), "{e}");
+        let probe = tempfile::tempdir().unwrap();
+        let h = harness(probe.path(), "", SUCCESS);
+        assert_eq!(harness_version(&h).unwrap(), "1.2.3");
+    }
+
+    /// A session whose program cannot be started is answered at once with the reason, and
+    /// not asked again: only a busy file is waited for.
+    #[test]
+    fn a_session_that_cannot_start_is_an_error_naming_why() {
+        let e = spawn_group(&mut Command::new("/nonexistent/harness"))
+            .err()
+            .expect("an absent program does not start");
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
+    }
+
+    /// A run whose harness cannot answer `--version` at the start runs no session and is
+    /// not recorded: its reason names the harness.
+    #[test]
+    fn a_run_whose_harness_cannot_start_is_not_recorded() {
+        let (repo, work, probe) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        repository(repo.path(), "t");
+        let decl = declarations(
+            suite("live", &["t"], None),
+            vec![task("t", "test -f solved")],
+        );
+        let mut opts = options(repo.path(), work.path());
+        opts.harness = probe.path().join("absent");
+        let (written, failed) = run(&opts, &decl, &|_| {}).unwrap();
+        assert!(written.is_empty(), "{written:?}");
+        assert_eq!(failed.len(), 1, "{failed:?}");
+        assert!(failed[0].contains("absent --version"), "{}", failed[0]);
+        assert!(!record_path(repo.path(), "pilot", "t--baseline--r1").exists());
+        assert!(
+            !work.path().join("pilot").exists(),
+            "no session was started"
+        );
+    }
+
+    /// A harness that answered `--version` at the start and cannot be started at the end
+    /// leaves the run unrecorded: the version at the end is an error, never `unknown`.
+    #[test]
+    fn a_run_whose_harness_is_gone_at_the_end_is_not_recorded() {
+        let (repo, work, probe) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        repository(repo.path(), "t");
+        let decl = declarations(
+            suite("live", &["t"], None),
+            vec![task("t", "test -f solved")],
+        );
+        let mut opts = options(repo.path(), work.path());
+        opts.session_timeout = Duration::from_secs(60);
+        opts.harness = harness(probe.path(), "echo yes > solved; rm -f \"$0\"", SUCCESS);
+        let (written, failed) = run(&opts, &decl, &|_| {}).unwrap();
+        assert!(!opts.harness.exists(), "the session removed its harness");
+        assert!(written.is_empty(), "{written:?}");
+        assert_eq!(failed.len(), 1, "{failed:?}");
+        assert!(failed[0].contains("harness --version"), "{}", failed[0]);
+        assert!(!record_path(repo.path(), "pilot", "t--baseline--r1").exists());
+    }
+
+    /// Hold `program` open for writing, as a child forked by another test thread holds a
+    /// file this process has just written, and let go after `hold`.
+    #[cfg(target_os = "linux")]
+    fn held_for_writing(program: &Path, hold: Duration) -> std::thread::JoinHandle<()> {
+        let held = std::fs::OpenOptions::new()
+            .write(true)
+            .open(program)
+            .unwrap();
+        let busy = Command::new(program).output().unwrap_err();
+        assert_eq!(
+            busy.kind(),
+            std::io::ErrorKind::ExecutableFileBusy,
+            "the program is busy while it is held: {busy}"
+        );
+        std::thread::spawn(move || {
+            std::thread::sleep(hold);
+            drop(held);
+        })
+    }
+
+    /// Linux refuses to exec a file held open for writing (ETXTBSY), and a child another
+    /// test thread forks while a stand-in is being written holds it so until that child
+    /// execs (CI run 40798671348). Each start of a program the runner may have been handed a
+    /// moment after it was written waits for the writer to let go instead of failing.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn every_start_waits_for_a_program_still_open_for_writing() {
+        let probe = tempfile::tempdir().unwrap();
+        let h = harness(probe.path(), "", SUCCESS);
+        let hold = Duration::from_millis(300);
+
+        let release = held_for_writing(&h, hold);
+        let version = harness_version(&h);
+        release.join().unwrap();
+        assert_eq!(version.unwrap(), "1.2.3");
+
+        let release = held_for_writing(&h, hold);
+        let mut cmd = Command::new(&h);
+        cmd.arg("--version").stdout(Stdio::null());
+        let started = spawn_group(&mut cmd);
+        release.join().unwrap();
+        let (mut child, _group) = started.expect("the session starts once its writer lets go");
+        assert!(child.wait().unwrap().success());
+
+        let release = held_for_writing(&h, hold);
+        let out = run_quiet(probe.path(), &h, &["--version"], None, None);
+        release.join().unwrap();
+        assert!(out.unwrap().starts_with("1.2.3"));
+    }
+
+    /// The whole run: a harness still held for writing when the run starts is waited for,
+    /// and the run is recorded with the harness's version rather than dropped because the
+    /// version read `unknown` at the start and `1.2.3` at the end.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_run_whose_harness_was_just_written_is_recorded() {
+        let (repo, work, probe) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        repository(repo.path(), "t");
+        let decl = declarations(
+            suite("live", &["t"], None),
+            vec![task("t", "test -f solved")],
+        );
+        let mut opts = options(repo.path(), work.path());
+        opts.session_timeout = Duration::from_secs(60);
+        opts.harness = harness(probe.path(), "echo yes > solved", SUCCESS);
+        let release = held_for_writing(&opts.harness, Duration::from_millis(500));
+        let (written, failed) = run(&opts, &decl, &|_| {}).unwrap();
+        release.join().unwrap();
+        assert!(failed.is_empty() && written.len() == 1, "{failed:?}");
+        let r = record(repo.path(), "t--baseline--r1");
+        assert_eq!(r.harness.version, "1.2.3");
+        assert!(r.outcome.completed);
     }
 
     #[test]
@@ -2266,6 +2438,18 @@ mod tests {
             text.contains("\n    ensure_server_on_start: true\n"),
             "the nested key is left alone"
         );
+
+        // a policy init wrote for a project that has its own CLAUDE.md already declares the
+        // mode (I4257): it is set once, never given twice, whatever it was
+        for mode in ["region", "file"] {
+            let written = format!(
+                "projections:\n  - provider: claude-code\n    target: CLAUDE.md\n    mode: {mode}\n"
+            );
+            let text = benchmark_policy(&written, &["CLAUDE.md"]).unwrap();
+            assert_eq!(text.matches("    mode:").count(), 1, "{text}");
+            let after: Policy = yaml::parse_into(&text).unwrap();
+            assert_eq!(after.projections[0].mode, ProjectionMode::Region, "{text}");
+        }
 
         // a change that cannot be made is refused, never run as a different treatment
         let err = benchmark_policy("version: 1\nprojections: []\n", &["CLAUDE.md"]).unwrap_err();

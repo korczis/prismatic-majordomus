@@ -34,7 +34,13 @@ evidence_required:
   - "eventbody_allowlist_case"
   - "review_redaction_test"
 created_at: 2026-10-14
-updated_at: 2026-10-15T08:44:24Z
+updated_at: 2026-10-17T12:04:47Z
+started_at: 2026-10-17T12:04:14Z
+started_event: sha256:5cf74ab6380396a9015662ee9dc1e36fab4605479a32423f07330fc19a4fb96e
+verified_at: 2026-10-17T12:04:36Z
+verified_event: sha256:b5c1d181e8fa194f996e4a090381aaa315c9c93438985fd80ee75cda2c4c5045
+completed_at: 2026-10-17T12:04:47Z
+completed_event: sha256:1576529c64dc2406196e99d2968df5bbf9301a8cb493fd63b4fd5ba591005ece
 evidence:
   - covers: eventbody_allowlist_case
     type: test
@@ -48,3 +54,15 @@ evidence:
     result: "redaction: 11 passed, 0 failed (lundra, 2026-10-15). a_review_is_journaled_with_the_marker_never_the_secret writes every credential line of test/fixtures/redaction/shapes.tsv into a review's subject, body, answer note and withdrawal note: the journal on disk and the folded state carry each shape's marker and no body; the same line as a verdict is refused before signing and the refusal names the marker. The test over the old review path fails (the refusal repeated the anthropic-key body). mesh-check OK: 47 fields carried, 6 redacted before signing. Cases 3051 and 301 pass. Run on e2d7042a44 (#1188) plus this change."
     commit: e2d7042a44174fa622b10ef4b3feee3966b35e4e
     recorded_at: 2026-10-15T08:44:24Z
+  - covers: eventbody_allowlist_case
+    type: test
+    command: "scripts/ci/mesh-check"
+    result: "OK: every EventBody field listed (47 carried, 6 redacted before signing); tracing redaction since dd4798ce55e (code on master since 3c3372d0617; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:04:25Z
+  - covers: review_redaction_test
+    type: test
+    command: "cargo test --test redaction"
+    result: "12 passed, 0 failed, incl. a_review_is_journaled_with_the_marker_never_the_secret (code on master since 3c3372d0617; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:04:31Z

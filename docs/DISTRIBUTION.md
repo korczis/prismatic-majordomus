@@ -190,6 +190,14 @@ scripts/release-version --check --tag v0.3.0
 scripts/ci/release-verdict --commit HEAD
 ```
 
+The verdict is the newest `ci` check-run GitHub attaches to that commit, whichever event
+started it, and `release.yml` asks the same question again with `--wait 300`. A commit that
+reached master unchanged from a pull request's head carries that pull request's run too, so a
+red or unfinished run there is the verdict until master's own push run on the commit concludes
+and is the newer one. Tag only after that push run is green: a tag pushed earlier is refused
+by the release workflow, at once on a red run and after five minutes on one still running,
+and is released by dispatching `release.yml` with the tag once the verdict is green.
+
 ```bash
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
@@ -213,13 +221,16 @@ for, and until I2054 it refused it on every head in that window: on 2026-10-08 f
 requests about other things went red on that one finding while v0.17.0's record ran, and on
 2026-10-14 every branch did between the v0.25.0 tag and its record's merge. It now reads the
 proposal from git, as the structure job already has it (`fetch-depth: 0` fetches every branch
-as `refs/remotes/origin/*`): a tag whose record is carried by the tip of a
+as `refs/remotes/origin/*`), and when no ref there proposes the record it asks origin for that
+one branch (`git ls-remote --heads`) and fetches it, because a job that fetched before the
+publish job pushed holds no such ref however long it runs (I4341): a tag whose record is
+carried by the tip of a
 `release/record-<tag>` branch younger than `MJ_RELEASE_RECORD_GRACE_HOURS` (24 by default) is
 reported `pending`, naming that branch, and passes. What it costs: the gate trusts a branch,
 not a merged record, for up to a day — a record branch whose pull request was closed excuses
-its tag until the grace runs out — and a checkout that fetched no branches sees no proposal
-and refuses as before. A tag with no record and no branch proposing one, the v0.7.0 state, is
-refused at once on every head. Proposing the record before the tag was the other choice, and
+its tag until the grace runs out — and a checkout whose origin cannot be asked sees only the
+branches it fetched, with a note naming the remote. A tag with no record and no branch
+proposing one past the grace, the v0.7.0 state, is refused on every head. Proposing the record before the tag was the other choice, and
 it was not taken: the record would describe artifacts nobody had built yet.
 `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
 
@@ -228,12 +239,16 @@ publish job's push of `release/record-<tag>` there is no record and no branch, a
 published yet either: on 2026-10-14 the structure job of #1146 went red on v0.26.0 while its
 release run was still waiting for a macOS build. Only the forge can see that state, so for a
 tag with neither record nor proposal the gate asks `gh` for the tag's runs of `release.yml`: a
-run queued or running makes the tag `pending`, naming the run; no run listed and no GitHub
-release yet, inside the same grace, is pending too. A concluded run, a GitHub release that
-exists, a forge that cannot be read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`,
+run queued or running makes the tag `pending`, naming the run. A concluded run does not end
+the window (I4341): on 2026-11-09 v1.0.1's release run failed on a rustup 504 and was rerun,
+and every head judged until its GitHub release (17:44Z) and record branch (17:52Z) existed was
+red. So inside the grace a tag is pending whatever its run concluded — counted from the GitHub
+release when one is published, from the tag when none is — and the run is named. Past the
+grace, a forge that cannot be read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`,
 else the `origin` remote on github.com) leave the refusal standing, with a note saying which —
 offline, the gate is as strict as before. `test/cases/3029_a_tag_in_flight_is_pending.sh`
-holds those states.
+drives every ordering of the checkout's fetch, the record branch's push and the run's
+conclusion.
 
 The pipeline is [`.github/workflows/release.yml`](../.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) and the generated
@@ -283,6 +298,28 @@ a tag that has no release behind it is the other, and only before anyone can hav
 Until one of those happens the advertised install command is broken for everyone, and
 `installer-live` below is what says so.
 
+### A pre-release is never the stable release
+
+A tag with a pre-release part (`v1.0.0-alpha.1`) is published as a GitHub prerelease and never
+as its "latest" (`--prerelease --latest=false` in the publish step of `release.yml`), and
+`scripts/release-record` records it on `channel: prerelease`: the channel is derived from the
+tag unless `--channel` is given, and `--channel stable` on a suffixed tag exits 2. The version
+decides as well as the record: `Release::is_stable_candidate` is false for any version with a
+pre-release part, so even a record that was mislabelled can never become `releases/latest.json`,
+and `Release::findings` reports the mislabel. A pre-release is installed by naming it
+(`install.sh --version 1.0.0-alpha.1`); an unpinned installer and a node that follows `stable`
+keep resolving the highest stable release. Versions order by semantic-version precedence
+(`alpha.2` before `alpha.10`, a pre-release before its own final, build metadata ignored).
+That order is `release::version::Version`'s, the crate's one reading of a version: the stable
+pointer, the release writer and the compatibility gate share it, so they cannot rank a pair
+of versions differently, and a record whose version is not a semantic version at all is never
+the stable pointer either. `release bump --exact 1.0.0-alpha.1` writes a pre-release, and the
+gate accepts a tree that declares one; `docs/RELEASE.md` says how a pre-release meets the floor.
+The crate's `distribution::tests` and `release::version` tests prove the resolution and the
+order; `test/cases/3179_a_prerelease_is_never_published_as_stable.sh` proves the two
+shell-side writers, and `test/cases/3212_a_prerelease_version_is_bumped_and_ordered.sh` the
+writer, the gate and the order against a real repository.
+
 ### When a release fails partway
 
 A release changes things the world can see, and it can fail after some of them have changed.
@@ -323,9 +360,21 @@ waiting for approval. In both the required `ci` check never reports and the prop
 merge. After `v0.15.0` and after `v0.16.0` it sat so, with an empty check rollup, until
 somebody closed and reopened it, and `smoke` failed by design for as long as that took.
 
-The pipeline cannot start that run, and does not claim to. What starts it is a person, in
-one of two ways: approving its waiting `validate` run, or closing and reopening the pull
-request. The integration executor does the second: `majordomus prs drain` closes and
+The waiting shape is the one the pipeline can start itself, and it tries (I2717). The
+`validate` run it dispatches on the record's branch (below) begins its plan job with
+`scripts/ci/record-run-approve`: it finds the `pull_request` run of `validate` at the
+record's branch and head that waits for approval and approves it, through the forge's own
+approval endpoint, with that run's token. What it starts is the pull request's own run,
+planned and judged as every pull request's run is; it writes no status and no check. Only that
+one run is approved, and a branch that is no `release/record-` branch is refused. On v1.0.1
+(2026-11-09, #2991) the waiting run 42668789214 was approved by a person through that same
+endpoint; whether the forge accepts the approval from `GITHUB_TOKEN` is first observed on the
+next record, and a refusal is a warning in the dispatch naming the two acts below, never its
+failure (`test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh`).
+
+When that approval is refused, and for the older shape, which no approval starts, what starts
+the run is a person, in one of two ways: approving its waiting `validate` run, or closing and
+reopening the pull request. The integration executor does the second: `majordomus prs drain` closes and
 reopens a `release/record-<tag>` pull request that the workflow's token opened and that has
 no check of its own, once per head, and the run its reopening starts is the one the merge
 waits for ([INTEGRATION.md](INTEGRATION.md), "The record pull request it reopens";
@@ -349,13 +398,19 @@ naming the remedy and does not fail the job, because the release is published ei
 holds both workflows to this, and the workflow and this section to calling the dispatch
 nothing more.
 
-Two remedies would remove the person's step, and neither is taken. A status or check the
+An approved run can still end red without any gate failing: attempt 2 of 42668789214 never
+created its `site` job, `needs` reported it `abandoned`, and `ci` was red for it alone while
+every job that ran passed. The verdict names that result and its remedy, re-running the
+failed jobs of the run, which started the job on attempt 3 ([CI.md](CI.md)).
+
+Two remedies beyond that approval would remove the person's step, and neither is taken. A status or check the
 dispatched run posted under the name `ci` would satisfy the required context without the
 pull request's own run having produced it, which is a forged verdict, not a remedy. Opening
 the pull request, or closing and reopening it, with a GitHub App or fine-grained token whose
 events start workflows would make its own run start at once; that needs a credential only the
-repository's owner can create and hold, and is the owner's decision. Until it is made, every
-release costs one person's act between publication and its record reaching master.
+repository's owner can create and hold, and is the owner's decision. Until it is made, a
+release whose record run the dispatch could not approve costs one person's act between
+publication and its record reaching master.
 
 #### The site serves a release before its record lands
 
@@ -564,7 +619,7 @@ not affected, and nothing fetches anything on entering a repository.
 
 **What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
 only an archive whose digest and size match them. A mesh announcement of a release means
-"check now" and nothing more. A node with no route to the site (jetson) may take the archive
+"check now" and nothing more. A node with no route to the site may take the archive
 from a peer, and verifies it against metadata it can check before unpacking (I2724).
 
 **Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not
@@ -586,14 +641,17 @@ announcement: one HTTPS request for `releases/latest.json`, never in the path of
 behind (I2723). A release is rolled out when every enrolled, following node reports it.
 
 `test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
-through the same records and the same stable pointer as the installer does.
+through the same records and the same stable pointer as the installer does, once it exists:
+`self update` is the design above and is not implemented yet.
 
 ## Package managers
 
 The release model is the primary contract and it is package-manager neutral: an archive per
-target with a digest, and a machine-readable index. A Homebrew formula, an APT repository,
-a Nix derivation or a container image would each read that index rather than replacing it,
-and none of them is implemented. Nothing in the model prevents one.
+target with a digest, and a machine-readable index. A Homebrew formula, an APT repository
+or a Nix derivation would each read that index rather than replacing it, and none of them is
+implemented. Nothing in the model prevents one. The container image is the one consumer that
+exists: the release workflow's `image` job builds it from the release's own Linux archives
+and pushes it to the GitHub container registry under the release's tag.
 
 Windows is representable — the schema carries `zip`, a `binary_suffix` and a `windows`
 operating system — and is declared `unavailable` with its reason: the command a person runs

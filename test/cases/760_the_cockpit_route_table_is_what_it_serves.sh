@@ -2,7 +2,7 @@
 # majordomus-timeout: 600
 # The Cockpit's documented route table is what it serves (#330, PR #543): over a real socket,
 # every plain route docs/COCKPIT.md documents answers 200 with a page, and every area the
-# sidebar links to is a route the table documents. The unit tests compare STATIC_ROUTES with
+# sidebar links to is a route the table documents. The unit tests compare static_routes() with
 # the dispatcher's source, the navigation and the table; this case holds the running server
 # to the same table, so a route the table names and the server lost, or an area the sidebar
 # offers and the table never mentions, is a failure no list kept beside the code can hide.

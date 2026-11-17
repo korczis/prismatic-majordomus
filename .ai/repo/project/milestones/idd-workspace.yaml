@@ -1,0 +1,33 @@
+id: idd-workspace
+title: The UI is where the owner directs the work, from an intent to its next move
+slug: idd-workspace
+order: 147
+priority: p0
+problem: "On 2026-10-16 the owner asked to stop orchestrating development by pasting prompts into terminals and to direct it from the UI instead: intent, milestones, issues, waves, execution, evidence and delivery, navigable and actionable. Every one of those answers exists as a capability, and the UI draws most of them on separate screens — the Roadmap, Issues, the PR Drain — while the waves have no screen on master and the moves that start an issue exist only on the Cockpit's issue page."
+outcome: "One screen of the UI, /ui/idd, starts from an intent and shows its milestones, their issues with status and blockers, the waves the dependencies allow and the dependency graph, each entity a link to its inspector, and every ready issue one click from the move that starts it; delivery and the live channel follow as the capabilities beneath them land."
+current_state: "No /ui/idd. Intents, milestones and issues are read on the Roadmap and Issues screens; plan.waves is read by no /ui screen; plan.transition is offered on /cockpit/plan/issues/<id> only."
+desired_state: "/ui/idd composes intents.list, plan.roadmap, plan.issues and plan.waves for a chosen intent, with the selection rule printed (I2780). Each further slice — the moves offered in the workspace itself, the inferred delivery once I2740 lands, the live overlay over /events — is recorded with the criterion it serves and the test that proves it when it starts."
+scope:
+  - apps/majordomus-cli/src/ui
+  - share/ui
+  - docs/UI.md
+  - .ai/repo/project
+  - test/cases
+non_scope:
+  - A second plan engine, wave allocator or status vocabulary
+  - Mutation from the published site
+  - Provider-assisted plan authoring
+acceptance_criteria:
+  - "/ui/idd renders a chosen intent's milestones, issues, waves and graph from the plan's capabilities alone, with the selection rule shown"
+  - "An issue added to the plan appears in the workspace with no other edit"
+  - "Every ready issue leads to the move that starts it"
+validation:
+  - majordomus plan validate
+  - majordomus intent validate
+  - cargo test --lib ui::
+evidence_required: []
+depends_on: []
+risks:
+  - "#1184 (/ui/waves) and #1302 (roadmap reads delivery) touch ui/mod.rs's screen list; each lands as a textual neighbour and needs one merge."
+created_at: 2026-10-16
+updated_at: 2026-10-16

@@ -29,11 +29,13 @@ validation:
 evidence_required:
   - "diagram_scope_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16T10:09:11Z
+updated_at: 2026-10-17T21:36:04Z
 started_at: 2026-10-16T09:03:11Z
 started_event: sha256:724c9d42189144390be95b63f0a06b7261a2ecfacb1cc470169ceb4ac4c529e0
 verified_at: 2026-10-16T10:09:11Z
 verified_event: sha256:f4efa49a83ee67743f300035f47d3b54ff2371945d6091b306f0cda44690d127
+completed_at: 2026-10-17T21:36:04Z
+completed_event: sha256:deb61e8ee5024d81764d4dabf32bb8622fe1b072a9b8952ff82936d7e83eeb40
 evidence:
   - covers: diagram_scope_case
     type: test
@@ -41,3 +43,9 @@ evidence:
     result: "tests: 2 passed, 0 failed, 0 skipped; case 3106 requires the gate to name 8 drawings planted in an ADR, a rule, a handbook chapter, UI doc comment/string/script (rose from 0 to 8, exit 10); scripts/ci/diagram-check on the real tree: no hand-drawn diagram (baseline 0) at 337b41ee72f"
     commit: 337b41ee72f1f185fc0d9cd947ba54269476d73a
     recorded_at: 2026-10-16T10:09:05Z
+  - covers: diagram_scope_case
+    type: test
+    command: "scripts/ci/diagram-check && bash test/run.sh 272_diagrams_are_drawn 3106_every_published_tree_draws_its_diagrams"
+    result: "diagram-check exit 0 (no hand-drawn diagram in the published documents); 2 passed on master 707a04c7ce8 (2026-10-17)"
+    commit: 707a04c7ce83ff9f2effd80e0c6dfc1829e49322
+    recorded_at: 2026-10-17T21:34:45Z

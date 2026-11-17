@@ -1,0 +1,21 @@
+id: finished-work-reaches-a-verified-release
+title: "Finished work reaches a verified release at the pace it is finished"
+slug: finished-work-reaches-a-verified-release
+order: 181
+priority: p1
+problem: "Work does not end when it is written or merged. A finished change flows to master, to a release whose version the public contract decided, and to every surface that publishes it, at the pace work is finished; the flow is measured, its backlog is loud before it is large, a red trunk holds it, and nothing calls a change delivered before its publication is observed. Sources: chatgpt-majordomus:c100#0, chatgpt-majordomus:c103#5, chatgpt-majordomus:c111#6, chatgpt-majordomus:c112#0, chatgpt-majordomus:c112#3, chatgpt-majordomus:c127#1, chatgpt-majordomus:c130#4, chatgpt-majordomus:c142#0, chatgpt-majordomus:c142#1, chatgpt-majordomus:c183#0, chatgpt-majordomus:c195#2, chatgpt-majordomus:c207#6, chatgpt-majordomus:c209#0, chatgpt-majordomus:c214#5, chatgpt-majordomus:c220#0, chatgpt-majordomus:c220#2, chatgpt-majordomus:c227#2, chatgpt-majordomus:c238#2, chatgpt-majordomus:c242#0, chatgpt-majordomus:c242#5, chatgpt-majordomus:c244#3, chatgpt-majordomus:c258#2, chatgpt-majordomus:c262#12, chatgpt-majordomus:c286#21, chatgpt-majordomus:c286#23, chatgpt-majordomus:c287#0, chatgpt-majordomus:c291#0."
+outcome: "Work does not end when it is written or merged. A finished change flows to master, to a release whose version the public contract decided, and to every surface that publishes it, at the pace work is finished; the flow is measured, its backlog is loud before it is large, a red trunk holds it, and nothing calls a change delivered before its publication is observed."
+current_state: "Its issues extend existing milestones; see each issue's why."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+acceptance_criteria:
+  - "While the trunk's verdict is red only its named carrier may land, and the trunk's protection requires the CI model's verdict"
+  - "Past the declared backlog bound every session brief says so, and duplicate candidates are named"
+  - "The time from a pull request's opening to its observed publication is measured per phase with p50, p95 and sample size"
+  - "A publication never replaces the site with an older commit or an older release"
+  - "Whether a commit may be released is one read naming each condition, and the release path reads the same functions"
+  - "A finished task names the pull request that carries it and its disposition"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

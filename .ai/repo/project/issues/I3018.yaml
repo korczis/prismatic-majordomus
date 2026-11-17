@@ -1,0 +1,45 @@
+id: I3018
+milestone: M004
+title: "The intent workspace borrows the plan instead of copying it on every request"
+slug: the-intent-workspace-borrows-the-plan
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "/ui/idd and the intent inspector it embeds read plan.issues and plan.roadmap through view::items, a borrow, wherever they only read, instead of view::list, which copies the whole answer: the issues serving the intent, the records the prose may name, the intent's own issues and its milestones."
+why: "Master's validate went red in ui on 2026-10-20 and 21 (runs 39485870890 on 91c0b5d5658 and 39504455062 on 573df967bb5): system.http.ui.idd and system.http.live.ui.idd warm p95 105.8 and 106.5 ms against a 100 ms budget, right after the W0 records grew the DONE set, with commits that only added records. The screen deep-copied the 805 full issue records at least four times per request (idd.rs serving and known, intent.rs known and serving), so its cost grew with every record the plan gained."
+current_state: "idd.rs and intent.rs call view::list on plan.issues and plan.roadmap, a to_vec of the whole answer, on every request."
+desired_state: "They borrow the answer; only the intent's own issues are cloned, and the screen's cost no longer grows with the plan's other records."
+scope:
+  - apps/majordomus-cli/src/ui/idd.rs
+  - apps/majordomus-cli/src/ui/intent.rs
+  - .ai/repo/project/issues/I3018.yaml
+  - site
+  - docs
+non_scope:
+  - "The budget itself, which stays at 100 ms"
+  - "Other screens that copy plan.issues (issues.rs, prs.rs, work.rs, milestone.rs): a follow-up if their budgets move"
+depends_on: []
+acceptance_criteria:
+  - "idd.rs and intent.rs read plan.issues and plan.roadmap through view::items wherever they only read them"
+  - "system.http.ui.idd and system.http.live.ui.idd warm p95 are within their 100 ms budget in the ui job"
+validation:
+  - "cargo test --lib ui::"
+  - "majordomus bench system.http.ui.idd --transport system --profile ci --no-write --check"
+evidence_required:
+  - ui_idd_within_budget
+created_at: 2026-10-21
+updated_at: 2026-10-28T12:20:52Z
+started_at: 2026-10-28T12:19:31Z
+started_event: sha256:6affa37039483a7cfe8c2d6cc5a3a1e923a4846012df71d0b0bee7e3eada783f
+verified_at: 2026-10-28T12:19:57Z
+verified_event: sha256:c76af5621014bb2257162699b975854b1be4aeb1cb3e90cf350ec9b54749681a
+completed_at: 2026-10-28T12:20:52Z
+completed_event: sha256:f33cd01d836371647cc4f43effaaccbf35e63eb32d85cc9d98e13843f05f95f0
+evidence:
+  - covers: ui_idd_within_budget
+    type: ci
+    command: "bench system.http. --transport system --profile ci --no-write --check (ui-checks step 'every warm screen of the UI is within its budget')"
+    result: "attempt 1 of master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163 at 5c24edb4c3b, job ui-checks 122006729898: system.http.ui.idd warm p95 38.9 ms and system.http.live.ui.idd 14.6 ms against 100 ms, within budget; again in https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (6c79dcf68cf, job 122655184005): 35.3 ms and 17.7 ms; idd.rs and intent.rs hold no view::list call on 81ef931a3e1 (8 and 2 view::items); landed via 9129c669709 (train 1)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163/job/122006729898"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:20:37Z

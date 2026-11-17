@@ -1,0 +1,32 @@
+id: I3993
+milestone: mcp-transports-are-reliable
+title: "Every wait on a peer is bounded and says what it waited for when the bound is reached"
+slug: every-wait-on-a-peer-is-bounded
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Find every place the executable waits on another session or runtime (a mesh review answer, a handover consumer, a derive or offload queue, a lease, a claim admission retry) and give each an explicit bound read from the declaration, after which it stops waiting, names what it waited for and who held it, and routes around (another host, another seat, or a report) instead of hanging."
+why: "The owner's order of 2026-10-22 forbids anything stalling on a stuck peer. I3990 frees claims; the waits themselves still block a caller: a review request nobody answers, a derive queue held by a dead process, an offload whose host stopped answering. A missing answer must read as 'not alive', not 'agreed'."
+current_state: "Waits are bounded case by case (offload wait_max_seconds 14400, the derive lock with its own timeouts, scripts that use timeout), others are unbounded or bounded only by the caller's patience; nothing lists them."
+desired_state: "A registry of the executable's peer waits, each with a declared bound and the routing it takes at the bound, a doctor check that refuses an unbounded one, and every bound reached reported with what was waited for and who held it."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I3993.yaml"
+non_scope:
+  - "Shell scripts' own waits: their callers bound them; this slice is the executable's"
+acceptance_criteria:
+  - "Every peer wait of the executable is listed with its bound and its routing at the bound"
+  - "mesh doctor fails a peer wait that has no bound"
+  - "A wait that reaches its bound stops, names what it waited for and who held it, and routes around"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "every_wait_on_a_peer_is_bounded"
+depends_on:
+  - "I3990"
+created_at: 2026-10-23
+updated_at: 2026-10-23

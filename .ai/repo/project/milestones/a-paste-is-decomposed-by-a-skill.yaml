@@ -1,0 +1,62 @@
+id: a-paste-is-decomposed-by-a-skill
+title: "A pasted brief is decomposed into the plan by a skill, and never kept verbatim as an intent statement"
+slug: a-paste-is-decomposed-by-a-skill
+order: 210
+priority: p1
+problem: "intents.propose keeps any statement verbatim: apps/majordomus-cli/src/intent.rs:2327-2366 trims it, takes the first line as the title and writes the whole text as the statement. The generated /intent alias (apps/majordomus-cli/src/editors/claude.rs:79-94) and the generic text of every model-invocable domain skill (claude.rs:179, projected into .claude/skills/mj-*/SKILL.md, for example mj-intents/SKILL.md:26) forbid trying again another way after a refusal. Three pastes became untracked intent records in the primary checkout (wc -c: 50814, 16314 and 9437 bytes); none has a criterion, milestone or issue. The longest statement line of a tracked intent on master 9904000d2df measures 846 bytes (grep '^statement:' | wc -c). No skill under .ai/repo/skills decomposes a paste. On 2026-10-19 the owner ordered that a pasted text be decomposed by an agent following a skill."
+outcome: "A multi-paragraph, Markdown or over-length paste given to intents.propose on any transport writes nothing and answers invalid_input, naming the skill decompose-a-brief and the digest of the paste's canonical text. The /intent alias, the domain skills, the Cockpit runner and the intent workspace lead to that skill instead of stopping at the refusal. The skill keeps the paste as a campaign whose digest equals the refused one, maps it to the existing plan, drafts only what is new, has the draft critiqued, derives and validates it, and offers its first wave on the mesh without claiming it. A test holds a decomposition of the skill's output shape valid under plan validate and intent validate."
+current_state: "PRECONDITION: the host intent a-brief-is-reconciled-into-the-plan, its critique and the issues and ADRs the skill names (I3168, I3169, I3251, I3254, I3273, ADR 0211, milestone an-outcome-becomes-a-reviewed-plan) are tracked only on docs/the-chatgpt-project-is-promoted, which is ahead of master 9904000d2df and has no remote head. No issue of this milestone starts until that branch, with these records and the critique reviewed against the three new criteria, is on master; each issue's acceptance checks this through intent preflight from a branch of master. Skills on master: assess-before-deleting, deploy-site, evolve, implement, pack-for-chatgpt, pack-for-review, repo-review, report-verification-state; the hand lists are apps/majordomus-cli/tests/skills.rs:6 and test/cases/391_skills_are_proven_capabilities.sh:3. ProposeError (intent.rs:2251) has Invalid, Exists and Write; intents.rs:460-462 maps Invalid to invalid_input. share/cockpit/runner.js:126-161 and share/cockpit/executions.js:85-97 render a refusal as text with no link, and no case loads runner.js except the browser case 3220 that walks the Cockpit. The intent-intake milestone of the same intent depends on an-outcome-becomes-a-reviewed-plan, which is not DONE, and plan.rs:1104-1131 marks every issue of a gated milestone BLOCKED."
+desired_state: "Every paste follows one path whichever surface it arrives by: refused without a write, kept as a campaign in one canonical byte form, decomposed by the skill under a critique, derived and validated, and offered on the mesh. The skill is a proven capability under skills verify, and its output contract is held by a test."
+scope:
+  - ".ai/repo/skills"
+  - ".ai/repo/workflows/plan.md"
+  - "apps/majordomus-cli/tests/skills.rs"
+  - "test/cases/391_skills_are_proven_capabilities.sh"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases/2978_an_intent_is_proposed_by_a_capability.sh"
+  - ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md"
+  - ".ai/repo/project/intents/README.md"
+  - "apps/majordomus-cli/src/editors/claude.rs"
+  - ".claude/skills/intent/SKILL.md"
+  - "apps/majordomus-cli/tests/editors.rs"
+  - "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh"
+  - "docs/EDITORS.md"
+  - "share/cockpit/runner.js"
+  - "share/cockpit/executions.js"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/tests/ui_idd.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - "apps/majordomus-cli/tests/intent_plan.rs"
+non_scope:
+  - "Any model, network or advisor call inside a Rust capability: the decomposition is the worker's reasoning (ADR 0098)"
+  - "A new writing capability, or intents.propose writing anything except one intent record"
+  - "Storing a campaign from inside intents.propose"
+  - "A new ProposeError or CapabilityError variant"
+  - "Automatic classification of a campaign's segments, which I3273 owns"
+  - "The draft brief, check and apply commands, which I3251 and I3252 own"
+  - "Transliterating non-ASCII letters in a proposed id"
+  - "Re-entering the three untracked pastes of the primary checkout; that is the owner's call and the skill's first live run"
+  - "New test/cases numbers"
+acceptance_criteria:
+  - "The three criteria the milestone adds to a-brief-is-reconciled-into-the-plan (a-paste-is-decomposed-not-stored-verbatim, a-refused-paste-leads-to-the-skill, a-decomposed-paste-passes-the-plan-checks) are each served by at least one issue here, and majordomus intent coverage shows them served"
+  - "majordomus skills verify names decompose-a-brief as an active skill that is not an orphan"
+  - "A two-paragraph statement, a statement opening with a Markdown heading and a one-paragraph statement over the ADR 0144 bound, each given to intents.propose over the command line, MCP and HTTP, write no file under .ai/repo/project/intents, and a one-paragraph statement within the bound is written as before"
+  - "The generated /intent alias and all 58 generated .claude/skills/mj-*/SKILL.md files carry the follow-the-named-skill rule, and case 3220 shows the Cockpit link for a refused paste"
+  - "The fixture decomposition in apps/majordomus-cli/tests/intent_plan.rs passes plan validate and intent validate with zero failures"
+  - "No issue here started before the planning branch docs/the-chatgpt-project-is-promoted was on master"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "The two hand lists (tests/skills.rs:6, case 391:3) are also edited by the unpushed branch feature/a-workspace-is-promoted-by-a-skill, which adds promote-a-workspace. Whichever lands second resolves a one-line conflict by keeping both ids"
+  - "intents.rs and ADR 0144 are also in I3286's scope. That later structured-delta path must keep the paste guard"
+  - "A paste that holds a conversation, an AI assistant's answer or personal data must not reach campaigns/ without the person's ruling. The skill's step 2 decides that, and a worker who skips it breaks project.never-store-transcripts"
+  - "Classifying a paste by structure and length refuses some legitimate statements. A person can still write such a record by hand, and no override field is added"
+  - "A copy of the paste relayed through a model may differ from the received bytes; the skill reports a digest mismatch instead of hiding it"
+  - "Case 3220 is a browser case that runs only in the ui job; a flaky new step there blocks every landing that runs it"
+  - "The derive may touch generated files beyond those listed. Each issue's scope must name every projection before finish"
+created_at: 2026-10-19
+updated_at: 2026-10-19

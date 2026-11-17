@@ -1,0 +1,32 @@
+id: I3321
+milestone: a-stranger-adopts-it-unaided
+title: "In a foreign repository, the wired pre-push hook of the claude-code projection refuses what finish would refuse, through the installed release"
+slug: the-pre-push-hook-refuses-in-a-foreign-repository
+priority: p2
+profile: implementation
+objective: "Add to install-check's first-run stage a step in which the refusal is reached through the pre-push hook (finish --check) that the claude-code projection wires in the foreign fixture repository, so the refusal is shown to arrive on the path an agent's session takes, not only through commands the stage calls itself."
+why: "Split from I3127 by the verification of 2026-10-18 (one worker, one issue, one pull request). The critique of a-stranger-adopts-it-unaided found that a scripted worker calling check and finish itself proves nothing about whether the projected hooks bring the refusal to an agent in the stranger's repository; the owner-accepted beta contract asks for at least one supported AI coding workflow. Sources: chatgpt-majordomus:c241#2, chatgpt-majordomus:c256#5, chatgpt-majordomus:c269#5, chatgpt-majordomus:c069#2, chatgpt-majordomus:c126#8."
+current_state: "init wires the skeleton's hooks and prints hook advice (lib/init.sh); no case pushes from a foreign repository through an installed release and observes the hook refuse."
+desired_state: "The stage pushes an unfinished change in the foreign fixture, the wired pre-push hook refuses it with the doctrine finish names, and the receipt records the step and says that a live agent session is not exercised."
+scope:
+  - "scripts/ci/install-check"
+  - "docs/ADOPTION.md"
+non_scope:
+  - "A live agent session; outside runs carry it"
+  - "Providers other than claude-code"
+  - "Changing which hooks init wires"
+depends_on:
+  - "I3127"
+serves:
+  - "a-stranger-adopts-it-unaided#first-refusal-in-ten-minutes"
+acceptance_criteria:
+  - "A stage reaches the refusal through the wired pre-push hook (finish --check) of the claude-code projection in the foreign repository, and the receipt states that a live agent session is not exercised"
+  - "The refusal printed by the hook names the same doctrine finish names for the same tree"
+  - "The regression case numbered by `scripts/case-numbers next` and announced on the board at start fails when the hook is not wired"
+validation:
+  - "bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_pre_push_refusal_in_a_foreign_repository"
+created_at: 2026-10-18
+updated_at: 2026-10-18

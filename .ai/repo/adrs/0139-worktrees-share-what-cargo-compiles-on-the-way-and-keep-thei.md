@@ -100,4 +100,13 @@ on by a default.
 - The shared directory is outside every checkout, so removing a worktree never frees it;
   only the reaper's bound does. That is the new accumulation and its measure, threshold
   and reducer are named in `project.worktrees-share-build-intermediates`.
+  **Amended 2026-10-23 (I3959).** The bound above never applied on a machine where some
+  cargo always runs: the directory reached 102GB against 6144MB. "Removes it as a whole when
+  nobody builds" stays, and while a build runs the reaper — and every bounded build, before it
+  starts and after it ends — evicts its stale units instead, oldest first until it is under
+  the bound, each inside cargo's own lock on its profile: an idle `llvm-cov-target`, a
+  dependency generation no worktree's `Cargo.lock` names, idle incremental sessions and idle
+  generations of this crate (`mj_rust_bound_build_dir`, docs/WORKTREES.md "The bound, while
+  builds run", `test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh`). The pass after
+  a build waits for a held lock in the background, bounded; a held profile is skipped and said.
 - Proven by `test/cases/1022_worktrees_share_build_intermediates.sh`.

@@ -1,0 +1,42 @@
+id: I4467
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "A handover records the work its writer delegated to subagents and peers, and resolving it says where each piece stands now"
+slug: a-handover-names-the-work-it-delegated
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus handover` takes a repeatable `--delegated <ref>`, and the record keeps what the writer handed to others beside its own task. A ref is one of: a task id (t-...), a branch, a mesh review (<stream>/<review>), or anything else, kept verbatim. The writer names the ref; the tool, never the writer, resolves where it stands from its authority at write time: a task from the task record of whichever worktree of the repository holds it (its outcome and worktree) or from the ledger's task.finished; a branch from git (its head and whether the trunk contains it); a review from the executable's mesh state when the mesh is enabled (open, answered with its verdict, withdrawn). What cannot be resolved is recorded as `unknown: <reason>`, never as done. The front matter (lib/handover.sh:74, mj_record_front_matter) carries a `delegated:` list, one `<kind> <ref> <standing>` per item; `handover --derive` adds a `# Delegated` section listing them. `handover --resolve` and the session briefing print each item with its standing then and its standing now, resolved again the same way, so a resumed coordinator sees which delegated work finished, which is still open and where, and which it can no longer find."
+why: "Observed in OSCILLA (korczis/oscilla) by session oscilla-b0 on 2026-10-30, item 7 of its adopter dossier. The coordinating session ran up to twelve workflows and subagents; when it hit a usage limit it stopped them and wrote a handover by hand in its scratchpad (the run ids, the pull requests awaiting verdicts, the train membership), because `majordomus handover` records one task and not a coordination state. After the resume nothing told the session which delegated tasks still had open Majordomus episodes. Mission section 5 says a handover must let the next session determine the work's ownership and its next feasible step, with identity derived from authoritative state rather than guessed, and that the mere existence of a handover file is not continuity."
+current_state: "At master 51b38035a71: mj_handover writes the front matter through mj_record_front_matter with task_id, profile, owner and the optional bound_issue, bound_intent, bound_exemption, plan_revision and evidence_standing lines (lib/handover.sh:63-74); its options are --close, --no-task, --derive, --resolve, --task, --path and --list (lib/handover.sh:14-17). Nothing in a handover names another task, branch, review or run. Episodes carry no parent, so delegation cannot be derived from the episode store without the writer naming it; I3956 would trace every process to its session."
+desired_state: "A coordinator that stops, for any reason, leaves a handover from which the next session learns what it delegated and where each piece stands now, resolved from git, the task records, the ledger and the mesh rather than from memory. Enforced by case 4467 and case 05 unchanged."
+scope:
+  - ".ai/repo/project/issues/I4467.yaml"
+  - "lib/handover.sh"
+  - "lib/common.sh"
+  - "lib/derive.sh"
+  - "docs/CLI.md"
+  - "test/cases/05_handover.sh"
+  - "test/cases/4467_a_handover_names_the_work_it_delegated.sh"
+non_scope:
+  - "Deriving delegation without the writer naming it, by tracing processes and subagents to their session: I3956"
+  - "Pull request and CI run state from GitHub: no remote query on the handover path (mission section 10); such a ref is kept verbatim with standing unknown"
+  - "Publishing the delegated list across machines: the continuity record (apps/majordomus-cli/src/continuity) is unchanged"
+  - "Widening a running task's scope: I4260"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4467: in a fixture with a linked worktree holding an active task T2, `majordomus handover --delegated <T2> --delegated feature/x` in the primary checkout writes a record whose front matter lists T2 as active with that worktree and feature/x with its head"
+  - "Case 4467: after T2 is finished completed in its worktree and feature/x is merged into the trunk, `majordomus handover --resolve` under a new MJ_SESSION_KEY prints T2 `active` then and `completed` now, and feature/x as contained in the trunk"
+  - "Case 4467: a ref that resolves to nothing (`--delegated t-nonexistent`) and an unrecognised ref (`--delegated run:12345`) are recorded and resolved as `unknown` with a reason, never as done"
+  - "Case 4467: `handover --derive --delegated <T2>` writes a `# Delegated` section naming T2"
+  - "Case 05 passes unchanged, and a handover written without --delegated has no delegated list"
+  - "Before the change, case 4467 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4467_a_handover_names_the_work_it_delegated 05_handover 25_continuity_lifecycle"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "delegated_work_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30

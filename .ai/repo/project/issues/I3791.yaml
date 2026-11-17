@@ -1,0 +1,29 @@
+id: I3791
+milestone: one-kit-on-every-surface
+title: "A code block on /ui and the Cockpit carries the one highlighter's classes, and the audit refuses one that does not"
+slug: every-code-block-is-highlighted
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Extend the ui audit with a rule over the site, /ui and the Cockpit that fails a pre or code block which carries neither the one highlighter's classes (I2747) nor the declared plain marker, naming the page, the width and the element, so a surface that renders code without the shared highlighter is refused wherever it appears."
+why: "I2747 makes one engine available; nothing measures that a page uses it. On 2026-10-20 cockpit::view::pre rendered schemas, files and monitor output as plain pre on /cockpit and in the snapshot, and /ui's prose rendered inline code only."
+current_state: "scripts/lib/ui-audit.mjs has no code rule; scripts/site-check checks that the highlight sheets exist and that every pre scrolls or wraps."
+desired_state: "ui-audit rule code.unhighlighted covers every surface; a block that is deliberately plain carries the declared plain marker; the marker for a highlighted block is shared with I3002's copy control."
+scope:
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/lib/ui.test.mjs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/ui/prose.rs"
+  - "test/cases/3791_every_code_block_is_highlighted.sh"
+depends_on: [I2747]
+acceptance_criteria:
+  - "ui-audit fails a page with a pre that carries neither the highlighter's classes nor the plain marker, naming page, width and element"
+  - "The site, /ui and the Cockpit pass the rule on master"
+validation:
+  - "bin/majordomus plan validate"
+  - "node scripts/lib/ui.test.mjs"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3791_every_code_block_is_highlighted"
+evidence_required:
+  - "code_unhighlighted_rule_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

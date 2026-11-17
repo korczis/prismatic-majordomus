@@ -1,0 +1,60 @@
+id: I3287
+milestone: every-sessions-usage-is-observed
+title: "A provider declares how it reports usage, with the evidence, beside its lifecycle"
+slug: a-provider-declares-its-usage-seam
+priority: p2
+profile: implementation
+objective: "Extend share/providers.yaml `offers` with `usage` (otel | app-server | stream-json | none) and `usage_evidence`, so discovery, normalisation, tests and surfaces read one declaration instead of a ClaudeTelemetry/CodexTelemetry/GeminiTelemetry subsystem."
+why: "The owner ordered one generic fabric (c253#3); providers.yaml already carries `offers` with dated evidence for episodes and prompts, so the usage seam is a fourth key, not a new 'telemetry adapter descriptor' noun. Plan repair carried here (the intent's own criteria were repaired in the plan on 2026-10-18; what remains is the existing execution-telemetry milestone and I0301-I0304) because I3287 has no dependencies and is the first issue every telemetry issue waits on: ADR 0213 promises that execution-telemetry drops runtime-adapters, but no milestone file changed, so I0301 and everything depending on it was derived BLOCKED. It extends milestone execution-telemetry. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c253#4."
+current_state: "share/providers.yaml declares episode and prompts per provider; nothing about usage."
+desired_state: "claude-code: otel and stream-json; codex: app-server; gemini: otel; agents/bb: none — each with a citation verified at implementation; product validate refuses a key without evidence."
+scope:
+  - "share/providers.yaml"
+  - "apps/majordomus-cli/src/commands/product.rs"
+  - ".ai/repo/project/milestones/execution-telemetry.yaml"
+  - ".ai/repo/project/issues/I0301.yaml"
+  - ".ai/repo/project/issues/I0302.yaml"
+  - ".ai/repo/project/issues/I0303.yaml"
+  - ".ai/repo/project/issues/I0304.yaml"
+  - "share/schemas/generated/providers.schema.json"
+  - "apps/majordomus-cli/src/share.rs"
+  - "apps/majordomus-cli/src/product.rs"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "test/cases/170_provider_lifecycle_declared.sh"
+  - "docs/generated/providers.json"
+  - "docs/generated/providers.md"
+  - "docs/generated/providers.yaml"
+serves:
+  - "every-sessions-usage-is-observed#claude-code-usage-recorded"
+acceptance_criteria:
+  - "Every provider row states usage and its evidence"
+  - "lifecycle providers and product validate report the usage seam"
+  - "A row with usage and no evidence is refused"
+  - "execution-telemetry no longer depends_on runtime-adapters (ADR 0213 Consequences) and depends on no milestone, its order with every-sessions-usage-is-observed carried by its issues (I0303 after I3288), and `majordomus plan show I0301` no longer derives BLOCKED from its milestone. Amended 2026-10-22 at implementation: the planned milestone dependency on every-sessions-usage-is-observed blocks I0301, which I3288 in that milestone depends on, so neither milestone could finish"
+  - "I0301 is rescoped to apps/majordomus-cli/src/economics and share/schemas and defines the usage record (Option<u64> per category, an absence reason, a named reporter per field)"
+  - "I0302 is cancelled as superseded by I3288 with its criteria carried into I3288; I0303 is rescoped to test/cases over the Rust receiver; I0304 is rescoped to the Rust economics read surface with a declared retention bound"
+  - "No acceptance criterion is ranked by both execution-telemetry and every-sessions-usage-is-observed (`majordomus plan validate` passes)"
+  - "Codex's usage row cites dated evidence on whether its own OpenTelemetry export covers sessions the person starts, or declares that seam unadapted with the reason"
+  - "The intent's criteria stand as the plan declares them on 2026-10-18 (no-estimate-shown-as-spend-or-saving replaces no-unmeasured-claim; a-silent-provider-is-absent, gemini-usage-recorded, compaction-is-measured, over-budget-is-told, savings-are-measured-by-arm and own-overhead-is-measured are served), and `majordomus intent validate` reports no criterion of the intent unserved"
+validation:
+  - "majordomus product validate"
+  - "majordomus generate --check"
+  - "bash test/run.sh 170_provider_lifecycle_declared"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_provider_declares_its_usage_seam"
+created_at: 2026-10-18
+updated_at: 2026-10-22T21:08:22Z
+started_at: 2026-10-22T21:07:48Z
+started_event: sha256:3fc0107f5996fa751036700bc5896db1fc3059c7977253e6de5b053321f6e184
+verified_at: 2026-10-22T21:08:02Z
+verified_event: sha256:0cfde906cac90cdcb80b06316f3552d2e85b253cd457a5b5ef0d07c8517f47d7
+completed_at: 2026-10-22T21:08:22Z
+completed_event: sha256:1c485bb9b07cd3104148936e8f8f97fbfb3b9d19dc131674dfe9dac3a3aaf2e5
+evidence:
+  - covers: case_a_provider_declares_its_usage_seam
+    type: test
+    command: "bash test/run.sh 3287_a_provider_declares_its_usage_seam"
+    result: "tests: 1 passed, 0 failed, 0 skipped: the evidence gate passes the declaration and refuses an unknown seam, none beside a seam and an uncited list; product validate names the uncited provider; lifecycle providers and docs/generated/providers.md carry every row's seams"
+    commit: dc514006fabd8f57bb610da16a5ccc50e8970827
+    recorded_at: 2026-10-22T21:08:15Z

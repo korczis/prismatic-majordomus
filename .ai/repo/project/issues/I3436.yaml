@@ -1,0 +1,41 @@
+id: I3436
+milestone: public-proof
+title: "Every article reads in every language the site declares, and its counterparts are reciprocal"
+slug: every-article-reads-in-every-language
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "scripts/site-check refuses, naming the file, an article whose counterpart is not a page under site/content-src, is in the article's own language or in another language than alternate_lang names, or does not name the article back, and an article site/data/nav.toml lists with no counterpart in a language the site declares; the languages are config.toml's default_language and the lang values the pages declare, and the check runs alone as --articles over a fixture."
+why: "The owner asked on 2026-10-19 that the site's articles be interlinked in every language and that this be enforced. The milestone is public-proof because it owns what the public site tells a visitor and holds scripts/site-check and site/ in its scope; a published article that names a translation which does not name it back, or that has none, is the site saying less than it claims."
+current_state: "site/templates/base.html:35-37 emits rel=alternate links from [extra] alternate and alternate_lang, and scripts/ci/link-check:5 resolves every <link> as an internal link, so only a counterpart that is not built is a finding. Nothing refuses a one-way alternate, a counterpart in the same language, or an article without one: on master site/content-src/everything-followed.md:6 (lang en) and site/content-src/teze.md:6 (lang cs) declare no counterpart while site/data/nav.toml:90 and :92 list them, and scripts/site-check:1597 ends the run without a language check."
+desired_state: "Check 21 of scripts/site-check, article_counterparts, reads the front matter of every *.md under site/content-src and refuses each of the four faults and every listed article missing a counterpart, printing one OK line for a clean tree; scripts/site-check --articles DIR NAV CONFIG runs it alone; case 3502 holds it on fixtures and on the real tree."
+scope:
+  - "scripts/site-check"
+  - "test/cases/3502_every_article_reads_in_every_language.sh"
+  - ".ai/repo/project/issues/I3436.yaml"
+acceptance_criteria:
+  - "A reciprocal pair and a page that declares no lang pass with one OK articles line"
+  - "A one-way alternate, a dangling target, an alternate_lang that is not the target's lang and a counterpart in the article's own language each fail with exit 10 and name the file"
+  - "An article the navigation lists with no counterpart fails naming the missing language, and a site that declares one language owes none"
+  - "The languages are derived from config.toml and the pages, not written in the check"
+  - "The real site/content-src passes"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3502_every_article_reads_in_every_language"
+evidence_required:
+  - "articles_are_reciprocal_in_every_language"
+depends_on: []
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-20T16:30:35Z
+started_at: 2026-10-20T16:16:25Z
+started_event: sha256:59fba4974e02881d04134434ad41e69fc614b77fa45cc15935880d8fbaa46430
+completed_at: 2026-10-20T16:30:35Z
+completed_event: sha256:f05ab5134536ab004f4f5f5391606c92355b218d06ad4e50fac61f4d1af7f638
+evidence:
+  - covers: articles_are_reciprocal_in_every_language
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: suite shards 1-4 (jobs 118683336189 118683338077 118683336157 118683336457) run every case, incl. 3502_every_article_reads_in_every_language (4624a38dfe7)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:22:52Z

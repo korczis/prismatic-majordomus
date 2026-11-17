@@ -1,0 +1,42 @@
+id: the-corpus-is-registered-before-it-runs
+title: "A corpus of 20 tasks, stratified by a difficulty proxy measured and registered before the new tasks are written, is registered with its analysis, run order, stopping rule and a pinned release"
+slug: the-corpus-is-registered-before-it-runs
+order: 203
+priority: p1
+problem: "The owner's report of 2026-10-19 (T2) asks for 20 comparable tasks split by difficulty in advance. The economics corpus has seven tasks, 4 small and 3 medium by their declared complexity and none large (grep complexity .ai/repo/benchmarks/economics/tasks/*/task.yaml). The suite declaration (model.rs:437) registers no strata, outcomes, analysis, run order or stopping rule. Difficulty is only the author's declaration. The treatment runs the checkout's own bin, lib and share (suites/pilot.yaml freshness_inputs), which the mesh changes many times a day, so a run spanning days would go stale before its pairs complete."
+outcome: "suites/corpus.yaml is a registration committed before the first run: 20 tasks in three strata whose cut-offs on a measured proxy were registered before the new tasks existed, each task proven failable and passable and reviewed by someone other than its author, a seeded interleaved run order, a stopping rule, and a treatment pinned to one released version."
+current_state: "suites/pilot.yaml:10-14 fixes model claude-sonnet-5, repetitions 2 and 5 USD per session against methodology.yaml:57 min_repetitions 3. methodology.yaml:43 lists majordomus revision among the comparability keys. runner.rs:103 RunOptions has a per-session timeout and no suite ceiling. wc -l test/fixtures/economics/reference/*.patch gives patches of 11 to 92 lines."
+desired_state: "suites/corpus.yaml loads under the registration validation; economics references proves all 20 tasks; the T2 protocol in the proof plan names the suite's registration digest."
+scope:
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - ".ai/repo/benchmarks/economics/suites"
+  - ".ai/repo/benchmarks/economics/README.md"
+  - ".ai/repo/benchmarks"
+  - "docs/ECONOMICS.md"
+  - "site/content/docs/economics.md"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "The acceptance pairing and finish-contract arm of methodology version 2 (I3133)"
+  - "Per-mechanism arms (I3298)"
+  - "Running the corpus (a-registered-corpus-judges-majordomus)"
+  - "Tasks from the T1 repository; a later registration may add them, never this one mid-run"
+acceptance_criteria:
+  - "majordomus economics references proves each of the 20 registered tasks"
+  - "The registration is committed before the first run of the suite, and every run of it carries the registration digest and the pinned release"
+  - "A task whose measured proxy disagrees with its stratum is refused on load"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "The corpus is one synthetic fixture written by the treatment's builders; the published result says so"
+  - "Case 430 runs economics references over every task, so 13 more tasks lengthen it"
+  - "I3133 must apply its completion declaration to the 13 new prompts if it lands after them"
+  - "I3367, I3374 and I3375 edit model.rs in sequence; their depends_on order them"
+created_at: 2026-10-19
+updated_at: 2026-10-19

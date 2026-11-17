@@ -131,6 +131,13 @@ impl BuildIdentity {
         let dirty = match v.get("dirty") {
             None => false,
             Some(Value::Bool(b)) => *b,
+            // a process that could not tell how it was built answers `null`: it proves no
+            // commit, and saying why is the difference between a finding and a puzzle
+            Some(Value::Null) => {
+                return Err(Malformed(
+                    "the served identity does not say whether its build was dirty (`dirty: null`), so it proves no commit".into(),
+                ))
+            }
             Some(other) => {
                 return Err(Malformed(format!(
                     "the served `dirty` is `{other}`, not a boolean"

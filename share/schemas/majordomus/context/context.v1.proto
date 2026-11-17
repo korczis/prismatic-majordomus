@@ -76,6 +76,45 @@ message Header {
   // directory applies, and a descendant may raise require_contract to true but never lower
   // an inherited true.
   Children children = 15;
+
+  // What may live in the directory and how long it lives (I2870, I1102). Optional: a
+  // contract without it says nothing about its contents, and the boundary check (I2871)
+  // judges only what a contract declares.
+  Layout layout = 16;
+}
+
+// The contents a directory admits: the lifecycle of what lives there, the kinds it holds,
+// and what must never appear in it. Declared in the contract the directory already has, so
+// the layout is never a second description of the tree.
+message Layout {
+  option (majordomus.closed) = true;
+
+  // How what lives here comes to exist and how long it lasts, in the classes of
+  // docs/TWO_FOLDER_CONSOLIDATION.md.
+  Lifecycle lifecycle = 1 [(majordomus.required) = true];
+
+  // The kinds (share/kinds.yaml) the directory holds. Empty: whatever its scope admits.
+  repeated string holds = 2;
+
+  // Lifecycles or kinds that must never appear here: `cache` and `runtime` under the
+  // tracked half, for example.
+  repeated string excludes = 3;
+}
+
+enum Lifecycle {
+  LIFECYCLE_UNSPECIFIED = 0;
+  // Once written, it is the person's file: Majordomus seeds it and then does not own it.
+  LIFECYCLE_CANONICAL = 1 [(majordomus.value) = "canonical"];
+  // Computed from this repository's own `.ai/` content: committed, regenerable, stamped.
+  LIFECYCLE_DERIVED = 2 [(majordomus.value) = "derived"];
+  // Laid down from the tool's distribution (`share/`), identical at one version.
+  LIFECYCLE_GENERATED = 3 [(majordomus.value) = "generated"];
+  // Recomputable state with no meaning of its own; deleting it costs time and nothing else.
+  LIFECYCLE_CACHE = 4 [(majordomus.value) = "cache"];
+  // State of one clone, machine or process; it never travels through git as content.
+  LIFECYCLE_RUNTIME = 5 [(majordomus.value) = "runtime"];
+  // Written although it serves no purpose where it is.
+  LIFECYCLE_ACCIDENTAL = 6 [(majordomus.value) = "accidental"];
 }
 
 // The obligation a document places on the subtree beneath it.

@@ -1,0 +1,25 @@
+id: I3245
+milestone: fly-deployment
+title: "The image build's cold and warm durations and its context size are read from docker-image runs, and the deployment records say what is built today"
+slug: the-image-build-is-measured
+priority: p3
+profile: verification
+objective: "Record cold, warm and one-line-edit image build times and the build-context size from docker-image runs as evidence, and rewrite the stale current_state of I0911 and I0921."
+why: "c228#9-#10 and c195#2 asked for multi-stage BuildKit caches with cold and warm times recorded. The stages exist; the numbers and the records do not. Sources: chatgpt-majordomus:c195#2, chatgpt-majordomus:c228#9, chatgpt-majordomus:c228#10."
+current_state: "I0911 says 'No container build exists'; docker-image.yml builds a multi-stage image with an sccache mount restored via actions/cache."
+desired_state: "I0911 and I0921 carry measured evidence and can move toward done."
+scope:
+  - ".ai/repo/project/issues/I0911.yaml"
+  - ".ai/repo/project/issues/I0921.yaml"
+  - ".github/workflows/docker-image.yml"
+non_scope:
+  - "Remote BuildKit cache backends without a benchmark (c195#2 rejected cargo-chef or a prebuilt image without one)"
+acceptance_criteria:
+  - "Three measured durations with run ids"
+  - "Context size measured from the build log"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "image_build_times_recorded"
+created_at: 2026-10-18
+updated_at: 2026-10-18

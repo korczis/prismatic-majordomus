@@ -1,0 +1,33 @@
+id: I3449
+milestone: truthful-plan-surfaces
+title: "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand"
+slug: every-surface-names-its-versions-from-one-model
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make the version a reader sees on any surface (the site's navbar and footer, /roadmap/, /ui, the Cockpit, the README badges, the install section) come from one derived release model with named roles: the offered stable release, the newest pre-release, and the source the page was built from. Each surface labels which role it shows, so one page never shows two versions without saying why. A gate over every built surface refuses a version that disagrees with that model, or a version written by hand in a template, content file or data file."
+why: "Found on 2026-10-20 by the owner-ordered audit of the roadmap and the landing page (campaign defect D10), on the day v1.0.0-alpha.1 was tagged. One page showed three versions: the navbar v0.30.2 (offered.version, the stable release), the footer v1.0.0-alpha.1 (source.source_version, with no label), and /ui '1.0.0-alpha.1 not tagged'. The roadmap has no milestone for the alpha. The owner asked that versions be dynamic, inferred, generic, up to date and enforced everywhere. It happened again on 2026-10-22, read by an outside reviewer as the stale projection the product says it detects: the navbar v0.30.2, the product block the release record of v1.0.0-alpha.4, the footer v1.0.0-alpha.6, three places and three numbers. The owner asked why they are not derived, inferred and enforced; the priority is raised to p0."
+current_state: "site/templates/partials/navbar.html shows offered.version from build.json's release block. site/templates/partials/footer.html:44 shows 'Generated from <project> v<source.source_version>' with no role named. The /ui badge reads the release state separately. scripts/ci/version-matches-surface judges the declared version against the public contract, but nothing compares the versions the built surfaces show with each other or with build.json, and nothing refuses a literal version in templates or content."
+desired_state: "One derived value (build.json's release model: offered, prerelease, source) is read by every surface. The navbar shows the offered release, and the newest pre-release beside it when one is newer. The footer says 'built from source vX at commit Y'. /ui and the Cockpit read the same model. scripts/site-check, or a gate it calls, walks the built site and the snapshots, and refuses any version string that is not one of the model's values in its labelled role, and any version literal in site/templates, site/content-src or site/data outside generated files."
+scope:
+  - "site/templates/partials/navbar.html"
+  - "site/templates/partials/footer.html"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh"
+non_scope:
+  - "Which release is offered as stable, which stays the newest stable release (I2829)"
+  - "The version bump policy, which stays release analyze's (scripts/ci/version-matches-surface)"
+acceptance_criteria:
+  - "On a build where a pre-release is newer than the offered release, every page names the offered release and the pre-release with their roles, and the footer names the source version and commit as the build's"
+  - "A fixture template carrying a hand-written 'v9.9.9' is refused by the gate, which names the file and line"
+  - "A fixture build whose /ui snapshot names a version build.json does not hold is refused"
+  - "Negative: a build with no pre-release newer than the offered release shows one release version and passes"
+validation:
+  - "scripts/site-build && scripts/site-check"
+  - "bash test/run.sh 3727_the_pages_name_the_pre_release_beside_the_stable_one"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_every_surface_names_its_versions_from_one_model"
+depends_on: []

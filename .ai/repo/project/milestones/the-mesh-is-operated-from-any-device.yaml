@@ -1,0 +1,19 @@
+id: the-mesh-is-operated-from-any-device
+title: "The owner understands and operates the whole mesh from one page, on any device"
+slug: the-mesh-is-operated-from-any-device
+order: 178
+priority: p1
+problem: "From a phone, a desktop or a Claude Code session the owner sees which nodes, sessions and tasks are live, what is blocked and why, and performs an authorised action whose result and evidence come back live; the page is a client of the persistent runtime, so closing it or ending a session loses nothing and changes nothing. Sources: chatgpt-majordomus:c118#6, chatgpt-majordomus:c138#2, chatgpt-majordomus:c296#0."
+outcome: "From a phone, a desktop or a Claude Code session the owner sees which nodes, sessions and tasks are live, what is blocked and why, and performs an authorised action whose result and evidence come back live; the page is a client of the persistent runtime, so closing it or ending a session loses nothing and changes nothing."
+current_state: "Its issues extend existing milestones; see each issue's why."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+acceptance_criteria:
+  - "The UI served on one machine reads a linked runtime the mesh names and says which runtime every reading came from"
+  - "One mutating operation started from /ui/mesh is authorised, executed, audited and its result shown live; refused without authentication"
+  - "The hub's UI, API and MCP answer over the tailnet from a second authorised device and nowhere publicly"
+  - "Ending the session or closing the page loses no persistent work and the next client resumes from a snapshot and cursor"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -67,7 +67,12 @@
 //! // 8000 bytes is 2000 tokens: twice the ceiling, and the more relevant of the two
 //! candidates.insert("big".to_string(), candidate("majordomus://knowledge/big", 0.9, 8_000));
 //! candidates.insert("small".to_string(), candidate("majordomus://knowledge/small", 0.5, 400));
-//! let selection = Selection { candidates, unresolved: Vec::new(), diagnostics: Vec::new() };
+//! let selection = Selection {
+//!     candidates,
+//!     unresolved: Vec::new(),
+//!     diagnostics: Vec::new(),
+//!     paths: BTreeSet::new(),
+//! };
 //!
 //! let (s, _) = spend(&index, selection, &BTreeSet::new(), 1_000, &BTreeMap::new());
 //!
@@ -126,6 +131,7 @@ use super::select::{version_of, Candidate, Selection};
 ///     candidates: BTreeMap::new(),
 ///     unresolved: Vec::new(),
 ///     diagnostics: Vec::new(),
+///     paths: Default::default(),
 /// };
 ///
 /// // the answer and what could not be read, side by side and neither an error
@@ -257,6 +263,7 @@ fn stem(uri: &str) -> (&str, Option<u32>) {
 ///     candidates: BTreeMap::from([(seed_uri.to_string(), candidate)]),
 ///     unresolved: Vec::new(),
 ///     diagnostics: Vec::new(),
+///     paths: Default::default(),
 /// };
 /// let seeds = BTreeSet::from([seed_uri.to_string()]);
 ///
@@ -318,6 +325,11 @@ pub fn spend(
     // ---- semantic: one file indexed under two kinds
     let mut by_path: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for c in candidates.values() {
+        // a source range names its file without being it: the ranges of one file are
+        // distinct parts of it, not one file indexed under several kinds
+        if c.kind == super::source::KIND {
+            continue;
+        }
         if let Some(p) = &c.path {
             by_path.entry(p.clone()).or_default().push(c.uri.clone());
         }
@@ -543,10 +555,13 @@ pub fn spend(
                     EntryProvenance {
                         path,
                         directory,
-                        // not discovered by a source class: named by the layer, or read
-                        // from this checkout's own local state
+                        // not discovered by a source class: named by the layer, read
+                        // from this checkout's own local state, or a range of a source
+                        // file the compiler parsed
                         source_class: if c.uri.starts_with("local:") {
                             "local-state".into()
+                        } else if c.uri.starts_with(super::source::SCHEME) {
+                            "source-syntax".into()
                         } else {
                             "named".into()
                         },

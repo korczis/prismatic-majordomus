@@ -70,7 +70,7 @@ flowchart TD
   decl["apps/majordomus-cli/src/design/tokens.yaml<br>the declaration, compiled in"]
   declout["design.* capabilities,<br>Cockpit shell and Design page"]
   logo["apps/majordomus-cli/src/cockpit/logo-mark.svg<br>the mark, compiled in"]
-  topbar["Cockpit top bar"]
+  topbar["the UI's hero mark"]
   brand["share/cockpit/favicon.svg, site/static/favicon.svg,<br>site/static/images/*.svg<br>every copy of the brand"]
   registry["site/data/registry/design.json<br>vocabulary, theme contract, widths"]
   registryout["templates, site-probe, ui audit"]
@@ -95,6 +95,32 @@ site's alone: the frame of the diagram viewer and of a chart
 ([`DIAGRAMS.md`](DIAGRAMS.md)), over the same tokens and the pairs the primitives already
 use. It is unlayered on purpose, because the frame is the diagram's own `<pre>` and must
 win over whatever utilities its page gave it.
+
+A chart (`site/charts.js`) takes every colour it draws from the page: the series from
+`--mj-series-<n>` by the column's place, or from the status badge its header carries, so a
+colour belongs to the column and hiding a series repaints none of the others; text in
+`--mj-fg`, `--mj-body` and `--mj-muted`, never in a series colour; the grid and axis in
+`--mj-line`; the tooltip on `--mj-raised` with a `--mj-line` border; the zoom slider's window
+in the one accent. It is read by pointing at it: one tooltip at a category naming every
+visible series in the figure's unit, under a crosshair on a line and a shaded band on bars;
+for two or more series a legend of toggle buttons under the frame (the page's own controls,
+reached by the keyboard and wrapped at any width), each hiding and showing its series, the
+axis rescaling to what is left, and a hidden series struck through with a hollow key and
+`aria-pressed="false"`, never told by a colour alone; the hovered series focused and the rest
+faded. Lines are 2px, straight between measured points and broken where a value is missing,
+over a fill that fades from the series colour at `--chart-area-opacity` (declared on
+`.mj-chart` in `figure.css`) to nothing, with a marked and labelled latest value and a dot on
+any measured value with no measured neighbour; bars round only their data end, and stacked
+segments are parted by the page's own colour. A line chart with more categories than its
+width holds at 24px each is zoomable (the slider, a trackpad pinch or ctrl + wheel, shift +
+wheel, a mouse drag), while a plain wheel always scrolls the page, and its Reset button
+gives the whole range back. The legend's button and the Reset button are `<template>`s in
+`site/templates/partials/charts.html`, so the interaction check counts them. The frame takes
+focus: the arrows, Home and End move the tooltip, + and - zoom, 0 resets, Escape lets go, a
+key held with ctrl, alt or meta is left to the browser, and a live region says what the
+tooltip says. Motion is
+`--mj-motion-fast`, and none under `prefers-reduced-motion`, followed when it changes. Without
+the script the figure is its table; [`DIAGRAMS.md`](DIAGRAMS.md) is the declaration.
 
 Both Tailwind builds import the generated sheets in the same order, after Flowbite's theme.
 The site keeps Flowbite's vocabulary in its templates — `text-heading`, `border-default`,
@@ -205,6 +231,34 @@ component's argument by its default, takes a literal argument only in braces
 (`count={4}`), allows one `for` per comprehension and arrays two levels deep; the kit is
 written within those limits.
 
+## The navbar: the site is the reference
+
+majordomus.dev is the reference for how the product looks and behaves, and the surfaces the
+executable serves derive from it rather than imitate it
+(`project.the-ui-wears-the-sites-navbar`). The first thing derived is the bar at the top of
+the page. It has one declaration (`site/data/nav.toml`, `project.navigation-is-declared-once`)
+and one renderer (`site/templates/partials/navbar.html`); every screen of `majordomus ui`
+and every page of the Cockpit wears that renderer's output:
+
+- **the markup** is the bar of the built site, cut out by `scripts/ui navbar --write` into
+  `apps/majordomus-cli/src/ui/navbar.html` and compiled into the executable — with the
+  release in the badge left for the executable to fill in, and the build's comments dropped;
+- **the styles** are the same utilities over the same tokens: the UI's and the Cockpit's
+  Tailwind entries (`share/ui/src/ui.css`, `share/cockpit/src/cockpit.css`) import what the
+  site's does and name the copy as a source, so each compiled sheet carries exactly the rules
+  the bar is written in;
+- **the behaviour** is the site's own `nav.js` and `theme.js`, served from `share/ui/` and
+  `share/cockpit/` as byte copies that `scripts/cockpit-assets --check` holds to their
+  originals.
+
+`scripts/ui navbar` (run first by `scripts/ui audit`, the `ui-audit` gate) refuses a copy that
+is not the built bar, and compares the bar on the site's front page with the bar on `/ui` in a
+browser, and the bar on `/cockpit` likewise — every element's tag, classes, text, box and computed styles, light and dark, at
+every width `viewports` declares, closed and with a menu open. The executable decides only
+what it alone knows: the version, and that the product entry leads to the UI itself rather
+than to its published snapshot. The UI's manual says the rest
+([`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#the-navbar-comes-from-the-site)).
+
 ## Validation
 
 | what | where | when |
@@ -217,6 +271,7 @@ written within those limits.
 | the stylesheet, the page and the dataset agree, at every declared width | `scripts/site-probe` (`site-probe` gate) | the site job |
 | the stylesheet, the page and the executable agree; every badge word is filed; no overflow at every declared width | `scripts/cockpit-probe` (`cockpit-probe` gate) | the cockpit job |
 | every page is keyboard-operable and passes contrast at every width | `scripts/ui audit` (`ui-audit` gate) | the site job |
+| the UI's navbar is the site's: the compiled copy is the built bar, and the two bars agree element by element and style by style | `scripts/ui navbar`, run first by `scripts/ui audit` (`ui-audit` gate) | the ui job |
 | every colour the declaration pairs with a ground can be read on it, in both themes | `crate::design::contrast` through `design.contrast`, asked by `scripts/ci/design-check` question 9; `test/cases/120_design_contrast.sh` | every plan that touches the declaration or a primitive |
 | the model, the renderer and the zero-registration property | the crate's tests; `test/cases/107_design_tokens.sh`; `test/cases/109_design_system.sh` | the rust and suite jobs |
 
@@ -240,7 +295,7 @@ always shows the word beside it.
 
 | surface | how |
 |---|---|
-| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`; resource `majordomus://design` |
+| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`, `majordomus_design_kit`; resource `majordomus://design` |
 | HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast` |
 | OpenAPI, Swagger | the same four operations, from the registry |
 | Cockpit | `/cockpit/design`: every role with both themes' swatches, every status with its words as badges, the type scale at its own sizes, the projections — and the badge that says whether the stylesheet the page loaded agrees with the executable |
@@ -257,6 +312,98 @@ majordomus_design_explain {"token": "--mj-ok"}
   aliases: --color-fg-success-strong --color-success-soft --color-success-subtle,
   projections: share/design/theme.css share/design/surface.css …
 ```
+
+## The UI kit of a supervised repository
+
+Everything above is this tool's own design. `majordomus design kit` asks a different
+question, about the repository Majordomus supervises: is its user interface built on the
+kit the owner licenses? The answer comes from a kit profile the distribution ships,
+[`share/design/kits/flowbite-pro.yaml`](../share/design/kits/flowbite-pro.yaml). The
+profile holds markers only: attributes, class lists, package names and file shapes. It
+never holds a line of Flowbite Pro itself. The decision is
+[ADR 0230](../.ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md): Pro's
+structure is adapted onto Tailwind 4 and Flowbite 4, and a brand's colour is declared as
+Tailwind's `primary` scale.
+
+| signal | holds when |
+|---|---|
+| S0 | there is no user interface at all, and the rule then holds vacuously. Otherwise an interface was found, and cut into surfaces: the root's `package.json` (or the one in `assets`), every workspace the root declares (`workspaces`, or `pnpm-workspace.yaml`), and every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv. Phoenix LiveView in `mix.exs`, `*.heex`, `templates/*.html`, a Next.js `app/layout.tsx` and published pages (a root `index.html`; pages under `site`, `www` or `public`, under a directory a Pages workflow or a deploy script publishes, and under `docs` when it is published) count too. A manifest with UI packages that is no surface is a notice, never a finding, and nothing under examples or fixtures counts, a Mix project included. A Git submodule or a nested repository is judged in its own repository: a notice names it |
+| S1 | each surface declares `flowbite`, or `flowbite-react` for React and Next.js, and uses it in its own files: an attribute Flowbite's JavaScript drives, a `flowbite-react` component or a call of its API. Wiring alone passes none of S1 to S3 |
+| S2 | under Tailwind 4, `@plugin "flowbite/plugin"` and an `@source` over Flowbite; under Tailwind 3, `require('flowbite/plugin')` and a content glob, or `.plugin()` and `.content()` called on the identifier bound to `flowbite-react/tailwind`. A Play CDN or a CDN-only Flowbite is a finding |
+| S3 | every `data-drawer-*`, `data-dropdown-*`, `data-modal-*`, `data-tabs-*`, `data-collapse-*` and `data-tooltip-*` attribute is driven by Flowbite's JavaScript, and no script reads those attributes itself |
+| S4 | no daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui or Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation or Materialize. Alpine.js is reported, not refused |
+| S5 | every root layout carries a fixed top navbar, an `aside[aria-label="Sidebar"]` that both `data-drawer-target` and `data-drawer-toggle` name, a breadcrumb, and the page, surface and border roles; a published site's layout (under `site`, `www` or `docs`) a navbar and a footer. The layouts and the role aliases are the profile's; a Phoenix `layouts.ex` is judged with the app and root templates it embeds |
+
+```console
+majordomus design kit                    # findings with their remedies; exit 0
+majordomus design kit --check            # exit 10 on a finding (CI, pre-push)
+majordomus design kit --repo ../other    # any tree, supervised or not
+majordomus design kit adopt flowbite-pro [--dry-run]
+```
+
+Each finding names its signal, path, evidence and remedy. Exit 0 means clean or no
+interface, 10 a finding under `--check`, and 2 a policy that cannot be read.
+
+The profile's markers come in two kinds. Wiring markers (`wiring:`) connect the kit to a
+build, and usage markers (`usage:`) show it in use. Flowbite Pro is licensed, so the profile
+also declares its licensed markers (`licence:`): what in a tree is the licensed distribution
+itself rather than markup adapted from it, such as a Pro distribution directory or a
+dependency on a Pro package. Where a tree carries one, the design licence
+(`majordomus design licence`, I4336) decides: the judge asks its library function and reads
+its verdict as `active`, `inactive`, `refused` or `not_judged`. Only `active` passes;
+`inactive` and `refused` make the marker unlicensed, and `not_judged` (a public tree with a
+UI and no evidence on this machine) is undecided, a finding that no exemption moves. The
+same answer is the MCP tool `majordomus_design_kit`. There is no HTTP route, as there is
+none for the design licence: the input `evidence` names a file the process opens, and a
+query parameter naming a file on the server would let any HTTP caller probe its files.
+
+The evidence is a kit-evidence/v1 file. `--evidence <file>` names it (the input `evidence`
+over MCP). Without it, the judge reads the policy's `~`-relative `ui.evidence`
+entries. The executable reads a file and never the environment. In CI the secret
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` holds base64(gzip(kit-evidence/v1)). For flowbite-pro the
+name is `MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO`. The launcher handles it: where a
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported, `majordomus design kit` and
+`majordomus design licence` (not `design kit adopt`) run through the shell's
+`mj_fleet_design_judge` (`lib/fleet.sh`), and anywhere else the command is the
+executable's, unchanged. The seam decodes the secret of
+the kit `ui.kit` names into a private temporary file, passes that file as `--evidence`, and
+removes it after the run. A value that is not kit-evidence/v1 exits 2 and names the
+variable, never its value. If the secret is unset, empty or for another kit, nothing is
+handed over, and a public tree that owes a judgement fails closed. A file whose first
+line `# kit: <id>` names another kit is `not_judged`. `licence.reason` says why the
+licence answered as it did. It names a file and a line at most, never what the evidence
+holds. A policy that still carries the retired top-level `design_kit:` block gets a notice
+naming `ui.kit` as its replacement.
+
+`adopt` writes the rule `project.ui-uses-flowbite-pro` from
+[the template](../share/design/kits/flowbite-pro.rule.md). It sets `ui.kit: flowbite-pro` in
+the `ui:` block of `.ai/repo/policy.yaml`, the block the design licence declares and the
+skeleton seeds with no kit (or appends the block when there is none; a `ui.kit` naming
+another profile is refused, and with no kit adopted flowbite-pro is the profile judged), and
+two enforcement entries that run `design kit --check`:
+`design-kit-on-push` (the pre-push hook) and `design-kit` (the CI workflow, when there is
+one). It writes nothing that is already there, so a second run changes nothing. The rule ends
+with a section `In this repository` that is the repository's own: a later adoption brings
+the rest of the rule up to the template and keeps that section as the repository wrote it.
+`majordomus doctor` names each entry until the hook and the workflow invoke it.
+
+An exemption is the repository's own entry under `ui.exempt`, exactly a path and its
+reason, and is never silent: it moves every finding at its path to the exempted list, and
+every answer lists it with the number of findings it covered. A licensed marker's finding
+is never exempted.
+
+```yaml
+ui:
+  kit: flowbite-pro                 # written by adopt; "" adopts none
+  visibility: public                # the design licence's, as are publish and evidence
+  exempt:
+    - path: reel.html
+      because: a render canvas, captured headless and never navigated
+```
+
+This repository has not adopted the rule yet. Its site's navigation is `site/nav.js`, a
+hand-written drawer that S3 refuses, and the site, the Cockpit and `/ui` move onto the Pro
+shell in a later slice (ADR 0230, Consequences).
 
 ## Troubleshooting
 
@@ -286,7 +433,8 @@ majordomus_design_explain {"token": "--mj-ok"}
 
 ## What is deliberately not shared
 
-The two surfaces share a language, not a layout. The site is Flowbite components in
+Below the bar, the surfaces share a language, not a layout: the bar itself is the site's on
+the UI and the Cockpit too (above). The site is Flowbite components in
 templates at reading density; the Cockpit is semantic classes over the same tokens at
 operational density. The Swagger UI's own component tree keeps its third-party stylesheet
 inside a frame that is ours. Flowbite names the site uses that are not shared decisions

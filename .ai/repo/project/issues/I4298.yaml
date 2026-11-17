@@ -1,0 +1,49 @@
+id: I4298
+milestone: a-review-is-published-at-its-commit
+title: "One forge-link component pins every commit, pull request, file and line reference on the site, and a reference it cannot prove is reported as text"
+slug: one-forge-link-component-pins-every-reference
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Extend the site's one forge-link component with commit, pull request and line forms, apply it wherever the site prints a commit, a pull request, a file or a test as text, refuse a branch-pinned fallback, teach scripts/ci/source-pin-check to ratchet inline repository_url/commit/ copies against its baseline, teach link-check to decide the pull request and line forms offline, render any reference it cannot prove as text listed in the build report, and make every page that cites a release pointer name the commit and path it read it at."
+why: "dev-68 asked that every link from a review be pinned to the commit it cites and that only links that resolve be emitted; dev-53 asked that every page pin the release pointer it cites instead of 'latest'. Today the merging pull request is a span (site/templates/roadmap.html:117), the evidence commit is text (site/templates/issue.html:73), an episode's commits are text (site/templates/session.html:23), a release's commit is text (site/templates/changelog.html:84) and entity file and test references are text (site/templates/entity.html:40-41). source_ref falls back to master when the build is dirty or unknown (site/templates/source-links.html:27). link-check decides commit links through mj_commit_in_history (lib/common.sh:761, scripts/ci/link-check:336) and has no pull request form. dev-53 observed plan delivery proving 0 of 1036 issues deployed while the delivery report said 29 of 29 features deployed, and gave as cause that published_live (apps/majordomus-cli/src/plan/delivery.rs:761) reads site/static/releases/latest.json at the deployed commit while the gh-pages branch carries releases/latest.json. Correcting that read is not this issue's: on 2026-10-28 a peer's unpushed branch fix/the-deployed-stage-reads-what-pages-published carries it as I4315 with a proposed ADR 0227, so this issue only makes each page name the pointer it cites. This extends I3007 (a commit the site names is one the history holds) and the file-to-source half of I2656; it does not repeat their scope."
+current_state: "On 81ef931a3e1 site/templates/source-links.html offers source_ref, source_blob and source_tree only; six templates write commit URLs inline (index.html:156, :173, :412, :519 and :534, trends.html:47, registry-benchmarks.html:86, plan-section.html:31, roadmap.html:33, :47 and :117 through its repo variable, and partials/footer.html:44); scripts/ci/source-pin-check ratchets blob/master, tree/master and variable-held /master occurrences against .ai/repo/source-pin-baseline.txt and counts no commit/ copy; no page names the commit at which it read the release pointer it cites."
+desired_state: "source-links.html adds source_commit, source_pull and source_line; every site of the list above uses them and roadmap.html's inline commit copies are gone; source-pin-check counts inline commit/ copies per template in .ai/repo/source-pin-baseline.txt, so a new copy fails and the copies left in index.html, trends.html, registry-benchmarks.html, plan-section.html and the footer are baselined and only shrink; the component refuses to emit a branch-pinned URL; link-check decides commit, pull request (against the merged pull requests the build's delivery data names) and line forms and reports every reference it renders as text; each page that cites a release pointer prints the commit and path it was read at."
+scope:
+  - ".ai/repo/project/issues/I4298.yaml"
+  - "site/templates/source-links.html"
+  - "site/templates/roadmap.html"
+  - "site/templates/issue.html"
+  - "site/templates/session.html"
+  - "site/templates/changelog.html"
+  - "site/templates/entity.html"
+  - "scripts/ci/link-check"
+  - "scripts/ci/source-pin-check"
+  - ".ai/repo/source-pin-baseline.txt"
+non_scope:
+  - "Forge links on /ui and the Cockpit (I4311)"
+  - "Blaming lines to commits (I4301)"
+  - "Any network read during the build: a pull request is proved against the delivery data the build already holds"
+  - "The navbar and footer partials (#2349): the footer's commit link is baselined, not rewritten"
+  - "The inline commit links of index.html, trends.html, registry-benchmarks.html and plan-section.html, which are already pinned to a commit and stay baselined; index.html's delivery commit links belong to open I3769"
+  - "Where plan delivery reads the release pointer (apps/majordomus-cli/src/plan/delivery.rs), which the peer branch fix/the-deployed-stage-reads-what-pages-published corrects as I4315"
+depends_on: []
+serves:
+  - "a-review-is-seen-at-its-commit#every-forge-link-is-pinned-and-proven"
+acceptance_criteria:
+  - "Every template listed in scope links commits, pull requests, files and tests through the component, and none of them keeps an inline repository_url/commit/ copy"
+  - "scripts/ci/source-pin-check fails a planted new inline commit/ copy in any template, naming the file, and passes on master with the remaining copies baselined"
+  - "A dirty or unknown build emits no forge link at all and reports why, instead of a /blob/master link"
+  - "link-check fails a planted /pull/<n> link whose number the build's delivery data does not name, and a planted #L<n> past the end of its file"
+  - "A reference that cannot be proved is rendered as text and appears in the build's unresolved-link report"
+  - "Every page that cites a release pointer prints the commit and path it read"
+validation:
+  - "scripts/ci/link-check --sources"
+  - "scripts/ci/source-pin-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "forge_links_are_pinned_and_proven"
+  - "release_pointer_is_named_where_cited"
+risk: "Medium. Stale #925 and #1358 edit site templates and scripts/site-build; this issue re-reads them before starting. If I4315 lands with a different pointer path, the pages that print it follow whatever plan delivery reports rather than a path of their own."
+created_at: 2026-10-28
+updated_at: 2026-10-28

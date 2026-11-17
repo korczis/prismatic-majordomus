@@ -12,8 +12,14 @@
 #   - `scripts/reap-orphans` exists, is executable, and matches processes by predicate —
 #     a `pkill`/`killall` by name would kill the servers live peers are attached to
 #   - the same reaper still deletes only build directories, still holds all three conditions
-#     for reclaiming one, and still refuses when liveness cannot be measured
-#   - every path that starts a build asks the one shared free-space check before it does
+#     for reclaiming one (landed or pushed, not live, clean), and still refuses when liveness
+#     cannot be measured
+#   - every path that starts a build asks the one shared free-space check before it does, and
+#     that check runs the reaper's reclaim below its mark before the floor decides — while the
+#     test runner turns that off, so no case sweeps the machine it runs on
+#   - every build first sweeps its build directory's idle incremental sessions and stale
+#     crate artifacts and the idle private build directories, each profile only under cargo's
+#     own lock and while no process names it; the test runner turns those sweeps off too
 #   - `.gitattributes` declares `merge=derived` and the driver it names is committed and
 #     executable, and a recipe installs it (the declaration and its installer are one
 #     relation; checking only one side is how this class of defect survives)
@@ -52,6 +58,15 @@ CASE="test/cases/131_backlog_hygiene.sh"
 DISK_CASE="test/cases/276_disk_is_bounded.sh"
 SPACE_LIB="lib/rust_bin.sh"
 
+# body_has <function> <grep-args...>: whether one function of $SPACE_LIB holds a line. The body
+# is read whole before it is searched: piped into grep -q, sed meets a closed pipe once grep has
+# its match, and under pipefail that SIGPIPE turns a found line into a finding (2026-10-22).
+body_has() {
+  bh_fn="$1"; shift
+  bh_body="$(sed -n "/^${bh_fn}()/,/^}/p" "$SPACE_LIB")"
+  printf '%s\n' "$bh_body" | grep "$@" >/dev/null
+}
+
 # 1. the reaper exists and is safe by construction
 if [ ! -f "$REAPER" ]; then
   fail "$REAPER is missing: abandoned servers have no measuring command"
@@ -83,9 +98,9 @@ if [ -x "$REAPER" ]; then
   else
     ok "the reaper removes build directories and never a worktree"
   fi
-  for predicate in 'merge-base --is-ancestor' 'ps -Ao command=' '\-d cwd' 'status --porcelain'; do
+  for predicate in 'merge-base --is-ancestor' 'for-each-ref --contains' 'ps -Ao command=' '\-d cwd' 'status --porcelain'; do
     grep -qE "$predicate" "$REAPER" \
-      || fail "$REAPER no longer tests '$predicate': merged, not live and idle are all three required"
+      || fail "$REAPER no longer tests '$predicate': landed or pushed, not live and idle are all three required"
   done
   grep -q 'no-optional-locks' "$REAPER" \
     || fail "$REAPER reads a worktree's status without --no-optional-locks: a status sweep that refreshes an index fakes liveness for every tree it touches"
@@ -110,6 +125,42 @@ else
     || fail "$SPACE_LIB states no floor"
   grep -qiE 'measured|KiB|GiB' "$SPACE_LIB" \
     || fail "$SPACE_LIB states a floor with no measurement written beside it"
+  # the floor alone is a cliff edge: below the mark the check reclaims first (2026-10-10, two
+  # machines at 99% with 318GB of unattended build output and nothing running the reaper)
+  if grep -qE 'MJ_RECLAIM_BELOW_MB_DEFAULT=[1-9][0-9]*' "$SPACE_LIB" \
+     && body_has mj_rust_space_check -E '^ +mj_rust_reclaim "' \
+     && body_has mj_rust_reclaim 'reap-orphans" --targets --reclaim'; then
+    ok "a build below the reclaim mark runs the reaper's classified reclaim before the floor decides"
+  else
+    fail "$SPACE_LIB no longer reclaims below a mark before the floor: unattended build output grows until the floor refuses every build"
+  fi
+  grep -qE '^MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB' test/run.sh \
+    || fail "test/run.sh does not turn the build-side reclaim off: a case that builds would sweep the machine it runs on"
+  # what the build directories accumulate is swept before every build (I2713, I2787, the
+  # private ones builds fell back to), and only under cargo's own lock: a sweep that skipped
+  # the lock removed rlibs a running build was reading (2026-10-16)
+  if body_has mj_rust_space_check -E '^ +mj_rust_prune_build_dir "' \
+     && body_has mj_rust_space_check -E '^ +mj_rust_reclaim_private$' \
+     && body_has mj_cargo_bounded -E '^ +mj_rust_prune_build_dir "' \
+     && body_has mj_rust_prune_build_dir 'mj_rust_locked ' \
+     && body_has mj_rust_locked 'flock -n -x 9 || exit 75' \
+     && body_has mj_rust_sweep_profile 'mj_rust_profile_users'; then
+    ok "every build sweeps its build directory's idle sessions, stale artifacts and idle private directories, under cargo's lock"
+  else
+    fail "$SPACE_LIB no longer sweeps the build directories before a build under cargo's lock: the shared and private build directories grow until the disk is full, or a sweep removes what a build is reading"
+  fi
+  # and what remains is bounded by its size, between builds, under the same lock (I3959): the
+  # age sweeps alone left 51 GB of generations younger than their age in the shared directory
+  if body_has mj_rust_prune_build_dir -E 'mj_rust_bound_build_dir "' \
+     && body_has mj_cargo_bounded -E '^ +mj_rust_bound_after_build "' \
+     && body_has mj_rust_bound_build_dir 'mj_rust_locked "$mj_bb_p" mj_rust_evict_in_profile ' \
+     && body_has mj_rust_evict_in_profile 'mj_rust_profile_users'; then
+    ok "every build bounds its build directory's size by evicting stale units, under cargo's lock"
+  else
+    fail "$SPACE_LIB no longer bounds the build directory's size around a build under cargo's lock: it grows past its bound while builds run"
+  fi
+  grep -qE '^MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0; MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0$' test/run.sh \
+    || fail "test/run.sh does not turn the build directory sweeps off: a case that builds would sweep the machine it runs on"
   unbounded=""
   for f in bin/majordomus-cli scripts/derive; do
     [ -f "$f" ] || continue

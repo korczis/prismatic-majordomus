@@ -1,0 +1,30 @@
+id: I2750
+milestone: truthful-plan-surfaces
+title: "The trunk's drift gate reads the forge before it judges"
+slug: the-trunks-drift-gate-reads-the-forge
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The structure job that runs scripts/ci/plan-drift-check on the trunk records the forge first (open pull requests and merged pull request titles), and a finding the gate could not settle because the forge went unread is reported as unjudged rather than refused."
+why: "On 2026-10-16 I2748 measured plan drift at origin/master d1162668036 twice: with the forge unread it reported 23 merged_not_recorded, with `majordomus prs refresh` and `majordomus served forge` run first it reported 16. The seven extra (I2059, I2114, I2123, I2124, I2132, I2282, I2288) each have an open pull request naming them, which the definition excludes. CI's checkout has no recorded forge, so every finding there says unread: forge; under blocking enforcement the trunk would turn red on work that is still in flight."
+current_state: "scripts/ci/plan-drift-check asks `majordomus plan drift --gate trunk` in a fresh checkout whose .ai/local holds no forge observation; the executable reports the forge unread and judges every finding without it."
+desired_state: "On the trunk the job runs `majordomus prs refresh` and `majordomus served forge` with the job's GH_TOKEN (pull-requests: read, deployments: read) before the gate. A finding still carrying unread: forge is PENDING with a NOTE naming the forge, never REFUSED, so an unreadable forge cannot turn the trunk red, and a settled finding past the window is refused as before."
+scope:
+  - "scripts/ci/plan-drift-check"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "apps/majordomus-cli/src/plan/drift.rs"
+  - "test/cases/3101_merged_work_unrecorded_is_drift.sh"
+non_scope:
+  - "A token with write access: the gate reads the forge and nothing else."
+depends_on: [I2741]
+acceptance_criteria:
+  - "The trunk's plan-drift step reads the forge before it judges, and its output names how many open pull requests it read"
+  - "A merged_not_recorded finding whose forge is unread is never refused on the trunk"
+  - "A settled finding past the window is still refused under blocking enforcement"
+validation:
+  - "bash test/run.sh 3101_merged_work_unrecorded_is_drift"
+evidence_required:
+  - "unread_forge_never_refuses"
+created_at: 2026-10-16
+updated_at: 2026-10-16

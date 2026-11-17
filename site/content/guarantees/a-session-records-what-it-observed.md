@@ -1,7 +1,7 @@
 +++
 title = "knowledge observe records one observation.recorded ledger line with its kind, subject, statement and typed evidence references, inside an open episode, inside a task or outside one, and refuses any other shape, or the absence of an episode, without writing"
 description = "A worker records friction it met — a workaround, a defect, a drift, a repeated manual step — with one command, majordomus knowledge observe, and the ledger gains one observation.recorded line carrying the kind, the subject, the statement and the evidence references. The command works inside a task and outside one. Anything not of that shape is refused with exit 2 and nothing is written."
-weight = 238
+weight = 241
 [extra]
 claim_id = "a-session-records-what-it-observed"
 status = "guaranteed"

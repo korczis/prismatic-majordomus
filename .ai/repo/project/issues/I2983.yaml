@@ -1,0 +1,42 @@
+id: I2983
+milestone: peer-blackboard
+title: "/ui/peers shows the blackboard and is read again when it changes"
+slug: the-peers-screen-follows-the-blackboard
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - the-peer-blackboard-is-one-reality#the-screen-follows
+objective: "Add the Peers screen to the UI: every worker of the repository with where it works, its client, whether it is here, its intent and its claims; the claims that meet; the reviews and handovers that wait; the typed relations; and every source with its state. It renders blackboard.snapshot through the same shared read the live channel's followers take (http::follow::blackboard), so a screen read after a change frame is the blackboard at that change. share/ui/live.js follows /events?follow=blackboard&frames=snapshot through the one socket client (share/ui/socket.js, a byte copy of share/cockpit/socket.js kept by scripts/cockpit-assets), asks ui.js to read the screen again on a change or a reconnection, and keeps a state line that says live, reconnecting or read on a timer. The minute refresh runs only while the channel is not live. The published UI snapshot withholds the screen until its public-safe form exists (I2984)."
+why: "Who works on what is on the blackboard and on no UI screen; /cockpit/peers reads peers.list, which knows one board's machines and nothing of the mesh."
+current_state: "No /ui screen renders blackboard.snapshot; /ui screens are refreshed every minute and never pushed."
+desired_state: "An announcement reaches an open /ui/peers within a second of the change on this machine, with the screen saying it is live."
+scope:
+  - "apps/majordomus-cli/src/ui/peers.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/src/http/follow.rs"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "share/ui/live.js"
+  - "share/ui/socket.js"
+  - "share/ui/ui.js"
+  - "scripts/cockpit-assets"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/BLACKBOARD.md"
+  - ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml"
+  - "test/cases/3383_the_peers_screen_follows_the_blackboard.sh"
+  - "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+  - ".ai/repo/project/critiques/the-peer-blackboard-is-one-reality.yaml"
+depends_on:
+  - "I2982"
+acceptance_criteria:
+  - "/ui/peers lists a worker announced over MCP with its intent and claim, and its fragment read after a second announcement shows the new intent at once"
+  - "live.js reads the screen again on every snapshot frame, a connection's first one included, one reading at a time, and says live, reconnecting or offline"
+  - "The UI snapshot holds no /ui/peers page and a link to it leads to the live page"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3383_the_peers_screen_follows_the_blackboard"
+evidence_required:
+  - "case_peers_screen_follows"
+created_at: 2026-10-18
+updated_at: 2026-10-18

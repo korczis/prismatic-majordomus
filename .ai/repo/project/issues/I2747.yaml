@@ -11,7 +11,6 @@ current_state: "site/config.toml highlights with ayu-light and ayu-dark classes;
 desired_state: "One engine, one class vocabulary, one generated palette; scripts/ci/highlighter-check refuses hljs, highlight.js, prism or shiki on any surface."
 scope:
   - "apps/majordomus-cli/Cargo.toml"
-  - "Cargo.lock"
   - "apps/majordomus-cli/src/ui"
   - "apps/majordomus-cli/src/web"
   - "share/ui/ui.js"
@@ -20,9 +19,7 @@ scope:
   - "site/config.toml"
   - "scripts/site-build"
   - "handbook"
-  - "scripts/ci/highlighter-check"
   - ".ai/repo/automation/inventory.jsonl"
-  - "test/cases/3107_one_highlighter.sh"
 depends_on: []
 acceptance_criteria:
   - "A code block rendered by majordomus ui carries the same classes as the same block on the site"

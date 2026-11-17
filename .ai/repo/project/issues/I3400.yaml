@@ -1,0 +1,57 @@
+id: I3400
+milestone: a-paste-is-decomposed-by-a-skill
+title: "The decompose-a-brief skill exists, is invoked by the plan workflow, and is named by both skill tests, so skills verify holds it as a capability"
+slug: a-brief-is-decomposed-by-a-skill
+priority: p1
+profile: implementation
+objective: "Add .ai/repo/skills/decompose-a-brief/SKILL.md (skill/v1) with the procedure given in this program: open the run and claim identities, keep the paste in one canonical byte form as a campaign (or as a reference, or ask, for a conversation or an AI assistant's answer), classify every item, map each requirement to the existing plan before drafting, draft only what is new, have the draft critiqued by a reviewer that did not write it, resolve the findings, derive and validate, deliver, and offer the first wave on the mesh without claiming its scope. Invoke it from .ai/repo/workflows/plan.md, add its id to the majordomus-skill marker lines of apps/majordomus-cli/tests/skills.rs and test/cases/391_skills_are_proven_capabilities.sh, and regenerate its projections."
+why: "The owner ordered on 2026-10-19 that a pasted text be decomposed by an agent following a skill. The owner's report of 2026-10-19 asks under T6 that a new user reach a first verified intent without knowing the internal doctrines, and under T3 that human interventions be measured. Today a pasted brief becomes a record with no plan, and only a person who knows the plan's vocabulary can turn it into work. The skill writes that knowledge down once, reuses existing commands only and adds no capability. It lands first because I3401, I3402, I3403 and I3405 all point a reader at it."
+current_state: "ls .ai/repo/skills lists eight skills, none decomposes a paste. The marker lines at apps/majordomus-cli/tests/skills.rs:6 and test/cases/391_skills_are_proven_capabilities.sh:3 list those eight. .ai/repo/workflows/plan.md (19 lines) names no skill. The evolve skill's commit a9d7b21157b also touched .gitattributes (merge=derived lines 93 and 102 for its two pointers) and docs/generated/artifacts.{json,md,yaml} and graph.json; site/data/generated/{artifacts,context,source,skills,plan}.json and site/data/registry/registry.json name skills/evolve today (git grep -l 'skills/evolve'). The issues and ADR the procedure names (I3168, I3169, I3251, I3254, ADR 0211) are tracked only on the planning branch docs/the-chatgpt-project-is-promoted."
+desired_state: "majordomus skills show decompose-a-brief prints the procedure. skills status reports it as an active skill with a naming test and an invocation, and the generated pointers, .gitattributes, the site page and the generated indexes carry it."
+scope:
+  - ".ai/repo/skills"
+  - ".ai/repo/workflows/plan.md"
+  - "apps/majordomus-cli/tests/skills.rs"
+  - "test/cases/391_skills_are_proven_capabilities.sh"
+  - ".claude/skills"
+  - ".agents/skills"
+  - ".gitattributes"
+  - "site/content/skills"
+  - "site/data/generated/skills.json"
+  - "site/data/generated/artifacts.json"
+  - "site/data/generated/context.json"
+  - "site/data/generated/source.json"
+  - "site/data/generated/plan.json"
+  - "site/data/registry/registry.json"
+  - "docs/generated/artifacts.json"
+  - "docs/generated/artifacts.md"
+  - "docs/generated/artifacts.yaml"
+  - "docs/generated/graph.json"
+non_scope:
+  - "Any Rust change"
+  - "The paste guard in intents.propose (I3401)"
+  - "An examples/ file beside the skill"
+  - "Editing .ai/repo/workflows/task-lifecycle.md, which the unpushed promote-a-workspace branch also edits"
+  - "Naming promote-a-workspace in related before that skill is on master"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#a-decomposed-paste-passes-the-plan-checks"
+acceptance_criteria:
+  - "Precondition: the planning branch docs/the-chatgpt-project-is-promoted, carrying this program and the critique reviewed against the three new criteria, is on master, and majordomus intent preflight for this issue passes from a branch of master"
+  - "majordomus skills check passes and refuses nothing about decompose-a-brief: the front matter has only skill/v1 keys, the id equals the directory, the three required sections are non-empty, and the description differs from every other skill's"
+  - "majordomus skills verify exits 0 and majordomus skills explain decompose-a-brief lists tests/skills.rs and case 391 as naming tests and .ai/repo/workflows/plan.md as an invocation"
+  - "The procedure names only commands and files that exist on master or names the issue that adds them (I3169 campaign add, I3168 campaign references, I3251 and I3254 drafts and duplicates), and names no provider or provider tool"
+  - "Step 2 defines the canonical byte form (whitespace trimmed at both ends, exactly one trailing line feed), routes an exchange between speakers and an AI assistant's answer to a workspace reference or to the person, stops on a credential or personal data, and regenerates the campaigns manifest with the command campaigns-check prints"
+  - "Step 9 announces only the issue the decomposer takes, and offers the rest by a handover with no scope claim"
+  - "majordomus generate --check and scripts/generate-site-data --check are clean after the regeneration"
+validation:
+  - "majordomus skills check"
+  - "majordomus skills verify"
+  - "cargo test -p majordomus-cli --test skills"
+  - "bash test/run.sh 391_skills_are_proven_capabilities"
+  - "majordomus intent validate"
+  - "majordomus generate --check"
+  - "scripts/generate-site-data --check"
+evidence_required:
+  - "test_the_decompose_skill_is_a_proven_capability"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,0 +1,38 @@
+id: I3132
+milestone: the-product-shows-what-it-caught
+title: "/ui shows what finish caught beside what being caught cost, and says not observed where there is no ledger"
+slug: the-ui-shows-what-finish-caught
+priority: p2
+profile: implementation
+objective: "Add one card to the /ui dashboard that reads the gates aggregate: false dones caught, unanswered refusals, refusals by doctrine, median time from first refusal to acceptance, each linking to the tasks it counted, with the kit's not-observed rendering for an absent ledger and in the published snapshot."
+why: "The owner's standing order of 2026-09-11 asks for charts and metrics of the current state; a figure only in a CLI answers nobody who follows the work in a browser. I2943's record exists only on branch fix/an-unobserved-mesh-is-not-zero, so it is named in an acceptance criterion and not in depends_on, which must name a record on the plan's tree. Proposed in ADR 0208 (The product's value is stated as the false dones its finish caught, beside the friction it cost) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c119#10."
+current_state: "apps/majordomus-cli/src/ui/dashboard.rs draws the Overview; apps/majordomus-cli/src/ui/view.rs on master has kpi, kpi_count and kpi_state; view::kpi_not_observed exists only on the unlanded branch of I2943."
+desired_state: "The card renders from the capability alone; the snapshot shows not observed."
+scope:
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "A new screen"
+  - "Charts over time, which need history the ledger reader does not yet bound"
+  - "The /cockpit overview and the dashboard.overview capability (MCP majordomus_dashboard_overview), whose Count measure renders absence as 0, until that capability has an absence-aware measure"
+depends_on:
+  - "I3130"
+serves:
+  - "the-product-shows-what-it-caught#ui-shows-caught-beside-cost"
+acceptance_criteria:
+  - "With a fixture ledger the card shows the aggregate's numbers and links each to its tasks"
+  - "Without a ledger, live and in the snapshot, the card reads not observed"
+  - "The ui audit passes on the dashboard at every width"
+  - "The card uses view::kpi_not_observed from I2943 once that issue is on master; no local copy of it is written, and work does not start before it lands"
+  - "The card's label says it counts finish refusals only"
+  - "Adding the aggregate to FIRST_PAINT updates every_source_is_named_and_the_queue_waits_for_its_own_route in ui/dashboard.rs"
+  - "Criterion ui-shows-caught-beside-cost of the intent carries evidence: test with ref apps/majordomus-cli/tests/ui_caught.rs"
+validation:
+  - "cargo test --test dashboard"
+  - "scripts/ui audit --only /ui/"
+evidence_required:
+  - "test_ui_caught"
+created_at: 2026-10-18
+updated_at: 2026-10-18

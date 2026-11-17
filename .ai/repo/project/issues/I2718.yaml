@@ -25,4 +25,17 @@ validation:
 evidence_required:
   - "worktree_runs_its_own_hooks_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-16T16:39:25Z
+started_at: 2026-10-16T16:39:12Z
+started_event: sha256:ddfb3712cc65bf055efba9a866fba83e51442fd78f4fc6180470055f7d353cc9
+verified_at: 2026-10-16T16:39:17Z
+verified_event: sha256:c600594a0c7f92a5a5f0e9be7d58c3599da450067e5e38738481ea892d5a336a
+completed_at: 2026-10-16T16:39:25Z
+completed_event: sha256:de4867a9c408fd12c65aefeac1e89551fdc0a49d986033dc95e941f69bf89ac7
+evidence:
+  - covers: worktree_runs_its_own_hooks_case
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 3036_a_worktree_runs_its_own_hooks"
+    result: "ok 3036_a_worktree_runs_its_own_hooks 100s (0 skipped) at 09c334079f5 with the executable of #1304: worktree create binds its own .githooks (relative and absolute hooksPath), a commit there runs the worktree's own pre-commit, doctor fails wiring hooks-path in a hand-made worktree, the primary's hooks path unchanged; delivered in the grand top 11e53f5a451 and 51faa7a5c76"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:39:22Z

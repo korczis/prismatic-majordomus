@@ -1,0 +1,94 @@
+intent: the-mesh-is-operated-from-any-device
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: 8 of 10 findings are blocking and all 8 are planned on I3196, I3195, I3192, I3191 and I3181; both non-blocking findings are planned, and the owner's open question on a skill or route and the decision on reports are recorded rather than decided here."
+findings:
+  - id: a-proxied-caller-is-judged-loopback
+    class: regression_risk
+    subject: "I3196"
+    finding: "ADR 0126 decides whether a caller is remote from the peer address alone, in `ExecutionPolicy::admits_remote`, called by the HTTP router and per MCP message. `apps/majordomus-cli/src/http/*.rs` has no forwarded-header or proxy handling at all. ADR 0204 (this branch) and I3195 put the origin on loopback behind `tailscale serve`, and I3197 puts it behind cloudflared. Both proxies connect from 127.0.0.1, so every tailnet or tunnel caller, a phone included, would count as loopback and could reach `executions.start`, `plan.transition` and the mesh writers that the node signs with its own key. That is exactly the signing-oracle hole ADR 0126 closed. I3196 only covers the canonical host, scheme and trusted hosts; nothing says that a request arriving through a declared ingress is remote. Before any ingress lands, the remote judgement has to treat an ingress-proxied request as remote (or as authenticated, through the edge's identity). That needs an ADR amending 0126, plus a case 1086 variant and a `tests/remote_callers.rs` test that go through a loopback proxy."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3196
+      because: "Verified: no forwarded/proxy handling in apps/majordomus-cli/src/http, and admits_remote judges the peer address (capability/model.rs). I3196 already owns the ingress block and forwarded headers, and both ingress issues (I3195, I3197) depend on it, so it becomes the place where an ingress-proxied request is judged remote, fail-closed. It also owes the ADR that amends ADR 0126, a 1086 variant and a remote_callers.rs test through a loopback proxy."
+  - id: the-hub-origin-cannot-leave-the-rendezvous-port
+    class: regression_risk
+    subject: "I3195"
+    finding: "The lundra hub is a mesh rendezvous hub. It listens on 0.0.0.0:8791, every other runtime dials it at its LAN or tailnet address on :8791 for the signed hello, sync and register routes, and it advertises its interface addresses (docs/MESH.md:102, 582, 592-622; firewall rules at :736-742). I3195's 'origin on loopback' would cut the hub off from every peer unless the mesh routes go through the ingress too, and it has no acceptance criterion that the mesh still converges. The reverse also holds: while the hub keeps 0.0.0.0, its UI, API and MCP are already served in plain HTTP to the whole LAN and tailnet (ADR 0126: 'reads are still served to the whole network, unencrypted'). So the criterion 'answer over the tailnet ... and nowhere else' is not met by adding an ingress. The target has to state which listeners exist (mesh port and UI/API/MCP origin), and the issue needs an acceptance criterion that a mesh round with lundra still succeeds after the change."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3195
+      because: "I3195 owns the hub target. It now has to declare the listeners separately: the mesh rendezvous port, which answers only the signed link and register routes, and the UI/API/MCP origin on loopback behind the tailnet ingress. It also has to prove that a mesh round with lundra still succeeds afterwards, and that the UI/API/MCP no longer answer on the LAN or tailnet address directly. It now also runs as the user-scoped unit I2722 writes, which absorbs I3186."
+  - id: deploy-check-cannot-prove-reachability
+    class: delivery_verification
+    subject: "the-mesh-is-operated-from-any-device#reachable-privately"
+    finding: "The planned proof is `majordomus deploy check <hub target>`, but `deploy_check` takes `Empty` input (apps/majordomus-cli/src/capability/builtin/deploy.rs:129). Its contract says 'Nothing here contacts the provider' (deploy.rs:213), and the tests `every_deployment_operation_is_a_read` and `the_module_declares_the_reads_and_nothing_else` hold the module to static checks over the local index. As things stand it cannot name a target, probe a socket, run from a second device, or prove the negative half ('nowhere publicly'). Both I3195 and I3197 assume it 'walks process, origin, ... tailnet ingress, certificate'. The plan needs: a network probe as its own capability (or an explicitly widened deploy contract); an off-tailnet negative probe; and a stated way the run's evidence is recorded and attached, since public CI must not join the tailnet. I3197 (Cloudflare Tunnel, a public hostname behind Access) also contradicts 'nowhere publicly'. It belongs to a separate phase-2 criterion, not this one."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3195
+      because: "deploy.check stays a read. The network-reaching probe is the existing CLI-only `served.observe` (apps/majordomus-cli/src/capability/builtin/served.rs, which already 'reaches the network and appends a record'), extended to a named deployment target and given a negative off-tailnet probe. I3195 carries this and commits the run as evidence under .ai/repo/evidence with device, time and commit, so public CI never joins the tailnet. I3197 is dropped from this plan (skip) as a later public-ingress phase, recorded as an open question for the owner, and the intent gains the non-goal that says so. deploy.check is no longer any issue's validation: it is not a command of the CLI."
+  - id: the-lumen-milestone-is-this-plan-twice
+    class: unnecessary_work
+    subject: "I3192"
+    finding: "The same branch already has milestone `prismatic-lumen` (order 164), whose issues cover the same ground as this plan's. I3138 extends /ui/mesh with a source and an age on every figure, plus resync after a gap (overlapping I3191 and I3181). I3139 offers one authorised mesh action on /ui/mesh and renders its result from the journal (the same work as I3192). I3140 measures the mesh page's latency (the same work as I3194). Both sets edit apps/majordomus-cli/src/ui/mesh.rs and share/ui. They also contradict each other: I3139 takes the result from the journal event, while I3192 audits through `executions.get`. Two sessions taking these would collide on one file and ship two designs. Merge each pair into one issue (or make one milestone depend on the other) before either is started."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3192
+      because: "Verified: I3138/I3139/I3140 exist in prismatic-lumen. The pairs are ordered, not duplicated. I3192 depends on I3139, adopts its journal-event design and adds only identity-based authorisation and refusal. I3191 depends on I3138 and adds only the remote target. I3181 depends on I3138 and I3222. I3194 duplicated I3140 and is dropped (skip) in favour of it; its two extra measurements are left for I3140's owner to add."
+  - id: an-execution-is-no-audit-record
+    class: unproven_assumption
+    subject: "I3192"
+    finding: "I3192's desired state is an 'audit record readable through executions.get'. `ExecutionStore` keeps executions only while the process runs, bounded, and forgets the oldest finished ones (apps/majordomus-cli/src/execution/store.rs:1-40). The shared server stops after its idle time once no peer is attached and no request has arrived for a second (apps/majordomus-cli/src/commands/serve.rs:200-210); a running execution does not keep it alive. So an audit record would vanish on restart, on idle stop, or after enough later executions. A UI-started action whose page is closed could even be killed mid-run, which contradicts the survives-the-client criterion. The audit has to be durable: the signed journal event the mesh write produces (as I3139 proposes) or a persisted record. Add a test that the audit survives a server restart, and one that closing the page does not stop the execution."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3192
+      because: "The audit becomes the signed mesh journal event the write produces, the same design as I3139, and executions.get is only the live view. I3192 also owes two things: a running execution holds off the shared server's idle stop (commands/serve.rs), and tests that the audit survives a server restart and that closing the page does not stop the execution."
+  - id: who-may-write-from-a-phone-is-undecided
+    class: missed_requirement
+    subject: "the-mesh-is-operated-from-any-device#one-authorised-action-end-to-end"
+    finding: "ADR 0126 (Consequences) explicitly leaves open 'a token or key-based authorization that would let an authenticated remote client write' and 'signing the author of a mesh event separately from the node that relays it'. None of the proposed ADRs 0180-0216 decides it. ADR 0204 only says 'edge identity plus application authorisation (ADR 0126, web-sign-in)'. I3192 depends on I1205, which sits at the end of the Google/Facebook OAuth chain I1201→I1204 (I1201 is READY, I1202-I1206 are BLOCKED, none started). Nothing says whether a phone on the tailnet authenticates by OAuth, by the tailnet identity the ingress asserts, or by a device key. Nothing says how the mesh event names the human author rather than the relaying node. Until an ADR decides this, I3192's 'authorise by the caller's identity' has no identity to read, and any implementation would guess."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3192
+      because: "I3192's first deliverable is now a proposed ADR that amends ADR 0126. It decides which credential lets a remote caller write: the web-sign-in session (I1205), an identity asserted by the ingress and accepted only from a declared ingress (I3196), or a device key. It also decides how a mesh event names its human author apart from the relaying node. The reasoning goes through majordomus reasoning, and no code is written before that ADR is accepted. I3196 is added as a dependency because the ingress-asserted option needs the declared-ingress judgement."
+  - id: the-link-carries-no-reads
+    class: unproven_assumption
+    subject: "I3191"
+    finding: "I3191 plans to read a linked runtime 'through that runtime's own read capabilities over the authenticated link'. The link protocol has exactly two signed exchanges: Hello→Welcome and Sync↔Sync over HELLO_PATH and SYNC_PATH (apps/majordomus-cli/src/mesh/link.rs:7-21, 55-59). It has no message for calling a capability, and LINK_PROTOCOL_MIN and MAX are both 1 (link.rs:50-53). The only path that exists today is plain HTTP to the endpoints on the remote's RuntimeCard: unauthenticated and unencrypted. The issue has to choose. Either it adds a signed read domain to the link, which bumps the protocol and needs a mixed-version rule (safe-self-update's concern), or it reads over HTTP through the ingress and says so. Scope and tests change with that choice (ui_linked_runtime needs two runtimes linked through apps/majordomus-cli/src/mesh/testing.rs)."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3191
+      because: "Verified in link.rs: there are only the hello and sync exchanges, and the protocol is 1..1. Choice: I3191 reads over HTTP from the endpoint on the linked runtime's signed RuntimeCard, through the declared tailnet ingress where one exists (it now depends on I3196), and every panel names the transport and states that the read is unsigned. A signed read domain, and with it a protocol bump, is non-scope. The test links two runtimes through mesh/testing.rs."
+  - id: remote-change-on-idd-is-impossible
+    class: unproven_assumption
+    subject: "I3181"
+    finding: "I3181's acceptance, 'An event appended on runtime B appears on runtime A's open /ui/idd', cannot come true as designed. /ui/idd reads only intents.list, plan.roadmap, plan.issues, plan.waves and plan.next (apps/majordomus-cli/src/ui/idd.rs:37-41), all from A's own checkout. The mesh journal carries only session, claim, handover and review events (apps/majordomus-cli/src/mesh/journal.rs:523-607): no plan transition travels, so 'plan transitions announced there' does not exist. Local push to /ui/idd is already I3220. Multi-page following already belongs to I2981 (5a, unpushed), ADR 0216 and the every-surface-follows-what-changed milestone (I3219, I3222). In addition, depends_on is [] although the why says it waits on I2981, and validation runs `cargo test --test ui_idd` while the required evidence is a case. Retarget I3181 to the pages that render journal state (/ui/mesh, /ui/peers), depend it on I2981, and drop what I3220 and I2983 already cover."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3181
+      because: "I3181 is retargeted to /ui/mesh and /ui/peers, which render journal state, and /ui/idd and plan transitions are made non-scope (I3220). I2981 has no record on master or on this branch, so it cannot be a dependency. I3181 depends instead on the existing I3222 (a follower ends equal to a fresh snapshot) and I3138 (resync on the mesh page), and the why names I2981 as unrecorded in-flight work. Its acceptance now requires the case, the /ui/idd criterion is removed, and its validation runs cargo test --lib http::events instead of the ui_idd test."
+  - id: survives-the-client-is-proven-by-nobody-here
+    class: insufficient_work
+    subject: "the-mesh-is-operated-from-any-device#survives-the-client"
+    finding: "This criterion's planned proof is 'case for snapshot+cursor resume (I2981/I2982)'. Those issues exist only on 5a's local, unpushed branches: there is no record on master or on this branch (board p10, commit 2f08a8e0a18), and peer p3 has requested changes on both (r-be1a4401fe22, r-1ecd125e3db6). The two issues that serve the criterion don't test it. I3181 is about pushing remote events. I3193 (reports) contradicts ADR 0209 on this same branch, which puts 'scheduled reports ... out of its scope until each has its own measured problem'. I3193's only validation is plan validate, its scope omits the schema and .ai/repo paths it needs, and it waits on I3186→I2722 (BLOCKED). No test shows that ending a session or closing the page loses no persistent work (see an-execution-is-no-audit-record). The owner did ask for periodic reports (c296#0), so give them their own criterion or owner decision instead of attaching them here. Add a case owned by this plan for 'end the session, reopen, resume from snapshot and cursor, nothing lost'."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3181
+      because: "I3181 now owns the plan's case for 'end the session, close the page, reopen, resume from snapshot and cursor, nothing lost'. I3192 adds that closing the page does not stop an execution. I3193 is dropped from this plan (skip) and held: ADR 0209 defers scheduled reports until they have a measured problem, and whether reports enter scope is recorded as an open question for the owner, who asked for them in c296#0. If they do, they get a criterion of their own."
+  - id: stale-dependencies-and-owner-surfaces
+    class: surface_missing
+    subject: "the-mesh-is-operated-from-one-page"
+    finding: "(1) The owner's request (c296#0) names a robust skill, documentation, the landing page, the UI and GitHub Pages. The plan covers /ui and docs/MAJORDOMUS_UI.md only. ADR 0209 defers the skill and route to the owner, but no record carries that open question. No issue covers site/content, /cockpit's mesh view, or how the published Pages snapshot renders I3191's target choice and I3192's action: they need a disabled 'live only' state, like I2910's moves. (2) The statement promises 'what is blocked and why', and no criterion carries it. I3182 provides it but serves another intent and should be linked. (3) The milestone current state and I3196 say I0903 and I0904 are open, but both are DONE (commits 1f074963918 and 58a2c377a1f). fly-deployment was rescoped to the GHCR image with 9 issues cancelled, and the deployment object already has `listen.interface: all` (.ai/repo/deployments/majordomus.yaml). So the dependencies on fly-deployment and I0904 are stale. I3196 should extend the existing listen block, and its UI projection is missing apps/majordomus-cli/src/ui/deployments.rs from scope."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3191
+      because: "Verified: 1f074963918 and 58a2c377a1f are on HEAD, and majordomus.yaml has listen.interface: all. (1) I3191 now carries the published-snapshot 'live only' disabled state, the /cockpit mesh view and site/content docs, and its why records ADR 0209's open owner question about a skill or route. I3192 carries the disabled action in the snapshot. (2) I3191 depends on I3182 and shows what is blocked and why from its classification. (3) I3196 extends the existing listen block and gains ui/deployments.rs in scope. The stale dependencies are removed: the milestone no longer depends on fly-deployment, and I3196 no longer depends on I0904."

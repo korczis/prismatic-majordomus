@@ -1,0 +1,30 @@
+id: I3667
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "A run that would fall through to metered billing while a grant is held, or cross a declared cap, is told before it starts"
+slug: a-funding-cap-is-told-before-it-is-crossed
+priority: p3
+profile: implementation
+objective: "Before the economics runner or an execution starts a model client, compare the route's source (I3662) with the owner's holdings and caps (I3661): tell the caller when the route would draw on a metered source while a credit grant is held, or when observed spend (I3666) already meets a declared cap, naming the source, the cap and the figure's class; refuse only where the repository policy declares refuse, through the same mechanism as I3295's over-budget telling."
+why: "The point of claiming the grant is that agents run on it and not on the owner's card. Without a check before the run, a missing credential silently moves headless work onto metered billing; with no observed spend, a cap can only be judged on what was observed, never on an estimate."
+current_state: "Nothing checks funding before a run; I3295 plans over-budget telling for token budgets."
+desired_state: "Falling through to metered, or meeting a cap, is told before the run and refused only by declared policy."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/execution"
+  - ".ai/repo/policy.yaml"
+depends_on:
+  - "I3662"
+  - "I3666"
+  - "I3295"
+cancelled: true
+completion: "Cancelled 2026-10-21 on feature/intent-funding-sources by the plan's critique (finding metered-fallthrough-presupposes-separate-credentials): the credit grant and metered billing share ANTHROPIC_API_KEY, so a run 'falling through to metered' is not a state Majordomus can see, and with spend absent for an individual account a cap could only ever read not judgeable. Reopen with a per-source credential split or a spend seam, each with vendor evidence."
+acceptance_criteria:
+  - "A held grant with its credential unset and a metered credential set: the run is told it would draw on metered"
+  - "A cap with spend absent is reported as not judgeable, never as within the cap (test)"
+  - "With policy refuse, the run does not start and the refusal names the source and the cap"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "test_falling_through_to_metered_is_told"
+created_at: 2026-10-20
+updated_at: 2026-10-21

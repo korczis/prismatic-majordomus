@@ -19,7 +19,7 @@
 # test/cases/403_published_translation.sh does and for the reason it gives: the check reads its
 # allow list from beside itself, so a copy lands on a list this case wrote.
 . "$ROOT/test/lib.sh"
-command -v python3 >/dev/null 2>&1 || skip "no python3; the handbook is built by a python program"
+mj_runs python3 || skip "no python3; the handbook is built by a python program"
 [ -f "$ROOT/docs/generated/graph.json" ] || { echo "    docs/generated/graph.json is missing"; exit 1; }
 
 HB="$PWD/hb"
@@ -136,7 +136,7 @@ expect_grep 'must name its language and say why'
 # outside the handbook: refused, whatever the directory says of itself
 allow 'edition docs cs prose that is not an edition'
 expect_exit 12 "$EN" --strict
-expect_grep 'one directory of the handbook named for its language'
+expect_grep "one directory of the handbook or of the site's languages named for its language"
 
 # one-sided: the list says Czech and the directory says another language
 printf 'lang = "pl"\n' > handbook/cs/edition.toml

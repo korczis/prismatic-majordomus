@@ -13,7 +13,8 @@
 #   - a dry run only names it;
 #   - the same head is never reopened twice, though it reads `missing` until its run reports;
 #   - a record a person opened is left alone, and so is every other branch;
-#   - once its own check passes the record merges like any other pull request.
+#   - once its own check passes the record lands like any other pull request: master is
+#     fast-forwarded to its head (I3910).
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -85,6 +86,14 @@ case "\$1 \$2" in
     git clone -q "$ORIGIN" "\$t/c" 2>/dev/null && cd "\$t/c" && git fetch -q origin "refs/pull/\$n/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$n" &&
       git push -q origin HEAD:master && echo MERGED > "$STATE/gone-\$n" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    echo MERGED > "$STATE/gone-\$n" ;;
   *) echo "UNEXPECTED \$*" >> "$STATE/log"; exit 1 ;;
 esac
 EOF
@@ -119,7 +128,7 @@ esac
 [ "$(jq -r 'select(.action == "reopen_attempted") | "\(.pr) \(.head_sha)"' "$TRAIL")" = "1 $H1" ] \
   || { echo "    reopen_attempted does not name #1 at its head"; exit 1; }
 # the person's record and the other branch were asked nothing and touched by nothing
-if grep -q '^pr \(close\|reopen\) [23]\|UNEXPECTED\|pr merge' "$STATE/log"; then echo "    the forge was asked to act on another pull request:"; cat "$STATE/log"; exit 1; fi
+if grep -q '^pr \(close\|reopen\) [23]\|UNEXPECTED\|pr merge\|^api -X' "$STATE/log"; then echo "    the forge was asked to act on another pull request:"; cat "$STATE/log"; exit 1; fi
 [ "$(said 'pr view 3 --json state,headRefOid,author')" = 0 ] || { echo "    a branch that is no record was asked after"; exit 1; }
 
 # ---------------------------------------------------------------- once per head
@@ -131,5 +140,5 @@ expect_exit 0 prs drain --max 1
 listing "$PASSED"
 expect_exit 0 prs drain --max 1
 expect_grep 'merged #1'
-[ "$(git -C "$ORIGIN" rev-parse 'master^2')" = "$H1" ] || { echo "    master does not hold the record's head"; exit 1; }
+[ "$(git -C "$ORIGIN" rev-parse master)" = "$H1" ] || { echo "    master is not the record's head"; exit 1; }
 echo "    a record no run was started for is reopened once, under the lease and trail first, and merges when its check passes"

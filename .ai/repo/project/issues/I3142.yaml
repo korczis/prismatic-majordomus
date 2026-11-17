@@ -1,0 +1,39 @@
+id: I3142
+milestone: the-session-domain-is-written-once
+title: "An episode opens through the typed domain and records the task and issue it began on"
+slug: an-episode-records-its-task-at-open
+priority: p1
+profile: implementation
+objective: "ADR 0047 step 2 plus the missing attribution: session start delegates to the domain's opener, and session.started carries the task the episode began on as an Option<TaskId> taken from a ledger fact of its own provider session; the closer derives the bound issue from that task's own ledger events and folds both into tasks and issues."
+why: "On 2026-09-11 a record could say task_id: t-... and tasks: [] at once, and a ten-hour session on an active issue reported issues: []: the task had been started in an earlier episode and no task event fell inside the window. Proposed in ADR 0182 (A closed session record is judged by what it can attribute, not only by its schema) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c116#3."
+current_state: "lib/session.sh opens episodes; tasks/issues in the record come only from ledger events inside the episode; Episode carries Option<TaskId> in session/episode.rs but nothing populates it at open; mj_load_current reads the checkout's current.yaml, which two windows of one checkout share."
+desired_state: "session.started names the task the episode began on and nothing else of it; the record's tasks and issues are the union of open, transitions and close."
+scope:
+  - "lib/session.sh"
+  - "lib/start.sh"
+  - "apps/majordomus-cli/src/session"
+  - "share/events.yaml"
+  - "share/allow/session.txt"
+  - "share/allow/session-record.txt"
+  - "share/schemas/majordomus/session/session.v1.schema.json"
+  - "share/schemas/majordomus/session-record/session-record.v1.schema.json"
+  - "apps/majordomus-cli/tests/session_domain.rs"
+  - "test/cases/60_session_lifecycle.sh"
+non_scope:
+  - "Binding a task to an intent, which I2001 owns"
+depends_on:
+  - "I3141"
+  - "I3320"
+serves:
+  - "a-session-record-says-what-it-served#open-records-its-task"
+acceptance_criteria:
+  - "A session opened on a task started in an earlier episode lists it in tasks and its issue in issues"
+  - "task_id and tasks can no longer disagree"
+  - "Shell output of session start unchanged"
+validation:
+  - "bash test/run.sh --no-skips 60_session_lifecycle 111_session_per_provider 130_lifecycle_survives_a_stale_task"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain"
+evidence_required:
+  - "test_session_open_records_its_task"
+created_at: 2026-10-18
+updated_at: 2026-10-18

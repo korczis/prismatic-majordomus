@@ -28,4 +28,21 @@ evidence_required:
   - negative_test
 risk: "A scan tuned to be quiet finds nothing forever. The synthetic marker is what keeps it honest."
 created_at: 2026-09-06
-updated_at: 2026-10-15
+updated_at: 2026-10-19T13:52:54Z
+started_at: 2026-10-19T13:52:20Z
+started_event: sha256:28f02787a603e2bddee2c26468ce15f07d0e09508058384054570cf121c2bad6
+completed_at: 2026-10-19T13:52:54Z
+completed_event: sha256:64ac9b1dacb0256e99d1bf3a471301c111ce01173abd32e2c0c20558f7bc55bd
+evidence:
+  - covers: public_scan
+    type: test
+    command: "bash test/run.sh 3047_a_leak_finding_names_where_it_is"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:52:37Z
+  - covers: negative_test
+    type: test
+    command: "bash test/run.sh 3047_a_leak_finding_names_where_it_is"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:52:45Z

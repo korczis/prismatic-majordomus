@@ -47,13 +47,14 @@ mj_project_load() {
   MJ_PJ_MILESTONES=""; MJ_PJ_ISSUES=""
   # the records in one collation whatever the shell's locale: a glob sorts by the locale,
   # and the row order of the model must not depend on who loaded it
-  set -- ; for f in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
-    case "$f" in *.yaml) [ -f "$dir/milestones/$f" ] && set -- "$@" "$dir/milestones/$f" ;; esac
+  # (the ids are collated, not the filenames: with the suffix in, `m-x.yaml` sorts before
+  # `m.yaml` where the executable's order puts m first)
+  set -- ; for id in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | sed -n 's/\.yaml$//p' | LC_ALL=C sort); do
+    [ -f "$dir/milestones/$id.yaml" ] && set -- "$@" "$dir/milestones/$id.yaml"
   done
   for f in "$@"; do MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $(basename "$f" .yaml)"; done
-  for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
-    case "$f" in *.yaml) ;; *) continue ;; esac
-    f="$dir/issues/$f"
+  for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | sed -n 's/\.yaml$//p' | LC_ALL=C sort); do
+    f="$dir/issues/$f.yaml"
     [ -f "$f" ] || continue
     id="$(basename "$f" .yaml)"
     # one id, one record: the flat directory is keyed by the filename, so a milestone and
@@ -144,22 +145,74 @@ mj_pj_active()         { mj_pj_rows P | cut -f5; }
 
 mj_pj_milestone_ids()  { mj_pj_rows M | cut -f2; }
 # Is this id a milestone? Answered from the record the loader wrote, never from the shape
-# of the id. A milestone id is a stable slug; the version lives in a field, so nothing may
+# of the id. A milestone id is a stable slug and never a version, so nothing may
 # infer a record's kind from how its id is spelled.
 mj_pj_is_milestone()   { case " $MJ_PJ_MILESTONES " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 mj_pj_issue_ids()      { mj_pj_rows I | cut -f2; }
 
 # milestone columns: 2 id · 3 status · 4 order · 5 priority · 6 title · 7 slug
 #                    8 counts (name=value, comma separated, keyed by the status vocabulary)
-#                    9 version · 10 rank · 11 depends · 12 blocked_by · 13 dependents · 14 claims
+#                    9 last accepted issue (DONE milestones only) · 10 rank · 11 depends
+#                    12 blocked_by · 13 dependents · 14 claims
 mj_pj_m_status()  { mj_pj_col M "$1" 3; }
 mj_pj_m_title()   { mj_pj_col M "$1" 6; }
 mj_pj_m_counts()  { mj_pj_col M "$1" 8; }
-mj_pj_m_version() { mj_pj_col M "$1" 9; }
+mj_pj_m_last()    { mj_pj_col M "$1" 9; }
 mj_pj_m_rank()    { mj_pj_col M "$1" 10; }
 mj_pj_m_deps()    { mj_pj_col M "$1" 11; }
 mj_pj_m_blocked() { mj_pj_col M "$1" 12; }
 mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
+# The release that carried a milestone, inferred and never typed (ADR 0166): the first
+# release record (.ai/repo/releases/v*.yaml, the tracked statement of a tag), in version
+# order, whose `commit:` contains the merge of the milestone's last accepted issue, and
+# `unreleased` for a milestone that is not DONE or that no record's commit contains yet. A
+# milestone DONE with no issue was finished by its own evidence: the commit that wrote the
+# latest recorded_at of that evidence stands in for the merge.
+# Records, not tags: derived data must not depend on refs outside the tree, so the answer is
+# a function of the commit and changes only when a record lands. Releases before the first
+# record (v0.3.1 here) have none, so work finished before it reads as that release, the
+# earliest one this layer records. The merge is found through the commit that wrote the
+# issue's completed_at stamp (the oldest commit whose diff of the record adds or removes that
+# stamp), and failing that through the latest merge whose message names the issue; a release
+# commit containing either contains the merge that brought it to the trunk. The executable
+# answers the same question the same way: `released_in` in apps/majordomus-cli/src/plan.rs.
+mj_pj_m_released_in() {
+  local last stamp sha="" tag commit
+  [ "$(mj_pj_m_status "$1")" = DONE ] || { printf 'unreleased'; return 0; }
+  last="$(mj_pj_m_last "$1")"
+  if [ -z "$last" ]; then
+    # DONE with no issue: its own evidence finished it, so the commit that wrote the latest
+    # recorded_at of that evidence is the one a release has to contain
+    stamp="$(sed -n 's/^evidence\.[0-9]*\.recorded_at=//p' "$MJ_PJ/flat/$1" 2>/dev/null \
+      | { grep -v '^$' || :; } | LC_ALL=C sort | tail -n 1)"
+    [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/milestones/$1.yaml" 2>/dev/null | tail -n 1)"
+  else
+    stamp="$(sed -n 's/^completed_at=//p' "$MJ_PJ/flat/$last" 2>/dev/null | head -n 1)"
+    [ -n "$stamp" ] && sha="$(mj_git log --format=%H -S"$stamp" -- "$MJ_PROJECT_DIR/issues/$last.yaml" 2>/dev/null | tail -n 1)"
+    [ -n "$sha" ] || sha="$(mj_git log --merges -1 --format=%H -E \
+      --grep="(^|[^A-Za-z0-9])$last([^A-Za-z0-9]|\$)" 2>/dev/null || :)"
+  fi
+  [ -n "$sha" ] || { printf 'unreleased'; return 0; }
+  [ -f "$MJ_PJ/releases.tsv" ] || mj_pj_release_records > "$MJ_PJ/releases.tsv"
+  while IFS="$MJ_TAB" read -r tag commit; do
+    if mj_git merge-base --is-ancestor "$sha" "$commit" 2>/dev/null; then printf '%s' "$tag"; return 0; fi
+  done < "$MJ_PJ/releases.tsv"
+  printf 'unreleased'
+}
+# The release records, "<tag><TAB><commit>" in ascending version order: every
+# .ai/repo/releases/*.yaml whose top-level tag is vMAJOR.MINOR.PATCH and which names a commit.
+mj_pj_release_records() {
+  local f
+  set --
+  for f in "$MJ_ROOT/.ai/repo/releases/"*.yaml; do [ -f "$f" ] && set -- "$@" "$f"; done
+  [ $# -gt 0 ] || return 0
+  awk 'function val(x) { sub(/^[a-z_]+:[ \t]*/, "", x); sub(/[ \t]+$/, "", x); gsub(/"/, "", x); return x }
+    FNR == 1 { if (t != "" && c != "") print t "\t" c; t = ""; c = "" }
+    /^tag:/ { t = val($0) } /^commit:/ { c = val($0) }
+    END { if (t != "" && c != "") print t "\t" c }' "$@" \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+'"$MJ_TAB" \
+    | sed 's/^v//' | LC_ALL=C sort -t. -k1,1n -k2,2n -k3,3n | sed 's/^/v/' || :
+}
 # One count out of a milestone's counts field, by name: total, required, or any status the
 # vocabulary declares. Nothing outside project.awk decides which counts exist.
 mj_pj_m_count()   { mj_pj_m_counts "$1" | tr ',' '\n' | sed -n "s/^$2=//p"; }
@@ -213,12 +266,46 @@ mj_pj_next_ready() {
   [ -n "$pick" ] || pick="$(mj_pj_ready_ranked "")"
   printf '%s' "$pick"
 }
-# lowest wave, then priority, then id, among the READY issues of one milestone ("" = any)
+# lowest wave, then priority, then the most unfinished issues unblocked, then id, among the
+# READY issues of one milestone ("" = any). "Unblocked" is every unfinished issue that depends
+# on the candidate directly or through other unfinished ones, each counted once: column 13 of
+# an issue row is its direct dependents. plan.rs Plan::ready_in_order and Plan::unblocks are
+# the same order and the same count, and case 99 holds the two engines to one answer. The id
+# is compared as order.rs natural_cmp compares it: its letters folded, then its digits as a
+# number written out (the count of significant digits, then those digits, never a float, so
+# I9999 comes before I10000 at any length), then the spelling with more leading zeros first,
+# then the id itself.
 mj_pj_ready_ranked() {
-  awk -F'\t' -v m="$1" '$1=="I" && $4=="READY" && ($3==m || m=="") {
-      p = $6; rank = (p=="p0"?0:(p=="p1"?1:(p=="p2"?2:3)))
-      printf "%d\t%d\t%s\n", $5, rank, $2 }' "$MJ_PJ/model.tsv" \
-    | LC_ALL=C sort -k1,1n -k2,2n -k3,3 | head -n 1 | cut -f3
+  awk -F'\t' -v m="$1" '
+    $1 == "I" {
+      st[$2] = $4; rd[$2] = $13
+      if ($4 == "READY" && ($3 == m || m == "")) {
+        n++; cid[n] = $2; cw[n] = $5; p = $6
+        cr[n] = (p == "p0" ? 0 : (p == "p1" ? 1 : (p == "p2" ? 2 : 3)))
+      }
+    }
+    function unblocked(id,   seen, q, head, tail, cur, parts, c, k, d, total) {
+      split("", seen); total = 0; head = 1; tail = 1; q[1] = id
+      while (head <= tail) {
+        cur = q[head++]; c = split(rd[cur], parts, ",")
+        for (k = 1; k <= c; k++) {
+          d = parts[k]
+          if (d == "" || (d in seen) || !(d in st) || st[d] == "DONE" || st[d] == "CANCELLED") continue
+          seen[d] = 1; total++; q[++tail] = d
+        }
+      }
+      return total
+    }
+    END {
+      for (i = 1; i <= n; i++) {
+        pre = cid[i]; sub(/[0-9]+$/, "", pre); run = substr(cid[i], length(pre) + 1)
+        sig = run; sub(/^0+/, "", sig)
+        printf "%d\t%d\t%06d\t%s\t%d\t=%s\t%d\t%s\n", cw[i], cr[i], 999999 - unblocked(cid[i]),
+          tolower(pre), length(sig), sig, length(run), cid[i]
+      }
+    }
+  ' "$MJ_PJ/model.tsv" | LC_ALL=C sort -t "$(printf '\t')" -k1,1n -k2,2n -k3,3n -k4,4 -k5,5n -k6,6 -k7,7nr -k8,8 \
+    | head -n 1 | cut -f8
 }
 
 # ---------------------------------------------------------------- unknown keys
@@ -254,7 +341,7 @@ mj_project_roadmap_mermaid() {
   printf 'flowchart LR\n'
   mj_pj_roadmap | while read -r id; do
     st="$(mj_pj_m_status "$id")"
-    ver="$(mj_pj_m_version "$id")"
+    ver="$(mj_pj_m_released_in "$id")"; [ "$ver" = unreleased ] && ver=""
     printf '    %s["%s%s<br/>%s"]:::%s\n' \
       "$(printf '%s' "$id" | tr -c 'A-Za-z0-9' '_')" \
       "$([ -n "$ver" ] && printf '%s — ' "$ver")" "$id" \

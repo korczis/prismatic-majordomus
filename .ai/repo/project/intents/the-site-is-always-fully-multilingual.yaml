@@ -1,0 +1,22 @@
+id: the-site-is-always-fully-multilingual
+title: The published site is always fully multilingual, every language derived from the English build
+statement: "majordomus.dev is offered, page for page, in every language site/i18n/languages.json declares — Czech and English at the least — with a language switch on every page and the reader's language chosen for them on arrival. Nobody writes or maintains a second language: each copy is derived from the English build and a translation memory filled by a model, a stale translation is never served, and a page whose translation is incomplete says so by measurement, not by promise."
+invariants:
+  - English is the only authored source; no page, template or generator is written twice (ADR 0218)
+  - A build is a pure function of the English pages and the memory; no build calls a model or needs a credential
+  - A translation is admitted only with every placeholder of its English, nested the same way; code and identifiers are never translated
+  - A changed English segment has a new key, so its old translation is never served
+  - Every internal link of a copy leads to that language's copy; the switch and the alternates lead to every other language
+  - A reader's explicit choice of language is kept and never overridden; a URL followed inside the site is never redirected
+milestones: []
+satisfaction: []
+governance:
+  - rule:project.english-only
+  - adr:adr-0077
+  - adr:adr-0149
+  - adr:adr-0218
+non_goals:
+  - Human review of every translation; the translation is machine translation and every translated page says so
+  - Languages written right to left
+created_at: 2026-10-19
+updated_at: 2026-10-19

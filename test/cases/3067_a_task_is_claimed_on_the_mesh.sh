@@ -36,7 +36,7 @@ expect_exit 0 "$MJ" finish --outcome partial --note "$T/note.md"
 # ---------------------------------------------------------------- 2. a server whose mesh runs
 mkdir -p .ai/repo/mesh
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
 printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3067\n' >> .ai/repo/mesh/majordomus.yaml
 git add -A && git commit -qm "mesh enabled"
 ( exec "$RB" serve --port 0 --idle 0 --discovery filesystem </dev/null >"$T/serve.log" 2>&1 ) &

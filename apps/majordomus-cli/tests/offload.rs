@@ -60,10 +60,10 @@ fi
 # or lets it run and then removes this stand-in: the next command cannot be started at all
 if [ -n "$OFFLOAD_SSH_VANISH" ]; then
   case "$*" in *"$OFFLOAD_SSH_VANISH"*)
-    env HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"; s=$?; rm -f "$0"; exit $s ;;
+    env -u CARGO_BUILD_BUILD_DIR -u CARGO_TARGET_DIR HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"; s=$?; rm -f "$0"; exit $s ;;
   esac
 fi
-exec env HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"
+exec env -u CARGO_BUILD_BUILD_DIR -u CARGO_TARGET_DIR HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"
 "#;
 
 /// A stand-in for git on the session's side: it fails the one invocation whose arguments
@@ -89,6 +89,10 @@ set -e
 if [ -f NOOP ]; then echo "==> derive: done"; exit 0; fi
 mkdir -p "$CARGO_TARGET_DIR/debug"
 printf 'built from %s\n' "$(git rev-parse HEAD)" > "$CARGO_TARGET_DIR/debug/majordomus"
+# what cargo does with its intermediates: the build directory the environment names, or
+# else the one the checkout declares, {cargo-cache-home}/build-shared/majordomus
+bd="${CARGO_BUILD_BUILD_DIR:-$HOME/.cargo/build-shared/majordomus}"
+mkdir -p "$bd/debug/deps" && : > "$bd/debug/deps/intermediate"
 if [ -n "$OFFLOAD_SIGNAL" ]; then
   : > "$OFFLOAD_SIGNAL/started"
   i=0
@@ -97,6 +101,13 @@ fi
 cp "$CARGO_TARGET_DIR/debug/majordomus" exe-seen.txt
 printf 'derived from: %s\n' "$(cat a.txt)" > generated.txt
 git rev-list --parents -n 1 HEAD | wc -w | tr -d ' ' > parents.txt
+# the commit the derived files may observe (I3836): the worktree's HEAD, not this input
+printf '%s\n' "${MJ_DERIVE_OBSERVE:-}" > observed.txt
+# who the run belongs to (I3956): written only when the test names an owner
+if [ "${OFFLOAD_SHOW_OWNER:-}" = 1 ]; then
+  printf '%s %s %s %s\n' "$MAJORDOMUS_OWNER_SESSION" "$MAJORDOMUS_OWNER_ISSUE" "$MAJORDOMUS_OWNER_PEER" \
+    "$MAJORDOMUS_OWNER_RUN" > owner.txt
+fi
 if [ -f DELETE ]; then rm -f a.txt; fi
 if [ -f FAIL ]; then echo "error: the derive broke"; exit 1; fi
 echo "==> derive: done"
@@ -319,7 +330,9 @@ fn the_probe_skips_a_host_that_is_down_or_short_of_space() {
 }
 
 /// The round trip: the uncommitted change travels, the host derives it, and the derived
-/// files come back staged — nothing committed, nothing left on the host.
+/// files come back staged — nothing committed, nothing left on the host, not even in the
+/// shared build directory the checkout declares (lundra, 2026-10-18: 87 GB there, 0 bytes
+/// free).
 #[test]
 fn a_derive_comes_back_staged_and_uncommitted() {
     let c = Cluster::new(&[("u@lundra", 50)]);
@@ -364,6 +377,15 @@ fn a_derive_comes_back_staged_and_uncommitted() {
         head,
         "something was committed"
     );
+    // the input was a stash snapshot no remote holds; the derive is told to observe HEAD,
+    // which the branch carries, so a derived delivery.json can be checked anywhere (I3836)
+    assert_eq!(
+        std::fs::read_to_string(s.join("observed.txt"))
+            .unwrap()
+            .trim(),
+        head.trim(),
+        "the derive was not told to observe the worktree's HEAD"
+    );
     assert!(
         !staged.lines().any(|l| l == "a.txt"),
         "the authored change was staged for the author"
@@ -389,6 +411,10 @@ fn a_derive_comes_back_staged_and_uncommitted() {
         cache,
         ["majordomus-offload-target"],
         "the derive's private build directory was left on the host"
+    );
+    assert!(
+        !home.join(".cargo/build-shared").exists(),
+        "the derive compiled into the host's shared build directory, which nothing removes"
     );
     assert!(
         !c.root.join("lock").exists(),
@@ -481,6 +507,7 @@ fn a_merge_in_progress_travels_with_both_parents() {
     std::fs::write(s.join("a.txt"), "master\n").unwrap();
     c.git(&s, &["commit", "-q", "-am", "master side"]);
     c.git(&s, &["push", "-q", "origin", "master"]);
+    let head = c.git(&s, &["rev-parse", "HEAD"]);
     let mut merge = Command::new("git");
     merge.arg("-C").arg(&s).args(["merge", "-q", "topic"]);
     c.env(&mut merge);
@@ -509,6 +536,13 @@ fn a_merge_in_progress_travels_with_both_parents() {
         "3",
         "the input lost its second parent"
     );
+    assert_eq!(
+        std::fs::read_to_string(s.join("observed.txt"))
+            .unwrap()
+            .trim(),
+        head.trim(),
+        "a merge in progress observes its HEAD, not the commit-tree input"
+    );
     assert!(
         s.join(".git/MERGE_HEAD").exists(),
         "the merge was concluded for the author"
@@ -518,6 +552,36 @@ fn a_merge_in_progress_travels_with_both_parents() {
 /// What would travel wrong is refused before anything travels: an untracked file. What
 /// comes back wrong is refused before anything is applied: a deleted tracked file. A derive
 /// that fails says so with its own exit code and keeps the host's worktree.
+/// A worktree whose branch has no commit has no HEAD for the derived files to observe
+/// (I3836): it is refused before anything is snapshot or travels.
+#[test]
+fn a_branch_with_no_commit_is_refused_before_anything_travels() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let unborn = c.root.join("unborn");
+    std::fs::create_dir_all(&unborn).unwrap();
+    c.git(&unborn, &["init", "-q"]);
+    let out = c.offload(
+        &[
+            "derive",
+            unborn.to_str().unwrap(),
+            "--declaration",
+            d.to_str().unwrap(),
+        ],
+        None,
+    );
+    assert_eq!(out.status.code(), Some(2), "{}", text(&out.stderr));
+    assert!(
+        text(&out.stderr).contains("no commit yet"),
+        "{}",
+        text(&out.stderr)
+    );
+    assert!(
+        !c.root.join("spool").exists(),
+        "something travelled before the refusal"
+    );
+}
+
 #[test]
 fn what_cannot_be_derived_faithfully_is_refused() {
     let c = Cluster::new(&[("u@lundra", 50)]);
@@ -741,7 +805,8 @@ fn a_host_step_that_fails_is_named_with_its_host() {
             "h0: the bundle could not be sent: ssh: injected failure",
         ),
         (
-            "git fetch -q origin",
+            // the preparation's one fetch of origin, through its bounded retry (I4375)
+            "fetch origin",
             "1",
             "h0: the host could not prepare the worktree: ssh: injected failure",
         ),
@@ -933,6 +998,144 @@ fn a_named_host_derives_and_a_current_tree_stages_nothing() {
     );
 }
 
+/// A derive runs for its owner (I3956): the owner this session names is exported into every
+/// process the derive starts on the host, and the report says whose run it was; the run
+/// record the host kept beside its queue while the derive ran is gone once it ends.
+#[test]
+fn a_derive_runs_for_its_owner_and_leaves_no_run_record() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let s = c.session();
+    std::fs::write(s.join("a.txt"), "owned\n").unwrap();
+    let owner = [
+        ("OFFLOAD_SHOW_OWNER", "1".to_string()),
+        ("MAJORDOMUS_OWNER_SESSION", "claude-code-owner".to_string()),
+        ("MAJORDOMUS_OWNER_ISSUE", "I3956".to_string()),
+        ("MAJORDOMUS_OWNER_PEER", "p3".to_string()),
+    ];
+    let out = c.derive(&d, &["--format", "json"], &owner);
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let report: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(report["owner"]["session"], "claude-code-owner", "{report}");
+    assert_eq!(report["owner"]["issue"], "I3956", "{report}");
+    assert_eq!(report["owner"]["peer"], "p3", "{report}");
+    let tag = report["tag"].as_str().unwrap();
+    assert_eq!(
+        std::fs::read_to_string(s.join("owner.txt")).unwrap(),
+        format!("claude-code-owner I3956 p3 {tag}\n"),
+        "the derive did not see its owner"
+    );
+    assert!(
+        text(&out.stderr).contains("runs for session claude-code-owner, peer p3, issue I3956"),
+        "{}",
+        text(&out.stderr)
+    );
+    let runs = c.root.join("queue.runs");
+    assert!(runs.is_dir(), "the run records live beside the queue");
+    assert_eq!(
+        std::fs::read_dir(&runs).unwrap().count(),
+        0,
+        "a run record outlived its run"
+    );
+}
+
+/// A running derive is stopped by its owner as a process group, through `offload stop`
+/// (I3956): another session is refused and nothing is signalled; the owner's stop ends the
+/// derive, whose own command then says it was stopped (14), and leaves no run record.
+#[test]
+fn a_running_derive_is_stopped_by_its_owner_and_only_by_it() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let s = c.session();
+    std::fs::write(s.join("a.txt"), "stopped\n").unwrap();
+    let signal = c.root.join("signal");
+    std::fs::create_dir_all(&signal).unwrap();
+    let mut cmd = common::majordomus();
+    cmd.args(["offload", "derive", ".", "--declaration"])
+        .arg(&d)
+        .current_dir(&s)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    c.env(&mut cmd);
+    cmd.env("OFFLOAD_SIGNAL", &signal)
+        .env("MAJORDOMUS_OWNER_SESSION", "claude-code-owner");
+    let derive = cmd.spawn().unwrap();
+    let runs = c.root.join("queue.runs");
+    let deadline = Instant::now() + Duration::from_secs(60);
+    let record = loop {
+        let found = std::fs::read_dir(&runs).ok().and_then(|mut d| {
+            d.find_map(|e| {
+                e.ok()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().is_some_and(|x| x == "run"))
+            })
+        });
+        if let (Some(r), true) = (found, signal.join("started").exists()) {
+            break r;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "the derive never recorded its run"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    };
+    let tag = record.file_stem().unwrap().to_str().unwrap().to_string();
+    let text_of = std::fs::read_to_string(&record).unwrap();
+    assert!(
+        text_of.contains("owner_session claude-code-owner"),
+        "{text_of}"
+    );
+    let stop = |session: &str| {
+        let mut cmd = common::majordomus();
+        cmd.args([
+            "offload",
+            "stop",
+            &tag,
+            "--grace",
+            "5",
+            "--format",
+            "json",
+            "--declaration",
+        ])
+        .arg(&d)
+        .current_dir(&s);
+        c.env(&mut cmd);
+        cmd.env("MAJORDOMUS_OWNER_SESSION", session);
+        cmd.output().unwrap()
+    };
+    let refused = stop("claude-code-other");
+    assert_eq!(refused.status.code(), Some(13), "{}", text(&refused.stderr));
+    assert!(
+        text(&refused.stderr).contains("belongs to session claude-code-owner"),
+        "{}",
+        text(&refused.stderr)
+    );
+    assert!(record.exists(), "a refused stop touched the run");
+    let stopped = stop("claude-code-owner");
+    assert!(stopped.status.success(), "{}", text(&stopped.stderr));
+    let report: serde_json::Value = serde_json::from_slice(&stopped.stdout).unwrap();
+    assert_eq!(report["signals"][0], "TERM", "{report}");
+    assert_eq!(
+        report["record"]["owner"]["session"], "claude-code-owner",
+        "{report}"
+    );
+    let out = derive.wait_with_output().unwrap();
+    assert_eq!(out.status.code(), Some(14), "{}", text(&out.stderr));
+    assert!(
+        text(&out.stderr).contains("the derive was stopped on h0 with `offload stop`"),
+        "{}",
+        text(&out.stderr)
+    );
+    assert!(!record.exists(), "the stopped run left its record");
+    let gone = stop("claude-code-owner");
+    assert_eq!(gone.status.code(), Some(12), "{}", text(&gone.stderr));
+    assert!(
+        text(&gone.stderr).contains("holds no run record"),
+        "{}",
+        text(&gone.stderr)
+    );
+}
+
 /// The command's own refusals: a declaration that cannot be read, a directory that is no
 /// repository, and output that cannot be written — each an error with its exit code, never a
 /// listing cut short in silence.
@@ -967,6 +1170,28 @@ fn the_command_refuses_what_it_cannot_read_or_write() {
         let out = closed(args);
         assert!(refused(&out, 13).contains("<stdout>: "), "{args:?}");
     }
+
+    // a stop that succeeded on its host (a leftover record whose group is empty) and
+    // could not say so: a child that has ended and been reaped stands for the group
+    let mut ended = Command::new("true").spawn().unwrap();
+    let dead = ended.id();
+    ended.wait().unwrap();
+    let runs = c.root.join("queue.runs");
+    std::fs::create_dir_all(&runs).unwrap();
+    std::fs::write(
+        runs.join("abcdefabcd.run"),
+        format!(
+            "majordomus-offload-run/v1\ntag abcdefabcd\npid {dead}\npgid {dead}\nhost h0\n\
+             owner_session claude-code-someone\n"
+        ),
+    )
+    .unwrap();
+    let out = closed(&["stop", "abcdefabcd", "--force", "--declaration", decl]);
+    assert!(refused(&out, 13).contains("<stdout>: "), "stop");
+    assert!(
+        !runs.join("abcdefabcd.run").exists(),
+        "the stop ran on its host before it could not be reported"
+    );
 }
 
 /// A repository whose layer declares no host says so, and contacts nobody.

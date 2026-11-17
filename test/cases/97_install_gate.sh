@@ -34,7 +34,8 @@ FIX="$T/fixture"; mkdir -p "$FIX/releases"
 start_http "$FIX" || skip "no python3 or node to serve a fixture release"
 trap 'stop_http' EXIT INT TERM HUP
 
-VERSION="$("$ROOT/scripts/release-version")"
+# the fixture serves the stable base of a pre-release tree (scripts/release-fixture)
+REAL_VERSION="$("$ROOT/scripts/release-version")"; VERSION="${REAL_VERSION%%-*}"
 MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-fixture" --out "$FIX" --base-url "$HTTP_BASE" > "$T/fixture.log" 2>&1 \
   || { rc=$?; echo "    the fixture release could not be built (exit $rc)"; tail -20 "$T/fixture.log" | sed 's/^/      /'; exit 1; }
 expect_file "$FIX/releases/latest.json"
@@ -54,6 +55,23 @@ printf '%s\n' "$out" | grep -q "initialises a repository" || { echo "    the gat
 # makes one of its own under TMPDIR and removes it. A gate that installs into the machine it
 # runs on would pass on a runner and be unusable anywhere else.
 [ ! -e "$T/home-green" ] || { echo "    the gate installed into the home it was given"; exit 1; }
+
+# --- a source tree newer than the release does not fail the release -----------------------
+# The gate runs from a checkout whose layer may carry keys the published release cannot know:
+# on 2026-10-31 the stable 0.30.2 refused this checkout's .ai/manifest.yaml (`lifecycle`), and
+# the launcher's no-toolchain check failed although the archive was whole. That check runs on
+# the layer the release itself wrote (I4527), so a checkout with a key no release knows is
+# still green, and the launcher is still run.
+NEWER="$T/newer"; mkdir -p "$NEWER/site/data/registry"
+cp "$MODEL" "$NEWER/site/data/registry/"
+cp -R "$ROOT/.ai" "$NEWER/.ai"
+printf 'a_key_no_release_knows: true\n' >> "$NEWER/.ai/manifest.yaml"
+out="$(env HOME="$T/home-newer" MJ_ROOT="$NEWER" "$GATE" --base "$HTTP_BASE" 2>&1)" || {
+  echo "    the gate failed a whole release because the checkout's layer is newer than it"
+  printf '%s\n' "$out" | sed 's/^/      /'
+  exit 1
+}
+printf '%s\n' "$out" | grep -q "MCP launcher runs with no toolchain" || { echo "    the gate did not run the MCP launcher"; exit 1; }
 
 # --- an origin that serves no release: the gate fails, and says what a reader would see -----
 mv "$FIX/releases/latest.json" "$FIX/releases/latest.json.away"

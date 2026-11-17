@@ -1,0 +1,28 @@
+id: I3310
+milestone: failure-is-visible
+title: "majordomus start refuses a task, owner or reason that the task record cannot hold, and writes nothing"
+slug: start-refuses-unsafe-scalars
+priority: p2
+profile: implementation
+objective: "Refuse at entry, with a usage exit and no write, any task description, --owner or --because value that is multi-line, carries a control character, or would not round-trip through the layer's YAML reader; adr propose, decision add, knowledge observe and question add/resolve already refuse multi-line text through mj_is_multiline."
+why: "lib/start.sh:144 and :150 write task, owner and exemption_because into .ai/local/state/current.yaml as double-quoted scalars, escaping the double quote in task and because and nothing in owner, and lib/start.sh never calls mj_is_multiline (lib/common.sh:1788). The layer's YAML reader rejects multi-line scalars (lib/common.sh:767), so a task started with an embedded newline, a trailing backslash or a quote in --owner writes a record that the next check, handover or finish cannot parse. The refusal belongs at the boundary that accepts the text (2026-09-04 archive review). Sources: chatgpt-majordomus:c003#4."
+current_state: "At 707a04c, start accepts any argument text. grep -n mj_is_multiline lib/*.sh lists the callers: adr propose, decision add, knowledge observe and question add/resolve refuse multi-line text; lib/start.sh is not among them."
+desired_state: "One shared predicate judges every scalar a task command writes, start applies it to task, owner and because, and a refused start leaves no state behind."
+scope:
+  - "lib/start.sh"
+  - "lib/common.sh"
+  - "docs/CLI.md"
+non_scope:
+  - "Changing the task record's schema"
+  - "Rewriting existing task records"
+acceptance_criteria:
+  - "majordomus start with a newline in the task exits with the usage code and writes no current.yaml"
+  - "The same refusal covers --owner and --because"
+  - "A quote, a backslash and a non-ASCII letter in the task are stored and read back unchanged by check"
+  - "A case drives each refusal and each round trip in a disposable repository"
+validation:
+  - "bash test/run.sh 04_start_check"
+evidence_required:
+  - "case_start_refuses_unsafe_scalars"
+created_at: 2026-10-18
+updated_at: 2026-10-18

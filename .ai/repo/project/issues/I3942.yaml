@@ -1,0 +1,29 @@
+id: I3942
+milestone: ci-critical-path
+title: Linux's per-argument cap is measured on every host, so an oversized jq argument fails where it is written
+slug: the-argument-cap-is-measured-on-every-host
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Case 10 runs scripts/generate-site-data over every one of its real inputs with a jq on PATH that measures each argument: one over Linux's 131072-byte MAX_ARG_STRLEN is refused with exit 126 as Linux refuses it, and one over three quarters of the cap is named as NEAR, on macOS as on CI."
+why: "The same failure reached CI three times through a spelling scripts/ci/argv-limit-check did not know: the claims matrix, forge_paths, then `--arg mermaid \"$(mj_project_mermaid)\"` at 132474 bytes, which reddened train 4's site job and six suite cases on run 39860903679. macOS applies no per-argument cap, so every local run passed. A static check refuses spellings; only a measurement refuses the payload whatever it is called. On master the same argument already measures 126361 bytes, 96% of the cap."
+current_state: "scripts/ci/argv-limit-check matches three spellings, plus mj_project_mermaid on train 4. A payload under a fourth spelling passes it and every macOS run, and fails only on Linux."
+desired_state: "Every argument the site generator hands to jq in case 10 is measured against 131072 bytes on every host; the shim is itself proved to refuse one byte over and to admit the cap exactly; arguments over 98304 bytes are named on the case's output before any of them crosses."
+scope:
+  - test/cases/10_site_data.sh
+  - .ai/repo/project/issues/I3942.yaml
+non_scope:
+  - scripts/generate-site-data and scripts/ci/argv-limit-check (p1's repair, r-c873f68b9658, carries the mermaid fix)
+  - Other commands than jq; the generators' whole-collection payloads travel to jq
+depends_on: []
+acceptance_criteria:
+  - "On train 4's head without p1's repair, case 10 fails on macOS with the argv-cap refusal; with the repair it passes"
+  - "On master, case 10 names the 126361-byte plan graph as NEAR and passes"
+  - "The shim refuses a 131073-byte argument with exit 126 and admits a 131072-byte one"
+validation:
+  - bash test/run.sh 10_site_data
+evidence_required:
+  - suite
+risk: "The shim adds one bash process per jq call in the first generator run of case 10; it measures with the shell's own length expansion under LC_ALL=C and forks nothing else."
+created_at: 2026-10-23
+updated_at: 2026-10-23

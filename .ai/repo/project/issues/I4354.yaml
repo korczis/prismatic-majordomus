@@ -1,0 +1,45 @@
+id: I4354
+milestone: development-runtime
+title: "Under disk pressure the shared build directory is reclaimed without cargo's lock, and a build is admitted before cargo takes it"
+slug: reclaim-without-cargos-lock-and-admit-before-it
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "On a developer machine: a reclaim triggered by free space removes idle incremental sessions under rustc's own s-*.lock, with no age floor under pressure; a cargo shim, share/libexec/cargo-shim/cargo, first on PATH, admits a build before cargo takes its lock and holds new builds while a reclaim is pending; admission reclaims before it refuses, the shared build directory first and a worktree's target only below MAJORDOMUS_MIN_FREE_MB. Admission is one function in lib/rust_bin.sh, and this issue states the order of its floors, which every record that adds one follows: (1) disk_emergency below 10 GiB (I4355) refuses every build, with no override; (2) the machine floor of rule project.the-cooperation-model-is-the-owners-word clause 7, 35 GiB, read from rule data (I4006) and held by I3825, refuses a local build only after this issue's reclaim has run, naming the free space, the floor, the override and the offload route; (3) the builder count of clause 7 (I3825); (4) the machine slot (I4006). CI keeps its own floor and is refused by none of (2) to (4). This issue changes no number of clause 7. #2397 (I4006) and #2567 are fixed to match and land."
+why: "Incident 5 of 2026-10-28: the 641b Mac's free space fell to 0-3 GiB twice (17:32Z and 21:34Z). Every reclaim of the shared build directory is gated on cargo's profile flock (unfair, and never free under concurrent builds), an empty profile-user list and a 60-minute idle age, while idle incremental sessions, about 55% of its size, could be removed lock-free under rustc's s-*.lock. The machine's steady headroom (27-30 GB) is below the 35 GiB floor, so a floor applied before any reclaim refuses every build and raw cargo bypasses it; #2567 is still tied to the lock; I3959's evictor removed 0 bytes twice. I3825 (open, p2) holds clause 7's 35 GiB in the same function, I4006 reads it from rule data and I4355 adds an emergency floor below it; without one stated order four records would set admission floors in one place. Whether 35 GiB is reachable after the reclaim on a 641b-class machine is measured here and reported; changing clause 7's number is the owner's word, not this issue's."
+current_state: "Measured at 81ef931a3e1: lib/rust_bin.sh's mj_rust_bound_build_dir (line 1396) evicts under cargo's lock; MJ_MIN_FREE_MB_DEFAULT is 5120 (line 470); share/libexec holds no cargo shim, so a raw cargo is admitted by nothing; no record states which admission floor applies first."
+desired_state: "With the debug flock held, an idle incremental session is reclaimed and a locked one is kept; a raw cargo below a floor exits non-zero before compiling, after the reclaim has run, naming which floor of the stated order refused it; a cargo started during a pending reclaim waits and names the barrier; CI and a caller already holding a slot pass unchanged. Enforced by cases 3959 and 276, case 4006 once #2397 lands, and `majordomus shell check` on the shim's exemption."
+scope:
+  - ".ai/repo/project/issues/I4354.yaml"
+  - "lib/rust_bin.sh"
+  - "share/libexec/cargo-shim/cargo"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+  - "test/cases/276_disk_is_bounded.sh"
+  - "docs/WORKTREES.md"
+  - "docs/OFFLOAD.md"
+non_scope:
+  - "A rustc-workspace-wrapper: it runs inside cargo's lock and would lengthen the hold"
+  - "CI runner homes (I4344)"
+  - "Changing clause 7's 35 GiB or five builders: the owner's word"
+acceptance_criteria:
+  - "Case 3959: with the debug flock held by a stub build, an idle incremental session is removed and a session holding its s-*.lock is kept"
+  - "Case 276: a raw cargo through the shim with free space stubbed below the machine floor after the reclaim exits non-zero before compiling, naming the free space, the floor, the override and the offload route; with the reclaim lifting free space above the floor it is admitted"
+  - "Case 276: with free space stubbed at 9 GiB the refusal is disk_emergency and the override does not admit it; at 30 GiB it is the machine floor and the override admits it"
+  - "Case 276: with a reclaim pending, a new cargo waits and names the reclaim barrier"
+  - "Case 276: CI and a caller that already holds a slot pass unchanged"
+  - "Case 276: a stub reap-orphans is not called while free space stays above MAJORDOMUS_MIN_FREE_MB after eviction"
+  - "`majordomus shell check` passes with share/libexec/cargo-shim/cargo carrying an F (platform adaptor) exemption in .ai/repo/automation/inventory.jsonl, like share/libexec/sccache-mesh's: cargo is run by name from PATH before any session, so the shim must be an executable; its removal is cargo offering an admission hook the executable can serve"
+validation:
+  - "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 276_disk_is_bounded"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on:
+  - "I3959"
+  - "I4006"
+  - "I3825"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

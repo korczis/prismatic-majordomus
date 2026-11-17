@@ -105,6 +105,9 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+cache:
+  flatten_max_entries: 2000              # parsed YAML files kept under .ai/local/cache/flat/; 0 is no cache
+
 benchmark:
   samples: 10            # warm samples per target in `majordomus bench`
   warmup: 2              # unsampled runs before them
@@ -260,6 +263,33 @@ The four shipped profiles:
 
 </div>
 
+
+### Which axis becomes which limit — `share/profile-limits.yaml`
+
+An axis is prose until a limit is derived from it. `share/profile-limits.yaml`, shipped with
+the tool beside `share/obligations.yaml`, is the one place that says which axis may become a
+runtime limit, how the value is derived, and which function applies it (I0201). It declares
+only the limits this repository already applies:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| limit | axis | derive | adapter |
+|---|---|---|---|
+| `checkpoint_max_age_seconds` | `checkpoint_interval` | `duration_seconds` | `mj_validate_checkpoint` |
+| `history_events` | `context.recent_history_depth` | `count` | `mj_ctx_history` |
+| `knowledge_pointers` | `context.knowledge_max_items` | `count` | `mj_context_pointers` |
+
+</div>
+
+
+`doctor` reconciles it in both directions and prints each profile's limits as data
+(`OK profile-limits routine — limits checkpoint_max_age_seconds=1800 history_events=0
+knowledge_pointers=0`). It refuses, by name, a declared axis a profile does not set, a value
+the derivation cannot read, a declared adapter that no function under `lib/` carries with a
+`# majordomus-limit: <limit>` line above it, and a function that carries that line for a
+limit the file does not declare. Capability, effort and verbosity are absent on purpose:
+nothing here can observe them being enforced. `test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh`
+holds it.
 
 ---
 
@@ -520,6 +550,8 @@ acceptance_criteria: [...]            # what would make the outcome true
 validation: [...]                     # commands that demonstrate it
 evidence_required: [...]              # tokens gating milestone acceptance
 risks: [...]
+due_on: 2026-11-11                    # optional: the day it is expected; projected to the
+                                      # forge's due date, never read to derive a status
 cancelled: false                      # optional
 evidence:                             # appended; each entry covers one required token
   - covers: suite
@@ -558,6 +590,8 @@ desired_state: "…"
 scope: [...]                          # the paths this issue may touch
 non_scope: [...]
 depends_on: [I0005]                   # issue ids; the edges of the DAG
+traces: [PROJ-12, A7]                 # optional: what it answers to outside the layer (tracker
+                                      # keys, requirement ids, URLs), rendered as written
 acceptance_criteria: [...]            # required; an issue without one is a placeholder
 validation: [...]                     # required; the commands that demonstrate it
 evidence_required: [...]              # tokens that gate completion
@@ -623,6 +657,85 @@ local, so upgrading does not turn an existing installation red.
 `outcome` and `checkpoint_at` are the only fields a command changes after `start`.
 `active` refuses a new `start`; every other outcome lets `start` archive the record to
 `state/archive/<id>.yaml` and begin a new task.
+
+---
+
+## `.ai/local/state/telemetry/<task-id>.yaml` — a telemetry record
+
+What a provider reported about the execution of one task. Majordomus invokes no model, so
+it measures none of this itself: every number in the record was handed to it, and the
+record keeps who handed it.
+
+**This section is ahead of its writer, and says so.** The contract is defined
+(`share/schemas/majordomus/telemetry/telemetry.v1.schema.json`, kind `telemetry` in
+`share/kinds.yaml`, allow-list `share/allow/telemetry.txt`) and a record that breaks it is
+refused wherever a `telemetry` document is validated, but nothing writes one yet. The
+writer is the usage receiver of issue I3288 (`every-sessions-usage-is-observed`), which takes
+a provider's usage from its official seam (ADR 0213, `offers.usage` in `share/providers.yaml`)
+rather than from a command a worker hands numbers to; I0302, which planned that command,
+was cancelled for it. Until I3288 lands, the directory does not exist and nothing reads it. It is the one format in this document described before something produces it,
+because every later statement about what a task consumed rests on this shape and it had to
+be fixed first.
+
+```yaml
+schema: telemetry/v1
+kind: telemetry
+task_id: t-20261012201705-7bf9        # the task `majordomus start` allocated
+session_id: s-20261012201704-3c1e     # optional; the episode the facts were reported in
+recorded_at: 2026-10-12T21:04:10Z     # when the record was written, never the provider's clock
+facts:
+  input_uncached_tokens:
+    value: 1840
+    reporter: claude-code
+  cache_write_tokens:
+    value: 52210
+    reporter: claude-code
+  cache_read_tokens:
+    value: 903377
+    reporter: claude-code
+  output_tokens:
+    value: 21504
+    reporter: claude-code
+  reasoning_tokens:
+    not_reported: "the harness reports reasoning inside output_tokens, not apart"
+    reporter: claude-code
+  requests:
+    value: 61
+    reporter: claude-code
+  tool_calls:
+    value: 0                          # a measurement: the reporter said zero
+    reporter: claude-code
+  cost_microusd:
+    not_reported: "no price table was reported for this session"
+    reporter: claude-code
+```
+
+Three rules make the record what it is, and the schema enforces each of them:
+
+- **Every fact names its reporter.** `reporter` is the party the value came from — a
+  provider by its id in `share/providers.yaml`, or another named source. A fact without one
+  is refused. For an absent fact it is the party that would have reported it and did not.
+- **Absence is a value.** A fact is `value` or `not_reported`, exactly one of them, and
+  `not_reported` carries the reason. All eight facts are required in every record: a record
+  that leaves one out is refused, because an omitted key is what a reader takes for zero.
+  A provider that reports nothing produces a record in which every fact is `not_reported`.
+- **Nothing derived is stored.** There is no total and no ratio here; those are arithmetic
+  over the facts, done by the reader. `cost_microusd` is what the reporter says the work
+  cost, in millionths of a US dollar — a harness's projection or a bill, as the reporter
+  states it — and is never computed from the other facts.
+
+The fact names are the provider-neutral ones `majordomus economics` already normalises
+recorded runs onto (`apps/majordomus-cli/src/economics/usage.rs`): input that touched no
+cache, input written to the cache, input read from it, and output with reasoning included.
+A provider whose own field means something else — one input figure with the cached part
+inside it — is mapped by whatever hands the facts in, and what it cannot separate is
+`not_reported`, not a guess.
+
+What version 1 does not carry: the model or models that answered, per-request detail, wall
+time, and anything a session said or read. None of them is estimated to fill the gap.
+
+Unknown keys are an error at every level, as in every other Majordomus YAML file. These
+files are **not tracked**: the numbers belong to one checkout's work.
 
 ---
 
@@ -1191,8 +1304,9 @@ See [`CLI.md`](@/docs/cli-specification.md) for `majordomus adr`.
 ## `.ai/repo/deployments/<id>.yaml`
 
 One deployment of this repository's executable, and the only authoritative statement of
-it. The container image definition (`deploy/Dockerfile`) and its ignore file
-(`.dockerignore`) are **generated** from this object; each carries a provenance header naming
+it. The container image definition (`deploy/Dockerfile`), its ignore file
+(`.dockerignore`) and the files of the provider it names (`deploy/<provider>/`) are
+**generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
 [`share/schemas/majordomus/deployment/deployment.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/deployment/deployment.v1.schema.json)
@@ -1247,15 +1361,42 @@ budgets:                        # each written by the run that measured it; none
   resident_memory_mb: ...
   blocking_check_ms: ...
   request_p99_ms: ...
+
+provider:                       # optional: the provider that hosts it (ADR 0219)
+  name: gigalixir               # only a provider the contract knows; another is refused
+  app: prismatic-majordomus     # the application at the provider, ^[a-z][a-z0-9-]{2,62}$
+  stack: gigalixir-24           # the provider's stack
+  url: https://prismatic-majordomus.gigalixirapp.com   # always https://
 ```
 
-**No hosting provider is named.** None is a target: the release binaries, GitHub Pages and
-the GHCR image built from `deploy/Dockerfile` are what ships. The object once carried a
-`provider` block naming Fly.io, rendered into `fly.toml`; nothing ever ran there, and on
-2026-10-12 the block, its reader and `fly.toml` were removed together. A `provider` key is
-now refused like any other key the contract does not have.
+**A provider is optional, and only a known one.** Absent, nobody hosts the deployment: the
+GHCR image built from `deploy/Dockerfile` is published and run by nobody. Named, it is one
+the contract knows — today `gigalixir` — and `majordomus generate deployment` renders every
+file it reads under `deploy/<provider>/`: for Gigalixir `Procfile` (the executable the slug
+carries at `.majordomus/bin/<binary>`, started with `serve --discovery filesystem` on the
+listen interface and the provider's `PORT`, falling back to `listen.port`) and the inline
+buildpack's `bin/detect`, `bin/compile` and `bin/release`, each opening with `#!/bin/sh` and
+carrying the provenance header on the next line. The buildpack itself, pinned by commit, is
+a constant of the renderer (`render::buildpack`) rather than a file, because a buildpack
+list cannot carry a header. A provider beside `listen.interface: loopback`, or a URL that is
+not `https://`, is refused. Fly.io was named here once, never ran, and stays no target
+(2026-10-12).
 
-**The port is stated once.** The process and the image both read this one field; a literal
+**What a provider receives is assembled, never the repository.** `majordomus deploy slug
+--deployment <id> --commit <sha> --executable <path> --out <dir>` writes, into a directory
+outside the checkout that is absent or empty, the object's `build.inputs` read from git at
+that commit except the package the executable is compiled from, the provider's generated
+files of that commit at the slug's root (each held to what the object renders, the hooks
+mode 755), `.buildpacks` holding the pinned buildpack line, the executable at
+`.majordomus/bin/<binary>`, and `.majordomus/SOURCE.json` naming the deployment, the commit,
+the executable's SHA-256 and the provider. `.github/workflows/provider.yml` (model
+`.ai/repo/ci/provider.yaml`) runs it after master's `validate` concludes success, with an
+executable built at that commit, pushes the slug as one fast-forward commit on the
+provider's own history, and waits until `provider.url` + `health.liveness` answers that
+commit.
+
+**The port is stated once.** The process, the image and the provider's Procfile all read
+this one field; a literal
 port anywhere else is the drift this kind exists to prevent. The same holds for the health
 routes and the build inputs.
 
@@ -1265,7 +1406,8 @@ layer or into a log.
 
 The schema decides shape; `majordomus deploy doctor` decides sense — a health route no
 capability registers, a package or binary the workspace does not contain, a build input
-that does not resolve, a `min_running` above `count` — and each refusal names the file, the
+that does not resolve, a `min_running` above `count`, a provider URL that is not https, a
+provider beside a loopback interface — and each refusal names the file, the
 key, the value found and the correction.
 
 **The image is built in stages that a cache can carry.** `deploy/Dockerfile` is rendered with
@@ -1605,6 +1747,31 @@ layer; never a baseline.
 `status` is `ok`, `setup-failed`, or `exit-<code>` when the command exited with a code its
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
 names the source of the milliseconds (`epochrealtime` or `seconds`).
+
+## `.ai/local/cache/flat/<parser>/<slot>` — a parsed YAML file
+
+What the shell tool's YAML reader printed for one file, kept so that the next command on the
+same bytes reads it instead of parsing it again. `<parser>` is the first 16 hex digits of the
+SHA-256 of the parser itself, so an entry is only ever read by the parser that wrote it.
+`<slot>` is where an entry is looked for — the file's length and sixteen of its characters as
+numbers, all computed without starting a process — and never what it is trusted on: hashing
+the file would cost the one process a cached read is there to save. One entry is one file:
+
+```text
+mjflat 1 <source length> <flat length>
+<the source, byte for byte><the flat lines, byte for byte>
+```
+
+An entry is served only when the header adds up to the file's own length and the source it
+holds is exactly the file asked about, compared in full; anything else is a miss, which
+parses the file again and writes the entry back. Two files that land in one slot evict each
+other and neither is ever served the other's lines. A parse that failed is never kept. An
+entry is written beside the others and renamed into place, so a reader never sees half of
+one. After each new entry the directory holds at most the policy's
+`cache.flatten_max_entries`, the oldest written removed first; without the key, or with 0,
+there is no cache. Nothing reads this directory but the reader that wrote it; deleting it
+costs one parse per file. With `MJ_TIMING=1`, `yaml_flatten` still counts every file asked
+for and `flatten_cache_hit` counts the ones served from here.
 
 ## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 

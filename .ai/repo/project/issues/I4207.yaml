@@ -1,0 +1,42 @@
+id: I4207
+milestone: measurements-are-tracked-over-time
+title: Only a trends series of the shape the publication writes decides a run link
+slug: a-trends-series-is-trusted-by-its-schema
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "scripts/ci/link-check adds the runs of site/data/trends.json to the runs it decides by provenance only when the file is the series `scripts/pages trends` writes, an object of schema trends/v1; a file of any other shape decides nothing and does not break the check."
+why: "I4220 admitted every runs[].run_id of site/data/trends.json without looking at what the file is. The trust rests on provenance: scripts/pages trends wrote it from the forge's answers at publish time, and its own output says schema trends/v1. A stale, hand-made or differently shaped file with a runs list would turn arbitrary run links into decided ones, and a top-level list made the check die with AttributeError instead of deciding."
+current_state: "link-check reads `.get('runs')` of whatever site/data/trends.json parses to: any object's runs are decided, and a JSON list raises AttributeError."
+desired_state: "Only an object whose schema is trends/v1 contributes runs; a series of another schema or none leaves those run links refused as undecidable offline (exit 10), and case 335 holds both."
+scope:
+  - scripts/ci/link-check
+  - test/cases/335_every_link_resolves.sh
+  - .ai/repo/project/issues/I4207.yaml
+non_scope:
+  - "What scripts/pages trends writes, which already carries schema trends/v1"
+  - "Deciding any other forge path offline"
+depends_on: []
+acceptance_criteria:
+  - "A run a trends/v1 series names is still decided"
+  - "The same run named by a series of schema trends/v0 is refused as undecidable offline (exit 10)"
+  - "The same run named by a top-level JSON list is refused (exit 10), not a crash"
+validation:
+  - "bash test/run.sh 335_every_link_resolves"
+evidence_required:
+  - suite
+risk: "None: the only series the publication writes is trends/v1 (scripts/pages, `schema: \"trends/v1\"`), so a published site decides exactly what it did."
+started_at: 2026-10-28T17:23:35Z
+started_event: sha256:5673290b06ed55519318ef92705e764852f722b762822aa49c915c3904f7b396
+updated_at: 2026-10-28T17:24:22Z
+completed_at: 2026-10-28T17:24:22Z
+completed_event: sha256:aa8b687623416c60709af864b6536bd3c5002270dd4e7f39334cfc3791190398
+evidence:
+  - covers: suite
+    type: ci
+    command: "bash test/run.sh 335_every_link_resolves (inside the master validate workflow's suite-shard (3) job)"
+    result: "pass: case 335 green on master CI. Its I4207 assertions are at test/cases/335_every_link_resolves.sh:112-124 (trends/v1 decided, trends/v0 refused with exit 10, bare list refused with exit 10). The fix commit 59bcaa4f9f9 is an ancestor of both CI commits. (commit 6c79dcf68cf329f4c21c219720b811381c3433aa) Audited per criterion on 2026-10-28 by 61e1283f; two adversarial verifiers did not refute it."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (job suite-shard (3) id 122655183349; log 'suite-shard (3) 2026-10-27T23:20:46.4694598Z ok      335_every_link_resolves  5s'; checkout line '6c79dcf68cf329f4c21c219720b811381c3433aa'). Corroborated on master head 81ef931a3e1: run https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754, job suite-shard (3) id 122783064697 (success), 'ok      335_every_link_resolves  4s' at 2026-10-28T12:27:52Z (that run failed only on case 103, in suite-shard (2))."
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:24:07Z

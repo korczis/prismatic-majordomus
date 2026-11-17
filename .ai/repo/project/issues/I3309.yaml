@@ -1,0 +1,41 @@
+id: I3309
+milestone: a-test-fails-when-the-code-is-wrong
+title: "A fix finishes completed only with a named regression case that fails on the task's base and passes on its head"
+slug: a-fix-proves-its-regression-case-fails-without-it
+priority: p2
+profile: implementation
+objective: "For a task started under the debugging profile, finish --outcome completed runs the regression case the task names twice: at the task's base commit (in a disposable worktree, with only the case file applied) where it must fail, and at the head where it must pass. The completed note of such a task carries a Root Cause section naming the observed failure, the mechanism and the violated invariant. The check is a typed Rust capability the finish validator calls, so no domain-logic shell is added."
+why: "On 2026-09-09 the owner made it a standing order that every fixed bug has a discovered root cause and is covered by regression and edge-case tests (c085#0, c087#0), and on 2026-09-05 a bug fix carrying regression evidence was ranked the highest-value rule to enforce (c028#1). Master treats it as a reminder: a test file touched anywhere satisfies it, so a fix whose test also passes on the old code reads complete. Sources: chatgpt-majordomus:c028#1, chatgpt-majordomus:c085#0, chatgpt-majordomus:c085#3, chatgpt-majordomus:c086#3, chatgpt-majordomus:c087#0, chatgpt-majordomus:c087#1."
+current_state: "Verified on master 707a04c. .ai/repo/policy.yaml sets commit.fix_requires_test: warning ('not evidence enough to refuse a commit on'); apps/majordomus-cli/src/commit/verdict.rs:323-325 raises FixWithoutTest only when no file of the commit is a test path. .ai/repo/profiles/debugging.yaml sets verification.regression_test_required: true, and lib/finish.sh:235-239 (mj_validate_profile_requirements) passes it when any touched path matches a test pattern; the other three profiles set it false. Required note sections come from policy handover.required_sections for every profile alike (lib/finish.sh mj_validate_note). Nothing runs a regression case against the commit before the fix."
+desired_state: "The debugging profile declares a regression proof and a Root Cause note section. finish names the case, the base and head revisions and both outcomes in its output and in the task record; a case that passes on the base is refused as not a regression test. partial and blocked are unaffected, and the commit-level warning stays a warning."
+scope:
+  - ".ai/repo/profiles/debugging.yaml"
+  - ".ai/repo/profiles/README.md"
+  - "apps/majordomus-cli/src/gates"
+  - "lib/finish.sh"
+  - ".ai/repo/rules/vendor/majordomus/rules/profile-requirements.v1.md"
+  - "test/cases/16_profiles.sh"
+non_scope:
+  - "Retroactive root-cause records for past fixes"
+  - "A minimum count of edge-case tests"
+  - "Typed waivers of the requirement (open question on waiver records)"
+  - "Making commit.fix_requires_test an error"
+  - "docs/COVERAGE.md and the scheduled mutation run, which I3120 owns (complementary: mutation shows a suite misses a wrong predicate, this shows one fix's case fails without the fix)"
+serves:
+  - "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
+acceptance_criteria:
+  - "A debugging-profile task whose named regression case also passes on the task's base is refused completed with a finding naming the case and the base commit"
+  - "A task whose case fails on the base and passes on the head finishes completed, and the record names the case and both revisions"
+  - "A fixture task that touches an unrelated test file is refused, where master today accepts it"
+  - "A debugging-profile completed note without a Root Cause section is refused"
+  - "partial and blocked outcomes of the same fixture finish as before"
+  - "No shell unit is added (majordomus shell check passes on the head); once I3155 lands, its domain-logic count does not rise"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 16_profiles"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
+  - "majordomus shell check"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_fix_regression_fails_on_base"
+created_at: 2026-10-18
+updated_at: 2026-10-18

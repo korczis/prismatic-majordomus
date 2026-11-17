@@ -1,0 +1,31 @@
+id: I3416
+milestone: knowledge-is-reconciled-before-it-is-reviewed
+title: "The episode boundary is proven to give one candidate for an observation recorded twice, none for a partial task, and one file per episode when two episodes close at once"
+slug: the-knowledge-boundary-holds-under-repetition-and-race
+priority: p2
+profile: implementation
+objective: "Extend the idempotency case so that it proves three behaviours the deriver has by construction and no case asserts. An identical observation recorded twice in one episode derives one file. A task finished partial yields no candidate, while knowledge.derived is still written. Two episodes of one checkout closing concurrently each write their own candidate once, knowledge check passes, and no staging file is left."
+why: "The owner's 2026-10-19 Cognitive Fabric pack lists the same observation twice, a partial task and a multi-peer race among its verification cases (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/03_KNOWLEDGE.md). verification/ACCEPTANCE.md asks for the same canonical state after a duplicate replay. This is wave 0: a change to tests only."
+current_state: "lib/knowledge.sh:1118-1129 digests kind, subject and statement, so a repeated observation maps to one id. :1105-1113 maps no partial outcome, and :1259-1273 stages and renames atomically. Case 564 proves the rerun idempotent and case 981:59-61 proves replay. No case records an observation twice, finishes a partial task or closes two episodes concurrently."
+desired_state: "Case 564 asserts the three behaviours and fails when any of them breaks."
+scope:
+  - "test/cases/564_knowledge_derivation_is_idempotent.sh"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Changing the deriver"
+  - "A new case number"
+  - "Cross-checkout evolve races (I3163)"
+serves:
+  - "a-change-reconciles-what-it-affects#a-known-fact-is-one-candidate"
+acceptance_criteria:
+  - "Two identical knowledge observe calls in one episode leave one candidate file and two observation.recorded lines"
+  - "A task finished with outcome partial yields no candidate, and the episode's knowledge.derived line is written"
+  - "Two episodes closed in parallel in one checkout each leave exactly their own candidate, knowledge check exits 0, and no .tmp. file remains under candidates/"
+  - "The case fails when the canonical evidence of an observation is changed to include its timestamp (shown once by a local mutation, then reverted)"
+validation:
+  - "bash test/run.sh 564_knowledge_derivation_is_idempotent"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_the_knowledge_boundary_holds_under_repetition_and_race"
+created_at: 2026-10-19
+updated_at: 2026-10-19

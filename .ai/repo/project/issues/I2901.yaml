@@ -1,0 +1,64 @@
+# Amendment of the existing record I2901 (spec B2, first half: "the record-id grammar
+# amendment"). Not a new record: it replaces .ai/repo/project/issues/I2901.yaml in a plan PR of
+# prismatic-majordomus, which keeps its id, milestone, priority and serves. It allocates no issue
+# id; its new case is 2901.
+# The second half of spec B2 (merge subjects and case-insensitive branches) is the separate
+# record I4366 (the merge-subject draft), which depends on this record.
+# Every citation below was read from origin/master 5370ee63d19 on 2026-10-29.
+id: I2901
+milestone: idd-reads-at-a-glance
+title: "One grammar names a record id, and every surface reads it: a capital letter and three or more digits that name a record file of the tree read"
+slug: one-grammar-names-an-issue-id
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Declare the record id grammar once. The issue schema's id pattern is `^[A-Z][0-9]{3,}$` (a capital letter followed by three or more digits), which this repository's I and four digits and an adopter's V603, R022 or M048 all satisfy, and plan validate refuses an issue whose id does not match it. One predicate, plan::is_record_id(word, tree), decides whether a word names a record: the word has that shape, and `<word>.yaml` exists under .ai/repo/project/issues/ or .ai/repo/project/milestones/ of the tree read, which also says whether it is an issue or a milestone. Shape alone is never enough, so H264, v3.13.0 or V999 with no V999.yaml name nothing. Slug milestones (this repository's `work-graph-github` and the like) never have that shape, so they are never a candidate on any surface, as today. Every surface that tests a word against a shape today calls the predicate instead and none spells the grammar its own way: ui/prs.rs is_issue_id and issues_named (and so plan/delivery.rs named_by, which wraps it), release/commits.rs record_candidates and its issue-or-milestone test (:149), capability/builtin/brief.rs:1003 task_label, the JS pattern `/(?<![\\/\\w-])I\\d{4}\\b/` in test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh:154, the awk pattern `I[0-9][0-9][0-9][0-9]+` in scripts/ci/audit-plan-check:56, and scripts/github-sync at :394 (`^I[0-9][0-9][0-9][0-9]+$`), :399 (`^I[0-9]+\\.yaml$`) and :1126 (the sed title claim `^\\([MI][0-9][0-9]*\\) — `). The shell and JS callers, and plan validate's refusal, take the answer from one typed subcommand of the executable (for example `majordomus plan ids --json`, the declared ids of the tree with their kind and whether each has the shape), never from a second pattern. The same subcommand answers which ids a text names: `majordomus plan ids --named-by --title <t> --branch <b> --json` returns the ids the title and the branch name, by the same predicate and the same scan as issues_named, so shell and JS callers, and the forge adapter of I4370, never spell a pattern. Which text a surface scans does not change: delivery and the PR Drain read a title, a subject and a branch; the changelog's references() keeps scanning a commit's subject and body together (release/commits.rs:79, documented at :130-133), because a commit that explains itself in its body is the one worth linking."
+why: "Four places restated the grammar when this record was filed. I3000 (d092324165f, 2026-10-18) removed ui/idd.rs's own id linker, and ui::prose links an id only by membership in the plan's sets, but on 2026-10-29 nine places spell a shape, in Rust, shell, awk, sed and JS, and they disagree: prs.rs says I and exactly four digits, github-sync I and four or more (:394) or I and any digits (:399), release/commits.rs I and four digits or M and three, brief.rs I and one or more digits, github-sync's unmanaged check M or I and digits (:1126), audit-plan-check I and four or more digits, and case 3220 /I\\d{4}\\b/. The schema declares no pattern at all. The first acceptance criterion as filed ('the schema refuses an id that is not I and four digits') would also refuse every adopter: OSCILLA (korczis/oscilla) has 309 plan issues on main, D001 to V606 with prefixes D E L P Q R S U V, and milestones M001-M054, every one of them a capital letter and three digits; and `majordomus plan delivery --at origin/main` (installed 1.0.0-alpha.8, 2026-10-29) put all 300 issues of its checkout at stage none, because no surface reads a V or an R."
+serves:
+  - the-owner-directs-work-from-the-ui#workspace-is-derived
+current_state: "Measured at 5370ee63d19: share/schemas/majordomus/issue/issue.v1.schema.json types id as a bare string (:24-26), and no JSON Schema validator applies it to records: plan validate (lib/plan.sh:190-218) checks unknown keys against share/allow/issue.txt and the findings of lib/project.awk, which take an id from its file name; ui/prs.rs:155-157 is_issue_id is `I` and exactly four digits, and issues_named (prs.rs:174-191, called by plan/delivery.rs named_by at :449-471 and by prs.rs:907) scans the title and the upper-cased head_ref for it, bounded by non-alphanumerics anywhere in the field; release/commits.rs record_candidates (:102-126) accepts I plus four digits or M plus three at :117-120, and references() picks issue or milestone by the first letter at :149; capability/builtin/brief.rs:1003 task_label tests `I` and one or more digits; scripts/github-sync keeps its own patterns at :394, :399 and :1126; scripts/ci/audit-plan-check:56 matches I and four or more digits in awk; case 3220:154 matches /I\\d{4}\\b/ in JS; ui/idd.rs carries no id grammar since I3000 (picked_issue at :84-95 admits any token of ASCII letters, digits, `-` and `_` up to 64 bytes) and share/ui holds none; worktree/state.rs:564-577 issue_of compares branch components with a declared-id list its callers build from the record files and is grammar-neutral."
+desired_state: "The schema states the pattern and plan validate refuses an id that breaks it; one predicate exists, shape plus record file; every surface in Rust, shell, awk, sed and JS reads it or the typed subcommand that exposes it; a scan fails when a second one appears."
+scope:
+  - "share/schemas/majordomus/issue/issue.v1.schema.json"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/release/commits.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/commands/plan.rs"
+  - "lib/plan.sh"
+  - "lib/project.awk"
+  - "scripts/github-sync"
+  - "scripts/ci/audit-plan-check"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - "test/cases/3970_a_pull_request_carries_its_metadata.sh"
+  - "test/cases/2901_one_grammar_names_a_record_id.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+non_scope:
+  - "Changing this repository's own I and four digits ids or any existing record id"
+  - "Changing which text a surface scans (title, subject, branch, or a commit body for the changelog)"
+  - "Case-insensitive branch components in worktree/state.rs issue_of and merge subjects written by the forge's PR_TITLE setting (I4366, the merge-subject draft)"
+  - "The reference gate of I3973 and the commit rule of I3976, which call the predicate once it exists"
+depends_on: []
+acceptance_criteria:
+  - "The issue schema declares id pattern `^[A-Z][0-9]{3,}$`, and plan validate fails naming the record on a fixture issue whose id is I12, i1234 or V-603; plan validate passes on this repository and on a fixture with OSCILLA's layout (V603.yaml, U001.yaml, R022.yaml, milestone M048.yaml)"
+  - "ui/prs.rs (is_issue_id and issues_named), release/commits.rs (record_candidates and the kind test at :149) and capability/builtin/brief.rs (task_label) call one plan::is_record_id, and plan/delivery.rs named_by passes it the tree it reads"
+  - "Library test in ui::prs: issues_named over title 'feat(studio): V603 pinch zoom' against a tree holding V603.yaml yields [V603]; over branch 'chore/plan-done-v603-u001' (OSCILLA #254) against a tree holding V603.yaml and U001.yaml yields [V603, U001], an id inside a component as today; a title naming H264, v3.13.0 or V999 with no such record yields nothing"
+  - "Library test in release::commits: references() finds E019, R022 and milestone M048 when their records exist, takes each one's kind from where its record lives and not from its first letter, still finds I4359, still scans the body, and never yields a slug milestone"
+  - "Case 2901: a source scan fails when any file other than plan::is_record_id's module and the case itself tests a word against a record-id shape: a Rust starts_with('I') or starts_with('M') id test, an awk, sed or grep pattern such as `[MI][0-9]` or `I[0-9][0-9][0-9][0-9]`, or a JS regular expression such as /I\\d{4}/; the scan covers apps/, bin/, lib/, scripts/, share/libexec/ (where I4370 moves the adapter), share/ui and test/cases/, and it fails on a planted copy of each of the nine patterns this record lists"
+  - "`majordomus plan ids --named-by --title <t> --branch <b> --json` returns the ids the title and the branch name, by plan::is_record_id and the scan issues_named uses: title 'feat(studio): V603 pinch zoom' with branch 'chore/plan-done-v603-u001' against a tree holding V603.yaml and U001.yaml returns [V603, U001], and a title naming H264 or V999 with no such record returns []"
+  - "scripts/github-sync, scripts/ci/audit-plan-check and case 3220 take their ids from the typed subcommand, and cases 3970, 3220 and 2901 pass"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus generate --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan:: ui::prs worktree::state release::commits"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc release::commits"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 2901_one_grammar_names_a_record_id 3970_a_pull_request_carries_its_metadata 3220_the_idd_loop_is_walked_in_a_browser"
+evidence_required:
+  - "test"
+  - "rust"
+created_at: 2026-10-18
+updated_at: 2026-10-29

@@ -1,0 +1,34 @@
+id: I3233
+milestone: a-change-is-judged-in-minutes
+title: "Stage C renders only the targets that read the index, and the manifest no longer renders every code-only artifact a second time"
+slug: stage-c-renders-only-what-reads-the-index
+priority: p1
+profile: implementation
+objective: "Make the second `majordomus generate` of scripts/derive render only the targets that depend on the index stage B rewrote (the site registry dataset, the benchmark matrix, the manifest). Build the manifest from the plan without rendering every code-only artifact again, and keep the result byte-identical to today's derive."
+why: "Board p3 (Codex) audit, 2026-10-18: generate's full work runs twice across stages A and C, and `generate manifest` alone still renders every target. The second pass is deliberate (c265#8: the index moves after stage B) and the manifest must stay over the whole plan, so the saving has to keep both. It extends milestone a-derive-does-only-the-work-its-inputs-changed. Proposed in ADR 0185 (A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c265#8, chatgpt-majordomus:c292#2."
+current_state: "scripts/derive stage C is `generate --repo --strict` over all targets. generate.rs plan() with Target::Manifest alone expands to Target::indexed() and calls indexed_plan, which renders every artifact."
+desired_state: "Stage C asks for the index-reading targets only. The manifest's entries for code-only artifacts come from stage A's rendering in the same derive, or from verified bytes on disk, and never from a second rendering. derive-check and generate --check are unchanged."
+scope:
+  - "apps/majordomus-cli/src/generate.rs"
+  - "scripts/derive"
+  - "test/cases/400_derivation_is_one_graph.sh"
+non_scope:
+  - "Skipping stage A or stage C altogether (I2525)"
+  - "Changing what the manifest indexes"
+depends_on:
+  - "I2521"
+serves:
+  - "a-change-is-judged-in-minutes#one-input-derive-is-sub-second"
+acceptance_criteria:
+  - "After a full derive the tree is byte-identical to today's on a fixture and on this repository"
+  - "Stage C's wall time and rendered-artifact count are printed and lower than before, from the same commit"
+  - "A mutation that drops a code-only artifact from the manifest fails a case"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib generate::"
+  - "bash test/run.sh 400_derivation_is_one_graph 51_derived_artifacts_committed 104_strict_derivation"
+  - "scripts/derive-check"
+evidence_required:
+  - "stage_c_renders_index_targets_only_case"
+  - "stage_c_before_after_timing"
+created_at: 2026-10-18
+updated_at: 2026-10-18

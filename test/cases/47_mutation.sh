@@ -7,6 +7,17 @@
 # The tool's own trees, then every canonical input the generator names that is not under
 # .ai/ (this case writes its own layer with init, and a copied manifest would block it),
 # read from --inputs so that a new input reaches this copy without this line changing.
+# The copy has bin/ and lib/ but no target/, so a command that runs the executable (`plan
+# done`, plan.transition) finds none in it: the copy is handed this tree's, as 275 and 277
+# hand theirs. The case used to pass only where its caller exported MAJORDOMUS_BIN, and the
+# rust job's plan-record-cases gate kept none (scripts/ci/run-plan drops an executable of
+# unknown generation), so every plan-record pull request failed here (run 42393755816).
+# An installed release answers through its launcher, a script, which the copy cannot be
+# handed: MAJORDOMUS_BIN naming a launcher is refused, since it would run itself (exit 12).
+MJB="$(rust_bin)" || rust_bin_exit $?
+[ "$(head -c 2 "$MJB")" != '#!' ] \
+  || skip "only the installed release's launcher answers here, and a copy of the tool can be handed only the executable (just build)"
+export MAJORDOMUS_BIN="$MJB"
 mkdir -p "$T/tool"
 cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/docs" "$ROOT/scripts" "$ROOT/site" "$T/tool/"
 for p in $("$ROOT/scripts/generate-site-data" --inputs | grep -v '^\.ai/'); do
@@ -128,13 +139,15 @@ rm -f .ai/repo/project/issues/I0002.yaml   # undo mutation 5; the model is legal
 pj_issue I0002 M000
 expect_exit 0 "$MJ" plan validate
 
-rm_milestone() { # ID VERSION ORDER [DEP ...]
-  local id="$1" ver="$2" ord="$3"; shift 3
+# A record the schema accepts, as pj_milestone writes one: `validation` items are strings, and an
+# unquoted `true` is a boolean the executable's index drops, so `plan done` (plan.transition)
+# would see no milestone where the shell's reading sees one.
+rm_milestone() { # ID ORDER [DEP ...]
+  local id="$1" ord="$2"; shift 2
   { cat <<Y
 id: $id
 title: Milestone $id
 slug: $id
-version: "$ver"
 order: $ord
 priority: p1
 problem: "A problem worth solving."
@@ -142,7 +155,7 @@ outcome: "The outcome once it is solved."
 acceptance_criteria:
   - The outcome is reached
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 Y
@@ -154,7 +167,7 @@ mstat()  { "$MJ" plan roadmap | awk -v i="$1" '$3==i{print $2}'; }
 
 # a second milestone with no dependency: reachable, and the roadmap shows it
 before_rm="$(rmsnap)"
-rm_milestone LATER 0.2 20
+rm_milestone LATER 20
 expect_exit 0 "$MJ" plan validate
 moved "adding a milestone" "$before_rm" "$(rmsnap)"
 [ "$(mstat LATER)" = PLANNED ] || { echo "    a milestone with no dependency is $(mstat LATER), expected PLANNED"; exit 1; }

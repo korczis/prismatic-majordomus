@@ -24,7 +24,8 @@ command -v cargo >/dev/null 2>&1 || skip "cargo not installed"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj493.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
-RUSTFLAGS='' cargo test --manifest-path "$MANIFEST" --test mesh_compaction 2>"$S/cargo.log" >"$S/cargo.out" \
+# two jobs and two test threads, so three neighbours in the parallel phase keep their cores (I4199)
+CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 RUSTFLAGS='' cargo test --manifest-path "$MANIFEST" --test mesh_compaction 2>"$S/cargo.log" >"$S/cargo.out" \
   || { tail -40 "$S/cargo.log" "$S/cargo.out"; echo "    the compaction suite failed"; exit 1; }
 for t in \
   a_runtime_compacted_while_it_slept_is_heard_again_whole \

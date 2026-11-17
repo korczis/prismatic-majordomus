@@ -1,0 +1,31 @@
+id: I3661
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "Which funding sources the owner holds, and their caps, are the owner's local declaration and never projected"
+slug: the-owner-holds-funding-sources-locally
+priority: p2
+profile: implementation
+objective: "Read the owner's holdings (which declared sources they hold, and an optional monthly cap per source) from a record under .ai/local and from the environment, resolve each against the vendor sources of I3660, and refuse a holdings record written under .ai/repo; no generated, projected or published file carries a holding."
+why: "Whether the owner claimed the Max plan's credits, and how much they will spend, is personal state, like permission modes and model choice (ADR 0140, ADR 0145): the distribution declares what a vendor offers, the owner declares what they hold. The same holding is also the named reporter I3292's billing_mode lacks."
+current_state: "No record of held sources exists; I3292 plans billing_mode as a declaration through the consented I3289 step."
+desired_state: "A holding is local, resolved against the catalogue, and absent from every projection; I3292's billing_mode reads it."
+scope:
+  - "apps/majordomus-cli/src/models"
+  - "share/schemas/majordomus"
+  - "docs/MODELS.md"
+non_scope:
+  - "Reading any credential's value"
+depends_on:
+  - "I3660"
+cancelled: true
+completion: "Cancelled 2026-10-21 on feature/intent-funding-sources by the plan's critique (findings two-reporters-for-one-billing-fact and holdings-are-per-checkout-not-per-owner): I3292's billing_mode, declared through I3289, already is the one reporter of how a call was paid, and a second store in .ai/local would fork that truth and differ per worktree. I3665 carries the declared kind on runs and consultations in the catalogue's vocabulary instead."
+acceptance_criteria:
+  - "A holding naming a source the catalogue does not declare is reported with the vendor and source it names"
+  - "A holdings record placed under .ai/repo is refused (test)"
+  - "No file majordomus generate writes contains a holding (test over the generated tree)"
+  - "A holding whose credential variable is unset reads held-but-unusable"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml models::"
+evidence_required:
+  - "test_a_holding_under_the_repository_layer_is_refused"
+created_at: 2026-10-20
+updated_at: 2026-10-21

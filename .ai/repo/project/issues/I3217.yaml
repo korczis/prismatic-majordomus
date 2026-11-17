@@ -1,0 +1,32 @@
+id: I3217
+milestone: the-ui-works-on-a-phone
+title: "A wide table on a UI screen is a stacked list below the narrow width, from the same rows"
+slug: a-table-stacks-on-a-phone
+priority: p2
+profile: implementation
+objective: "Give the kit's table one narrow projection (each row a card with its labelled cells, the first column its heading) applied by CSS below the declared narrow width, and use it on the Issues, PR Drain and workspace issue tables; a graph's table fallback is shown first at that width."
+why: "The 2026-10-08 mobile review named tables, modals and 1400 px graphs inside overflow-x as the dense surfaces that fail on phones. Proposed in ADR 0215 (A phone is the baseline width of every first-party surface, and the primary flow is accepted there before a surface grows) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c197#1."
+current_state: "The audit refuses page overflow; scripts/lib/interaction-specs/scroll-region.mjs holds tables that scroll inside their region."
+desired_state: "One kit class pair renders the same HTML rows as a table or as stacked cards by width; no second markup."
+scope:
+  - "share/ui/src/ui.css"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+non_scope:
+  - "Server-side mobile detection"
+  - "A separate mobile template"
+depends_on:
+  - "I3214"
+serves:
+  - "a-person-runs-majordomus-from-a-phone#dense-screens-fit-a-phone"
+acceptance_criteria:
+  - "At the floor width no listed table scrolls horizontally and every cell keeps its column label"
+  - "The served HTML is identical at every width"
+validation:
+  - "scripts/ui audit --only /ui/issues"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view"
+evidence_required:
+  - "ui_audit_issues_floor_width"
+created_at: 2026-10-18
+updated_at: 2026-10-18

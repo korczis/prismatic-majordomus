@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/generated-artifacts/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.28.0",
+  "generator": "majordomus-cli 1.0.2",
   "documents": [
     {
       "id": "allow/adr",
@@ -200,6 +200,13 @@
       ]
     },
     {
+      "id": "allow/telemetry",
+      "source": "the JSON Schema `majordomus.telemetry/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
       "id": "allow/use-case",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
       "formats": [
@@ -372,6 +379,13 @@
       ]
     },
     {
+      "id": "entities",
+      "source": "the composed graph under site/data/publication.toml",
+      "formats": [
+        "json"
+      ]
+    },
+    {
       "id": "graph",
       "schema": "majordomus/capability-graph/v1",
       "source": "the composed graph of the registry and the index",
@@ -403,6 +417,20 @@
     {
       "id": "modules/artifacts",
       "source": "the `artifacts` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/blackboard",
+      "source": "the `blackboard` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/board",
+      "source": "the `board` module of the canonical Majordomus capability registry",
       "formats": [
         "markdown"
       ]
@@ -611,6 +639,13 @@
       ]
     },
     {
+      "id": "modules/layout",
+      "source": "the `layout` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
       "id": "modules/lifecycle",
       "source": "the `lifecycle` module of the canonical Majordomus capability registry",
       "formats": [
@@ -690,6 +725,13 @@
     {
       "id": "modules/plan",
       "source": "the `plan` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/proceed",
+      "source": "the `proceed` module of the canonical Majordomus capability registry",
       "formats": [
         "markdown"
       ]
@@ -1023,8 +1065,36 @@
       ]
     },
     {
+      "id": "release/v0.29.0",
+      "source": "the release record v0.29.0",
+      "formats": [
+        "json"
+      ]
+    },
+    {
       "id": "release/v0.3.1",
       "source": "the release record v0.3.1",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v0.30.0",
+      "source": "the release record v0.30.0",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v0.30.1",
+      "source": "the release record v0.30.1",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v0.30.2",
+      "source": "the release record v0.30.2",
       "formats": [
         "json"
       ]
@@ -1060,6 +1130,76 @@
     {
       "id": "release/v0.9.0",
       "source": "the release record v0.9.0",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0",
+      "source": "the release record v1.0.0",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.1",
+      "source": "the release record v1.0.0-alpha.1",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.10",
+      "source": "the release record v1.0.0-alpha.10",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.2",
+      "source": "the release record v1.0.0-alpha.2",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.4",
+      "source": "the release record v1.0.0-alpha.4",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.5",
+      "source": "the release record v1.0.0-alpha.5",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.8",
+      "source": "the release record v1.0.0-alpha.8",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.0-alpha.9",
+      "source": "the release record v1.0.0-alpha.9",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.1",
+      "source": "the release record v1.0.1",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "release/v1.0.2",
+      "source": "the release record v1.0.2",
       "formats": [
         "json"
       ]
@@ -1274,64 +1414,96 @@
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/assess-before-deleting/SKILL.md",
-      "bytes": 964,
-      "sha256": "1923499cd0c315b9e3137eb3159dff9a9f85f3367186c4f53964fd5d09302cca"
+      "bytes": 963,
+      "sha256": "7ff4487e8d5243ff6e8f76486dd2e97cd1340f7fbd5dac8dfbeaedda236bd639"
     },
     {
       "path": ".agents/skills/deploy-site/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/deploy-site/SKILL.md",
-      "bytes": 865,
-      "sha256": "2173212e01b972d9af5ae2a4935f7f0fb48c19bc93fbdb3b953a7794f02468a4"
+      "bytes": 864,
+      "sha256": "459e4a31b2a7009fd645fb512562072b2d24866f24da83262420795be7487556"
     },
     {
       "path": ".agents/skills/evolve/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/evolve/SKILL.md",
-      "bytes": 864,
-      "sha256": "22b38d91ebcd280c889b6aa6c0579607183ca4edbf9a8dc5457dfa2fd7ef75c5"
+      "bytes": 863,
+      "sha256": "9b141116c3cdc187695ccb12c7ed95d5590e4621c757ab48a7376a8d9d67f437"
     },
     {
       "path": ".agents/skills/implement/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/implement/SKILL.md",
-      "bytes": 875,
-      "sha256": "907f01d7bfbf0f3781b84b6be8b5fa90abe3884e38ba3d215e744b4e9d4103a7"
+      "bytes": 874,
+      "sha256": "3b4559111a8099435522ef1e191ba09458d399c2bb9ace732ca861c6dbda12b3"
+    },
+    {
+      "path": ".agents/skills/integrator/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/integrator/SKILL.md",
+      "bytes": 999,
+      "sha256": "fda81680dea4384e0c8d756b6ecdd390dda764e948eb368caa2230818d32a346"
+    },
+    {
+      "path": ".agents/skills/intent/SKILL.md",
+      "document": "editors/command",
+      "format": "markdown",
+      "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "bytes": 1491,
+      "sha256": "7b550de63a02148eff36076d40d9f28b0ebbbb92fbfecf36d74dfad14536762c"
     },
     {
       "path": ".agents/skills/pack-for-chatgpt/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
-      "bytes": 1000,
-      "sha256": "f6ee4a109ed36e9cb6d170c3fef2902532a0164cf8c379e86fde0279f5a1a335"
+      "bytes": 999,
+      "sha256": "b56a18868f63f9ac2ce606497b4e036c1c0b713ab94f2865a07f98cda346bc60"
     },
     {
       "path": ".agents/skills/pack-for-review/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/pack-for-review/SKILL.md",
-      "bytes": 975,
-      "sha256": "2d8474c7e15a1f2f449a79c7bc2a18cdcfa91d5a1924ba278bf2d50f8ba148d9"
+      "bytes": 974,
+      "sha256": "564b2fa47a2c57ecb3631cdc5a6bc25b17437a5468e4f483e7dd7d03ebfbf617"
+    },
+    {
+      "path": ".agents/skills/proceed/SKILL.md",
+      "document": "editors/command",
+      "format": "markdown",
+      "source": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "bytes": 1678,
+      "sha256": "04705527003dd5184a83c5bfe59ea52fa97410deb382f5e4c8b70aae4e1dd18b"
+    },
+    {
+      "path": ".agents/skills/rebaser/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/rebaser/SKILL.md",
+      "bytes": 980,
+      "sha256": "cc3df5536979291cd5d057c0eb2cd54b0ae524145ca5a3eb986ecf21e8341f6a"
     },
     {
       "path": ".agents/skills/repo-review/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/repo-review/SKILL.md",
-      "bytes": 852,
-      "sha256": "2548668624190793afbbb124ebb0078f6beb798086b6a442f354b0bcc631ab2d"
+      "bytes": 851,
+      "sha256": "2d2ebd55fccebb8eed303702ebae7eb9bab4f49917cc60c1a1105810c09527f5"
     },
     {
       "path": ".agents/skills/report-verification-state/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/report-verification-state/SKILL.md",
-      "bytes": 996,
-      "sha256": "cef3794aa68980cfadf3cc25d3c343eb08afc18e5eddad426babbcbf24841cea"
+      "bytes": 995,
+      "sha256": "6f57a043139fca8d26397cf73caba50cb83f424b85284a18c767cedc27223e1a"
     },
     {
       "path": ".bb/AGENTS.md",
@@ -1339,631 +1511,719 @@
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself",
       "bytes": 1442,
-      "sha256": "aaa45ba7b116a68dc68b153f952b3f80e2a856e7e826ea4a7ea319bf455e9ff5"
+      "sha256": "865234e82a6f7bd3be02b7dd55ec2bfd165cb1fcf7ddb982f58a66bb40432bc6"
     },
     {
       "path": ".claude/skills/assess-before-deleting/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/assess-before-deleting/SKILL.md",
-      "bytes": 964,
-      "sha256": "2cc031025aa628b5fa4dea69f0925a29ccd56cd8308525c65625dea44ff73007"
+      "bytes": 963,
+      "sha256": "7cd9bf822ac2074da459e39ad3991bb67612eace6877a053450b0499ca0ad655"
     },
     {
       "path": ".claude/skills/deploy-site/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/deploy-site/SKILL.md",
-      "bytes": 865,
-      "sha256": "769098df0180c33e48dd50ee5118de23b5dc95dfbaf0bbd2bc7b9b86dfb5f337"
+      "bytes": 864,
+      "sha256": "1c120d47dd2358031c7dbed795f3b64c33e4fb3985b1a40133d977a58467340f"
     },
     {
       "path": ".claude/skills/evolve/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/evolve/SKILL.md",
-      "bytes": 864,
-      "sha256": "c22ff8d83c53f9b7967778ec526e257999d86734655e9211f3c4f02e89ce2a0f"
+      "bytes": 863,
+      "sha256": "f18d245b2122dff80c90fe4eb8a04633143e74ce5e29300549c62d51564b1f6a"
     },
     {
       "path": ".claude/skills/implement/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/implement/SKILL.md",
-      "bytes": 875,
-      "sha256": "21802b4670740f9bfa563443006c9daeef8b7f6d3c290cda986d4bb825e9c9ad"
+      "bytes": 874,
+      "sha256": "8f431f569e400c0a463ec78e20c91046874a9fa853eb8d9dadfd07e8b9a0316b"
+    },
+    {
+      "path": ".claude/skills/integrator/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/integrator/SKILL.md",
+      "bytes": 999,
+      "sha256": "b609ee062f5307d67d751ba2c853014437f4fc897fbae2153b84a36780a957c4"
     },
     {
       "path": ".claude/skills/intent/SKILL.md",
       "document": "editors/command",
       "format": "markdown",
       "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
-      "bytes": 1461,
-      "sha256": "1776b77c0bb609db519a8f71eb5c8223cd402746a39b50e024979a687828c9e3"
+      "bytes": 1460,
+      "sha256": "c6e70285a97d28716cdbff6ad07e55d7352703f45f523ede5ae803470d4212f8"
     },
     {
       "path": ".claude/skills/mj-artifacts/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:artifacts",
-      "bytes": 1393,
-      "sha256": "653f720cf9944b9bc2e0d9f821754f98f1c9ecd4827eb3c4dc8f1d356a5d844d"
+      "bytes": 1392,
+      "sha256": "1afd9dd5085d3ad2bd2ed7a72bd5c69aef0b95020133f8e78d02994a95a71b17"
+    },
+    {
+      "path": ".claude/skills/mj-blackboard/SKILL.md",
+      "document": "editors/domain",
+      "format": "markdown",
+      "source": "module:blackboard",
+      "bytes": 1412,
+      "sha256": "b73df01acc84a3c28cf38bfffdc33ccf0a38cf5300f4ff06b6b33657e1132d7f"
+    },
+    {
+      "path": ".claude/skills/mj-board/SKILL.md",
+      "document": "editors/domain",
+      "format": "markdown",
+      "source": "module:board",
+      "bytes": 1401,
+      "sha256": "f5f4d4f511ef5e729f391b3459215c850a552f8ade62e44e88c17922445c6cec"
     },
     {
       "path": ".claude/skills/mj-brief/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:brief",
-      "bytes": 1357,
-      "sha256": "02aad11e9459b0733f3640be37e85695ed631c814faaa6304d64e686fc65c5fa"
+      "bytes": 1356,
+      "sha256": "71305549a7bd4d5b07779db8c9b78339bff3a71042620b448f000700839bac50"
     },
     {
       "path": ".claude/skills/mj-capabilities/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:capabilities",
-      "bytes": 1751,
-      "sha256": "899439a2a2320db34e44f50acf7956e8b1a1e3a6cf14ed967fbc70632454adbe"
+      "bytes": 1750,
+      "sha256": "28224893386ed00cf1e155100949e1fb2ba60f39a6148e217a5586de2e4db2fe"
     },
     {
       "path": ".claude/skills/mj-commands/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:commands",
-      "bytes": 1599,
-      "sha256": "478fd07b9ff438e3487b945278ca810452814e88288a0c04957d0d7cffbbf802"
+      "bytes": 1598,
+      "sha256": "b29163f569739a6809475bc1c1175aa01c422a12bfe5165e087ae1010d46b13f"
     },
     {
       "path": ".claude/skills/mj-commit/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:commit",
-      "bytes": 1825,
-      "sha256": "61b658fffdbfe98b656c340c195ad8e16baebcb2e2b9db8a8a019eaeac44ddfa"
+      "bytes": 1824,
+      "sha256": "fdda66133926dc3224df88152d76f7f50eeab4ad6e1a778df72ac89d897365cb"
     },
     {
       "path": ".claude/skills/mj-continuity/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:continuity",
-      "bytes": 2711,
-      "sha256": "17b29539a819d6e05c166fe99a87b3514e4825d8fd06ee549b700276a161f4ff"
+      "bytes": 2710,
+      "sha256": "ae38dce2c58a23c3d0f53869afb3c116a41dd8dcd882103f7795401b0777050b"
     },
     {
       "path": ".claude/skills/mj-convergence/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:convergence",
-      "bytes": 1452,
-      "sha256": "e725499cadf34f1d352cb73991b51ef328fadcdab297083178d6c0a5dbd01c9b"
+      "bytes": 1451,
+      "sha256": "bd7eaa76e7755b0f987ebc9243b74999a45d1ddbd7b2d15d390320517d3b95de"
     },
     {
       "path": ".claude/skills/mj-dashboard/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:dashboard",
-      "bytes": 1434,
-      "sha256": "cf0df7a6e51c3f1668a633e7e2bdfc4f538178e5e4e7dd53173f63d0f3204d73"
+      "bytes": 1433,
+      "sha256": "73d8a5504f3236d306214472e9d5034964ed5100b0ebaedff6bb6d14e04cb692"
     },
     {
       "path": ".claude/skills/mj-delivery/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:delivery",
-      "bytes": 1545,
-      "sha256": "e9d6f72b1980e145f0b0cf96f24b8519b2a7c4827618805560d4c4f39168a503"
+      "bytes": 1544,
+      "sha256": "a764a287c2c7f0394b5ab9c8fd7f9c5860fba4dd04ddad30c3617a45a0941f09"
     },
     {
       "path": ".claude/skills/mj-deploy/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:deploy",
-      "bytes": 1685,
-      "sha256": "b34e300261e2255ef3a90e9e9618cab2739de4d3d67ab0e9fbbb8ee01f2c44c5"
+      "bytes": 1684,
+      "sha256": "97db868f4b9af57046c45fbb34b053e93d607feba169d4a83445a91f00e331f8"
     },
     {
       "path": ".claude/skills/mj-design/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:design",
-      "bytes": 1723,
-      "sha256": "eef2ed0e41ae1a3eb3ea151b05be986ff99e33a68e5b02a500d406b0c05bb299"
+      "bytes": 2080,
+      "sha256": "012166f31cec691ada2da4c9de31a5b08ac880ab214c11fe9c36608ef9e85ef4"
     },
     {
       "path": ".claude/skills/mj-devcontext/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:devcontext",
-      "bytes": 1807,
-      "sha256": "a6640804904602887c27677ce2254f1426b4e40985afa30eb18dbae891e7da93"
+      "bytes": 1806,
+      "sha256": "0d3c9146adedd3260175e16146ab90da60e22a55c610e5bb1dd1cb11a0e8337a"
     },
     {
       "path": ".claude/skills/mj-devtask/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:devtask",
-      "bytes": 1628,
-      "sha256": "3f7b010942463fe0cd25f796dabf569df63cf8cad1dd939119eca874d96751e0"
+      "bytes": 1843,
+      "sha256": "e5a91b50f8a9b8491dfae7984b21b8f4c2553290f1e87b73c33e0c1379bb6316"
     },
     {
       "path": ".claude/skills/mj-directories/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:directories",
-      "bytes": 1415,
-      "sha256": "ade1bbdc1c619000afa70cc05e2f5f93b94ec91206d022fe401e3f8004f84eb3"
+      "bytes": 1414,
+      "sha256": "9fb277e8e1cfe05339610152812b65462015acace653ab3180daa98d84d7858c"
     },
     {
       "path": ".claude/skills/mj-distribution/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:distribution",
-      "bytes": 2018,
-      "sha256": "42f2c4441229586b9ebadf8d52d7ff940a9723576b874bf9cb6a9e0cd3168c49"
+      "bytes": 2017,
+      "sha256": "15c0a574c6e66bed9a7a73f632e508faedaa2ba8bb3745195361a5a469a87a57"
     },
     {
       "path": ".claude/skills/mj-economics/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:economics",
-      "bytes": 1879,
-      "sha256": "8f5649f40404e9edec7c748a88291409b9fa7095e1e2a5eb8bddcd23deb136d7"
+      "bytes": 2035,
+      "sha256": "e636b65d7503115324a47eddf702bf564a67994eb5d8efb69bf3510fe28e64cc"
     },
     {
       "path": ".claude/skills/mj-editors/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:editors",
-      "bytes": 1379,
-      "sha256": "369b80d28480c8e5c1bb9a6c13e3c53c6fb0cd4275ca8cc9d0d056eb64f54d48"
+      "bytes": 1378,
+      "sha256": "c58cac8ded53912901109a4ed62f7aaec0246a0574d0bcaacbcf4b005f8f8316"
     },
     {
       "path": ".claude/skills/mj-entity/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:entity",
-      "bytes": 1559,
-      "sha256": "f80374793b4e29126e5d096d8e86d293a2c3cd28dd1a2e81bbd9ba8fe52a2650"
+      "bytes": 1558,
+      "sha256": "6bbf6dd92f2da0af7943e7ac93177d7fc8989f3f3b47aa63a2624022757994c1"
     },
     {
       "path": ".claude/skills/mj-environment/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:environment",
-      "bytes": 1741,
-      "sha256": "aa4f54dbe0208a48e5f33ff2b1ae53017e98db27745ca7daa9631f98cffdc42b"
+      "bytes": 1740,
+      "sha256": "2b351fe651f570481bd8c89652e2e39b793df7280d15644ebaeb1b1b859298ae"
     },
     {
       "path": ".claude/skills/mj-episodes/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:episodes",
-      "bytes": 1635,
-      "sha256": "4eb8a39e013916d7a4a6129c0ab273074f792eb729e62f701615c316464657bc"
+      "bytes": 1634,
+      "sha256": "c26880bdf613db4d52d63cccb49218b83bbc53fa5614b4a4c977698a399aef19"
     },
     {
       "path": ".claude/skills/mj-evidence/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:evidence",
-      "bytes": 1723,
-      "sha256": "919bee0805ee7a31184d7e31bb5ecef2de90fc735d91c2e5c21c5bcf02fae8be"
+      "bytes": 1722,
+      "sha256": "d13f145dcecf7fec354c702b4f8a0586a4574c393b974847257eb65edd8f357a"
     },
     {
       "path": ".claude/skills/mj-executions/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:executions",
-      "bytes": 2277,
-      "sha256": "097179951311b4a9599e64c5a34f1b9d549ccfc54f427f151b9ce68b8675953c"
+      "bytes": 2276,
+      "sha256": "99d0ed3b7f73855cc0e090190c96408fb046ecdefb076aa97f87b47ef8a6a977"
     },
     {
       "path": ".claude/skills/mj-gates/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:gates",
-      "bytes": 1478,
-      "sha256": "4349e45968ff17ce49e81cc112140239555a05e88cf5c9f2dd1ec9dad89bf029"
+      "bytes": 1699,
+      "sha256": "0310e973bd379998461e5a81d9d6abfa5853627e7973de8a55a0520e1fab653d"
     },
     {
       "path": ".claude/skills/mj-graph/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:graph",
-      "bytes": 1416,
-      "sha256": "51aa83f86bb0c2b5e1a99c2a40d877b8b0d3f7b56c35d0ba7be0ae0091fb8b3c"
+      "bytes": 1415,
+      "sha256": "87a6ddd7200700a71e8e56e516dc2660bf09d7cb14c2364d2ee9511ce02b8c72"
     },
     {
       "path": ".claude/skills/mj-guard/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:guard",
-      "bytes": 1338,
-      "sha256": "8d3ef6fd6e17374bfae4fbaa9667d7c61afae3972485884e52b241891f60fee1"
+      "bytes": 1337,
+      "sha256": "7263e0ed9f1e17b418a409404efee5aa6da1f09a0c0b158d5562c959cd75322a"
     },
     {
       "path": ".claude/skills/mj-health/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:health",
-      "bytes": 1359,
-      "sha256": "84bfccd0fcb792e79b6e5bf65769a4eb43ba5989cd4635d1b9f4c63d8d931e78"
+      "bytes": 1358,
+      "sha256": "cf83d1ea399ad137a1f4c7ec5f93a649890a9921dbb66b8afc900ec42277fa1d"
     },
     {
       "path": ".claude/skills/mj-integration/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:integration",
-      "bytes": 2329,
-      "sha256": "6713a611de99a05033fd3028c787a5425457c193527cc0e61b318a4647ccbb4b"
+      "bytes": 2328,
+      "sha256": "97d1910291573ffe034e34594ce9553eae5d1afdcc2b50537b133a487fe26f47"
     },
     {
       "path": ".claude/skills/mj-intent-realization/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:intent_realization",
-      "bytes": 1733,
-      "sha256": "3510947befb1959221289e6f95ae929619cbdcef9106af6dc71ef01c32f780f7"
+      "bytes": 1732,
+      "sha256": "6de19b35779821686f4d1feaf7653771d16d092478d96d2ef1fce497d72fa0ec"
     },
     {
       "path": ".claude/skills/mj-intents/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:intents",
-      "bytes": 2517,
-      "sha256": "476d93d7a2c6da08437cf485baf14485462e0df4450a08bb4a70bb4a39cd4f84"
+      "bytes": 2516,
+      "sha256": "d12c5ed8cf661f5d2730a7ffa04556d0df6fb218c5b2fcf6e6a379ffab527766"
     },
     {
       "path": ".claude/skills/mj-knowledge-base/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:knowledge_base",
-      "bytes": 1937,
-      "sha256": "0579d54dbae37a4a846da1eabdb81716699a0a96d07fd01f66bcf7328a04c9bb"
+      "bytes": 1936,
+      "sha256": "111ee730b785700c1ad086d57e6507d5cc49f2864f4195dd1e1461eba1a08b62"
+    },
+    {
+      "path": ".claude/skills/mj-layout/SKILL.md",
+      "document": "editors/domain",
+      "format": "markdown",
+      "source": "module:layout",
+      "bytes": 1395,
+      "sha256": "141973b53bdaf484895665a08b46b78cc2e151c3d7be37496d41ad24e82111d6"
     },
     {
       "path": ".claude/skills/mj-lifecycle/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:lifecycle",
-      "bytes": 1978,
-      "sha256": "121841a148e969b0a30ade0eee1f698154cc5f9ab60918b0ea9d700b8c23e4a3"
+      "bytes": 1977,
+      "sha256": "79297e72b8e7cfdf7c1fcce8f7db2487bc99ea72ee1415ee34002fa002ec97c4"
     },
     {
       "path": ".claude/skills/mj-mcp/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:mcp",
-      "bytes": 1365,
-      "sha256": "0a17ee4e5a5d9ea34df03e5561493464753371608799c47029d9762efc770b82"
+      "bytes": 1364,
+      "sha256": "252b7e945698369ed2fd86ab188fbb5c81844dacc4c06a94595f85d29623d664"
     },
     {
       "path": ".claude/skills/mj-mesh/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:mesh",
-      "bytes": 3589,
-      "sha256": "d4bd6b15733a54a73da8b2ccfd1faf902abb32375b49c13cd7a9182992d2ccf2"
+      "bytes": 4232,
+      "sha256": "d0c058019e343a35288581b3ca5363438dc61f8ee087fbb74c545377e6da84ee"
     },
     {
       "path": ".claude/skills/mj-models/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:models",
-      "bytes": 1506,
-      "sha256": "63e415f10222595195a650d56d9dd728c032062c6eb82a98b9b8e49acb179c04"
+      "bytes": 1505,
+      "sha256": "19e5ad4b2b6d2ec63e6aa46290ab0517388d303f7eae1118d072020b4077ad3e"
     },
     {
       "path": ".claude/skills/mj-monitor/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:monitor",
-      "bytes": 1385,
-      "sha256": "4a5d13410f3fad912d98686770a8a83d84eb1e3b8cba41609c25e9f0167d6c33"
+      "bytes": 1384,
+      "sha256": "66b63fa680955a03ce6d3eb717ee585561c5d19c4cef8d79484d5374f363e946"
     },
     {
       "path": ".claude/skills/mj-objects/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:objects",
-      "bytes": 1668,
-      "sha256": "90e2efd7d0fe3ea75739d6fbeb71991a35c14d73cb8d3d0ceb639c0ca8313dd5"
+      "bytes": 1667,
+      "sha256": "ea5f12f1c88c87160495a8fbb23b044668a1182bfb98a78a8d72fba16fc5175e"
     },
     {
       "path": ".claude/skills/mj-obligations/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:obligations",
-      "bytes": 1538,
-      "sha256": "caf6753da9a9e57704360f3f097ceec3ec4bc1bdae302db8c18e7bb811e95a4e"
+      "bytes": 1537,
+      "sha256": "a19ac269d7a05d2c12ed22d11acfbc8542c8a4f5356c871f01eca4460afbcb88"
     },
     {
       "path": ".claude/skills/mj-observatory/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:observatory",
-      "bytes": 1630,
-      "sha256": "c18bf3fc8c2ac589d67b9ee755e0b2fae29b70e19f18349900ca66fa795fa40a"
+      "bytes": 1629,
+      "sha256": "ad8d8a6202d7b95f09409978201447a031724f1306163a328590e107143e3dca"
     },
     {
       "path": ".claude/skills/mj-pack/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:pack",
-      "bytes": 1498,
-      "sha256": "f1cc8ee66297334a8224032cbb903a1dbff29b7bbd9c4f7a19ceca515d88ba2f"
+      "bytes": 1497,
+      "sha256": "b3055ced84cb8f3db648301052b87e2e06e9ddb7bb7043d0706b5f33b6a78441"
     },
     {
       "path": ".claude/skills/mj-peers/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:peers",
-      "bytes": 1465,
-      "sha256": "fde3dba8f60c05dc8ecb7367907bfd686d101c0756b5879d62aefa6d0aa163e9"
+      "bytes": 1464,
+      "sha256": "91641c442887025487647901c873900c3f0aef7785d0c0c973fe877985794b48"
     },
     {
       "path": ".claude/skills/mj-perf/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:perf",
-      "bytes": 1341,
-      "sha256": "c2a9edca6b4d23f15249976507486098ca26b0fede1b6ed6ef80ba2470b469aa"
+      "bytes": 1340,
+      "sha256": "b9fdddaac222997180609fd04c7fd4ee144545ba423863d255bb242648b3dc5b"
     },
     {
       "path": ".claude/skills/mj-plan/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:plan",
-      "bytes": 2373,
-      "sha256": "ba96833d2a33338b8eee460a276148b6f6dad929da9c8b6317d8bc912402869e"
+      "bytes": 2825,
+      "sha256": "ea9d797bda8d449309a518f9a4e4d2ea9d461e95b94e851eb58d8ed9a9e80574"
+    },
+    {
+      "path": ".claude/skills/mj-proceed/SKILL.md",
+      "document": "editors/domain",
+      "format": "markdown",
+      "source": "module:proceed",
+      "bytes": 1575,
+      "sha256": "6718c6863f7ccf6f7f60fdcc6a4b9cc2b7d0548f3ec8b1fb78b88cf55ffb0b2d"
     },
     {
       "path": ".claude/skills/mj-product/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:product",
-      "bytes": 2004,
-      "sha256": "76a7857f9718757c3e42d309c23ccdc7b8a64df1a328a50bc4a9b237313234b4"
+      "bytes": 2003,
+      "sha256": "3e575fd82d7f362ff4f7ce290ce7c4e8eb1e3c3aab5b5152f7cd4cc5ca2affbd"
     },
     {
       "path": ".claude/skills/mj-quality/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:quality",
-      "bytes": 1538,
-      "sha256": "7a0a4db813e143e53662e4f5e296e6ebbf2beb585032f25c6876ffccc93eed1c"
+      "bytes": 1537,
+      "sha256": "90f1fffb60a26ae1d17020f762b982790bcd51dc305330dc7e400c5eadbdc2e8"
     },
     {
       "path": ".claude/skills/mj-reasoning/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:reasoning",
-      "bytes": 2243,
-      "sha256": "fda562cb6e8b6d810d385b8b2e29e434fe656d820b3208df09e3b7b5467dc5d3"
+      "bytes": 2242,
+      "sha256": "fbda5dfb2f544976f3d09b2aeaadb3d92def9704262b088fd4bc03cb87914e7c"
     },
     {
       "path": ".claude/skills/mj-recover/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:recover",
-      "bytes": 1502,
-      "sha256": "57d783a38ed076364dda5d0cb2952a92a6c110f09999b837ff347a625e1f2757"
+      "bytes": 1501,
+      "sha256": "cbac919a30c3958b1ab982a9694919859f4a73532b0d3f89ce0c6b74c85ca529"
     },
     {
       "path": ".claude/skills/mj-release/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:release",
-      "bytes": 1876,
-      "sha256": "c271e7c273de0b46454eda42be0535d5dfe33b6f8aff47d03f1a8c23b45c3590"
+      "bytes": 2035,
+      "sha256": "5f0d14d70a347a3baf0e73d9f8f41e1a7878b4358d3a029572f3107bd7ed1f78"
     },
     {
       "path": ".claude/skills/mj-repository/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:repository",
-      "bytes": 1656,
-      "sha256": "51ffad69191881ae24fb34eeb810a459394bc83d89e38910cef966d490e764a3"
+      "bytes": 1655,
+      "sha256": "f0b7ee659ca7422c924d348178dc891b9576c75a8848d3928cba5c11acb4bd19"
     },
     {
       "path": ".claude/skills/mj-rules/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:rules",
-      "bytes": 1664,
-      "sha256": "500803f3d152b4f3528c03c2a18c2078031752c0b78b6890559f5c9c2aba7ce8"
+      "bytes": 1663,
+      "sha256": "cd4bee7ac5fcf92dc0a7e9b29f0e2a84605160149b0010376d113a7008749a9e"
     },
     {
       "path": ".claude/skills/mj-served/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:served",
-      "bytes": 1418,
-      "sha256": "54aa32dac62c46bd3ef934fb2b53e2c048440088da3474d9d19f55b4eef606f7"
+      "bytes": 1417,
+      "sha256": "a136bf256c7d329df94070eae09f3d5f5dfeaf73ed8c139c483068f39c10e747"
     },
     {
       "path": ".claude/skills/mj-server/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:server",
-      "bytes": 1443,
-      "sha256": "147f0e77573aef41c6090f71d7bb5075487d03e90644adda2b4dbcdb88062927"
+      "bytes": 1442,
+      "sha256": "747e492e9fa43db312acd5ed18c03fc85296be38d8d806ac84f4750be79d74dc"
     },
     {
       "path": ".claude/skills/mj-session-domain/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:session_domain",
-      "bytes": 1640,
-      "sha256": "d2097d6fc95e49875baa37a332199adc6c3439c9a00792d95c934bc981c39c36"
+      "bytes": 1639,
+      "sha256": "d6bf25a0cd9f35fe493e21ceccb5c5432afe3e09bb79e937cdaf0c642622d614"
     },
     {
       "path": ".claude/skills/mj-shell/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:shell",
-      "bytes": 1379,
-      "sha256": "a6de48409a7f7d6d0c3fb249b8e381df3fb6d9a8ad753c51d503dd1e1e1b27a5"
+      "bytes": 1378,
+      "sha256": "3bfcbe4693f85a83c4cffd6d3e06b24315de6f9c6bf60bb8f19a10270a3c0ea5"
     },
     {
       "path": ".claude/skills/mj-skills/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:skills",
-      "bytes": 1754,
-      "sha256": "11bafdcfaecee3185733a8f18dd80dbd424f109fdd00d3ba1073cd3c45ddb39a"
+      "bytes": 1753,
+      "sha256": "afdb5a85df7c0a914090759513141ec643346e461d431eb669834980ed0cb8c7"
     },
     {
       "path": ".claude/skills/mj-trace/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:trace",
-      "bytes": 1630,
-      "sha256": "e84f3c28fbb31a3d89a8adf3c8265d20992072a66ee1d2a88b7287779fa2537d"
+      "bytes": 1629,
+      "sha256": "ab9255f1a4e3e33bb20049347a66fba975d8a14643781b6b6a13226cc27de2b9"
     },
     {
       "path": ".claude/skills/mj-web/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:web",
-      "bytes": 1356,
-      "sha256": "0ac5a9b3f558f89f8c3a7c6be3896e14262ba6b0a2c270900ec888f8f36c9369"
+      "bytes": 1355,
+      "sha256": "b056ce4314e0d9c1b06eda7e1a03fb983189bafdc58636e9e7eaaef41ce9a331"
     },
     {
       "path": ".claude/skills/mj-why/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:why",
-      "bytes": 1915,
-      "sha256": "37c0461a843e1311b6585cfae443a75fd539826d3a4b2c9fd5b64069314ee293"
+      "bytes": 1914,
+      "sha256": "a5b47445cfc9bde405364aacbf5c4ae4e086cd63c2140c141b1ad04c151fb487"
     },
     {
       "path": ".claude/skills/mj-worktree/SKILL.md",
       "document": "editors/domain",
       "format": "markdown",
       "source": "module:worktree",
-      "bytes": 2246,
-      "sha256": "2520414569eba7c7eb9db4c0a620956ea30f1fa57be127d7f175825f1bfb91bd"
+      "bytes": 2563,
+      "sha256": "4009647dbb3554f4fa41ca052af08fd3e78c47beea083769ef13573e134a31c3"
     },
     {
       "path": ".claude/skills/pack-for-chatgpt/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
-      "bytes": 1000,
-      "sha256": "2b74afa46318c60149b2e3f673f18313ec1fb3c6d1577dc7f68ec48d6f6fb2cb"
+      "bytes": 999,
+      "sha256": "28c0d03c535af6ab0d0a5c7dcfb14765be3613e6fbcc4e96aecbfa5ec57a5342"
     },
     {
       "path": ".claude/skills/pack-for-review/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/pack-for-review/SKILL.md",
-      "bytes": 975,
-      "sha256": "92b6e9c49f3b222131e70cc4a892617d5bb1f423aa7ccd197dde5b47a64045b4"
+      "bytes": 974,
+      "sha256": "dc50cd3a8db254fe8d880548920ac0f5f0e6ff69cffe266c8df3c4507c0361e2"
+    },
+    {
+      "path": ".claude/skills/proceed/SKILL.md",
+      "document": "editors/command",
+      "format": "markdown",
+      "source": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "bytes": 1690,
+      "sha256": "a2c9b3e2984ad42f98725316887ca6058ddeb332498d4b5789e0d17ef2f8a175"
+    },
+    {
+      "path": ".claude/skills/rebaser/SKILL.md",
+      "document": "editors/skill",
+      "format": "markdown",
+      "source": ".ai/repo/skills/rebaser/SKILL.md",
+      "bytes": 980,
+      "sha256": "dee83211d3dcc12d2024db22d1755d6d5901a24cfac7b1da6f80c63f49b6d122"
     },
     {
       "path": ".claude/skills/repo-review/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/repo-review/SKILL.md",
-      "bytes": 852,
-      "sha256": "0ae393f5495a0d5bc7c1f70bd0a78381e9813c0b1e862d0a76a6eec5e0755f12"
+      "bytes": 851,
+      "sha256": "fa028596731be72a9251e74ce2970ef7e83eb3eeb9be07e1bb525467503726cb"
     },
     {
       "path": ".claude/skills/report-verification-state/SKILL.md",
       "document": "editors/skill",
       "format": "markdown",
       "source": ".ai/repo/skills/report-verification-state/SKILL.md",
-      "bytes": 996,
-      "sha256": "0b9de4230e377aaaf5587b305258797b89816720db79311981bdf299c1e01fa8"
+      "bytes": 995,
+      "sha256": "db9e23ebd7d11b6f9693fc7633c59a01b72045713b83d9efd7e6b71b86fa5b6b"
     },
     {
       "path": ".dockerignore",
       "document": "deployment",
       "format": "text",
       "source": ".ai/repo/deployments/majordomus.yaml",
-      "bytes": 573,
-      "sha256": "b5411ad35adb24ead488fa316e91ee90f80ed8578267ddcebf02dd1334e11b29"
+      "bytes": 595,
+      "sha256": "84919926eadd46cd65c6e462641f30913d41078b622cf25f20344e2f2e26f8cf"
     },
     {
       "path": ".zed/tasks.json",
       "document": "editors/zed-tasks",
       "format": "json",
       "source": "the recipes of the tracked justfile and .just/*.just",
-      "bytes": 5505,
-      "sha256": "0a9ca45a6daedf36943ca4e3327cc7c7bb819520656721b86667bd83af24c15e"
+      "bytes": 5504,
+      "sha256": "bb5225b0587fd898817e424236b77e7f7a0a6c6a2e7054e2077231cba73d4495"
     },
     {
       "path": "AGENTS.md",
       "document": "providers/agents",
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself",
-      "bytes": 7992,
-      "sha256": "8ef1d0482a1298f46122dcd31901d3930b1d6494ea5a78bbb71e2f240d130398"
+      "bytes": 8709,
+      "sha256": "893dcdb5bd6e065336e5f543d014a8781177f0785f4fa86f42391c8e530c50e1"
     },
     {
       "path": "CLAUDE.md",
       "document": "providers/claude-code",
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself",
-      "bytes": 7281,
-      "sha256": "a437e6e12d566435c970c8c7aa6fd5d77f41e506dc55922f2a96d11325294641"
+      "bytes": 7998,
+      "sha256": "835562a51a2b7bdb76abdf4439c7f76ed3c392fc57302f69825fd4272ae421e4"
     },
     {
       "path": "GEMINI.md",
       "document": "providers/gemini",
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `gemini` template, stamped by the projection itself",
-      "bytes": 7499,
-      "sha256": "e7e23190d1dde2611973b65a5ec0fef7a00740f85bf1c5bbd847be62e7aa7214"
+      "bytes": 8216,
+      "sha256": "62b042961512aba665c20ba32b3028d0256fc08b34e7aa517e78b6621f8cbd69"
     },
     {
       "path": "apps/majordomus-cli/src/cockpit/logo-mark.svg",
       "document": "design-mark",
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
-      "bytes": 904,
-      "sha256": "a78a3dfd15c1fe3b39fa8d10661dac4380a80fce28f222f7a2ed56bbb9465ccd"
+      "bytes": 903,
+      "sha256": "c6b07e82ce6f914862c57e779a3c8d91afec76654ed5d7972ba0f5b73a7a6185"
     },
     {
       "path": "apps/majordomus-cli/src/design/tokens.yaml",
       "document": "design-declaration",
       "format": "yaml",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 21258,
-      "sha256": "0b1022197b2b87fdde9bd1ef1fb6fb78eee46824aa61e2c5f7b6a012504e00cc"
+      "bytes": 21257,
+      "sha256": "a18fd8892e1d1b7baf86671970530f64235b6f94a72716167535ce3d898073ea"
     },
     {
       "path": "apps/majordomus-cli/src/ui/icons.toml",
       "document": "ui-icons",
       "format": "text",
       "source": "site/data/kit/icons.toml, the kit's icons",
-      "bytes": 9027,
-      "sha256": "7f1dd82a255cde5e80c519f3bdbb8d6aacfcfa28e1423dd5ba7db26f164b5c8a"
+      "bytes": 9026,
+      "sha256": "bd913059eed3ce7900c398011b0b34b8b528f13eff35ca3ecc9a9bb6a0f9768c"
     },
     {
       "path": "apps/majordomus-cli/src/web/tokens.css",
       "document": "design-tokens",
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 9320,
-      "sha256": "a83a5af40af703437f4eb10112a3dddf81a576a18c2828198b4eaaa06ab8dbe9"
+      "bytes": 9319,
+      "sha256": "94a6886496c89bf1a3526f076a2917f3367e30739479c75e4747c9b2bc007141"
     },
     {
       "path": "deploy/Dockerfile",
       "document": "deployment",
       "format": "text",
       "source": ".ai/repo/deployments/majordomus.yaml",
-      "bytes": 4559,
-      "sha256": "cd3d9307ea0f86f03f0e1403abdaf105e95e81c60b4681cbb91a6c4c222902a2"
+      "bytes": 4608,
+      "sha256": "b0cc326e4f5b85ae5771ea35c52b916d712205c25214af241323780094225481"
+    },
+    {
+      "path": "deploy/gigalixir/Procfile",
+      "document": "deployment",
+      "format": "text",
+      "source": ".ai/repo/deployments/majordomus.yaml",
+      "bytes": 522,
+      "sha256": "5dbc7258766f2753a3c50475282f06da9933966d8d9477ef984be073a3ae433a"
+    },
+    {
+      "path": "deploy/gigalixir/bin/compile",
+      "document": "deployment",
+      "format": "text",
+      "source": ".ai/repo/deployments/majordomus.yaml",
+      "bytes": 432,
+      "sha256": "ec41143398e3794a00d1a8636cfaeaac3ec1339094d865c2f3918912473a35e8"
+    },
+    {
+      "path": "deploy/gigalixir/bin/detect",
+      "document": "deployment",
+      "format": "text",
+      "source": ".ai/repo/deployments/majordomus.yaml",
+      "bytes": 345,
+      "sha256": "60601c82b8b7adb37df641edd1383318f261a80806add5b2fa54d1de170b716d"
+    },
+    {
+      "path": "deploy/gigalixir/bin/release",
+      "document": "deployment",
+      "format": "text",
+      "source": ".ai/repo/deployments/majordomus.yaml",
+      "bytes": 354,
+      "sha256": "1a9af0500bbe3fc3a1d12a793f43777bb47395686679869fd3b87507492e3a73"
     },
     {
       "path": "docs/INSTALL.md",
       "document": "install-guide",
       "format": "markdown",
       "source": "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)",
-      "bytes": 14394,
-      "sha256": "c9234722de3047679e47c38d8f6ab350589105cb8ebfeedba5fb3742f26f8445"
+      "bytes": 16653,
+      "sha256": "14cec4d90336b6a3946fac80f8c6dfd74ec4ede5b441c55496abbc8534f3c215"
     },
     {
       "path": "docs/generated/artifacts.json",
@@ -1994,16 +2254,16 @@
       "format": "json",
       "schema": "majordomus/benchmark-matrix/v1",
       "source": "the benchmark projection of the canonical capability registry",
-      "bytes": 57588,
-      "sha256": "e1bc4c30d970cfe04e10ade47d7b7c746f962e9cf1617d962de9f947bcf1a204"
+      "bytes": 65318,
+      "sha256": "9f069d16b9db31f4b25bf46754429cf17c249ed1cd90ae868aedf07ab1466f73"
     },
     {
       "path": "docs/generated/benchmarks.md",
       "document": "benchmarks",
       "format": "markdown",
       "source": "the benchmark projection of the canonical capability registry",
-      "bytes": 25340,
-      "sha256": "41b2ab8de10c0c007b0b3bd3a1fff030f936f004b5ebd463f2fd7aa2eaf6bbf8"
+      "bytes": 28422,
+      "sha256": "12d2aa41036ea23bd6289e1ebcde27481af22efe4257aa90570ae44bea621fd9"
     },
     {
       "path": "docs/generated/benchmarks.yaml",
@@ -2011,16 +2271,16 @@
       "format": "yaml",
       "schema": "majordomus/benchmark-matrix/v1",
       "source": "the benchmark projection of the canonical capability registry",
-      "bytes": 40440,
-      "sha256": "f3ef22e0b2ce75c1b290837874c07ca9c829ab5a272ad00ed2eb5c2c37338bc4"
+      "bytes": 45799,
+      "sha256": "58329f1b17a6fe0cba4baf00690f650f7da9a988f783ad3d03eb4a41b18fed2f"
     },
     {
       "path": "docs/generated/capabilities.md",
       "document": "capabilities",
       "format": "markdown",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 44234,
-      "sha256": "ccf7e6ab4c3ca084cbd5a3e0e42cb6fa213bceacca219d60e6fdc59f1323a8ed"
+      "bytes": 49407,
+      "sha256": "67173325cefcbf80c485db87145d24aac0c63f30ae297bcd015755a294a1df8e"
     },
     {
       "path": "docs/generated/changelog.json",
@@ -2028,16 +2288,16 @@
       "format": "json",
       "schema": "majordomus/changelog/v1",
       "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range",
-      "bytes": 1180850,
-      "sha256": "1072fcab72c2630a28ad2b50edbc24ca931ea17e27668b152b8396158c3df90d"
+      "bytes": 1899071,
+      "sha256": "84c36d9ebf766f48f04ef0afa2fa8a7d953b0dedd3ae6d4b26527f627586b029"
     },
     {
       "path": "docs/generated/changelog.md",
       "document": "changelog",
       "format": "markdown",
       "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range",
-      "bytes": 267898,
-      "sha256": "0ab8845be27a62db2c948ef3b364cdcef4a9d8fa8d07b353bc10bc2f2c145a68"
+      "bytes": 358346,
+      "sha256": "7b2ee7fec98af5d6372fbd5e49e83a68a79804ebbfa0ff33fe6f59f6e2dc20fc"
     },
     {
       "path": "docs/generated/changelog.yaml",
@@ -2045,8 +2305,8 @@
       "format": "yaml",
       "schema": "majordomus/changelog/v1",
       "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range",
-      "bytes": 934990,
-      "sha256": "71e3ce539a9b3440a0b0e6d98e7a5b30fd875bf355e4a0cc31935a8a7bd738e0"
+      "bytes": 1491400,
+      "sha256": "dfb84a374de4f3b41e404450c328d6960f31a07efd5fcb1f23793ff6fc007811"
     },
     {
       "path": "docs/generated/cli.json",
@@ -2054,16 +2314,16 @@
       "format": "json",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-      "bytes": 1236890,
-      "sha256": "9ef4ec66d78af7041e4d8e5ea6dfe3cfb6c08f4dbb476d0e2e44b1581576e26a"
+      "bytes": 1402105,
+      "sha256": "8c09660c6f4c83ba4e1054cc1d3c87a0499d7e4488ee1563eca3f92a249f6af0"
     },
     {
       "path": "docs/generated/cli.md",
       "document": "cli",
       "format": "markdown",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-      "bytes": 539474,
-      "sha256": "38d9d2dae18e370e796a971d582210ea35fab64ef232c6261dd2b9129fabbf9f"
+      "bytes": 617856,
+      "sha256": "29c8c26d36518f00f3050520f3bff0c4e81c0d3b5d90325ac40e6bc011f2a269"
     },
     {
       "path": "docs/generated/cli.yaml",
@@ -2071,8 +2331,8 @@
       "format": "yaml",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-      "bytes": 968356,
-      "sha256": "6fa3408d4d6c398041c85163ed99758dbed1d49658c9e537ba7205423617ba61"
+      "bytes": 1099404,
+      "sha256": "768b154f8782780fcbe261e2b94526008354487cd447e8b7c068cc8347cd654a"
     },
     {
       "path": "docs/generated/design.json",
@@ -2080,16 +2340,16 @@
       "format": "json",
       "schema": "majordomus/design-system/v1",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 155550,
-      "sha256": "34d19e3dca26cfead5e0390f027a61b161d6c0f3edd44447f28fdbb2d6417f9c"
+      "bytes": 155549,
+      "sha256": "b04f03c08d6dbea1a8b4e7cafd4f6b49b663c4ad9041ccbf7520b83d9cf2d938"
     },
     {
       "path": "docs/generated/design.md",
       "document": "design",
       "format": "markdown",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 11791,
-      "sha256": "4eb8d06d09e0a54307024c82bae49ef8e1966b607ff370284a012eea1477cdd0"
+      "bytes": 11790,
+      "sha256": "48a9021b6bfe3992c6a2d694c3d7b9162a285b5dd83b846f9e0a434e32a16505"
     },
     {
       "path": "docs/generated/design.yaml",
@@ -2097,8 +2357,8 @@
       "format": "yaml",
       "schema": "majordomus/design-system/v1",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 126201,
-      "sha256": "e00c408b8326947ad06fe2b41db83f921a8a223f95d8e63e002878311f36e78b"
+      "bytes": 126199,
+      "sha256": "bc620498eefe6bce8ebed26fe2072e65c7c7e8284785e41d2921079e9ef46d13"
     },
     {
       "path": "docs/generated/distribution-matrix.json",
@@ -2114,16 +2374,16 @@
       "format": "json",
       "schema": "majordomus/economics-summary/v1",
       "source": "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics",
-      "bytes": 30840,
-      "sha256": "3f8d295bff26c9006ee444321d3fda9dc79b2364c8a5fa09e0acdb563428e40b"
+      "bytes": 56203,
+      "sha256": "255727fd3c174f4318fc216f8df7258bfb6346116d601e284459ee71d458364b"
     },
     {
       "path": "docs/generated/economics.md",
       "document": "economics",
       "format": "markdown",
       "source": "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics",
-      "bytes": 15299,
-      "sha256": "a0bd687b580daaae24a534da2c31537dc72f5a59cdf00806930019af1647902c"
+      "bytes": 15763,
+      "sha256": "bb58e1ceb0de11522caf83ffc7d153fce977cd97b99a6c329ac7f70a50cd6337"
     },
     {
       "path": "docs/generated/economics.yaml",
@@ -2131,8 +2391,16 @@
       "format": "yaml",
       "schema": "majordomus/economics-summary/v1",
       "source": "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics",
-      "bytes": 25713,
-      "sha256": "7954348d628cea10eaaf3d43b69f9f934561e8ad140b1e1b5ea7c25586f2d080"
+      "bytes": 46587,
+      "sha256": "f5aaf18e6a0efe903e0503c8ee90a280423a867aa47b06d6e541413db3448a97"
+    },
+    {
+      "path": "docs/generated/entities.json",
+      "document": "entities",
+      "format": "json",
+      "source": "the composed graph under site/data/publication.toml",
+      "bytes": 730995,
+      "sha256": "e5c71e088cbdf015b2516e72e8393fe4c34f1ce85697e51c9454dca96bea2f6d"
     },
     {
       "path": "docs/generated/graph.json",
@@ -2140,496 +2408,528 @@
       "format": "json",
       "schema": "majordomus/capability-graph/v1",
       "source": "the composed graph of the registry and the index",
-      "bytes": 3567250,
-      "sha256": "7a275d1e8b71d0bfd09583c9457c127bec8bdb5077927887b69b6ddc32d54585"
+      "bytes": 6625224,
+      "sha256": "c03ff505b284b1a6aa9b4187e9e26e8d4f7b9455cbb95c731179e8e23325e7db"
     },
     {
       "path": "docs/generated/graph.schema.json",
       "document": "graph-schema",
       "format": "json",
       "source": "the schema of the composed graph, generated from its types",
-      "bytes": 7618,
-      "sha256": "7a585a29178e802c577c1a2e5b31ff3fc80f6727dbbdf6a6d02f7e296f3ada7d"
+      "bytes": 7616,
+      "sha256": "04634022cb1114198a50f74b8f3a6f90f2dee4ebf4b5ba6d8b26fc3b03dc6c6d"
     },
     {
       "path": "docs/generated/modules/artifacts.md",
       "document": "modules/artifacts",
       "format": "markdown",
       "source": "the `artifacts` module of the canonical Majordomus capability registry",
-      "bytes": 1742,
-      "sha256": "3f41ce69bb9d9cb7401fd122f7d91ed869902b8563b4d6ca1c37dfbeec9d7379"
+      "bytes": 1741,
+      "sha256": "387fd91b921992327857fb4e4d19a5075fc0a6b729507c407ce52040c28f3a37"
+    },
+    {
+      "path": "docs/generated/modules/blackboard.md",
+      "document": "modules/blackboard",
+      "format": "markdown",
+      "source": "the `blackboard` module of the canonical Majordomus capability registry",
+      "bytes": 2531,
+      "sha256": "b859cb7d9c9acbc168791a51faa78fa33f2df0f587e50214bd7673694026bfab"
+    },
+    {
+      "path": "docs/generated/modules/board.md",
+      "document": "modules/board",
+      "format": "markdown",
+      "source": "the `board` module of the canonical Majordomus capability registry",
+      "bytes": 1987,
+      "sha256": "cb74b242bb253cdac3e8ad84dba1f33cdd376219e5dffb5e0713967a5671da23"
     },
     {
       "path": "docs/generated/modules/brief.md",
       "document": "modules/brief",
       "format": "markdown",
       "source": "the `brief` module of the canonical Majordomus capability registry",
-      "bytes": 2394,
-      "sha256": "5d5decdd715e90ed8fa13682e85125d248fc10dcc02539b8ced376a3198f31ea"
+      "bytes": 2393,
+      "sha256": "8ff942997824467df40bb38af6d075c44b8b814ee40eb09f98bffe3231b911c1"
     },
     {
       "path": "docs/generated/modules/capabilities.md",
       "document": "modules/capabilities",
       "format": "markdown",
       "source": "the `capabilities` module of the canonical Majordomus capability registry",
-      "bytes": 3147,
-      "sha256": "e67aceb928414a0f2012fd2b70ad8b4eb930d01446bafb60fb5bb391be336a86"
+      "bytes": 3146,
+      "sha256": "06b79aaf427c30d2a6b459a985ab10b5f756b72a59411cd5760ab0ecf5c64186"
     },
     {
       "path": "docs/generated/modules/commands.md",
       "document": "modules/commands",
       "format": "markdown",
       "source": "the `commands` module of the canonical Majordomus capability registry",
-      "bytes": 3423,
-      "sha256": "5fade00dc32dcea243af2f1b74809bc5e9bb2738504208fef26309089774da91"
+      "bytes": 3422,
+      "sha256": "9df9cfdd87d045e29c088e947442803969378ba7c82e48c1c180faa120f89553"
     },
     {
       "path": "docs/generated/modules/commit.md",
       "document": "modules/commit",
       "format": "markdown",
       "source": "the `commit` module of the canonical Majordomus capability registry",
-      "bytes": 4383,
-      "sha256": "67d568821f7dd39dccaed890c7351f2f8582afe19a83c2931652e9d1ad796ef1"
+      "bytes": 4382,
+      "sha256": "f568b55bf7794f0a904807f5d5655662c768d68fb6686dc4165e422e332224c7"
     },
     {
       "path": "docs/generated/modules/continuity.md",
       "document": "modules/continuity",
       "format": "markdown",
       "source": "the `continuity` module of the canonical Majordomus capability registry",
-      "bytes": 8930,
-      "sha256": "34f64ed88b5b5f11207035963f8ce3939abd471002052953cba61fecd1a813ee"
+      "bytes": 8929,
+      "sha256": "f27d6e21b0d2c634f3b83bb4dff744869048b370664ec4e4fd4519659187895e"
     },
     {
       "path": "docs/generated/modules/convergence.md",
       "document": "modules/convergence",
       "format": "markdown",
       "source": "the `convergence` module of the canonical Majordomus capability registry",
-      "bytes": 1800,
-      "sha256": "5d5438e6e4116bcb8fa6a6c3f5c57f7a4a527ee2d3e84b3ead5c9b1ddceb075a"
+      "bytes": 1799,
+      "sha256": "21544d02f74219d657177024799030c55429598f70990f97c82ac17c4d6c5fd4"
     },
     {
       "path": "docs/generated/modules/dashboard.md",
       "document": "modules/dashboard",
       "format": "markdown",
       "source": "the `dashboard` module of the canonical Majordomus capability registry",
-      "bytes": 1702,
-      "sha256": "ad54a241c999c3720c32a1d12fbce96f48a5df6a377a454cc3670942c2f618be"
+      "bytes": 1701,
+      "sha256": "c444ebb17a96c72538e34d568611a8ae991028c15e8112c1139ecd2dbb253722"
     },
     {
       "path": "docs/generated/modules/delivery.md",
       "document": "modules/delivery",
       "format": "markdown",
       "source": "the `delivery` module of the canonical Majordomus capability registry",
-      "bytes": 2602,
-      "sha256": "e03dde918c647c566a5a12f8c3c2c1748644f2f73bf2161927ddc5943bede788"
+      "bytes": 3618,
+      "sha256": "1f2017482eb7c913cfecb76f06eb0a5236d4f9937c83dfa5fb638e0f9336d37b"
     },
     {
       "path": "docs/generated/modules/deploy.md",
       "document": "modules/deploy",
       "format": "markdown",
       "source": "the `deploy` module of the canonical Majordomus capability registry",
-      "bytes": 3617,
-      "sha256": "d472c75ece09aa0aaf1b77ac263754fd4908482dd2b797ee38360d5809624e7a"
+      "bytes": 5667,
+      "sha256": "d0c045e6f0fe1ed0377376104682e892f4be0be2a67597c18bd0e7705dc41eb2"
     },
     {
       "path": "docs/generated/modules/design.md",
       "document": "modules/design",
       "format": "markdown",
       "source": "the `design` module of the canonical Majordomus capability registry",
-      "bytes": 4193,
-      "sha256": "ae59c44a795de835b011a37e272ca58978bf6e2f8c1870ac405727242ec5e32d"
+      "bytes": 12600,
+      "sha256": "83e3be00f4dee50179bcb1f111045ac2a63f5fef3441caf10645e1f96733f720"
     },
     {
       "path": "docs/generated/modules/devcontext.md",
       "document": "modules/devcontext",
       "format": "markdown",
       "source": "the `devcontext` module of the canonical Majordomus capability registry",
-      "bytes": 6521,
-      "sha256": "0e7010baebf9cfc8c6f9259fe69b3b1cc913ecddb46b337f33d5e69d6ab465e3"
+      "bytes": 7328,
+      "sha256": "38c45d264d77a8ce1399ad0c7b0d14fa4c42c0e6c8eed4e796d8844a7cc4e091"
     },
     {
       "path": "docs/generated/modules/devtask.md",
       "document": "modules/devtask",
       "format": "markdown",
       "source": "the `devtask` module of the canonical Majordomus capability registry",
-      "bytes": 4470,
-      "sha256": "51e94b83de876eb18872aa8003a943cee2010b4334a798781d86030a0f9f2b7e"
+      "bytes": 8190,
+      "sha256": "f9eafc5f4b57a2cd93f8fc2bcdbbc8435683dbe29b3be6ff2d5a046044e121c0"
     },
     {
       "path": "docs/generated/modules/directories.md",
       "document": "modules/directories",
       "format": "markdown",
       "source": "the `directories` module of the canonical Majordomus capability registry",
-      "bytes": 1654,
-      "sha256": "f071b0ced2fc5f4d649683d47baa015678032e76309d05e687934bd7e165f623"
+      "bytes": 1653,
+      "sha256": "d15bcab98b84a4ddb2c298e6b7db59d3db2a18a709206233310fdaf27e769968"
     },
     {
       "path": "docs/generated/modules/distribution.md",
       "document": "modules/distribution",
       "format": "markdown",
       "source": "the `distribution` module of the canonical Majordomus capability registry",
-      "bytes": 4566,
-      "sha256": "43ae931bc6e1c45494fade36c52a193ceb983766c138a6fd2dc0612ec683e494"
+      "bytes": 4565,
+      "sha256": "acb362c90ee95d22415cd3158935a6b291a49b56d570bb6c18817880f5af3ac4"
     },
     {
       "path": "docs/generated/modules/economics.md",
       "document": "modules/economics",
       "format": "markdown",
       "source": "the `economics` module of the canonical Majordomus capability registry",
-      "bytes": 4646,
-      "sha256": "7d9aefccb08bb4272f4ed9d99c3e36a63b3678f35e521c08f08b676549133413"
+      "bytes": 5950,
+      "sha256": "33c1959e50719f5be7905229bf871f9847d5b81ed08022afae6591643249cde4"
     },
     {
       "path": "docs/generated/modules/editors.md",
       "document": "modules/editors",
       "format": "markdown",
       "source": "the `editors` module of the canonical Majordomus capability registry",
-      "bytes": 1415,
-      "sha256": "23d6266e67d8dd31a9e60cb79f8d5569cdd91319c76c7e36c9bd86e206cf7086"
+      "bytes": 1414,
+      "sha256": "20152ed104871c3acd036c3624372740a3b8a0f391d12b86d7fe02316bbc7bb4"
     },
     {
       "path": "docs/generated/modules/entity.md",
       "document": "modules/entity",
       "format": "markdown",
       "source": "the `entity` module of the canonical Majordomus capability registry",
-      "bytes": 2453,
-      "sha256": "c538007f5726bd9b17f84970addb7242f98e25b3a64ae6e639682c6cf79cd78d"
+      "bytes": 2452,
+      "sha256": "23d5910fdc3ce745854d797e09fa7bdc44592e83f80a370429cf7009d732b180"
     },
     {
       "path": "docs/generated/modules/environment.md",
       "document": "modules/environment",
       "format": "markdown",
       "source": "the `environment` module of the canonical Majordomus capability registry",
-      "bytes": 4152,
-      "sha256": "4f4d5da534f3f90a5494d2e545d6eb839c8a381890e7b3a1c5eb9528d119c26b"
+      "bytes": 4151,
+      "sha256": "403b7d1953c6bcd1f19528f025c043e893a08f18c2f06d9d9c45b0ed79725671"
     },
     {
       "path": "docs/generated/modules/episodes.md",
       "document": "modules/episodes",
       "format": "markdown",
       "source": "the `episodes` module of the canonical Majordomus capability registry",
-      "bytes": 4357,
-      "sha256": "0e36e818bf9918cce8d81822a6dc4c0fea3db0ae4a30f7ad9a99e616ecb41d3a"
+      "bytes": 4356,
+      "sha256": "724f643a37367b1e8b00a672de5d54bac782978d3b78ef75961f37de99b15d14"
     },
     {
       "path": "docs/generated/modules/evidence.md",
       "document": "modules/evidence",
       "format": "markdown",
       "source": "the `evidence` module of the canonical Majordomus capability registry",
-      "bytes": 9463,
-      "sha256": "fe5a1b1845b66b6c19c227308973e18bc91809f836d341340434aeadff34e4d2"
+      "bytes": 9462,
+      "sha256": "65e65cbdb6ac316de7db75929cdb3701eaeb6ca0c59a56f60e0d6a47c23882be"
     },
     {
       "path": "docs/generated/modules/executions.md",
       "document": "modules/executions",
       "format": "markdown",
       "source": "the `executions` module of the canonical Majordomus capability registry",
-      "bytes": 9751,
-      "sha256": "4fba85ccfa06bd3dc49dc11a886720cfd9678badf41a7cc2599c462d09f83eb7"
+      "bytes": 11980,
+      "sha256": "0c41ebaa20cf5d7d328177336d531d42387ac059407fcdf4eb8fff9f94e3bf98"
     },
     {
       "path": "docs/generated/modules/gates.md",
       "document": "modules/gates",
       "format": "markdown",
       "source": "the `gates` module of the canonical Majordomus capability registry",
-      "bytes": 3260,
-      "sha256": "0cb5421e2671ddcec609fad4f249eb47efb5b576f9495103dcb0cc95a739a50c"
+      "bytes": 6093,
+      "sha256": "d93ee8c600a023cbd9bc52f49ca283cebc5aa7a4e4d513812ca778a55f4aaf86"
     },
     {
       "path": "docs/generated/modules/graph.md",
       "document": "modules/graph",
       "format": "markdown",
       "source": "the `graph` module of the canonical Majordomus capability registry",
-      "bytes": 1798,
-      "sha256": "5203311f23e08ab8bc4f1ea4ddaeb5afb40b3abe3a503954565ee7b822d0fa0d"
+      "bytes": 1797,
+      "sha256": "fc9c89339bca530ddff82409dd16b6688f06fd97e8286e9183c5e0ab9b723db7"
     },
     {
       "path": "docs/generated/modules/guard.md",
       "document": "modules/guard",
       "format": "markdown",
       "source": "the `guard` module of the canonical Majordomus capability registry",
-      "bytes": 1674,
-      "sha256": "d9794c1d540163f985dc9efe443bf8fa748057f9132fc081f24298578737d8e7"
+      "bytes": 1673,
+      "sha256": "1fc5134c086d3f0672a930b8bc9a71b6a18ebea8b26364d0fa674b70c5a2ac2e"
     },
     {
       "path": "docs/generated/modules/health.md",
       "document": "modules/health",
       "format": "markdown",
       "source": "the `health` module of the canonical Majordomus capability registry",
-      "bytes": 2534,
-      "sha256": "e4a129e100cfd9ad1b5cef28584c15a6d3a10e1198d413b984ed04376479bd0d"
+      "bytes": 2533,
+      "sha256": "bfc0e84716250e306e6dfbca9c49886c0c50b2fc4b91b814c36b0d25c5cea534"
     },
     {
       "path": "docs/generated/modules/integration.md",
       "document": "modules/integration",
       "format": "markdown",
       "source": "the `integration` module of the canonical Majordomus capability registry",
-      "bytes": 9826,
-      "sha256": "1069486fa1c8ced857c122a8fb9a8e7fecee839f6b81269e3e5e6e9c3d83663d"
+      "bytes": 9825,
+      "sha256": "b47dab00336b914cf86a1ae29bedbafffec86c32583d62a925c442919151e25f"
     },
     {
       "path": "docs/generated/modules/intent_realization.md",
       "document": "modules/intent_realization",
       "format": "markdown",
       "source": "the `intent_realization` module of the canonical Majordomus capability registry",
-      "bytes": 3613,
-      "sha256": "10b4f5b386d8121ff5d9337f76eb4cf2086c47d95dd2623ecd347c035a97d1d7"
+      "bytes": 3612,
+      "sha256": "8944aae8d9e6e9672f913ea093c17c8d6177cc15b12b9543e4555e35bfec91e9"
     },
     {
       "path": "docs/generated/modules/intents.md",
       "document": "modules/intents",
       "format": "markdown",
       "source": "the `intents` module of the canonical Majordomus capability registry",
-      "bytes": 9819,
-      "sha256": "51607af40fd1a273f1ce0526774f12cdeab0475c20e09fb4c07cfeba25df58ce"
+      "bytes": 9818,
+      "sha256": "1775fd1a92121e6b137a906e4c63b5d152939fe7f93f998c1174b5182456ca10"
     },
     {
       "path": "docs/generated/modules/knowledge_base.md",
       "document": "modules/knowledge_base",
       "format": "markdown",
       "source": "the `knowledge_base` module of the canonical Majordomus capability registry",
-      "bytes": 5484,
-      "sha256": "0633ac2c138436ab03899924b17e9e0c0e0d67c4967c10ab936292fe6d6d1548"
+      "bytes": 5483,
+      "sha256": "1be236c149212dcb8a54bac9c44a9a3232af981b24c57bdfcdbb2c4797723615"
+    },
+    {
+      "path": "docs/generated/modules/layout.md",
+      "document": "modules/layout",
+      "format": "markdown",
+      "source": "the `layout` module of the canonical Majordomus capability registry",
+      "bytes": 1424,
+      "sha256": "6142df0ef33f9014affef589a45d4a78f44630b21c8378c6e5e90d59b7fcd736"
     },
     {
       "path": "docs/generated/modules/lifecycle.md",
       "document": "modules/lifecycle",
       "format": "markdown",
       "source": "the `lifecycle` module of the canonical Majordomus capability registry",
-      "bytes": 4520,
-      "sha256": "0f1a8f569db23acf95ec7469a11336899017f1e3b5acf84c0caea05300205a59"
+      "bytes": 4615,
+      "sha256": "e03e6b302a25961dee7eb244d5a1583899b2c2c66a65348bbf26542d3b7dc997"
     },
     {
       "path": "docs/generated/modules/mcp.md",
       "document": "modules/mcp",
       "format": "markdown",
       "source": "the `mcp` module of the canonical Majordomus capability registry",
-      "bytes": 1997,
-      "sha256": "e3343c59aeb5efd00b37de92cc0122044a3be024c4ee946446653507299a7571"
+      "bytes": 1996,
+      "sha256": "fb416642febc91082c5bc1ea7b21f6029330d6c505a72ef690400e9ccf965bb4"
     },
     {
       "path": "docs/generated/modules/mesh.md",
       "document": "modules/mesh",
       "format": "markdown",
       "source": "the `mesh` module of the canonical Majordomus capability registry",
-      "bytes": 27228,
-      "sha256": "50e8ffc9e83abde10230a57ca11e2b0b84a72f774994fe625fd245a344a7ea2f"
+      "bytes": 39800,
+      "sha256": "095656b75af4dbf1f86b8aa9e9527b6e225ed6592bb9e2f588ed683a0343ad5d"
     },
     {
       "path": "docs/generated/modules/models.md",
       "document": "modules/models",
       "format": "markdown",
       "source": "the `models` module of the canonical Majordomus capability registry",
-      "bytes": 2899,
-      "sha256": "1208733cb042dbda8865b34fd8a56cda0322bfd535a99fd2dd5bd3cbf5422bb4"
+      "bytes": 2898,
+      "sha256": "e3df47ba7997cdea839fb1a584faf3d8891fc7ba169669c94e5dd1cf090e97bd"
     },
     {
       "path": "docs/generated/modules/monitor.md",
       "document": "modules/monitor",
       "format": "markdown",
       "source": "the `monitor` module of the canonical Majordomus capability registry",
-      "bytes": 2411,
-      "sha256": "3907c1514345c7d13bbbdbc008106f3bcb8477e178c757dbb8f925db64a0e48f"
+      "bytes": 2410,
+      "sha256": "96e8764dd3a8a46c0fbb28e1e1ebd54cd971ded9eeef2ac34cb29c8220590ecd"
     },
     {
       "path": "docs/generated/modules/objects.md",
       "document": "modules/objects",
       "format": "markdown",
       "source": "the `objects` module of the canonical Majordomus capability registry",
-      "bytes": 4068,
-      "sha256": "8cae7082aa56f3d0a1624ec8bce27cc02edeac4339efe9393b54d07d780aa3d4"
+      "bytes": 4067,
+      "sha256": "9024bf92af6a7d068614ade7d868190c7c1bf4605c5ef769221fcb1f2f522bf7"
     },
     {
       "path": "docs/generated/modules/obligations.md",
       "document": "modules/obligations",
       "format": "markdown",
       "source": "the `obligations` module of the canonical Majordomus capability registry",
-      "bytes": 2611,
-      "sha256": "84b061fb6290c9d0b5f7c2e20a0bbcd24a4f4b667b45d6c3f932c96374c3a71d"
+      "bytes": 2610,
+      "sha256": "97d8fcf47b2ccb6d76407758bde3f74a05270972789eec996a064e28bd2c1369"
     },
     {
       "path": "docs/generated/modules/observatory.md",
       "document": "modules/observatory",
       "format": "markdown",
       "source": "the `observatory` module of the canonical Majordomus capability registry",
-      "bytes": 2882,
-      "sha256": "5f444caadffcdde8714bcbec392f855418956695fb65e8c2f744bc2033e720c9"
+      "bytes": 2881,
+      "sha256": "d851112e11508c8637f9b54ef55ca2582c25a2157c24976e1ec5515817e4e40e"
     },
     {
       "path": "docs/generated/modules/pack.md",
       "document": "modules/pack",
       "format": "markdown",
       "source": "the `pack` module of the canonical Majordomus capability registry",
-      "bytes": 2805,
-      "sha256": "6610ab80c4bd0758fb3724171632fa66f04e5ff352bfadfd49bb3bd727d88f57"
+      "bytes": 2804,
+      "sha256": "918da7ce03fdab67f8c11dbcbfd2e5eb234802b7a8fa9f187de545633192e7e5"
     },
     {
       "path": "docs/generated/modules/peers.md",
       "document": "modules/peers",
       "format": "markdown",
       "source": "the `peers` module of the canonical Majordomus capability registry",
-      "bytes": 3917,
-      "sha256": "03b9e4ae7897daa7bae9eb584a8f3cbc24123229b716a0a38c60a031332b702b"
+      "bytes": 4305,
+      "sha256": "7ce970757a9b4b653c41cfdd34e4cabdc5a1445964ff5913e8618ceb2f95b879"
     },
     {
       "path": "docs/generated/modules/perf.md",
       "document": "modules/perf",
       "format": "markdown",
       "source": "the `perf` module of the canonical Majordomus capability registry",
-      "bytes": 1041,
-      "sha256": "90faeb3762dd65af4dd70b6208e05649abc220111faa10d607b2de376dc1b712"
+      "bytes": 1040,
+      "sha256": "545712002c0e4330102d56962bec10bd71aa0369660dd6cd8ef28cd32898eed9"
     },
     {
       "path": "docs/generated/modules/plan.md",
       "document": "modules/plan",
       "format": "markdown",
       "source": "the `plan` module of the canonical Majordomus capability registry",
-      "bytes": 10210,
-      "sha256": "f929fb5ce2ca5abecc7c85b54aab26e7dbdf9936a7371d5b679da45a520b2dd7"
+      "bytes": 18137,
+      "sha256": "86a64aa452a4d2527c5770a67acfc2a0a1baced9aaaf678f74e57faa77f31b72"
+    },
+    {
+      "path": "docs/generated/modules/proceed.md",
+      "document": "modules/proceed",
+      "format": "markdown",
+      "source": "the `proceed` module of the canonical Majordomus capability registry",
+      "bytes": 5310,
+      "sha256": "e5de92aba82f0f53b1a3934e781d3967cbd11453da074a7c93a3337899b3363e"
     },
     {
       "path": "docs/generated/modules/product.md",
       "document": "modules/product",
       "format": "markdown",
       "source": "the `product` module of the canonical Majordomus capability registry",
-      "bytes": 7230,
-      "sha256": "9e15cec0fa5e9db5b62a5357246b4fffdf6872c9fe9b3146ff7b2c11d6492073"
+      "bytes": 7229,
+      "sha256": "e8edce89ae8fdd245582e5ee1df2e28ce9574a815143b8be46c5a3fffd143f90"
     },
     {
       "path": "docs/generated/modules/quality.md",
       "document": "modules/quality",
       "format": "markdown",
       "source": "the `quality` module of the canonical Majordomus capability registry",
-      "bytes": 4317,
-      "sha256": "bd548490c23bbdbba3341873addbff08ed0d77f695f395176c9eeaa94f8b9d57"
+      "bytes": 4316,
+      "sha256": "a27fa484eb8fe16a6e01a386573d61456552d79dce2a1904ddd295c9db1faf50"
     },
     {
       "path": "docs/generated/modules/reasoning.md",
       "document": "modules/reasoning",
       "format": "markdown",
       "source": "the `reasoning` module of the canonical Majordomus capability registry",
-      "bytes": 6928,
-      "sha256": "69a5f04ae86ee79c9eb0a2ba8a3c7e211bcf322fea921725d9db0f59f6727637"
+      "bytes": 6927,
+      "sha256": "46683b1c6c6efb16e8bf417217b3f74dc1ae3fdbd46e728f109dff6f5a2ea734"
     },
     {
       "path": "docs/generated/modules/recover.md",
       "document": "modules/recover",
       "format": "markdown",
       "source": "the `recover` module of the canonical Majordomus capability registry",
-      "bytes": 2388,
-      "sha256": "56ef2c8ee153655cfe0e97a31f93ba2a44ae5fc6b1110e37a3b4528fe3b0faf7"
+      "bytes": 2387,
+      "sha256": "344ae5dde155058ec02fc5565c99a60c99e5834e560e70a57f9c2db74c3d87ff"
     },
     {
       "path": "docs/generated/modules/release.md",
       "document": "modules/release",
       "format": "markdown",
       "source": "the `release` module of the canonical Majordomus capability registry",
-      "bytes": 6190,
-      "sha256": "efadf4ff2f3e63eb73b1143124173837acf56c41b81916bd7899d22fc9a3a937"
+      "bytes": 7969,
+      "sha256": "cd752748a0dcca0027db6181f7af64e0d8c155bae1ea90000e53fb8d8960ce91"
     },
     {
       "path": "docs/generated/modules/repository.md",
       "document": "modules/repository",
       "format": "markdown",
       "source": "the `repository` module of the canonical Majordomus capability registry",
-      "bytes": 2516,
-      "sha256": "bd0e7a7827e0adbd4e400ed2bbbbb7499da08aca5fcd8dd14770113382110078"
+      "bytes": 2515,
+      "sha256": "d494a66469dec8c29af5a6652c6dc9bacc69e215b8831bad914baecd80760e18"
     },
     {
       "path": "docs/generated/modules/rules.md",
       "document": "modules/rules",
       "format": "markdown",
       "source": "the `rules` module of the canonical Majordomus capability registry",
-      "bytes": 5067,
-      "sha256": "ee04b543f70eab02a8a46b74460563c9298a17dbeea749b25497074a90d6683c"
+      "bytes": 5066,
+      "sha256": "41b02c29126efed2203b41c1dbb5d4162e1d976aa62ac49e0bca33e0139c7772"
     },
     {
       "path": "docs/generated/modules/served.md",
       "document": "modules/served",
       "format": "markdown",
       "source": "the `served` module of the canonical Majordomus capability registry",
-      "bytes": 4348,
-      "sha256": "2a2f79ab6c23a45c8546d24752b9c36ae398738f3a8e4e9f8864a11a837f2557"
+      "bytes": 4766,
+      "sha256": "0c44a77c59ed19370a53c4203a821c85e78548ba6be8da4f34e1d50c363a6e60"
     },
     {
       "path": "docs/generated/modules/server.md",
       "document": "modules/server",
       "format": "markdown",
       "source": "the `server` module of the canonical Majordomus capability registry",
-      "bytes": 1870,
-      "sha256": "f6199abc3709705beea103423543ce7a35a0f137683bf5a7b4f54dc0aa1719ed"
+      "bytes": 2541,
+      "sha256": "bdad0382cc8328b7c82bf2eaec51cc953ee9e6c0bb01c74a21122519e391bdf9"
     },
     {
       "path": "docs/generated/modules/session_domain.md",
       "document": "modules/session_domain",
       "format": "markdown",
       "source": "the `session_domain` module of the canonical Majordomus capability registry",
-      "bytes": 2686,
-      "sha256": "c91f3afeb697186e7124a5b93d2b5cec12dee1e65ed154bd69d0d20c7aa9eb07"
+      "bytes": 2685,
+      "sha256": "b97dfc1efa3ec4b83fbe4fca732cd644da9c47694df7d82f12994bc93efd3658"
     },
     {
       "path": "docs/generated/modules/shell.md",
       "document": "modules/shell",
       "format": "markdown",
       "source": "the `shell` module of the canonical Majordomus capability registry",
-      "bytes": 1554,
-      "sha256": "c2470d3d8facbb1346e33d7ba0585ec5f05806a920405b9c96dfac3cb12564fa"
+      "bytes": 1582,
+      "sha256": "6349bc7ef568bd461400434a0b44bee1e0cafa69eed31600bd6578c4a00a798e"
     },
     {
       "path": "docs/generated/modules/skills.md",
       "document": "modules/skills",
       "format": "markdown",
       "source": "the `skills` module of the canonical Majordomus capability registry",
-      "bytes": 3159,
-      "sha256": "d2989c892cb3a1736746de48680c2cd8274c134e29cce8c4c3b2dd9a392a5f9f"
+      "bytes": 3158,
+      "sha256": "a9b79a87deaa03fdefdd2b87de0ee86a52820cf06bf37694a21480a82d47f884"
     },
     {
       "path": "docs/generated/modules/trace.md",
       "document": "modules/trace",
       "format": "markdown",
       "source": "the `trace` module of the canonical Majordomus capability registry",
-      "bytes": 4579,
-      "sha256": "529e5c9e62c88a9182b709693caf4e445c44c04aebfe4f9c0bb1e660a854df96"
+      "bytes": 4578,
+      "sha256": "d99752ebddb68c48abb58ea358240021110f4432bc5de423b9b0094688a2bc43"
     },
     {
       "path": "docs/generated/modules/web.md",
       "document": "modules/web",
       "format": "markdown",
       "source": "the `web` module of the canonical Majordomus capability registry",
-      "bytes": 1463,
-      "sha256": "1705e63b7856ec2fe22ed94d44b22f3243ccaa0de85aa24f0eb1db8825fd51bf"
+      "bytes": 1462,
+      "sha256": "46f86cb135128b928fb337dce2d27bf23bfc971ab4ce1c0536305d6c07f432cb"
     },
     {
       "path": "docs/generated/modules/why.md",
       "document": "modules/why",
       "format": "markdown",
       "source": "the `why` module of the canonical Majordomus capability registry",
-      "bytes": 6122,
-      "sha256": "d59f0b21195e3a58ff695e022da6e30d2d1c5e343d259352f932fbb2da5b70df"
+      "bytes": 6121,
+      "sha256": "8fd50e8af93910d9d750b820719996f20dacb4e31debd99f1eb9f553aeb40e5e"
     },
     {
       "path": "docs/generated/modules/worktree.md",
       "document": "modules/worktree",
       "format": "markdown",
       "source": "the `worktree` module of the canonical Majordomus capability registry",
-      "bytes": 6488,
-      "sha256": "42a25919f4615ad2eaf116379a4193b7f9caee5eecfb7480229df826e5ec9bdd"
+      "bytes": 10042,
+      "sha256": "898f0c60f4a3a6d25f45729e6e3ce926d9b0709b920d9a28fee15c3d6ab75539"
     },
     {
       "path": "docs/generated/openapi.json",
       "document": "openapi",
       "format": "json",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 2508713,
-      "sha256": "2c5cff4823571fae5435b7226e0655a8dbaf2a8ba9118c7cd957078cf4ca2e87"
+      "bytes": 2900633,
+      "sha256": "30c67bd20dc4d0352a1c64a961218dfcff7e69c43f4e3cfed78a54105e8a5caa"
     },
     {
       "path": "docs/generated/openapi.yaml",
       "document": "openapi",
       "format": "yaml",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 2029945,
-      "sha256": "d2be96c80a1205717b66ba64fd25dddb1c5f67a0dda50d2c53e4bd0846046d52"
+      "bytes": 2348062,
+      "sha256": "7cefd4c19189c868fbe7c489b77597fa7e58c92fa8c9990b70bcc844c6067d8b"
     },
     {
       "path": "docs/generated/providers.json",
@@ -2637,16 +2937,16 @@
       "format": "json",
       "schema": "majordomus/providers/v1",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
-      "bytes": 7073,
-      "sha256": "a378421c6d4d232554be84baf9278c75bb07cea165e09b3e6b4f71f161e2d139"
+      "bytes": 12861,
+      "sha256": "4d30c778043b96db2e9358b50ddd7824dbfb796c43f85814fb82d24bba71b042"
     },
     {
       "path": "docs/generated/providers.md",
       "document": "providers",
       "format": "markdown",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
-      "bytes": 2310,
-      "sha256": "fd9fe4fc8133d1ab4020d7289c1aa7e5f05b46b02dfaf6fc5d399b0738ff9ce0"
+      "bytes": 2745,
+      "sha256": "776767df21d4e6ca05b5880ec5a2ab710ed85e1e812a3d6e072adce0fb8d0f68"
     },
     {
       "path": "docs/generated/providers.yaml",
@@ -2654,8 +2954,8 @@
       "format": "yaml",
       "schema": "majordomus/providers/v1",
       "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
-      "bytes": 6543,
-      "sha256": "4475727548466138783922b73c4a1ebc2f7f83ce593d11fbbe823736ac7116ba"
+      "bytes": 12099,
+      "sha256": "884e83fa1bfc51ddd234796d6a713495c1cd2f45b5adc3f3a1ea6ea4e3ee0528"
     },
     {
       "path": "docs/generated/registry.json",
@@ -2663,8 +2963,8 @@
       "format": "json",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
-      "bytes": 3761774,
-      "sha256": "a838e0ab15e411aa79c91839c7d8c79737b6bcf63e9d767d4b123c7a518c69b4"
+      "bytes": 4405597,
+      "sha256": "fd4c6ca9b77cf531ca68f463a68b1b234cdff9325197936c5dc54b7ab1b5e95e"
     },
     {
       "path": "docs/generated/registry.yaml",
@@ -2672,8 +2972,8 @@
       "format": "yaml",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
-      "bytes": 3036592,
-      "sha256": "92da9619dcecf59b249ce899fd2d4a35f4115541e99d6305c9e1ac13e233d800"
+      "bytes": 3557555,
+      "sha256": "2dc0f9f5d5513c2fc657e8d94d26e3130e07abf80c3e9fec1ec3efb0d888e2f4"
     },
     {
       "path": "docs/generated/web.json",
@@ -2681,8 +2981,8 @@
       "format": "json",
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository",
-      "bytes": 5555,
-      "sha256": "e31bafc02d05503a05ef92953acc2883dce69f2375821ad8df7cfff0d01f1919"
+      "bytes": 5554,
+      "sha256": "a7392e75114c552e7b360f6711c4638ed88249a218b87ddb44a246e4b35a8b45"
     },
     {
       "path": "docs/generated/web.yaml",
@@ -2690,432 +2990,440 @@
       "format": "yaml",
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository",
-      "bytes": 4219,
-      "sha256": "689dbe8fee17f454befc860ce5f93a51b211fcb56b5cb3368c7f64b3fed7b3da"
+      "bytes": 4217,
+      "sha256": "8cf767b32c0eee0492f51f0a0230e6105e40bbc9cdebb6997325978a66b75e98"
     },
     {
       "path": "share/allow/adr.txt",
       "document": "allow/adr",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
-      "bytes": 373,
-      "sha256": "a262649601169ce3691d0cc5d74983016149d1db9fb4c5e2c1e0495645b0bafd"
+      "bytes": 372,
+      "sha256": "de0e88196c9d20d31435e7dd1926887130e874f82d00a1887754fe6b87fb7e7c"
     },
     {
       "path": "share/allow/application.txt",
       "document": "allow/application",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
-      "bytes": 384,
-      "sha256": "4613e3b2261ba6bde208f06cc43bec8e726660b9d71ed30a38049db4ed39811c"
+      "bytes": 383,
+      "sha256": "e9ef44fcea5cd7587534f365f1989e9598a8377fe474a100fd9a396671d64acd"
     },
     {
       "path": "share/allow/context.txt",
       "document": "allow/context",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
-      "bytes": 447,
-      "sha256": "4af2c6ad23b6c859d6e7b02d26234400fe83af64bea5ef2886583fbb32a3ec36"
+      "bytes": 523,
+      "sha256": "f273e4f990a760e8a73bd59af93d2b238d9ecc1530cdbbe159f5fe8bfb387b28"
     },
     {
       "path": "share/allow/critique.txt",
       "document": "allow/critique",
       "format": "text",
       "source": "the JSON Schema `majordomus.critique/v1` of the kind it validates",
-      "bytes": 479,
-      "sha256": "c0ed6269513ca66023401109af6a5b7fada2d25441e41655a965c110bf87afb3"
+      "bytes": 478,
+      "sha256": "bbe547466080fe3c4d4426d7d7c6257335edc5844d37ad8dd68b1845ce859dc3"
     },
     {
       "path": "share/allow/current.txt",
       "document": "allow/current",
       "format": "text",
       "source": "the JSON Schema `majordomus.current/v1` of the kind it validates",
-      "bytes": 467,
-      "sha256": "2e684d0cd776b33cde6a39e84851daf1917f2523ff48e15e5b1ad779386052bc"
+      "bytes": 466,
+      "sha256": "c29dfd70c312f9416df56f13e25714950254932b216204c8c717faf9330d7bf6"
     },
     {
       "path": "share/allow/deployment.txt",
       "document": "allow/deployment",
       "format": "text",
       "source": "the JSON Schema `majordomus.deployment/v1` of the kind it validates",
-      "bytes": 873,
-      "sha256": "3bf034ff15bbd7a2280644928106615e6fe31e4f5b85f4c959eb3fad69de64a7"
+      "bytes": 966,
+      "sha256": "ed1ad90887db4876c1d5ef12b5660d19b7b73b8c652bcc6268cf82418c2a5f5d"
     },
     {
       "path": "share/allow/derive-offload.txt",
       "document": "allow/derive-offload",
       "format": "text",
       "source": "the JSON Schema `majordomus.derive-offload/v1` of the kind it validates",
-      "bytes": 613,
-      "sha256": "0e5dab1965a5f68bdfb8797fe504146c97af0e9fb7bec07c5f039d673b0d29cf"
+      "bytes": 612,
+      "sha256": "f370eb09607c19f3b098d380a312fb1b0d1e13c81444d1ab79acb1f1aac83afe"
     },
     {
       "path": "share/allow/distribution.txt",
       "document": "allow/distribution",
       "format": "text",
       "source": "the JSON Schema `majordomus.distribution/v1` of the kind it validates",
-      "bytes": 997,
-      "sha256": "6f9e2fb366add46978a966b3411e9cd8062c469d636e562af28fe1116a248153"
+      "bytes": 996,
+      "sha256": "7793f572cfbbc1dd4ac0691fd5acfaf4440679102e5285ac1db9eb217e8e903f"
     },
     {
       "path": "share/allow/document.txt",
       "document": "allow/document",
       "format": "text",
       "source": "the JSON Schema `majordomus.document/v1` of the kind it validates",
-      "bytes": 274,
-      "sha256": "a8fca3faf0221de58cd8ca3d5563acc60107092ae45eb622cb28f1bcde612fec"
+      "bytes": 273,
+      "sha256": "aacae470efdc643750db90eb26219bfa477582330d415ba9e5d89e4cb462020e"
     },
     {
       "path": "share/allow/gap.txt",
       "document": "allow/gap",
       "format": "text",
       "source": "the JSON Schema `majordomus.gap/v1` of the kind it validates",
-      "bytes": 627,
-      "sha256": "1fc1c83191dde32f9da7f1c875c352919c02416b427d5a9ea3556af3d5ae0287"
+      "bytes": 626,
+      "sha256": "7121babe0b466c28a8c776b03ecf5f386922cdc25ea1778ed593a57c56758146"
     },
     {
       "path": "share/allow/intent.txt",
       "document": "allow/intent",
       "format": "text",
       "source": "the JSON Schema `majordomus.intent/v1` of the kind it validates",
-      "bytes": 486,
-      "sha256": "f87b1e11cce2643850c4cca8f3607d7683432cbc8ed6123c3d11e859e36074b3"
+      "bytes": 485,
+      "sha256": "19daaaf51a8063ec6f41ad36ea58c0ef2abec0bf35d2b7631fa56dcdc764a6d5"
     },
     {
       "path": "share/allow/issue.txt",
       "document": "allow/issue",
       "format": "text",
       "source": "the JSON Schema `majordomus.issue/v1` of the kind it validates",
-      "bytes": 889,
-      "sha256": "12ea2bbdd067a4bc9c05ac71d364929ea1755762a801c55a9a5cf82f747d5c39"
+      "bytes": 908,
+      "sha256": "d1aafdbf15070339af5354a3b59b2b8460edad4d552b6def6dbde50f46aad2ef"
     },
     {
       "path": "share/allow/knowledge.txt",
       "document": "allow/knowledge",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
-      "bytes": 445,
-      "sha256": "d5340644781003f8740c3b34dfc31ef845a9d1ed6a1ba6e8a519de6f680e9774"
+      "bytes": 444,
+      "sha256": "00362ec834094d09be72e305bff40168596eae65ae858ca0df26cc41a777b344"
     },
     {
       "path": "share/allow/manifest.txt",
       "document": "allow/manifest",
       "format": "text",
       "source": "the JSON Schema `majordomus.manifest/v1` of the kind it validates",
-      "bytes": 649,
-      "sha256": "9ee8f69492669f03a7c2531a415c52af48085fc51c6264e88c77f4b2a70ecb86"
+      "bytes": 696,
+      "sha256": "eaab96d56fa9f03b410c77946359939fc392834e6dca655a358dca8c494bb205"
     },
     {
       "path": "share/allow/mesh-declaration.txt",
       "document": "allow/mesh-declaration",
       "format": "text",
       "source": "the JSON Schema `majordomus.mesh-declaration/v1` of the kind it validates",
-      "bytes": 687,
-      "sha256": "ebd598aa1a9c2fb76842a7178c710f12845d94d424c2e0f702908528fda5eb73"
+      "bytes": 811,
+      "sha256": "d9a25992cbe09cf31d2ff196ba5bab9625d9ba141274e1cb84064c76bdcb1c13"
     },
     {
       "path": "share/allow/milestone.txt",
       "document": "allow/milestone",
       "format": "text",
       "source": "the JSON Schema `majordomus.milestone/v1` of the kind it validates",
-      "bytes": 760,
-      "sha256": "5a9268115a42ba634c805b6fe31c7cc4446b90f08b28a2b781148664f95d8afa"
+      "bytes": 758,
+      "sha256": "52e0e8a4b8624b901e438f975528f3dcf5c38c8611fab65cdda570ab3d7ee49f"
     },
     {
       "path": "share/allow/policy.txt",
       "document": "allow/policy",
       "format": "text",
       "source": "the JSON Schema `majordomus.policy/v1` of the kind it validates",
-      "bytes": 2567,
-      "sha256": "7dbcd0bb95d44169c3c1ed955e1b1de479fe1016bb856e7e0c9c64dc3cf16873"
+      "bytes": 2839,
+      "sha256": "6ad4517958ee246eb86c07727b539c3fbfb48b0a3447facb5acc14077f379e04"
     },
     {
       "path": "share/allow/profile.txt",
       "document": "allow/profile",
       "format": "text",
       "source": "the JSON Schema `majordomus.profile/v1` of the kind it validates",
-      "bytes": 742,
-      "sha256": "12b2c363a46285467587d80b7d55a494de033f5bbe77716ed8db4866566e0b01"
+      "bytes": 741,
+      "sha256": "8a7eb22b2e57f571151ed6f4d80c7fc82d2c03bb4756d242f08736ff38697171"
     },
     {
       "path": "share/allow/project.txt",
       "document": "allow/project",
       "format": "text",
       "source": "the JSON Schema `majordomus.project/v1` of the kind it validates",
-      "bytes": 245,
-      "sha256": "e66bd147e129ee1b51aa1172c7d326ab84039e11e5f4160d48b83991a4076fa4"
+      "bytes": 244,
+      "sha256": "9ebdbf4c8cd4687ccce6fb89fc6dcfd4f6fc87bcf7bc4670bd3fa7e27472064c"
     },
     {
       "path": "share/allow/prompt.txt",
       "document": "allow/prompt",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
-      "bytes": 227,
-      "sha256": "b82e94145b0f057efa3cc76338452b55e77305931e04c177aa233718f0eda0d6"
+      "bytes": 226,
+      "sha256": "1c2046f512d488701679f296ab5276b8626e6f665b1de0616579f63173209318"
     },
     {
       "path": "share/allow/release.txt",
       "document": "allow/release",
       "format": "text",
       "source": "the JSON Schema `majordomus.release/v1` of the kind it validates",
-      "bytes": 434,
-      "sha256": "9c6775199854c660348a77af31dfd50995dc7fc5497b0ed863a1d592b260c7db"
+      "bytes": 433,
+      "sha256": "fae4051724c434f75c19e220d2a4409d5ae8a45187ab584ba8e33214d4afeeb1"
     },
     {
       "path": "share/allow/rule.txt",
       "document": "allow/rule",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
-      "bytes": 550,
-      "sha256": "8802c3a2da8fb522e6328472f22706790afb4c8cf29edd859728d69264fa2ca0"
+      "bytes": 549,
+      "sha256": "db1615a10bfc70e44e9723eddb03eb1af9c1e9d4bde1ce8ca1e924b17c751dce"
     },
     {
       "path": "share/allow/scope.txt",
       "document": "allow/scope",
       "format": "text",
       "source": "the JSON Schema `majordomus.scope/v1` of the kind it validates",
-      "bytes": 825,
-      "sha256": "ed0600a018690eeedc55950559bf90bab9b5ebff542f6a7e8ebf944343f364a3"
+      "bytes": 824,
+      "sha256": "4eed73917928e07e2822b1fe924bf6c00851eba03e91bb28350768081a4f7e93"
     },
     {
       "path": "share/allow/session-context.txt",
       "document": "allow/session-context",
       "format": "text",
       "source": "the JSON Schema `majordomus.session-context/v1` of the kind it validates",
-      "bytes": 327,
-      "sha256": "f06b3d19fe8eb77a704c99bf6b3ddd7e23547872e86e20bc090c2209387d8b55"
+      "bytes": 326,
+      "sha256": "27b969d9a4d82f79703f735b8fda105ee57c28e94954906e2e4f82c460f642d0"
     },
     {
       "path": "share/allow/session-record.txt",
       "document": "allow/session-record",
       "format": "text",
       "source": "the JSON Schema `majordomus.session-record/v1` of the kind it validates",
-      "bytes": 651,
-      "sha256": "ef030a0e35ce37785c899b224aa3438c7db635a1c0680f020142a117f6d35c0c"
+      "bytes": 650,
+      "sha256": "a0d335bd898189ffe3de22904087aaee49bce293883f244c436d2cf69d4f4934"
     },
     {
       "path": "share/allow/session.txt",
       "document": "allow/session",
       "format": "text",
       "source": "the JSON Schema `majordomus.session/v1` of the kind it validates",
-      "bytes": 334,
-      "sha256": "725280cddf0b30e55ae96b4f80e9b10e805394cf11bdd8db16ce2e63c123da1e"
+      "bytes": 333,
+      "sha256": "1638c5c93f3b2f2a35e835ed415f4c778f18d86c5976e399c1b211d542fcfe96"
     },
     {
       "path": "share/allow/skill.txt",
       "document": "allow/skill",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
-      "bytes": 394,
-      "sha256": "680575999db61dbbfcf07a752507b5deb341b4a9eb52ec836cfcc5cf99dc0b23"
+      "bytes": 393,
+      "sha256": "cfb115c227080c8439e276b82789f55754deeb4b5ab63a3e52a7e3e9e6f91163"
     },
     {
       "path": "share/allow/taxonomy.txt",
       "document": "allow/taxonomy",
       "format": "text",
       "source": "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates",
-      "bytes": 313,
-      "sha256": "e0d32709405949bd9c796c5af5445a51e6a20efe6226e0f5b54cd64151474e32"
+      "bytes": 312,
+      "sha256": "3ef1705897f1ebcbc162105eaf5582029ff6555bc2e2a20b83bdcb88c097921d"
+    },
+    {
+      "path": "share/allow/telemetry.txt",
+      "document": "allow/telemetry",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.telemetry/v1` of the kind it validates",
+      "bytes": 1081,
+      "sha256": "0231ecf731ed1a6cd4de9ef95fe5364d1ca52aa9b144911c8ff1c788e3d91da1"
     },
     {
       "path": "share/allow/use-case.txt",
       "document": "allow/use-case",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
-      "bytes": 547,
-      "sha256": "c1c580f260f936e0fab2182a08bf53cccb9fceeb3f857005c7adedeb462024e7"
+      "bytes": 546,
+      "sha256": "6c88056899cc9617ff4dcc5efacff2b9f62f81f89d45fa36adc5ef6f7ab88d6c"
     },
     {
       "path": "share/allow/workspace.txt",
       "document": "allow/workspace",
       "format": "text",
       "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates",
-      "bytes": 568,
-      "sha256": "9cea4bf90b00bd4b87429dc164c0e4b8f59ea3a11326b2bcead3bb65f3d17a35"
+      "bytes": 567,
+      "sha256": "3a8d9f5308252c1ce14f258d4804d53da1e4b99405b4d79fd8d4b8919a26be89"
     },
     {
       "path": "share/cockpit/favicon.svg",
       "document": "design-mark",
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
-      "bytes": 904,
-      "sha256": "a78a3dfd15c1fe3b39fa8d10661dac4380a80fce28f222f7a2ed56bbb9465ccd"
+      "bytes": 903,
+      "sha256": "c6b07e82ce6f914862c57e779a3c8d91afec76654ed5d7972ba0f5b73a7a6185"
     },
     {
       "path": "share/design/status.css",
       "document": "design-status",
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 13327,
-      "sha256": "9b8e925a169cb2f80d00c524a28b8dcd050370a6168865b197c41bd526f81408"
+      "bytes": 13326,
+      "sha256": "603b6dbc03e9a3c4de0e5eac02cc0816b1bd2690d8cf3a902565fe887ad4bfd2"
     },
     {
       "path": "share/design/surface.css",
       "document": "design-surface",
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 6062,
-      "sha256": "b55a60b0a7bc24144040440bae479326160ec4521505ac600848487cdd26bcba"
+      "bytes": 6061,
+      "sha256": "b605e5cb6c7d900ca8a391bd5b6c6326d0c275deed3ac9d3e6e1c4848af83f48"
     },
     {
       "path": "share/design/theme.css",
       "document": "design-theme",
       "format": "text",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 2408,
-      "sha256": "7a351363f5ef120b17277db40e3212bea5a6372cb35ebfc4d87fe0eedb49394f"
+      "bytes": 2407,
+      "sha256": "8362191b325fdeb3d9b4869f168f9f7dd1d8536a47c8c7c2e5cc6b0da9a3468b"
     },
     {
       "path": "share/schemas/majordomus/adr/adr.v1.schema.json",
       "document": "schemas/majordomus.adr/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
-      "bytes": 6107,
-      "sha256": "57e2e45a840b04512e8c991b9f5116609a94b57d7f8d40510190c2681e5de4af"
+      "bytes": 6106,
+      "sha256": "e272971b56b0d5cd72ef0a1e518807a56016451d652334b0bc949e271571103e"
     },
     {
       "path": "share/schemas/majordomus/application/application.v1.schema.json",
       "document": "schemas/majordomus.application/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
-      "bytes": 3961,
-      "sha256": "19de8dff45f8958518f68cb9c27c103ca8bfe3a22c6d79777754d78f39b803db"
+      "bytes": 3960,
+      "sha256": "c0689f0fe1346b14d1e9d2b10f5ce42ed004c6346f3325212877d424b32a7970"
     },
     {
       "path": "share/schemas/majordomus/capture/capture.v1.schema.json",
       "document": "schemas/majordomus.capture/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/capture/capture.v1.proto`",
-      "bytes": 6775,
-      "sha256": "68eeafe3010a1899181d6c8d48c257943cb4618a95b7fcf622cda485241908b4"
+      "bytes": 6774,
+      "sha256": "0821297d16e863d64b336b2fa29355afeb54592a3d04ce693af0bd550415c79b"
     },
     {
       "path": "share/schemas/majordomus/context/context.v1.schema.json",
       "document": "schemas/majordomus.context/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
-      "bytes": 6584,
-      "sha256": "c73cddc6d9ef4bd000d1830fcbebd8564556ca06fd327e16ae4f8315601dccbe"
+      "bytes": 8132,
+      "sha256": "75fd31678c37ab77ec2ae2be1ec1d65267ad9d1a2b79fb26570ab1e0f2880344"
     },
     {
       "path": "share/schemas/majordomus/knowledge/knowledge.v1.schema.json",
       "document": "schemas/majordomus.knowledge/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
-      "bytes": 7450,
-      "sha256": "2fb8ec1744c2a2b980f2ef7d55435bc1d3dcedfc3f23ee923bc195bfe71770df"
+      "bytes": 7449,
+      "sha256": "225df2011b82f19a578529c8054c9b677a4dea8d3337af61978fbe5d45efd2c4"
     },
     {
       "path": "share/schemas/majordomus/prompt/prompt.v1.schema.json",
       "document": "schemas/majordomus.prompt/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
-      "bytes": 2411,
-      "sha256": "6f661fed4e3768d55f5cecc94b6d1ac00684352d6f87ef095f6431d4d0e304b6"
+      "bytes": 2410,
+      "sha256": "4f976de935ce8900a49793a87e5ead55b530b0e43a99d4c3fa8f7e510fa89a72"
     },
     {
       "path": "share/schemas/majordomus/rule/rule.v1.schema.json",
       "document": "schemas/majordomus.rule/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
-      "bytes": 5786,
-      "sha256": "f60b9a96be1f29481687a15efd5596903651b04c2a1d98f8b1aad96f9d2c472c"
+      "bytes": 5785,
+      "sha256": "22d4eac3666c50a7f6ddfb04f7c5ceff9050524441828b9e8076947161ed9c88"
     },
     {
       "path": "share/schemas/majordomus/skill/skill.v1.schema.json",
       "document": "schemas/majordomus.skill/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
-      "bytes": 5188,
-      "sha256": "9bf56b53b5677ac4a77fa6c048c0091b61deb06ef5d22fbf17317f4ecda48f41"
+      "bytes": 5187,
+      "sha256": "dcd3088038c955a8f3af5b30d8351148f19d076b8f84429fe0efa66b08a3e10c"
     },
     {
       "path": "share/schemas/majordomus/use-case/use-case.v1.schema.json",
       "document": "schemas/majordomus.use-case/v1",
       "format": "json",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
-      "bytes": 11170,
-      "sha256": "9f0a08dd41b8fd0741834d929a608530e22f853f0574d95f3128fdbed6d552ec"
+      "bytes": 11169,
+      "sha256": "8df90a5c7cfdecd2344740b644e94b1579e85cb195dd9c47d3d4937096e7aaf9"
     },
     {
       "path": "share/sections/adr.txt",
       "document": "sections/adr",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
-      "bytes": 320,
-      "sha256": "5260288f0ff5d19b195612111a6bd29f3923ca64fd5236534361636b8a4435c0"
+      "bytes": 319,
+      "sha256": "975693ed0fbf83fc8d05d26aac8d616c281ef1466b06c58190a3f17a7c7350ff"
     },
     {
       "path": "share/sections/application.txt",
       "document": "sections/application",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
-      "bytes": 235,
-      "sha256": "8215d33d62dbe70a10f2082edd343cb5a7fb5799f9e77bf91da36ab73ea123a5"
+      "bytes": 234,
+      "sha256": "9b5495c743733eae255d14f887d66c050e13ff99706b30d8dd4f21435264aac3"
     },
     {
       "path": "share/sections/context.txt",
       "document": "sections/context",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
-      "bytes": 298,
-      "sha256": "6c86da21d8c9fafd25941d2ec8bce26ef2d8aeace17d17cec0e8f298f7c9239b"
+      "bytes": 297,
+      "sha256": "456614d6b4a2f89cba129526a32cf53b9b350bd6c658e8de04a88650a21a7cfd"
     },
     {
       "path": "share/sections/knowledge.txt",
       "document": "sections/knowledge",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
-      "bytes": 202,
-      "sha256": "bbb56b5559c812a53d057cefc3c21f4dc500165814d132c5e4978a322d6c3ef6"
+      "bytes": 201,
+      "sha256": "5624e9ba9e9b410c470ef28360aec4f3db9ba80537287e1b0b41d2ef812789fd"
     },
     {
       "path": "share/sections/prompt.txt",
       "document": "sections/prompt",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
-      "bytes": 196,
-      "sha256": "3c7aab3d62c723cf39ffc0547f344ebe1ec3229da3996369bd0704ac33ee6396"
+      "bytes": 195,
+      "sha256": "47026d7525a3d975c9ebe3c646ca63d7b3e6b45e32e6673249d63887056491af"
     },
     {
       "path": "share/sections/rule.txt",
       "document": "sections/rule",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
-      "bytes": 336,
-      "sha256": "fb570a720bdc01365b05f22fd7b4c14ae78f4789c21e454347a69023e54a3afe"
+      "bytes": 335,
+      "sha256": "2c4d77ff96eb577a3acc2f035c2c05325dbe42f89ee789a072559c2c7da67b53"
     },
     {
       "path": "share/sections/skill.txt",
       "document": "sections/skill",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
-      "bytes": 282,
-      "sha256": "28d154dfd63850c41c9896931bc5fcbb2c2b048eaf4f76f854f73948cdc2baa0"
+      "bytes": 281,
+      "sha256": "1a4f6d85ed8aaf242ccff80ca7ba1056983c78743e61291ad58fdc18aa605ec6"
     },
     {
       "path": "share/sections/use-case.txt",
       "document": "sections/use-case",
       "format": "text",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
-      "bytes": 290,
-      "sha256": "b7e793056433602dcd37bd7e132dcee069a3a9a0a59ce9485cfa81c32becc694"
+      "bytes": 289,
+      "sha256": "bbda2e2e9c59cef431feeaeca70da15fed30dc95a565747a43466d5d3b4a08a6"
     },
     {
       "path": "share/ui/favicon.svg",
       "document": "design-mark",
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
-      "bytes": 904,
-      "sha256": "a78a3dfd15c1fe3b39fa8d10661dac4380a80fce28f222f7a2ed56bbb9465ccd"
+      "bytes": 903,
+      "sha256": "c6b07e82ce6f914862c57e779a3c8d91afec76654ed5d7972ba0f5b73a7a6185"
     },
     {
       "path": "share/version.txt",
       "document": "version",
       "format": "text",
       "source": "apps/majordomus-cli/Cargo.toml ([package] version), the one place the version is authored",
-      "bytes": 231,
-      "sha256": "51bb4d4675b210cda54ba88274a9362a97aeca222d35ac61cc87a1e7d4dbfd0f"
+      "bytes": 229,
+      "sha256": "548300779919b17b7fce26bef35c06a535a2c0c1d814d9593792da88a4577d97"
     },
     {
       "path": "site/data/registry/design.json",
@@ -3123,16 +3431,16 @@
       "format": "json",
       "schema": "majordomus-site-design/v1",
       "source": "share/design/tokens.yaml, the one declaration of the design",
-      "bytes": 11587,
-      "sha256": "ce89335fbfeb458a9d3988a8039bc20830aa00b2c9623690d5af0a2ddbbfb88e"
+      "bytes": 11586,
+      "sha256": "74327c2460fd9c51c5071e18a7b5860682bd9ad53facbf1500c4ff192f0ceb08"
     },
     {
       "path": "site/data/registry/distribution.json",
       "document": "site-distribution",
       "format": "json",
       "source": "share/distribution.yaml and the release records",
-      "bytes": 3005,
-      "sha256": "922b51095b59cca15fe7dfb586268c38c631fc19099320d062bba7ba4567fbef"
+      "bytes": 3001,
+      "sha256": "d83825c6e5972b63004a8906752be3772f757beca8fe53f6e501b839a595a57f"
     },
     {
       "path": "site/data/registry/evidence-subjects.json",
@@ -3140,16 +3448,16 @@
       "format": "json",
       "schema": "majordomus-site-evidence-subjects/v1",
       "source": "the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases",
-      "bytes": 798702,
-      "sha256": "2379546719bf19735067871c9a25e578e201aa1f4019333ece5c9a3e21f2c4bc"
+      "bytes": 881247,
+      "sha256": "1024dc65501a9f7111ded984ea4efe26393d84c9f1e818c423ba6b7ec9454b69"
     },
     {
       "path": "site/data/registry/product-graph.json",
       "document": "site-product-graph",
       "format": "json",
       "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
-      "bytes": 111570,
-      "sha256": "0a92c884398019b8a0a18f071cdd1a79d823c60745a7cb099c72a22eb4eae72f"
+      "bytes": 112747,
+      "sha256": "8c529a020d95632f5f6509149b34a09ccf8d65f58bead74dbad4d8c6129ada44"
     },
     {
       "path": "site/data/registry/product.json",
@@ -3157,8 +3465,8 @@
       "format": "json",
       "schema": "majordomus-site-product/v1",
       "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology",
-      "bytes": 759212,
-      "sha256": "31ec8a05e1230f2224e256b93808b5770b47d40d2f14f47ee796d224925a2f2e"
+      "bytes": 786496,
+      "sha256": "b34a9c1a3bdf702a2e6459e943df92ef64c530a960c2b3752f9273edad1214af"
     },
     {
       "path": "site/data/registry/registry.json",
@@ -3166,16 +3474,16 @@
       "format": "json",
       "schema": "majordomus-site-registry/v2",
       "source": "the capability registry and the index of this repository's layer",
-      "bytes": 6967656,
-      "sha256": "95a0f7b8f14c52ddf2172ff087e50b3d02870be292e3ce23cc0cf90fd9d699d8"
+      "bytes": 9077054,
+      "sha256": "7afd6a7c4df4a505cd716ab846d63ff16f25a82d3f41cc94b89d6db93b662d44"
     },
     {
       "path": "site/data/registry/why-graph.json",
       "document": "site-why-graph",
       "format": "json",
       "source": "the moments and what answers them, as the derived `why` graph",
-      "bytes": 180163,
-      "sha256": "c3d964ece2af2e0c4e71a5b77154392477de130f19002df3248581b1a716e4f6"
+      "bytes": 180162,
+      "sha256": "11d5802c80358f249509ca8947da750807f720480807a7086d5c49ea9a7a7253"
     },
     {
       "path": "site/data/registry/why.json",
@@ -3183,48 +3491,48 @@
       "format": "json",
       "schema": "majordomus-site-why/v1",
       "source": "the operational moments, audiences and areas of this repository's layer",
-      "bytes": 349924,
-      "sha256": "369491bb2e12a860e634f324d46ebfd6779ddc003eb4a37b5b2d57c233827f47"
+      "bytes": 349923,
+      "sha256": "72af2ec61ce206c44b90832fe6dbb88e83731e7ec2a27f33ec4973020e21bc55"
     },
     {
       "path": "site/static/favicon.svg",
       "document": "design-mark",
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
-      "bytes": 904,
-      "sha256": "a78a3dfd15c1fe3b39fa8d10661dac4380a80fce28f222f7a2ed56bbb9465ccd"
+      "bytes": 903,
+      "sha256": "c6b07e82ce6f914862c57e779a3c8d91afec76654ed5d7972ba0f5b73a7a6185"
     },
     {
       "path": "site/static/images/logo-mark.svg",
       "document": "design-mark",
       "format": "text",
       "source": "share/design/brand/logo-mark.svg, the canonical mark",
-      "bytes": 904,
-      "sha256": "a78a3dfd15c1fe3b39fa8d10661dac4380a80fce28f222f7a2ed56bbb9465ccd"
+      "bytes": 903,
+      "sha256": "c6b07e82ce6f914862c57e779a3c8d91afec76654ed5d7972ba0f5b73a7a6185"
     },
     {
       "path": "site/static/images/logo.svg",
       "document": "design-logo",
       "format": "text",
       "source": "share/design/brand/logo.svg, the canonical logo",
-      "bytes": 1059,
-      "sha256": "6e17978a62df7bfd38659395d219d1cc2289b3296e9f487855851a8f76e00599"
+      "bytes": 1058,
+      "sha256": "0d079a36454dff11ce7fea792c4f52a7b640e198fd608a77771ba86b78319fc1"
     },
     {
       "path": "site/static/install.sh",
       "document": "installer",
       "format": "text",
       "source": "share/distribution.yaml and the release records",
-      "bytes": 36904,
-      "sha256": "e0c4832bbd949bec388ee59b6fe6e5467a60aa0392324666c8fc9b5933b6e84c"
+      "bytes": 37694,
+      "sha256": "ab92544291fdbe9c0cda040821a05cc5cd7368f5f9b75ef2e0413c3e54ac9343"
     },
     {
       "path": "site/static/releases/latest.json",
       "document": "release/latest",
       "format": "json",
       "source": "the latest stable release record",
-      "bytes": 2397,
-      "sha256": "84647db19b6e7a7c6c4b358ffcb6c4b32afa5d964d17014c9cf018bf3f95d6d8"
+      "bytes": 2375,
+      "sha256": "c41773235dc7c3b7e983da93689f334a15e7fa30a666b511886abe8e165d4d17"
     },
     {
       "path": "site/static/releases/v0.10.0.json",
@@ -3403,12 +3711,44 @@
       "sha256": "84647db19b6e7a7c6c4b358ffcb6c4b32afa5d964d17014c9cf018bf3f95d6d8"
     },
     {
+      "path": "site/static/releases/v0.29.0.json",
+      "document": "release/v0.29.0",
+      "format": "json",
+      "source": "the release record v0.29.0",
+      "bytes": 2397,
+      "sha256": "7f7bc1148c9d621e8b55f5cbe425f69be2456d3bc76c8371f7cdf649a12a2192"
+    },
+    {
       "path": "site/static/releases/v0.3.1.json",
       "document": "release/v0.3.1",
       "format": "json",
       "source": "the release record v0.3.1",
       "bytes": 2369,
       "sha256": "8331c85c5162a5b5300991008d075fb4601bb163d71b67db117322e0cdab3f09"
+    },
+    {
+      "path": "site/static/releases/v0.30.0.json",
+      "document": "release/v0.30.0",
+      "format": "json",
+      "source": "the release record v0.30.0",
+      "bytes": 2397,
+      "sha256": "2388da75a2d13c4fc67606711f51d8fcfbdafcf742691aaba73b0e332d75ed98"
+    },
+    {
+      "path": "site/static/releases/v0.30.1.json",
+      "document": "release/v0.30.1",
+      "format": "json",
+      "source": "the release record v0.30.1",
+      "bytes": 2397,
+      "sha256": "de49b84427135e831696f3b5ca1873f9d049bd338929dd113142375c64b7eaf5"
+    },
+    {
+      "path": "site/static/releases/v0.30.2.json",
+      "document": "release/v0.30.2",
+      "format": "json",
+      "source": "the release record v0.30.2",
+      "bytes": 2397,
+      "sha256": "6b987fb14ec59a933410edabb967bc79606ee891881355c655aab9086bd8a8dd"
     },
     {
       "path": "site/static/releases/v0.5.0.json",
@@ -3449,6 +3789,86 @@
       "source": "the release record v0.9.0",
       "bytes": 2369,
       "sha256": "aaf1d2a914bc9302b424d6d54bdee32836e474d0880ec99a7e9e18db9a5fba47"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.1.json",
+      "document": "release/v1.0.0-alpha.1",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.1",
+      "bytes": 2555,
+      "sha256": "c5441f436c4d6824879aa5b48ba8f6d9d746cd4b1c9aa95bffe08780d4d80cf9"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.10.json",
+      "document": "release/v1.0.0-alpha.10",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.10",
+      "bytes": 2577,
+      "sha256": "27664db88de95c589ab07fd156c27ed050e393210cf5598af02b169c9547b9d2"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.2.json",
+      "document": "release/v1.0.0-alpha.2",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.2",
+      "bytes": 2555,
+      "sha256": "4e8178b5a0cf36c073ef7f97b397d6b29dbcc16ca1b887260b757594b2039408"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.4.json",
+      "document": "release/v1.0.0-alpha.4",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.4",
+      "bytes": 2555,
+      "sha256": "488ca122fbbf452dea46a2153478971e2d4e4c875888429bb86b0ce29e388d23"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.5.json",
+      "document": "release/v1.0.0-alpha.5",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.5",
+      "bytes": 2555,
+      "sha256": "25d006ff80ec919df4d90a4661bfa9e618344da4935db18cffad613e91b6d6cd"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.8.json",
+      "document": "release/v1.0.0-alpha.8",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.8",
+      "bytes": 2555,
+      "sha256": "58f9fe41053c6699d8ee76577517e3ccdbd925ccd3e6451953ad9d8691d8a156"
+    },
+    {
+      "path": "site/static/releases/v1.0.0-alpha.9.json",
+      "document": "release/v1.0.0-alpha.9",
+      "format": "json",
+      "source": "the release record v1.0.0-alpha.9",
+      "bytes": 2555,
+      "sha256": "43dd329c04bd43527d53090455d6ee04deaa78fab94f0a0b92ad36c6ed6acf3f"
+    },
+    {
+      "path": "site/static/releases/v1.0.0.json",
+      "document": "release/v1.0.0",
+      "format": "json",
+      "source": "the release record v1.0.0",
+      "bytes": 2375,
+      "sha256": "a1829decf853117dc36109995bd47c40da5ec6440c359356911fda9753e09c96"
+    },
+    {
+      "path": "site/static/releases/v1.0.1.json",
+      "document": "release/v1.0.1",
+      "format": "json",
+      "source": "the release record v1.0.1",
+      "bytes": 2375,
+      "sha256": "6eac535531d12038681464b4da106f0cc40e4995538f8606571272130608035c"
+    },
+    {
+      "path": "site/static/releases/v1.0.2.json",
+      "document": "release/v1.0.2",
+      "format": "json",
+      "source": "the release record v1.0.2",
+      "bytes": 2375,
+      "sha256": "c41773235dc7c3b7e983da93689f334a15e7fa30a666b511886abe8e165d4d17"
     }
   ]
 }

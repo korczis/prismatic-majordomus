@@ -38,9 +38,20 @@ jq -e 'type == "object"' "$NEEDS" >/dev/null 2>&1 || { echo "verdict: $NEEDS is 
 
 # Every receipt, as "<gate><TAB><outcome>" lines; none when the directory is missing or empty,
 # which leaves every selected gate without one, and so red.
+# Each job's receipts arrive in a directory named for its artifact, ci-receipts-<job>-a<attempt>
+# (I4203). A rerun of the failed jobs leaves the untouched jobs' artifacts of earlier attempts in
+# the run, and the rerun job's earlier, red artifact beside its new one: so of every artifact only
+# its newest attempt is read. A directory with no -a<n> is attempt 0.
 receipts=""
 if [ -d "$RECEIPTS" ]; then
-  receipts="$(find "$RECEIPTS" -type f -name '*.tsv' -exec cat {} + 2>/dev/null \
+  receipts="$(find "$RECEIPTS" -type f -name '*.tsv' 2>/dev/null \
+    | awk '{ d = $0; sub(/\/[^\/]*$/, "", d); sub(/.*\//, "", d)
+             base = d; att = 0
+             if (match(d, /-a[0-9]+$/)) { base = substr(d, 1, RSTART - 1); att = substr(d, RSTART + 2) + 0 }
+             f[NR] = $0; b[NR] = base; a[NR] = att
+             if (!(base in max) || att > max[base]) max[base] = att }
+           END { for (i = 1; i <= NR; i++) if (a[i] == max[b[i]]) print f[i] }' \
+    | while IFS= read -r f; do cat "$f"; done \
     | awk -F'\t' 'NF >= 1 && $1 != "" { print $1 "\t" ($2 == "" ? "absent" : $2) }')"
 fi
 # "<n> <outcomes>" for one gate: how many receipts it left, and the distinct outcomes that
@@ -69,6 +80,10 @@ note_for() {
   case "$1" in
     cancelled) printf '%s' 'the job reported no result: a timeout renders as cancelled, and so does a run superseded by a newer push' ;;
     absent)    printf '%s' 'the job never ran, so this gate has no verdict' ;;
+    # I2717: on 2026-11-09 the approved record run 42668789214 (attempt 2) never created its
+    # site job; `needs` said `abandoned`, nothing of the job ran, and re-running the failed
+    # jobs started it. Red, as every result but success is, with the act that recovers it.
+    abandoned) printf '%s' 'GitHub never created the job (abandoned): nothing of it ran; re-run the failed jobs of this run' ;;
     *)         printf '%s' 'a selected gate did not succeed' ;;
   esac
 }

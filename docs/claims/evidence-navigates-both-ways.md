@@ -1,4 +1,4 @@
-# Every claim names the test that proves it and every test names the claims it proves, from one derivation
+# Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation
 
 ## What it means
 

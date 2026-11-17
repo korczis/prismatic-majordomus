@@ -1,0 +1,25 @@
+id: I3790
+milestone: one-kit-on-every-surface
+title: "The design book declares one mechanism, its tokens and its gate for code, charts, controls, embeds and shell blocks"
+slug: the-design-book-declares-the-kit
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add one section to docs/DESIGN_SYSTEM.md per rendered element kind (code and syntax, charts, interactive controls, embeds, shell blocks) that names the one mechanism every surface uses, the design tokens it reads, the marker class a gate looks for, and the gate that refuses a second way, so a contributor learns the rule where the rest of the design system is written."
+why: "On 2026-10-20 docs/DESIGN_SYSTEM.md did not mention syntax highlighting, syntax colours or the highlighter, and its kit section listed the terminal, copy, tabs and chart components without saying which surfaces must use them; nothing a contributor reads says that /ui and the Cockpit must not grow their own."
+current_state: "DESIGN_SYSTEM.md names the monospace stack (line 33), the contrast threshold (line 264) and the kit components (150-205); tokens.yaml has font.mono, sunken and series-1..8 and no syntax roles."
+desired_state: "Five sections, each with mechanism, tokens, marker class and gate, linked from the kit section; I2747's code-* roles are listed with their contrast pairs; the marker class for a highlighted block is the one I3002's copy control attaches to."
+scope:
+  - "docs/DESIGN_SYSTEM.md"
+  - "share/design/tokens.yaml"
+depends_on: [I2747]
+acceptance_criteria:
+  - "DESIGN_SYSTEM.md has a section for each of the five kinds naming mechanism, tokens, marker class and gate"
+  - "Every gate a section names exists and is registered in gates.yaml"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/design-check"
+evidence_required:
+  - "design_book_names_existing_gates_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

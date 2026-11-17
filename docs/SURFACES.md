@@ -358,7 +358,7 @@ stages run in this order [C15]:
 flowchart TD
   build["build step<br>cargo build, or MAJORDOMUS_BIN"]
   a["stage A: majordomus generate --strict<br>code-only projections: openapi, registry, cli,<br>capabilities.md, modules/*.md, share/allow, provider bootstraps"]
-  b["stage B: scripts/generate-site-data<br>site/data/generated, site/content, docs/SITE_CLAIMS.md,<br>docs/PLAN_STATUS.md, docs/PAGES_STATUS.md"]
+  b["stage B: scripts/generate-site-data<br>site/data/generated, site/content, docs/SITE_CLAIMS.md,<br>docs/PLAN_STATUS.md, docs/plan-status/*.md, docs/PAGES_STATUS.md"]
   c["stage C: majordomus generate<br>projections over the index stage B changed:<br>site/data/registry, benchmarks, artifacts manifest"]
   d["stage D: scripts/gitattributes<br>the merge=derived block, from the artifact manifest<br>and the published content tree"]
   check["scripts/derive-check<br>generate --check, generate-site-data --check,<br>gitattributes --check: 0 current, 10 stale, 15 refused"]
@@ -506,10 +506,11 @@ the weakest of its parts [C23].
   shows this; it has not been observed in data (**debt** F-9) [C26].
 
 `project.never-reported-is-not-green` shows the whole problem in one rule. Its statement
-is "a check that has not reported is unknown, never passing". It is `class: advisory`, has
-no `x-majordomus` block, and says it is decided "by review and by the record, not by a
-gate". The proof graph reports it as `unproven`, and that is not a finding, because an
-advisory rule owes no proof. The rule exists, its ideas shaped `evidence-check` (see
+is "a check that has not reported is unknown, never passing". It is `class: advisory`, and
+its `x-majordomus` block declares, under `reviewed_because`, that it is decided "by review
+and by the record, not by a gate". The proof graph reports it as `reviewed`: a reader
+enforces it, which is weaker than any gate and is counted apart, and that is not a finding.
+The rule exists, its ideas shaped `evidence-check` (see
 `EVIDENCE.md`), and it is not mechanically enforced. The graph says exactly that.
 
 To measure it yourself:
@@ -962,7 +963,7 @@ flowchart TD
 | worktrees | `worktree topology / status / inspect / migrate …` | `majordomus_worktrees`, … | `/api/v1/worktrees*` | `/cockpit/worktrees` | `WORKTREES.md` |
 | peers | none | `majordomus_peers`, `majordomus_announce` | `/api/v1/peers`, `/peers/announce` | none | `MCP.md` |
 | mesh | `mesh identity / doctor / status / nodes` | `majordomus_mesh*` | `/api/v1/mesh*` | `/cockpit/mesh` | `MESH.md` |
-| gates and completion | shell `check`, `finish` | `majordomus_gates`, `majordomus_completion` | `/api/v1/gates`, `/gates/completion` | generic pages | `CI.md` |
+| gates and completion | shell `check`, `finish`; `majordomus-cli run gates.state` | `majordomus_gates`, `majordomus_completion_policy`, `majordomus_completion`, `majordomus_gate_state` | `/api/v1/gates`, `/gates/policy`, `/gates/completion`, `/gates/state` | generic pages | `CI.md` |
 
 To check any row, run `bin/majordomus-cli capabilities projections --format json`.
 

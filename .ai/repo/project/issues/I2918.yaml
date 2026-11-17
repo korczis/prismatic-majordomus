@@ -1,0 +1,27 @@
+id: I2918
+milestone: idd-reads-at-a-glance
+title: "The issue list filters by status"
+slug: the-issue-list-filters-by-status
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Let the issue list be filtered by status, the statuses read from the plan and the filter kept in the URL so the snapshot can carry it."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: a long intent offers no way to narrow its issues."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "No filter."
+desired_state: "A status filter in the URL."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "?status=READY shows only the intent's ready issues"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test ui_idd"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,45 @@
+id: I3082
+milestone: public-proof
+title: "An article explains the worktree topology in both languages: one branch, one place"
+slug: one-branch-one-place
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/one-branch-one-place.md, an English article on why a branch's worktree is at one derived place. It covers the paths that callers chose before the rule and the cost of having no answer to where a branch is. It covers the derivation from git's shared metadata, its safety checks and its fixed suffix (ADR 0021), `majordomus worktree create`, and the layered enforcement with its honest limits (project.worktree-topology). It covers migration verified by fingerprints, and a reclaim that removes worktrees, never branches, and refuses what it cannot prove. Every statement is one that ADR 0021, that rule or docs/WORKTREES.md on master states, and no count is typed by hand. site/content-src/jedna-vetev-jedno-misto.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the claiming, continuity and derivation articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. Where each session's work lives is the first thing a session working beside others has to know. The site explained it only in docs/WORKTREES.md, the rule and the ADR, which are written for the sessions that follow them."
+current_state: "No article explains the worktree topology. The nine article groups relate each other, and none of them names it."
+desired_state: "/one-branch-one-place/ and /jedna-vetev-jedno-misto/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 passes, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3082.yaml"
+  - "site/content-src/one-branch-one-place.md"
+  - "site/content-src/jedna-vetev-jedno-misto.md"
+  - "site/content-src/claimed-before-it-is-built.md"
+  - "site/content-src/zabrano-driv-nez-se-stavi.md"
+  - "site/content-src/a-session-ends-the-work-does-not.md"
+  - "site/content-src/session-skonci-prace-ne.md"
+  - "site/content-src/written-once-derived-everywhere.md"
+  - "site/content-src/napsano-jednou-odvozeno-vsude.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the worktree topology, its commands, its hook or the ADR the article explains"
+depends_on:
+  - "I3081"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = one-branch-one-place/ and the digest check 21 computes of its source"
+  - "Each statement is one a record or manual on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-20
+updated_at: 2026-10-22T04:50:31Z
+started_at: 2026-10-22T04:49:48Z
+started_event: sha256:db27d85b76c4f75762f462fa5717805530560eb0cb61cd6d93fa4c5df1d9ea3b
+verified_at: 2026-10-22T04:50:09Z
+verified_event: sha256:6ca872fbe923ca0d94cb41c928c3c8dd2efa8f62a3829e9766dbf10eb326f0d5
+completed_at: 2026-10-22T04:50:31Z
+completed_event: sha256:a79b6a32399a0fc40d06df86365a88b85d03b4858dca424bde89672fac6846ae

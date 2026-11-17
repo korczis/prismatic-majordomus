@@ -5,6 +5,24 @@ change into the current master, verifies that it landed, discards what it assume
 decides again from what is there now. The decision is recorded in ADR 0101, the rule is
 `project.integration-follows-the-current-master`, and the code is `crate::integration`.
 
+## The model in force
+
+That is the executor. Who lands, how much at once and how often is decided by the owner, and
+the decision of 2026-10-16 is
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
+and [ADR 0167](../.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md).
+The rule is the one record of the seats, the scope each one claims on the mesh and what each
+does, and this document does not copy it: the site renders the rule and the decision from
+those files, so they cannot drift from what is read here. Who holds each seat now is drawn
+by the Mesh screen of the UI (`/ui/mesh`) from the live claims.
+
+What the decision changes here is the lander's unit of work, not the executor. `prs drain`
+below still takes one ready pull request at a time and never passes `--admin`; a combined top
+is the landing seat's own act, the batch ADR 0101 left to a person and the owner has now
+chosen. Everything else this document says of a decision still holds for a top: it is taken
+against the current master and the heads it names, its evidence is recorded, and no check is
+bypassed.
+
 ## The pipeline
 
 ```mermaid
@@ -118,7 +136,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
 | `supersession` | its cross-references were read whole, and no authorised successor is open, landed, merged elsewhere or unread | `declarations_unread`, then `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
 | `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
-| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
+| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed`, or `merge_settings_unread` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
@@ -166,7 +184,11 @@ copy. No other list of labels exists. A label is compared case-insensitively.
 | `manual-merge` | hold |
 | `obsolete` | obsolete |
 
-`hold` makes the pull request `blocked`, with `label:NAME`. `obsolete` makes it `obsolete`,
+`hold` makes the pull request `blocked`, with `label:NAME`, until every commit of its head is
+on master: a hold has nothing left to hold then, and the relation to master decides, so a member
+a landed train carried is `redundant` (`head_reachable_from_master`). The executor closes
+nothing on that account; `prs cleanup --apply` does, when a person asks (I3910).
+`obsolete` makes it `obsolete`,
 with `label_obsolete:NAME` in the forge's spelling (owner decision D3): a person's mark is the
 only evidence that reaches the word — age, shared paths and a similar title never do — and it
 is never closed automatically. A pull request carrying both is `obsolete`, since a person acts
@@ -182,13 +204,18 @@ on its own once its own conditions hold, outside the executor and against whatev
 then, and refreshing it would only hand the forge a head to merge. Nothing acts on it until a
 person disarms it, and the queue lists every such pull request in a diagnostic.
 
-The executor merges only with a merge commit, because the derived-file driver resolves merges
+The executor lands a head that contains master by a fast-forward (see *One merge at a time*),
+and merges only with a merge commit otherwise, because the derived-file driver resolves merges
 and a squash or a rebase would replay commits it never saw. The merge method
 (`policy.merge_method`) is `merge` when the repository's settings allow a merge commit
 (`allow_merge_commit`, read with `gh api repos/OWNER/NAME`), and none otherwise. With none,
 every pull request the relation to master does not already decide is `blocked` with
-`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. The
-executor never falls back to a squash or a rebase. The `merge_method` gate comes after
+`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. When
+the forge's answer carries none of the merge settings — a token that may not read them gets
+the repository without them, as the Pages workflow's does — nothing is known: the policy says
+`merge_settings_unread`, such a pull request is `unknown` with `merge_settings_unread`, and
+the queue says the settings could not be read, never that the repository allows nothing
+(I2966). The executor never falls back to a squash or a rebase. The `merge_method` gate comes after
 `relation_to_master` because closing work that is already on master does not depend on the
 merge setting: a `redundant` pull request stays `redundant`, lists
 `merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it. So
@@ -429,12 +456,31 @@ executor first sees the pull request as actionable, not when the forge was first
 3. observe again and rebuild the queue;
 4. act only if the second decision names the same master and head and still says `ready`,
    and otherwise record `stale_decision` and start again;
-5. merge with a merge commit (`--merge`) and `--match-head-commit <head>`, never `--admin`,
-   a squash or a rebase;
-6. verify that the forge shows it merged and that the fetched master contains its head;
-7. record the merge with the master before and after.
+5. land it: a head that contains master by a non-forced fast-forward of master to that head
+   (`gh api -X PATCH repos/OWNER/NAME/git/refs/heads/master -f sha=<head> -F force=false`),
+   and only a head that carries master without containing it by a merge commit (`--merge`,
+   `--match-head-commit <head>`); never `--admin`, a force, a squash or a rebase;
+6. verify that the forge shows it merged and that the fetched master is what was decided:
+   after a fast-forward master is the head itself and contains the master decided against,
+   after a merge master's first-parent successor of that master merges the head;
+7. record the landing with the master before and after, its method (`merge_attempted` says
+   `--fast-forward` or `--merge`) and the commit master became.
 
-A merge moves every other pull request behind master, so the next step always starts from a
+The act is a fast-forward because the owner decided so on 2026-10-22 (I3910). Branch
+protection here does not require a branch to be up to date (`strict: false`), so a merge commit
+pinned only to the head can land onto a master that moved after the decision, and two executors
+could each land one, the second with a tree nobody judged; only the parent check afterwards
+would see it. A non-forced ref update is a compare-and-swap the forge enforces: it is refused
+(HTTP 422, "Update is not a fast forward") unless master is still an ancestor of the head, so
+master always holds exactly the tree the checks judged. That refusal is not an unverified
+landing: it is recorded as `merge_failed` of class `stale`, the drain goes on, and the next step
+observes again and decides from the new master. The forge marks the pull request whose head
+master became as merged by itself. A head that does not contain master is landed by a merge
+commit only when it carries master (the `carries_master` link of a train whose lower link
+landed by a merge); that is rare, since a link above one that was fast-forwarded to contains
+master.
+
+A landing moves every other pull request behind master, so the next step always starts from a
 new observation.
 
 A merge that changes a projected plan record leaves GitHub behind by exactly that change.
@@ -496,7 +542,8 @@ it.
 |---|---|
 | the lowest, with its checks passed | `ready`, `contains_master` |
 | above an open link | `waiting_for_dependency`, `depends_on:#N`, whatever its checks say |
-| above a link that landed, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
+| above a link that was fast-forwarded to, with its checks passed | `ready`, `contains_master`: master is the link below, so it is fast-forwarded to in turn |
+| above a link that landed by a merge commit, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
 | above a link that landed after its head moved | `needs_refresh`: master holds what this head never saw |
 | above a link that was closed without a merge | `blocked`, `dependency_closed_unmerged:#N`: a person decides |
 
@@ -535,12 +582,162 @@ one the forge cannot show and every branch that is no record are left alone. If 
 refuses the reopen after the closure, the pull request is closed: the drain says so, names
 `gh pr reopen <n>`, records `reopen_failed` and exits 10.
 
+## A train top is judged before it is pushed
+
+A *train top* here is the landing seat's combined top, clause 2 of
+[the cooperation rule](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md):
+the seats number them (train 13, 13b, 13c), and it is not the stacked train of the section
+above. By practice, not by that rule, its branch is named `integration/train-<train>-<date>`
+(for example `integration/train-13c-20261031`), because that is the name the pre-push hook
+refuses a failed gate on (step 3), and its pull request is opened labelled `train`, with
+`gh pr create --label train`, so that the first validate run already reads the label and does
+not yield to the release path (`docs/CI.md`): a label added after the run started, as
+`scripts/github-sync --prs` adds it in `pr-meta`, comes too late for that run, and a label
+added with the workflow's token starts no new one. Tops under other names
+(`integration/next-top`, `integration/e7-top-*`) are of an earlier procedure. The rule says
+one validation run judges every member. This section is the landing seat's procedure for
+keeping that run a confirmation rather than the first time anyone looks.
+It is measured by one number, the owner's, given on the night of 2026-10-31 in Czech:
+"pokud je min nez 1 merged PR/MR per 30 mins, tak je to fail produktu" ("fewer than one
+merged pull request per 30 minutes is a failure of the product"), with "tohle se nesmi
+opakovat" ("this must not happen again") about what follows.
+
+**What happened.** Train 12c landed at 2026-10-30T18:27Z and master stood at `6b30ede2d13`
+for more than 29 hours after it, until #2654 was merged outside the train at 2026-10-31T23:50Z.
+Train 13 (#2784, 29 members, top `a428913c05d`) was pushed at 09:12Z on 2026-10-31 although the
+local pre-push plan on its top had reported failures in four structure gates: development
+semantics, the collision check, economics claims and rust quality. Its validate run
+41187739613 failed the same four in its structure job by 09:44Z, together with shell lint,
+which the push leaves out. Job rust (3) failed five integration tests (`discovery_has_its_owners`,
+`http_serve`, `quality`, `skills`, `ui_links`), and coverage, three suite shards and the four ui
+shards failed as well. A review traced the structure failures to members (#900, #2620, #1050,
+#2746). The top's pull request was closed at 10:48Z, 1.6 hours after the push, and the run
+then ended as `cancelled`, although most of its verdict was already red. The compose of 13 had
+run fmt, clippy and `cargo test --lib` only. Train 13b (#2785, 28 members) was in validate
+from 10:46Z to 14:32Z (run 41194104887), and its rust jobs passed. It came back red in
+coverage, in structure (the collision check), in three suite shards with six cases (430, 94,
+400, 93, 15, 3955), in three ui shards and in one site-probe shard. Its coverage gate counted
+609 uncovered changed items: 257 lines, 329 regions and 23 functions (job 124519535121 of that
+run, `rust-coverage --changed: 609 uncovered changed item(s)`). The landing seat's reviewer,
+f3, attributed 586 of them, the line and region items, to members by `git blame` of the merged
+tree, as the compose commit of 13c (`af91101cfdd`) records; #2638, #2746, #2689, #2637 and
+#966 carried most of them. The ui-audit findings were attributed to #933. All of it came from
+members, and nobody had seen any of it before boarding, because no member had been judged on
+its own head against the current master. Their own validate runs had been cancelled to free
+hosted runners, since `validate.yml` runs on `ubuntu-latest` and one run takes all of the
+hosted concurrency. Train 13c (#2786) was composed differently. Every uncovered item of 13b
+was blamed to its member, every member that carried one or a new ui-audit finding was moved to
+the next train at once (#2638, #2746, #2689, #2637, #966, #1050, #933, #900 and four others,
+named in `af91101cfdd`'s message), and 13c boarded 16 members, each with no uncovered changed
+item. The members behind the six suite reds were not moved out: each was fixed by one of f3's
+patches inside the top (step 4). 13c's pull request was opened at 2026-10-31T23:51:38Z and
+merged at 2026-11-01T03:08:34Z as `aca6f182b41`, 3 hours 17 minutes later
+(`gh pr view 2786 --json createdAt,mergedAt`). It landed, but not within the owner's 30
+minutes.
+
+The procedure:
+
+1. **A member boards only judged on its own head merged with the current master.** One of two
+   things is true. Either the member's own `ci` succeeded on a head that contains the current
+   `origin/master`, or the composer merges the member into the current `origin/master` and
+   judges that merge commit, not the member's unmerged head. On that commit the composer runs
+   `scripts/ci/coverage-differential` with `MJ_COVERAGE_BASE=origin/master` (the same verdict
+   as `scripts/rust-coverage --changed origin/master`). When the member touches the crate,
+   the composer also runs `cargo test --tests` in `apps/majordomus-cli`. Last come the suite
+   cases that read the member's paths, named by hand (`bash test/run.sh <case>...`):
+   `scripts/ci/run-plan` selects gates by the path classes a change touches, and its suite gate
+   runs the whole suite, so it is no way to name a member's cases. A cancelled run is no
+   verdict, so a member whose own run was
+   cancelled boards only after this judgement. The landing seat may still cancel queued runs
+   of hold members, as the owner approved. This step does not run the structure gates, ui-audit
+   or site-probe for each member. Their findings, and those that arise only from members
+   together, are found on the top: the structure gates at steps 2 and 3, and ui-audit and
+   site-probe in CI.
+2. **The composer judges the merged tree before it pushes, within half an hour.** On the
+   merged and derived tree it runs `cargo fmt --check`,
+   `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --lib --tests`, and
+   the gates and cases `scripts/ci/run-plan` plans for the tree against `origin/master`. The
+   target is the owner's: the top is pushed within 30 minutes of being composed, and what does
+   not fit that time is left to CI and named. Two limits bound what a local run can prove. A
+   macOS build host differs from CI's `ubuntu-latest`: bash 3.2, BSD tools and another
+   browser stack. So a platform-dependent case that passes there can fail in CI, and ui-audit
+   and site-probe are judged by CI, not here. Clause 7 starts no build below 35 GiB free, so
+   when no host has that much room, nobody builds the top's executable: CI's coverage and rust
+   jobs are then the judges of coverage and of the crate's tests, and the composer says so in
+   the top's pull request. The composer pushes only a top that passed what it could run.
+3. **A pre-push failure on a train top refuses the push.** Since version 3 of
+   [`project.a-push-runs-what-ci-would-find-first`](../.ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md),
+   `.githooks/pre-push` refuses a push that carries a ref under `refs/heads/integration/train-*`
+   when `scripts/ci/run-plan --before-push` exits 1. On a member's own branch it still
+   reports, because there CI's verdict costs one run. When no executable of the tree's
+   generation exists, exactly two things are left to CI: a gate whose exit 12 is the
+   launcher's own refusal (`run: just build`), printed `NOT JUDGED`, and a fast case that
+   calls `rust_bin`, left out by name. That is not a promise that such a host can push a top.
+   A gate that exits 12 for a reason of its own (CANNOT MEASURE), and a fast case that reaches
+   the executable without calling `rust_bin`, still fail, and so does every other failure;
+   each refuses the top. A top's run
+   is the widest and slowest the
+   repository has, and every member waits on it. The composer finds the member the failure
+   belongs to and applies step 4.
+
+   The hook's `--before-push` is a budget, not step 2's plan: it keeps the structure gates CI
+   recorded at 15 s or less while their sum stays within 120 s, so core-check and
+   knowledge-nodes, and adr-collision once cheaper gates fill the sum, are first met in CI. A
+   top that raises a rule's or a decision's version, or renames any record file, runs those
+   three itself and greps the tree for the old path. Train 19c (#2918) passed its hook and
+   failed structure in run 41896185903 on ADR 0167, which still related the `.v1.md` file of
+   a rule its member raised to v2 (fixed by `5512734636d`). Step 1's merged judgement holds
+   for a member's own cases as well: train P (#2855) failed cases 3441 and 99, which #2522 had
+   written against an older master and no finished run of its own had repeated
+   (`37a8ef2f4c9`).
+4. **A member that blocks moves to the next train at once, unless its fix is small and
+   ready.** Small and green beats big. A top waits on its worst member, so one member's red
+   holds back every other member's landing. Clause 2, as the owner decided on 2026-11-01 at
+   02:45Z (version 3), allows two remedies. Either the member is dropped from the top, its fix
+   is committed on its own branch, and it boards the next train with that head; or the fix
+   travels inside the top as its own commit that names the member, and is carried to the
+   member's branch afterwards. By practice, not by the rule, the commit names the member's pull
+   request in its message and the top's pull request lists each such fix beside its member. A
+   fix that is not ready before the push is the first remedy. 13c's eight patches (listed in
+   its compose commit `af91101cfdd`) were folded into that compose commit before the decision.
+   They are not in the form it allows, and carrying each to its member's branch is still
+   owed.
+5. **A red train is post-mortemed per member, by blame.** Each finding of the top's run goes
+   to the member that introduced it. An uncovered changed item belongs to the member whose
+   commits (`origin/master..<member head>`) carry it in `git blame` of the merged tree. A
+   failing case or test belongs to the member whose paths it reads. A member's fix that rides
+   in the top (step 4) is that member's, by the name its commit carries. Some lines no member
+   owns: merge resolutions and the top's own commits (the version raise, the derive). The
+   composer owns those and, before pushing, fixes them in commits of the top's own or drops
+   them. Clause 2 speaks of a member's fix, not of the top's own commits: version 2 kept every
+   member's fix out of the top ("never inside the top"), and version 3 lets one in only as its
+   own commit that names the member. The attribution is written in the top's pull request. The
+   members it names leave, and the rest compose the next top on the current master.
+6. **A decision is taken again after a stop.** A workflow or session that resumes reads
+   `origin/master`, the members' heads and the board again before it acts on what it decided
+   earlier. On 2026-10-30 and 2026-10-31 account limits stopped agents of three sessions
+   mid-run, and a workflow that resumed hours later acted on state that had been superseded.
+   This is
+   [`project.integration-follows-the-current-master`](../.ai/repo/rules/project/integration-follows-the-current-master.v3.md)
+   applied to a top.
+
+Two other throughput defects of the same days are outside this section. #2596 (I4242, with
+I4359) moves validate onto the self-hosted runners, so a member's own run no longer competes
+with the top for the hosted pool. It is open. The other is a stale primary checkout. `plan
+drift` there read a tree 160 commits behind and reported 24 issues as open that master had
+already closed. Clause 3 of the rule is the remedy: whoever finds the checkout behind brings it
+current. Two lander and telemetry findings of 2026-10-30 are only proposed, in the open #2782.
+Nothing here depends on them.
+
 ## An expedited landing
 
 Everything above is the executor, and the executor never passes `--admin`. One thing is
 outside it: the owner of the branch protection may decide to spend it. Rule
 `project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
 merge past the required check, and what that never reaches.
+Since 2026-10-16 the lander is the landing seat of
+[*The model in force*](#the-model-in-force), and what it lands may be a combined top rather
+than one pull request: one seat at a time, and a landing may carry a whole top.
 
 The required check takes about an hour and the pool judges one pull request at a time. On
 2026-10-12 a release record that changed one file waited two and a half hours behind runs
@@ -551,7 +748,8 @@ next day:
 | the lander | because |
 |---|---|
 | holds the exclusive landing claim on the mesh, alone | a merge between another lander's gates and its merge makes those gates a verdict on a tree that no longer exists |
-| merges master into the branch, commits the merge, then derives | a head judged alone is not the tree that lands, and a derive taken on an uncommitted merge is stale |
+| before it arms a follower (a loop that merges a head once its `ci` is green) on a head another seat composed, or one another seat tried to land, asks that seat on the mesh and merges only on its answer | a follower armed on a head that is already green merges on its first poll; in #1745 one did, before the composing seat's message arrived saying its own landing had been refused by its permissions, and the seat that composed a head is the one that knows why it was not merged |
+| merges master into the branch, derives the merge, then commits it | a head judged alone is not the tree that lands. `scripts/derive` derives an uncommitted merge as the commit it will be, both parents as history, so the merge commits through the pages gate in one go (I3963); before that a merge could be neither derived nor committed |
 | runs the whole structure job, the library tests and the cases the change touches on that merged tree, and names the commit each ran on | a gate nobody ran reads as a gate that passed; a landing with the structure job unfinished put two reds on master |
 | before judging, searches the tests for what reads the change: a sibling's identifier across `apps/majordomus-cli/tests` and `test/cases` when the change adds a named record (a skill, a screen, a rule, a capability), the script's name when it changes how a script calls a tool; and runs every test found | a test that lists records by name, or that replaces a tool with a stand-in and reads what it was asked, lives in the rust lanes and the suite shards, which the structure job does not run; two landings of 2026-10-13 passed that job and left the trunk red there, for 95 minutes and for the length of the next run |
 | after a red is found, searches for the same shape before pushing its fix | the first fix of 2026-10-13 named the skill in the crate test; the case that makes the same demand would have been the next red, one run later |
@@ -728,6 +926,24 @@ json` stays the list of pull requests to close.
   refuses to itself — and the next executor of that checkout releases the leftover, so a
   crash costs other machines a wait, never a claim nobody can give back
   (`integration::exclusive`, `tests/integration_across_machines.rs`, case 924).
+- An executor's lease lives by its progress through the queue, not by its process existing
+  (I3991). The claim's session is beaten once as it is taken and again each time the
+  executor advances its queue: a pull request planned, acted on or refused, one becoming or
+  stopping being actionable, or a head or a check verdict that moved between two
+  observations. Observing, idling and waiting out an outage are not progress. An executor
+  that holds the lease and advances nothing for `cooperation.session_ttl_seconds` has its
+  claim suspended by the mesh (I3990) while its process lives, and another machine's
+  executor is admitted. Before every write to the forge or a branch — a merge, a refresh, a
+  reopen, a repair, a closure — the executor beats and reads its claim again: one another
+  executor was admitted over is released by the mesh with `OVERTAKEN` at that beat, and the
+  executor records `lease_lost`, does nothing, and stops (`prs drain` exits 10; `repair
+  --apply` and `cleanup --apply` exit 12). The lease record carries `progressed_at` and
+  `progress_ttl_seconds`, and `prs brief` says "no queue progress for N s" once the holder
+  is past its ttl. A long derive inside one refresh can outlast the ttl; the check before
+  the push catches it, and the keep-alive deliberately does not beat. What this does not
+  close is the moment between that check and the forge's merge: an executor suspended and
+  overtaken inside it still merges once. Fencing that write needs an epoch the forge side
+  can be told was lost (I3174).
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the

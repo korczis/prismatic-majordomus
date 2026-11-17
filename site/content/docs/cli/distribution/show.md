@@ -1,7 +1,7 @@
 +++
 title = "majordomus distribution show"
 description = "The model: the install command, where an installation goes, and every declared target"
-weight = 42
+weight = 43
 [extra]
 route = "/docs/cli/distribution/show/"
 command = "majordomus distribution show"

@@ -1,0 +1,34 @@
+id: I4225
+milestone: builds-reuse-the-mesh-cache
+title: "A withdrawal whose probe could not say is refined to the verdict that follows it"
+slug: a-store-that-resets-is-unhealthy
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When a provider's store dies while a probe is in flight, the build-cache withdrawal it writes says the probe could not say. The next heartbeat's probe is refused, and the runtime writes the withdrawal once more with that verdict. The record a peer reads converges on what the probe says instead of keeping the first, uncertain reason."
+why: "Case 3954_a_store_is_offered_in_a_signed_record failed intermittently on master-based CI: #2521 validate run 40156367031, attempt 1, suite-shard (4), job 121064538489. It passed on attempt 3. The case waited 20 s for 'withdrawn: its own probe says unhealthy' and read 'withdrawn: its own probe could not say' (diagnosed by 9d, given to 39 by 641b at 10:05Z on 2026-10-25). A store killed mid-request accepts the probe and dies without a word, so probe_health answers Unknown by design (a_probe_judges_only_what_the_store_answered). Once a withdrawal was written, the publisher forgot it (published = None), so next_event(None, Err) wrote nothing, and the reason never moved to the refusal every later probe met."
+current_state: "Measured at origin/master 71857dbb609 on 2026-10-25: Cooperation::write_build_cache_record keeps only the published offer. After a withdrawal, refresh_build_cache_offer writes nothing until the store is offered again, whatever the probe says."
+desired_state: "The publisher remembers the reason of the withdrawal it wrote. A withdrawal whose reason is 'its own probe could not say' is written once more when the probe then gives a different reason. A definite reason is never rewritten, so a wavering probe adds at most one record per withdrawal. probe_health's verdicts are unchanged."
+scope:
+  - "apps/majordomus-cli/src/mesh/build_cache/offer.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - ".ai/repo/project/issues/I4225.yaml"
+non_scope:
+  - "probe_health's verdicts: a store that closes without a word stays Unknown, as its own unit test holds"
+  - "test/cases/3954_a_store_is_offered_in_a_signed_record.sh: its expectation is right, the publisher was not"
+depends_on:
+  - I2671
+acceptance_criteria:
+  - "A runtime whose store is offered, then closes a probe without a word, then answers unhealthy writes an offer, a withdrawal saying the probe could not say, a withdrawal saying unhealthy, and then nothing. The test forces that interleaving with a scripted loopback store, not a sleep."
+  - "refined_withdrawal refines only the uncertain reason, only to a different reason, and never rewrites a definite one"
+  - "Without the refinement the forcing test fails"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::build_cache a_build_cache_record_the_journal_refuses"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3954_a_store_is_offered_in_a_signed_record"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+created_at: 2026-10-25
+updated_at: 2026-10-25

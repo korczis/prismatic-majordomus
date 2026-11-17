@@ -76,12 +76,14 @@ findings=""
 check() { # <file> <all|first>
   named="$(marker_ids "$1" "$2")"
   for id in $active; do
-    printf '%s\n' "$named" | grep -qxF "$id" \
+    # a here-string, not a pipe: grep -q leaves at its first match, and under pipefail the
+    # printf it cut off would read as a skill not named (run 39023981585, case 3020)
+    grep -qxF "$id" <<<"$named" \
       || findings="$findings  UNNAMED  active skill '$id' is not named by $1
 "
   done
   for id in $named; do
-    printf '%s\n' "$known" | grep -qxF "$id" \
+    grep -qxF "$id" <<<"$known" \
       || findings="$findings  UNKNOWN  $1 names skill '$id', which no .ai/repo/skills/*/SKILL.md declares
 "
   done

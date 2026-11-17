@@ -21,6 +21,7 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::delivery::public::Probe;
+use crate::delivery::trends::{self, TrendsReport};
 use crate::delivery::{self, revision, DeliveryReport, FeatureDelivery, Subject};
 use crate::{capability, module};
 
@@ -66,6 +67,12 @@ fn report_for(ctx: &Context, only: Option<&str>) -> DeliveryReport {
 
 fn delivery_report(ctx: &Context, _: Empty) -> Result<DeliveryReport, CapabilityError> {
     Ok(report_for(ctx, None))
+}
+
+fn delivery_trends(ctx: &Context, _: Empty) -> Result<TrendsReport, CapabilityError> {
+    Ok(trends::read(std::path::Path::new(
+        &ctx.index.repository.root,
+    )))
 }
 
 fn delivery_feature(
@@ -126,6 +133,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
                 handler: delivery_feature,
+            },
+            capability! {
+                id: "delivery.trends",
+                title: "How CI runs trend",
+                description: "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series.",
+                input: Empty,
+                output: TrendsReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: get("/api/v1/delivery/trends"),
+                    cli: None,
+                },
+                tags: ["delivery", "ci", "trends"],
+                cache: CachePolicy::Disabled,
+                handler: delivery_trends,
             },
         ],
     }
@@ -228,6 +251,12 @@ mod tests {
                     s("majordomus_delivery_feature"),
                     s("/api/v1/delivery/feature"),
                     vec!["delivery".to_string(), "show".into()]
+                ),
+                (
+                    "delivery.trends".into(),
+                    None,
+                    s("/api/v1/delivery/trends"),
+                    Vec::new()
                 ),
             ]
         );

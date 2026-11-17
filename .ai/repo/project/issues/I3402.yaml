@@ -1,0 +1,43 @@
+id: I3402
+milestone: a-paste-is-decomposed-by-a-skill
+title: "The /intent alias follows the skill an unsuccessful answer names instead of stopping at it or retrying with altered text"
+slug: the-alias-follows-the-named-skill
+priority: p1
+profile: implementation
+objective: "Change the generated command-alias text in apps/majordomus-cli/src/editors/claude.rs for a capability that changes something. When an unsuccessful answer names majordomus://skill/<id>, the alias reads that skill with majordomus skills show <id> or the MCP resource majordomus://skill/<id> and follows it with the same text. Any other refusal, or an unknown outcome, is reported as it is, keeping the pinned phrase 'do not try again by another way'. The alias never calls the capability again with shortened or rewritten text. Regenerate .claude/skills/intent/SKILL.md and document the rule in docs/EDITORS.md."
+why: "The owner's 2026-10-19 order asks that a paste lead on to its decomposition, not only to a refusal. Under T6 of the owner's report of 2026-10-19, a new user who pastes through /intent must reach a verified intent without knowing which skill runs next. Today's alias forbids trying again another way, so a refused paste would end the turn. The change is generic for every writing alias and names no capability. majordomus skills explain answers tests and invocations, not the body (capability/builtin/skills.rs:142), so the alias names skills show."
+current_state: "apps/majordomus-cli/src/editors/claude.rs:79-81 writes 'if the call is refused or its outcome is not known, report that as it is and do not try again by another way'; 86-94 pass the text 'whole and verbatim'. The unit test at claude.rs:330-342 and case 2980:57 pin 'do not try again by another way'. lib/skills.sh:29 implements skills show, which prints the file as written. docs/EDITORS.md:41-50 documents the alias, and site/content/docs/editors.md is its generated projection."
+desired_state: "A refused paste typed after /intent continues into decompose-a-brief with the same text in the same turn, and every other refusal behaves as today."
+scope:
+  - "apps/majordomus-cli/src/editors/claude.rs"
+  - ".claude/skills/intent/SKILL.md"
+  - "apps/majordomus-cli/tests/editors.rs"
+  - "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh"
+  - "docs/EDITORS.md"
+  - "site/content/docs/editors.md"
+non_scope:
+  - "disable-model-invocation, which stays true for a writer"
+  - "A per-capability special case in the generator"
+  - "The generic domain-skill text and the mj-* projections (I3405)"
+  - "Packaging the alias as a plugin (I3300)"
+depends_on:
+  - "I3400"
+  - "I3401"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#a-refused-paste-leads-to-the-skill"
+acceptance_criteria:
+  - "Precondition: majordomus intent preflight for this issue passes from a branch of master that holds I3400 and I3401"
+  - "The generated alias of a capability that changes something contains the sentence that sends an unsuccessful answer naming majordomus://skill/<id> to that skill through majordomus skills show <id> or majordomus://skill/<id> with the same text, and the sentence that forbids calling the capability again with shortened or rewritten text. A read-only alias's text is unchanged"
+  - "The phrase 'do not try again by another way' stays, now for a refusal naming no skill, so claude.rs's unit test and case 2980:57 keep passing"
+  - "A unit test in editors/claude.rs and case 2980 assert both new sentences in the generated .claude/skills/intent/SKILL.md"
+  - "The first call still passes the text whole and verbatim"
+  - "docs/EDITORS.md states the rule, and majordomus generate --check is clean"
+validation:
+  - "cargo test -p majordomus-cli --lib editors::claude"
+  - "cargo test -p majordomus-cli --test editors"
+  - "bash test/run.sh 2980_a_capability_is_invoked_by_name_from_claude_code"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_the_alias_follows_the_skill_a_refusal_names"
+created_at: 2026-10-19
+updated_at: 2026-10-19

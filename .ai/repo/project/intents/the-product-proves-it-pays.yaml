@@ -1,0 +1,141 @@
+id: the-product-proves-it-pays
+title: "Majordomus proves, by measured runs, that it delivers accepted work with less cost, risk and human effort than the same agents without it"
+statement: "Whether Majordomus is worth adopting is settled by recorded, reproducible measurement, never by a feature count or a forecast: on repositories not built around it and on a corpus of comparable tasks registered and stratified before any run, the same agents with and without Majordomus are compared on accepted results, wall time, human interventions, CI reruns, spend and recovery from injected faults; a newcomer reaches a first verified intent unaided; and the verdict of every test, losses included, is published beside the claim it settles."
+invariants:
+  - "No status, verdict or figure is typed: every verdict is computed from committed records against a protocol registered before the first record it counts"
+  - "A protocol edited after registration is a new version; a record carries the digest of its own test's protocol and counts only toward that version, so registering or editing one test never makes another test's records stale"
+  - "A failed or inconclusive test, a lost pair or trial, and an invalid or uncounted record are published in the same row as the claim they bear on, never dropped or folded into a total"
+  - "No public sentence of the claims matrix or the homepage copy states an advantage that a passed proof test does not back"
+  - "A record of a repository whose publication basis is neither a licence nor the owner's dated written consent carries no name, raw commit id, path or free-text observation"
+  - "Nothing about an outside person's run is simulated, edited or inferred; a run the person did not do is not a run"
+  - "No fix decides by the identity of the repository it runs in"
+  - "One calculator: effects, intervals and verdicts come from apps/majordomus-cli/src/economics/stats.rs, and every surface reads one capability"
+non_goals:
+  - "Opening another large vertical before the six tests read a computed status"
+  - "Replacing the coding tools; Majordomus is measured as a layer over them"
+  - "A productivity score, ranking or forecast"
+  - "Detecting synonyms or meaning in general prose"
+  - "Cross-provider or cross-model comparison"
+  - "Comparison with other products"
+milestones:
+  - "the-proof-tests-are-registered-before-they-run"
+  - "the-proof-scorecard-is-published"
+  - "a-foreign-repository-is-adopted-and-measured"
+  - "the-corpus-is-registered-before-it-runs"
+  - "a-registered-corpus-judges-majordomus"
+  - "every-task-states-its-delivery-economics"
+  - "delivery-economics-are-measured-over-declared-windows"
+  - "the-mesh-is-measured-against-one-agent"
+  - "recovery-from-injected-faults-is-proven"
+  - "a-newcomer-reaches-a-first-verified-intent"
+satisfaction:
+  - id: plan-is-registered-before-runs
+    criterion: "Every one of the six proof tests (T1 to T6) is listed in .ai/repo/benchmarks/proof-plan.yaml with the claim it settles, its dimension and its instrument. A trials or window protocol (T1, T3, T5, T6) is declared in the plan; a paired protocol (T2, T4) names its suite and the digest of that suite's registration block. Each protocol carries its own digest, which the validator recomputes, and a version with a changes entry. A run or trial record counts only when it carries the digest of its own test's protocol and was recorded after that protocol's registered_at; every record that does not count is listed with its reason, and registering one test changes no other test's counted records (planned proof: the proof-plan tests I3351 and I3352 add to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-record-reveals-only-what-its-basis-permits
+    criterion: "The trial-record loader refuses a record of a repository whose publication basis is neither a licence permitting publication nor the owner's dated written consent when it carries a repository name, a raw commit id (only a salted digest is allowed), a path (only declared path classes) or a free-text observation (only declared friction codes); no generated economics file and no site page carries such a field for such a record (planned proof: the redaction tests I3353 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: scorecard-is-published
+    criterion: "One calculator answers majordomus economics proof, GET /api/v1/economics/proof, the MCP tool majordomus_economics_proof, /ui/evidence and the site economics page with the same six rows, each with its protocol, a status computed from committed records (not_run, running, passed, failed, inconclusive) and its reason, the counted sample beside its registered minimum, the effect with its interval and method where measured, and the claim it settles. A test whose counted sample is below its registered minimum reads running and shows no verdict word. The per-status totals sum to six on every surface (planned proof: the scorecard tests I3354 and I3355 add to apps/majordomus-cli/tests/economics.rs and the evidence-screen test I3357 adds in apps/majordomus-cli/src/ui/mod.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: losses-are-published
+    criterion: "On every scorecard surface, each failed or inconclusive test, each pair or trial the treatment lost, and each invalid or uncounted record is shown with its reason in the same row and markup as the claim it bears on, never dropped, folded into a total or rendered apart from passed results (planned proof: the site economics page assertions case 430 gains in I3356)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: no-unbacked-value-claim
+    criterion: "majordomus economics check refuses a docs/CLAIMS.yaml claim marked guaranteed that a proof test settles while that test does not read passed, and a claim sentence carrying a value word the plan declares that no proof test settles. scripts/ci/homepage-check --only promises refuses each declared value word in site/data/marketing.toml and site/data/manifesto.toml while no guaranteed and supported claim permits it. Each refusal names the file, the line, the word or claim, the test and its status. The gate decides the claims matrix and the homepage copy only and says so (planned proof: the mutations case 431 gains in I3358, and homepage-check over the built site in I3350)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-foreign-repository-is-admitted-before-it-is-adopted
+    criterion: "Every T1 trial record names a candidate entry committed before the record's first step, measured at the adopted commit against the selection floors the owner recorded as a decision before any candidate was measured: tracked files and commits at or above the floors, the primary language and the test command the repository already runs, no tracked path under .ai/ or .majordomus/ and no Majordomus generated region, and a publication basis. A record whose entry is missing, is committed after its first step, or fails a measurement is refused (planned proof: the candidate tests I3360 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-foreign-repository-reaches-an-accepted-finish
+    criterion: "At least one admitted foreign repository has a T1 trial record with reached_accepted_finish true and every step the adoption workflow declares present (install from the published installer into a throwaway HOME, init, update, first task started, first refusal by check or finish, first accepted finish, removal), carrying the tool version, platform, adopted commit (as the basis allows), agent and version, each step's elapsed seconds with its source (ledger event or run clock), commands typed beyond the published site and manual interventions. A record that did not reach the accepted finish is committed and published beside the others (planned proof: the trial-record tests over the committed T1 records and the T1 scorecard row)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: overhead-is-measured-in-the-foreign-repository
+    criterion: "For each adopted foreign repository, every operation the adoption-overhead suite of I3299 declares has a measurement taken in that repository at the adopted commit with its verdict against its budget, an exceeded budget published as exceeded, and the adoption's footprint outside .ai/ and .majordomus/ compared class by class with the inventory case 3113 holds (planned proof: the overhead record I3364 commits, read by the trial-record tests in apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: foreign-friction-becomes-a-case
+    criterion: "In every T1 trial record, each manual intervention, each command typed beyond the published site and each refused step carries a friction id or a declared not-a-friction reason, and every friction id is cited in the why of an issue whose acceptance names a case or test that fails without its fix, or in a cancellation with its reason; the count of uncovered events and of uncited ids is zero (planned proof: the friction tests I3365 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: the-corpus-is-registered-before-any-run
+    criterion: "A committed registered suite under .ai/repo/benchmarks/economics/suites names 20 tasks with their strata, the measured difficulty proxy and the stratum cut-offs registered before the new tasks were written, the acceptance rule, the primary and secondary outcomes, the analysis, the minimum detectable difference, a seeded interleaved run order, the stopping rule (fixed repetitions, a budget ceiling, no interim analysis) and the released Majordomus version the treatment installs. The load refuses a registration whose strata disagree with the measured proxy or that names an undeclared gate or outcome; a run recorded under another registration digest or another treatment release is listed stale and counts toward no verdict (planned proof: the registration tests I3367, I3374 and I3375 add to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: every-registered-task-can-be-failed-and-passed
+    criterion: "majordomus economics references reports, for each of the 20 registered tasks, that its hidden tests fail on the starting state and pass on its reference with no model involved, each of the strata small, medium and large holds at least six tasks, and each new task's prompt carries a review answered by a reviewer who did not write it (planned proof: test/cases/430_economics.sh, which runs economics references over every declared task)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: the-paired-analysis-says-inconclusive-when-underpowered
+    criterion: "For the registered suite, economics summary decides the primary outcome (accepted results) by an exact task-level test registered in advance and reports favourable, unfavourable or inconclusive, inconclusive whenever the test does not reject at the registered level or the valid pairs fall below the publication rule; wall time and spend are reported as mean paired differences with task-clustered intervals and no verdict word; the effective sample is stated as tasks, not repetitions; the status stays running until the registered sample is complete; human interventions and CI reruns read not observed, never zero (planned proof: the paired-analysis tests I3366 and I3371 add)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: the-corpus-verdict-is-published-with-its-losses
+    criterion: "Every declared pair of the registered suite has been attempted in both arms with the same harness, model, per-session budget and pinned release, its run records are committed under .ai/repo/benchmarks/economics/runs/corpus, and the generated economics report, the site's economics page and the T2 scorecard row publish the primary verdict, an unfavourable or inconclusive one included, with every missing or invalid pair and its reason, beside the registration's digest and the statement that the corpus is one synthetic fixture written by the treatment's builders (planned proof: majordomus economics proof over the committed corpus runs, and test/cases/431_economics_claims_gated.sh)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: every-task-states-its-delivery-economics
+    criterion: "One capability (economics.tasks) returns, for every task in the ledgers of every checkout git worktree list reports, rotated archives included, one record naming its issue and intent, its wall time from task.started to its last finish or refusal, and the episodes that carried it; the record count equals the number of distinct task_id values among the task.started lines read, and each ledger read is listed with its line and skipped-line counts (planned proof: the task-economics tests I3376 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: interventions-are-typed-and-sourced
+    criterion: "Each task's human interventions are counted by type: prompt, approval, restart (after a handover, after a recovery, or a re-started task for the same issue) and manual change (a commit outside every open episode, and a commit without an agent co-author trailer, as separate signals); each count lists the record ids behind it, and a type with no readable source reads not observed with a reason, never zero (planned proof: the intervention tests I3377 and I3378 add, and test/cases/54_session_lifecycle_hooks.sh for the permission receipt)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: ci-reruns-are-attributed-to-the-issue
+    criterion: "For each issue, the runs of the pull requests plan.delivery attributes to it are counted as reruns (run_attempt above 1 on the same head) and rounds (runs of a later head), with cancelled and superseded runs apart, each with run id and attempt, and a run read twice counted once (planned proof: the CI-rerun test I3379 adds over a forge-observation fixture)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: spend-is-the-observed-usage-of-the-task
+    criterion: "A task's spend is the usage I3293 attributes to it, shown as reported tokens per category with their measurement class, never re-joined and never estimated; any money amount stays not observed until I3292's separate estimate and billed fields exist (planned proof: the spend test I3380 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: accepted-is-the-finish-definition
+    criterion: "A task is accepted only by I0401's written definition, read through the same function; the issue's furthest delivery stage from plan.delivery is shown beside it, never merged with it, and a task finished as partial is not counted accepted (planned proof: the acceptance test I3381 adds)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-corpus-run-states-the-same-economics
+    criterion: "Every recorded benchmark run answers the economics.tasks record shape: wall time per run and per session, scripted follow-up prompts apart from human interventions (none by construction of the headless harness), CI reruns not applicable, spend as observed tokens with the harness's projected cost labelled as a projection, and acceptance as the hidden acceptance_tests check; an aggregate per suite and variant gives medians beside their denominators and is published nowhere until ADR 0082's rule is met (planned proof: the run-record tests I3382 adds)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: delivery-is-measured-over-a-declared-window
+    criterion: "A delivery window registered in the proof plan before it opens (its period, the work it admits, the definition of accepted and a bound on each field's not-observed share) is measured at its close: the committed T3 record gives per field the count, median and denominator and how many tasks left it not observed, lists every task not accepted, names every checkout that existed during the window and could not be read (removed worktrees included) and cross-checks the task count against the tracked session records; the T3 row reads passed only when every field's not-observed share is within its bound (planned proof: the window tests I3384 adds and the T3 scorecard row)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-mesh-arm-runs-coordinated-workers
+    criterion: "The economics runner runs one job of a batch task as a registered number of concurrent headless sessions, each in its own worktree of one workspace, sharing the treatment's server, board and claims, and records each session's span, the job's wall time from first start to the last hidden test passing on the integrated tree, every claim refusal and every merge conflict; a replaying harness proves the whole pipeline without a provider (planned proof: the topology tests I3386 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: the-mesh-verdict-is-published
+    criterion: "A registered suite compares, on the same batch tasks, model, per-session budget and pinned release, a single agent with the coordinated-workers arm: the primary outcome is wall time to all hidden tests passing, and a favourable verdict is allowed only when the treatment's accepted share is not lower than the control's by more than a non-inferiority margin registered in advance; the verdict, losses included, is published on the T4 scorecard row (planned proof: majordomus economics proof row T4 over the committed runs, and the guard tests I3385 adds)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: work-is-conserved-under-faults
+    criterion: "One reading over the ledgers of every checkout, the mesh state and the git refs answers, for a window: completions per issue, refusing more than one task.finished with outcome completed per issue; every commit a task made reachable from a branch or a refs/rescue/ ref; every exclusive claim released, expired or held by a live session; every handover consumed by at most one session; each violation names its records (planned proof: the conservation tests I3390 adds to apps/majordomus-cli/tests/economics.rs)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: recovery-is-proven-for-each-injected-fault
+    criterion: "For each registered fault (a worker killed mid-task, a connection cut while a claim or handover is in flight, two workers taking the same issue or the same lines), the registered number of trials ran, the work resumed to an accepted finish, and the conservation reading found zero lost commits and zero duplicate completions in every trial; every failed trial is published on the T5 row (planned proof: the work-level mesh lab scenarios read by scripts/ci/mesh-lab-evidence and case 414, and the T5 trial records)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-criterion-can-cite-the-repositorys-own-check
+    criterion: "In a repository whose tests live outside test/cases/ and apps/majordomus-cli/tests/, an intent criterion can name a verification the repository's profile declares, and a passing run of it recorded by a documented command at the current tree makes the criterion current and the verdict satisfied, while a failing or stale run does not (planned proof: the foreign-check tests I3395 adds to apps/majordomus-cli/tests/intent.rs and case 367)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: a-first-verified-intent-uses-only-documented-commands
+    criterion: "The scripted first-intent stage, from the published installer into a clone of an existing repository, reaches an intent whose verdict is satisfied using only commands the getting-started page shows; it records each step's elapsed seconds, the count of commands typed beyond the page, which is zero, and the count of output lines that name an ADR, a rule id or a path under .ai/repo the user did not create (planned proof: the first-intent stage case 1024 gains in I3397)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+  - id: newcomers-reach-a-first-verified-intent
+    criterion: "Under the registered T6 protocol, each newcomer trial (a developer who has not contributed to Majordomus, with the public site only, in a repository of their own, with consent) records reached_satisfied_verdict, seconds, commands beyond the getting-started page, documents opened beyond it and the observer's interventions; the T6 row reads passed only when the registered number of trials reached the verdict with zero interventions, and every trial is published (planned proof: majordomus economics proof row T6 over the committed trial records)"
+    evidence: command
+    ref: "majordomus intent explain the-product-proves-it-pays"
+created_at: 2026-10-19
+updated_at: 2026-10-19

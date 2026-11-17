@@ -1,0 +1,36 @@
+id: I3020
+milestone: truthful-plan-surfaces
+title: "The Knowledge screen states nothing about the repository that its checkout could not observe"
+slug: the-knowledge-screen-reads-true
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Where knowledge_base.status read no line of the session ledger (no close, no derivation, no close without a derivation), /ui/knowledge shows the ledger-derived tiles (Closed, underived; Newest episode) as 'not recorded here' and its deriver panel says that no ledger is recorded in this checkout and where the judgement is made, instead of '0', 'unknown' and 'never, in this checkout'."
+why: "The published snapshot of /ui/knowledge (majordomus.dev, v0.29.0 at 707a04c7ce8) read 'Closed, underived 0', 'Last derived: never, in this checkout', 'Last closed: never, in this checkout' and 'Judgement: not judged'. The Pages runner is a fresh clone with no session ledger; a visitor reads those as facts about the repository's knowledge base. Candidate counts are tracked records and stay as read."
+current_state: "The screen draws every status field as read, so a checkout with no ledger shows zero and never."
+desired_state: "A tile or a panel whose value comes from the session ledger says it is not recorded here when the status read no ledger line; a crate test pins it."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+acceptance_criteria:
+  - "In a checkout without a session ledger, the Closed, underived and Newest episode tiles read 'not recorded here' and still cite knowledge_base.status"
+  - "The deriver panel names no 'never' there and names majordomus knowledge status as where the judgement is made"
+  - "A checkout whose ledger holds a close keeps its counts and judgement as read"
+validation:
+  - "cargo test --lib ui::knowledge"
+  - "scripts/ui audit --only /ui/knowledge"
+evidence_required:
+  - "knowledge_screen_reads_true"
+created_at: 2026-10-18
+updated_at: 2026-10-20T16:24:44Z
+started_at: 2026-10-20T16:14:31Z
+started_event: sha256:3c2a3cde9418dafb1feee37f182ef6262a8718a891dbd5c8fbab65d228363d3b
+completed_at: 2026-10-20T16:24:44Z
+completed_event: sha256:b5229800b4499776a91b46f0e2a4075328d98d8bea8254c187e89af4996cb4d7
+evidence:
+  - covers: knowledge_screen_reads_true
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::knowledge::a_checkout_without_a_ledger_states_nothing_it_could_not_observe (4767d1be4fe, 6afb1240313)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: a81b1e3537d333f6b7cfac24dd8aa8bce8a1a7ca
+    recorded_at: 2026-10-20T16:20:21Z

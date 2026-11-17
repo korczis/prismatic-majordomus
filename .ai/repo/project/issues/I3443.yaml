@@ -1,0 +1,42 @@
+id: "I3443"
+milestone: "truthful-plan-surfaces"
+title: "Each roadmap milestone names the product features its issues deliver, derived from the feature declarations"
+slug: "the-roadmap-names-the-features-it-delivers"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "A derived relation joins an issue to the product features whose paths its scope touches, product.features exposes each feature's derived paths, and every milestone row of /ui/roadmap names, as links to /ui/features, the features its issues deliver; no list of features is written anywhere but .ai/repo/features."
+why: "On 2026-10-19 the owner asked that /roadmap be correct and connected. Review finding: the product features (capability product.features) are not drawn on /ui/roadmap, so the roadmap does not say what a milestone delivers to a person. The work starts only after the exclusive mesh claim another session holds on apps/majordomus-cli/src/plan/flight.rs, apps/majordomus-cli/src/ui/roadmap.rs and apps/majordomus-cli/tests/ui_roadmap.rs is released or handed over."
+current_state: "product.features is declared at apps/majordomus-cli/src/capability/builtin/product.rs:579-595 and reads the feature files under .ai/repo/features (one per feature, e.g. .ai/repo/features/benchmarks.md), whose front matter names modules, commands, kinds, rules, docs, adrs, claims, use_cases, cockpit and web, and nothing about milestones or issues. The product model derives a module's source_path (apps/majordomus-cli/src/product.rs:230-243) and the paths of the documents it names (product.rs:103). An issue carries its scope paths and its serves criteria (apps/majordomus-cli/src/plan.rs:360-396) and nothing about features. No relation between an issue and a feature exists today. /ui/roadmap reads plan.roadmap, plan.status, intents.list, plan.issues and plan.flight (apps/majordomus-cli/src/ui/roadmap.rs:37-45), not product.features."
+desired_state: "The relation added: an issue delivers a feature when a path of its scope is, or lies under, one of the paths the product model derives for that feature (each module's source_path, each named document, rule and ADR file). product.features exposes those derived paths per feature; /ui/roadmap asks product.features beside plan.issues and draws, on each milestone row, the features its issues deliver (each a link to that feature's page under /ui/features), or 'no feature' when none. No feature file and no issue record gains a hand-written field for this."
+scope:
+  - "apps/majordomus-cli/src/product.rs"
+  - "apps/majordomus-cli/src/capability/builtin/product.rs"
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/tests/ui_roadmap.rs"
+  - ".ai/repo/features/README.md"
+  - "docs/generated/capabilities.md"
+  - "docs/generated/modules/product.md"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/product.json"
+non_scope:
+  - "A features or milestones field in a feature file or an issue record: the relation is derived, never declared twice."
+  - "Drawing features on the published /roadmap/ page."
+  - "Changing what any feature names."
+depends_on: []
+acceptance_criteria:
+  - "An issue whose scope names a feature module's source file, or a document the feature names, is related to that feature; one whose scope touches none of a feature's derived paths is not"
+  - "A milestone row of /ui/roadmap names, as links, exactly the features its issues are related to, and a milestone whose issues relate to no feature reads 'no feature'"
+  - "Adding a document to a feature's docs moves the relation with no edit to the plan, and no feature file or issue record carries a hand-written relation (product validate and plan validate refuse an unknown field)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib product"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap"
+  - "bin/majordomus product validate"
+  - "bin/majordomus generate --check"
+  - "scripts/ui audit --only /ui/roadmap"
+evidence_required:
+  - "roadmap_names_delivered_features"
+created_at: 2026-10-19
+updated_at: 2026-10-19

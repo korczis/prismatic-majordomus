@@ -34,13 +34,16 @@
 //! assert!(Repository::discover(empty.path()).is_err());
 //! ```
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock, PoisonError};
+use std::time::SystemTime;
 
 use serde::Deserialize;
 
 use crate::error::{Error, Result};
 use crate::metadata::yaml;
+use crate::perf::{Counters, COUNTERS};
 
 /// The file whose presence makes a directory the root of a Majordomus repository.
 pub const MANIFEST: &str = ".ai/manifest.yaml";
@@ -66,6 +69,40 @@ pub struct LocalHalf {
     pub tracked: bool,
     /// Loaded into a worker's context implicitly? The contract says `false`.
     pub implicit_context: bool,
+    /// The lifecycle of what lives in the local half, which carries no tracked contract of
+    /// its own to say it (I2870): `runtime`. Optional, so a layer written before it stays
+    /// valid; the boundary check (I2871) judges only what is declared.
+    #[serde(default)]
+    pub lifecycle: Option<Lifecycle>,
+    /// What must never appear in the local half: `canonical`, a copy of authored knowledge.
+    #[serde(default)]
+    pub excludes: Vec<String>,
+}
+
+/// How what lives in a directory comes to exist and how long it lasts: the classes of
+/// docs/TWO_FOLDER_CONSOLIDATION.md, the same values `context/v1`'s `layout.lifecycle` takes.
+///
+/// ```
+/// use majordomus_cli::repository::Lifecycle;
+/// let l: Lifecycle = serde_json::from_str(r#""runtime""#).unwrap();
+/// assert_eq!(l, Lifecycle::Runtime);
+/// assert!(serde_json::from_str::<Lifecycle>(r#""ephemeral""#).is_err());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Lifecycle {
+    /// Once written, it is the person's file.
+    Canonical,
+    /// Computed from this repository's own `.ai/` content, committed and regenerable.
+    Derived,
+    /// Laid down from the tool's distribution, identical at one version.
+    Generated,
+    /// Recomputable state with no meaning of its own.
+    Cache,
+    /// State of one clone, machine or process; never travels through git as content.
+    Runtime,
+    /// Written although it serves no purpose where it is.
+    Accidental,
 }
 
 /// The scoped context documents: file names that must carry the context contract
@@ -132,6 +169,17 @@ impl Manifest {
     }
 }
 
+/// The repositories this process has opened, by the root they were opened at, each with the
+/// stamp of the manifest it was read from.
+static OPENED: OnceLock<Mutex<HashMap<PathBuf, (ManifestStamp, Repository)>>> = OnceLock::new();
+
+/// What says a manifest is still the one that was read: its length and modification time.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ManifestStamp {
+    len: u64,
+    modified: Option<SystemTime>,
+}
+
 /// A located repository with its manifest read.
 #[derive(Debug, Clone)]
 pub struct Repository {
@@ -142,8 +190,11 @@ pub struct Repository {
 impl Repository {
     /// Walk from `start` upward to the nearest directory carrying [`MANIFEST`]. A manifest
     /// that does not parse stops the search with its error: a nearer broken layer is never
-    /// skipped in favour of a farther working one.
+    /// skipped in favour of a farther working one. Every call is timed as
+    /// [`crate::perf::Phase::RepositoryDiscovery`], wherever it is made, so the count of that
+    /// phase is how many times a process discovered (I3015).
     pub fn discover(start: &Path) -> Result<Self> {
+        let _phase = crate::perf::phase(crate::perf::Phase::RepositoryDiscovery);
         let start = start.canonicalize().map_err(|e| Error::io(start, e))?;
         for dir in start.ancestors() {
             let manifest = dir.join(MANIFEST);
@@ -159,16 +210,42 @@ impl Repository {
         Err(Error::RepositoryNotFound { start })
     }
 
-    /// Open a directory known to be a root.
+    /// Open a directory known to be a root. The manifest is read and parsed once per root in
+    /// a process: a later open of the same root answers from `OPENED` while the manifest's
+    /// length and modification time are the ones it was read at, so a second consumer pays
+    /// one `stat` and an edited manifest is read again (I3014). A manifest that does not
+    /// parse is never remembered.
     pub fn open(root: &Path) -> Result<Self> {
         let manifest_path = root.join(MANIFEST);
+        let stamp = std::fs::metadata(&manifest_path)
+            .map(|m| ManifestStamp {
+                len: m.len(),
+                modified: m.modified().ok(),
+            })
+            .map_err(|e| Error::io(&manifest_path, e))?;
+        let opened = OPENED.get_or_init(Default::default);
+        if let Some((seen, repository)) = opened
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get(root)
+        {
+            if *seen == stamp {
+                return Ok(repository.clone());
+            }
+        }
         let text =
             std::fs::read_to_string(&manifest_path).map_err(|e| Error::io(&manifest_path, e))?;
         let manifest = Manifest::parse(&manifest_path, &text)?;
-        Ok(Repository {
+        Counters::bump(&COUNTERS.repository_discoveries);
+        let repository = Repository {
             root: root.to_path_buf(),
             manifest,
-        })
+        };
+        opened
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(root.to_path_buf(), (stamp, repository.clone()));
+        Ok(repository)
     }
 
     /// The root, absolute and canonical.
@@ -404,6 +481,68 @@ mod tests {
         assert_eq!(m.context.unwrap().documents, vec!["README.md"]);
     }
 
+    /// The local half declares its lifecycle and what it excludes (I2870), and the type and
+    /// the distribution's hand-written schema agree on its keys until I2873 generates the
+    /// schema: every key the schema names is read by the type, an unknown one is refused by
+    /// both, and a layer written before the keys existed still parses.
+    #[test]
+    fn the_local_half_and_its_schema_name_the_same_keys() {
+        let schema: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../share/schemas/majordomus/manifest/manifest.v1.schema.json"
+        ))
+        .expect("the manifest schema");
+        let local = &schema["properties"]["local"];
+        let mut keys: Vec<&str> = local["properties"]
+            .as_object()
+            .expect("local's properties")
+            .keys()
+            .map(String::as_str)
+            .collect();
+        keys.sort_unstable();
+        assert_eq!(
+            keys,
+            [
+                "excludes",
+                "implicit_context",
+                "lifecycle",
+                "path",
+                "tracked"
+            ],
+            "LocalHalf's fields and the schema's local keys"
+        );
+        assert_eq!(
+            local["additionalProperties"], false,
+            "the schema refuses an unknown key"
+        );
+
+        let declared = MANIFEST_TEXT.replace(
+            "  implicit_context: false\n",
+            "  implicit_context: false\n  lifecycle: runtime\n  excludes: [canonical]\n",
+        );
+        let m = Manifest::parse(Path::new("m"), &declared).unwrap();
+        assert_eq!(m.local.lifecycle, Some(Lifecycle::Runtime));
+        assert_eq!(m.local.excludes, vec!["canonical"]);
+        let older = Manifest::parse(Path::new("m"), MANIFEST_TEXT).unwrap();
+        assert_eq!(
+            (older.local.lifecycle, older.local.excludes.len()),
+            (None, 0)
+        );
+
+        let unknown = MANIFEST_TEXT.replace(
+            "  implicit_context: false\n",
+            "  implicit_context: false\n  retention: forever\n",
+        );
+        assert!(
+            Manifest::parse(Path::new("m"), &unknown).is_err(),
+            "the type refuses it too"
+        );
+        let wrong = declared.replace("lifecycle: runtime", "lifecycle: ephemeral");
+        assert!(
+            Manifest::parse(Path::new("m"), &wrong).is_err(),
+            "not a lifecycle"
+        );
+    }
+
     #[test]
     fn manifest_unknown_key_is_named() {
         let bad = format!("{MANIFEST_TEXT}extra: 1\n");
@@ -420,6 +559,53 @@ mod tests {
             Manifest::parse(Path::new("m"), &bad),
             Err(Error::UnsupportedSchema { .. })
         ));
+    }
+
+    /// A second open of a root reads no manifest, and an edited manifest is read again. The
+    /// process-wide counter cannot say which open read (tests run side by side), so the
+    /// manifest is made unreadable after the first open: the second answers anyway, from
+    /// what was read, and once the manifest's length changes the open has to read it and
+    /// fails, which is the proof that it tried.
+    #[cfg(unix)]
+    #[test]
+    fn a_root_is_read_once_until_its_manifest_changes() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let path = root.join(MANIFEST);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, MANIFEST_TEXT).unwrap();
+        let first = Repository::open(&root).unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o000)).unwrap();
+        if std::fs::read_to_string(&path).is_ok() {
+            // a superuser reads through the mode, so nothing here would be proved
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+            return;
+        }
+        let second = Repository::open(&root).expect("answered from what was read");
+        assert_eq!(second.root(), first.root());
+        assert_eq!(second.manifest().sections, first.manifest().sections);
+        let discovered = Repository::discover(&root.join(".ai")).expect("the walk finds it too");
+        assert_eq!(discovered.root(), root);
+
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        std::fs::write(
+            &path,
+            format!("{MANIFEST_TEXT}context:\n  documents: [README.md]\n"),
+        )
+        .unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let edited = Repository::open(&root);
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(
+            matches!(edited, Err(Error::Io { .. })),
+            "an edited manifest is read again: {edited:?}"
+        );
+        let reread = Repository::open(&root).unwrap();
+        assert_eq!(
+            reread.manifest().context.as_ref().unwrap().documents,
+            vec!["README.md"]
+        );
     }
 
     #[test]

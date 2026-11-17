@@ -176,6 +176,21 @@
         </tbody>
       </table>
     </div>
+    {#- What the chart says, derived from the same recorded runs it is drawn from; every number a
+        <data> value the site's languages carry unchanged. -#}
+    {%- set e_first = recorded[0] -%}{%- set e_last = recorded | last -%}
+    {%- set_global e_best = recorded[0] -%}{%- set_global e_worst = recorded[0] -%}
+    {%- for h in recorded -%}
+      {%- if h.value > e_best.value %}{% set_global e_best = h %}{% endif -%}
+      {%- if h.value < e_worst.value %}{% set_global e_worst = h %}{% endif -%}
+    {%- endfor %}
+    <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" data-chart-facts="chart-context-history">
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Latest run</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ e_last.value }}">{{ <economics_amount value={e_last.value} /> }}</data></dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Best run</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ e_best.value }}">{{ <economics_amount value={e_best.value} /> }}</data></dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Weakest run</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ e_worst.value }}">{{ <economics_amount value={e_worst.value} /> }}</data></dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Recorded runs</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ recorded | length }}">{{ recorded | length }}</data></dd></div>
+    </dl>
+    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-body" data-chart-prose="chart-context-history">Over <data value="{{ recorded | length }}">{{ recorded | length }}</data> recorded runs, from <data value="{{ e_first.at }}">{{ e_first.at }}</data> to <data value="{{ e_last.at }}">{{ e_last.at }}</data>, the reduction moved from <data value="{{ e_first.value }}">{{ <economics_amount value={e_first.value} /> }}</data> to <data value="{{ e_last.value }}">{{ <economics_amount value={e_last.value} /> }}</data>. The best run, at revision <data value="{{ e_best.revision }}">{{ e_best.revision | truncate(length=12, end="") }}</data>, reached <data value="{{ e_best.value }}">{{ <economics_amount value={e_best.value} /> }}</data>.</p>
   </figure>
   {%- endif %}
 </section>

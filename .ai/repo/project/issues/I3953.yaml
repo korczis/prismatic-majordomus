@@ -1,0 +1,43 @@
+id: I3953
+milestone: builds-reuse-the-mesh-cache
+title: "Every local build path of the repository goes through the cache, and a gate refuses a new bypass"
+slug: every-build-path-goes-through-the-cache
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "The repository's cargo choke point (lib/rust_bin.sh, which scripts/derive, scripts/rust-check and the just recipes call) starts sccache with the store as its second level through the configuration I2673 derives, credential by file; the local site build installs through mesh build-cache ensure; scripts/ci/build-cache-check refuses a local script that runs cargo or npm install around them unless the line declares why."
+why: "The owner, 2026-10-22, after lundra (the build and deploy host) reached zero free bytes: the shared cache must be part of Majordomus — used when MinIO is available, enforced, dynamic, derived — for compiled Rust, the shared cargo build directory, mix deps.get and npm install, keyed by a triplet for the most reuse. Decided the same day after critique: the store is trusted only through a signed offer (I2671), the build directory archive is measured before it is built (I3955), and the dependency cache is generic and wired first into prismatic-platform. See ADR 0157 and intent a-build-reuses-what-the-mesh-already-built."
+current_state: "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only."
+desired_state: "Every local build of this repository reuses what the store holds without anyone setting a variable; GitHub's runners, which cannot reach the store, are a declared exemption; an older installed majordomus without the commands leaves every path working as before."
+scope:
+  - "lib/rust_bin.sh"
+  - "scripts/derive"
+  - "scripts/site-build"
+  - "scripts/ci/build-cache-check"
+  - "apps/majordomus-cli/src/environment/"
+  - ".ai/repo/rules/project/"
+  - ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml"
+  - "test/cases/3953_every_build_path_goes_through_the_cache.sh"
+  - "docs/BUILD_CACHE.md"
+non_scope:
+  - "Editing a user's cargo config or shell profile"
+  - "GitHub Actions jobs"
+depends_on:
+  - I3952
+  - I2673
+acceptance_criteria:
+  - "With the store healthy when the sccache server starts, the server has it as its second level; with it down the build is local-only and succeeds"
+  - "The store is probed only when a server is started, never per compilation"
+  - "The gate fails on a fixture script that calls npm ci or cargo build around the choke point, and passes one that declares why"
+  - "A cold node with no majordomus yet builds as before, and the cache joins once the executable exists"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3953_every_build_path_goes_through_the_cache"
+evidence_required:
+  - "build_paths_case"
+  - "bypass_refused_case"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+  - "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+created_at: 2026-10-22
+updated_at: 2026-10-22

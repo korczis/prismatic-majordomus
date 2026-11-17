@@ -1,7 +1,7 @@
 +++
 title = "Performance truth"
 description = "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance"
-weight = 21
+weight = 22
 [extra]
 source = "docs/PERFORMANCE.md"
 +++
@@ -55,7 +55,12 @@ milliseconds; a thousand of them cost the tool its users. The fixes are the same
   documents and the site generator read that way;
 - nothing per row that forks: the tab for `IFS` is computed once (`MJ_TAB`), a substring
   replaces a `cut`, and the generator's JSON strings and arrays are built by `jstr`,
-  `jarr` and `jline` instead of a jq per value.
+  `jarr` and `jline` instead of a jq per value;
+- the executable has the same shape: a read that chooses one record of many chooses from
+  what every record already says (its front matter), and only the chosen one is asked what
+  costs a `git` process — its ancestry, a diff. A served read pays a process per question,
+  and a process costs whatever the machine's load makes it cost, so a question asked per
+  candidate turns a page into a minute on a busy machine (`continuity.state`, I4243).
 
 The measured deltas of each step are in the commit messages (`git log --grep perf`), the
 accepted state is `baseline.json` under `.ai/repo/benchmarks/` once one is written, and the history of local runs is under `.ai/local/benchmarks/`. This
@@ -104,6 +109,16 @@ Three things that are easy to confuse and are kept apart:
   `benchmark.regression` fraction over the baseline is a `FAIL` naming the metric, both
   values and the threshold, and the command exits `10`. No baseline exits `12`; a baseline
   with another schema is not comparable and exits `15` rather than producing a number.
+- **A regression needs two samples that agree.** Each sample is held to the same bound,
+  baseline × (1 + threshold), and counted: a metric over its threshold on one sample (the
+  only cold sample of a read-only command, or the one slow sample a small p95 rests on) is a
+  `WARN` to re-measure, and does not fail. `--cold-samples <n>` takes further cold samples of
+  a read-only command, each the first run in a repository of its own. Every finding names
+  the samples it rests on (`on 2 of 3 sample(s)`), the runner and its 1-minute load average
+  at the start and end of the run: on 2026-10-08 one cold sample of `version` read
+  9 -> 23 ms on a saturated runner and failed a change that ran none of the measured code.
+  The Rust executable's `bench --check` holds its baseline to the same rule (`WARN`,
+  `agree/n`) and names its runner and load on the verdict line.
 
 Wall-clock thresholds are noisy across machines, so the fractions in the policy are
 conservative and relative; the exact evidence is the counters.

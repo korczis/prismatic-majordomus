@@ -1,0 +1,40 @@
+# Draft for the 2026-10-20 records sweep. The id, the case number (placeholder I3765 in case names) and the dates are
+# allocated from the granted id block when the coordinator records it; current_state was read
+# on origin/master 91c0b5d5658.
+# rehomed from a-visitor-understands-and-checks-majordomus: that milestone derives PLANNED, and the campaign covers ACTIVE milestones only (O1); public-proof is the ACTIVE milestone whose outcome is a visitor checking every claim the homepage makes
+id: "I3765"
+milestone: "public-proof"
+title: "The homepage's provider figure says what it counts, and every provider it names is a name a visitor can recognise"
+slug: "the-provider-figure-says-what-it-counts"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "Relabel the hero figure that counts providers to what the number is, the agent bootstraps the policy generates (one per provider template), with the label declared in site/data/marketing.toml; give bb a title in share/providers.yaml that says what it is (the getbb.app orchestrator); link the figure to the page that lists the providers; and have homepage-check refuse a provider whose title is its bare id."
+why: "The hero calls six entries AI coding tools, but two of them are a class of tools defined by a file and a worker with no convention, and the entry bb is three letters a visitor cannot place. A figure whose label overstates what it counts is the kind of claim the page promises a visitor can check. Found by the landing audit of 2026-10-20 (L-P2-3; campaign defect D26). index.html and marketing.toml sit under a stale claim of I2745, which is completed; ask its holder to release it before claiming."
+current_state: "site/templates/index.html:166 declares the hero figure 'AI coding tools it writes instructions for' with value model.telemetry.providers and link /docs/install/; site/data/registry/product.json telemetry.providers is 6 over the entries agents ('Any tool that reads AGENTS.md'), bb ('bb'), claude-code, codex, gemini and generic ('A worker with no convention of its own'). share/providers.yaml:92-94 documents agents as not a product but a class of tools, :102-105 gives bb the title bb with its meaning (an orchestrator, getbb.app) only in a comment, and :155-157 documents generic as the provider with no convention. site/templates/index.html:98-107 names every provider title as a chip under m.hero.works_with, held to the product model by scripts/ci/homepage-check:261-284, which compares titles and does not judge them."
+desired_state: "The figure's label is declared in marketing.toml and names what is counted; its link opens the page that lists the providers (site/content/docs/cli/product/providers.md or the product page that renders model.providers, measured at claim time). share/providers.yaml titles bb with what it is. homepage-check's providers check also refuses a provider title that equals its id or is empty, naming the provider. The chips keep naming every provider the model names, so the existing both-directions check still holds."
+scope:
+  - "share/providers.yaml"
+  - "site/templates/index.html"
+  - "site/data/marketing.toml"
+  - "scripts/ci/homepage-check"
+  - "test/cases/3738_the_provider_figure_says_what_it_counts.sh"
+  - ".ai/repo/project/issues/I3765.yaml"
+non_scope:
+  - "A declared kind for providers that would let the model count tools apart from classes; that needs share.rs and product.rs and is a separate issue if wanted"
+  - "Adding or removing a provider"
+  - "The other hero figures and their links (I3760)"
+acceptance_criteria:
+  - "The hero figure counting providers carries a label declared in marketing.toml that does not call every entry a tool"
+  - "The bb chip on the homepage names what bb is"
+  - "The figure links to a built page that lists every provider the product model names"
+  - "homepage-check fails when a provider's title equals its id, naming the provider (negative case, planted in the case's fixture)"
+  - "homepage-check still fails when the homepage names a provider the model does not, and when the model names one the homepage does not"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3738_the_provider_figure_says_what_it_counts"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative"
+  - "majordomus product validate && scripts/site-build && scripts/ci/homepage-check"
+evidence_required:
+  - "a_provider_title_is_not_its_id"
+  - "the_provider_figure_names_what_it_counts"
+depends_on: []

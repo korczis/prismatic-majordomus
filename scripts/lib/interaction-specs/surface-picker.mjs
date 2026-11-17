@@ -24,7 +24,13 @@ export default {
                  cli: text('[data-surface="cli"]'), http: text('[data-surface="http"]'), mcp: text('[data-surface="mcp"]'),
                  options: [...sel.options].map((o) => o.value), current: sel.value };
       });
-      const start = await read();
+      // the page ships the option it shows and draws the rest from the slice once it has loaded,
+      // so the list is read once that fetch has had its bound, not at the first paint
+      let start = await read();
+      for (const until = Date.now() + SETTLE_MS; start.options.length < 2 && Date.now() < until;) {
+        await page.waitForTimeout(50);
+        start = await read();
+      }
       // a capability other than the one shown, taken from the picker's own list: the last one
       const target = [...start.options].reverse().find((v) => v !== start.current);
       if (!target) { fail('the picker offers a single capability, so choosing shows nothing new'); n++; continue; }

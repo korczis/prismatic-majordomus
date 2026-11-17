@@ -39,3 +39,9 @@ evidence:
     result: "tests: 2 passed, 0 failed; docs/DISTRIBUTION.md#releasing says the order and why (run 2026-10-14 14:52Z on master 0dff496d1c plus this change)"
     commit: 0dff496d1c312ce4a8d37ac5d6667b522beb4905
     recorded_at: 2026-10-14T14:53:08Z
+  - covers: adopter-release-record-red-for-hours
+    type: manual
+    command: "the release-record unit test on every open korczis/oscilla branch, after v3.38.0"
+    result: "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). OSCILLA v3.38.0 was published at 10:56Z. From the six-hour mark every branch's release-record unit test went red ('recorded neither in this checkout nor on origin/main') while the record rode the frozen release train T23 (c4a41d76), so every open pull request was red on that one test for hours. A tag still turned other pull requests red until its record landed."
+    url: "https://github.com/korczis/oscilla/pull/562"
+    recorded_at: 2026-11-15T19:10:56Z

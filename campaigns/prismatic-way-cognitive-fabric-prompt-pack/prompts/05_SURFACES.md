@@ -1,0 +1,9 @@
+# WAVE 05 — One read model across CLI/API/MCP/Cockpit/Pages
+
+First find existing canonical `capability!` declarations, generated routing, entity addressing and public publication rules. Update a canonical capability or reuse existing entity endpoints. Avoid editing generated OpenAPI tables, MCP registries, frontend hardcoded taxonomies and site inventories. New API routes only when existing routes genuinely cannot represent the capability.
+
+Expose the same inference/provenance projection to eligible consumers: entity ID/kind/status; source refs and observed/derived/inferred/proposed/verified classification; confidence when meaningful; linked intent/task/issue/milestone; evidence; causal history; last verified timestamp; source freshness; affected graph edges; pending decision; suggested safe action; accountable owner. Publish privacy-filtered minimal schemas on public Pages; **never** render `.ai/local`, raw prompts, mesh secrets or unpublished knowledge.
+
+Cockpit: make a useful live 'Intents ↔ Knowledge ↔ Evidence' view integrated into existing navigation, not a decorative new dashboard. Show live subscription state, reconnect/replay, idle/offline/stale labels, graph drilldown, explain-why, duplicate/contradiction queue, reasoning/advisor status, affected task edges, safe review/approval actions with permissions, keyboard and mobile ergonomics. Prefer existing WebSocket/PubSub streaming; use polling only as fallback. UI actions must invoke real capability endpoints and report operation results. If an action is not implemented, do not render it as functional.
+
+Cross-surface tests assert same entity identities, evidence classification, default deterministic order and freshness semantics in CLI JSON, REST, MCP and Cockpit models. Generated docs must clearly distinguish source-backed live values, inferred values and published snapshots. Deploy only after gates, verify rendered Pages and APIs, report any unavailable live infrastructure.
