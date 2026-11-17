@@ -12,6 +12,7 @@ domain: completion
 featured: false
 areas: [verification]
 commands: [doctor, watch]
+kinds: [derive-offload]
 rules: [project.blocking-checks-cheap, project.tests-run-in-disposable-repos, project.rust-cli-evidence, project.rust-command-tested-in-file]
 docs: [docs/CI.md, docs/GITHUB_PAGES_PERFORMANCE.md]
 adrs: [adr-0006]

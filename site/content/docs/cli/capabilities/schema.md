@@ -1,7 +1,7 @@
 +++
 title = "majordomus capabilities schema"
 description = "The canonical input or output JSON Schema of one capability"
-weight = 10
+weight = 11
 [extra]
 route = "/docs/cli/capabilities/schema/"
 command = "majordomus capabilities schema"

@@ -9,6 +9,20 @@ import { requestJson } from './http.mjs';
 
 const VERDICT = { approved: 'supports', changes_requested: 'opposes', commented: 'inconclusive' };
 
+// The full view of the mesh's state, where the reviews are. A server older than that view
+// refuses the query (HTTP 400) and answers the whole state when asked bare, so that one
+// refusal is asked again without it.
+async function fullState(server, io) {
+  try {
+    return await requestJson(`${server}/api/v1/mesh/state?view=full`, { io });
+  } catch (e) {
+    if (e instanceof AdvisorFailure && /HTTP 400\b/.test(e.diagnostic)) {
+      return requestJson(`${server}/api/v1/mesh/state`, { io });
+    }
+    throw e;
+  }
+}
+
 export async function exchange(advisor, prompt, io = {}) {
   const env = io.env ?? process.env;
   const server = env.MAJORDOMUS_SERVER_URL;
@@ -24,7 +38,7 @@ export async function exchange(advisor, prompt, io = {}) {
   const every = Number(env.MAJORDOMUS_MESH_POLL_MS || 2000);
   for (;;) {
     if (io.signal?.aborted) throw new AdvisorFailure('cancelled', 'the session withdrew the request');
-    const state = await requestJson(`${server}/api/v1/mesh/state`, { io });
+    const state = await fullState(server, io);
     const review = (state?.state?.reviews ?? []).find((r) => r.key === key);
     const answer = review?.answers?.[0];
     if (answer) {

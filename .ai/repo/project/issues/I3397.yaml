@@ -1,0 +1,33 @@
+id: I3397
+milestone: a-newcomer-reaches-a-first-verified-intent
+title: "install-check's first-intent stage reaches a satisfied verdict in a named repository with only the getting-started commands, and counts the doctrine its output exposes"
+slug: install-check-reaches-a-first-verified-intent
+priority: p1
+profile: implementation
+objective: "Add a first-intent stage to scripts/ci/install-check after the --repository adoption: propose an intent, add a verify: criterion naming the repository's verify command, record the verification, and read intent explain until the verdict is satisfied. Record each step's seconds, the commands typed beyond those the built getting-started page shows, and the output lines matching declared doctrine patterns (an ADR number, a rule id, a path under .ai/repo the user did not create). Write it into the T1 or T6 trial record as the protocol declares and extend case 1024."
+why: "T6 of the owner's report of 2026-10-19 asks that a newcomer not need internal doctrine; the scripted stage measures the path's tool cost per platform and makes 'without doctrine' a count of declared patterns rather than an impression."
+current_state: "scripts/ci/install-check:17-27 has no intent stage; test/cases/1024_an_installed_release_serves_a_foreign_repository.sh exercises a local fixture."
+desired_state: "Case 1024 reaches a satisfied verdict with zero commands beyond the page and records the doctrine-line count."
+scope:
+  - "scripts/ci/install-check"
+  - "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
+non_scope:
+  - "A live agent session in CI"
+  - "Rewording command output (each doctrine line becomes its own issue)"
+depends_on:
+  - "I3396"
+  - "I3361"
+serves:
+  - "the-product-proves-it-pays#a-first-verified-intent-uses-only-documented-commands"
+acceptance_criteria:
+  - "The stage reaches verdict satisfied and records each step's seconds"
+  - "The count of commands beyond the page is zero"
+  - "The doctrine-line count is recorded with each matching line's pattern"
+  - "Without --repository the stage runs on case 1024's fixture"
+validation:
+  - "bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_first_intent_stage"
+created_at: 2026-10-19
+updated_at: 2026-10-19

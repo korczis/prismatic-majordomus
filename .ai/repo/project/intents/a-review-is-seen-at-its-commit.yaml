@@ -1,0 +1,79 @@
+id: a-review-is-seen-at-its-commit
+title: "A reader sees what a review of the code found, at the commit it measured, and follows each finding to its line, its commit, its rule, its plan issue and that issue's GitHub projection"
+statement: "Every review of the code that Majordomus runs or records reaches a reader as findings anchored to the commit and tree they were measured at. majordomus.dev publishes the quality report of the deployed commit as public API conformance, baselined findings included, with the analyser, the baseline identity, the exclusions and the denominators beside it and the report downloadable as JSON. Dependency, security and licence evidence from cargo-deny stands beside it. Each finding carries a stable id, a verification state (confirmed, or plausible with the refuter's note) and the plan issue that resolves it, and every link from it (the line at blob/<commit>/<path>#L<n>, the commit that introduced that line, the rule, the issue and its GitHub projection) is pinned to a commit and proven to resolve before it is emitted. A due-diligence review is a record with a scorecard and a remediation roadmap, and it shows where two surfaces of the repository disagree about one fact."
+invariants:
+  - "Findings come from capabilities and records, never from prose written for a page"
+  - "Every finding carries the commit and tree it was measured at, its path, line, rule, a reproduce command, a stable id and a verification state"
+  - "Every forge link is pinned to a commit (blob/<sha>/<path>#L<n>, commit/<sha>, pull/<n>) and decided offline; a link that does not resolve is reported and rendered as text, never emitted as a link; no branch-pinned (/blob/master) link is written"
+  - "A page that cites a release pointer names the commit it read the pointer at; no page cites 'latest' alone"
+  - "GitHub is a projection reached only through scripts/github-sync: no record stores a GitHub issue number as a field or key, no record is matched to GitHub by number, no agent creates a GitHub issue, and no closing keyword is written"
+  - "One library per job, as ADRs 0135 and 0152 assign them: ECharts for measured series and Cytoscape for relations (ADR 0135), Mermaid for authored diagrams on the site (ADR 0152); syntect inside the executable and giallo only inside Zola's site build; nothing is fetched from a CDN"
+  - "Every chart is drawn over the table on its page, and the page is complete without JavaScript (ADR 0152)"
+  - "Conformance is never presented as assurance: the quality page is labelled public API conformance and shows its baselined findings, exclusions and denominators"
+  - "Unknown and not observed are never shown as pass or as zero"
+  - "A security finding shows only its title, severity and status on a shared surface"
+  - "A critical or high finding without a plan issue is refused"
+  - "No new record noun: a review's findings use the critique finding shape"
+non_goals:
+  - "Chart.js, or any second chart library beside ECharts (ADR 0135, I2654's non_scope)"
+  - "p5 as status or review evidence (ADR 0135)"
+  - "giallo, an EUPL-1.2 crate, linked into the MIT executable"
+  - "A Markdown renderer for majordomus ui, which the unlanded ADR 0148 and I3004 own (branch feature/markdown-is-rendered-once)"
+  - "A network call from the executable, bin/, lib/ or share/, or from the site build"
+  - "Fixing inside this intent every smell the first review finds: each becomes its own issue"
+  - "A flaky-test instrument: the scorecard reports test stability as not observed until one exists"
+  - "A change to the navbar, which #2349 holds under an exclusive claim"
+milestones:
+  - "a-review-is-published-at-its-commit"
+  - "a-finding-is-tracked-to-its-issue"
+satisfaction:
+  - id: findings-are-published-at-their-commit
+    criterion: "majordomus.dev/quality/ shows the quality report of the deployed commit, labelled public API conformance, baselined findings included and marked so, with the commit, tree, analyser, baseline identity, exclusions and denominators it was measured with, and the report downloadable as JSON; each finding carries its stable id (the baseline key), its verification state and its reproduce command, and links to blob/<commit>/<path>#L<n> (planned proof: the quality report tests of I4297 and the site-check rule of I4299)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: each-cited-line-is-blamed-to-its-commit
+    criterion: "Every finding the site publishes with a line names the commit that introduced that line at the measured commit, linked to commit/<sha> and decided by link-check, or says not observed with the reason (planned proof: the planted-line fixture of I4301)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: every-forge-link-is-pinned-and-proven
+    criterion: "Every commit, pull request, file and line reference on the site, /ui and the Cockpit is a link pinned to a commit, link-check or case 1091 decides each one offline, a reference that does not resolve is reported and rendered as text, and every page that cites a release pointer names the commit it read it at (planned proof: the link-check cases that I4298 and I4311 add)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: dependencies-are-judged
+    criterion: "A cargo-deny gate judges advisories, licences, bans and sources for the crate, an exact-pin check judges the npm devDependencies, a planted disallowed licence fails the gate, and the gate's last verdict is published beside the quality report (planned proof: the gate case I4300 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: a-planted-smell-fails-a-named-gate
+    criterion: "An over-long function and a new unwrap in product code each fail the clippy lint table (too_many_lines, unwrap_used), and an over-long module, a module-wide allow(dead_code) and a TODO comment in product code each raise a quality.report code; function length is judged by clippy alone, and each gate ratchets new debt against its own baseline (planned proof: the lint baseline case of I4302 and the quality report tests of I4303)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: a-review-is-a-record-with-a-scorecard
+    criterion: "The first due-diligence review is a record at the commit it measured, in the critique finding shape, with a scorecard, a remediation roadmap and a section naming where two surfaces disagree about one fact, each disagreement with both readings and the commit they were read at, and it is rendered on the site with every finding linked (planned proof: the record and the site-check rule I4305 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: a-finding-becomes-a-tracked-issue
+    criterion: "One capability proposes a canonical issue record from a finding, carrying the finding's stable id and verification state, refusing an id with no id:issue claim on the board and writing only through the plan's one checked write (ADR 0191), and after landing the site issue page links its GitHub projection while the GitHub issue body links back (planned proof: the tests of I4308 and I4310)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: an-untracked-serious-finding-is-refused
+    criterion: "A critical or high finding without a plan issue, and not rejected with a reason, is refused by the rule project.review-findings-are-tracked and its gate in intent validate, naming the record and the finding (planned proof: the fixture critique tests of I4309)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: code-is-highlighted-inside-its-licence-boundary
+    criterion: "A proposed ADR writes the highlighter boundary down (syntect in the executable, giallo at build time inside Zola only; its acceptance is the owner's act and no issue claims it), every fence in an authored document carries a language and a gate refuses one that does not, and the executable's dependency tree holds no EUPL crate (planned proof: the ADR I4307 writes, the fence rule of I4306 and the licence ban of I4300)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: security-findings-are-redacted
+    criterion: "On the site and in every published data file, a finding of the security class shows only its title, severity and status, through one redaction function in the crate that any /ui or Cockpit screen rendering findings calls (none renders a critique finding today), while the checkout-local report keeps the detail (planned proof: the redaction test I4314 adds)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: hotspots-are-drawn-over-their-table
+    criterion: "The hotspot view on /quality/ is an ECharts treemap drawn over its module table (lines, findings, findings per thousand lines) in a sequential token ramp whose every step passes the contrast measurement, and the page reads the same with JavaScript off (planned proof: the case of I4304)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+  - id: relations-and-status-are-drawn-from-tables
+    criterion: "The trace from issue to commit, pull request and finding is drawn with Cytoscape over its table, and every /ui donut colours a slice by its status token, never by position (planned proof: the cases of I4312 and I4313)"
+    evidence: command
+    ref: "majordomus intent explain a-review-is-seen-at-its-commit"
+created_at: 2026-10-28
+updated_at: 2026-10-28

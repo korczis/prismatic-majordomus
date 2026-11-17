@@ -7,6 +7,8 @@
 //! - the slow pull-request queue is a route of its own, never something the first paint
 //!   waits for;
 //! - the topology lists the UI as a public surface.
+//!
+//! The first two tests prove the claim `ui-dashboard-cites-its-sources` (docs/CLAIMS.yaml).
 
 mod common;
 

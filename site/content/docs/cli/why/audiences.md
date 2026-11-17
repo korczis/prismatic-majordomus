@@ -1,7 +1,7 @@
 +++
 title = "majordomus why audiences"
 description = "Every audience, with the moments that name it"
-weight = 32
+weight = 35
 [extra]
 route = "/docs/cli/why/audiences/"
 command = "majordomus why audiences"

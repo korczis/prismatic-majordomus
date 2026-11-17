@@ -20,7 +20,7 @@ const B: &str = "3f7b357805aa15ecdb3c1ace7e7ac02de263e3d0def8aafda9ad280d3af7c81
 
 fn declaration(policy: &str, allow: &[&str], endpoints: &[&str]) -> String {
     let mut text = format!(
-        "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: {policy}\n"
+        "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: {policy}\n"
     );
     if !allow.is_empty() {
         text.push_str("  allow:\n");

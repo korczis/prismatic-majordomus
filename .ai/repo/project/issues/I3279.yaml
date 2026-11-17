@@ -1,0 +1,36 @@
+id: I3279
+milestone: what-a-workspace-decides-reaches-the-repository-with-its-source
+title: "The vendor's own data export is a transport, and it carries the message identities an in-page read did not keep"
+slug: the-export-is-a-transport
+priority: p2
+profile: implementation
+objective: "Accept the ChatGPT account export archive as a second transport (acquisition: export) that the mapper of I1307 reads offline, keeping each message's upstream id, parent and position on the current branch."
+why: "The export is the vendor's documented path for a person's own data and needs no automation of its site; it is the legitimate fallback when the in-page read breaks, and the only source of message ids for the conversations captured on 2026-10-18 without them. Whether it includes project conversations is unverified (open question). Critique 2026-10-18: the transports enum is official|browser|private_http and the declaration names only browser; the export is the vendor's documented interface and maps to `official`. It extends milestone external-workspaces. Proposed in ADR 0212 (A workspace is read in the operator's own signed-in browser or from the vendor's export, never through a launched automation profile or another tool's credential) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c267#2, chatgpt-majordomus:c066#4."
+current_state: "No export reader exists; workspace.v1's transports enum is official|browser|private_http, and .ai/repo/workspaces/chatgpt-majordomus.yaml declares only browser."
+desired_state: "scripts/workspace import-export <archive> maps the export through the same mapper and writes the same records a browser sync would, marking acquisition: export."
+scope:
+  - "share/schemas/majordomus/workspace"
+  - ".ai/repo/workspaces"
+  - "share/allow/workspace.txt"
+  - "test/cases/93_workspace_kind.sh"
+non_scope:
+  - "Any network access"
+  - "Storing the archive inside the repository"
+depends_on:
+  - "I1302"
+  - "I1305"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#the-import-is-pinned"
+acceptance_criteria:
+  - "A sanitised synthetic export fixture maps to records identical in content to the browser-mapped fixture"
+  - "Every message record carries upstream id, parent id and branch position"
+  - "An export whose shape fingerprint differs fails closed and persists nothing"
+  - "The account export is declared as the `official` transport of workspace.v1 and listed in .ai/repo/workspaces/chatgpt-majordomus.yaml transports"
+  - "Before any mapping code, one real owner export is inspected and whether it holds Project conversations is recorded as a decision"
+validation:
+  - "bash test/run.sh 93_workspace_kind"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_the_export_maps_like_the_browser"
+created_at: 2026-10-18
+updated_at: 2026-10-18

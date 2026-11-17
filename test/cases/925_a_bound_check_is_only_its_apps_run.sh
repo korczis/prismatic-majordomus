@@ -16,8 +16,8 @@
 #   2. the writers were read as the adapter reads them: one page for each observation of the
 #      open pull requests, owner and name as strings (`-f`), only the page size typed (`-F`),
 #      and never the per-pull-request form, since no rollup was truncated.
-#   3. `prs drain --max 3` merges #1 only: the forge's log holds one `pr merge 1`, pinned to
-#      its head, none for #2 or #3, no --admin, and master contains #1's head alone.
+#   3. `prs drain --max 3` lands #1 only: the forge's log holds one fast-forward of master to
+#      its head (I3910), none for #2 or #3, no --admin, and master contains #1's head alone.
 #   4. nothing was asked of the forge that this harness does not answer.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
@@ -124,6 +124,14 @@ case "\$1 \$2" in
       git fetch -q origin "refs/pull/\$n/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$n" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$n" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-\$n"; echo "landed \$n" >> "$STATE/log" ;;
   "pr view")
     # the executor's read of whether its merge is visible
     case " \$* " in
@@ -189,11 +197,11 @@ grep -q "^$WRITERS"'.* -f owner=o -f name=r -F n=50$' "$STATE/log" \
 # ---------------------------------------------------------------- 3. the drain merges #1 only
 out="$(prs drain --max 3 2>&1)" || { echo "    the drain failed:"; printf '%s\n' "$out" | sed 's/^/      /'; unexpected "the drain"; tail -8 "$STATE/log" | cut -c1-200; exit 1; }
 unexpected "the drain"
-merged="$(grep '^pr merge' "$STATE/log" | awk '{print $3}' | tr '\n' ' ')" || :
+merged="$(grep '^landed ' "$STATE/log" | awk '{print $2}' | tr '\n' ' ')" || :
 [ "$merged" = "1 " ] || { echo "    the drain merged [$merged], not #1 alone:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1; }
-grep -q "^pr merge 1 --merge --match-head-commit $H1\$" "$STATE/log" \
-  || { echo "    #1 was not merged pinned to its head:"; grep '^pr merge' "$STATE/log"; exit 1; }
-if grep -qE '^pr merge (2|3) ' "$STATE/log"; then echo "    #2 or #3 reached the forge's merge"; exit 1; fi
+grep -q "^api -X PATCH repos/o/r/git/refs/heads/master -f sha=$H1 -F force=false\$" "$STATE/log" \
+  || { echo "    master was not fast-forwarded to #1's head:"; grep '^api -X\|^pr merge' "$STATE/log"; exit 1; }
+if grep -qE '^pr merge|^landed (2|3)$' "$STATE/log"; then echo "    #2 or #3 landed, or a merge commit was asked for"; exit 1; fi
 if grep -q ADMIN "$STATE/log"; then echo "    a call carried --admin"; exit 1; fi
 master="$(git -C "$ORIGIN" rev-parse master)"
 git -C "$ORIGIN" merge-base --is-ancestor "$H1" "$master" || { echo "    master does not contain #1's head"; exit 1; }

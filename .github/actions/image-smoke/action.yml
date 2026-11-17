@@ -1,0 +1,62 @@
+name: image-smoke
+description: >-
+  The deployment image is the deployment: it runs unprivileged, carries no Rust toolchain,
+  becomes ready, and names on /api/v1/live the commit it was built from. A green build of an
+  image that cannot serve, or that serves another commit, is not proof. One definition for
+  every workflow that publishes the image (docker-image.yml, release.yml), so the two cannot
+  come to mean different things by "the image works".
+inputs:
+  image:
+    description: a loaded image reference
+    required: true
+  commit:
+    description: the full commit the image must name on its liveness route
+    required: true
+  port:
+    description: the container port the deployment object declares (published on a free host port)
+    required: false
+    default: "8080"
+outputs:
+  ready-seconds:
+    description: seconds from `docker run` to the first ready answer
+    value: ${{ steps.smoke.outputs.ready-seconds }}
+runs:
+  using: composite
+  steps:
+    - id: smoke
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+        SHA: ${{ inputs.commit }}
+        PORT: ${{ inputs.port }}
+      run: |
+        set -eu
+        user="$(docker image inspect --format '{{.Config.User}}' "$IMAGE")"
+        case "$user" in ''|root|0|0:*) echo "::error::the image runs as '${user:-root}'"; exit 1 ;; esac
+        if docker run --rm --entrypoint sh "$IMAGE" -c 'command -v cargo || command -v rustc'; then
+          echo "::error::the runtime image carries a Rust toolchain"; exit 1
+        fi
+        # the container's declared port, published on whichever host port is free
+        cid="$(docker run -d -p "127.0.0.1::$PORT" "$IMAGE")"
+        trap 'docker logs "$cid" 2>&1 | tail -n 40; docker rm -f "$cid" >/dev/null' EXIT
+        url="http://$(docker port "$cid" "$PORT/tcp" | head -n 1)"
+        start="$(date +%s)"
+        until curl -fsS --max-time 2 "$url/api/v1/ready" > ready.json 2>/dev/null; do
+          [ "$(( $(date +%s) - start ))" -lt 60 ] || { echo "::error::not ready within 60 s"; exit 1; }
+          sleep 1
+        done
+        took="$(( $(date +%s) - start ))"
+        curl -fsS --max-time 2 "$url/api/v1/live" > live.json
+        # The commit must be the one asked for, and the tree it was built from must not be
+        # known dirty. `null` is a build that did not know (the release archives do not record
+        # it), which is reported rather than passed off as clean.
+        jq -e --arg c "$SHA" '.commit == $c and .dirty != true' live.json >/dev/null \
+          || { echo "::error::expected commit $SHA from a clean tree, the image says $(jq -c '{commit,dirty}' live.json)"; exit 1; }
+        if jq -e '.dirty == null' live.json >/dev/null; then
+          echo "::warning::the executable does not know whether its tree was dirty (dirty: null)"
+        fi
+        jq -e --arg c "$SHA" '.ready == true and .commit == $c and .capabilities > 0 and .objects > 0' ready.json >/dev/null \
+          || { echo "::error::not ready: $(cat ready.json)"; exit 1; }
+        echo "ready in ${took} s: $(jq -c '{version,commit,capabilities,objects}' ready.json)"
+        echo "ready-seconds=$took" >> "$GITHUB_OUTPUT"
+        rm -f ready.json live.json

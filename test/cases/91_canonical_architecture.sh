@@ -71,6 +71,15 @@ expect_exit 0 "$RB" bench objects.get --transport direct --profile quick --check
 expect_grep 'no baseline for'
 expect_exit 0 "$RB" bench baseline update --profile quick
 expect_grep '\.ai/repo/benchmarks/rust/baseline\.'
+# The recorded baseline is raised to ten seconds per metric before the check reads it. Holding
+# a second measurement of a ~1 ms target to the first was a verdict on the runner: on #857
+# (job 113934888718) a runner that took 733 s over this 25 s case read p50 0.966 -> 2.824 ms,
+# +192%, and the check refused a tree nothing had changed in. `within policy` is the gate's
+# answer to a measurement under its baseline; that the gate refuses a real regression is
+# held where the baseline is lowered, in tests/bench_baseline.rs and case 82.
+for b in .ai/repo/benchmarks/rust/baseline.*.json; do
+  jq -c '.results |= map(.stats |= with_entries(if (.key | endswith("_us")) then .value = 10000000 else . end))' "$b" > "$b.tmp" && mv "$b.tmp" "$b"
+done
 expect_exit 0 "$RB" bench objects.get --transport direct --profile quick --check --no-write
 expect_grep 'within policy'
 

@@ -1,0 +1,43 @@
+id: I3947
+milestone: ci-critical-path
+title: "A plan asked at a tier selects only the lanes that tier runs, and both readers of the CI model agree on it"
+slug: a-tier-selects-its-lanes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give scripts/ci-plan a --tier T option and the executable's model::plan a tier argument, fed from gates.completion's new tier input the way on_demand is. A plan asked at tier T leaves out every gate whose lane is not in T's entry of the model's tiers map, with the reason `lane L: not in the T tier` in both readers, and neither implies nor requires brings such a gate back. Without a tier every lane is planned as before; a model without tiers, or a tier the model does not declare, is refused as a usage error in the same words by both readers. Slice S4 of I2350."
+why: "ADR 0186, accepted by the owner on 2026-10-23, makes a pull request's required verdict the feedback lane and has the proof lane judge the combined top before it lands. I3946 gave every gate a lane and the model its tiers, and selects nothing by them. Until a plan can be asked at a tier, the workflow (slice S5) has nothing to ask for. Two readers of one model must give the same plan, so the filter is placed at the same point in both, with the same words, and case 131 compares them at every declared tier."
+current_state: "On train 5 (22cecde111e) with I3946 applied, every gate declares a lane and the model declares the four tiers local, pull-request, integration and release, but neither reader selects by them. scripts/ci-plan has no --tier option and model::plan has no tier argument."
+desired_state: "scripts/ci-plan --tier T and gates.completion {tier: T} plan the same gates with the same reasons at every tier the model declares. The tier is decided first for each gate: before the on-demand rule, so it is the reason a gate gives and --on-demand cannot undo it; before implies and requires, which skip a gate the tier left out; and before subsumed-by, so a subsuming gate the tier left out subsumes nothing and the gate it would have replaced still runs. With no tier the plan is byte-identical to the plan before this issue. GateModel::tier refuses an undeclared tier, naming the declared ones in byte order, and a model without tiers, in ci-plan's words; ci-plan exits 2 on both. The workflow and pre-push are not wired to tiers."
+scope:
+  - "scripts/ci-plan"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "apps/majordomus-cli/src/gates/mod.rs"
+  - "apps/majordomus-cli/src/gates/judge.rs"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "test/cases/3947_a_tier_selects_its_lanes.sh"
+  - "test/cases/94_ci_plan.sh"
+  - "test/cases/131_completion_gates.sh"
+  - ".ai/repo/project/issues/I3947.yaml"
+non_scope:
+  - "Wiring .github/workflows/validate.yml, the pre-push hook or the landing seat to a tier: slice S5 of I2350"
+  - "Reusing a gate whose inputs did not change as inputs_unchanged (ADR 0186's other half)"
+  - "Refusing a model in which a gate requires a gate of a lane that some tier running the requirer does not run; this model has no such pair today"
+  - "Running majordomus generate for the new tier field of the gates.completion input schema; the train that carries this issue derives once"
+acceptance_criteria:
+  - "scripts/ci-plan --full --tier pull-request leaves every proof-lane gate of the repository's model out with the reason `lane proof: not in the pull-request tier`, and --tier integration plans it as without a tier"
+  - "On a fixture where a feedback gate implies, requires and is subsumed by proof gates, the pull-request tier plans the feedback gates and none of the proof gates, and the integration tier applies implies, requires and subsumed-by as without tiers, in both readers"
+  - "A tier the model does not declare and any tier of a model without tiers are refused by ci-plan (exit 2) and by gates.completion (invalid input) with the same text"
+  - "Case 131 compares both readers' selected sets and every gate's reason under each declared tier; the plan without a tier is unchanged"
+  - "Unit tests in model.rs cover GateModel::tier, Tier::excludes and every branch of the tier filter in model::plan"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3947_a_tier_selects_its_lanes 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found"
+  - "scripts/ci-plan --check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_tier_selects_its_lanes_test"
+depends_on:
+  - I3946
+created_at: 2026-10-23
+updated_at: 2026-10-23

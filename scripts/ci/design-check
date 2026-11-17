@@ -37,7 +37,7 @@
 #
 #   share/design/*.css, apps/majordomus-cli/src/web/tokens.css
 #       the generated projections themselves. They are made of literals; that is their job.
-#   */vendor/*, share/cockpit/cockpit.css, site/static/app.css
+#   */vendor/*, share/cockpit/cockpit.css, share/ui/ui.css, site/static/app.css
 #       third-party bytes and compiled artifacts. Neither is written here.
 #   share/design/brand/*.svg
 #       the canonical marks. A favicon cannot reach a custom property — a browser renders
@@ -89,7 +89,7 @@ first_party() { # the files a person writes that can put something on a screen
   printf '%s\n' "$tracked" | grep -E '\.(css|html|rs|js|mjs|tera)$' | grep -vE \
     -e '^share/design/[^/]+\.css$' -e '^apps/majordomus-cli/src/web/tokens\.css$' \
     -e '^apps/majordomus-cli/src/design/.*\.rs$' \
-    -e '/vendor/' -e '^share/cockpit/cockpit\.css$' -e '^site/static/app\.css$' -e '^node_modules/' \
+    -e '/vendor/' -e '^share/cockpit/cockpit\.css$' -e '^share/ui/ui\.css$' -e '^site/static/app\.css$' -e '^node_modules/' \
     -e '^scripts/lib/ui-contrast\.mjs$' -e '^scripts/lib/ui\.test\.mjs$' -e '^scripts/lib/cockpit-probe\.mjs$' \
     -e '^scripts/ci/design-check$' || true
 }
@@ -178,7 +178,7 @@ done
 echo "== 6. every copy of the brand is the canonical file"
 mark="share/design/brand/logo-mark.svg"; logo="share/design/brand/logo.svg"; social="share/design/brand/social-card.png"
 strip_banner() { sed '1,/-->/{/^<!-- GENERATED FILE/,/-->/d;}' "$1"; }
-for copy in apps/majordomus-cli/src/cockpit/logo-mark.svg share/cockpit/favicon.svg site/static/favicon.svg site/static/images/logo-mark.svg; do
+for copy in apps/majordomus-cli/src/cockpit/logo-mark.svg share/cockpit/favicon.svg share/ui/favicon.svg site/static/favicon.svg site/static/images/logo-mark.svg; do
   [ -f "$copy" ] || { fail "$copy  missing: run majordomus generate design"; continue; }
   cmp -s <(strip_banner "$copy") "$mark" || fail "$copy  differs from $mark: run majordomus generate design"
 done
@@ -190,7 +190,7 @@ if [ -f site/static/images/social-card.png ]; then
 fi
 # no other svg in the tree is a mark of its own: an icon a template inlines is fine, a copy
 # of the brand under another name is not
-for svg in $(printf '%s\n' "$tracked" | grep -E '\.svg$' | grep -vE '^share/design/brand/|^apps/majordomus-cli/src/cockpit/logo-mark\.svg$|^share/cockpit/favicon\.svg$|^site/static/favicon\.svg$|^site/static/images/'); do
+for svg in $(printf '%s\n' "$tracked" | grep -E '\.svg$' | grep -vE '^share/design/brand/|^apps/majordomus-cli/src/cockpit/logo-mark\.svg$|^share/cockpit/favicon\.svg$|^share/ui/favicon\.svg$|^site/static/favicon\.svg$|^site/static/images/'); do
   fail "$svg  a mark outside share/design/brand; the generator writes every copy"
 done
 

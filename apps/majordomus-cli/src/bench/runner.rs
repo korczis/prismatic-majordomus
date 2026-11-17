@@ -4,6 +4,13 @@
 //! `GET`, the JSON body of a `POST`, a `tools/call` frame), so a benchmark exercises the
 //! adapter it claims to. Cold and warm cache modes are measured for a cached capability;
 //! a fresh process is spawned per sample for the process-cold system target.
+//!
+//! The socket serves what `serve` serves: the Cockpit and the UI beside the API. It is
+//! served twice when a target asks for it, once over the context the runner holds
+//! (pinned, nothing re-read) and once over a live view of the same repository, the one a
+//! shared server answers from, so that a page timed over the live view pays the
+//! per-request generation check — the stamp of the watched git control files, and a
+//! reload when they moved — that a pinned context never does.
 
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -13,12 +20,14 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use crate::capability::{CachePolicy, CapabilityError, Context};
+use crate::cli::{DiscoveryMode, RepoArgs};
 use crate::error::{Error, Result};
 use crate::http::server;
 use crate::http::Router;
+use crate::live::Live;
 use crate::mcp::bridge;
 
-use super::projection::{BenchmarkTarget, TargetKind, Transport};
+use super::projection::{BenchmarkTarget, TargetKind, Transport, View};
 use super::results::{BenchmarkResult, CacheMode};
 use super::stats::Statistics;
 use super::system::SystemTarget;
@@ -32,8 +41,13 @@ pub struct Profile {
     pub warmup: usize,
     /// Samples per target and cache mode.
     pub samples: usize,
-    /// Processes spawned for the process-cold target.
+    /// Processes spawned for the process-cold target, and samples per cache mode of a
+    /// deferred panel: the targets whose one sample costs what a whole quick run does.
     pub cold_spawns: usize,
+    /// Are the UI's deferred panels measured? Their sources (the integration queue, the
+    /// delivery report) are the reason the UI defers them, and one sample of one of them
+    /// takes longer than every other target together; only `full` admits them.
+    pub deferred: bool,
 }
 
 impl Profile {
@@ -43,6 +57,7 @@ impl Profile {
         warmup: 3,
         samples: 20,
         cold_spawns: 2,
+        deferred: false,
     };
     /// Stable evidence.
     pub const FULL: Profile = Profile {
@@ -50,6 +65,7 @@ impl Profile {
         warmup: 10,
         samples: 200,
         cold_spawns: 10,
+        deferred: true,
     };
     /// Structural gates plus a conservative measurement.
     pub const CI: Profile = Profile {
@@ -57,6 +73,7 @@ impl Profile {
         warmup: 5,
         samples: 50,
         cold_spawns: 3,
+        deferred: false,
     };
 
     /// By name.
@@ -68,13 +85,44 @@ impl Profile {
             _ => None,
         }
     }
+
+    /// Does this profile measure the target? Every target but a deferred panel, which only
+    /// a profile that admits deferred panels does.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::{BenchmarkTarget, Profile, TargetKind, View};
+    /// let panel = BenchmarkTarget {
+    ///     key: "system.http.ui.panels.drain".into(),
+    ///     kind: TargetKind::Page {
+    ///         route: "/ui/panels/drain".into(),
+    ///         view: View::Pinned,
+    ///         deferred: true,
+    ///     },
+    /// };
+    /// assert!(!Profile::QUICK.admits(&panel) && !Profile::CI.admits(&panel));
+    /// assert!(Profile::FULL.admits(&panel));
+    /// ```
+    pub fn admits(&self, target: &BenchmarkTarget) -> bool {
+        self.deferred || !target.is_deferred()
+    }
 }
+
+/// How long one page request may take before the run fails: a screen, and a deferred
+/// panel, whose source is the slow one by definition (a cold integration queue has taken
+/// 158 s on a loaded machine).
+const PAGE_TIMEOUT: Duration = Duration::from_secs(120);
+const DEFERRED_TIMEOUT: Duration = Duration::from_secs(900);
 
 /// Times targets against one context.
 pub struct Runner {
     ctx: Arc<Context>,
     profile: Profile,
     http: Option<server::Running>,
+    /// The second socket, over the live view, started on the first target that needs it.
+    live_http: Option<(Arc<Live>, server::Running)>,
+    /// How the live view re-reads the repository when git moves it; derived from the
+    /// context when not given.
+    repo_args: Option<RepoArgs>,
     mcp: Option<McpChild>,
     /// The executable to spawn for MCP: this one, unless a test says otherwise.
     executable: std::path::PathBuf,
@@ -92,6 +140,8 @@ impl Runner {
             ctx,
             profile,
             http: None,
+            live_http: None,
+            repo_args: None,
             mcp: None,
             executable: std::env::current_exe().unwrap_or_else(|_| "majordomus".into()),
             repo_root: repo_root.to_path_buf(),
@@ -109,6 +159,36 @@ impl Runner {
     /// The share directory the MCP child reads (`MAJORDOMUS_SHARE`); the parent's.
     pub fn with_share(mut self, share: std::path::PathBuf) -> Self {
         self.share = Some(share);
+        self
+    }
+
+    /// How the live view reloads the repository: the arguments the process read it with,
+    /// so that a reload discovers the same root, distribution and discovery mode.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::{BenchmarkProjection, Profile, Runner};
+    /// use majordomus_cli::cli::RepoArgs;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let projection = BenchmarkProjection::from_context(&ctx);
+    /// let live = projection
+    ///     .targets
+    ///     .iter()
+    ///     .find(|t| t.key == "system.http.live.index")
+    ///     .unwrap();
+    /// let tiny = Profile { name: "doc", warmup: 0, samples: 2, cold_spawns: 1, deferred: false };
+    /// let args = RepoArgs {
+    ///     repo: Some(repo.root().to_path_buf()),
+    ///     ..RepoArgs::default()
+    /// };
+    /// let mut runner = Runner::new(ctx, tiny, repo.root()).with_repo_args(args);
+    /// // the live socket is served over a view started from these arguments
+    /// assert_eq!(runner.run(live).unwrap()[0].stats.samples, 2);
+    /// runner.finish();
+    /// ```
+    pub fn with_repo_args(mut self, args: RepoArgs) -> Self {
+        self.repo_args = Some(args);
         self
     }
 
@@ -170,7 +250,124 @@ impl Runner {
                 stats: self.system(*system)?,
                 handler_invocations: None,
             }]),
+            TargetKind::Page {
+                route,
+                view,
+                deferred,
+            } => {
+                let mut out = Vec::new();
+                for mode in [CacheMode::Cold, CacheMode::Warm] {
+                    out.push(BenchmarkResult {
+                        key: target.key.clone(),
+                        kind: target.kind.clone(),
+                        cache_mode: mode,
+                        stats: self.page(&target.key, route, *view, *deferred, mode)?,
+                        handler_invocations: None,
+                    });
+                }
+                Ok(out)
+            }
         }
+    }
+
+    /// One page of the UI as a browser asks for it. Cold clears the capability cache of
+    /// the context the page will be answered from before every sample, warm leaves it;
+    /// most of a screen's sources are uncached, so the two differ by what is cached. A
+    /// deferred panel takes `cold_spawns` samples after one warm-up, the budget of the
+    /// other targets whose one sample is a whole run's worth.
+    fn page(
+        &mut self,
+        key: &str,
+        route: &str,
+        view: View,
+        deferred: bool,
+        mode: CacheMode,
+    ) -> Result<Statistics> {
+        let (warmup, samples, timeout) = if deferred {
+            (
+                self.profile.warmup.min(1),
+                self.profile.cold_spawns.max(1),
+                DEFERRED_TIMEOUT,
+            )
+        } else {
+            (self.profile.warmup, self.profile.samples, PAGE_TIMEOUT)
+        };
+        let headers = [("Accept", "text/html")];
+        match view {
+            View::Pinned => {
+                let url = self.http_server()?;
+                let ctx = Arc::clone(&self.ctx);
+                let clear = move || {
+                    if mode == CacheMode::Cold {
+                        ctx.executor.clear();
+                    }
+                };
+                time_requests(
+                    &url, "GET", route, &headers, None, timeout, warmup, samples, clear,
+                )
+            }
+            View::Live => {
+                let url = self.live_server()?;
+                let live = self.live_http.as_ref().map(|(l, _)| Arc::clone(l));
+                let before = live.as_ref().map(|l| l.generation());
+                let clear = {
+                    let live = live.clone();
+                    move || {
+                        if mode == CacheMode::Cold {
+                            if let Some(live) = &live {
+                                // the context the next request will be answered from; taking
+                                // it stamps the repository, outside the timed request
+                                live.current().executor.clear();
+                            }
+                        }
+                    }
+                };
+                let stats = time_requests(
+                    &url, "GET", route, &headers, None, timeout, warmup, samples, clear,
+                )?;
+                if let (Some(live), Some(before)) = (live, before) {
+                    let reloads = live.generation() - before;
+                    if reloads > 0 {
+                        // a reload inside the samples is part of what serving costs, and a
+                        // reader of an outlier must be able to tell it from the code
+                        tracing::warn!(
+                            target = key,
+                            reloads,
+                            "the repository moved during the samples: the live view reloaded"
+                        );
+                    }
+                }
+                Ok(stats)
+            }
+        }
+    }
+
+    /// The socket over the live view, as `serve` builds it: the Cockpit and the UI over a
+    /// [`Live`] that follows the repository the runner's context was read from.
+    fn live_server(&mut self) -> Result<String> {
+        if self.live_http.is_none() {
+            let args = self.repo_args.clone().unwrap_or_else(|| RepoArgs {
+                repo: Some(self.repo_root.clone()),
+                discovery: if self.ctx.index.repository.discovery == "filesystem" {
+                    DiscoveryMode::Filesystem
+                } else {
+                    DiscoveryMode::Vcs
+                },
+                strict: false,
+                share: self.share.clone(),
+            });
+            let live = Arc::new(Live::watching(args, Arc::clone(&self.ctx)));
+            let bound = server::bind("127.0.0.1", 0)?;
+            let router = Router::new(Arc::clone(&live), crate::VERSION)
+                .with_cockpit(self.share.as_deref())
+                .with_ui(self.share.as_deref());
+            self.live_http = Some((live, bound.start(router)));
+        }
+        Ok(self
+            .live_http
+            .as_ref()
+            .map(|(_, r)| r.url())
+            .unwrap_or_default())
     }
 
     /// The executor, in process. Cold clears the cache before every sample.
@@ -245,11 +442,12 @@ impl Runner {
     fn http_server(&mut self) -> Result<String> {
         if self.http.is_none() {
             let bound = server::bind("127.0.0.1", 0)?;
-            // with the Cockpit, so that the pages measured here are the pages served: the
-            // share directory is the one the runner was given, and without one the Cockpit
-            // renders unstyled markup, which is the same work
+            // with the Cockpit and the UI, so that the pages measured here are the pages
+            // served: the share directory is the one the runner was given, and without one
+            // the pages render unstyled markup, which is the same work
             let router = Router::new(Arc::clone(&self.ctx), crate::VERSION)
-                .with_cockpit(self.share.as_deref());
+                .with_cockpit(self.share.as_deref())
+                .with_ui(self.share.as_deref());
             self.http = Some(bound.start(router));
         }
         Ok(self.http.as_ref().map(|r| r.url()).unwrap_or_default())
@@ -280,38 +478,22 @@ impl Runner {
             _ => (path.to_string(), Some(input.to_string())),
         };
         let ctx = Arc::clone(&self.ctx);
-        let once = || -> Result<Duration> {
+        let clear = move || {
             if mode == CacheMode::Cold {
                 ctx.executor.clear();
             }
-            let t = Instant::now();
-            let reply = bridge::request(
-                &url,
-                method,
-                &target,
-                headers,
-                body.as_deref(),
-                Duration::from_secs(30),
-            )
-            .map_err(|e| Error::Http {
-                reason: format!("{method} {target}: {e}"),
-            })?;
-            let elapsed = t.elapsed();
-            if reply.status >= 500 {
-                return Err(Error::Http {
-                    reason: format!("{method} {target}: status {}", reply.status),
-                });
-            }
-            Ok(elapsed)
         };
-        for _ in 0..self.profile.warmup {
-            once()?;
-        }
-        let mut samples = Vec::with_capacity(self.profile.samples);
-        for _ in 0..self.profile.samples {
-            samples.push(once()?);
-        }
-        Ok(Statistics::of(&samples))
+        time_requests(
+            &url,
+            method,
+            &target,
+            headers,
+            body.as_deref(),
+            Duration::from_secs(30),
+            self.profile.warmup,
+            self.profile.samples,
+            clear,
+        )
     }
 
     fn mcp_child(&mut self) -> Result<&mut McpChild> {
@@ -426,11 +608,14 @@ impl Runner {
             | SystemTarget::HttpSwagger
             | SystemTarget::HttpCockpitOverview
             | SystemTarget::HttpCockpitCapabilities
-            | SystemTarget::HttpCockpitGraph => {
+            | SystemTarget::HttpCockpitGraph
+            | SystemTarget::HttpIndexLive => {
                 // the mounts come from the surfaces that declare them, so a route that
                 // moves moves its benchmark with it
                 let path = match target {
-                    SystemTarget::HttpIndex | SystemTarget::HttpHome => "/",
+                    SystemTarget::HttpIndex
+                    | SystemTarget::HttpHome
+                    | SystemTarget::HttpIndexLive => "/",
                     SystemTarget::HttpOpenApi => crate::http::swagger::SPEC_PATH,
                     SystemTarget::HttpCockpitOverview => crate::cockpit::PREFIX,
                     SystemTarget::HttpCockpitCapabilities => "/cockpit/capabilities",
@@ -443,6 +628,20 @@ impl Runner {
                     SystemTarget::HttpHome => &[("Accept", "text/html")],
                     _ => &[],
                 };
+                if target == SystemTarget::HttpIndexLive {
+                    let url = self.live_server()?;
+                    return time_requests(
+                        &url,
+                        "GET",
+                        path,
+                        headers,
+                        None,
+                        Duration::from_secs(30),
+                        profile.warmup,
+                        profile.samples,
+                        || {},
+                    );
+                }
                 self.http_with("GET", path, &json!({}), CacheMode::NotApplicable, headers)
             }
         }
@@ -456,7 +655,51 @@ impl Runner {
         if let Some(http) = self.http.take() {
             http.stop();
         }
+        if let Some((_, http)) = self.live_http.take() {
+            http.stop();
+        }
     }
+}
+
+/// `warmup` requests, then `samples` timed ones, over a fresh connection each, with
+/// `before` run ahead of every request and outside its time. A status of 500 or more
+/// fails the run: a refusal is an answer and is timed, an internal failure is not.
+#[allow(clippy::too_many_arguments)]
+fn time_requests(
+    url: &str,
+    method: &str,
+    target: &str,
+    headers: &[(&str, &str)],
+    body: Option<&str>,
+    timeout: Duration,
+    warmup: usize,
+    samples: usize,
+    before: impl Fn(),
+) -> Result<Statistics> {
+    let once = || -> Result<Duration> {
+        before();
+        let t = Instant::now();
+        let reply = bridge::request(url, method, target, headers, body, timeout).map_err(|e| {
+            Error::Http {
+                reason: format!("{method} {target}: {e}"),
+            }
+        })?;
+        let elapsed = t.elapsed();
+        if reply.status >= 500 {
+            return Err(Error::Http {
+                reason: format!("{method} {target}: status {}", reply.status),
+            });
+        }
+        Ok(elapsed)
+    };
+    for _ in 0..warmup {
+        once()?;
+    }
+    let mut taken = Vec::with_capacity(samples);
+    for _ in 0..samples {
+        taken.push(once()?);
+    }
+    Ok(Statistics::of(&taken))
 }
 
 /// The query string a `GET` route binds: every top-level property, scalars as text.

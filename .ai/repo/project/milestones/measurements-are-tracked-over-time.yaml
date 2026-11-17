@@ -1,0 +1,29 @@
+id: measurements-are-tracked-over-time
+title: Coverage and CI cost are kept, exported and drawn over time, from the one measurement each has
+slug: measurements-are-tracked-over-time
+order: 126
+priority: p1
+problem: "Coverage is measured on every run and kept nowhere: scripts/rust-coverage's export is a 14-day artifact, no format another tool reads is written, nothing is uploaded, and no history or graph exists. CI cost is the same: ci-timings reads only the open pull requests' latest observation, so a regression of a job's minutes or a gate's pass rate is seen by a person reading runs, not by the repository. The owner's order of 2026-10-22 asks for coverage and pipeline telemetry that can be analysed, improved and connected to Coveralls, Codecov and OpenTelemetry."
+outcome: "Every master run's coverage and CI cost is kept as a derived series, exported in LCOV and Cobertura from the one measurement docs/COVERAGE.md requires, uploaded to Coveralls and Codecov when their secrets exist, drawn on the site and in the Cockpit, and emitted as OpenTelemetry when an endpoint is configured; no number differs between the gate, the export and the graph."
+current_state: "rust-coverage writes one JSON export per run; validate.yml uploads it for 14 days; .ai/repo/ci/suite-durations.tsv is the only kept CI cost, refreshed by hand."
+desired_state: "LCOV and Cobertura exports of the one measurement (I3932); a coverage and CI-cost series per master run with graphs (I3933); OpenTelemetry traces of CI runs (I3934) and of agent sessions (I3935) when an endpoint is configured; every external upload skipped, never failed, without its secret."
+scope:
+  - scripts/rust-coverage
+  - .github/workflows/validate.yml
+  - docs/COVERAGE.md
+  - test/cases
+  - .ai/repo/project
+non_scope:
+  - A second coverage counter, threshold or parser anywhere
+  - Sending anything outside the repository without the owner's secret configured for it
+  - Changing any gate's verdict
+acceptance_criteria:
+  - "The export, the gate and the graph give the same line totals for the same run, shown by a case"
+  - "A master run's coverage and CI cost are in the series without anyone running a command"
+  - "With no secret or endpoint configured, every upload and export step is skipped and the run's verdict is unchanged"
+validation:
+  - bin/majordomus plan validate
+evidence_required:
+  - suite
+created_at: 2026-10-22
+updated_at: 2026-10-22

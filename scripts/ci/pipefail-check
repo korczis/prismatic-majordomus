@@ -24,8 +24,11 @@
 #   scripts/ci/pipefail-check --write-baseline  record today's set (a deliberate act)
 #   scripts/ci/pipefail-check --strict          fail on any script without pipefail
 #
+# A script that does set pipefail is read once more, for the one pipeline pipefail itself
+# breaks: a printf or echo piped into `grep -q`, which is refused wherever it appears.
+#
 # Exit: 0 clean or unchanged, 10 a script the baseline does not have (or any under
-# --strict), 12 unusable.
+# --strict), or a printf or echo piped into grep -q under pipefail, 12 unusable.
 set -eu
 set -o pipefail
 
@@ -93,6 +96,24 @@ if [ -s /tmp/pipefail-new.$$ ]; then
   rc=10
 fi
 rm -f /tmp/pipefail-new.$$
+
+# The converse trap, in the scripts that do set pipefail: `printf '%s\n' "$list" | grep -q
+# "$key"` stops reading at its first match, the printf still writing gets SIGPIPE, and the
+# pipeline returns 141 — a match read as no match. It shows only under load: case 547 on the
+# 0.30.1 top, and the same spelling sat in collision-gate, pages-check and generate-site-data
+# (I3949). A here-string has no second process to kill, so it is the one spelling accepted.
+# Refused outright, not ratcheted: no script carries one any more.
+races="$(measured | while IFS= read -r f; do
+  grep -q 'pipefail' "$f" || continue
+  { grep -nE '(^|[^[:alnum:]_])(printf|echo)([[:space:]][^|]*)?\|[[:space:]]*grep[[:space:]]+-[A-Za-z]*q' "$f" \
+    || true; } | { grep -vE '^[0-9]+:[[:space:]]*#' || true; } | awk -v f="$f" '{ print f ":" $0 }'
+done)"
+if [ -n "$races" ]; then
+  echo "pipefail-check: a printf or echo piped into grep -q fails with 141 when grep stops first:"
+  while IFS= read -r r; do echo "  RACE $r"; done <<<"$races"
+  echo "  give grep the text as a here-string: grep -q -e \"\$key\" <<<\"\$list\""
+  rc=10
+fi
 
 # a baseline entry that has since been fixed: report, never fail
 grep -v '^#' "$BASELINE" | grep -v '^$' | while IFS= read -r f; do

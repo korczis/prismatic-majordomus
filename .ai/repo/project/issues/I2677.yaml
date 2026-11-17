@@ -1,0 +1,31 @@
+id: I2677
+milestone: development-runtime
+title: "The build cache is documented, governed by a rule and described on the site and the Pages"
+slug: the-build-cache-is-documented-governed-and-on-the-site
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Say once, derived, what the cache is, how a node offers and uses it and how to see it, on the handbook, the site and the landing's account of how the cluster compiles."
+why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157."
+current_state: "Measured on master b29cf4e487 on 2026-10-13: the docs describe sharing between worktrees only."
+desired_state: "docs/BUILD_CACHE.md, a project rule that a build never depends on the cache, the site page and the Pages, all generated from the canonical model and rule."
+scope:
+  - "docs/BUILD_CACHE.md"
+  - ".ai/repo/rules/project/"
+  - "site/"
+non_scope:
+  - "Private addresses in any public page"
+depends_on:
+  - I2672
+acceptance_criteria:
+  - "Public pages carry no private address or key"
+  - "The rule is enforced by the case of I2676"
+  - "majordomus generate --check and scripts/pages current are clean"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus generate --check"
+  - "scripts/pages current"
+evidence_required:
+  - "docs_and_rule"
+created_at: 2026-10-13
+updated_at: 2026-10-13

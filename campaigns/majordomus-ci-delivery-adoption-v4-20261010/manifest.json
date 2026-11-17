@@ -1,0 +1,141 @@
+{
+  "title": "Majordomus CI Delivery Adoption V4",
+  "created": "2026-10-10",
+  "repository": "korczis/prismatic-majordomus",
+  "entry": "00-EXECUTE.md",
+  "extends": [
+    "majordomus-ci-under-5min-20261010",
+    "majordomus-autonomous-delivery-v2-20261010",
+    "majordomus-rapid-delivery-living-site-v3-20261010"
+  ],
+  "milestones": [
+    {
+      "id": "M01",
+      "file": "01-LIVE-INVENTORY.md",
+      "issues": [
+        "V4-01-01",
+        "V4-01-02",
+        "V4-01-03",
+        "V4-01-04",
+        "V4-01-05"
+      ]
+    },
+    {
+      "id": "M02",
+      "file": "02-FAST-VERDICT.md",
+      "issues": [
+        "V4-02-01",
+        "V4-02-02",
+        "V4-02-03",
+        "V4-02-04"
+      ]
+    },
+    {
+      "id": "M03",
+      "file": "03-CACHE-AND-BUILDS.md",
+      "issues": [
+        "V4-03-01",
+        "V4-03-02",
+        "V4-03-03",
+        "V4-03-04"
+      ]
+    },
+    {
+      "id": "M04",
+      "file": "04-SUITE-AND-DERIVE.md",
+      "issues": [
+        "V4-04-01",
+        "V4-04-02",
+        "V4-04-03",
+        "V4-04-04"
+      ]
+    },
+    {
+      "id": "M05",
+      "file": "05-AI-POLICY-MIGRATION.md",
+      "issues": [
+        "V4-05-01",
+        "V4-05-02",
+        "V4-05-03",
+        "V4-05-04"
+      ]
+    },
+    {
+      "id": "M06",
+      "file": "06-TOOLING-AND-MESH.md",
+      "issues": [
+        "V4-06-01",
+        "V4-06-02",
+        "V4-06-03",
+        "V4-06-04"
+      ]
+    },
+    {
+      "id": "M07",
+      "file": "07-DOCS-AND-UX.md",
+      "issues": [
+        "V4-07-01",
+        "V4-07-02",
+        "V4-07-03",
+        "V4-07-04"
+      ]
+    },
+    {
+      "id": "M08",
+      "file": "08-RELEASE-ROLLOUT.md",
+      "issues": [
+        "V4-08-01",
+        "V4-08-02",
+        "V4-08-03",
+        "V4-08-04"
+      ]
+    },
+    {
+      "id": "M09",
+      "file": "09-VALIDATION-AND-CLOSEOUT.md",
+      "issues": [
+        "V4-09-01",
+        "V4-09-02",
+        "V4-09-03",
+        "V4-09-04"
+      ]
+    }
+  ],
+  "dependencies": {
+    "M01": [],
+    "M02": [
+      "M01"
+    ],
+    "M03": [
+      "M01"
+    ],
+    "M04": [
+      "M01",
+      "M03"
+    ],
+    "M05": [
+      "M02",
+      "M04"
+    ],
+    "M06": [
+      "M02",
+      "M05"
+    ],
+    "M07": [
+      "M05",
+      "M06"
+    ],
+    "M08": [
+      "M02",
+      "M03",
+      "M04",
+      "M05",
+      "M06",
+      "M07"
+    ],
+    "M09": [
+      "M08"
+    ]
+  },
+  "status": "PROMPT_PACK_ONLY_NOT_DEPLOYED"
+}

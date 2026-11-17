@@ -14,7 +14,14 @@
    Every colour is a role, a status or a tone of share/design/tokens.yaml: no literal colour
    and no bracketed size, because the design gate refuses both. The markup names what a
    thing is and never a utility class, because this file compiles only what is written in
-   it (source(none)). */
+   it (source(none)) — with one exception, which is not the UI's markup at all.
+
+   The bar above every screen is majordomus.dev's (project.the-ui-wears-the-sites-navbar): the
+   site's partial, rendered by the site's build and compiled into the executable
+   (apps/majordomus-cli/src/ui/navbar.rs). It is written in the site's utilities, so this file
+   compiles exactly the utilities that file names, from the same Tailwind, the same Flowbite
+   theme and the same generated tokens the site's app.css compiles them from; scripts/ui navbar
+   holds the result to the site's, style by style. */
 
 @import "tailwindcss" source(none);
 @import "flowbite/src/themes/default";
@@ -25,6 +32,10 @@
 @import "../../design/primitives.css";
 @import "../../design/kit.css";
 @plugin "flowbite/plugin";
+@source "../../../apps/majordomus-cli/src/ui/navbar.html";
+/* Flowbite's own sources, as its Tailwind 4 setup asks: the classes its components set
+   from script are emitted, and the output stays a function of the pinned version */
+@source "../../../node_modules/flowbite";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -64,6 +75,9 @@
   }
   .mj-ui-mono {
     @apply font-mono;
+    /* a path, a rule id or a command is one word to the browser: at phone width it breaks
+       rather than widening the page (two rule pages measured 356 and 400 px at 320) */
+    overflow-wrap: anywhere;
   }
   .mj-ui-dim {
     color: var(--mj-muted);
@@ -81,11 +95,18 @@
   .mj-ui-frame {
     @apply flex min-h-screen w-full min-w-0;
   }
+  /* On a wide screen the sidebar stays in view beneath the site's bar, which stays at the top:
+     ui.js writes the bar's height into --ui-bar as it changes (a measurement of this page, not
+     a token), and without the script the sidebar sticks to the top of the window as before. */
   .mj-ui-sidebar {
     @apply fixed inset-y-0 left-0 z-40 hidden w-64 flex-col gap-6 overflow-y-auto px-4 py-5;
-    @apply lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:shrink-0;
+    @apply lg:sticky lg:z-10 lg:flex lg:w-60 lg:shrink-0;
     background: var(--mj-raised);
     border-right: 1px solid var(--mj-line);
+    @variant lg {
+      top: var(--ui-bar, 0rem);
+      height: calc(100vh - var(--ui-bar, 0rem));
+    }
   }
   /* a narrow screen opens the sidebar from the menu button, with no script */
   .mj-ui-menu-toggle:checked ~ .mj-ui-frame .mj-ui-sidebar {
@@ -94,29 +115,6 @@
   .mj-ui-menu-toggle:focus-visible ~ .mj-ui-frame .mj-ui-menu-button {
     outline: 2px solid var(--mj-accent);
     outline-offset: 2px;
-  }
-  .mj-ui-brand {
-    @apply flex items-center gap-3 px-1 no-underline;
-    color: var(--mj-fg);
-  }
-  .mj-ui-mark {
-    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-1.5;
-    color: var(--mj-accent);
-    background: var(--mj-accent-soft);
-    border: 1px solid var(--mj-accent-line);
-  }
-  .mj-ui-mark > svg {
-    @apply h-full w-full;
-  }
-  .mj-ui-brand-text {
-    @apply flex min-w-0 flex-col leading-tight;
-  }
-  .mj-ui-brand-name {
-    @apply text-lg font-semibold tracking-tight;
-  }
-  .mj-ui-brand-sub {
-    @apply font-mono text-xs;
-    color: var(--mj-muted);
   }
   .mj-ui-nav-list {
     @apply m-0 grid list-none gap-1 p-0;
@@ -154,8 +152,10 @@
   .mj-ui-body {
     @apply flex min-w-0 flex-1 flex-col;
   }
+  /* below sm the search takes a row of its own, so it stays a target a thumb can hit; the bar
+     that stays at the top is the site's, above this one */
   .mj-ui-topbar {
-    @apply sticky top-0 z-30 flex items-center gap-3 px-4 py-3 lg:px-6;
+    @apply flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap lg:px-6;
     background: var(--mj-bg);
     border-bottom: 1px solid var(--mj-line);
   }
@@ -165,7 +165,7 @@
     border: 1px solid var(--mj-line);
   }
   .mj-ui-search {
-    @apply flex min-w-0 flex-1 items-center gap-2 rounded-xl px-3 sm:max-w-2xl;
+    @apply order-last flex min-w-0 flex-1 basis-full items-center gap-2 rounded-xl px-3 sm:order-none sm:basis-0 sm:max-w-2xl;
     background: var(--mj-raised);
     border: 1px solid var(--mj-line);
     color: var(--mj-muted);
@@ -176,6 +176,18 @@
   .mj-ui-search input {
     @apply min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm focus:ring-0;
     color: var(--mj-fg);
+  }
+  /* a filter form inside a panel (the Issues and Capabilities browsers) holds choices beside
+     its search: it wraps, and a choice whose options are long (a milestone with its title)
+     shrinks to the panel instead of widening the page */
+  .mj-ui-panel .mj-ui-search {
+    @apply flex-wrap basis-auto py-1.5 sm:max-w-none;
+  }
+  .mj-ui-panel .mj-ui-search > label {
+    @apply mb-0 flex min-w-0 max-w-full items-center gap-1;
+  }
+  .mj-ui-panel .mj-ui-search select {
+    @apply min-w-0 max-w-full truncate;
   }
   .mj-ui-tools {
     @apply ml-auto flex shrink-0 items-center gap-1 xl:ml-0;
@@ -236,6 +248,14 @@
   }
   .mj-ui-title {
     @apply text-3xl font-bold tracking-tight sm:text-4xl;
+  }
+  /* the screen's name above the title of the one record a screen shows */
+  .mj-ui-hero-titles {
+    @apply flex min-w-0 flex-col gap-0.5;
+  }
+  .mj-ui-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wide;
+    color: var(--mj-muted);
   }
   .mj-ui-tagline {
     @apply text-lg font-medium;
@@ -311,8 +331,11 @@
     background: var(--mj-raised);
     border: 1px solid var(--mj-line);
   }
+  /* a panel being fetched says so by its frame and the pointer, never by fading its text:
+     faded text fails the contrast it owes while it is read (axe, /ui/deployments) */
   .mj-ui-panel[aria-busy="true"] {
-    opacity: 0.7;
+    border-style: dashed;
+    cursor: progress;
   }
   .mj-ui-panel-head {
     @apply flex min-w-0 items-start justify-between gap-4;
@@ -379,6 +402,42 @@
   .mj-ui-empty {
     @apply text-sm;
     color: var(--mj-muted);
+    /* an empty or unobserved panel says why in the source's words, which can hold a key or a
+       path with no place to break: a runner's "this machine's key <64 hex digits> is not in
+       trust.allow" made /ui 578 px wide at 320 (run 39115660488) */
+    overflow-wrap: anywhere;
+  }
+
+  /* Prose a record carries (ui/prose.rs): a milestone's problem and outcome, a list of
+     acceptance criteria. Read as text, at a measure a sentence can be read at. */
+  /* A record's prose names paths and commands, which have no place to break: without this a
+     long one is wider than a phone and the page scrolls sideways. */
+  .mj-ui-prose {
+    @apply mb-3 max-w-prose text-sm leading-relaxed;
+    color: var(--mj-body);
+    overflow-wrap: anywhere;
+  }
+  .mj-ui-prose-list {
+    @apply mb-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed;
+    color: var(--mj-body);
+    overflow-wrap: anywhere;
+  }
+  /* a command to reproduce: the code whole, wrapped rather than scrolled, its copy button beside it (I3002) */
+  .mj-ui-command {
+    @apply flex min-w-0 items-start gap-2;
+  }
+  .mj-ui-command-text {
+    @apply m-0 min-w-0 flex-1 rounded-lg px-3 py-2 font-mono text-xs;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-code {
+    @apply rounded px-1 py-0.5 font-mono text-small;
+    background: var(--mj-sunken);
+    color: var(--mj-body);
   }
   .mj-ui-line {
     @apply mb-3 text-sm;
@@ -406,6 +465,12 @@
   }
   .mj-ui-badges {
     @apply flex flex-wrap gap-1;
+  }
+  /* a badge holding a long unbroken value (an intent id in a chip) shrinks with its row and
+     truncates inside, rather than widening the page: a flex item keeps its content's width
+     unless it is allowed to shrink (alpha.1 top, /ui/idd and /ui/roadmap at 320 px) */
+  .mj-ui-badges > * {
+    @apply min-w-0 max-w-full;
   }
 
   /* a meter: the bar is a picture of the two numbers written beside it */
@@ -453,8 +518,10 @@
     @apply text-2xl font-semibold;
     color: var(--mj-fg);
   }
+  /* at least 10rem wide, so on a narrow panel it wraps beneath the figure rather than
+     squeezing beside it, in one column that shrinks rather than overflows */
   .mj-ui-legend {
-    @apply m-0 grid min-w-0 flex-1 list-none gap-2 p-0;
+    @apply m-0 grid min-w-0 flex-1 basis-40 list-none grid-cols-1 gap-2 p-0;
   }
   .mj-ui-legend-item {
     @apply flex items-center gap-2 text-sm;
@@ -518,16 +585,107 @@
     overflow-wrap: anywhere;
   }
 
-  /* a relationship graph: the canvas once the script has drawn it, the table before */
+  /* a relationship graph: the canvas once the script has drawn it, the table before. The
+     script adds the view's buttons (top right), the card that names the node pointed at and
+     the keys note; the canvas fades in once, and a graph the minute's refresh draws again
+     (`--again`) does not fade again */
+  .mj-ui-graph {
+    @apply relative;
+  }
   .mj-ui-graph-canvas {
-    @apply h-96 w-full rounded-xl;
+    @apply h-96 w-full rounded-lg;
     background:
       radial-gradient(70% 70% at 50% 40%, var(--mj-accent-soft), transparent 75%),
       var(--mj-sunken);
     border: 1px solid var(--mj-line);
   }
+  .mj-ui-graph-canvas:focus-visible {
+    outline-offset: -2px;
+  }
+  .mj-ui-graph--drawn .mj-ui-graph-canvas {
+    animation: mj-ui-graph-in calc(var(--mj-motion-fast) * 2) ease-out;
+  }
+  .mj-ui-graph--again .mj-ui-graph-canvas {
+    animation: none;
+  }
+  @keyframes mj-ui-graph-in {
+    from {
+      opacity: 0;
+    }
+  }
   .mj-ui-graph--drawn .mj-ui-graph-fallback {
     @apply mt-4;
+  }
+  /* zoom out, zoom in, fit: one segmented group of the kit's buttons */
+  .mj-ui-graph-tools {
+    @apply absolute right-2 top-2 z-10 inline-flex overflow-hidden rounded-md;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    box-shadow: 0 1px 2px color-mix(in oklch, var(--mj-fg) 8%, transparent);
+  }
+  .mj-ui-graph-tools .mj-button {
+    @apply min-w-8 cursor-pointer rounded-none border-0 px-2.5 py-1 text-center tabular-nums;
+    background: var(--mj-raised);
+    color: var(--mj-body);
+    transition: background-color var(--mj-motion-fast), color var(--mj-motion-fast);
+  }
+  .mj-ui-graph-tools .mj-button + .mj-button {
+    border-left: 1px solid var(--mj-line);
+  }
+  .mj-ui-graph-tools .mj-button:hover {
+    background: var(--mj-accent-soft);
+    color: var(--mj-accent-strong);
+  }
+  .mj-ui-graph-tools .mj-button:focus-visible {
+    outline-offset: -2px;
+  }
+  /* the card that names the node pointed at or chosen: the same card as the site's and the
+     Cockpit's (share/design/figure.css), value for value; what is the UI's own is that it
+     stands over the frame's tools, and that a touch screen, where there is no pointing, has none */
+  .mj-graph-tip {
+    @apply pointer-events-none absolute left-0 top-0 z-20 rounded-md font-sans text-small;
+    max-width: 18rem;
+    padding: 0.375rem 0.625rem;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-body);
+    box-shadow:
+      0 1px 2px color-mix(in oklch, var(--mj-fg) 8%, transparent),
+      0 8px 24px -8px color-mix(in oklch, var(--mj-fg) 22%, transparent);
+  }
+  .mj-graph-tip[hidden] {
+    display: none;
+  }
+  .mj-graph-tip-title {
+    @apply m-0 font-mono font-medium;
+    overflow-wrap: anywhere;
+    color: var(--mj-fg);
+  }
+  .mj-graph-tip-row {
+    @apply flex flex-wrap items-center;
+    gap: 0.375rem;
+    margin: 0.25rem 0 0;
+  }
+  .mj-graph-tip-name {
+    color: var(--mj-body);
+  }
+  .mj-graph-tip-value {
+    @apply tabular-nums;
+    margin-inline-start: auto;
+    padding-inline-start: 0.5rem;
+    color: var(--mj-fg);
+  }
+  .mj-graph-tip-foot {
+    @apply text-label;
+    margin: 0.375rem 0 0;
+    padding-top: 0.375rem;
+    border-top: 1px solid var(--mj-line);
+    color: var(--mj-muted);
+  }
+  @media (pointer: coarse) {
+    .mj-graph-tip {
+      display: none;
+    }
   }
 
   /* tabs: links to the same route with the filter a capability declares */
@@ -592,8 +750,10 @@
     @apply m-0 grid gap-2;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
   }
+  /* a fact's value can be one long word (`behaviorally_verified`): the fact may shrink below
+     it and the value breaks, or the grid widens the page */
   .mj-ui-fact {
-    @apply flex flex-col gap-0.5 rounded-lg px-3 py-2;
+    @apply flex min-w-0 flex-col gap-0.5 rounded-lg px-3 py-2;
     background: var(--mj-sunken);
   }
   .mj-ui-fact > dt {
@@ -603,5 +763,99 @@
   .mj-ui-fact > dd {
     @apply m-0 font-mono text-lg font-semibold;
     color: var(--mj-fg);
+    overflow-wrap: anywhere;
+  }
+
+  /* the Observatory (/ui/observatory, /ui/kiosk): a stage the script draws on, sized for a wall display.
+     Every word on it is set by the script from the projection the page carries. */
+  .mj-obs {
+    @apply relative w-full overflow-hidden rounded-xl;
+    aspect-ratio: 16 / 9;
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs:fullscreen {
+    @apply rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs--kiosk {
+    @apply fixed inset-0 z-50 rounded-none;
+    aspect-ratio: auto;
+    border: 0;
+  }
+  .mj-obs-canvas {
+    @apply absolute inset-0 block h-full w-full;
+  }
+  .mj-obs-noscript {
+    @apply m-0 p-6 text-sm;
+  }
+  .mj-obs-head,
+  .mj-obs-foot {
+    @apply pointer-events-none absolute inset-x-0 flex items-baseline gap-4 px-[3%] font-mono uppercase;
+    font-size: clamp(0.6rem, 1.15vw, 1.6rem);
+    letter-spacing: 0.14em;
+  }
+  .mj-obs-head {
+    @apply top-[4%];
+  }
+  .mj-obs-foot {
+    @apply bottom-[4%];
+  }
+  .mj-obs-brand,
+  .mj-obs-fact {
+    color: var(--mj-muted);
+  }
+  .mj-obs-title {
+    @apply mx-auto font-semibold;
+    letter-spacing: 0.32em;
+  }
+  .mj-obs-status {
+    @apply ml-auto;
+  }
+  .mj-obs-status[data-state='live'] {
+    color: var(--mj-tone-cyan-fill);
+  }
+  .mj-obs-status[data-state='stale'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='resynced'] {
+    color: var(--mj-tone-blue-fill);
+  }
+  .mj-obs-status[data-state='replay'] {
+    color: var(--mj-tone-orange-fill);
+  }
+  .mj-obs-status[data-state='snapshot'] {
+    color: var(--mj-tone-violet-fill);
+  }
+  .mj-obs-scene {
+    @apply font-semibold;
+  }
+  .mj-obs-fact {
+    @apply ml-auto normal-case;
+    letter-spacing: 0.02em;
+  }
+  .mj-obs-legend {
+    @apply absolute inset-x-[3%] bottom-[12%] m-0 rounded-lg p-3 text-sm;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-controls {
+    @apply absolute right-[3%] top-[11%] flex gap-1 opacity-0 transition-opacity;
+  }
+  .mj-obs:hover .mj-obs-controls,
+  .mj-obs:focus-within .mj-obs-controls {
+    @apply opacity-100;
+  }
+  .mj-obs-button {
+    @apply cursor-pointer rounded-md px-2 py-1 font-mono text-xs;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-obs-button[aria-pressed='false'] {
+    color: var(--mj-muted);
   }
 }

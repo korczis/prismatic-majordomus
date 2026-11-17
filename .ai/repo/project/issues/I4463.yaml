@@ -1,0 +1,43 @@
+id: I4463
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "plan validate flags an open issue named as a blocker in another issue's current_state and absent from its depends_on, and plan next does not propose the issue it blocks"
+slug: a-blocker-named-in-prose-is-a-dependency
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Both engines of the plan read one more thing from an issue's current_state: an open issue id that the text names as what the issue waits on. The phrases that make a mention a blocker are declared once, as data both engines read (beside the plan schema in share/, not as a constant in either engine): `completes when <ids> ... land`, `blocked by <id>`, `blocked on <id>`, `waits for <id>`, `waits on <id>`, `after <id> lands`, `until <id> lands`. When such an id names an issue that is neither DONE nor CANCELLED and is not in the issue's depends_on, plan validate emits a WARN finding on the issue: `current_state names <id> as a blocker and depends_on does not; add it to depends_on, or reword current_state`. The derived status treats that mention as an open dependency for readiness, so the issue is not READY, and plan next and plan start never propose it while the named blocker is open; plan show names the blocker as the reason. A mention that is not in one of the declared phrases is not read, so citing another issue in prose stays free."
+why: "Observed in session f3's in-repo pass on master 51b38035a71 on 2026-10-30. Step 1, `bin/majordomus plan next` (117.7 s), proposed I0703. Step 2: I0703's current_state says the issue `completes when I4291 and I4292 have landed and the suite and doctor evidence is taken again`, while its depends_on names only I0702. The plan proposed work its own record says is blocked; the worker had to read the prose, notice the contradiction and pick I4292 by hand. Mission section 3 asks that flow breaks are removed before capabilities grow, and section 7 that continuing finds the valid next ready step; a next step the record itself refutes costs a person's judgement every time."
+current_state: "At master 51b38035a71: readiness is derived from depends_on only. lib/project.awk reads depends_on.N into dep[] (lib/project.awk:92); apps/majordomus-cli/src/plan.rs derives the same in derive (plan.rs:717); next_ready and ready_ranked (plan.rs:567-579) and mj_pj_next_ready and mj_pj_ready_ranked (lib/project.sh:259-274) pick the lowest-wave READY issue by priority and id. Neither engine reads current_state for issue ids. .ai/repo/project/issues/I0703.yaml carries the blocker in current_state and `depends_on: [I0702]`; I4291 and I4292 are open."
+desired_state: "An issue whose current_state says it waits on an open issue is either declared as depending on it or flagged until it is, and is never the next ready issue while that blocker is open. Both engines answer the same. Enforced by case 4463 and by plan validate on this repository, where I0703 is flagged until its record is amended."
+scope:
+  - ".ai/repo/project/issues/I4463.yaml"
+  - "lib/project.awk"
+  - "lib/project.sh"
+  - "lib/plan.sh"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "share/schemas/majordomus/issue"
+  - "docs/CLI.md"
+  - "test/cases/4463_a_blocker_named_in_prose_is_a_dependency.sh"
+non_scope:
+  - "Amending I0703's depends_on: the coordinator's follow-up, once the finding exists"
+  - "Saying why an issue with no dependency is BLOCKED by its milestone: I4266"
+  - "Reporting work in an open pull request or under a live claim as taken: I3971"
+  - "Reading ids from why, desired_state or any field other than current_state"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4463, in a fixture plan where issue B's current_state says `completes when A has landed`, A is open and B's depends_on is empty: `majordomus plan validate` prints a WARN naming B and A, and `majordomus plan next` does not name B"
+  - "Case 4463: the Rust plan.next answer, through the executable, names the same issue as the shell's plan next for that fixture"
+  - "Case 4463: with A marked DONE, the WARN disappears and B can be proposed; with A in B's depends_on, there is no WARN and readiness is unchanged from today"
+  - "Case 4463: a current_state that names A outside the declared phrases (for example `see A for the history`) yields no WARN and no change in readiness"
+  - "Before the change, case 4463 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4463_a_blocker_named_in_prose_is_a_dependency 133_plan_transition"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "prose_blocker_case"
+risk: "A phrase list that reads too much turns ordinary history into blockers and hides ready work; the phrases are few, anchored on an issue id, and a WARN, not a FAIL, so the cost of a false reading is one line and one record edit."
+created_at: 2026-10-30
+updated_at: 2026-10-30

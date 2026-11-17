@@ -74,6 +74,12 @@
       "route": "/docs/planning/"
     },
     {
+      "path": "PROCEED.md",
+      "audience": "everyone, AI workers",
+      "summary": "proceeding: what a session told only to proceed does — `proceed.plan`'s claim-aware decision, the take, and `proceed.step`'s work order (`do`, `fan_out`, `report`, `next_due_at`), why the same state answers the same order and key, when a step is done, and the generated `/proceed` skill",
+      "route": "/docs/proceed/"
+    },
+    {
       "path": "PERFORMANCE.md",
       "audience": "contributors, AI workers",
       "summary": "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance",
@@ -110,6 +116,12 @@
       "route": "/docs/install/"
     },
     {
+      "path": "BUILD_CACHE.md",
+      "audience": "everyone",
+      "summary": "what a person sees of the mesh build cache: how a Rust build starts sccache with the store as its second level, the one line a local-only build leaves, and the gate that refuses a build around the cache",
+      "route": "/docs/build-cache/"
+    },
+    {
       "path": "DISTRIBUTION.md",
       "audience": "contributors, AI workers",
       "summary": "how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release",
@@ -144,6 +156,18 @@
       "audience": "maintainers",
       "summary": "forensic finding, closed: what `doctor` reported in a repository that is not this one, why the findings tracked the tool's own distribution rather than the adopting repository, and the release stamp that now scopes them",
       "route": "/docs/adoption-first-run/"
+    },
+    {
+      "path": "HANDBOOK.md",
+      "audience": "readers, and whoever changes what a chapter is about",
+      "summary": "the handbook: one interactive page per language, built from this tree; what is written and what is derived, and the gate that refuses a change which removes what a chapter rests on",
+      "route": "/docs/handbook/"
+    },
+    {
+      "path": "PERSONAL_MODE.md",
+      "audience": "one person in a repository a team owns",
+      "summary": "personal mode, the tool as one person's instrument with nothing left in git: who it is for, why it is ordinary practice, the measured way from personal to shared, the per-clone exclude file, a private policy with one projection and one enforcement, filesystem discovery for the server, how each part of the tool fits, and what was and was not measured",
+      "route": "/docs/personal-mode/"
     },
     {
       "path": "ENTRY.md",
@@ -254,6 +278,12 @@
       "route": "/docs/web/"
     },
     {
+      "path": "EDITORS.md",
+      "audience": "everyone, AI workers",
+      "summary": "what Zed and Google Antigravity read from the repository: the skills and tasks projected by `majordomus generate editors`, ownership and conflict refusal, what is left to the person (MCP, settings, permissions) and why",
+      "route": "/docs/editors/"
+    },
+    {
       "path": "ENVIRONMENT.md",
       "audience": "everyone, contributors",
       "summary": "the repository environment: one typed snapshot of what a checkout is — project, layer, version control, toolchains, workflows, provider projections, local services — with a provenance entry for every value; the full and the fast resolution, the cache under `.ai/local/`, and the direnv adapter that renders it without reading the repository itself",
@@ -314,10 +344,22 @@
       "route": "/docs/mesh/"
     },
     {
+      "path": "OWNER_PACKS.md",
+      "audience": "everyone, AI workers",
+      "summary": "working from the owner's prompt packs: how a brief kept under `campaigns/` becomes milestones and issues that cite it, the packs of 2026-10-11 and 2026-10-12 with the master records each one maps onto, what was not planned and which decision or record says why, where to start, and the gate that holds packs and plan together",
+      "route": "/docs/owner-packs/"
+    },
+    {
       "path": "MONITOR.md",
       "audience": "everyone, operators, agents",
       "summary": "the monitor: everything that happens around a repository in one stream — mesh sessions, claims, handovers and reviews, the executor's outcomes, GitHub's pull requests and runs — with the noise folded away, what names you first, one cursor across every source, and the command, MCP, HTTP and Cockpit surfaces",
       "route": "/docs/monitor/"
+    },
+    {
+      "path": "BLACKBOARD.md",
+      "audience": "everyone, operators, agents",
+      "summary": "the peer blackboard: who works on what across every checkout's board and every linked machine, one projection of the board, the mesh journal and the monitor — workers keyed by explicit identifiers, the claims that meet, the reviews and handovers that wait, and what could not be read",
+      "route": "/docs/blackboard/"
     },
     {
       "path": "MODELS.md",
@@ -342,6 +384,12 @@
       "audience": "everyone, contributors",
       "summary": "the design system: the one declaration every surface is rendered from, the pipeline from `share/design/tokens.yaml` to the site, the Cockpit and the executable's own pages, how to add a role, a status word or a type step without touching a consumer, how drift is caught, and how to read a page that looks wrong",
       "route": "/docs/design-system/"
+    },
+    {
+      "path": "DIAGRAMS.md",
+      "audience": "everyone, contributors",
+      "summary": "diagrams and charts on the site: one viewer for every Mermaid diagram (zoom, pan, full screen, download, tracing), the addresses `#diagram-<name>` and `#diagram-<name>:<node>`, node links inferred at build from the identities the generated data carries, and charts drawn from the tables a page already renders",
+      "route": "/docs/diagrams/"
     },
     {
       "path": "UI.md",

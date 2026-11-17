@@ -72,6 +72,22 @@
       "items": { "type": "string" },
       "description": "Repository-relative paths it writes. Empty for a read-only command."
     },
+    "effects": {
+      "type": "array",
+      "description": "Where a command's subcommands or flags differ in what they do to the repository, one entry per difference. `class` stays the worst case of the command as a whole. A subcommand entry replaces it for that subcommand; a flag entry raises it for any argument vector the flag appears in, and never lowers it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["class"],
+        "oneOf": [{ "required": ["subcommand"] }, { "required": ["flag"] }],
+        "properties": {
+          "subcommand": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "flag": { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" },
+          "class": { "enum": ["read-only", "state-mutating", "generated-output-mutating"] },
+          "writes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
     "exit_codes": {
       "type": "array",
       "items": { "type": "integer", "minimum": 0 },

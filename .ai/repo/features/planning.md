@@ -12,8 +12,8 @@ domain: coordination
 featured: false
 areas: [work-tracking]
 commands: [plan]
-modules: [trace, plan, devtask, intents, intent_realization]
-kinds: [milestone, issue, intent]
+modules: [trace, plan, devtask, intents, intent_realization, board]
+kinds: [milestone, issue, intent, gap, critique]
 cockpit: [intents]
 rules: [majordomus.project-integrity, majordomus.dag-integrity, majordomus.roadmap-integrity]
 docs: [docs/PLANNING.md, docs/ROADMAP.md]

@@ -2329,12 +2329,13 @@ mod tests {
         let header = |kind: &str, words: &str| format!("# majordomus-{kind}: {words}\n");
         std::fs::write(
             cases.join("01_first.sh"),
-            header("covers", "none") + &header("covers", "version"),
+            header("covers", "none") + header("covers", "version").as_str(),
         )
         .unwrap();
         std::fs::write(
             cases.join("02_words.sh"),
-            header("covers", "gate:x capability:c.x version") + &header("negative", "none version"),
+            header("covers", "gate:x capability:c.x version")
+                + header("negative", "none version").as_str(),
         )
         .unwrap();
         std::fs::write(cases.join("README.md"), header("covers", "version")).unwrap();

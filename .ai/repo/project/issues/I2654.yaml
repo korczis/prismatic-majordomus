@@ -1,0 +1,35 @@
+id: I2654
+milestone: surfaces-never-disagree
+title: "A chart is held to its table by a gate, and the tables that are measured series are drawn"
+slug: a-chart-is-held-to-its-table
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Give the chart component (site/charts.js, ADR 0152) the two checks it lacks, and declare the remaining tables whose content is a measured series as charts: the benchmark baselines, the economics pairs and segments, the claims by status."
+why: "I2653 delivered the component and two charts. What a chart read from its table is asserted by no gate, and the interaction probe claims nothing on a chart because a chart declares no control; both were verified once, by hand, in a headless browser."
+current_state: "Two figures carry data-chart (/plan/, /economics/). No case builds a fixture figure and asserts the series; no behaviour spec opens a chart; ECharts is loaded only where those two pages ask for it."
+desired_state: "A browser check reads window.mjCharts for every figure[data-chart] of the built site and fails when a series differs from the cells of its table or the chart did not draw; site-check fails a figure[data-chart] with no table, no data-series header or no id; the further tables are declared."
+scope:
+  - "site/charts.js"
+  - "site/templates/registry-benchmarks.html"
+  - "site/templates/economics.html"
+  - "site/templates/features-matrix.html"
+  - "scripts/site-check"
+  - "scripts/lib/interaction-specs/chart.mjs"
+  - "docs/DIAGRAMS.md"
+  - ".ai/repo/project/issues/I2654.yaml"
+non_scope:
+  - "A second charting library, or a chart whose data is not a table on the same page"
+depends_on: ["I2653"]
+acceptance_criteria:
+  - "A figure[data-chart] whose drawn series differs from its table fails a check that names the figure"
+  - "A figure[data-chart] without a table, a data-series header or an id fails scripts/site-check"
+  - "Each newly declared chart is listed in docs/DIAGRAMS.md with the dataset it reads"
+validation:
+  - "scripts/site-build && scripts/site-check"
+  - "scripts/interaction-probe --only /plan/"
+evidence_required:
+  - "chart_table_agreement_check"
+  - "chart_markup_check"
+created_at: 2026-10-13
+updated_at: 2026-10-13

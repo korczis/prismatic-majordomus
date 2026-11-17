@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-use common::{dist_share, Fixture, Served, BIN};
+use common::{dist_share, Fixture, Served};
 use serde_json::{json, Value};
 
 use majordomus_cli::mesh::identity::NodeIdentity;
@@ -142,7 +142,7 @@ impl Node {
 
     fn declare(&self, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));
@@ -168,7 +168,7 @@ impl Node {
     }
 
     fn prs(&self, forge: &Forge, args: &[&str]) -> Command {
-        let mut c = Command::new(BIN);
+        let mut c = common::majordomus();
         c.arg("prs")
             .arg("--repo")
             .arg(self.root())
@@ -191,6 +191,10 @@ impl Node {
     }
 
     /// A continuous drain left running: the executor holding the lease while it waits.
+    ///
+    /// The lease is taken when its holder record reads, not when its file exists: the drain
+    /// creates the file empty, locks it and only then writes who holds it, and a brief read
+    /// in between says "holder unreadable" (coverage run 42525378591, I4566).
     fn hold(&self, forge: &Forge) -> Child {
         let child = self
             .prs(forge, &["drain", "--continuous", "--interval", "30"])
@@ -200,9 +204,14 @@ impl Node {
             .expect("a continuous drain");
         let lock = self.lock();
         wait_until(
-            "the continuous drain takes the lease",
+            "the continuous drain takes the lease and names its holder",
             Duration::from_secs(60),
-            || lock.exists(),
+            || {
+                std::fs::read_to_string(&lock)
+                    .ok()
+                    .and_then(|text| serde_json::from_str::<Value>(text.trim()).ok())
+                    .is_some_and(|holder| holder.get("pid").is_some())
+            },
         );
         child
     }
@@ -246,7 +255,7 @@ fn connected(s: &Served) -> usize {
 
 /// The held claims on [`SCOPE`] a runtime knows of.
 fn held(s: &Served) -> Vec<Value> {
-    s.get("/api/v1/mesh/state").1["state"]["claims"]
+    s.get("/api/v1/mesh/state?view=full").1["state"]["claims"]
         .as_array()
         .cloned()
         .unwrap_or_default()

@@ -316,11 +316,13 @@ mj_recover_close_episode() {
   local f="$1" sid="$2" started="$3" last="$4" src="$5" age="$6"
   local closed_at rec win final existing
 
-  mj_session_store_ready
+  # On the trunk the record goes to the outbox, as a close's does (ADR 0091 amendment).
+  local wstore; wstore="$(mj_session_write_store)"
+  mj_session_write_store_ready "$wstore"
   # Exactly once, by identity. A record for this episode already existing is the normal
   # outcome of a re-run and of a crash between the publish and the removal below; it is not
   # an error, and the correct move is to keep the record that exists and finish the teardown.
-  existing="$(grep -rl "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
+  existing="$(mj_session_find_record "$sid" || true)"
   if [ -n "$existing" ]; then
     printf '    record exists at %s; none written, the open record is removed\n' "$(mj_rel "$existing")"
     final="$existing"
@@ -363,7 +365,7 @@ mj_recover_close_episode() {
       printf -- '- everything above the body comes from the open record and from the ledger lines\n'
       printf '  this episode stamped with its own id.\n'
     } > "$rec"
-    final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
+    final="$(mj_publish_record "$wstore" "$sid" "$rec")" \
       || { rm -f "$rec" "$win"; mj_err "recover: could not create a unique session file for $sid"; return 1; }
     rm -f "$rec" "$win"
     printf '    wrote %s\n' "$(mj_rel "$final")"
@@ -635,7 +637,7 @@ mj_recover_strays() {
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || mj_die "$MJ_EX_CONTRACT" \
-    "recover: the runtime that classifies a stray file is not built, and nothing here decides it a second time (build it: bin/majordomus-cli --help)"
+    "recover: the runtime that classifies a stray file is not built, and nothing here decides it a second time (build it: just build)"
   command -v jq >/dev/null 2>&1 || mj_die "$MJ_EX_CONTRACT" \
     "recover: jq is not installed, so the runtime's verdicts cannot be read here (brew install jq)"
 

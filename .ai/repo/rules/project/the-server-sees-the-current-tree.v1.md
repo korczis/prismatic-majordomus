@@ -41,8 +41,9 @@ because each worker would otherwise have read the repository itself.
 about to *use* the context takes it from there, and taking it compares a
 `crate::live::Stamp` — the size and modification time of the git control files, about eight
 `stat` calls — with the one the current generation was built at. When they differ, the
-request that noticed rebuilds the layer; a second request arriving mid-rebuild is answered
-from the generation that exists rather than queued behind it.
+request that noticed rebuilds the layer; a second request arriving mid-rebuild has already seen
+the move, so it waits for that rebuild and is answered from the generation it produces rather
+than from the one known to be stale.
 
 Everything that is a projection of the index is memoised per *generation* and not once per
 process: the OpenAPI document, the MCP tool and resource listings, the resolved web
@@ -62,9 +63,14 @@ would be a regression bought with nothing.
 # Failure behaviour
 
 A layer that will not load after a move is not an error to the client: the last generation
-that did load goes on being served, the reason is logged, and the stamp is recorded so the
-failure is not retried on every request. A repository that is not a git work tree has no
-moves to follow and is pinned, which is said once in the log.
+that did load goes on being served and the reason is logged. The failed load consumes no
+change: the generation keeps the stamp and the write count it was built at, and the failure is
+recorded beside it, so the same state is read again once `RETRY_AFTER` has passed — never on
+every request, never given up on — and a further move or write is read at once. A request that
+waited for a rebuild which then failed is answered the same way, from the generation that did
+load: it does not repeat the load it waited to see fail, so one failure costs one load however
+many requests queued behind it. A repository that is not a git work tree has no moves to
+follow and is pinned, which is said once in the log.
 
 # Verification
 

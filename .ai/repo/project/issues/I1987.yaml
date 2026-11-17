@@ -23,4 +23,15 @@ validation:
 evidence_required:
   - "historical_file_reference_case"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-14T14:53:24Z
+started_at: 2026-10-14T14:53:04Z
+started_event: sha256:0f68d079203f55bbdc05d92bfaad8afb5f2362132b47f2ff286bed4513f731f0
+completed_at: 2026-10-14T14:53:24Z
+completed_event: sha256:b2a8adc95601fb072202a46e071a178964daee08a11b080eee376ba9fd4bc94f
+evidence:
+  - covers: historical_file_reference_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3023_a_knowledge_record_outlives_the_file_it_cites && cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib knowledge_base"
+    result: "tests: 1 passed; test result: ok. 18 passed: shell and Rust resolve a deleted file through history and refuse one that never existed (run 2026-10-14 14:52Z on master 0dff496d1c plus this change)"
+    commit: 0dff496d1c312ce4a8d37ac5d6667b522beb4905
+    recorded_at: 2026-10-14T14:53:14Z

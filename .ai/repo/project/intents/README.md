@@ -27,10 +27,15 @@ until it can be derived. The plan stays the only lifecycle of work (ADR 0070).
 
 The keys are closed by `share/allow/intent.txt`.
 
+A record may start as a proposal (ADR 0144): `intent propose` writes the statement alone,
+with no milestone, criterion or invariant. Its stage is `declared`, the two absences are
+warnings, and no work can serve it until it is planned by adding milestones and criteria.
+
 ```bash
 majordomus-cli intent list                    # every intent, with its derived stage
 majordomus-cli intent show <id>               # one intent, milestones and evidence
 majordomus-cli intent validate                # exit 10 on a failure
 majordomus-cli intent preflight --issue I0001 # which intent the work serves, or why none
 majordomus-cli intent binding --issue I0001   # what a task naming it is bound to, with its pins
+majordomus-cli intent propose --statement "..." # a new, unplanned intent: what must become true
 ```

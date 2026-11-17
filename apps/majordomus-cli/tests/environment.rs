@@ -12,6 +12,8 @@
 //! - the banner is silent when nothing is watching, because a script, a hook and a
 //!   continuous-integration run all read standard error.
 
+mod common;
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -164,7 +166,7 @@ fn an_unchanged_repository_gets_the_shorter_form_on_the_way_back_in() {
 #[test]
 fn entry_draws_the_episode_and_the_checks_once() {
     let (_dir, root) = repository("demo");
-    let out = Command::new(env!("CARGO_BIN_EXE_majordomus"))
+    let out = common::majordomus()
         .args([
             "env",
             "enter",

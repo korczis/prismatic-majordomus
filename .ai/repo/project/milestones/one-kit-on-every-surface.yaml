@@ -1,0 +1,42 @@
+id: one-kit-on-every-surface
+title: "Code, charts, controls, embeds and shell blocks are one kit on every surface, declared in the design book and held there by a gate"
+slug: one-kit-on-every-surface
+order: 512
+priority: p1
+problem: "A survey of master 91c0b5d5658 on 2026-10-20 found each kind of rendered element made several ways. Code is highlighted only on the site (ayu themes, not design tokens); /ui and the Cockpit render plain pre. Charts are drawn by four mechanisms, and only the site's are held to a table. Copy buttons and tabs exist in two implementations each on the site and in none on /ui and the Cockpit. Shell blocks are three styles on the site and bare code on /ui. docs/DESIGN_SYSTEM.md says nothing about syntax highlighting, and no gate refuses a second way of drawing any of them."
+outcome: "A reader meets one code block, one chart, one copy control, one tab control and one shell block, whichever surface they are on: the site, /ui, the Cockpit or the docs. Each is declared once in the design book with its tokens, and a gate fails the change that renders one another way, so the kit stays one as the surfaces grow."
+current_state: "Code: I2747 (PR #1294) gives one engine, giallo, and one token-derived palette with a highlighter-check gate, revived after the owner's decision of 2026-10-20. Charts: site/charts.js draws from the page's table; the kit chart and the /ui donut have no table; I2654 holds the site's charts to their tables. Controls: Alpine and kit.js copy and tabs on the site, none on /ui and the Cockpit, and interaction-probe drives the site only. Embeds: none found; Mermaid on the site only. Shells: terminal-run.html, the kit's term_* and plain fences on the site; code.mj-ui-mono reproduce lines on /ui."
+desired_state: "docs/DESIGN_SYSTEM.md carries one section per element kind, naming its mechanism, its tokens and the gate that holds it. Code goes through I2747 everywhere. Every chart is drawn from a table on its page. One copy control and one tab control, kit.js's dependency-free ones, ship to every surface, and interaction-probe drives them on /ui and the Cockpit as on the site. A surface links to another and never embeds it. One shell primitive (prompt not copied, status in words, long output folded) renders every command and its output."
+scope:
+  - "docs/DESIGN_SYSTEM.md"
+  - "share/design"
+  - "share/ui"
+  - "share/cockpit"
+  - "site/templates"
+  - "site/kit.js"
+  - "site/charts.js"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit"
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/interaction-probe"
+  - "scripts/lib/interaction-specs"
+  - "scripts/ci/design-check"
+  - "test/cases"
+non_scope:
+  - "Rustdoc's own highlighting and themes, which rustdoc owns; it stays excluded from the audit as it is today"
+  - "New chart types or new controls: this milestone makes the existing ones one kit"
+acceptance_criteria:
+  - "The design book has a section for code, charts, controls, embeds and shell blocks, each naming its mechanism, tokens and gate"
+  - "For each element kind a planted second implementation on any surface fails a gate that names it"
+  - "The site, /ui and the Cockpit pass every one of those gates on master, and the published site is deployed from that master"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/design-check"
+  - "node scripts/ui audit"
+evidence_required:
+  - "one_kit_gates_case"
+depends_on: []
+risks:
+  - "giallo builds Oniguruma from C on every release target (I2747): the release matrix must prove it before #1294 lands"
+created_at: 2026-10-20
+updated_at: 2026-10-20

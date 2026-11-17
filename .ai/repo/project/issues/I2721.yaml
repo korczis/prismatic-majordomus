@@ -1,0 +1,37 @@
+id: I2721
+milestone: safe-self-update
+title: "An enrolled mesh node follows the stable pointer by itself"
+slug: a-node-follows-the-stable-pointer
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make every node the mesh declaration enrolls keep its installation at the version releases/latest.json names, checking at server start, every 15 minutes with jitter and when the mesh announces a release, and applying through self update."
+why: "ADR 0161. On 2026-10-14 v0.25.0 reached the five mesh nodes only after one session upgraded each by hand, and v0.26.0 sat on the stable pointer while every node ran 0.25.0."
+current_state: "No process reads releases/latest.json except install.sh run by a person."
+desired_state: "The mesh declaration carries follow: stable | pinned <version> | off per node, defaulting to stable for an enrolled node of the owner's mesh. A following node's server checks the pointer as above, never while blocking a request, and applies a forward, stable, listed version through self update --apply. A mesh release announcement only triggers a check; nothing a peer sends is trusted as a version or digest."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/release"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "share/schemas"
+  - "docs/MESH.md"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases"
+non_scope:
+  - "A network fetch on entering a repository"
+  - "Repositories that adopt Majordomus without enrolling machines in this mesh"
+depends_on:
+  - "I2720"
+acceptance_criteria:
+  - "A following node whose installed version is behind the stable pointer is upgraded within one check interval with no person on it"
+  - "A pinned node and a node with follow: off are left alone, and say so in mesh doctor"
+  - "A mesh announcement naming a version the metadata does not list changes nothing"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "node_follows_stable_pointer_test"
+  - "peer_announcement_not_trusted_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

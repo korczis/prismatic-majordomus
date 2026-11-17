@@ -74,15 +74,15 @@ schema: release/v1
 version: 9.9.9
 tag: v9.9.9
 channel: stable
-commit: 0000000000000000000000000000000000000000
+commit: '0000000000000000000000000000000000000000'
 published_at: '2026-01-01T00:00:00Z'
 required_targets:
   - aarch64-apple-darwin
 artifacts:
   - target: aarch64-apple-darwin
     name: majordomus-v9.9.9-aarch64-apple-darwin.tar.gz
-    url: https://example.invalid/majordomus-v9.9.9-aarch64-apple-darwin.tar.gz
-    sha256: 0000000000000000000000000000000000000000000000000000000000000000
+    url: https://github.com/example/majordomus/releases/download/v9.9.9/majordomus-v9.9.9-aarch64-apple-darwin.tar.gz
+    sha256: '0000000000000000000000000000000000000000000000000000000000000000'
     size: 1
 YAML
 out="$("$RB" generate --repo "$T/repo" --check --strict 2>&1)" || true

@@ -17,7 +17,10 @@
 //! # The two enumerations
 //!
 //! [`VcsIndex`] asks git for the tracked files, which is the layer's contract and the only
-//! mode [`DiscoveryKind`] declares: what is not tracked is not part of the layer.
+//! mode [`DiscoveryKind`] declares: what is not tracked is not part of the layer. The one
+//! layer that sentence cannot describe is a layer none of which is tracked — a personal
+//! layer (ADR 0145), or one created a minute ago and not committed yet: its tracked set is
+//! empty by construction, so [`layer_is_untracked`] says so and the work tree is read.
 //! [`FileSystem`] walks the tree with the same glob semantics, for a checkout git cannot
 //! describe — a scratch fixture, a tree with no commits. The index records which one it
 //! used, so an answer can
@@ -208,6 +211,42 @@ impl DiscoverySource for VcsIndex {
         crate::order::canonical(&mut out);
         Ok(out)
     }
+}
+
+/// Whether git has never been given the layer under `root`: its manifest is on disk and the
+/// index holds no entry for it.
+///
+/// The manifest stands for the layer because nothing reads a layer without it, and a
+/// repository that tracks its layer tracks that file first. It is asked of git each time
+/// rather than recorded anywhere, so a layer that is committed later is read through the
+/// index from that moment and nobody has to change a setting. A repository git cannot
+/// describe answers `false`: the caller's own handling of an unavailable git stands.
+///
+/// ```
+/// use majordomus_cli::discovery::layer_is_untracked;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// std::fs::create_dir(dir.path().join(".ai")).unwrap();
+/// std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: manifest/v1\n").unwrap();
+/// assert!(layer_is_untracked(dir.path()), "on disk, and git was never given it");
+///
+/// git(&["add", ".ai/manifest.yaml"]);
+/// assert!(!layer_is_untracked(dir.path()), "staged is tracked: the index holds it");
+///
+/// let bare = tempfile::tempdir().unwrap();
+/// assert!(!layer_is_untracked(bare.path()), "no manifest, no layer to call untracked");
+/// ```
+pub fn layer_is_untracked(root: &Path) -> bool {
+    root.join(crate::repository::MANIFEST).is_file()
+        && matches!(
+            git::ls_files(root, crate::repository::MANIFEST),
+            Ok(tracked) if tracked.is_empty()
+        )
 }
 
 /// A walk of the work tree with `:(glob)` semantics: for a checkout that is not a git work

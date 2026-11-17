@@ -1,7 +1,7 @@
 +++
 title = "Projection integrity"
 description = "Projection integrity"
-weight = 39
+weight = 40
 [extra]
 kind = "rule"
 slug = "majordomus-projection-integrity-1"

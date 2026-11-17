@@ -30,8 +30,12 @@
 //! );
 //! ```
 
+pub mod allocate;
 pub mod artifacts;
+pub(crate) mod blackboard;
+pub(crate) mod board;
 pub(crate) mod brief;
+pub(crate) mod cache_provision;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
@@ -47,6 +51,7 @@ pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod economics;
+pub(crate) mod editors;
 pub mod entity;
 pub mod environment;
 pub mod episodes;
@@ -54,11 +59,13 @@ pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
+pub(crate) mod guard;
 pub mod health;
 pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
+pub mod layout;
 pub mod lifecycle;
 pub mod mcp;
 pub(crate) mod mesh;
@@ -66,10 +73,12 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub mod objects;
 pub mod obligations;
+pub mod observatory;
 pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
+pub(crate) mod proceed;
 pub(crate) mod product;
 pub mod quality;
 pub mod reasoning;
@@ -124,7 +133,7 @@ pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENV
 pub use episodes::{AttachInput, DetachInput, EpisodeList};
 pub use executions::{
     CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
-    EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
+    StartedExecution, EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
 };
 pub use gates::{CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
@@ -182,6 +191,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         capabilities,
         commands,
         graph,
+        guard,
         health,
         dashboard,
         continuity,
@@ -201,19 +211,24 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         reasoning,
         episodes,
         peers,
+        blackboard,
+        board,
         brief,
         server,
         mcp,
         session_domain,
         shell,
+        layout,
         pack,
         perf,
         plan,
+        proceed,
         recover,
         directories,
         devcontext,
         artifacts,
         economics,
+        editors,
         environment,
         quality,
         distribution,
@@ -228,7 +243,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         integration,
         convergence,
         trace,
-        product
+        product,
+        observatory
     ]
 }
 
@@ -324,11 +340,23 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // writes the kit's rule and policy block into a repository (I4334)
+                "design.kit.adopt",
+                // creates an issue's worktree and starts its run, through worktree.create and
+                // executions.start (I4003)
+                "devtask.implement",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
+                // writes one new intent record, never a stage (ADR 0144)
+                "intents.propose",
+                // lists this machine's key in the mesh declaration's trust.allow (I2412)
+                "mesh.enrol",
                 "plan.transition",
                 "reasoning.record",
-                "recover.orphans"
+                "recover.orphans",
+                // the canonical worktree of a branch, made or found; never moved or removed
+                // (I4002)
+                "worktree.create"
             ]
         );
     }

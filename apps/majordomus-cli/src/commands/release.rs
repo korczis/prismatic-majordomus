@@ -41,6 +41,10 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
             let since = since.clone();
             analyze(&args, since.as_deref(), explain)
         }
+        Some(ReleaseCommand::Next { ref base, ref head }) => {
+            let (base, head) = (base.clone(), head.clone());
+            next(&args, base.as_deref(), &head)
+        }
         Some(ReleaseCommand::Bump {
             ref level,
             ref exact,
@@ -277,6 +281,72 @@ fn analyze(args: &ReleaseArgs, since: Option<&str>, explain: bool) -> Result<u8>
     })
 }
 
+/// `majordomus release next`: what a landing would allocate, through the capability so
+/// every surface renders one value. Exit 0 when decided, [`EXIT_UNREADABLE`] when an input
+/// could not be read.
+fn next(args: &ReleaseArgs, base: Option<&str>, head: &str) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let decision = landing_decision(&app.context, base, head)?;
+    let stdout = std::io::stdout();
+    render_next(&mut stdout.lock(), &decision, args.format).map(|()| 0)
+}
+
+/// The landing decision the capability answers for `head` onto `base`, or onto the trunk
+/// the repository names when no base is given; a refusal is the command's
+/// [`EXIT_UNREADABLE`].
+fn landing_decision(
+    ctx: &crate::capability::Context,
+    base: Option<&str>,
+    head: &str,
+) -> Result<release::landing::LandingDecision> {
+    let mut input = serde_json::json!({ "head": head });
+    if let Some(base) = base {
+        input["base"] = serde_json::Value::String(base.to_string());
+    }
+    let value = ctx
+        .execute(crate::capability::builtin::release::NEXT_ID, input)
+        .map_err(unreadable)?;
+    serde_json::from_value(value).map_err(protocol)
+}
+
+/// A refusal of the capability, as the command's exit says it.
+fn unreadable(e: impl std::fmt::Display) -> Error {
+    Error::Refused {
+        code: EXIT_UNREADABLE,
+        reason: e.to_string(),
+    }
+}
+
+/// An answer that is not the decision the capability declares.
+fn protocol(e: impl std::fmt::Display) -> Error {
+    Error::Protocol {
+        reason: e.to_string(),
+    }
+}
+
+/// A decision as JSON, or as its explanation and the number it allocates.
+fn render_next(
+    out: &mut impl Write,
+    decision: &release::landing::LandingDecision,
+    format: OutputFormat,
+) -> Result<()> {
+    match format {
+        OutputFormat::Json => writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(decision).unwrap_or_default()
+        )
+        .map_err(Error::Transport)?,
+        OutputFormat::Text => {
+            for line in &decision.explanation {
+                writeln!(out, "  {line}").map_err(Error::Transport)?;
+            }
+            writeln!(out, "next  {}", decision.next_version).map_err(Error::Transport)?;
+        }
+    }
+    Ok(())
+}
+
 /// The human rendering of a plan. One function, so `analyze` and `bump` cannot describe the
 /// same verdict differently.
 fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Result<()> {
@@ -471,7 +541,9 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     let wanted_exact = match exact {
         Some(v) => Some(version::Version::parse(v).ok_or_else(|| Error::Refused {
             code: 2,
-            reason: format!("'{v}' is not a version; it must be three numbers, `1.2.3`"),
+            reason: format!(
+                "'{v}' is not a version; it must be a semantic version, `1.2.3` or `1.0.0-alpha.1`"
+            ),
         })?),
         None => None,
     };
@@ -530,14 +602,15 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         version::Version::parse(&p.baseline.version).map(|base| base.raised_to(p.required))
     });
 
+    let explicit = wanted_exact.is_some() || wanted_level.is_some();
     let (to, source) = match (wanted_exact, wanted_level) {
         (Some(v), _) => (v, "explicit --exact"),
-        (None, Some(impact)) => (current.raised_to(impact), "explicit --level"),
+        (None, Some(impact)) => (current.clone().raised_to(impact), "explicit --level"),
         // The selected version, which is the whole point: with no argument at all, the
         // contract decides — through the one selection `release version` reports, so the
         // writer raises to exactly the `next` the report states. With no measurable contract
         // no one decided, and there is nothing to raise to.
-        (None, None) => match version::default_target(&selection.report, current) {
+        (None, None) => match version::default_target(&selection.report, &current) {
             Ok(to) => (
                 to,
                 match selection.report.decided_by {
@@ -554,11 +627,11 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
             }
         },
     };
-    let explicit = wanted_exact.is_some() || wanted_level.is_some();
 
-    // An override may go above the floor and never below it.
-    if let (Some(f), Some(p)) = (floor, plan) {
-        if to < f {
+    // An override may go above the floor and never below it. A pre-release of the floor is
+    // the floor on its way (`Version::reaches`): `1.0.0-alpha.2` meets a floor of `1.0.0`.
+    if let (Some(f), Some(p)) = (&floor, plan) {
+        if !to.reaches(f) {
             writeln!(
                 out,
                 "release: REFUSED {to} is below {f}, which is the smallest version this tree may declare"
@@ -621,7 +694,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     }
     .map_err(Error::Transport)?;
     if explicit {
-        if let Some(f) = floor {
+        if let Some(f) = &floor {
             // Provenance: a version larger than the measurement is allowed and never silent.
             writeln!(
                 out,
@@ -690,6 +763,133 @@ mod tests {
     use super::*;
     use crate::release::compat::Diagnostic;
     use crate::release::model::{DecidedBy, VersionReport};
+
+    /// A decision renders as its explanation and the number, or as the whole decision in
+    /// JSON; a refusal and a malformed answer are each their own error.
+    #[test]
+    fn a_landing_decision_renders_as_text_or_json_and_its_failures_are_named() {
+        let policy = release::landing::ReleasePolicy {
+            allocation: release::landing::Allocation::Landing,
+            floor: Impact::Minor,
+            exempt: Vec::new(),
+        };
+        let d = release::landing::decide(
+            version::Version::parse("0.21.0").unwrap(),
+            Impact::None,
+            &policy,
+            &["apps/majordomus-cli/src/lib.rs".to_string()],
+        );
+        let mut text = Vec::new();
+        render_next(&mut text, &d, OutputFormat::Text).unwrap();
+        let text = String::from_utf8(text).unwrap();
+        assert!(
+            text.ends_with("next  0.22.0\n") && text.starts_with("  "),
+            "{text}"
+        );
+        let mut json = Vec::new();
+        render_next(&mut json, &d, OutputFormat::Json).unwrap();
+        let back: release::landing::LandingDecision = serde_json::from_slice(&json).unwrap();
+        assert_eq!(back.next_version, "0.22.0");
+        assert!(matches!(
+            unreadable("no"),
+            Error::Refused {
+                code: EXIT_UNREADABLE,
+                ..
+            }
+        ));
+        assert!(matches!(protocol("no"), Error::Protocol { .. }));
+
+        // a writer that refuses is the command's transport error, on every line it writes
+        assert!(render_next(&mut RefuseAfter(0), &d, OutputFormat::Json).is_err());
+        for lines in [0, d.explanation.len()] {
+            assert!(
+                render_next(&mut RefuseAfter(lines), &d, OutputFormat::Text).is_err(),
+                "{lines}"
+            );
+        }
+    }
+
+    /// A writer that accepts `.0` lines and refuses every write after them.
+    struct RefuseAfter(usize);
+
+    impl Write for RefuseAfter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::Error::other("refused"));
+            }
+            self.0 -= buf.iter().filter(|b| **b == b'\n').count().min(self.0);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// Through the capability, in a repository with a history: the head landed onto itself
+    /// is decided, and a ref git cannot resolve is refused with the command's exit.
+    #[test]
+    fn the_command_asks_the_capability_and_a_bad_ref_is_unreadable() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let root = repo.root();
+        let git = |args: &[&str]| {
+            assert!(std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .status()
+                .expect("git")
+                .success());
+        };
+        let write = |rel: &str, body: &str| {
+            let path = root.join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, body).unwrap();
+        };
+        git(&["init", "-q"]);
+        write(
+            version::MANIFEST,
+            "[package]\nname = \"x\"\nversion = \"0.3.0\"\n",
+        );
+        let registry = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(release::surface::REGISTRY),
+        )
+        .unwrap();
+        write(release::surface::REGISTRY, &registry);
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        let ctx = repo.context().expect("a context");
+        let d = landing_decision(&ctx, Some("HEAD"), "HEAD").expect("decided");
+        assert_eq!(d.trunk_version, "0.3.0");
+        assert!(matches!(
+            landing_decision(&ctx, Some("no-such-ref-of-ours"), "HEAD"),
+            Err(Error::Refused {
+                code: EXIT_UNREADABLE,
+                ..
+            })
+        ));
+
+        // the command itself: decided exits 0, a bad ref and a directory that is no
+        // repository are each refused
+        let args = |at: &std::path::Path| ReleaseArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(at.to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command: None,
+            format: OutputFormat::Json,
+        };
+        assert_eq!(next(&args(root), Some("HEAD"), "HEAD").expect("decided"), 0);
+        assert!(next(&args(root), Some("no-such-ref-of-ours"), "HEAD").is_err());
+        let empty = tempfile::tempdir().unwrap();
+        assert!(next(&args(empty.path()), Some("HEAD"), "HEAD").is_err());
+    }
 
     fn report(decided_by: DecidedBy) -> VersionReport {
         VersionReport {
@@ -804,6 +1004,50 @@ mod tests {
              derive\n         nothing is published\n         no tag names a release\n         \
              name the version deliberately: `majordomus release bump --level minor` or \
              `--exact <version>`\n"
+        );
+    }
+
+    /// `release bump --exact` takes a semantic version, a pre-release among them, and
+    /// refuses anything else with exit 2 before the repository is read: junk is refused
+    /// even in a directory that is no repository, while `1.0.0-alpha.1` gets past the
+    /// argument and fails only on what it then reads. A level that is not one is refused
+    /// the same way.
+    #[test]
+    fn bump_refuses_an_exact_that_is_no_version_before_reading_the_repository() {
+        let empty = tempfile::tempdir().expect("a temporary directory");
+        let args = ReleaseArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(empty.path().to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command: None,
+            format: OutputFormat::Text,
+        };
+        for junk in ["banana", "1.2", "1.0.0-alpha.01", "v1.2.3"] {
+            match bump(&args, None, Some(junk), true) {
+                Err(Error::Refused { code: 2, reason }) => {
+                    assert!(
+                        reason.contains(&format!("'{junk}' is not a version"))
+                            && reason.contains("1.0.0-alpha.1"),
+                        "{reason}"
+                    );
+                }
+                other => panic!("--exact {junk}: expected a refusal with exit 2, got {other:?}"),
+            }
+        }
+        match bump(&args, Some("huge"), None, true) {
+            Err(Error::Refused { code: 2, reason }) => {
+                assert!(reason.contains("'huge' is not a level"), "{reason}")
+            }
+            other => panic!("--level huge: expected a refusal with exit 2, got {other:?}"),
+        }
+        // a pre-release is a version: the argument is accepted, and what fails is the
+        // directory, which holds no repository
+        let alpha = bump(&args, None, Some("1.0.0-alpha.1"), true);
+        assert!(
+            !matches!(alpha, Err(Error::Refused { code: 2, .. }) | Ok(_)),
+            "{alpha:?}"
         );
     }
 }

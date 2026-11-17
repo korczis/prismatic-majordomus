@@ -56,9 +56,12 @@ grep -q 'errored' "$T/out.txt" || { echo "    the output does not say why it ask
 echo "    an errored build with nothing in flight is asked for again"
 
 # ---------------------------------------------------------------- 2. this commit is building
-rows "building	$C	no message"
+# A build that started a minute ago is not hung: it is waited on, with its own exit (13).
+young="$(date -u -d '-60 seconds' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-60S +%Y-%m-%dT%H:%M:%SZ)"
+old="2026-01-01T00:00:00Z"   # older than any deploy.build_hung_after
+rows "building	$C	no message	$young"
 rebuild
-[ "$rc" = 12 ] || { echo "    a build in flight answered $rc, not 12"; cat "$T/out.txt"; exit 1; }
+[ "$rc" = 13 ] || { echo "    a build in flight answered $rc, not 13"; cat "$T/out.txt"; exit 1; }
 [ "$(posts)" = 0 ] || { echo "    a request was sent while GitHub was building: that preempts the build"; exit 1; }
 grep -q 'preempt' "$T/out.txt" || { echo "    the refusal does not say what it protects"; cat "$T/out.txt"; exit 1; }
 # and it is this commit's own build that held it off, read before anything else is asked: the
@@ -67,14 +70,34 @@ grep -q "a build of ${C:0:12} is building" "$T/out.txt" \
   || { echo "    the refusal does not name this commit's build in flight"; cat "$T/out.txt"; exit 1; }
 echo "    a build in flight is left alone, and the refusal names the preemption"
 
+# a build whose start time cannot be read is never taken for an old one
+rows "building	$C	no message"
+rebuild
+[ "$rc" = 13 ] && [ "$(posts)" = 0 ] || { echo "    a build in flight with no start time answered $rc and $(posts) request(s), not 13 and 0"; cat "$T/out.txt"; exit 1; }
+
+# ---------------------------------------------------------------- 2b. this commit's build is hung
+# I3902: on 2026-10-22 a build stayed `building` for 47 minutes while the site served the
+# previous commit, and the old predicate refused every request for as long as it did. Past
+# deploy.build_hung_after the build in flight is replaced, and the line says why.
+rows "building	$C	no message	$old"
+rebuild
+[ "$rc" = 0 ] || { echo "    a hung build answered $rc, not 0"; cat "$T/out.txt"; exit 1; }
+[ "$(posts)" = 1 ] || { echo "    a hung build was not replaced ($(posts) request(s))"; cat "$T/out.txt"; exit 1; }
+grep -q 'hung' "$T/out.txt" || { echo "    the request does not say the build was hung"; cat "$T/out.txt"; exit 1; }
+echo "    a build in flight past deploy.build_hung_after is hung, and is replaced"
+
 # ---------------------------------------------------------------- 3. another commit is building
 #     The newest build is what "nothing is building" is asked about — a request is repository-wide
 #     and would preempt a build of anything, not only of this commit.
-rows "building	$O	no message" "errored	$C	Page build failed."
+rows "building	$O	no message	$young" "errored	$C	Page build failed."
 rebuild
-[ "$rc" = 12 ] || { echo "    a build of another commit in flight answered $rc, not 12"; cat "$T/out.txt"; exit 1; }
+[ "$rc" = 13 ] || { echo "    a build of another commit in flight answered $rc, not 13"; cat "$T/out.txt"; exit 1; }
 [ "$(posts)" = 0 ] || { echo "    a request was sent while another commit was building"; exit 1; }
 echo "    a build of another commit in flight is left alone too"
+rows "building	$O	no message	$old" "errored	$C	Page build failed."
+rebuild
+[ "$rc" = 0 ] && [ "$(posts)" = 1 ] || { echo "    a hung build of another commit blocked the rebuild ($rc, $(posts) request(s))"; cat "$T/out.txt"; exit 1; }
+echo "    and a hung build of another commit is replaced as well"
 
 # ---------------------------------------------------------------- 4. already built: nothing to ask
 rows "built	$C	no message"
@@ -159,6 +182,12 @@ remedy_for() {   # $1: the commit gh-pages' build.json names
 }
 got="$(remedy_for "$trunk")"
 [ "$got" = rebuild ] || { echo "    an errored build of the trunk's own tree chose '$got', not rebuild"; cat "$T/step.out"; exit 1; }
+# a build of the trunk's own tree still in flight goes to the rebuild too, which replaces it once
+# hung and otherwise waits; deploying would push the identical tree again (I3902)
+printf '#!/bin/sh\nprintf '"'"'building\\t%%s\\tno message\\t2026-01-01T00:00:00Z\\n'"'"' "$(git rev-parse origin/gh-pages)"\n' > "$R/scripts/pages"
+got="$(remedy_for "$trunk")"
+[ "$got" = rebuild ] || { echo "    a build in flight of the trunk's own tree chose '$got', not rebuild"; cat "$T/step.out"; exit 1; }
+printf '#!/bin/sh\nprintf '"'"'errored\\t%%s\\tPage build failed.\\n'"'"' "$(git rev-parse origin/gh-pages)"\n' > "$R/scripts/pages"
 got="$(remedy_for 3333333333333333333333333333333333333333)"
 [ "$got" = deploy ] || {
   echo "    an errored build of an OLDER tree chose '$got', not deploy: it would rebuild a stale site"

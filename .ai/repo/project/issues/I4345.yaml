@@ -1,0 +1,43 @@
+id: I4345
+milestone: development-runtime
+title: "A CI runner that systemd shows active while its listener crash-loops is recovered within five minutes"
+slug: a-crash-looping-runner-is-recovered
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The build host policy installs a root watchdog, runner-watchdog.service with runner-watchdog.timer, that for each actions.runner.* unit detects a listener crash loop or free space below the hard floor, then runs disk-guard's hard tier, releases the ballast (root may use the reserved ext4 blocks), restarts the unit and emits a mesh monitor event naming the runner; a runner GitHub reports offline is reported the same way."
+why: "Incident 1 of 2026-10-28: after lundra's disk filled during run 40680986818, the runner listener crash-looped inside units systemd still showed active, so nothing restarted them and GitHub saw lundra-1..3 offline until a person intervened. Restart= cannot recover this: runsvc.sh relaunches the listener itself, so the unit never exits; the Restart=always I4352 gives the runner units does not reach a listener that loops inside a live unit."
+current_state: "Measured at 81ef931a3e1: apps/majordomus-cli/assets/mesh-cache-provider holds disk-guard with its service and timer and no watchdog; nothing on lundra reads the runner listener's journal."
+desired_state: "A runner whose listener exits three times within one minute, or whose host falls below the hard floor, is restarted within five minutes after its space is reclaimed, and the restart is a monitor event naming the runner. Enforced by the watchdog timer on the host, case 4345 (a DRY_RUN fixture journal), a cache_provision unit test on the plan's units, and `majordomus shell check` on the unit's exemption."
+scope:
+  - ".ai/repo/project/issues/I4345.yaml"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/runner-watchdog"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/runner-watchdog.service"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/runner-watchdog.timer"
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/4345_a_crash_looping_runner_is_recovered.sh"
+  - "docs/MESH.md"
+non_scope:
+  - "Adding runner units to critical_services: critical.conf's OOMScoreAdjust=-900 would be inherited by the CI compilers"
+  - "Restart= settings of the runner units (I4352)"
+acceptance_criteria:
+  - "Unit test: the provision plan installs runner-watchdog.service and runner-watchdog.timer and enables the timer"
+  - "Case 4345: a DRY_RUN fixture journal with three 'Runner listener exit' lines within one minute prints `would: release ballast` and `would: systemctl restart <unit>` for that unit only"
+  - "Case 4345: no crash loop and free space above the floor print no action"
+  - "Case 4345: free space below the hard floor runs disk-guard's hard tier before any restart"
+  - "`majordomus shell check` passes with runner-watchdog carrying an F (platform adaptor) exemption in .ai/repo/automation/inventory.jsonl, beside disk-guard's, giving why (it drives systemd and journalctl on the host, where no session runs) and its removal (the executable observes and restarts the units itself)"
+validation:
+  - "bash test/run.sh 4345_a_crash_looping_runner_is_recovered"
+  - "bin/majordomus shell check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on:
+  - "I4343"
+  - "I4346"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

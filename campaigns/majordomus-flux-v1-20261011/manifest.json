@@ -1,0 +1,365 @@
+{
+  "name": "Majordomus Flux",
+  "version": "1.0",
+  "mission": "fast derived render, cache, pagination and live updates",
+  "issues": [
+    {
+      "id": "M00-I01",
+      "milestone": "M00",
+      "title": "Inventory real route and generator timing",
+      "depends_on": []
+    },
+    {
+      "id": "M00-I02",
+      "milestone": "M00",
+      "title": "Trace repeated capability calls and N+1 renders",
+      "depends_on": [
+        "M00-I01"
+      ]
+    },
+    {
+      "id": "M00-I03",
+      "milestone": "M00",
+      "title": "Audit current PRs, rules, gates and design tokens",
+      "depends_on": [
+        "M00-I02"
+      ]
+    },
+    {
+      "id": "M00-I04",
+      "milestone": "M00",
+      "title": "Build cold/warm benchmark harness",
+      "depends_on": [
+        "M00-I03"
+      ]
+    },
+    {
+      "id": "M01-I01",
+      "milestone": "M01",
+      "title": "Canonical projection descriptor and provenance",
+      "depends_on": [
+        "M00"
+      ]
+    },
+    {
+      "id": "M01-I02",
+      "milestone": "M01",
+      "title": "Request snapshot and batch resolver",
+      "depends_on": [
+        "M01-I01"
+      ]
+    },
+    {
+      "id": "M01-I03",
+      "milestone": "M01",
+      "title": "Safe reusable fragment component boundary",
+      "depends_on": [
+        "M01-I02"
+      ]
+    },
+    {
+      "id": "M01-I04",
+      "milestone": "M01",
+      "title": "Data source and component registry parity",
+      "depends_on": [
+        "M01-I03"
+      ]
+    },
+    {
+      "id": "M02-I01",
+      "milestone": "M02",
+      "title": "Fingerprint dependency closure",
+      "depends_on": [
+        "M01"
+      ]
+    },
+    {
+      "id": "M02-I02",
+      "milestone": "M02",
+      "title": "Single-flight cache keyed by scope and revision",
+      "depends_on": [
+        "M02-I01"
+      ]
+    },
+    {
+      "id": "M02-I03",
+      "milestone": "M02",
+      "title": "HTTP ETag/conditional response and safe asset headers",
+      "depends_on": [
+        "M02-I02"
+      ]
+    },
+    {
+      "id": "M02-I04",
+      "milestone": "M02",
+      "title": "Atomic invalidation and cache diagnostics",
+      "depends_on": [
+        "M02-I03"
+      ]
+    },
+    {
+      "id": "M03-I01",
+      "milestone": "M03",
+      "title": "Trace existing derive graph and duplicate calls",
+      "depends_on": [
+        "M02"
+      ]
+    },
+    {
+      "id": "M03-I02",
+      "milestone": "M03",
+      "title": "Implement impacted-subgraph generation",
+      "depends_on": [
+        "M03-I01"
+      ]
+    },
+    {
+      "id": "M03-I03",
+      "milestone": "M03",
+      "title": "Preserve transactional publish and stale detection",
+      "depends_on": [
+        "M03-I02"
+      ]
+    },
+    {
+      "id": "M03-I04",
+      "milestone": "M03",
+      "title": "Prove idempotence, deterministic outputs, speedup",
+      "depends_on": [
+        "M03-I03"
+      ]
+    },
+    {
+      "id": "M04-I01",
+      "milestone": "M04",
+      "title": "Canonical page query/sort/filter contract",
+      "depends_on": [
+        "M03"
+      ]
+    },
+    {
+      "id": "M04-I02",
+      "milestone": "M04",
+      "title": "Cursor or offset migration with explicit semantics",
+      "depends_on": [
+        "M04-I01"
+      ]
+    },
+    {
+      "id": "M04-I03",
+      "milestone": "M04",
+      "title": "Accessible universal pager and deep links",
+      "depends_on": [
+        "M04-I02"
+      ]
+    },
+    {
+      "id": "M04-I04",
+      "milestone": "M04",
+      "title": "Real data large-list benchmarks and parity",
+      "depends_on": [
+        "M04-I03"
+      ]
+    },
+    {
+      "id": "M05-I01",
+      "milestone": "M05",
+      "title": "Reuse existing WebSocket capability event channel",
+      "depends_on": [
+        "M04"
+      ]
+    },
+    {
+      "id": "M05-I02",
+      "milestone": "M05",
+      "title": "Snapshot/replay/reconnect/gap handling",
+      "depends_on": [
+        "M05-I01"
+      ]
+    },
+    {
+      "id": "M05-I03",
+      "milestone": "M05",
+      "title": "Live fragment updates with no-JS fallback",
+      "depends_on": [
+        "M05-I02"
+      ]
+    },
+    {
+      "id": "M05-I04",
+      "milestone": "M05",
+      "title": "Backpressure, scope authorization and stale indicators",
+      "depends_on": [
+        "M05-I03"
+      ]
+    },
+    {
+      "id": "M06-I01",
+      "milestone": "M06",
+      "title": "Migrate Overview/Mesh/PR/Issues incrementally",
+      "depends_on": [
+        "M05"
+      ]
+    },
+    {
+      "id": "M06-I02",
+      "milestone": "M06",
+      "title": "Migrate Intent/Roadmap/Evidence and graph panels",
+      "depends_on": [
+        "M06-I01"
+      ]
+    },
+    {
+      "id": "M06-I03",
+      "milestone": "M06",
+      "title": "Migrate Docs/Pages link graph and release provenance",
+      "depends_on": [
+        "M06-I02"
+      ]
+    },
+    {
+      "id": "M06-I04",
+      "milestone": "M06",
+      "title": "Cross-surface browser, accessibility, responsiveness",
+      "depends_on": [
+        "M06-I03"
+      ]
+    },
+    {
+      "id": "M07-I01",
+      "milestone": "M07",
+      "title": "Update .ai rules/ADRs/CI proofs and docs",
+      "depends_on": [
+        "M06"
+      ]
+    },
+    {
+      "id": "M07-I02",
+      "milestone": "M07",
+      "title": "CI impact selection + regression budgets",
+      "depends_on": [
+        "M07-I01"
+      ]
+    },
+    {
+      "id": "M07-I03",
+      "milestone": "M07",
+      "title": "Canary, merge, release analysis, deployment checks",
+      "depends_on": [
+        "M07-I02"
+      ]
+    },
+    {
+      "id": "M07-I04",
+      "milestone": "M07",
+      "title": "Self-hosted and adopter proof; cleanup legacy duplicates",
+      "depends_on": [
+        "M07-I03"
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M00",
+      "title": "Reality & baseline",
+      "depends_on": [],
+      "issue_ids": [
+        "M00-I01",
+        "M00-I02",
+        "M00-I03",
+        "M00-I04"
+      ]
+    },
+    {
+      "id": "M01",
+      "title": "Typed Flux core",
+      "depends_on": [
+        "M00"
+      ],
+      "issue_ids": [
+        "M01-I01",
+        "M01-I02",
+        "M01-I03",
+        "M01-I04"
+      ]
+    },
+    {
+      "id": "M02",
+      "title": "Caching & invalidation",
+      "depends_on": [
+        "M01"
+      ],
+      "issue_ids": [
+        "M02-I01",
+        "M02-I02",
+        "M02-I03",
+        "M02-I04"
+      ]
+    },
+    {
+      "id": "M03",
+      "title": "Incremental derive",
+      "depends_on": [
+        "M02"
+      ],
+      "issue_ids": [
+        "M03-I01",
+        "M03-I02",
+        "M03-I03",
+        "M03-I04"
+      ]
+    },
+    {
+      "id": "M04",
+      "title": "Pagination & navigation",
+      "depends_on": [
+        "M03"
+      ],
+      "issue_ids": [
+        "M04-I01",
+        "M04-I02",
+        "M04-I03",
+        "M04-I04"
+      ]
+    },
+    {
+      "id": "M05",
+      "title": "Streaming & interactivity",
+      "depends_on": [
+        "M04"
+      ],
+      "issue_ids": [
+        "M05-I01",
+        "M05-I02",
+        "M05-I03",
+        "M05-I04"
+      ]
+    },
+    {
+      "id": "M06",
+      "title": "Surface adoption",
+      "depends_on": [
+        "M05"
+      ],
+      "issue_ids": [
+        "M06-I01",
+        "M06-I02",
+        "M06-I03",
+        "M06-I04"
+      ]
+    },
+    {
+      "id": "M07",
+      "title": "Enforcement & delivery",
+      "depends_on": [
+        "M06"
+      ],
+      "issue_ids": [
+        "M07-I01",
+        "M07-I02",
+        "M07-I03",
+        "M07-I04"
+      ]
+    }
+  ]
+}

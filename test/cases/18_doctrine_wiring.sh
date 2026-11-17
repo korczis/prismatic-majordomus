@@ -120,7 +120,7 @@ expect_grep 'FAIL doctrine +mj_validate_orphan_rule .* no rule declares it'
 restore
 
 # 7. CI stops running the suite
-sed 's#run: bash test/run.sh#run: echo skipped#' "$ROOT/.github/workflows/validate.yml" > "$CI"
+sed 's#bash test/run.sh#echo skipped#g' "$ROOT/.github/workflows/validate.yml" > "$CI"
 gone "$CI" "run: bash test/run.sh"
 expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine +ci .* does not run test/run.sh'

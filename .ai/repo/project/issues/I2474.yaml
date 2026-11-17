@@ -1,0 +1,50 @@
+id: I2474
+milestone: development-runtime
+title: "The drain draws its merge throughput: each day's merges over the fortnight its trail ends on"
+slug: the-drain-draws-its-throughput
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Draw on the PR Drain how many pull requests the executor merged on each of the fourteen days that end on the day of its trail's newest event, as a chart whose counts are written in its label and in a table beside it."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots (reference 03-pr-drain shows a merge throughput chart; pack v3 M04-03, measured time series). The executor's trail records every merge_succeeded with its time, and the queue already folds a seven-day merge count, but nothing showed the series."
+current_state: "The drain shows merges in seven days and merges per day as two numbers."
+desired_state: "The drain panel, which asks integration.events, draws 'Merge throughput': the fourteen days ending on the trail's newest event's day (the record's end, not the reader's clock), each with its count of merge_succeeded events, as a server-side SVG chart labelled with every day's count and a table of the same numbers. An attempt is no merge, a merge outside the window is not drawn, and a trail with no merge in the window says so and draws no chart."
+scope:
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - ".ai/repo/project/issues/I2474.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1079_the_drain_draws_its_throughput.sh"
+depends_on: ["I2473"]
+acceptance_criteria:
+  - "the chart covers fourteen days ending on the trail's newest event's day"
+  - "each day counts merge_succeeded events only, and the counts are in the chart's label and a table"
+  - "a trail with no merge in the window draws no chart and says so"
+validation:
+  - "cargo test --lib ui::prs"
+  - "test/run.sh 1079_the_drain_draws_its_throughput"
+evidence_required:
+  - "ui_throughput_unit_test"
+  - "ui_throughput_case_1079"
+created_at: 2026-10-11
+updated_at: 2026-10-12T11:04:08Z
+started_at: 2026-10-12T11:03:47Z
+started_event: sha256:ca0f3dcedfef681fa96b0a992f7a94976c6d9c5319d0391a8900042fb082ea16
+verified_at: 2026-10-12T11:03:54Z
+verified_event: sha256:17b3da7a7339bb54f4959c9fef488e983660326f326a38e3f9d7c3bf6b214683
+completed_at: 2026-10-12T11:04:08Z
+completed_event: sha256:0d6980af2b3dbd611d89a0aefc89a5820b2085aa0bf49daf062bb285e9f221ee
+evidence:
+  - covers: ui_throughput_unit_test
+    type: ci
+    command: "cargo test --lib ui::prs (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "merges_are_counted_per_day_over_the_days_the_trail_ends_on ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:04:01Z
+  - covers: ui_throughput_case_1079
+    type: ci
+    command: "test/run.sh 1079_the_drain_draws_its_throughput (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1079_the_drain_draws_its_throughput ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:04:05Z

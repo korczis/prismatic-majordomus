@@ -1,0 +1,42 @@
+id: I3367
+milestone: the-corpus-is-registered-before-it-runs
+title: "A suite can be registered: strata, outcomes, acceptance rule, analysis, MDE, a seeded interleaved run order and the stopping rule are declared data the load validates and the runner honours"
+slug: a-suite-is-registered-before-it-runs
+priority: p1
+profile: implementation
+objective: "Give the suite declaration an optional registration block: strata, primary outcome (the only one that carries a verdict) and secondary outcomes, the success gates that define acceptance, the analysis and its level, the registered MDE, a run-order seed, and the stopping rule (fixed repetitions, a suite budget ceiling, no interim analysis). Compute its digest with I3351's digest function. Validate it on load against the tasks and the methodology. Make the runner launch jobs in the seeded order, alternating arms within each pair, stop launching once recorded reported cost reaches the ceiling, and name the pairs it left missing per stratum."
+why: "T2 of the owner's report of 2026-10-19 requires the split to be fixed in advance. The critique found an unrandomised order lets time of day bias wall time and lets the budget ceiling truncate whichever stratum runs last, and that nine verdicts across outcomes and strata need a multiplicity rule; one primary verdict and a seeded interleaved order answer both. It depends on I3351 so the paired protocol in the plan can reference this block's digest."
+current_state: "apps/majordomus-cli/src/economics/model.rs:437 EconomicsSuite holds tasks, repetitions, control, treatment, max_budget_usd_per_session and freshness_inputs only; runner.rs:103 RunOptions has no suite ceiling or order; suites/pilot.yaml:11 declares 2 repetitions against methodology.yaml:57 min_repetitions 3."
+desired_state: "A registered suite loads only when its strata, gates, outcomes and repetitions are valid; the runner honours order and ceiling; pilot and context load as before."
+scope:
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+  - "site/content/docs/economics.md"
+  - ".ai/repo/benchmarks/economics/README.md"
+non_scope:
+  - "The corpus registration itself (I3370)"
+  - "The difficulty proxy (I3374) and the pinned release (I3375)"
+  - "Methodology version 2 (I3133)"
+depends_on:
+  - "I3351"
+serves:
+  - "the-product-proves-it-pays#the-corpus-is-registered-before-any-run"
+acceptance_criteria:
+  - "A registration naming an undeclared gate or outcome, or fewer repetitions than the methodology minimum, is refused on load"
+  - "A registration with two primary outcomes is refused"
+  - "The dry run lists jobs in the seeded order with arms alternating within pairs, and the same seed gives the same order"
+  - "A suite whose recorded cost reaches its ceiling launches no further job, and the summary names the missing pairs per stratum"
+  - "Pilot and context load and summarise unchanged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics summary"
+  - "bash test/run.sh 430_economics"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_registration_is_validated_on_load"
+  - "test_runner_honours_order_and_ceiling"
+created_at: 2026-10-19
+updated_at: 2026-10-19

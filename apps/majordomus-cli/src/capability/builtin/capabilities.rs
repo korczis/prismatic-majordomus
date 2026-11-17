@@ -266,6 +266,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["capabilities".into(), "describe".into()] }),
                 },
                 tags: ["introspection"],
+                cache: CachePolicy::Process { max_entries: 512, ttl_seconds: None },
                 handler: capabilities_describe,
             },
             capability! {

@@ -1,0 +1,3 @@
+# Phase 06: Dogfood and verified delivery
+
+Read master prompt. In actual Majordomus repository, derive Zed and Antigravity from same core, sync owned files, ensure README/architecture/ADR per doctrine, validate schemas, focused tests, integration tests, full canonical gates, CI pipeline and generated artifacts. Demonstrate adding workflow and schema with no manual adapter inventory edits. Confirm source tree unchanged during standard builds. Run evidence-backed before/after benchmarks; address regressions. Merge, release, version bump and deploy only under repository's actual required policies and permissions; never claim an external action happened unless tool/evidence proves it. Report exact actions, failures, diffs and metrics.

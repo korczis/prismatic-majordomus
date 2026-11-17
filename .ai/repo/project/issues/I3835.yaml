@@ -1,0 +1,30 @@
+id: I3835
+milestone: the-mesh-works-out-of-the-box
+title: "A node the mesh lists as trusted and present but cannot link is said so, with why, on every surface that names it"
+slug: a-present-node-that-cannot-be-linked-says-why
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make mesh nodes, mesh peers and mesh doctor name every trusted, present node this server holds no link to, with the reason the link is absent (never dialled, dial refused, hello refused, its runtime expired, no endpoint this server can reach), and make a mesh review request, claim release or handover aimed at such a node refuse with that same reason instead of a bare not_found."
+why: "On 2026-10-21 `mesh nodes` listed node 5d81b5c9 as trusted and present (udp_multicast, rendezvous, last seen 21:49:55Z), while `mesh review request --reviewer 5d81b5c94b02767fc07b181613a7fc71-b10f19aa2cd888a6` refused with \"mesh: not_found: no linked peer 5d81b5c94b02767fc07b181613a7fc71-b10f19aa2cd888a6\". Discovery and linking disagreed and no surface said why, so the holder of an exclusive claim on I2720 could not be reached at all (found by dev-03, filed at a3's ruling)."
+current_state: "mesh nodes reports discovery (trust, presence, sources); mesh peers reports linked runtimes; nothing joins the two, and a request to an unlinked runtime answers not_found."
+desired_state: "Every trusted, present node without a link is listed with the reason, and every request aimed at one is refused with it."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "A dead run's exclusive claim that nobody can release (mesh-journal-converges, beside I3798)"
+depends_on: []
+acceptance_criteria:
+  - "With two runtimes of which one is discovered but never linked, mesh nodes and mesh peers both name it as present and unlinked, with the reason"
+  - "A review request aimed at it refuses with the reason, and the refusal names the runtime and the node"
+  - "mesh doctor reports a trusted, present, unlinked node as a finding"
+  - "A node that links later stops being reported, without a restart"
+validation:
+  - "bash test/run.sh 3835_a_present_node_that_cannot_be_linked_says_why"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_present_unlinked_node_says_why_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21

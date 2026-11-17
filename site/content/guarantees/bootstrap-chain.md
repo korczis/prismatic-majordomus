@@ -1,7 +1,7 @@
 +++
 title = "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own"
 description = "CLAUDE.md, AGENTS.md, GEMINI.md and any other target the policy names are generated, and each says the same short thing: read README.md, then .ai/README.md, follow its discovery protocol, run majordomus context, and find the lifecycle under the layer's workflows. No rule lives in a provider file. A person reaches the layer through README.md and AGENTS.md; a worker reaches it through its own bootstrap; both arrive at the same .ai/."
-weight = 82
+weight = 83
 [extra]
 claim_id = "bootstrap-chain"
 status = "guaranteed"
@@ -15,7 +15,7 @@ source = "docs/claims/bootstrap-chain.md"
 
 ## How it works
 
-`lib/update.sh` renders each target from an adapter under the distribution's `share/providers/` (or the repository's own override under its providers section), stamps it with the policy hash and its content hash, and writes it atomically. The `majordomus.bootstrap-integrity` doctrine, dispatched from `doctor` and `watch`, proves the chain on every run: `README.md` names `AGENTS.md`, every projection names `.ai/README.md`, and a generated file that has grown a rule corpus of its own fails. So does one that names a rule the repository does not have: every rule id the generated content names (`<namespace>.<slug>`, optionally `@<version>`, outside a fenced block) must resolve in the effective set `majordomus rules list` lists, and each that does not is a `rule-refs` finding naming the file, the line and the id: a `WARN` with `majordomus update` as its reproduce command when an older template wrote the line and the current one no longer does, so an upgrade never refuses a commit, and a `FAIL` when the current template names the id itself or the line was written by hand (`test/cases/899_a_bootstrap_names_only_rules_in_force.sh`). The always-loaded projection also stays within the policy's line budget, which is what keeps a bootstrap a bootstrap.
+`lib/update.sh` renders each target from an adapter under the distribution's `share/providers/` (or the repository's own override under its providers section), stamps it with the policy hash and its content hash, and writes it atomically. The `majordomus.bootstrap-integrity` doctrine, dispatched from `doctor` and `watch`, proves the chain on every run: `README.md` names `AGENTS.md`, every projection names `.ai/README.md`, and a generated file that has grown a rule corpus of its own fails. Both are asked of the generated content: the whole file, or for a `mode: region` projection the text between its markers, so the hand-written document around a region is never judged as a bootstrap (`test/cases/13_region_projection.sh`). So does one that names a rule the repository does not have: every rule id the generated content names (`<namespace>.<slug>`, optionally `@<version>`, outside a fenced block) must resolve in the effective set `majordomus rules list` lists, and each that does not is a `rule-refs` finding naming the file, the line and the id: a `WARN` with `majordomus update` as its reproduce command when an older template wrote the line and the current one no longer does, so an upgrade never refuses a commit, and a `FAIL` when the current template names the id itself or the line was written by hand (`test/cases/899_a_bootstrap_names_only_rules_in_force.sh`). The always-loaded projection also stays within the policy's line budget, which is what keeps a bootstrap a bootstrap.
 
 ## How to see it
 

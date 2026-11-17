@@ -7,7 +7,7 @@
 #
 # Skips itself without zola or node_modules, as 12_site_build does; the build is real.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 [ -d "$ROOT/node_modules/tailwindcss" ] || skip "node_modules absent"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj96.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
@@ -41,6 +41,11 @@ expect_exit 0 scripts/site-build
 # the build regenerates site/data/generated/source.json with a generation time; that is
 # the build's, not a change of ours, and the deploy's dirty-tree check must see a clean tree
 git checkout -q -- .
+# What the publication model says a publication holds and the site build does not compose (the
+# UI's snapshot, ADR 0141) is placed by the deploy job of the pages workflow, between the check
+# and the push. The case stands where that job stands, so it places a stand-in read at this
+# commit; test/cases/2983_the_published_ui_is_the_trunks.sh holds the refusal without one.
+publication_snapshots "$PWD" site/public "$(git rev-parse HEAD)" || { echo "    the clone's publication model cannot be read"; exit 1; }
 
 # --- a dirty tree is refused, nothing pushed
 echo "x" >> README.md

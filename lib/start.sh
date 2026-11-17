@@ -8,6 +8,9 @@
 . "$MJ_LIB_DIR/check.sh"
 # shellcheck source=intent_binding.sh
 . "$MJ_LIB_DIR/intent_binding.sh"
+# the judgement `context` makes of a path, asked of every scope entry before it is recorded
+# shellcheck source=context_docs.sh
+. "$MJ_LIB_DIR/context_docs.sh"
 mj_cmd_start() {
   local task="" scope="" requires="" profile="" owner="${USER:-unknown}"
   local issue="" intent="" exempt="" because=""
@@ -68,7 +71,7 @@ H
       [ "$oc" = active ] && mj_info task "$(mj_cur id)" "that task is still active there; nothing here changes it" "majordomus --repo $(mj_cur worktree) check"
     else
       case "$oc" in
-        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus handover or majordomus finish first" ;;
+        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus finish (or majordomus handover --close) first" ;;
         *) mkdir -p "$MJ_STATE_DIR/archive"; mv "$MJ_CUR" "$MJ_STATE_DIR/archive/$(mj_cur id).yaml" ;;
       esac
     fi
@@ -80,7 +83,14 @@ H
     IFS="$IFS_save"
     raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
     [ -n "$raw" ] || { IFS=','; continue; }
+    # The record holds the scope as words, so an entry holding whitespace would be recorded
+    # as each of its words: on 2026-10-15 a pasted prompt became some 270 "paths", a lone
+    # `/` among them, and `context` refused the worktree from then on (I2760).
+    case "$raw" in *[[:space:]]*)
+      mj_die "$MJ_EX_USAGE" "start: scope entry '$raw' holds whitespace; a scope is repository paths separated by commas, and a path holding a space is scoped by its directory" ;;
+    esac
     p="$(mj_norm_path "$raw")" || mj_die "$MJ_EX_USAGE" "start: scope path '$raw' is empty, absolute, or escapes the repository"
+    mj_ctxd_judge "$p" || mj_die "$MJ_EX_USAGE" "start: scope entry '$raw' is refused by context: $MJ_CTXD_REFUSAL"
     norm="$norm $p"; IFS=','
   done; IFS="$IFS_save"
 
@@ -145,6 +155,8 @@ H
     printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$MJ_STATE_DIR/current.yaml.mj-tmp" && mv "$MJ_STATE_DIR/current.yaml.mj-tmp" "$MJ_STATE_DIR/current.yaml"
+  # what was already changed, and what it held: a task answers for what changes after this
+  mj_start_dirty_record "$id" || mj_warn scope "$id" "what the working tree held at the start could not be recorded; files already changed will be counted as this task's" "git status --porcelain"
   mj_ledger_append task.started "\"task_id\":\"$id\",\"profile\":\"$profile\",\"owner\":\"$(mj_json_esc "$owner")\",\"scope\":\"$(mj_json_esc "$(printf '%s' "$norm" | sed 's/^ //')")\",\"requires\":\"$(mj_json_esc "$(printf '%s' "$req_norm" | sed 's/^ //')")\"$(
     [ "$bind_asked" = 0 ] || printf ',"issue":"%s","intent":"%s","exemption":"%s","because":"%s","binding":"%s","plan_revision":"%s"' \
       "$(mj_json_esc "$issue")" "$(mj_json_esc "$intent")" "$(mj_json_esc "$exempt")" "$(mj_json_esc "$because")" "${bind_standing:-unknown}" "$plan_rev")"
@@ -158,6 +170,7 @@ H
     mj_binding_get '.notes[]? | "note     " + .'
   fi
   mj_report_overlap "$norm"
+  mj_mesh_task_start_claim "$id" "$(printf '%s' "$norm" | sed 's/^ //')" "$task" "$issue"
   # continuity: name the prior record this checkout would resolve to, without injecting it
   if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then
     mj_info handover "${MJ_RES_PATH#"$MJ_ROOT/"}" \

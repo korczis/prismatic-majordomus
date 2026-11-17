@@ -18,6 +18,57 @@
       "tool": "majordomus_artifacts"
     },
     {
+      "api_anchor": "/docs/api/blackboard/#op-blackboard-snapshot",
+      "claims": [],
+      "cli": "majordomus blackboard",
+      "id": "blackboard.snapshot",
+      "kind": "query",
+      "module": "blackboard",
+      "module_route": "/registry/modules/blackboard/",
+      "resource": null,
+      "route": "/registry/capabilities/blackboard-snapshot/",
+      "slug": "blackboard-snapshot",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+      "tests": [],
+      "title": "Who works on what, now",
+      "tool": "majordomus_blackboard"
+    },
+    {
+      "api_anchor": "/docs/api/board/#op-board-snapshot",
+      "claims": [],
+      "cli": "majordomus board snapshot",
+      "id": "board.snapshot",
+      "kind": "query",
+      "module": "board",
+      "module_route": "/registry/modules/board/",
+      "resource": null,
+      "route": "/registry/capabilities/board-snapshot/",
+      "slug": "board-snapshot",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/board.rs",
+      "tests": [],
+      "title": "The delivery board's documents",
+      "tool": "majordomus_board_snapshot"
+    },
+    {
+      "api_anchor": "/docs/api/brief/#op-brief-session",
+      "claims": [],
+      "cli": "majordomus brief",
+      "id": "brief.session",
+      "kind": "query",
+      "module": "brief",
+      "module_route": "/registry/modules/brief/",
+      "resource": null,
+      "route": "/registry/capabilities/brief-session/",
+      "slug": "brief-session",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "tests": [],
+      "title": "The session brief",
+      "tool": "majordomus_brief"
+    },
+    {
       "api_anchor": "/docs/api/capabilities/#op-capabilities-describe",
       "claims": [],
       "cli": "majordomus capabilities describe",
@@ -392,6 +443,23 @@
       "tool": "majordomus_delivery"
     },
     {
+      "api_anchor": "/docs/api/delivery/#op-delivery-trends",
+      "claims": [],
+      "cli": null,
+      "id": "delivery.trends",
+      "kind": "query",
+      "module": "delivery",
+      "module_route": "/registry/modules/delivery/",
+      "resource": null,
+      "route": "/registry/capabilities/delivery-trends/",
+      "slug": "delivery-trends",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/delivery.rs",
+      "tests": [],
+      "title": "How CI runs trend",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/deploy/#op-deploy-check",
       "claims": [],
       "cli": null,
@@ -443,6 +511,40 @@
       "tool": "majordomus_deployments"
     },
     {
+      "api_anchor": "/docs/api/deploy/#op-deploy-observed",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.observed",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-observed/",
+      "slug": "deploy-observed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "What was deployed, and where",
+      "tool": "majordomus_deployments_observed"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus deploy slug",
+      "id": "deploy.slug",
+      "kind": "command",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-slug/",
+      "slug": "deploy-slug",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Assemble the tree a provider receives",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/design/#op-design-contrast",
       "claims": [],
       "cli": null,
@@ -475,6 +577,57 @@
       "tests": [],
       "title": "What a design token means",
       "tool": "majordomus_design_explain"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus design kit",
+      "id": "design.kit",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-kit/",
+      "slug": "design-kit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Whether the interface is built on the kit",
+      "tool": "majordomus_design_kit"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus design kit adopt",
+      "id": "design.kit.adopt",
+      "kind": "command",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-kit-adopt/",
+      "slug": "design-kit-adopt",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Declare the kit in the repository",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus design licence",
+      "id": "design.licence",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-licence/",
+      "slug": "design-licence",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Whether a public tree holds a licensed kit's files",
+      "tool": "majordomus_design_licence"
     },
     {
       "api_anchor": "/docs/api/design/#op-design-system",
@@ -562,6 +715,23 @@
       "tool": "majordomus_devcontext_policy"
     },
     {
+      "api_anchor": "/docs/api/devtask/#op-devtask-implement",
+      "claims": [],
+      "cli": null,
+      "id": "devtask.implement",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-implement/",
+      "slug": "devtask-implement",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+      "tool": "majordomus_devtask_implement"
+    },
+    {
       "api_anchor": "/docs/api/devtask/#op-devtask-issue",
       "claims": [],
       "cli": "majordomus devtask issue",
@@ -594,6 +764,23 @@
       "tests": [],
       "title": "One milestone as an executable dependency graph",
       "tool": "majordomus_devtask_milestone"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": null,
+      "id": "devtask.run",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-run/",
+      "slug": "devtask-run",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "A worker's run on an issue's worktree",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/directories/#op-directories-list",
@@ -764,6 +951,40 @@
       "tests": [],
       "title": "Token economics summary",
       "tool": "majordomus_economics"
+    },
+    {
+      "api_anchor": "/docs/api/economics/#op-economics-tasks",
+      "claims": [],
+      "cli": "majordomus economics tasks",
+      "id": "economics.tasks",
+      "kind": "query",
+      "module": "economics",
+      "module_route": "/registry/modules/economics/",
+      "resource": null,
+      "route": "/registry/capabilities/economics-tasks/",
+      "slug": "economics-tasks",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "tests": [],
+      "title": "Each task's delivery economics",
+      "tool": "majordomus_economics_tasks"
+    },
+    {
+      "api_anchor": "/docs/api/editors/#op-editors-status",
+      "claims": [],
+      "cli": null,
+      "id": "editors.status",
+      "kind": "query",
+      "module": "editors",
+      "module_route": "/registry/modules/editors/",
+      "resource": "majordomus://editors",
+      "route": "/registry/capabilities/editors-status/",
+      "slug": "editors-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "tests": [],
+      "title": "Editor and agent projections",
+      "tool": "majordomus_editors"
     },
     {
       "api_anchor": "/docs/api/entity/#op-entity-kinds",
@@ -1139,6 +1360,23 @@
       "tool": "majordomus_execution_protocol"
     },
     {
+      "api_anchor": "/docs/api/executions/#op-executions-report",
+      "claims": [],
+      "cli": null,
+      "id": "executions.report",
+      "kind": "command",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-report/",
+      "slug": "executions-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "Report an execution another process runs",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/executions/#op-executions-start",
       "claims": [],
       "cli": "majordomus run",
@@ -1190,6 +1428,40 @@
       "tool": "majordomus_gates"
     },
     {
+      "api_anchor": "/docs/api/gates/#op-gates-policy",
+      "claims": [],
+      "cli": null,
+      "id": "gates.policy",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/policy",
+      "route": "/registry/capabilities/gates-policy/",
+      "slug": "gates-policy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "The completion policy",
+      "tool": "majordomus_completion_policy"
+    },
+    {
+      "api_anchor": "/docs/api/gates/#op-gates-state",
+      "claims": [],
+      "cli": null,
+      "id": "gates.state",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/state",
+      "route": "/registry/capabilities/gates-state/",
+      "slug": "gates-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "How each gate last went",
+      "tool": "majordomus_gate_state"
+    },
+    {
       "api_anchor": "/docs/api/graph/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -1222,6 +1494,23 @@
       "tests": [],
       "title": "List graphs",
       "tool": "majordomus_graphs"
+    },
+    {
+      "api_anchor": "/docs/api/guard/#op-guard-edit",
+      "claims": [],
+      "cli": null,
+      "id": "guard.edit",
+      "kind": "query",
+      "module": "guard",
+      "module_route": "/registry/modules/guard/",
+      "resource": null,
+      "route": "/registry/capabilities/guard-edit/",
+      "slug": "guard-edit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "tests": [],
+      "title": "Judge one edit",
+      "tool": "majordomus_guard_edit"
     },
     {
       "api_anchor": "/docs/api/health/#op-health-live",
@@ -1360,6 +1649,40 @@
       "tool": "majordomus_pull_requests"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-timings",
+      "claims": [],
+      "cli": null,
+      "id": "integration.timings",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-timings/",
+      "slug": "integration-timings",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "How long CI takes",
+      "tool": "majordomus_ci_timings"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-trains",
+      "claims": [],
+      "cli": "majordomus prs trains",
+      "id": "integration.trains",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-trains/",
+      "slug": "integration-trains",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The trains of stacked pull requests",
+      "tool": "majordomus_pull_request_trains"
+    },
+    {
       "api_anchor": "/docs/api/intent-realization/#op-intent_realization-explain",
       "claims": [],
       "cli": "majordomus intent explain",
@@ -1460,6 +1783,23 @@
       "tests": [],
       "title": "Which intent a piece of work serves, or why it may not proceed",
       "tool": "majordomus_intent_preflight"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-propose",
+      "claims": [],
+      "cli": "majordomus intent propose",
+      "id": "intents.propose",
+      "kind": "command",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-propose/",
+      "slug": "intents-propose",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Propose an intent: what must become true",
+      "tool": "majordomus_intent_propose"
     },
     {
       "api_anchor": "/docs/api/intents/#op-intents-record",
@@ -1575,6 +1915,23 @@
       ],
       "title": "Whether the deriver is still writing",
       "tool": "majordomus_knowledge_status"
+    },
+    {
+      "api_anchor": "/docs/api/layout/#op-layout-check",
+      "claims": [],
+      "cli": "majordomus layout check",
+      "id": "layout.check",
+      "kind": "query",
+      "module": "layout",
+      "module_route": "/registry/modules/layout/",
+      "resource": null,
+      "route": "/registry/capabilities/layout-check/",
+      "slug": "layout-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/layout.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/layout.rs",
+      "tests": [],
+      "title": "Refuse a misplaced artifact",
+      "tool": "majordomus_layout_check"
     },
     {
       "api_anchor": "/docs/api/lifecycle/#op-lifecycle-closed",
@@ -1729,6 +2086,91 @@
       "tool": "majordomus_mcp"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-beat",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.beat",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-beat/",
+      "slug": "mesh-beat",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Say a session is making progress",
+      "tool": "majordomus_mesh_beat"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh build-cache ensure",
+      "id": "mesh.build_cache.ensure",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-ensure/",
+      "slug": "mesh-build-cache-ensure",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Restore an install before its command, and save it after",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-env",
+      "claims": [],
+      "cli": "majordomus mesh build-cache env",
+      "id": "mesh.build_cache.env",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-env/",
+      "slug": "mesh-build-cache-env",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The sccache client configuration for the store this node selected",
+      "tool": "majordomus_mesh_build_cache_env"
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-key",
+      "claims": [],
+      "cli": "majordomus mesh build-cache key",
+      "id": "mesh.build_cache.key",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-key/",
+      "slug": "mesh-build-cache-key",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "What every dependency install and build directory is cached under",
+      "tool": "majordomus_mesh_build_cache_key"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh build-cache provision",
+      "id": "mesh.build_cache.provision",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-provision/",
+      "slug": "mesh-build-cache-provision",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Provision this node as a mesh build cache provider",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-claim",
       "claims": [],
       "cli": null,
@@ -1780,6 +2222,23 @@
       "tool": "majordomus_mesh_doctor"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-enrol",
+      "claims": [],
+      "cli": "majordomus mesh enrol",
+      "id": "mesh.enrol",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-enrol/",
+      "slug": "mesh-enrol",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Enrol this machine in the mesh",
+      "tool": "majordomus_mesh_enrol"
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-events",
       "claims": [],
       "cli": null,
@@ -1795,6 +2254,40 @@
       "tests": [],
       "title": "The cooperation journal",
       "tool": "majordomus_mesh_events"
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-firewall",
+      "claims": [],
+      "cli": "majordomus mesh firewall",
+      "id": "mesh.firewall",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-firewall/",
+      "slug": "mesh-firewall",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The host firewall, as the mesh needs it",
+      "tool": "majordomus_mesh_firewall"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh firewall apply",
+      "id": "mesh.firewall.apply",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-firewall-apply/",
+      "slug": "mesh-firewall-apply",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Admit the mesh through the host firewall",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/mesh/#op-mesh-handover-consume",
@@ -2001,6 +2494,23 @@
       "tool": "majordomus_mesh_review_request"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-review-withdraw",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.review.withdraw",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-review-withdraw/",
+      "slug": "mesh-review-withdraw",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Withdraw a review request",
+      "tool": "majordomus_mesh_review_withdraw"
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-session-close",
       "claims": [],
       "cli": null,
@@ -2086,6 +2596,23 @@
       "tool": "majordomus_mesh_verify"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-who",
+      "claims": [],
+      "cli": "majordomus mesh who",
+      "id": "mesh.who",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-who/",
+      "slug": "mesh-who",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Who runs this",
+      "tool": "majordomus_mesh_who"
+    },
+    {
       "api_anchor": "/docs/api/models/#op-models-list",
       "claims": [],
       "cli": "majordomus models list",
@@ -2118,6 +2645,23 @@
       "tests": [],
       "title": "Route a need to a model",
       "tool": "majordomus_models_route"
+    },
+    {
+      "api_anchor": "/docs/api/monitor/#op-monitor-stream",
+      "claims": [],
+      "cli": null,
+      "id": "monitor.stream",
+      "kind": "query",
+      "module": "monitor",
+      "module_route": "/registry/modules/monitor/",
+      "resource": null,
+      "route": "/registry/capabilities/monitor-stream/",
+      "slug": "monitor-stream",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "tests": [],
+      "title": "Follow everything in one stream",
+      "tool": "majordomus_monitor"
     },
     {
       "api_anchor": "/docs/api/objects/#op-objects-get",
@@ -2262,6 +2806,57 @@
       "tool": "majordomus_obligations"
     },
     {
+      "api_anchor": "/docs/api/observatory/#op-observatory-capture",
+      "claims": [],
+      "cli": null,
+      "id": "observatory.capture",
+      "kind": "query",
+      "module": "observatory",
+      "module_route": "/registry/modules/observatory/",
+      "resource": null,
+      "route": "/registry/capabilities/observatory-capture/",
+      "slug": "observatory-capture",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "tests": [],
+      "title": "Observatory capture",
+      "tool": "majordomus_observatory_capture"
+    },
+    {
+      "api_anchor": "/docs/api/observatory/#op-observatory-events",
+      "claims": [],
+      "cli": null,
+      "id": "observatory.events",
+      "kind": "query",
+      "module": "observatory",
+      "module_route": "/registry/modules/observatory/",
+      "resource": null,
+      "route": "/registry/capabilities/observatory-events/",
+      "slug": "observatory-events",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "tests": [],
+      "title": "Observatory events",
+      "tool": "majordomus_observatory_events"
+    },
+    {
+      "api_anchor": "/docs/api/observatory/#op-observatory-replay",
+      "claims": [],
+      "cli": null,
+      "id": "observatory.replay",
+      "kind": "query",
+      "module": "observatory",
+      "module_route": "/registry/modules/observatory/",
+      "resource": null,
+      "route": "/registry/capabilities/observatory-replay/",
+      "slug": "observatory-replay",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "tests": [],
+      "title": "Observatory replay",
+      "tool": "majordomus_observatory_replay"
+    },
+    {
       "api_anchor": "/docs/api/pack/#op-pack-plan",
       "claims": [],
       "cli": "majordomus pack plan",
@@ -2345,6 +2940,74 @@
       "tests": [],
       "title": "Performance counters",
       "tool": "majordomus_perf"
+    },
+    {
+      "api_anchor": "/docs/api/plan/#op-plan-allocate",
+      "claims": [],
+      "cli": null,
+      "id": "plan.allocate",
+      "kind": "command",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-allocate/",
+      "slug": "plan-allocate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Reserve the next issue, case or ADR number",
+      "tool": "majordomus_plan_allocate"
+    },
+    {
+      "api_anchor": "/docs/api/plan/#op-plan-delivery",
+      "claims": [],
+      "cli": "majordomus plan delivery",
+      "id": "plan.delivery",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-delivery/",
+      "slug": "plan-delivery",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "How far each issue's work has travelled",
+      "tool": "majordomus_plan_delivery"
+    },
+    {
+      "api_anchor": "/docs/api/plan/#op-plan-drift",
+      "claims": [],
+      "cli": "majordomus plan drift",
+      "id": "plan.drift",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-drift/",
+      "slug": "plan-drift",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Where the plan's stamps contradict the delivered work",
+      "tool": "majordomus_plan_drift"
+    },
+    {
+      "api_anchor": "/docs/api/plan/#op-plan-flight",
+      "claims": [],
+      "cli": null,
+      "id": "plan.flight",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-flight/",
+      "slug": "plan-flight",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Where the work is now",
+      "tool": "majordomus_plan_flight"
     },
     {
       "api_anchor": "/docs/api/plan/#op-plan-issues",
@@ -2498,6 +3161,40 @@
       "tests": [],
       "title": "What may run at the same time",
       "tool": "majordomus_plan_waves"
+    },
+    {
+      "api_anchor": "/docs/api/proceed/#op-proceed-plan",
+      "claims": [],
+      "cli": "majordomus proceed plan",
+      "id": "proceed.plan",
+      "kind": "query",
+      "module": "proceed",
+      "module_route": "/registry/modules/proceed/",
+      "resource": null,
+      "route": "/registry/capabilities/proceed-plan/",
+      "slug": "proceed-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "tests": [],
+      "title": "What to proceed with, and why",
+      "tool": "majordomus_proceed_plan"
+    },
+    {
+      "api_anchor": "/docs/api/proceed/#op-proceed-step",
+      "claims": [],
+      "cli": "majordomus proceed step",
+      "id": "proceed.step",
+      "kind": "query",
+      "module": "proceed",
+      "module_route": "/registry/modules/proceed/",
+      "resource": null,
+      "route": "/registry/capabilities/proceed-step/",
+      "slug": "proceed-step",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "tests": [],
+      "title": "Proceed: the next step, as one work order",
+      "tool": "majordomus_proceed_step"
     },
     {
       "api_anchor": "/docs/api/product/#op-product-domains",
@@ -2789,6 +3486,40 @@
       "tool": "majordomus_changelog"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-currency",
+      "claims": [],
+      "cli": null,
+      "id": "release.currency",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-currency/",
+      "slug": "release-currency",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether the trunk's landed work is released",
+      "tool": "majordomus_release_currency"
+    },
+    {
+      "api_anchor": "/docs/api/release/#op-release-next",
+      "claims": [],
+      "cli": null,
+      "id": "release.next",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-next/",
+      "slug": "release-next",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The version a landing allocates, and why",
+      "tool": "majordomus_release_next"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-version",
       "claims": [],
       "cli": null,
@@ -2906,6 +3637,23 @@
       "tests": [],
       "title": "What proves this rule",
       "tool": "majordomus_rule"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus served forge",
+      "id": "served.forge",
+      "kind": "command",
+      "module": "served",
+      "module_route": "/registry/modules/served/",
+      "resource": null,
+      "route": "/registry/capabilities/served-forge/",
+      "slug": "served-forge",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/served.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/served.rs",
+      "tests": [],
+      "title": "Ask the forge what it recorded as deployed and released",
+      "tool": null
     },
     {
       "api_anchor": null,
@@ -3231,6 +3979,23 @@
       "tool": "majordomus_why_validate"
     },
     {
+      "api_anchor": "/docs/api/worktree/#op-worktree-create",
+      "claims": [],
+      "cli": "majordomus worktree ensure",
+      "id": "worktree.create",
+      "kind": "command",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-create/",
+      "slug": "worktree-create",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "The canonical worktree of a branch, made or found",
+      "tool": "majordomus_worktree_create"
+    },
+    {
       "api_anchor": "/docs/api/worktree/#op-worktree-inspect",
       "claims": [],
       "cli": "majordomus worktree inspect",
@@ -3314,6 +4079,40 @@
       "tests": [],
       "title": "The whole topology",
       "tool": "majordomus_worktrees"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-trunk",
+      "claims": [],
+      "cli": "majordomus worktree trunk",
+      "id": "worktree.trunk",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-trunk/",
+      "slug": "worktree-trunk",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "How far a checkout is from the remote trunk",
+      "tool": "majordomus_worktree_trunk"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-uncommitted",
+      "claims": [],
+      "cli": "majordomus worktree uncommitted",
+      "id": "worktree.uncommitted",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-uncommitted/",
+      "slug": "worktree-uncommitted",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "Uncommitted work in the linked worktrees, and what holds it",
+      "tool": "majordomus_worktree_uncommitted"
     }
   ],
   "claims": {
@@ -3631,6 +4430,20 @@
         "test": "apps/majordomus-cli/tests/cockpit.rs"
       },
       {
+        "id": "ui-dashboard-cites-its-sources",
+        "implementation": "apps/majordomus-cli/src/ui/dashboard.rs",
+        "route": "/guarantees/ui-dashboard-cites-its-sources/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/ui_surface.rs"
+      },
+      {
+        "id": "observatory-draws-nothing-it-did-not-read",
+        "implementation": "apps/majordomus-cli/src/ui/observatory.rs",
+        "route": "/guarantees/observatory-draws-nothing-it-did-not-read/",
+        "status": "guaranteed",
+        "test": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+      },
+      {
         "id": "evidence-proof-is-an-execution",
         "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
         "route": "/guarantees/evidence-proof-is-an-execution/",
@@ -3757,6 +4570,13 @@
         "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
       },
       {
+        "id": "mesh-firewall-is-derived",
+        "implementation": "apps/majordomus-cli/src/mesh/firewall.rs",
+        "route": "/guarantees/mesh-firewall-is-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/495_the_firewall_admits_the_mesh.sh"
+      },
+      {
         "id": "models-one-declaration",
         "implementation": "apps/majordomus-cli/src/models/mod.rs",
         "route": "/guarantees/models-one-declaration/",
@@ -3860,6 +4680,13 @@
         "route": "/guarantees/review-is-never-fabricated/",
         "status": "guaranteed",
         "test": "test/cases/736_reasoning_check_refuses_drift.sh"
+      },
+      {
+        "id": "the-closing-question-is-measured",
+        "implementation": "apps/majordomus-cli/src/gates/closing.rs",
+        "route": "/guarantees/the-closing-question-is-measured/",
+        "status": "guaranteed",
+        "test": "test/cases/1037_the_closing_question_is_measured.sh"
       }
     ],
     "http": [
@@ -3924,11 +4751,11 @@
     ]
   },
   "counts": {
-    "capabilities": 185,
-    "claims": 89,
-    "modules": 53
+    "capabilities": 232,
+    "claims": 93,
+    "modules": 62
   },
-  "generator": "majordomus-cli 0.20.0",
+  "generator": "majordomus-cli 1.0.2",
   "modules": [
     {
       "capabilities": [
@@ -3945,6 +4772,54 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/artifacts.rs",
       "title": "Generated artifacts"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "blackboard.snapshot",
+          "route": "/registry/capabilities/blackboard-snapshot/",
+          "slug": "blackboard-snapshot"
+        }
+      ],
+      "claims": [],
+      "id": "blackboard",
+      "route": "/registry/modules/blackboard/",
+      "slug": "blackboard",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+      "title": "The peer blackboard"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "board.snapshot",
+          "route": "/registry/capabilities/board-snapshot/",
+          "slug": "board-snapshot"
+        }
+      ],
+      "claims": [],
+      "id": "board",
+      "route": "/registry/modules/board/",
+      "slug": "board",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/board.rs",
+      "title": "The delivery board"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "brief.session",
+          "route": "/registry/capabilities/brief-session/",
+          "slug": "brief-session"
+        }
+      ],
+      "claims": [],
+      "id": "brief",
+      "route": "/registry/modules/brief/",
+      "slug": "brief",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/brief.rs",
+      "title": "The session brief"
     },
     {
       "capabilities": [
@@ -4123,6 +4998,11 @@
           "id": "delivery.report",
           "route": "/registry/capabilities/delivery-report/",
           "slug": "delivery-report"
+        },
+        {
+          "id": "delivery.trends",
+          "route": "/registry/capabilities/delivery-trends/",
+          "slug": "delivery-trends"
         }
       ],
       "claims": [],
@@ -4149,6 +5029,16 @@
           "id": "deploy.list",
           "route": "/registry/capabilities/deploy-list/",
           "slug": "deploy-list"
+        },
+        {
+          "id": "deploy.observed",
+          "route": "/registry/capabilities/deploy-observed/",
+          "slug": "deploy-observed"
+        },
+        {
+          "id": "deploy.slug",
+          "route": "/registry/capabilities/deploy-slug/",
+          "slug": "deploy-slug"
         }
       ],
       "claims": [],
@@ -4170,6 +5060,21 @@
           "id": "design.explain",
           "route": "/registry/capabilities/design-explain/",
           "slug": "design-explain"
+        },
+        {
+          "id": "design.kit",
+          "route": "/registry/capabilities/design-kit/",
+          "slug": "design-kit"
+        },
+        {
+          "id": "design.kit.adopt",
+          "route": "/registry/capabilities/design-kit-adopt/",
+          "slug": "design-kit-adopt"
+        },
+        {
+          "id": "design.licence",
+          "route": "/registry/capabilities/design-licence/",
+          "slug": "design-licence"
         },
         {
           "id": "design.system",
@@ -4219,6 +5124,11 @@
     {
       "capabilities": [
         {
+          "id": "devtask.implement",
+          "route": "/registry/capabilities/devtask-implement/",
+          "slug": "devtask-implement"
+        },
+        {
           "id": "devtask.issue",
           "route": "/registry/capabilities/devtask-issue/",
           "slug": "devtask-issue"
@@ -4227,6 +5137,11 @@
           "id": "devtask.milestone",
           "route": "/registry/capabilities/devtask-milestone/",
           "slug": "devtask-milestone"
+        },
+        {
+          "id": "devtask.run",
+          "route": "/registry/capabilities/devtask-run/",
+          "slug": "devtask-run"
         }
       ],
       "claims": [],
@@ -4310,6 +5225,11 @@
           "id": "economics.summary",
           "route": "/registry/capabilities/economics-summary/",
           "slug": "economics-summary"
+        },
+        {
+          "id": "economics.tasks",
+          "route": "/registry/capabilities/economics-tasks/",
+          "slug": "economics-tasks"
         }
       ],
       "claims": [],
@@ -4319,6 +5239,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
       "title": "Token economics"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "editors.status",
+          "route": "/registry/capabilities/editors-status/",
+          "slug": "editors-status"
+        }
+      ],
+      "claims": [],
+      "id": "editors",
+      "route": "/registry/modules/editors/",
+      "slug": "editors",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/editors.rs",
+      "title": "Editor and agent projections"
     },
     {
       "capabilities": [
@@ -4470,6 +5406,11 @@
           "slug": "executions-protocol"
         },
         {
+          "id": "executions.report",
+          "route": "/registry/capabilities/executions-report/",
+          "slug": "executions-report"
+        },
+        {
           "id": "executions.start",
           "route": "/registry/capabilities/executions-start/",
           "slug": "executions-start"
@@ -4494,6 +5435,16 @@
           "id": "gates.model",
           "route": "/registry/capabilities/gates-model/",
           "slug": "gates-model"
+        },
+        {
+          "id": "gates.policy",
+          "route": "/registry/capabilities/gates-policy/",
+          "slug": "gates-policy"
+        },
+        {
+          "id": "gates.state",
+          "route": "/registry/capabilities/gates-state/",
+          "slug": "gates-state"
         }
       ],
       "claims": [],
@@ -4524,6 +5475,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
       "title": "Graphs"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "guard.edit",
+          "route": "/registry/capabilities/guard-edit/",
+          "slug": "guard-edit"
+        }
+      ],
+      "claims": [],
+      "id": "guard",
+      "route": "/registry/modules/guard/",
+      "slug": "guard",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/guard.rs",
+      "title": "Edit guard"
     },
     {
       "capabilities": [
@@ -4577,6 +5544,16 @@
           "id": "integration.queue",
           "route": "/registry/capabilities/integration-queue/",
           "slug": "integration-queue"
+        },
+        {
+          "id": "integration.timings",
+          "route": "/registry/capabilities/integration-timings/",
+          "slug": "integration-timings"
+        },
+        {
+          "id": "integration.trains",
+          "route": "/registry/capabilities/integration-trains/",
+          "slug": "integration-trains"
         }
       ],
       "claims": [],
@@ -4631,6 +5608,11 @@
           "slug": "intents-preflight"
         },
         {
+          "id": "intents.propose",
+          "route": "/registry/capabilities/intents-propose/",
+          "slug": "intents-propose"
+        },
+        {
           "id": "intents.record",
           "route": "/registry/capabilities/intents-record/",
           "slug": "intents-record"
@@ -4682,6 +5664,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
       "title": "Knowledge base"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "layout.check",
+          "route": "/registry/capabilities/layout-check/",
+          "slug": "layout-check"
+        }
+      ],
+      "claims": [],
+      "id": "layout",
+      "route": "/registry/modules/layout/",
+      "slug": "layout",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/layout.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/layout.rs",
+      "title": "Layer layout"
     },
     {
       "capabilities": [
@@ -4746,6 +5744,31 @@
     {
       "capabilities": [
         {
+          "id": "mesh.beat",
+          "route": "/registry/capabilities/mesh-beat/",
+          "slug": "mesh-beat"
+        },
+        {
+          "id": "mesh.build_cache.ensure",
+          "route": "/registry/capabilities/mesh-build-cache-ensure/",
+          "slug": "mesh-build-cache-ensure"
+        },
+        {
+          "id": "mesh.build_cache.env",
+          "route": "/registry/capabilities/mesh-build-cache-env/",
+          "slug": "mesh-build-cache-env"
+        },
+        {
+          "id": "mesh.build_cache.key",
+          "route": "/registry/capabilities/mesh-build-cache-key/",
+          "slug": "mesh-build-cache-key"
+        },
+        {
+          "id": "mesh.build_cache.provision",
+          "route": "/registry/capabilities/mesh-build-cache-provision/",
+          "slug": "mesh-build-cache-provision"
+        },
+        {
           "id": "mesh.claim",
           "route": "/registry/capabilities/mesh-claim/",
           "slug": "mesh-claim"
@@ -4761,9 +5784,24 @@
           "slug": "mesh-doctor"
         },
         {
+          "id": "mesh.enrol",
+          "route": "/registry/capabilities/mesh-enrol/",
+          "slug": "mesh-enrol"
+        },
+        {
           "id": "mesh.events",
           "route": "/registry/capabilities/mesh-events/",
           "slug": "mesh-events"
+        },
+        {
+          "id": "mesh.firewall",
+          "route": "/registry/capabilities/mesh-firewall/",
+          "slug": "mesh-firewall"
+        },
+        {
+          "id": "mesh.firewall.apply",
+          "route": "/registry/capabilities/mesh-firewall-apply/",
+          "slug": "mesh-firewall-apply"
         },
         {
           "id": "mesh.handover.consume",
@@ -4826,6 +5864,11 @@
           "slug": "mesh-review-request"
         },
         {
+          "id": "mesh.review.withdraw",
+          "route": "/registry/capabilities/mesh-review-withdraw/",
+          "slug": "mesh-review-withdraw"
+        },
+        {
           "id": "mesh.session.close",
           "route": "/registry/capabilities/mesh-session-close/",
           "slug": "mesh-session-close"
@@ -4849,6 +5892,11 @@
           "id": "mesh.verify",
           "route": "/registry/capabilities/mesh-verify/",
           "slug": "mesh-verify"
+        },
+        {
+          "id": "mesh.who",
+          "route": "/registry/capabilities/mesh-who/",
+          "slug": "mesh-who"
         }
       ],
       "claims": [],
@@ -4879,6 +5927,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
       "title": "Models"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "monitor.stream",
+          "route": "/registry/capabilities/monitor-stream/",
+          "slug": "monitor-stream"
+        }
+      ],
+      "claims": [],
+      "id": "monitor",
+      "route": "/registry/modules/monitor/",
+      "slug": "monitor",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/monitor.rs",
+      "title": "The monitor"
     },
     {
       "capabilities": [
@@ -4943,6 +6007,32 @@
     {
       "capabilities": [
         {
+          "id": "observatory.capture",
+          "route": "/registry/capabilities/observatory-capture/",
+          "slug": "observatory-capture"
+        },
+        {
+          "id": "observatory.events",
+          "route": "/registry/capabilities/observatory-events/",
+          "slug": "observatory-events"
+        },
+        {
+          "id": "observatory.replay",
+          "route": "/registry/capabilities/observatory-replay/",
+          "slug": "observatory-replay"
+        }
+      ],
+      "claims": [],
+      "id": "observatory",
+      "route": "/registry/modules/observatory/",
+      "slug": "observatory",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/observatory.rs",
+      "title": "Observatory"
+    },
+    {
+      "capabilities": [
+        {
           "id": "pack.plan",
           "route": "/registry/capabilities/pack-plan/",
           "slug": "pack-plan"
@@ -5001,6 +6091,26 @@
     {
       "capabilities": [
         {
+          "id": "plan.allocate",
+          "route": "/registry/capabilities/plan-allocate/",
+          "slug": "plan-allocate"
+        },
+        {
+          "id": "plan.delivery",
+          "route": "/registry/capabilities/plan-delivery/",
+          "slug": "plan-delivery"
+        },
+        {
+          "id": "plan.drift",
+          "route": "/registry/capabilities/plan-drift/",
+          "slug": "plan-drift"
+        },
+        {
+          "id": "plan.flight",
+          "route": "/registry/capabilities/plan-flight/",
+          "slug": "plan-flight"
+        },
+        {
           "id": "plan.issues",
           "route": "/registry/capabilities/plan-issues/",
           "slug": "plan-issues"
@@ -5053,6 +6163,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
       "title": "The plan and its derivations"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "proceed.plan",
+          "route": "/registry/capabilities/proceed-plan/",
+          "slug": "proceed-plan"
+        },
+        {
+          "id": "proceed.step",
+          "route": "/registry/capabilities/proceed-step/",
+          "slug": "proceed-step"
+        }
+      ],
+      "claims": [],
+      "id": "proceed",
+      "route": "/registry/modules/proceed/",
+      "slug": "proceed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "title": "What a session proceeds with"
     },
     {
       "capabilities": [
@@ -5186,6 +6317,16 @@
           "slug": "release-changelog"
         },
         {
+          "id": "release.currency",
+          "route": "/registry/capabilities/release-currency/",
+          "slug": "release-currency"
+        },
+        {
+          "id": "release.next",
+          "route": "/registry/capabilities/release-next/",
+          "slug": "release-next"
+        },
+        {
           "id": "release.version",
           "route": "/registry/capabilities/release-version/",
           "slug": "release-version"
@@ -5253,6 +6394,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "served.forge",
+          "route": "/registry/capabilities/served-forge/",
+          "slug": "served-forge"
+        },
         {
           "id": "served.observe",
           "route": "/registry/capabilities/served-observe/",
@@ -5437,6 +6583,11 @@
     {
       "capabilities": [
         {
+          "id": "worktree.create",
+          "route": "/registry/capabilities/worktree-create/",
+          "slug": "worktree-create"
+        },
+        {
           "id": "worktree.inspect",
           "route": "/registry/capabilities/worktree-inspect/",
           "slug": "worktree-inspect"
@@ -5460,6 +6611,16 @@
           "id": "worktree.topology",
           "route": "/registry/capabilities/worktree-topology/",
           "slug": "worktree-topology"
+        },
+        {
+          "id": "worktree.trunk",
+          "route": "/registry/capabilities/worktree-trunk/",
+          "slug": "worktree-trunk"
+        },
+        {
+          "id": "worktree.uncommitted",
+          "route": "/registry/capabilities/worktree-uncommitted/",
+          "slug": "worktree-uncommitted"
         }
       ],
       "claims": [],

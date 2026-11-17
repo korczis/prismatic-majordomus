@@ -1,0 +1,44 @@
+id: I2703
+milestone: runtime-trust
+title: "The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order"
+slug: the-rule-states-the-hello-check-order
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bring rule project.mesh-cooperation-is-authenticated to the check order accept_hello runs, with the nonce cache last and the recipient check before it, as a new version of the blocking rule, and hold the code to it with a test."
+why: "Split from I2132 on 2026-10-14. I2132 bound each hello to its recipient and made docs/MESH.md state the order the code checks in, and its desired_state said 'Not done here' of the rule, which still lists the nonce fourth; correcting it is a version bump of a blocking rule that scripts/ci/mesh-check and case 301 name by file. Its acceptance criteria still required rule and code to agree, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh drift 1."
+current_state: ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md says the answerer verifies 'in order' signature, timestamp, nonce, protocol, self, repository, trust, and has no recipient check. docs/MESH.md lists the ten checks in the code's order, with the recipient (misaddressed) seventh and the nonce cache last, while its diagram still reads 'signature · freshness · nonce · protocol · self · repository · trust'. scripts/ci/mesh-check and test/cases/301_the_mesh_stays_one_subsystem.sh name the v1 rule file. No test names the order Cooperation::accept_hello (apps/majordomus-cli/src/mesh/cooperation.rs) checks in."
+desired_state: "A new version of the rule states the order accept_hello checks in, the recipient check included and the nonce cache last with its reason; scripts/ci/mesh-check, case 301 and the docs/MESH.md diagram follow the new version; a test sends hellos that fail two checks at once and asserts the refusal of the earlier one, for each adjacent pair the rule orders."
+scope:
+  - ".ai/repo/rules/project"
+  - "scripts/ci/mesh-check"
+  - "test/cases/301_the_mesh_stays_one_subsystem.sh"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "The recipient field of a hello and the misaddressed refusal, which I2132 delivered"
+depends_on:
+  - I2132
+acceptance_criteria:
+  - "The rule's check order and the code's check order are the same, and a test names the order"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::cooperation"
+  - "scripts/ci/mesh-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 301_the_mesh_stays_one_subsystem"
+evidence_required:
+  - "hello_check_order_test"
+created_at: 2026-10-14
+updated_at: 2026-10-15T09:49:54Z
+started_at: 2026-10-15T08:05:22Z
+started_event: sha256:fb240e74c28d131e5525e03d404a9831a1a12526efe7cd7436380c45936f559b
+completed_at: 2026-10-15T09:49:54Z
+completed_event: sha256:81e5061412cf39d14b2c0e1fb371b4faf81bf281f2a6c66c88b7415173db52c8
+evidence:
+  - covers: hello_check_order_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation::tests::the_hello_checks_run_in_the_order_the_rule_lists"
+    result: "test result: ok; 14 checks alone and 13 adjacent pairs each refused by the earlier check, and the rule v2 and docs/MESH.md list the same 14 refusals in the same order (run 2026-10-15 on lundra, x86_64-linux, on the tree of 1336d6fdabc; lib mesh 315 passed, 0 failed). Mutant with the repository check moved above the recipient check fails it: Misaddressed before Repository refused RepositoryMismatch"
+    commit: 1336d6fdabcb12058086a433713b4b7cba8b2b28
+    recorded_at: 2026-10-15T09:49:35Z

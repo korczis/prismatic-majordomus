@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # release-record — write the record of one published release.
 #
-#   scripts/release-record --tag v0.2.0 --dir dist --commit <sha> [--channel stable] \
+#   scripts/release-record --tag v0.2.0 --dir dist --commit <sha> [--channel stable|prerelease]  (default: from the tag) \
 #                          [--published-at <UTC>] [--notes-url URL] [--out FILE]
 #
 # The record is this repository's evidence of what was published: for every target the
@@ -26,7 +26,7 @@ CRATE="$ROOT/apps/majordomus-cli"
 
 die() { printf 'release-record: %s\n' "$*" >&2; exit "${2:-12}"; }
 
-tag=""; dir=""; commit=""; channel="stable"; published=""; notes=""; out=""
+tag=""; dir=""; commit=""; channel=""; published=""; notes=""; out=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) tag="${2:-}"; shift 2 ;;
@@ -42,7 +42,21 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$tag" ] && [ -n "$dir" ] || die "--tag and --dir are required" 2
 case "$tag" in v[0-9]*) ;; *) die "--tag must be v followed by a version" 2 ;; esac
+# The channel is derived from the tag unless it is given: a version with a pre-release part
+# (v1.0.0-alpha.1) is a prerelease, anything else is stable. Left to a default of "stable", a
+# tag with a suffix was recorded as the stable release and became what an unpinned installer
+# resolves; so the default is the tag's own answer, and a stable channel on a suffixed tag is
+# refused here as the record's findings refuse it later.
+case "$tag" in
+  *-*) derived="prerelease" ;;
+  *) derived="stable" ;;
+esac
+[ -n "$channel" ] || channel="$derived"
 case "$channel" in stable|prerelease) ;; *) die "--channel is stable or prerelease" 2 ;; esac
+if [ "$channel" = "stable" ] && [ "$derived" = "prerelease" ]; then
+  die "$tag has a pre-release part and cannot be recorded on the stable channel" 2
+fi
+
 [ -d "$dir" ] || die "no such directory: $dir" 10
 [ -n "$commit" ] || commit="$(cd "$ROOT" && git rev-parse HEAD)"
 case "$commit" in

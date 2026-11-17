@@ -1,0 +1,48 @@
+id: I4499
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "The Cockpit's pages ask for readings: no page of the technical layer computes on the request"
+slug: the-cockpit-asks-for-readings
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Move the Cockpit's pages from ctx.execute to the readings the UI already uses, so that a Cockpit page shows the latest reading with its standing and no handler runs on the path of a page request."
+why: "campaigns/majordomus-ui-speed-pack/00-MASTER.md names the cockpit among the surfaces the fast UI is integrated with and forbids a repository traversal or an unbounded computation in a common page handler. ADR 0142 measured /cockpit at 6.1 to 6.3 s on every request and says in its consequences that the Cockpit's pages still compute on the request and that moving them to readings is the same change and follows the UI's. No issue records that follow-up, and the UI links down into the Cockpit as the technical view of each source (ADR 0135)."
+current_state: "Measured at 51b38035a71, after the readings (I2486) and the UI budgets (I2489) landed and I4200 made warm screens borrow instead of copy. apps/majordomus-cli/src/cockpit/pages.rs ask() is ctx.execute, with 47 call sites in pages.rs and more in cockpit/plan.rs (7), intents.rs (3 and a direct execute), mcp.rs (2), reasoning.rs (2), trains.rs (1) and monitor.rs (1); pages.rs and nav.rs also call execute directly (objects.get, graph.get, objects.search, perf.counters, repository.info). test/cases/1096_no_screen_waits_for_a_source.sh scans only src/ui. ADR 0142 still states that /cockpit computes on the request."
+desired_state: "A Cockpit page that renders a capability's answer asks for a reading through the same function ui/source.rs uses and draws its standing where the page names its source. The pages that run a capability because a person asked them to (the execute control, data-mj-execute) keep execute, since that is an answer and not a reading. The scan of case 1096 covers src/cockpit with that one exemption named in it."
+scope:
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/intents.rs"
+  - "apps/majordomus-cli/src/cockpit/nav.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "test/cases/1096_no_screen_waits_for_a_source.sh"
+  - ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md"
+  - "docs/COCKPIT.md"
+  - ".ai/repo/project/issues/I4499.yaml"
+  - "apps/majordomus-cli/src/cockpit/plan.rs"
+  - "apps/majordomus-cli/src/cockpit/trains.rs"
+  - "apps/majordomus-cli/src/cockpit/monitor.rs"
+  - "apps/majordomus-cli/src/cockpit/reasoning.rs"
+  - "apps/majordomus-cli/src/cockpit/mcp.rs"
+non_scope:
+  - "Restyling the Cockpit or moving its pages into the UI: ADR 0135 keeps the two apart"
+  - "The execute control and the API: an answer stays exact"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "A Cockpit page whose source was read before is answered without its handler running on the request's thread, counted by handler_invocations"
+  - "A Cockpit page drawn from a stale or pending reading says so beside the source it names"
+  - "Outside the named exemption nothing under src/cockpit calls execute, and case 1096 fails when one is added"
+  - "The rule project.no-screen-waits-for-a-source names the Cockpit in what it holds"
+  - "A reading on the Cockpit honours the remote-caller refusal its snapshot relies on (I3435) and keeps the Server-Timing entries I3226 adds"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source"
+evidence_required:
+  - "cockpit_reads_readings_tests"
+  - "no_screen_waits_case_1096"
+  - "cockpit_latency_before_after"
+created_at: 2026-10-30
+updated_at: 2026-10-30

@@ -1,0 +1,37 @@
+id: I3665
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "A benchmark run and an advisor consultation carry the funding kind the owner declared for them, or unknown"
+slug: each-call-names-its-declared-funding-kind
+priority: p2
+profile: implementation
+objective: "Add an optional funding kind to the economics run record (EconomicsRun, not EconomicsRequest) and to the reasoning consultation record, in the catalogue's vocabulary (I3660), filled from the owner's I3289 declaration through I3292's billing_mode and otherwise unknown; an existing run file without the field reads unknown and is not rewritten; nothing infers the kind from which credential was present."
+why: "The economics runner passes ANTHROPIC_API_KEY and CLAUDE_CODE_OAUTH_TOKEN to both arms alike (economics/runner.rs), and Claude Code uses the API key whenever it is present in non-interactive mode (code.claude.com/docs/en/authentication, read 2026-10-21), so a run may be paid by the seat or by the API organization and nothing records which. The advisor driver is the other place Majordomus starts a model call, and the one a credit grant is meant to pay for. I3288 freezes EconomicsRequest, the recorded run files and the pairing calculators; an optional field on the run record that reads unknown when absent changes none of them (critique findings benchmark-runs-have-no-usage-record and advisor-calls-are-the-calls-left-unattributed)."
+current_state: "Runs keep total_cost_usd as reported; consultations report usage when the transport does; neither names how it was paid."
+desired_state: "Every run and consultation names its declared funding kind or unknown, and the recorded runs are untouched."
+scope:
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/reasoning"
+  - "scripts/lib/advisors/driver.mjs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "share/schemas/generated"
+  - "docs/generated"
+non_scope:
+  - "EconomicsRequest, the recorded run files and the pairing in economics/stats.rs and report.rs (I3288)"
+depends_on:
+  - "I3660"
+  - "I3292"
+serves:
+  - "every-model-call-is-paid-from-a-declared-source#each-call-names-its-declared-source"
+acceptance_criteria:
+  - "A run under a declaration of credit_grant records credit_grant; a run with no declaration records unknown"
+  - "Every recorded run file under .ai/repo/benchmarks/economics/runs still parses and reads unknown, byte for byte unchanged (test)"
+  - "A consultation record carries the declared kind or unknown"
+  - "No code path writes a kind inferred from credential presence (test)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+evidence_required:
+  - "test_a_run_records_its_declared_funding_kind_or_unknown"
+created_at: 2026-10-20
+updated_at: 2026-10-21

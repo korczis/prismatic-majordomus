@@ -1,0 +1,31 @@
+id: I2485
+milestone: development-runtime
+title: "The bench measures the first request after the repository moved, and a budget bounds it"
+slug: the-bench-measures-the-request-after-a-move
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Measure what a reader pays on the first request after the repository changed, as a benchmark target of its own, so that the budget of I2489 covers the case ADR 0142 was written for and not only the warm one."
+why: "ADR 0142 took the handlers and the reload off the path of a UI request. Its effect on the warm request is now held by a budget (I2489). Its effect on the first request after a commit was measured by hand, once: 1.2-4.2 s before, 3-330 ms after, on release builds with a script outside the repository. Nothing measures it again, so a change that puts a wait back after a move would pass every gate."
+current_state: "bench has two cache modes for a page, cold (the executor cache cleared before every sample) and warm. Neither moves the repository. The live view targets (system.http.live.ui.*) pay the git stamp and never a new generation."
+desired_state: "A system target per screen over the live view takes each sample right after the fixture repository moved (an empty commit), in a cache mode of its own, so a result document says what the first reader after a change waited. The policy bounds it with a budget of its own, measured before it is declared, and the ui job's check holds it. The hand script is retired."
+scope:
+  - "apps/majordomus-cli/src/bench"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - test/cases
+  - ".ai/repo/project/issues/I2485.yaml"
+depends_on:
+  - I2489
+acceptance_criteria:
+  - "A result document carries, per screen of the live view, a measurement taken on the first request after the repository moved"
+  - "A screen made to wait for a source after a move, in a fixture, is over its budget and fails the check"
+  - "The budget is declared in the benchmark policy with the measurement it was set from"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1095_the_bench_measures_the_request_after_a_move"
+evidence_required:
+  - "bench_moved_mode_tests"
+  - "bench_moved_case_1095"
+created_at: 2026-10-12
+updated_at: 2026-10-12

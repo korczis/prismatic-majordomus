@@ -76,13 +76,23 @@ MAJORDOMUS_PROVIDER_SESSION=win-a "$MJ" decision add "Attributed to the worker t
 tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$a\"" \
   || { echo "    the ledger line was stamped with the wrong episode:"; tail -n 1 .ai/local/state/ledger.jsonl | sed 's/^/    | /'; exit 1; }
 
-# A worker whose provider session has no episode here falls through to the pointer rather
-# than losing its attribution: sessions opened by hand still stamp the commands of the
-# worker sitting in that checkout.
-MAJORDOMUS_PROVIDER_SESSION=win-nothing "$MJ" decision add "Falls through to the pointer" \
-  --why "an unopened provider session must not cost a worker its attribution" >/dev/null
-tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$b\"" \
-  || { echo "    an unknown provider session did not fall through to the pointer"; tail -n 1 .ai/local/state/ledger.jsonl | sed 's/^/    | /'; exit 1; }
+# An explicit missing episode and an anonymous caller both remain unattributed here.
+# The pointer still answers status, but is no evidence of which of two workers wrote.
+no_session_stamp() {
+  if tail -n 1 .ai/local/state/ledger.jsonl | grep -q '"session":'; then
+    echo "    an unknown caller borrowed the checkout's session pointer"
+    tail -n 1 .ai/local/state/ledger.jsonl
+    return 1
+  fi
+}
+MAJORDOMUS_PROVIDER_SESSION=win-nothing "$MJ" decision add "No episode for this caller" \
+  --why "an explicit unknown provider session must not borrow another worker" >/dev/null
+no_session_stamp
+"$MJ" decision add "Two episodes do not identify an anonymous caller" \
+  --why "the record must not turn a status pointer into authorship" >/dev/null
+no_session_stamp
+expect_exit 0 "$MJ" session status
+expect_grep "Session: +$b"
 
 # ---------------------------------------------------------------- the end event
 # It closes its own episode and no other. Before this, the second window to be shut ended
@@ -128,6 +138,14 @@ expect_exit 0 "$MJ" session status
 expect_grep "Session: +$h"
 expect_no_grep 'Provider:'
 
+# The unambiguous hand-opened episode remains the ordinary terminal's attribution.
+"$MJ" decision add "The sole local episode is usable" --why "one local episode is unambiguous" >/dev/null
+tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$h\"" \
+  || { echo "    the sole hand-opened episode lost its attribution"; exit 1; }
+MAJORDOMUS_PROVIDER_SESSION=win-nothing "$MJ" decision add "A missing key stays missing" \
+  --why "even a sole episode is not the explicitly named missing episode" >/dev/null
+no_session_stamp
+
 # A provider session opening one beside a person's does not disturb it...
 start_event win-c startup >/dev/null 2>&1
 must "the provider's episode replaced the person's" [ "$(open_count)" = 2 ]
@@ -145,3 +163,30 @@ expect_exit 0 "$MJ" session close
 must "the hand-opened episode survived its own close" [ "$(open_count)" = 0 ]
 expect_exit 0 "$MJ" session status
 expect_grep 'No open session'
+
+# ---------------------------------------------------------------- by hand, inside a provider
+# A worker running inside a provider's process opens its episode with `session start`, as the
+# evolve skill tells it to, and then records into it. The open used to key the episode `hand`
+# while every writer resolved the same process to its provider session, so the observation
+# that followed was refused with "no episode is open in this checkout for this caller"
+# (measured on 2026-10-28 in this repository's worktree of the evolve branch).
+CLAUDE_CODE_SESSION_ID=win-d "$MJ" session start --owner tester >/dev/null 2>&1
+must "a hand start inside a provider was keyed as nobody's" [ -f "$OPEN/win-d.yaml" ]
+must "a hand start inside a provider also wrote the hand episode" [ ! -f "$OPEN/hand.yaml" ]
+d="$(sid_of "$OPEN/win-d.yaml")"
+# The record says whose it is, as its file name does: every reader that asks whose an
+# episode is joins on these two fields, and without them a brief for win-d fell back to the
+# pointer and reported another worker's episode as this one's.
+expect_grep '^provider_session: "win-d"$' "$OPEN/win-d.yaml"
+expect_grep '^provider: "claude-code"$' "$OPEN/win-d.yaml"
+grep 'session.started' .ai/local/state/ledger.jsonl | tail -n 1 | grep -qF '"provider_session":"win-d"' \
+  || { echo "    the session.started line forgot the provider session the episode is keyed by"; exit 1; }
+# ...and it is still a hand-opened one: no hook delivered it, and the working context says so.
+grep -q 'opened_by: hand\|Opened by: *hand\|"opened_by": *"hand"' "$("$MJ" session context "$d" --path 2>/dev/null)" \
+  || { echo "    an episode a person opened by hand was recorded as opened by a hook"; exit 1; }
+CLAUDE_CODE_SESSION_ID=win-d "$MJ" decision add "Recorded by the process that opened it" \
+  --why "an episode a process opens by hand is the one its records are stamped with" >/dev/null
+tail -n 1 .ai/local/state/ledger.jsonl | grep -qF "\"session\":\"$d\"" \
+  || { echo "    the record of the process that opened the episode was not stamped with it"; exit 1; }
+CLAUDE_CODE_SESSION_ID=win-d expect_exit 0 "$MJ" session close
+must "the episode opened by hand inside a provider survived its own close" [ "$(open_count)" = 0 ]

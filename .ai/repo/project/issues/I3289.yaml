@@ -1,0 +1,44 @@
+id: I3289
+milestone: every-sessions-usage-is-observed
+title: "Turning usage collection on is a dry-run plan the person consents to, never a committed repository setting"
+slug: usage-collection-is-consented
+priority: p2
+profile: implementation
+objective: "Generate the minimal client configuration that points a client's telemetry at the shared server (for Claude Code the CLAUDE_CODE_ENABLE_TELEMETRY and OTEL_* environment), print it on --dry-run, and apply it only with consent: launcher-scoped by default with OTEL_RESOURCE_ATTRIBUTES naming the repository and checkout, keeping existing user settings; a persistent user-level endpoint waits until a stable receiver is declared."
+why: "Most sessions are started by the person, not by Majordomus, so collection has to reach sessions Majordomus does not launch; ADR 0140 and ADR 0145 forbid writing personal settings from the repository unasked, and the shared server's port is derived per checkout, falls back to a free port and the server exits when idle, so no user-level URL can name the receiver until a stable one (the ADR 0199 hub) is declared. The assistant reported (twice) that Claude Code ignores exporter settings in project .claude/settings files; that is unverified and decided by experiment. It extends milestone execution-telemetry. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c236#4, chatgpt-majordomus:c253#4."
+current_state: "Nothing configures any client's telemetry."
+desired_state: "One command under an existing domain (economics or lifecycle providers, not a new noun) shows, applies and reverts the change, and doctor says whether collection is on per provider."
+scope:
+  - "docs/ECONOMICS.md"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/generated/modules/economics.md"
+non_scope:
+  - "Writing .claude/settings.json in the repository"
+  - "Enabling raw body export"
+depends_on:
+  - "I3288"
+serves:
+  - "every-sessions-usage-is-observed#claude-code-usage-recorded"
+acceptance_criteria:
+  - "--dry-run prints exactly the lines it would change and changes nothing"
+  - "Apply without consent is refused"
+  - "Revert restores the previous file byte-identically"
+  - "The generated configuration is launcher-scoped by default and sets OTEL_RESOURCE_ATTRIBUTES naming the repository and checkout; a persistent user-level endpoint is refused until a stable receiver (ADR 0199 hub) is declared"
+  - "--dry-run prints the port the receiver actually holds at that moment, read from the server record, not a derived default (case)"
+  - "A doctor-style report states per provider whether collection is on and the age of the last received event"
+  - "One live round with collection on leaves usage records, kept as evidence naming the client version"
+  - "billing_mode is captured here as the person's declaration (class declared), and is never inferred"
+validation:
+  - "majordomus generate --check"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_usage_collection_is_consented"
+  - "case_the_dry_run_names_the_receiver_port"
+  - "live_round_claude_code_usage"
+created_at: 2026-10-18
+updated_at: 2026-10-18

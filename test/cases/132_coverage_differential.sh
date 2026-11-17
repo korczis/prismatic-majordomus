@@ -189,3 +189,151 @@ expect_exit 0 cov7 "$BASE7"
 printf 'pub fn demo() {}\n\nmod tests;\n' > "$W7/apps/majordomus-cli/src/demo/mod.rs"
 expect_exit 10 cov7 "$BASE7"
 expect_grep "$REL7:6"
+
+# ------------------------------- 9. a raw string across lines does not close a test module early
+#
+# `test_lines` finds the end of an inline `#[cfg(test)] mod tests { ... }` by matching braces.
+# A multi-line raw string such as r#"{"graph": {"nodes": [ ... ]}}"#, whose braces are data,
+# closed the module 63 lines early on 2026-10-22 (I3919): the panic branches after it were
+# judged product code and failed the gate. The fixture's uncovered changed line (8) sits after
+# such a string inside the test module and owes nothing; the same file without the attribute
+# is an ordinary module and its line 8 is owed.
+W9="$T/repo9"; REL9="apps/majordomus-cli/src/rawstr.rs"
+mkdir -p "$W9/$(dirname "$REL9")" "$W9/scripts/ci"
+git -C "$W9" init -q; git -C "$W9" config user.email t@example.com; git -C "$W9" config user.name t
+cp "$ROOT/scripts/rust-coverage" "$W9/scripts/rust-coverage"; chmod +x "$W9/scripts/rust-coverage"
+cp "$ROOT/scripts/ci/coverage-differential" "$W9/scripts/ci/coverage-differential"; chmod +x "$W9/scripts/ci/coverage-differential"
+write_rawstr() {
+  { [ "$1" = test ] && echo '#[cfg(test)]' || echo '// plain module'
+    cat <<'RS'
+mod tests {
+    fn fixture() -> &'static str {
+        r##"{"graph": {"nodes": [
+            {"id": "x"}
+        ], "edges": []}}"##
+    }
+    fn after() { panic!("test branch"); }
+}
+RS
+  } > "$W9/$REL9"
+}
+write_rawstr test
+git -C "$W9" add -A >/dev/null; git -C "$W9" commit -qm base
+BASE9="$(git -C "$W9" rev-parse HEAD)"
+# the export names the file; line 8 (the panic after the raw string) is uncovered
+FX9="$T/export9.json"
+W="$W9" REL="$REL9" python3 - "$FX9" <<'PY'
+import json, os, sys
+target = os.path.join(os.environ["W"], os.environ["REL"])
+seg = lambda l, c, n, s: [l, c, n, s, s, False]
+data = {"version": "2.0.1", "type": "llvm.coverage.json.export", "data": [{
+    "files": [{"filename": target, "segments": [seg(8, 5, 0, True), seg(8, 40, 0, False)], "summary": {}}],
+    "functions": [{"name": "after", "count": 0, "filenames": [target],
+                   "regions": [[8, 5, 8, 40, 0, 0]]}]}]}
+json.dump(data, open(sys.argv[1], "w"))
+PY
+cov9() { ( cd "$W9" && MJ_ROOT="$W9" MJ_COVERAGE_EXPORT="$FX9" scripts/ci/coverage-differential "$1" ); }
+touch9() { python3 - "$W9/$REL9" <<'PY'
+import sys
+path = sys.argv[1]
+lines = open(path).read().splitlines(keepends=True)
+lines[7] = lines[7].rstrip("\n") + "  // touched by 132\n"
+open(path, "w").writelines(lines)
+PY
+}
+touch9
+expect_exit 0 cov9 "$BASE9"
+# the direct check: every line of the module, from its attribute to its closing brace, is test code
+TL="$T/test-lines.out"
+python3 - "$ROOT/scripts/rust-coverage" "$W9/$REL9" > "$TL" <<'PY'
+import re, sys
+src = open(sys.argv[1]).read()
+code = src[src.index("RAW_OPEN = "):src.index("def declared_test_module")]
+def read(path):
+    return open(path).read().splitlines()
+ns = {"re": re, "read": read}
+exec(code, ns)
+print(sorted(ns["test_lines"](sys.argv[2])))
+PY
+grep -q '^\[1, 2, 3, 4, 5, 6, 7, 8, 9\]$' "$TL" \
+  || { cat "$TL"; echo "    test_lines closed the module early at a raw string"; exit 1; }
+# the same file, no longer a test module: its uncovered changed line is owed
+write_rawstr plain; touch9
+expect_exit 10 cov9 "$BASE9"
+expect_grep "$REL9:8"
+
+# ------------------------------- 10. a saturated count is discarded, never read as a finding
+#
+# llvm-cov's JSON clamps a count to 2**63-1, and only a counter expression that came out negative
+# reaches it. On CI run 41932965548 one copy (instantiation) of editors::plan (228 calls)
+# counted the region at editors/mod.rs:697 at 2**63-1 and another counted it 1; llvm summed
+# them, 2**64-1 + 1 wrapped the line segment to 0, and the gate called a line that ran "not
+# covered" (exit 10). The fixtures put both shapes on the sample's line 6, over a segment of 0:
+#   (a) one saturated copy and one counting 1: the saturated copy is discarded, the region and
+#       the line count 1, and touching line 6 PASSES (0), neither a FAIL (10) nor BLOCKED (12)
+#   (b) every copy saturated: there is no count, and touching line 6 is BLOCKED (12), naming the
+#       region and what to do about it
+#   (c) one saturated copy and one counting 0: the 0 is not evidence the line never ran (the
+#       discarded copy may be the one that ran it), so it is BLOCKED (12) too, never a FAIL (10)
+fixture10() { W="$W" REL="$REL" SHAPE="$1" python3 - "$2" <<'PY'
+import json, os, sys
+target = os.path.join(os.environ["W"], os.environ["REL"])
+SAT = 2**63 - 1
+seg = lambda l, c, n, s: [l, c, n, s, s, False]
+copies = [{"name": "_RNvCs4PoU8zQlhil_6sample6unused", "count": 228, "filenames": [target],
+           "regions": [[5, 1, 7, 1, 228, 0, 0, 0], [6, 5, 6, 10, SAT, 0, 0, 0]]}]
+if os.environ["SHAPE"] in ("a", "c"):
+    ran = 1 if os.environ["SHAPE"] == "a" else 0
+    copies.append({"name": "_RNvCs9aB8zQlhil0_6sample6unused", "count": 1, "filenames": [target],
+                   "regions": [[5, 1, 7, 1, 1, 0, 0, 0], [6, 5, 6, 10, ran, 0, 0, 0]]})
+line6 = 0 if os.environ["SHAPE"] == "a" else SAT
+data = {"version": "2.0.1", "type": "llvm.coverage.json.export", "data": [{
+    "files": [{"filename": target, "summary": {}, "segments": [
+        seg(3, 5, 7, True), seg(3, 10, 0, False), seg(6, 5, line6, True), seg(6, 10, 0, False)]}],
+    "functions": [{"name": "add", "count": 7, "filenames": [target],
+                   "regions": [[1, 1, 4, 1, 7, 0, 0, 0]]}] + copies}]}
+json.dump(data, open(sys.argv[1], "w"))
+PY
+}
+FX10A="$T/export10a.json"; FX10B="$T/export10b.json"; FX10C="$T/export10c.json"
+fixture10 a "$FX10A"; fixture10 b "$FX10B"; fixture10 c "$FX10C"
+cov10() { ( cd "$W" && MJ_ROOT="$W" MJ_COVERAGE_EXPORT="$1" \
+    scripts/ci/coverage-differential "$BASE" ); }
+git -C "$W" reset -q --hard "$BASE"
+touch_line 6
+# (a) one unsaturated copy: its count is the region's, and the changed line is covered
+expect_exit 0 cov10 "$FX10A"
+expect_grep "PASS: every changed executable line"
+expect_no_grep "UNTRUSTED|^FAIL "
+# (b) no unsaturated copy: BLOCKED, with the region and the remedy named
+expect_exit 12 cov10 "$FX10B"
+expect_grep "could not be trusted"
+expect_grep "UNTRUSTED $REL:6:5-6:10 in .*every copy of this region's count saturated"
+expect_grep "stop or join the thread in the test before the process exits, then measure again"
+expect_no_grep "^FAIL |^PASS"
+# (c) a saturated copy and a copy that counted 0: BLOCKED, not uncovered
+expect_exit 12 cov10 "$FX10C"
+expect_grep "UNTRUSTED $REL:6:5-6:10 in .*1 of the 2 copies of this region's count saturated"
+expect_no_grep "^FAIL |^PASS"
+git -C "$W" checkout -- "$REL"
+# the covered line beside it is judged as before: no untrusted span reaches line 3
+touch_line 3
+expect_exit 0 cov10 "$FX10B"
+expect_grep "every changed executable line"
+git -C "$W" checkout -- "$REL"
+# The floors. (a): both lines count, 100%, and nothing is untrusted. (b): line 3 ran and line 6
+# has no count, so the lines are at 50% read one way and 100% the other; a floor of 75% is
+# decided by the untrusted count (12), one of 40% is not (0).
+printf '75\n' > "$W/scripts/rust-coverage-threshold"
+expect_exit 0 "$W/scripts/rust-coverage" --from "$FX10A"
+expect_no_grep "UNTRUSTED"
+expect_exit 12 "$W/scripts/rust-coverage" --from "$FX10B"
+expect_grep "UNTRUSTED $REL:6:5-6:10"
+expect_grep "could not be trusted"
+printf '40\n' > "$W/scripts/rust-coverage-threshold"
+expect_exit 0 "$W/scripts/rust-coverage" --from "$FX10B"
+expect_grep "so it stands"
+# --report holds nothing, and still names the untrusted region
+expect_exit 0 "$W/scripts/rust-coverage" --report --from "$FX10B"
+expect_grep "UNTRUSTED $REL:6:5-6:10"
+rm -f "$W/scripts/rust-coverage-threshold"

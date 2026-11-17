@@ -7,7 +7,7 @@ profile: deep-work
 parallel_safe: true
 objective: "Declare the canonical layout of `.ai/` and `.majordomus/` as typed, versioned data — what each namespace holds, what it must never hold, and which lifecycle each directory's contents carry — so that the boundary can be checked rather than remembered."
 why: "The boundary between portable knowledge and control-plane mechanics is the whole architecture. Stated only in prose it survives until the first subsystem finds it convenient to write an index next to a rule."
-current_state: "Both namespaces exist and are populated. Nothing declares what belongs in which, and nothing refuses a control-plane artifact written under `.ai/` or a copy of authored knowledge written under `.majordomus/`."
+current_state: "Surveyed on master 905159df7cc (2026-10-21): `.majordomus/` holds nothing tracked; the code reads it only as the pre-`.ai` layout or an optional tool install (lib/common.sh, repository.rs). The control-plane state lives in `.ai/local/`, declared by the manifest's `local:` half (LocalHalf) and kept untracked by doctor. `context/v1` contracts are versioned and proto-derived but carry no typed holds, excludes or lifecycle; nothing refuses an artifact in the wrong half; share/skeleton is hand-copied by lib/init.sh and its manifest already lacks `releases`. OPEN QUESTION for the owner: does control-plane state move from `.ai/local/` to `.majordomus/`, as this milestone's plan assumes, or stay where it is? The slices below declare what exists and decide nothing about it."
 desired_state: "The layout is a schema-backed declaration; a check reads it and refuses a path that contradicts it."
 scope:
   - share/schemas
@@ -17,6 +17,10 @@ non_scope:
   - Moving existing content; that is the migration issue
 depends_on:
   - I1101
+  - I2870
+  - I2871
+  - I2872
+  - I2873
 acceptance_criteria:
   - Each namespace declares what it holds, in typed and versioned form, generated from the canonical Rust types where generation is available
   - "`.ai/` is defined as portable semantic material that keeps its meaning without this tool and across providers, and `.majordomus/` as control-plane state that must never hold a second copy of it"
@@ -28,6 +32,6 @@ validation:
 evidence_required:
   - layout_declared
   - boundary_checked
-risk: "A layout schema can become a second description of the tree it describes. It declares intent and lifecycle; the tree remains what discovery finds."
+risk: "A layout schema can become a second description of the tree it describes. It declares intent and lifecycle; the tree remains what discovery finds. Declaring `.majordomus/` before the owner answers where control-plane state lives would write down a decision nobody made."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-21

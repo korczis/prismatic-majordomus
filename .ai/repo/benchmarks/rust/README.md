@@ -21,6 +21,12 @@ a CI runner. `policy.yaml` holds the sampling and the fractions of the baseline 
 exceed before it is called a regression, so the threshold is data the repository can
 change deliberately rather than a constant compiled into a comparison.
 
+`policy.yaml` also holds **budgets**: absolute bounds on a metric of every target under a
+prefix, such as "a warm screen of the UI answers within 100 ms at p95". A budget needs no
+baseline and is held on every host, because a target that was always too slow never
+regresses. Each budget in the file says where its number came from and what was measured
+before it was declared.
+
 The files are written by the benchmark run and read by the check that compares against
 them; a hand-edited baseline is a claim without a measurement. Record a new one when the
 change is a real cost that the repository accepts, and say so in the commit that does it.

@@ -78,8 +78,10 @@ profiles:
     binary: drop
     artifacts: drop
     # recorded measurements and ratchet baselines are evidence about the sources, not
-    # sources; a reader that needs them takes the audit profile
-    exclude: ["package-lock.json", "**/*-baseline.txt", "*-baseline.txt", ".ai/repo/benchmarks/**/runs/**", ".ai/repo/evidence/ledger.json"]
+    # sources; a reader that needs them takes the audit profile. A language's translation
+    # memory (site/i18n/<lang>/memory/, ADR 0218) is the English site's text rendered in that
+    # language, not a source of the system, and alone it would fill eight shards
+    exclude: ["package-lock.json", "**/*-baseline.txt", "*-baseline.txt", ".ai/repo/benchmarks/**/runs/**", ".ai/repo/evidence/ledger.json", "site/i18n/*/memory/**"]
     include: ["AGENTS.md", "CLAUDE.md", "docs/INSTALL.md"]
     format: zip
     manifest: true

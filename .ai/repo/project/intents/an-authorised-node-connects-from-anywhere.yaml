@@ -1,0 +1,31 @@
+id: an-authorised-node-connects-from-anywhere
+title: "An authorised node reaches another across LAN, tailnet or NAT, and says how"
+statement: "Two trusted Majordomus nodes cooperate whether they share a LAN, a tailnet or neither, choose a working path by themselves, fall back to a relay when no direct path exists, and every surface shows the path in use and why it was chosen."
+invariants:
+  - "Work is routed to an identity, never to an address; an endpoint is an expiring observation"
+  - "Finding a peer authorises nothing (rule project.mesh-is-observation-not-authority)"
+  - "Majordomus selects among proven transports; it does not implement ICE or NAT traversal"
+  - "A bootstrap source is a signed hint, never signalling and never trust"
+  - "No mesh frame crosses a public network in cleartext: a relay hub is a private or overlay endpoint, or is reached through an encrypted ingress the deployment provides (case 491)"
+non_goals:
+  - "DNS fast-flux, by mechanism or by name"
+  - "A DHT, custom consensus or coordinator election before a two-node NAT test passes"
+  - "Browser-to-browser gossip"
+milestones:
+  - "mesh-connectivity"
+  - "an-authorised-node-connects-from-anywhere"
+satisfaction:
+  - id: path-is-explained
+    criterion: "mesh peers names, per link, the candidates tried, the one chosen and why (planned proof: apps/majordomus-cli/tests/mesh_connectivity.rs (I3187))"
+    evidence: command
+    ref: "majordomus intent explain an-authorised-node-connects-from-anywhere"
+  - id: relay-when-no-direct-path
+    criterion: "Two nodes with no direct path cooperate through a trusted hub relaying authenticated frames, in the mesh lab (planned proof: apps/majordomus-cli/tests/mesh_relay.rs (I3189), with the mesh lab scenario relayed_link (I3190))"
+    evidence: command
+    ref: "majordomus intent explain an-authorised-node-connects-from-anywhere"
+  - id: bootstrap-is-signed
+    criterion: "A node with no peers finds the mesh from the signed Pages manifest and refuses a stale, rolled-back or unsigned one (planned proof: apps/majordomus-cli/tests/mesh_bootstrap_manifest.rs (I3188))"
+    evidence: command
+    ref: "majordomus intent explain an-authorised-node-connects-from-anywhere"
+created_at: 2026-10-18
+updated_at: 2026-10-18

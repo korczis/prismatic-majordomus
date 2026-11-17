@@ -193,15 +193,42 @@ pub fn bootstrap_median(
     }
     let mut rng = SplitMix64(seed);
     let mut medians = Vec::with_capacity(resamples as usize);
-    let mut sample = vec![0.0; n];
+    // A resample is `n` draws of an index into `v`, and `v` is in order, so the resample in
+    // order is `v` at its drawn indices in order: how often each index was drawn gives the
+    // two order statistics `quantile(_, 0.5)` reads, without sorting the resample. Sorting it
+    // was most of `generate`'s economics on 2026-10-15. The same draws and the same
+    // arithmetic give the same median to the bit (`counting_is_sorting`, below).
+    let h = (n - 1) as f64 * 0.5;
+    let (lo, hi) = (h.floor() as usize, h.ceil() as usize);
+    let mut drawn = vec![0usize; n];
     for _ in 0..resamples {
-        for slot in sample.iter_mut() {
-            *slot = v[rng.below(n as u64) as usize];
+        drawn.fill(0);
+        for _ in 0..n {
+            drawn[rng.below(n as u64) as usize] += 1;
         }
-        crate::order::numeric(&mut sample);
-        medians.push(quantile(&sample, 0.5)?);
+        let (a, b) = order_statistics(&v, &drawn, lo, hi);
+        medians.push(a + (h - lo as f64) * (b - a));
     }
     percentile_interval(medians, level_bp, resamples, seed, INDEPENDENT_METHOD)
+}
+
+/// The `lo`-th and `hi`-th values (from zero, `lo <= hi`) of the resample that drew index `i`
+/// of the ordered `v` `drawn[i]` times: where the running count of draws first passes each.
+fn order_statistics(v: &[f64], drawn: &[usize], lo: usize, hi: usize) -> (f64, f64) {
+    let mut seen = 0;
+    let mut low = None;
+    for (value, &times) in v.iter().zip(drawn) {
+        seen += times;
+        if low.is_none() && seen > lo {
+            low = Some(*value);
+        }
+        if seen > hi {
+            return (low.unwrap_or(*value), *value);
+        }
+    }
+    // `drawn` sums to `v.len()`, which is more than `hi`: the loop has already returned
+    let last = v.last().copied().unwrap_or(f64::NAN);
+    (low.unwrap_or(last), last)
 }
 
 /// A percentile bootstrap interval of the median over clustered values: each resample
@@ -364,6 +391,71 @@ mod tests {
         assert_eq!(a, b);
         assert!(a != c, "a different seed is a different resampling");
         assert!(a.low <= a.high);
+    }
+
+    /// Counting the draws answers what sorting each resample answered, to the bit: the
+    /// interval is compared with the one the sorting implementation computed, over odd and
+    /// even sizes, repeated values, both zeros, negative values and many seeds.
+    #[test]
+    fn counting_is_sorting() {
+        fn by_sorting(
+            values: &[f64],
+            level_bp: u32,
+            resamples: u32,
+            seed: u64,
+        ) -> EconomicsInterval {
+            let v = sorted(values);
+            let n = v.len();
+            let mut rng = SplitMix64(seed);
+            let mut medians = Vec::with_capacity(resamples as usize);
+            let mut sample = vec![0.0; n];
+            for _ in 0..resamples {
+                for slot in sample.iter_mut() {
+                    *slot = v[rng.below(n as u64) as usize];
+                }
+                crate::order::numeric(&mut sample);
+                medians.push(quantile(&sample, 0.5).unwrap());
+            }
+            percentile_interval(medians, level_bp, resamples, seed, INDEPENDENT_METHOD).unwrap()
+        }
+        let mut sets: Vec<Vec<f64>> = (2..=13)
+            .map(|n| (0..n).map(|i| ((i * 7 % 5) as f64 - 2.0) * 0.1).collect())
+            .collect();
+        sets.push(vec![0.0, -0.0, 0.0, -0.0, 1.0]);
+        sets.push(vec![0.25; 9]);
+        sets.push((0..40).map(|i| (i as f64 * 0.37).sin()).collect());
+        sets.push(vec![f64::NAN, 3.0, -1.5, f64::INFINITY, 2.0, 2.0]);
+        for v in &sets {
+            for seed in 0..25 {
+                let counted = bootstrap_median(v, 9500, 300, seed, 2).unwrap();
+                let sorted = by_sorting(v, 9500, 300, seed);
+                assert_eq!(
+                    counted.low.to_bits(),
+                    sorted.low.to_bits(),
+                    "{v:?} seed {seed}"
+                );
+                assert_eq!(
+                    counted.high.to_bits(),
+                    sorted.high.to_bits(),
+                    "{v:?} seed {seed}"
+                );
+                assert_eq!(counted, sorted, "{v:?} seed {seed}");
+            }
+        }
+    }
+
+    /// Draws that never pass `hi` — which the bootstrap cannot produce, since its draws sum
+    /// to the sample size — still answer: the high statistic is the last value, the low one
+    /// whatever was passed, or the last value too, and an empty sample is not a number.
+    #[test]
+    fn draws_that_never_pass_the_high_rank_answer_with_the_last_value() {
+        let v = [1.0, 2.0, 3.0];
+        // one draw of the middle value passes rank 0 but never rank 1
+        assert_eq!(order_statistics(&v, &[0, 1, 0], 0, 1), (2.0, 3.0));
+        // no draw at all passes neither rank
+        assert_eq!(order_statistics(&v, &[0, 0, 0], 0, 1), (3.0, 3.0));
+        let (low, high) = order_statistics(&[], &[], 0, 0);
+        assert!(low.is_nan() && high.is_nan(), "{low} {high}");
     }
 
     #[test]

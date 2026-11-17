@@ -12,6 +12,7 @@
 #
 # The rules it serves, in .ai/repo/rules/project/, and the shape that decides each:
 #   project.every-wait-is-bounded            unbounded-network, unsupervised-spawn
+#   project.a-build-never-waits-in-silence-on-anothers-lock   unbounded-build
 #   project.commands-run-non-interactively   pager-blocks
 #   project.execution-state-is-authoritative unsupervised-spawn
 # It does not require them to be present: this gate ships alongside the rules and must not
@@ -88,6 +89,30 @@ scan() {
     | while IFS= read -r hit; do
         printf '%s:%s:unbounded-network:%s\n' "$f" "${hit%%:*}" "$(printf '%s' "${hit#*:}" | sed 's/^[[:space:]]*//' | cut -c1-100)"
       done
+  # a build that can stand behind another build's lock with nothing to bound it. The
+  # worktrees of this repository share one build directory (ADR 0139) and cargo takes one
+  # exclusive lock on it, so a `cargo build` here may be a wait for as long as every other
+  # worktree's build lasts — and `--quiet`, which every caller passed, removes the one line
+  # cargo says about it. On 2026-10-13 a commit hook stood there for fourteen minutes.
+  # lib/rust_bin.sh's mj_cargo_bounded is the bounded form: a direct call is the finding, a
+  # call through it is not, and neither is a file that makes `cargo` mean it (a function
+  # named cargo whose body is mj_cargo_bounded). A workflow is not read for this shape: a
+  # runner has one checkout and no other build to stand behind. An opening parenthesis is
+  # not command position here: `(cargo build --locked)` is how prose names a command, and a
+  # subshell that builds reaches cargo through `&&` or a newline, which are.
+  case "$f" in
+    .github/workflows/*) ;;
+    *)
+      if ! grep -qE '^[[:space:]]*cargo\(\)[[:space:]]*\{[^}]*mj_cargo_bounded' "$f" 2>/dev/null; then
+        grep -nE '(^|[;&}]|&&|\|\||\$\(|then|do|else)[[:space:]]*(![[:space:]]*)?(mj_lock_run[[:space:]]+)?(env[[:space:]]+)?([A-Za-z_]+=[^[:space:]]*[[:space:]]+)*cargo[[:space:]]+(build|test|clippy|doc|check|run|rustc)([[:space:]]|$)' "$f" 2>/dev/null \
+          | grep -vE '^[0-9]+: *#' \
+          | grep -vE 'mj_cargo_bounded|command cargo' \
+          | grep -vE "printf '|echo \"" \
+          | while IFS= read -r hit; do
+              printf '%s:%s:unbounded-build:%s\n' "$f" "${hit%%:*}" "$(printf '%s' "${hit#*:}" | sed 's/^[[:space:]]*//' | cut -c1-100)"
+            done
+      fi ;;
+  esac
   # a git subcommand that pages, writing straight to the terminal: `log`, `diff`, `show`
   # and `blame` page whenever stdout is a terminal, which stops on a keypress that a person
   # eventually sends and an agent never does. Captured, piped or redirected output is not

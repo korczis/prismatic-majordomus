@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 72
+weight = 80
 [extra]
 source = "docs/CI.md"
 +++
@@ -22,16 +22,20 @@ every run writes its own summary.
 <pre class="mermaid">
 flowchart LR
   plan["plan"] --&gt; structure["structure&lt;br&gt;(always)"]
+  plan --&gt; structureb["structure-b&lt;br&gt;github-projection,&lt;br&gt;worktree-topology"]
   plan --&gt; shards["suite-shard ×4&lt;br&gt;the suite, dealt by duration"]
   shards --&gt; suite["suite&lt;br&gt;every case exactly once,&lt;br&gt;budget, one verdict"]
   plan --&gt; rust["rust"]
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
-  plan --&gt; site["site"]
-  plan --&gt; interactions["interactions"]
+  plan --&gt; site["site&lt;br&gt;the build, once"]
+  site --&gt; probeshards["site-probe-shard ×6&lt;br&gt;a stride of the routes each"]
+  probeshards --&gt; probe["site-probe&lt;br&gt;every route exactly once"]
+  site --&gt; ishards["interaction-probe-shard ×6&lt;br&gt;a stride of the pages each"]
+  ishards --&gt; interactions["interactions&lt;br&gt;every page exactly once"]
   plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; structureb &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; probe &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
@@ -45,8 +49,12 @@ flowchart LR
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
 plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the
-change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
-through the script a person runs. `ci` always runs and turns the plan and the jobs' results
+change needs. `structure-b` runs, beside it, the two structure gates that need not share its
+55-minute bound: `github-projection`, which waits on GitHub's API, and `worktree-topology`
+(I4381). With them in one job a full plan summed p50 2720 / p90 3256 s of gates, and run
+40813274272 was killed at the bound with all 59 green, so no receipt reached the verdict. The
+other jobs run when the plan selected a gate they carry, in parallel, each through the script
+a person runs. `ci` always runs and turns the plan and the jobs' results
 into one verdict.
 
 A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job <job>` reads the plan and runs every
@@ -63,6 +71,34 @@ decides whether a change may merge. `.github/workflows/pages.yml` decides what t
 shows: it triggers directly on a master push whose paths can change the site and publishes as
 soon as the bytes are proved, without waiting for gates that cannot change a published byte.
 Neither repeats the other's work.
+
+A third decides what GitHub's issues and milestones show. `.github/workflows/github.yml` runs
+on every push to master, with no path filter: it builds the executable, asks
+`scripts/github-sync --check` what GitHub does not show yet, runs `scripts/github-sync --apply`
+when something is owed and the checkout is still the tip of master, and then runs
+`scripts/ci/github-check`, the same `github-projection` gate validate runs. It holds
+`issues: write` and `contents: read`, one run at a time and never cancelled, and every step
+refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`, the rule is
+`project.the-projection-is-applied-at-landing`, and
+`test/cases/1097_the_projection_is_applied_at_landing.sh` holds the workflow to the model and
+runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
+how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
+
+A fourth keeps each pull request's metadata current. `.github/workflows/pr-meta.yml` runs on
+every `pull_request_target` event that can change what a pull request serves or carries
+(opened, edited, synchronize, labeled) and applies `scripts/github-sync --prs --pr <number>`
+to that one pull request, and once a day (or on a dispatch) to every open one. What it
+writes: the type, priority, `train` and `records` labels, the milestone, the author as
+assignee when nobody is, and the `Refs #<n>` region of the body (`docs/PLANNING.md`, "Pull
+requests"). Its token's writes start no other workflow, so the labels it adds start no
+validate run. It checks out the default branch and never the head, whose commits and records
+it reads with git as data, so `pull_request_target`'s writing token never runs a head's
+code; it holds `pull-requests: write`, `issues: read` and `contents: read`, runs one at a
+time per pull request (and one sweep at a time) and is never cancelled. It is the one run a
+pull request may start (`project.the-projection-is-applied-at-landing@2`). Its model is
+`.ai/repo/ci/pr-meta.yaml`; `test/cases/1097_the_projection_is_applied_at_landing.sh` holds
+it to the rule and `test/cases/3970_a_pull_request_carries_its_metadata.sh` to its model,
+and drives the adapter against a scripted forge.
 
 ## The model: what can affect what
 
@@ -91,7 +127,11 @@ Two execution classes, both evidence-driven:
 - **full** — every gate but the on-demand ones: a push to master, the nightly schedule, a
   manual dispatch, a pull request labelled `ci:full`, a change to the pipeline itself (the
   workflow, the actions, `scripts/ci/`, the planner, the model, the runner), or a path the
-  model does not know.
+  model does not know. The pipeline's own data files under `.ai/repo/ci/` — the shard
+  durations, the case-number and GitHub-drift ratchets, the recorded baseline, the
+  directory's README — are not the pipeline: the `ci` class names each one in `except`, one
+  path at a time, and the `ci-data` class plans the gates that read it. A file that appears
+  under `.ai/repo/ci/` without being named still escalates.
 
 A third distinction cuts across both. A gate the model marks `on-demand: true` is planned
 only when the plan is asked for it (`scripts/ci-plan --on-demand`), which the nightly
@@ -130,6 +170,19 @@ To force full validation of a pull request, add the label `ci:full`; the `labele
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
 `ci-plan` artifact, or run the planner on the same diff locally.
 
+Any other label starts no second verdict (I4347). `labeled` starts validate for every label,
+and only `ci:full` and `hold` change what a run does; in the seven days to 2026-11-01, 128 of
+436 pull-request validate runs were a further run of a head that had already been run, most
+of them started by the label a train or a records branch is opened with. So a run started by
+another label, on a head that already carries a verdict, gives its runners back in the plan
+job's first step, and its `ci` job writes that verdict again: success stays success and a
+red stays red. It never skips `ci`, because GitHub counts a skipped required check as
+passing. A verdict is a completed run of the same head whose `plan` succeeded and whose `ci`
+concluded success or failure; a run that yielded is none, so a head whose only runs yielded
+runs its plan, and a forge that cannot be read decides the same. The enforcer is
+`scripts/ci/carried-verdict`; `test/cases/26_ci_wiring.sh` proves the wiring, keeps its label
+set equal to the labels validate.yml reads, and replays the trains of 2026-10-28.
+
 `test/cases/94_ci_plan.sh` proves the relationships that matter: a Rust change selects the
 Rust gates and never the site, a site change the site gates and never a Rust gate, a
 document the site and the registry checks, the distribution every implementation, the
@@ -146,7 +199,8 @@ person runs:
 
 ```bash
 scripts/ci/run-plan --job structure --plan plan.json   # one job's gates of a written plan, as CI runs them
-scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases
+scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases;
+                                      # shellcheck in batches over MJ_LINT_JOBS workers (the CPUs)
 scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
 scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
 scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
@@ -252,6 +306,48 @@ processes finished in, and a finding still names the route, the width, the asser
 what was measured. The homepage behaviour checks (the mobile menu, the dropdown, the theme
 toggle) are unchanged. `--quick` remains the local sample.
 
+In CI the sweep is split in six (I2841). As one step of the site job it took 35-37 minutes,
+which held that job at 46-50 of its 50 minutes until one run was cancelled at its bound. The
+Czech copies then doubled the routes, and run 39317142394 stopped the single step at its
+2700 s bound. The `site-probe-shard` jobs now run side by side after the site job's build:
+
+- each one gets the files that build generated and git ignores (artifact `site-probe-inputs`);
+- each runs its own Zola build;
+- each measures `SITE_PROBE_SHARD=K/6`: every sixth route of the sorted list, starting from
+  the Kth. A stride rather than six blocks, so the expensive sections are spread across shards;
+- each writes the routes it measured (`SITE_PROBE_REPORT`).
+
+The homepage behaviour and the command routes are shard 1's, so each is reported once.
+
+The `site-probe` job is the gate's. It asks `scripts/site-probe --verify-report` whether the
+reports are shards 1..6, each once, and whether together they hold every route of the site,
+each once. Only then, and only if every shard passed, does it write the gate's receipt.
+
+Case 3602 holds the partition, the fan-in and the wiring, whatever the number of shards.
+Reproduce one shard locally with `SITE_PROBE_SHARD=2/6 SITE_PROBE_JOBS=4 scripts/site-probe`, or
+see which routes it holds with `scripts/site-probe --partition 2/6 < routes.txt`.
+
+## The interaction probe
+
+`scripts/interaction-probe` drives every control on every page with the behaviour spec that
+claims it (`project.every-link-and-control-is-tested`). As one job it rebuilt the site and drove
+every page in one step. That step reached page 1850 of 1865 at its 2400 s bound on 2026-10-12.
+After the Czech copies doubled the pages, run 39317142394 stopped it at 3300 s.
+
+Since I3602 it is split in six like the site probe, and cut by the same rule:
+
+- the site job packs its build without the composed surfaces (artifact `interaction-probe-site`,
+  about 26 MB; the mounts come from the topology);
+- each `interaction-probe-shard` job drives `MJ_PROBE_SHARD=K/6`, the stride
+  `scripts/site-probe --partition K/6` gives for the sorted pages, and writes them to
+  `MJ_PROBE_REPORT`;
+- the `interactions` job keeps the gate. It runs `scripts/site-probe --verify-report` over the
+  six reports and writes the receipt only if they are every page once and every shard passed.
+
+No page is sampled, the Czech copies included. A finding still fails the shard that drove the
+page and names the page and the spec. Case 3603 drives three shards of a fixture site in a
+browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts/interaction-probe`.
+
 ## Caches and artifacts
 
 Caches hold reusable dependency and build state; artifacts carry a job's outputs to a
@@ -314,6 +410,83 @@ intermediate commit, and an older tree can never land after a newer one. Cancell
 flight starved publication on 2026-09-12: each superseding run was itself superseded, and the
 site stood 34 commits behind master for three hours.
 
+A pull request's run ends at its first red. Once one job has failed the run cannot be green,
+and the jobs still going hold runners the trunk's run and the deployments wait for: on
+2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
+step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
+cancels the run by its own id with the job's token (`actions: write`); `ci` still runs,
+because it runs `always()`, and reports the run red. The fan-ins (the suite's and the audit's
+unions, `site-probe`, `interactions`) run `!cancelled()`, and the probe shards only on the
+`site` job's success: after a cancel the shards left nothing to join and the site no artifact
+to probe, and on 2026-11-07 each cancelled run added twelve "Artifact not found" shards and a
+"no row for" union beside its one real red. They still run, and report red, after a shard or
+the site failed in a run that was not cancelled. A combined top, a pull request
+whose head is an `integration/*` branch, is never cancelled this way: it carries many heads and
+is judged once for all of them, so one run of it shows every red (on 2026-10-15 the grand top
+took three full cycles to show three reds). A push to master, the schedule
+and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
+its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
+rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
+A run that reaches its plan for a head its pull request no longer has gives its runners back:
+the plan job's first step after the held-member yield reads the pull request's head and, when
+it moved, cancels its own run before any gate asks for a runner. That is not a newer commit
+cancelling a started run — no gate of it has started, and its verdict would judge a head nobody
+can merge. On 2026-11-07 three such runs held 19 queued jobs under the account's shared hosted
+cap. A head that cannot be read lets the run proceed. Case 26 holds the step, its place before
+the checkout, and the conditions above.
+
+A cancel GitHub accepted is a request, not an end. On 2026-10-19 a cancelled run's `suite` job
+went on running and held its slot in the pool; only
+`gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/force-cancel` freed it. So after a cancel,
+read the run again (`gh run view <id> --json status,jobs`): one that has not completed a minute
+later, a job of it still `in_progress`, is force-cancelled. `scripts/ci/release-path preempt`
+does this by itself for the runs it cancels, after the model's `cancel_wait_seconds`; case 3027
+holds it.
+
+The release path goes first (I2710). Every workflow of this repository draws on one pool of
+job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's
+verdict and the Pages deploy that publishes it sat queued behind two pull requests' validates
+holding all twenty slots; the site offered the previous release until a person cancelled one
+of them by hand. The release path is three kinds of run, read from what GitHub lists rather
+than from the release workflow: a run of `release.yml`, the validate run on a
+`release/record-<tag>` branch (the early reading the release dispatches, and the record pull
+request's own run once a person starts it), and a `pages.yml` run of master that the
+release's token dispatched. While any of them is queued or running:
+
+- a pull request's validate yields at the first step of its plan job, before any job of its
+  own asks for a runner: it labels its pull request `ci:yielded`, comments which run it yielded
+  to, and cancels itself;
+- a tag push preempts: `.github/workflows/release-path.yml` starts on the same push as the
+  release and cancels every pull-request validate already queued or running, labelling and
+  telling each the same way, and force-cancels any of them that still runs after the wait;
+- once the path is clear, `scripts/ci/release-path resume` re-runs the newest validate run of
+  each labelled pull request's head when that run is the cancelled one, and removes the label.
+  It is asked at the end of every validate run that is not a pull request's (the record's
+  verdict is one) and every fifteen minutes by `release-path.yml`'s schedule.
+
+Never cancelled by this: anything of the release path, master's validate, the schedule and a
+dispatch, a run on a record branch, and a run whose pull request GitHub does not name. Nor a
+train: a pull request labelled `train` (the model's `exempt_label`), the landing seat's
+combined top, on whose one run every member waits. The owner decided that on 2026-11-01; the
+members and every other pull request still yield. A reading of the runs that cannot be made
+lets a run proceed and touches nothing; labels that cannot be read exempt nothing, so that run
+is not known to be a train and yields as before. The label is read when the run asks, so the
+composer opens a top's pull request with `gh pr create --label train`. The model is
+`.ai/repo/ci/release-path.yaml`; case 3027 holds the decisions and the wiring.
+
+The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
+minutes after the push that also starts that commit's deploy, and on 2026-10-14 run
+38600347235 read the site while the deploy was in flight and went red; a rerun passed.
+`scripts/ci/pages-check --for "$GITHUB_SHA"` first waits, bounded by `PAGES_CHECK_DEPLOY_WAIT`
+(twenty minutes) and asking every `PAGES_CHECK_POLL` seconds (thirty) with a line each time,
+until production serves that commit or one that carries it — a newer trunk commit, or an older
+one when nothing since changed what the site is built from. It refuses early only when
+production serves an older commit and no deployment is in flight (no pages run queued or
+running, GitHub's own build not building), and otherwise at the bound, naming both commits. A
+pull request's merge commit is not on master and is not waited for. The job's bound is 35
+minutes to hold the wait and the checks after it; case 3028 holds the wait.
+
 ### The three ways a deploy fails, and who reports each
 
 A deploy that does not put the intended commit in front of a reader has failed, and until
@@ -366,12 +539,20 @@ generator, not from a conflict marker. The design leans on `scripts/pages curren
 `.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
 hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
 commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
-bypass; it is the action this repository tells people to take. With no branch protection
-(`gh api repos/<owner>/<repo>/branches/master/protection` answers *404 Branch not protected*)
-nothing server-side compensates, and the `site` gate that does check currency is advisory and
-reports after the merge. So the first thing in the pipeline that can actually refuse is the
-Pages build, and it refuses by failing publication rather than by failing a pull request. The
-symptom is always "the site is stale" and never "the branch is red".
+bypass; it is the action this repository tells people to take. On 2026-09-10 there was no
+branch protection (`gh api repos/<owner>/<repo>/branches/master/protection` answered *404
+Branch not protected*), so nothing server-side compensated, and the `site` gate that checks
+currency was advisory and reported after the merge. The first thing in the pipeline that could
+refuse was the Pages build, and it refused by failing publication rather than by failing a
+pull request. The symptom was always "the site is stale" and never "the branch is red".
+
+What guards that path now (I1409, ADR 0101 amendment of 2026-10-15) is the ci-time freshness
+gate, and the hook plays no part in it. The `ci` check is required (`strict: false`). It runs
+`derived site data in sync` and `generate --check` on the pull request's merge ref. The forge
+runs no merge driver, so two branches that both changed a canonical input conflict on
+`source_hash` and cannot be merged by the forge at all. The merged commit is checked again on
+push, and `scripts/pages build` refuses stale site data before the `publish` step. The
+pre-commit hook guards only a merge a person commits.
 
 The vivid form: a stale recording rides through a merge untouched, so two consecutive master
 merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
@@ -457,6 +638,23 @@ back through the GitHub API and writes `.ai/repo/ci/baseline.json`: per run, per
 per step, with the commit, the runner, the event and whether the caches hit, so a later
 regression has a table to be compared with. The budgets are those measurements; a budget
 written here would be stale the day after.
+
+## Telemetry
+
+When the repository configures an OTLP endpoint, `.github/workflows/telemetry.yml` exports every
+completed `validate` run as one OpenTelemetry trace: a span per job and per step, with its
+queued time, its run time and its conclusion (service name `majordomus-ci`). It exists because
+queueing across overlapping runs cost up to 774 summed job-minutes on master run 39784979979
+and nothing measured it continuously.
+
+The owner sets two repository secrets: `OTEL_EXPORTER_OTLP_ENDPOINT` (the OTLP/HTTP base URL)
+and `OTEL_EXPORTER_OTLP_HEADERS` (the authentication headers, for example `Authorization=Bearer
+...`). Without the endpoint nothing is sent: the workflow notices, skips the export and
+succeeds. The export step is `continue-on-error`, so a backend outage changes no verdict.
+
+To view the traces, point any OTLP backend at the endpoint (Grafana Tempo, Honeycomb, Jaeger)
+and search for service `majordomus-ci`. The action is pinned by commit SHA
+(dash0hq/otel-cicd-action v4.2.0).
 
 ## The critical path, measured on 2026-10-10
 
@@ -544,5 +742,9 @@ scripts/ci-baseline --runs 10                       # record what GitHub observe
 
 `scripts/ci/verdict --plan plan.json --needs needs.json` renders the same verdict CI
 renders, from a plan and a `needs` context; `test/cases/94_ci_plan.sh` drives it with
-fixtures.
+fixtures. A job GitHub never created reads `abandoned` in `needs`: on 2026-11-09 attempt 2
+of the approved record run 42668789214 had no `site` job and `ci` was red for it alone. The
+verdict stays red for it, as for every result but `success`, and its row says what recovers
+it: re-running the failed jobs of the run, which created the job on attempt 3
+(`test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh`).
 {% endraw %}

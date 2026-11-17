@@ -8,7 +8,7 @@ mod common;
 
 use std::io::Write;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 use serde_json::{json, Value};
 
@@ -39,7 +39,7 @@ fn fixture() -> common::Fixture {
 
 /// Run `majordomus pack <args>` in the fixture and return (status, stdout, stderr).
 fn pack(f: &common::Fixture, args: &[&str]) -> (i32, String, String) {
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .arg("pack")
         .args(args)
         .current_dir(f.root())
@@ -59,7 +59,7 @@ fn pack(f: &common::Fixture, args: &[&str]) -> (i32, String, String) {
 /// `calls`, answered in order. Each answer is the call's `result`, or its `error` when the
 /// server refused the frame.
 fn mcp(f: &common::Fixture, calls: &[(&str, Value)]) -> Vec<Value> {
-    let mut child = Command::new(common::BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .env_remove("GIT_DIR")
@@ -358,7 +358,7 @@ fn the_command_line_refuses_what_it_cannot_answer() {
 #[test]
 fn outside_a_repository_there_is_nothing_to_pack() {
     let plain = tempfile::tempdir().unwrap();
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .args(["pack", "plan"])
         .current_dir(plain.path())
         .env("MAJORDOMUS_SHARE", common::dist_share())

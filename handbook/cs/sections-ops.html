@@ -1,0 +1,432 @@
+<section id="x-plan">
+  <h2>Plán: milníky, issues a vlny</h2>
+  <p>Plán řeší tři selhání: práce se vybírá z paměti, „hotovo“ se tvrdí místo dokazuje a plán žije na několika místech, která si odporují. Proto je v repu a status se do něj nikdy nepíše.</p>
+  <div class="two">
+    <div class="card">
+      <h4>Milník: specifikace výsledku</h4>
+      <ul>
+        <li>problém, výsledek, současný a cílový stav</li>
+        <li>scope a ne-scope, kritéria, validace, požadované důkazy</li>
+        <li>jeden YAML v <code>.ai/repo/project/milestones/</code></li>
+        <li>milník svoje issues nevyjmenovává, issue jmenuje svůj milník</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Issue: ohraničený kontrakt provedení</h4>
+      <ul>
+        <li>cíl, proč, <code>scope</code>, <code>depends_on</code>, akceptační kritéria, validační příkazy</li>
+        <li><code>evidence_required</code> a časová razítka <code>started_at</code>, <code>verified_at</code>, <code>completed_at</code></li>
+        <li>volitelně <code>serves</code>: kterému kritériu intentu slouží</li>
+        <li>jeden soubor v <code>.ai/repo/project/issues/</code></li>
+      </ul>
+    </div>
+  </div>
+  <p>Ani jeden záznam nemá pole <code>status</code>. Kdo ho napíše, dostane chybu neznámého klíče. Stav se počítá při každém čtení z razítek, závislostí a důkazů. V repu Majordomusu je 35 milníků a 328 issues.</p>
+  <h3>Odvozený stav issue</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Stav</th><th>Kdy platí</th></tr></thead>
+    <tbody>
+      <tr><td><code>CANCELLED</code></td><td><code>cancelled: true</code></td></tr>
+      <tr><td><code>DONE</code></td><td><code>completed_at</code> je nastavené a každý token z <code>evidence_required</code> má důkaz</td></tr>
+      <tr><td><code>VERIFY</code></td><td>implementace je prohlášená za hotovou, důkazy ještě nestačí</td></tr>
+      <tr><td><code>ACTIVE</code></td><td><code>started_at</code> je nastavené a nic dalšího</td></tr>
+      <tr><td><code>BLOCKED</code></td><td>některá závislost není <code>DONE</code></td></tr>
+      <tr><td><code>READY</code></td><td>nic z předchozího</td></tr>
+    </tbody>
+  </table></div>
+  <p>Razítko platí jen se svou pečetí (<code>started_event</code>, <code>verified_event</code>, <code>completed_event</code>, SHA-256). Ručně dopsané datum bez pečeti je chyba <code>stamp_without_event</code>. <code>plan done</code> odmítne issue, které není <code>ACTIVE</code> nebo <code>VERIFY</code>, a odmítne ho i tehdy, když chybí důkaz k některému požadovanému tokenu.</p>
+  <h3>Vlny: co může běžet souběžně</h3>
+  <p>Vlna je Kahnova vrstva issue v grafu závislostí. Vlna nula jsou issues bez závislostí, každé další je o vrstvu za svou nejhlubší závislostí. Vlny se počítají při každém čtení a nikde se neukládají. Závislosti říkají, co by <em>mohlo</em> běžet spolu. Scope říká, co <em>bezpečně</em> může.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Graf závislostí rozdělený do tří vln; dvě issues ve vlně 1 mají překrývající se scope a musí běžet po sobě.">
+        <defs><marker id="pl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker></defs>
+        <g font-size="12" font-weight="600" class="mut">
+          <text x="110" y="24" text-anchor="middle">VLNA 0</text><text x="360" y="24" text-anchor="middle">VLNA 1</text><text x="610" y="24" text-anchor="middle">VLNA 2</text>
+        </g>
+        <rect x="16" y="34" width="188" height="200" rx="8" class="zone" stroke-width="1"/>
+        <rect x="266" y="34" width="188" height="200" rx="8" class="zone" stroke-width="1"/>
+        <rect x="516" y="34" width="188" height="200" rx="8" class="zone" stroke-width="1"/>
+        <g font-size="12" class="ink">
+          <rect x="36" y="60" width="148" height="44" rx="6" class="box" stroke-width="1.25"/><text x="48" y="79" font-weight="600">I0101</text><text x="48" y="95" class="mut" font-size="11">scope: lib/auth</text>
+          <rect x="36" y="150" width="148" height="44" rx="6" class="box" stroke-width="1.25"/><text x="48" y="169" font-weight="600">I0102</text><text x="48" y="185" class="mut" font-size="11">scope: docs</text>
+          <rect x="286" y="60" width="148" height="44" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.75"/><text x="298" y="79" font-weight="600">I0103</text><text x="298" y="95" class="mut" font-size="11">scope: apps/cli</text>
+          <rect x="286" y="150" width="148" height="44" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.75"/><text x="298" y="169" font-weight="600">I0104</text><text x="298" y="185" class="mut" font-size="11">scope: apps/cli/src/mesh</text>
+          <rect x="536" y="105" width="148" height="44" rx="6" class="box" stroke-width="1.25"/><text x="548" y="124" font-weight="600">I0105</text><text x="548" y="140" class="mut" font-size="11">scope: test</text>
+        </g>
+        <g stroke="var(--muted)" stroke-width="1.25" fill="none" marker-end="url(#pl-arrow)">
+          <path d="M184 82H284"/><path d="M184 172H284"/><path d="M434 82C480 82 480 120 534 124"/><path d="M434 172C480 172 480 134 534 130"/>
+        </g>
+        <path d="M360 106V148" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="368" y="131" font-size="11" font-weight="600" class="acc">konflikt scope</text>
+      </svg>
+    </div>
+    <figcaption>I0103 a I0104 jsou ve stejné vlně a obě připravené, ale scope jednoho obsahuje scope druhého. Plán to ohlásí a issues se seřadí za sebe. Dokumentovaný limit: scope je to, co issue deklaruje, ne to, čeho se skutečně dotkne.</figcaption>
+  </figure>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus plan validate           <span class="c"># schémata, reference, graf, konzistence stavu</span>
+majordomus plan status             <span class="c"># postup milníků a další proveditelné issue</span>
+majordomus plan ready              <span class="c"># issues se splněnými závislostmi</span>
+majordomus plan blocked            <span class="c"># issues, které čekají, a na co</span>
+majordomus plan waves              <span class="c"># topologické vlny</span>
+majordomus plan graph              <span class="c"># graf jako Mermaid</span>
+majordomus plan next               <span class="c"># jedno issue, které vzít teď</span>
+majordomus plan start &lt;id&gt;         <span class="c"># odmítnuto, pokud není READY</span>
+majordomus plan evidence &lt;id&gt; --covers tests --type test --command "…" --result "…"
+majordomus plan done &lt;id&gt;          <span class="c"># odmítnuto, dokud chybí požadovaný důkaz</span></code></pre></div>
+  <div class="note"><p>Projekce plánu na GitHub issues měla detektor driftu, který někdo napsal a nikdo nevolal. Projekce se za pět dní rozpadla na desetinu modelu a každý build byl zelený. Od té doby ji hlídá gate <code>github-check</code> a pravidlo <code>project.github-projection-gated</code>.</p></div>
+</section>
+
+<section id="x-intent">
+  <h2>Intents: k čemu práce slouží</h2>
+  <p>Otázka „kterému výsledku tahle změna slouží“ se dřív zodpovídala z promptu, který nepřežil svou session. Intent je typovaný záznam nad milníky: tvrzení, které má začít platit, invarianty, milníky, které ho realizují, a kritéria splnění. V repu jsou čtyři.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Stupeň</th><th>Kdy platí</th></tr></thead>
+    <tbody>
+      <tr><td><code>declared</code></td><td>některý jmenovaný milník neexistuje</td></tr>
+      <tr><td><code>planned</code></td><td>všechny milníky existují</td></tr>
+      <tr><td><code>executing</code></td><td>některý milník je <code>ACTIVE</code>, <code>VERIFY</code> nebo <code>DONE</code></td></tr>
+      <tr><td><code>verifying</code></td><td>každý nezrušený milník je <code>DONE</code></td></tr>
+      <tr><td><code>satisfied</code></td><td><code>verifying</code> a každé kritérium je splněné</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Kritérium splní jen aktuální důkaz.</strong> Průchozí běh, jehož commit je v této historii, na čistém stromu, s nezměněným hashem testu a bez změny čehokoli, co kritérium jmenuje. Průchod na špinavém stromu je <code>stale</code>, selhaný běh <code>failing</code>.</li>
+    <li><strong>Uzavřená práce nepřebíjí důkaz.</strong> Issue označené za hotové, kterému důkaz odporuje, se nahlásí.</li>
+    <li><strong>Issue se váže na kritérium</strong> polem <code>serves: - &lt;intent&gt;#&lt;kritérium&gt;</code>. Pokrytí kritéria je <code>covered</code>, <code>weak</code>, <code>observed</code> nebo <code>uncovered</code>.</li>
+    <li><strong>Kritéria typu <code>command</code> a <code>deployment</code></strong> zatím splnit nejdou (<code>not_derivable</code>). Je to napsané, ne zamlčené.</li>
+  </ul>
+  <h3>Vazba tasku na intent</h3>
+  <p>Policy klíčem <code>intent.binding</code> určuje, co stojí odmítnutá vazba při <code>start</code>:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Hodnota</th><th>Chování</th></tr></thead>
+    <tbody>
+      <tr><td><code>off</code> nebo chybí</td><td>ptá se, jen když dostane <code>--issue</code>, <code>--intent</code> nebo <code>--exempt</code></td></tr>
+      <tr><td><code>advisory</code></td><td>ptá se vždy; odmítnutí ohlásí a task začne (nastavení repa Majordomusu)</td></tr>
+      <tr><td><code>required</code></td><td>odmítnutá nebo nečitelná vazba task nezačne a <code>plan start</code> issue neaktivuje</td></tr>
+    </tbody>
+  </table></div>
+  <p>Výjimka je třída deklarovaná v policy, uvedená s důvodem: <code>--exempt maintenance --because "…"</code>. Třídy v repu jsou <code>maintenance</code>, <code>emergency</code>, <code>integration</code> a <code>exploration</code>. Chybějící intent sám o sobě výjimkou není.</p>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus intent list                 <span class="c"># každý intent s odvozeným stupněm</span>
+majordomus intent validate             <span class="c"># všechny nálezy, exit 10 při selhání</span>
+majordomus intent coverage             <span class="c"># která práce nese které kritérium</span>
+majordomus intent preflight --issue &lt;id&gt;   <span class="c"># smí práce začít</span>
+majordomus intent realization          <span class="c"># která práce realizuje který intent</span>
+majordomus intent explain &lt;id&gt;         <span class="c"># proč stojí tam, kde stojí</span></code></pre></div>
+</section>
+
+<section id="x-worktree">
+  <h2>Worktrees: jedna větev, jedno místo</h2>
+  <p>V den rozhodnutí (7. 9. 2026) mělo repo 53 registrovaných worktrees na nekonzistentních místech, z toho 16 dočasných od sessions. Pravidlo <code>project.worktree-topology</code> to nahradilo jednou větou: jméno branche <em>je</em> relativní cesta.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 230" role="img" aria-label="Primární checkout hostí trunk; vedle něj kontejner se suffixem -wt, ve kterém má každá branch adresář podle svého jména.">
+        <g font-size="12.5" class="ink mono">
+          <text x="24" y="34">~/dev/</text>
+          <text x="48" y="64">prismatic-majordomus/</text>
+          <text x="48" y="104">prismatic-majordomus-wt/</text>
+          <text x="84" y="134">feature/</text>
+          <text x="120" y="160">a-rule-opens-its-proof/</text>
+          <text x="84" y="190">fix/</text>
+          <text x="120" y="216">mesh-claim-expiry/</text>
+        </g>
+        <g stroke="var(--line)" stroke-width="1.25" fill="none">
+          <path d="M30 40V100H44"/><path d="M30 60H44"/><path d="M56 110V186H80"/><path d="M56 130H80"/><path d="M92 140V156H116"/><path d="M92 196V212H116"/>
+        </g>
+        <g font-size="11.5" class="mut">
+          <text x="300" y="64">primární checkout · hostí trunk · nikdy se nestěhuje</text>
+          <text x="300" y="104">kontejner: jméno primárního + „-wt“, bez konfigurace</text>
+          <text x="340" y="160">branch feature/a-rule-opens-its-proof</text>
+          <text x="340" y="216">branch fix/mesh-claim-expiry</text>
+        </g>
+        <path d="M290 60H262" stroke="var(--accent)" stroke-width="1.25"/><path d="M290 100H282" stroke="var(--accent)" stroke-width="1.25"/>
+      </svg>
+    </div>
+    <figcaption>Cesta se odvozuje z gitu (<code>git rev-parse --git-common-dir</code> a první záznam <code>git worktree list</code>), nikde se neregistruje a z kteréhokoli adresáře vyjde stejně. Kontejner, který by šel nastavit, je kontejner, na kterém by se dva checkouty mohly neshodnout.</figcaption>
+  </figure>
+  <h3>Šest postavení worktree</h3>
+  <div class="chips"><code>primary</code><code>canonical</code><code>misplaced</code><code>detached</code><code>ephemeral</code><code>missing</code></div>
+  <p>Pre-commit hook volá <code>worktree guard</code>. Ten odmítne (exit 10) commit feature branche odjinud než z jejího kanonického worktree, commit v primárním checkoutu na jiné než trunk větvi a commit z dočasného scratch checkoutu. Odpojené (detached) worktrees jsou vyňaté.</p>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus worktree                      <span class="c"># branch, postavení, kanonická cesta, neuložená práce</span>
+majordomus worktree create &lt;branch&gt;      <span class="c"># cesta se odvodí, nikdy nezadává</span>
+cd "$(majordomus worktree path &lt;branch&gt;)"
+majordomus worktree migrate --plan       <span class="c"># co by se přesunulo; nic nemění</span>
+majordomus worktree migrate              <span class="c"># git worktree move, ověřený otiskem před a po</span>
+majordomus worktree topology             <span class="c"># celý obraz: kontejner, trunk, worktrees, diagnostika</span>
+majordomus worktree cleanup              <span class="c"># vypíše sloučené branche s čistým worktree; nic nemaže</span>
+majordomus worktree cleanup --remove     <span class="c"># odstraní je po opětovném změření každého</span></code></pre></div>
+  <p>Migrace je bezeztrátová, nebo to není migrace: nikdy neresetuje, nestashuje, nečistí a nepřepisuje. <code>cleanup --remove</code> odmítne branch před svým remote, bez upstreamu, s neuloženou prací nebo s procesem, který má pracovní adresář uvnitř. Branche se nemažou nikdy.</p>
+  <h3>Proč na tom záleží při víc agentech</h3>
+  <ul>
+    <li><strong>Agenti se nesrazí na cestě.</strong> Session, branch a worktree se mapují předvídatelně a obnovená session odvodí worktree z branche místo důvěry v zapsanou cestu.</li>
+    <li><strong>Jeden server a jeden board na worktree.</strong> <a href="#h-server">Sdílený server</a> patří checkoutu, board repozitáře se skládá ze všech.</li>
+    <li><strong>Aktivní task je lokální.</strong> Claim v jednom worktree nepokrývá ostatní, proto existuje <a href="#koordinace">překryv a mesh</a>.</li>
+    <li><strong>Build:</strong> mezivýsledky kompilace se sdílejí, hotové artefakty zůstávají v <code>target</code> každého worktree. Sdílený <code>CARGO_TARGET_DIR</code> je zakázaný, protože by jeden build nahradil binárku, kterou jiný worktree právě spouští.</li>
+  </ul>
+  <div class="note"><p>Osmnáct hodin po zavedení (8. 9. 2026) drželo 15 worktrees 104 GB build výstupu a na 926GiB disku zbylo 124 MiB. Tři subsystémy přitom nehlásily plný disk, ale špatný obsah. Studený <code>target/</code> má 2,45 GiB na worktree. Od té doby se build odmítne pod 5 120 MB volného místa a build výstup sloučených worktrees se měří a uvolňuje.</p></div>
+</section>
+
+<section id="x-env">
+  <h2>Prostředí repozitáře: co platí při vstupu</h2>
+  <p>Vstup do adresáře má za dobu jednoho <code>cd</code> odpovědět, jestli tu Majordomus opravdu platí, v jakém kontextu pracuju a co běží. Odpověď je jedna typovaná hodnota a banner v shellu je jen jeden z jejích rendererů. Stejnou hodnotu vrací <code>majordomus env</code>, <code>GET /api/v1/environment</code> a MCP resource <code>majordomus://environment</code>.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Sekce</th><th>Kanonický zdroj</th></tr></thead>
+    <tbody>
+      <tr><td>projekt</td><td>manifest crate</td></tr>
+      <tr><td>repozitář a vrstva</td><td><code>.ai/manifest.yaml</code></td></tr>
+      <tr><td>správa verzí</td><td>jedno volání <code>git status --porcelain=v2 --branch</code></td></tr>
+      <tr><td>workflows</td><td><code>just --dump --dump-format json</code></td></tr>
+      <tr><td>projekce providerů</td><td><code>projections[]</code> v policy</td></tr>
+      <tr><td>lokální služby</td><td>konstanty rout a lease serveru</td></tr>
+      <tr><td>toolchainy, diagnostika</td><td>měřené při čtení</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Každé pole má původ.</strong> Soubor, příkaz nebo konstanta, která ho rozhodla, a jestli se četlo teď, z cache, nebo se nepodařilo. Ukáže to <code>env explain [POLE]</code>.</li>
+    <li><strong>Dvě rozlišení.</strong> Plné (<code>env</code>, <code>explain</code>) staví index a píše cache. Rychlé (<code>banner</code>, <code>export</code>, <code>enter</code>) čte cache. Stav vrstvy je <code>resolved</code>, <code>cached</code> nebo <code>unavailable</code>.</li>
+    <li><strong><code>env enter</code> nikdy nebuilduje, nečeká a vždy skončí nulou.</strong> Vypíše přiřazení proměnných, banner na stderr a zajistí sdílený server. Změřená cena vstupu: 185 až 217 ms studená, 134 až 218 ms teplá při zátěži stroje 136.</li>
+    <li><strong>Služba se kreslí jako odpovídající, jen když to preflight ověřil.</strong> Nevědět není totéž jako nic tam není.</li>
+  </ul>
+  <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .envrc je adaptér a nic jiného</span>
+PATH_add bin
+watch_file .ai/local/state/mcp/server.json
+eval "$(bin/majordomus-env enter --shell direnv)"
+source_env_if_exists .envrc.local</code></pre></div>
+  <p>Přepínače banneru: <code>MAJORDOMUS_BANNER=auto|full|compact|off</code>, <code>MAJORDOMUS_RUNTIME=off</code>, <code>NO_COLOR</code>. Pod <code>CI</code> se banner nekreslí. Nové worktrees převezmou schválení direnv z primárního checkoutu jen tehdy, když je jejich <code>.envrc</code> bajt po bajtu stejný. Důvod: 9. 9. 2026 bylo 36 z 37 worktrees s <code>.envrc</code> zablokovaných direnvem.</p>
+</section>
+
+<section id="x-evidence">
+  <h2>Důkazy: co se opravdu spustilo</h2>
+  <p>Cesta k testu je deklarace, že někde existuje důkaz. Není to důkaz. Důkaz je zaznamenaný běh se svým commitem. Ledger <code>.ai/repo/evidence/ledger.json</code> je trackovaný JSON, který drží poslední běh každého testu, bez historie a bez zachyceného výstupu.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pole běhu</th><th>Obsah</th></tr></thead>
+    <tbody>
+      <tr><td><code>test</code>, <code>runner</code></td><td>identita odvozená z cesty: <code>test/cases/X.sh</code> je <code>suite:X</code>, <code>tests/X.rs</code> je <code>crate:X</code></td></tr>
+      <tr><td><code>outcome</code></td><td><code>pass</code>, <code>fail</code>, <code>skip</code>, <code>timeout</code>, <code>error</code>; dokazuje jen <code>pass</code>, neznámé slovo je <code>error</code></td></tr>
+      <tr><td><code>commit</code>, <code>working_tree</code></td><td>plné jméno objektu a <code>clean</code>, <code>dirty</code> nebo <code>unknown</code></td></tr>
+      <tr><td><code>digest</code></td><td><code>sha256:</code> zdrojáku testu</td></tr>
+      <tr><td><code>origin</code>, <code>at</code>, <code>command</code></td><td><code>local</code>, <code>ci</code> nebo <code>release</code>; čas v UTC; příkaz</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>MJ_TEST_REPORT=suite.tsv bash test/run.sh
+majordomus evidence stamp --producer suite --report suite.tsv --out suite.provenance.json
+majordomus evidence record --suite suite.tsv --provenance suite.provenance.json
+git add .ai/repo/evidence/ledger.json   <span class="c"># nezacommitovaný záznam je lokální názor</span>
+
+majordomus evidence show [--state stale] [--check]
+majordomus evidence claim &lt;id&gt;          <span class="c"># stav jedné garance</span>
+majordomus evidence proves &lt;test&gt;       <span class="c"># které garance test dokazuje</span></code></pre></div>
+  <h3>Jak se stav důkazu odvozuje</h3>
+  <p>Jedna funkce, první vyhovující řádek vyhrává. Vstupy jsou přesně tři cesty: zdroj garance, její implementace a zdroj testu. „Změněno“ je diff od commitu běhu k posuzované revizi bez řádku ledgeru samotného.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Podmínka</th><th>Stav</th></tr></thead>
+    <tbody>
+      <tr><td>garance nejmenuje test</td><td><code>no_test</code></td></tr>
+      <tr><td>cestu neumí spustit žádný runner</td><td><code>unrunnable</code></td></tr>
+      <tr><td>nic nezaznamenáno, nebo běh byl skip</td><td><code>not_run</code></td></tr>
+      <tr><td>fail, timeout nebo error</td><td><code>failing</code></td></tr>
+      <tr><td>pass, ale commit běhu není v posuzované historii, git neumí porovnat, test má jiný hash, nebo se změnil vstup</td><td><code>stale</code></td></tr>
+      <tr><td>pass, nic se nezměnilo a oba stromy jsou čisté</td><td><code>proven</code></td></tr>
+      <tr><td>pass, nic se nezměnilo, ale některý strom je špinavý nebo neznámý</td><td><code>inputs_unchanged</code></td></tr>
+      <tr><td>pass, něco se změnilo, ale žádný ze vstupů</td><td><code>inputs_unchanged</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Selhávající část udělá selhávajícím celek. Jinak rozhoduje nejslabší část, která může nést důkaz. <code>proven</code> a <code>inputs_unchanged</code> se nikdy neslévají do jednoho stavu.</p>
+  <h3>Doktrína důkazů</h3>
+  <ul>
+    <li><strong>Přeskočený případ není důkaz.</strong> Případ, který odmítne běžet, se zaznamená jako skip, nikdy jako průchod. Předtím desítky přeskočených případů končily nulou a zapisovaly se jako <code>ok</code>.</li>
+    <li><strong>Binárka, která nespustila nic, neprošla.</strong> Nula testů nebo filtrovaná podmnožina je skip. Chybějící řádek s výsledkem je chyba.</li>
+    <li><strong>Selhání má přednost před absencí.</strong></li>
+    <li><strong>Strom měří běh, ne člověk.</strong> Nezměřený strom je <code>unknown</code> a nikdy není <code>proven</code>.</li>
+    <li><strong>Částečný běh zachová zbytek.</strong> Záznam jednoho testu nikdy nesmaže ostatní.</li>
+    <li><strong>Lokální záznam zůstává lokální.</strong> <code>--ledger local</code> nepohne žádným verdiktem.</li>
+  </ul>
+  <div class="note"><p>Ledger není odolný proti podvrhu a netvrdí to. Co poctivě přiznává dokumentace: <code>stale</code> se dřív počítalo jako podpora, dokud se nezměřilo, že na něm stojí 14 garancí proti nule skutečně <code>proven</code>. A první návrh dělal <code>proven</code> nedosažitelným, protože sám zápis do ledgeru strom zašpinil. Proto se řádek ledgeru z diffu vyjímá.</p></div>
+</section>
+
+<section id="x-claims">
+  <h2>Garance a use cases</h2>
+  <p>Garance je veřejné tvrzení o tom, co nástroj dělá: jedna věta se zdrojem, implementací, testem a statusem. Žijí v <code>docs/CLAIMS.yaml</code>, každá má stránku na webu a na ní se generuje i <code>docs/SITE_CLAIMS.md</code>. Soubor jim říká claims, web garance, aby se nepletly s <a href="#m-claims">claimy v meshi</a>.</p>
+  <div class="facts">
+    <div><b>244</b><span>garancí v CLAIMS.yaml</span></div>
+    <div><b>226</b><span>ve stavu guaranteed</span></div>
+    <div><b>48</b><span>use cases se scénářem</span></div>
+    <div><b>83 %</b><span>spodní mez řádkového pokrytí</span></div>
+  </div>
+  <p>Zbylé garance jsou 10 plánovaných, 6 poradních a 2 zamítnuté. Dva gates běží v každém plánu:</p>
+  <ul>
+    <li><strong><code>claim-proof</code></strong>: test, který garance ve stavu <code>guaranteed</code> jmenuje, musí obsahovat id té garance. Baseline výjimek je prázdný.</li>
+    <li><strong><code>evidence-check</code></strong>: posuzuje jen <code>guaranteed</code>. Podpořená znamená <code>proven</code> nebo <code>inputs_unchanged</code>. Dnes je to ratchet, který odmítá jen zhoršení. Baseline na <code>origin/master</code> nese 158 nepodpořených garancí a žádnou podpořenou, protože záznam důkazů z CI do trackovaného ledgeru ještě není zapojený. Dokumentace to říká otevřeně.</li>
+  </ul>
+  <h3>Use case: úkol, který nástroj předvede sám na sobě</h3>
+  <p>Use case je úkol, který člověk s nástrojem dělá, jako jeden objekt: příkazy, pravidla, garance a scénář. Každý krok scénáře je skutečné volání <code>bin/majordomus</code> v jednorázovém repozitáři. Zralost nikdo nepíše, pozoruje se z důkazů:</p>
+  <div class="chips"><code>draft</code><code>described</code><code>executable</code><code>verified</code><code>guaranteed</code></div>
+  <p><code>guaranteed</code> znamená ověřený scénář, kde je každá jmenovaná garance zaručená a každá jmenovaná doktrína vynucená. Repo vyžaduje, aby každý veřejný příkaz měl use case.</p>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus usecase run [id] [--live]     <span class="c"># spustí scénář; --live jen čte nad aktuálním repem</span>
+majordomus usecase coverage --check      <span class="c"># má každý veřejný příkaz use case?</span>
+majordomus usecase impact --base master  <span class="c"># které scénáře změna zavazuje spustit</span>
+majordomus usecase scaffold --missing    <span class="c"># kostry pro nepokryté příkazy</span></code></pre></div>
+  <h3>Pokrytí kódu</h3>
+  <p>Jedno měření (<code>cargo llvm-cov</code>, bez testovacího kódu) pro řádky, funkce a regiony. Dvě spodní meze fungují jako ratchet: 83 % pro celý crate a 95 % pro doménu session a kontinuity. Diferenciální gate <code>coverage-differential</code> jde dál: každý řádek, funkce a region, který změna přidá nebo se ho dotkne, musí být pokrytý. Invariant je <code>new_debt == 0</code> a starý dluh nesmí růst. Výsledky jsou PASS, FAIL, UNKNOWN a BLOCKED a jen první je zelený: spadlé měření nikdy není průchod.</p>
+</section>
+
+<section id="x-release">
+  <h2>Verze a vydání</h2>
+  <p>Verze je napsaná na jednom místě: <code>[package] version</code> v <code>apps/majordomus-cli/Cargo.toml</code>. Jediný, kdo ji mění, je <code>majordomus release bump</code>. Shellový nástroj žádnou verzi nezná a čte vygenerovaný <code>share/version.txt</code>. Ručně psaný changelog neexistuje: skládá se ze záznamů vydání, datovaných ADR a <code>git log</code>.</p>
+  <h3>Verze se měří, netvrdí</h3>
+  <p><code>release analyze</code> nečte slova v commitech. Porovná veřejný povrch capabilities posledního vydání (<code>docs/generated/registry.json</code>: id, druhy, vazby na MCP, HTTP a CLI, obě schémata) se stromem.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Změna povrchu</th><th>Co dluží</th></tr></thead>
+    <tbody>
+      <tr><td>něco zmizelo nebo se zúžilo</td><td>major (pod 1.0.0 minor)</td></tr>
+      <tr><td>něco přibylo nebo se rozšířilo</td><td>minor</td></tr>
+      <tr><td>povrch stejný, commity nesou změny</td><td>patch</td></tr>
+      <tr><td>povrch stejný, žádné změny</td><td>nic</td></tr>
+      <tr><td>baseline nejde změřit</td><td><code>undecided</code>; holý bump odmítne s exit 12</td></tr>
+    </tbody>
+  </table></div>
+  <p>Vstupy a výstupy se posuzují opačnými směry: rozšířený vstup je kompatibilní, rozšířený výstup taky, zúžení kteréhokoli ne. Konvenční commity jsou jen podpůrný důkaz. <code>--level</code> a <code>--exact</code> smí jít jen výš, než kolik měření vyžaduje.</p>
+  <h3>Od tagu k vydání</h3>
+  <ol class="pipeline">
+    <li><span class="n">1</span><div><h4>Bump a tag</h4><p><code>release bump</code>, odvození projekcí, PR, merge na zeleném <code>ci</code>, <code>release-verdict --commit HEAD</code>, pak <code>git tag</code> a push tagu.</p></div></li>
+    <li><span class="n">2</span><div><h4>Plán</h4><p>Tag se musí rovnat verzi v manifestu a <code>ci</code> otagovaného commitu muselo skončit úspěchem. Selhání je exit 10, nečitelný nebo běžící stav exit 12. Špatně napsaný tag stojí třicet sekund místo publikovaného vydání.</p></div></li>
+    <li><span class="n">3</span><div><h4>Build</h4><p>Jeden archiv na podporovaný cíl, ověřený tam, kde vznikl. Šest platforem (macOS a Linux, ARM64 a x86_64, glibc i musl). Windows je uvedený jako nedostupný, s důvodem.</p></div></li>
+    <li><span class="n">4</span><div><h4>Publikace</h4><p>Otisky, GitHub release, attestace, záznam vydání zapsaný z nahraných souborů, metadata na web a PR se záznamem. Jen tenhle job smí zapisovat do repa.</p></div></li>
+    <li><span class="n">5</span><div><h4>Smoke</h4><p>Publikovaný instalátor nainstaluje právě vydanou verzi a ověří ji.</p></div></li>
+  </ol>
+  <h3>Co ověřuje instalátor</h3>
+  <ul>
+    <li>jen HTTPS; SHA-256 a velikost před rozbalením, nesoulad je fatální</li>
+    <li>URL artefaktu musí nést vlastní prefix vydání projektu</li>
+    <li>položky archivu s absolutní cestou, <code>..</code>, odkazy nebo zařízeními jsou odmítnuté</li>
+    <li>rozbalený nástroj se jednou spustí a musí ohlásit očekávanou verzi; instaluje se přejmenováním, bez sudo</li>
+    <li>provenance (GitHub attestace) se kontroluje, když je přihlášené <code>gh</code>; fatální je jen s <code>MAJORDOMUS_REQUIRE_PROVENANCE=1</code></li>
+  </ul>
+  <p>Co dokumentace výslovně neslibuje: podpis nad metadaty a bitově identické rebuildy.</p>
+  <h3>Web</h3>
+  <p>Po merge do masteru <code>scripts/pages build</code> vyrenderuje commitnuté projekce (starý hash zdroje odmítne a nic nepřegenerovává), <code>site-deploy</code> pushne výsledek na <code>gh-pages</code> a <code>pages verify --commit SHA</code> se ptá veřejného <code>/build.json</code>, dokud neservíruje právě ten commit. <code>pages current</code> je rychlá verze téže otázky pro pre-commit hook.</p>
+  <div class="note"><p>Verze v0.3.1, v0.5.0, v0.6.0 a v0.7.0 vyšly z commitů, jejichž <code>ci</code> selhalo. Nic to nekontrolovalo. Od té doby je <code>release-verdict</code> součástí plánu vydání.</p></div>
+</section>
+
+<section id="x-lessons">
+  <h2>Poučení z provozu</h2>
+  <p>Každé pravidlo, gate a příkaz v Majordomusu má za sebou konkrétní incident. Tady je sedmnáct zdokumentovaných, s čísly a s tím, co se po nich změnilo. Vzorec je pořád stejný: něco bylo deklarované, nikdo to nevolal a nikdo se nedíval.</p>
+  <div class="lab" id="lab-lessons">
+    <p class="lab-h">Vyzkoušej si · časová osa incidentů</p>
+    <div class="chips-btn" id="ls-chips"></div>
+    <div class="graph-wrap"><svg id="ls-svg" viewBox="0 0 720 130" role="img" aria-label="Časová osa incidentů od září do října 2026"></svg></div>
+    <div class="lab-panel" id="ls-panel" aria-live="polite"></div>
+    <ol class="ls-list" id="ls-list"></ol>
+  </div>
+</section>
+
+<section id="x-registry">
+  <h2>Registr capabilities zblízka</h2>
+  <p>Kapitola <a href="#projekce">Jeden fakt, mnoho rozhraní</a> říká proč. Tady je jak. Deklarace je makro <code>capability!</code>, jeden modul na soubor v <code>apps/majordomus-cli/src/capability/builtin/</code>. Na <code>origin/master</code> je 191 deklarací v 55 modulech: 183 má MCP nástroj, 187 HTTP routu a 105 cestu v CLI. Server k nim přidává každý objekt vrstvy <code>.ai/</code> jako resource, proto hlásí přes dva tisíce capabilities.</p>
+  <div class="two">
+    <div class="card">
+      <h4>Autor deklaruje</h4>
+      <ul>
+        <li><code>id</code>, <code>kind</code> (<code>Query</code>, <code>Command</code>, <code>Resource</code>), titulek, popis</li>
+        <li>typy vstupu a výstupu v Rustu, ze kterých vznikne JSON Schema</li>
+        <li><code>stability</code> a <code>exposure</code>: jméno MCP nástroje, HTTP metodu a cestu, slova CLI</li>
+        <li>handler; volitelně <code>.writes_repository()</code> a <code>.cancellable()</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Nástroj odvodí sám</h4>
+      <ul>
+        <li>modul, původ, dostupnost, viditelnost</li>
+        <li>efekt (<code>read</code>, <code>process_state</code>, <code>repository_mutation</code>) a z něj MCP anotace</li>
+        <li>benchmarkové případy z typu vstupu</li>
+        <li>příklady v OpenAPI</li>
+      </ul>
+    </div>
+  </div>
+  <ul>
+    <li><strong>Kompilátor hlídá první vrstvu.</strong> Vstup bez benchmarkových případů se nezkompiluje. Handler s jinou signaturou, než deklarují typy, taky ne.</li>
+    <li><strong>Registr hlídá druhou.</strong> Při sestavení sbírá všechny chyby najednou: duplicitní id, jméno nástroje, URI, routa nebo cesta CLI; routa mimo <code>/api/v1/</code>; command s jinou metodou než POST. <code>capabilities validate</code> skončí s exit 10 a seznamem.</li>
+    <li><strong>Jeden executor.</strong> Každý transport volá <code>Context::execute</code>, takže odmítnutí je stejné v CLI, HTTP i MCP.</li>
+    <li><strong>CLI se negeneruje.</strong> Strom příkazů je psaný ručně a kontroluje se proti registru oběma směry. Je to „kontrolovaná druhá deklarace“, ne projekce. Obecné <code>majordomus run &lt;id&gt;</code> dosáhne na jakoukoli capability.</li>
+  </ul>
+  <h3>Přidání capability krok za krokem</h3>
+  <ol class="steps">
+    <li><div><p>Napsat doménovou logiku a přidat blok <code>capability!</code> (nový modul navíc zaregistrovat).</p></div></li>
+    <li><div><p>HTTP, OpenAPI, Swagger UI, MCP a formulář v Cockpitu se objeví bez dalšího kódu.</p></div></li>
+    <li><div><p>Pokud má mít příkaz v CLI: varianta v clap, dispatch přes <code>ctx.execute</code>, textový renderer a spustitelný příklad. Dokud nesouhlasí, selže <code>capabilities validate</code>, test projekcí i gate <code>projection-check</code>.</p></div></li>
+    <li><div><p>Spustit <code>just derive</code> a commitnout. Samotné <code>majordomus generate</code> nepřepíše data webu a pre-commit hook zastaralá data odmítne.</p></div></li>
+    <li><div><p>Rozšířit pin test modulu a přidat behaviorální test. Pokud je to veřejná garance, přidat ji do <code>CLAIMS.yaml</code> s důkazem.</p></div></li>
+    <li><div><p>Verze: <code>release analyze</code> změří, co změna povrchu dluží.</p></div></li>
+  </ol>
+  <h3>Co brání driftu</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mechanismus</th><th>Co hlídá</th></tr></thead>
+    <tbody>
+      <tr><td><code>majordomus generate --check</code></td><td>znovu odvodí, porovná bajt po bajtu, nic nezapíše; exit 10 se jmény zastaralých souborů</td></tr>
+      <tr><td><code>scripts/derive-check</code>, <code>pages current</code></td><td>data webu odpovídají stromu; běží v pre-commit hooku</td></tr>
+      <tr><td>test projekcí</td><td>každá deklarovaná projekce existuje, žádná není sirotek, změna typu nebo popisu dorazí všude</td></tr>
+      <tr><td>test determinismu</td><td>dva běhy dají stejné bajty a žádnou absolutní cestu</td></tr>
+      <tr><td>stráž generace</td><td><code>generate</code> odmítne (exit 15) binárku z jiné generace crate</td></tr>
+    </tbody>
+  </table></div>
+  <p>Generování samo driftu nebrání. Generátor, který nikdo znovu nespustí, je zastaralá kopie se skriptem vedle sebe.</p>
+</section>
+
+<section id="x-cockpit">
+  <h2>Cockpit a UI: stejný model v prohlížeči</h2>
+  <p>Cockpit běží na stejném sdíleném serveru jako MCP, na <code>/cockpit</code>. Stránky renderuje server v Rustu bez šablonovacího enginu a každá je kompletní HTML dřív, než se spustí jakýkoli skript. JavaScript je jen vylepšení: paleta příkazů, spouštěč capabilities, grafy, živý proud událostí. Zabezpečení: přísné CSP bez vzdáleného originu, výchozí loopback, stránky jen na GET.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Stránka</th><th>K čemu</th></tr></thead>
+    <tbody>
+      <tr><td><code>/cockpit</code></td><td>přehled: je to zdravé, co se změnilo, co je rozbité, co potřebuje akci</td></tr>
+      <tr><td><code>/cockpit/capabilities</code></td><td>průzkumník capabilities s formulářem vygenerovaným ze schématu vstupu</td></tr>
+      <tr><td><code>/cockpit/executions</code></td><td>co proces spustil, jedna execution živě</td></tr>
+      <tr><td><code>/cockpit/plan</code>, <code>/cockpit/intents</code></td><td>plán, milníky, issues a intents se stupněm a důkazy</td></tr>
+      <tr><td><code>/cockpit/continuity</code></td><td>životní cyklus a epizody tohoto checkoutu</td></tr>
+      <tr><td><code>/cockpit/mesh</code>, <code>/peers</code>, <code>/worktrees</code></td><td>kdo je v síti, kdo je na boardu, kde co leží</td></tr>
+      <tr><td><code>/cockpit/integration</code>, <code>/trains</code></td><td>fronta pull requestů a skládané vlaky</td></tr>
+      <tr><td><code>/cockpit/graphs</code>, <code>/topology</code></td><td>odvozené grafy, graf registru ve 3D</td></tr>
+      <tr><td><code>/cockpit/health</code>, <code>/quality</code>, <code>/release</code>, <code>/economics</code></td><td>stav, kvalita, vydání, měření</td></tr>
+      <tr><td><code>/cockpit/models</code>, <code>/reasoning</code></td><td>katalog modelů a záznamy nejistoty</td></tr>
+      <tr><td><code>/cockpit/api</code>, <code>/mcp</code>, <code>/search</code></td><td>HTTP routy, MCP projekce, hledání</td></tr>
+    </tbody>
+  </table></div>
+  <p>Tabulka rout v dokumentaci se testem porovnává se seznamem rout v kódu a hlídají ji gates <code>cockpit-projection</code> a <code>ui-integrity</code>.</p>
+  <h3><code>majordomus ui</code>: povrch pro člověka</h3>
+  <p>ADR 0135 (přijaté 11. 10. 2026) dělá z <code>/ui</code> primární povrch ve slovníku dodávky: issues, pull requesty, roadmapa, dodávka, nasazení, důkazy, governance. Cockpit zůstává technickou vrstvou pod ním. Obojí je stejný server a stejný executor, bez vlastního úložiště. Starší servery <code>/ui</code> neznají a vrátí 404.</p>
+</section>
+
+<section id="x-exec">
+  <h2>Executions: volání, které jde sledovat</h2>
+  <p>Execution je volání capability, kterému proces dal identitu, aby se dalo sledovat místo čekání. Má životní cyklus, vstup tak, jak byl uložen, typované události a výstup nebo chybu. Nepřežije proces, který ji přijal: žádná trvalá fronta, opakování ani plánovač.</p>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 150" role="img" aria-label="Stavy execution: queued, running, cancelling a koncové succeeded, failed, cancelled.">
+        <defs><marker id="ex-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker></defs>
+        <g font-size="12.5" font-weight="600" class="ink mono" text-anchor="middle">
+          <rect x="20" y="52" width="110" height="40" rx="6" class="box" stroke-width="1.25"/><text x="75" y="77">queued</text>
+          <rect x="190" y="52" width="110" height="40" rx="6" class="box" stroke-width="1.25"/><text x="245" y="77">running</text>
+          <rect x="360" y="52" width="120" height="40" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/><text x="420" y="77">cancelling</text>
+          <rect x="570" y="8" width="130" height="36" rx="6" class="zone" stroke-width="1.25"/><text x="635" y="31">succeeded</text>
+          <rect x="570" y="56" width="130" height="36" rx="6" class="zone" stroke-width="1.25"/><text x="635" y="79">failed</text>
+          <rect x="570" y="104" width="130" height="36" rx="6" class="zone" stroke-width="1.25"/><text x="635" y="127">cancelled</text>
+        </g>
+        <g stroke="var(--muted)" stroke-width="1.25" fill="none" marker-end="url(#ex-arrow)">
+          <path d="M130 72H188"/><path d="M300 72H358"/>
+          <path d="M245 52C245 20 400 26 568 26"/>
+          <path d="M480 66C520 60 530 30 568 28"/><path d="M480 72H568"/><path d="M480 80C520 90 530 118 568 122"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption><code>cancelling</code> může ještě skončit úspěchem nebo selháním. Zrušení má účinek jen u capability deklarované jako <code>.cancellable()</code>, jejíž handler se na zrušení ptá.</figcaption>
+  </figure>
+  <p>Každá událost má obálku s verzí protokolu, hustou sekvencí od jedné, časem, typem a daty. Klient musí neznámé typy ignorovat.</p>
+  <div class="chips"><code>execution.created</code><code>.queued</code><code>.started</code><code>.progress</code><code>.step.started</code><code>.step.completed</code><code>.log</code><code>.diagnostic</code><code>.cancelling</code><code>.cancelled</code><code>.completed</code><code>.failed</code></div>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus run &lt;id&gt; [--input JSON]        <span class="c"># spustí capability jako execution</span>
+majordomus executions list
+majordomus executions events &lt;id&gt; --after N
+majordomus executions cancel &lt;id&gt;
+
+POST /api/v1/executions/start    GET /api/v1/executions/events
+GET  /events?execution=&lt;id&gt;&amp;after=&lt;seq&gt;   <span class="c"># WebSocket, heartbeat 20 s</span></code></pre></div>
+  <p>Limity jsou napsané: 200 zapamatovaných executions, 2 000 událostí každá, 4 běžící současně, 64 živých kanálů. Citlivé vstupy se podle schématu redigují.</p>
+</section>

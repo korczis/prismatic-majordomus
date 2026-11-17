@@ -464,8 +464,10 @@ pub fn changed_between(
     match presented {
         Presented::WorkingTree => super::changed_since(root, evidence_commit),
         Presented::Commit { commit, .. } => git::read_only(root)
+            // both sides of a rename, as the working-tree comparison lists them
             .args([
                 "diff",
+                "--no-renames",
                 "--name-only",
                 evidence_commit,
                 commit.as_str(),
@@ -1323,6 +1325,30 @@ mod tests {
         assert_eq!(
             judge(&run, Some(&after), TreeState::Clean),
             Judgement::of(ProofState::InputsUnchanged)
+        );
+    }
+
+    /// A file moved since the run changed at both of its paths: the one the run measured is
+    /// gone. With git's rename detection only the new path was listed, so an input moved
+    /// away compared as untouched — in the working tree and against a presented commit.
+    #[test]
+    fn a_file_moved_since_the_run_changed_at_its_old_path_too() {
+        let r = Repo::new();
+        let e = r.commit(
+            "src/input.rs",
+            "a body long enough for git to pair it as a rename\n",
+        );
+        r.git(&["mv", "src/input.rs", "src/moved.rs"]);
+        let here = changed_between(r.root(), &e, &Presented::WorkingTree).unwrap();
+        assert!(here.contains("src/input.rs"), "{here:?}");
+        assert!(here.contains("src/moved.rs"), "{here:?}");
+
+        r.git(&["commit", "-q", "-m", "move"]);
+        let head = presented_commit(r.root(), "HEAD", None).unwrap();
+        let there = changed_between(r.root(), &e, &head).unwrap();
+        assert_eq!(
+            there.into_iter().collect::<Vec<_>>(),
+            ["src/input.rs", "src/moved.rs"]
         );
     }
 

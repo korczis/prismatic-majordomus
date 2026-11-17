@@ -26,6 +26,7 @@ use super::protocol::{self, Refusal};
 use super::provider::{Beacon, MeshProvider, Observation, ProviderContext, ProviderStatus};
 use super::registry::{MeshRegistry, MeshSource, NodeRecord, Tallies};
 use super::rendezvous::{RegisterAnswer, RendezvousProvider};
+use super::tailscale::TailscaleProvider;
 use super::trust;
 use super::MeshError;
 
@@ -110,6 +111,10 @@ pub struct MeshStatus {
     /// This node, when the mesh has an identity.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub identity: Option<PublicIdentity>,
+    /// The endpoints this node advertises: what a peer dials to reach it. The bound
+    /// interface's addresses, or the one public URL a hosted hub is started with (ADR 0220).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub advertised: Vec<String>,
     /// The trust policy in force.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trust_policy: Option<String>,
@@ -133,6 +138,13 @@ struct Active {
     started_at: String,
 }
 
+/// What opens a runtime the trust list closed, once the declaration in force trusts its key
+/// (I4571): the activation the server ran at start, run again over the generation of the
+/// repository that is current now. The server that activated the runtime registers it;
+/// nothing else can, because only the server knows what to activate with (its address, its
+/// hosting, its version).
+pub type Reopen = Arc<dyn Fn(&Arc<crate::capability::Context>) + Send + Sync>;
+
 /// The runtime: the registry (always there, so a surface can answer before activation)
 /// and the active machinery once a declaration switched it on.
 pub struct MeshRuntime {
@@ -149,6 +161,10 @@ pub struct MeshRuntime {
     /// declined with a reason. A runtime nobody decided on is the command line's, and its
     /// inactivity is an absence the doctor may not report as a verdict (ADR 0059).
     decided: AtomicBool,
+    /// How to open this runtime when the trust list closed it, once the declaration trusts
+    /// its key ([`Reopen`]); set by the server that activated it, cleared by
+    /// [`MeshRuntime::stop`].
+    reopen: Mutex<Option<Reopen>>,
 }
 
 impl Default for MeshRuntime {
@@ -170,7 +186,127 @@ impl MeshRuntime {
             cooperation: Mutex::new(None),
             cooperation_reason: Mutex::new(None),
             decided: AtomicBool::new(false),
+            reopen: Mutex::new(None),
         }
+    }
+
+    /// The key this runtime is closed to, when the trust list closed it ([`closed_to`]):
+    /// what a reload holds against the declaration in force (I4571). `None` while the mesh
+    /// is active, and for every other reason it is not.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let unlisted: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true })).unwrap();
+    /// let identity = NodeIdentity::ephemeral().unwrap();
+    /// let key = identity.public.public_key.clone();
+    /// let mesh = MeshRuntime::new();
+    /// assert_eq!(mesh.closed_key(), None, "nothing decided yet");
+    /// mesh.activate(&unlisted, identity, vec![], vec![], "doc").unwrap();
+    /// assert_eq!(mesh.closed_key(), Some(key));
+    /// ```
+    pub fn closed_key(&self) -> Option<String> {
+        if self.state.lock().expect("mesh state").is_some() {
+            return None;
+        }
+        let reason = self.reason.lock().expect("mesh reason");
+        closed_key(&reason).map(str::to_string)
+    }
+
+    /// Register what opens this runtime once the declaration in force trusts the key it is
+    /// closed to ([`Reopen`]). The server calls it whenever it activates the mesh, so that a
+    /// runtime closed at start and one closed later by a withdrawn key open alike; a later
+    /// registration replaces an earlier one.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::capability::Context;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// mesh.reopen_with(Arc::new(|_: &Arc<Context>| {}));
+    /// assert!(mesh.reopens(), "registered");
+    /// mesh.stop();
+    /// assert!(!mesh.reopens(), "a stopped runtime is never opened again");
+    /// ```
+    pub fn reopen_with(&self, reopen: Reopen) {
+        *self.reopen.lock().expect("mesh reopen") = Some(reopen);
+    }
+
+    /// Whether a server registered how to open this runtime again ([`Reopen`]) and has not
+    /// stopped it: only such a runtime is closed and opened by the trust list while it runs.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// // the command line's runtime, which no server activated, is never moved by trust
+    /// assert!(!MeshRuntime::new().reopens());
+    /// ```
+    pub fn reopens(&self) -> bool {
+        self.reopen.lock().expect("mesh reopen").is_some()
+    }
+
+    /// Close an active runtime because the declaration in force no longer trusts its own
+    /// key, with `why` ([`closed_to`]'s reason) as its reason: its providers stop, its
+    /// cooperation stops and ends its links, and what [`MeshRuntime::reopen_with`]
+    /// registered stays, so that listing the key again opens it (I4571). `false` when it
+    /// was not active.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::{closed_to, MeshRuntime};
+    ///
+    /// let identity = NodeIdentity::ephemeral().unwrap();
+    /// let key = identity.public.public_key.clone();
+    /// let listed: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true,
+    ///     "multicast": { "enabled": false }, "tailscale": { "enabled": false },
+    ///     "trust": { "allow": [key.clone()] } })).unwrap();
+    /// let mesh = MeshRuntime::new();
+    /// mesh.activate(&listed, identity, vec![], vec![], "doc").unwrap();
+    /// let mut withdrawn = listed.clone();
+    /// withdrawn.trust.allow.clear();
+    /// assert!(mesh.close(&closed_to(&withdrawn, &key).unwrap()));
+    /// assert!(!mesh.status().active);
+    /// assert_eq!(mesh.closed_key(), Some(key));
+    /// assert!(!mesh.close("again"), "closed already");
+    /// ```
+    pub fn close(&self, why: &str) -> bool {
+        // the state's lock is let go before cooperation's is taken: `stop` takes them in the
+        // other order, and two holders of both would wait on each other
+        let Some(active) = self.state.lock().expect("mesh state").take() else {
+            return false;
+        };
+        active.stop.store(true, Ordering::SeqCst);
+        if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
+            cooperation.stop();
+        }
+        *self.reason.lock().expect("mesh reason") = why.to_string();
+        *self
+            .cooperation_reason
+            .lock()
+            .expect("mesh cooperation reason") = Some(why.to_string());
+        true
+    }
+
+    /// What [`MeshRuntime::reopen_with`] registered, while this runtime is closed by the
+    /// trust list and has not been stopped.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// mesh.reopen_with(Arc::new(|_: &Arc<majordomus_cli::capability::Context>| {}));
+    /// assert!(mesh.reopener().is_none(), "not closed by the trust list: nothing to reopen");
+    /// ```
+    pub fn reopener(&self) -> Option<Reopen> {
+        self.closed_key()?;
+        self.reopen.lock().expect("mesh reopen").clone()
     }
 
     /// Whether a shared server activated or declined this runtime. `false` in every process
@@ -232,7 +368,9 @@ impl MeshRuntime {
     /// ```
     pub fn attach_cooperation(&self, cooperation: Arc<Cooperation>) {
         let mut slot = self.cooperation.lock().expect("mesh cooperation");
-        if slot.is_none() {
+        // a stopped one holds the slot for nobody: a runtime closed by the trust list and
+        // opened again attaches the cooperation it starts then (I4571)
+        if slot.as_ref().is_none_or(|held| held.stopped()) {
             *slot = Some(cooperation);
         }
     }
@@ -387,6 +525,9 @@ impl MeshRuntime {
     ///
     /// let mesh = MeshRuntime::new();
     /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// // a machine whose key the declaration does not list stays closed (see `closed_to`)
+    /// let mut config = config;
+    /// config.trust.allow = vec![identity.public.public_key.clone()];
     /// mesh.activate_as(&config, Arc::clone(&identity), "0000000000000001",
     ///     vec!["127.0.0.1:8742".into()], vec!["root".into()], "doc").unwrap();
     ///
@@ -416,6 +557,10 @@ impl MeshRuntime {
         if !config.enabled {
             *self.reason.lock().expect("mesh reason") =
                 "not active: the mesh declaration is disabled".into();
+            return Ok(());
+        }
+        if let Some(why) = closed_to(config, &identity.public.public_key) {
+            *self.reason.lock().expect("mesh reason") = why;
             return Ok(());
         }
         let beacon = Arc::new(
@@ -456,6 +601,11 @@ impl MeshRuntime {
                 config.rendezvous.endpoints.clone(),
                 config.rendezvous.interval_seconds,
             )));
+        }
+        // the tailnet's online peers are asked as rendezvous: a machine joining the tailnet
+        // is found with no address written by hand (I2410)
+        if config.tailscale.enabled {
+            providers.push(Box::new(TailscaleProvider::new(config.tailscale.clone())));
         }
         for provider in providers.iter_mut() {
             if let Err(e) = provider.start(&ctx) {
@@ -541,6 +691,8 @@ impl MeshRuntime {
     /// Stop the mesh. Every provider thread and the manager end at their next bounded
     /// wait; the registry keeps what it saw for whoever still asks.
     pub fn stop(&self) {
+        // a stopped runtime is never reopened: the server that registered it is going away
+        *self.reopen.lock().expect("mesh reopen") = None;
         if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
             cooperation.stop();
         }
@@ -548,6 +700,38 @@ impl MeshRuntime {
         if let Some(active) = state.take() {
             active.stop.store(true, Ordering::SeqCst);
             *self.reason.lock().expect("mesh reason") = "not active: stopped".into();
+        }
+    }
+
+    /// Advertise what `source` answers from now on, read again before every beacon (see
+    /// [`Beacon::follow`]). Does nothing while the mesh is not active.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    ///
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mut config: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "majordomus", "enabled": true,
+    ///     "multicast": { "enabled": false },
+    /// })).unwrap();
+    /// let mesh = MeshRuntime::new();
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// config.trust.allow = vec![identity.public.public_key.clone()];
+    ///
+    /// mesh.follow_endpoints(Arc::new(|| vec!["10.0.0.9:8791".to_string()]));
+    /// assert!(mesh.status().advertised.is_empty(), "nothing to follow before activation");
+    ///
+    /// mesh.activate_as(&config, identity, "0000000000000001",
+    ///     vec!["192.168.100.96:8791".into()], vec!["root".into()], "doc").unwrap();
+    /// mesh.follow_endpoints(Arc::new(|| vec!["192.168.100.100:8791".to_string()]));
+    /// assert_eq!(mesh.status().advertised, ["192.168.100.100:8791"]);
+    /// ```
+    pub fn follow_endpoints(&self, source: super::provider::EndpointSource) {
+        if let Some(active) = self.state.lock().expect("mesh state").as_ref() {
+            active.beacon.follow(source);
         }
     }
 
@@ -563,6 +747,7 @@ impl MeshRuntime {
                     active: true,
                     reason: None,
                     identity: Some(active.beacon.identity().public.clone()),
+                    advertised: active.beacon.endpoints(),
                     trust_policy: Some(active.trust.policy.as_str().into()),
                     providers,
                     tallies: Tallies::default(),
@@ -574,6 +759,7 @@ impl MeshRuntime {
                 active: false,
                 reason: Some(self.reason.lock().expect("mesh reason").clone()),
                 identity: None,
+                advertised: Vec::new(),
                 trust_policy: None,
                 providers: Vec::new(),
                 tallies: Tallies::default(),
@@ -613,6 +799,7 @@ impl MeshRuntime {
         drop(state);
 
         let bytes = serde_json::to_vec(envelope).unwrap_or_default();
+        let mut caller_trusted = false;
         let refusal = match ingest(
             &self.registry,
             &self.refusals,
@@ -624,19 +811,24 @@ impl MeshRuntime {
                 bytes,
             },
         ) {
-            Ingest::Accepted => None,
+            Ingest::Accepted { trusted } => {
+                caller_trusted = trusted;
+                None
+            }
             Ingest::Own => Some("that is this node's own envelope".into()),
             Ingest::Replay => Some("replayed".into()),
             Ingest::Refused(r) => Some(r.to_string()),
         };
         // A refused caller is answered with the refusal alone: it learns nothing of this
-        // node's peers. An admitted one learns this node and the trusted nodes of its own
-        // repositories (I2133).
+        // node's peers. An admitted one learns this node; only a caller the trust policy
+        // trusts also learns the trusted nodes of its own repositories (I2133). A stranger
+        // with a valid signature is recorded and told who this hub is, never who trusts it
+        // (ADR 0220 decision 5): a hub reachable from anywhere must not hand out the map.
         let mut candidates = Vec::with_capacity(MAX_CANDIDATES + 1);
         if refusal.is_none() {
-            if let Ok(own_value) = serde_json::to_value(&own_envelope) {
-                candidates.push(own_value);
-            }
+            candidates.extend(serde_json::to_value(&own_envelope).ok());
+        }
+        if refusal.is_none() && caller_trusted {
             let repos: Vec<String> = envelope
                 .get("repos")
                 .and_then(|r| r.as_array())
@@ -661,7 +853,10 @@ impl MeshRuntime {
 }
 
 enum Ingest {
-    Accepted,
+    /// Recorded; `trusted` is whether the trust policy trusts the sender's key.
+    Accepted {
+        trusted: bool,
+    },
     Own,
     Replay,
     Refused(Refusal),
@@ -703,6 +898,7 @@ fn ingest(
         known_key.as_deref(),
         previous.as_ref(),
     );
+    let trusted = verdict.is_trusted();
     let raw = serde_json::to_value(&envelope).unwrap_or(serde_json::Value::Null);
     if registry.observe(
         &envelope.adv,
@@ -712,10 +908,75 @@ fn ingest(
         &observation.path,
         raw,
     ) {
-        Ingest::Accepted
+        Ingest::Accepted { trusted }
     } else {
         Ingest::Replay
     }
+}
+
+/// Why the mesh stays closed on a machine the declaration does not name, or `None` when
+/// it may open. Under `deny_unknown` and `allowlist` a machine joins only when its own
+/// public key is in `trust.allow`: an unlisted machine — a contributor's clone of a public
+/// repository, a new machine nobody enrolled — would otherwise announce itself on its
+/// network and dial whatever endpoints the repository commits, trusted by nobody. It
+/// opens no socket instead, and says which key to list. `tofu` trusts whoever answers
+/// first, so it never closes on this ground.
+///
+/// ```
+/// use majordomus_cli::mesh::config::MeshConfig;
+/// use majordomus_cli::mesh::manager::closed_to;
+///
+/// let declared = |allow: &[&str], policy: &str| -> MeshConfig {
+///     serde_json::from_value(serde_json::json!({
+///         "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true,
+///         "trust": { "policy": policy, "allow": allow },
+///     })).unwrap()
+/// };
+/// let key = "ab".repeat(32);
+/// assert!(closed_to(&declared(&[], "deny_unknown"), &key).unwrap().starts_with("closed: "));
+/// assert!(closed_to(&declared(&["cd"], "allowlist"), &key).is_some());
+/// assert_eq!(closed_to(&declared(&[&key], "deny_unknown"), &key), None, "listed: it opens");
+/// assert_eq!(closed_to(&declared(&[], "tofu"), &key), None);
+/// ```
+pub fn closed_to(config: &MeshConfig, public_key: &str) -> Option<String> {
+    if config.trust.policy == trust::TrustPolicy::Tofu
+        || config.trust.allow.iter().any(|k| k == public_key)
+    {
+        return None;
+    }
+    Some(format!(
+        "{CLOSED_TO_KEY}{public_key} is not in trust.allow of the {} declaration, so it neither announces nor dials; to join, list the key there (`majordomus mesh identity` prints it) and commit",
+        config.id
+    ))
+}
+
+/// How every reason [`closed_to`] gives begins, up to the key it names.
+const CLOSED_TO_KEY: &str = "closed: this machine's key ";
+
+/// The key a runtime was closed to, read back from the reason [`closed_to`] gave it, or
+/// `None` when the reason is not that one. The reason is the only place a closed runtime
+/// keeps the key it judged — its status carries no identity, because nothing opened — and
+/// it is the key that matters: the one the server loaded, not the one a later reader
+/// would. `mesh doctor` holds it against the declaration in force now, which may list it
+/// although it did not when the server decided (I4572).
+///
+/// ```
+/// use majordomus_cli::mesh::config::MeshConfig;
+/// use majordomus_cli::mesh::manager::{closed_key, closed_to};
+///
+/// let config: MeshConfig = serde_json::from_value(serde_json::json!({
+///     "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true })).unwrap();
+/// let key = "ab".repeat(32);
+/// let reason = closed_to(&config, &key).unwrap();
+/// assert_eq!(closed_key(&reason), Some(key.as_str()));
+/// assert_eq!(closed_key("the node identity did not load"), None);
+/// ```
+pub fn closed_key(reason: &str) -> Option<&str> {
+    let rest = reason.strip_prefix(CLOSED_TO_KEY)?;
+    // `split` always yields a first piece, so no `?` here: an early return that can never be
+    // taken is a region no test can cover (coverage-differential)
+    let key = rest.split(' ').next().unwrap_or(rest);
+    (!key.is_empty()).then_some(key)
 }
 
 #[cfg(test)]
@@ -727,6 +988,13 @@ mod tests {
 
     fn identity_in(dir: &tempfile::TempDir, name: &str) -> NodeIdentity {
         NodeIdentity::load_or_create(&dir.path().join(name)).unwrap()
+    }
+
+    /// [`quiet_config`] with `identity`'s key listed: an unlisted machine stays closed.
+    fn listed(identity: &NodeIdentity) -> MeshConfig {
+        let mut config = quiet_config();
+        config.trust.allow = vec![identity.public.public_key.clone()];
+        config
     }
 
     fn quiet_config() -> MeshConfig {
@@ -742,6 +1010,10 @@ mod tests {
             },
             broadcast: Default::default(),
             rendezvous: Default::default(),
+            tailscale: crate::mesh::config::TailscaleConfig {
+                enabled: false,
+                ..Default::default()
+            },
             trust: Default::default(),
             cooperation: Default::default(),
         }
@@ -795,7 +1067,7 @@ mod tests {
         let runtime = MeshRuntime::new();
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "self.json")),
                 identity_in(&dir, "self.json"),
                 vec![],
                 vec![],
@@ -834,7 +1106,7 @@ mod tests {
         let own = identity_in(&dir, "self.json");
         let own_envelope = advertise(&own, 1, &[], &[], &[], "0.5.0");
         runtime
-            .activate(&quiet_config(), own, vec![], vec![], "0.5.0")
+            .activate(&listed(&own), own, vec![], vec![], "0.5.0")
             .unwrap();
         let bytes = serde_json::to_vec(&own_envelope).unwrap();
         runtime
@@ -855,7 +1127,7 @@ mod tests {
         let runtime = MeshRuntime::new();
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "self.json")),
                 identity_in(&dir, "self.json"),
                 vec![],
                 vec![],
@@ -882,7 +1154,7 @@ mod tests {
         let own = identity_in(&dir, "self.json");
         let own_node = own.public.node_id.clone();
         runtime
-            .activate(&quiet_config(), own, vec![], vec![], "0.5.0")
+            .activate(&listed(&own), own, vec![], vec![], "0.5.0")
             .unwrap();
         let caller = identity_in(&dir, "caller.json");
         let envelope = advertise(&caller, 1, &["127.0.0.1:2".into()], &[], &[], "0.5.0");
@@ -898,6 +1170,55 @@ mod tests {
     }
 
     #[test]
+    fn a_stranger_learns_this_hub_and_never_who_trusts_it() {
+        // ADR 0220 decision 5: a hub reachable from anywhere records a validly signed
+        // stranger and tells it who the hub is; only a trusted caller learns the trusted
+        // nodes of its repositories.
+        let dir = tempfile::tempdir().unwrap();
+        let runtime = MeshRuntime::new();
+        let own = identity_in(&dir, "self.json");
+        let own_node = own.public.node_id.clone();
+        let friend = identity_in(&dir, "friend.json");
+        let colleague = identity_in(&dir, "colleague.json");
+        let stranger = identity_in(&dir, "stranger.json");
+        let mut config = listed(&own);
+        config.trust.allow.push(friend.public.public_key.clone());
+        config.trust.allow.push(colleague.public.public_key.clone());
+        runtime
+            .activate(&config, own, vec![], vec![], "0.5.0")
+            .unwrap();
+        let repos = vec!["repo-1".to_string()];
+        let friend_env = advertise(&friend, 1, &["127.0.0.1:3".into()], &[], &repos, "0.5.0");
+        let first = runtime.register(&serde_json::to_value(&friend_env).unwrap(), "test");
+        assert!(first.accepted, "{:?}", first.refusal);
+
+        let stranger_env = advertise(&stranger, 1, &["127.0.0.1:4".into()], &[], &repos, "0.5.0");
+        let told = runtime.register(&serde_json::to_value(&stranger_env).unwrap(), "test");
+        assert!(
+            told.accepted,
+            "a valid stranger is recorded: {:?}",
+            told.refusal
+        );
+        let nodes: Vec<_> = told.candidates.iter().map(|c| c.adv.node_id()).collect();
+        assert_eq!(
+            nodes,
+            vec![Some(own_node.clone())],
+            "a stranger learns the hub alone"
+        );
+
+        let colleague_env = advertise(&colleague, 1, &["127.0.0.1:5".into()], &[], &repos, "0.5.0");
+        let shared = runtime.register(&serde_json::to_value(&colleague_env).unwrap(), "test");
+        let nodes: Vec<_> = shared.candidates.iter().map(|c| c.adv.node_id()).collect();
+        assert_eq!(nodes.first(), Some(&Some(own_node)));
+        assert!(
+            nodes.contains(&Some(friend.public.node_id.clone())),
+            "a trusted caller learns the trusted nodes of its repositories: {nodes:?}"
+        );
+        assert!(!nodes.contains(&Some(stranger.public.node_id.clone())));
+        runtime.stop();
+    }
+
+    #[test]
     fn registration_refuses_garbage_and_an_inactive_mesh_says_so() {
         let inactive = MeshRuntime::new();
         let answer = inactive.register(&serde_json::json!({"v": 1}), "test");
@@ -906,7 +1227,7 @@ mod tests {
         let runtime = MeshRuntime::new();
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "self.json")),
                 identity_in(&dir, "self.json"),
                 vec![],
                 vec![],
@@ -917,6 +1238,125 @@ mod tests {
         assert!(!answer.accepted);
         assert_eq!(answer.refusal.as_deref(), Some("malformed"));
         runtime.stop();
+    }
+
+    #[test]
+    fn the_key_a_runtime_was_closed_to_reads_back_from_its_reason_and_nothing_else_does() {
+        // what `mesh doctor` holds against the declaration in force (I4572)
+        let config: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true,
+        }))
+        .unwrap();
+        let key = "ab".repeat(32);
+        let reason = closed_to(&config, &key).expect("an unlisted key is closed to");
+        assert_eq!(closed_key(&reason), Some(key.as_str()), "round trip");
+        // the prefix with no key after it names no key
+        assert_eq!(closed_key(CLOSED_TO_KEY), None);
+        assert_eq!(
+            closed_key(&format!("{CLOSED_TO_KEY} is not in trust.allow")),
+            None
+        );
+        // a reason closed_to did not write names none either
+        assert_eq!(
+            closed_key("not active: the node identity did not load"),
+            None
+        );
+        assert_eq!(closed_key("closed: something else entirely"), None);
+    }
+
+    #[test]
+    fn closing_stops_the_cooperation_and_a_stopped_one_gives_up_its_attach_slot() {
+        use crate::mesh::config::CooperationConfig;
+        use crate::mesh::cooperation::{CheckoutFacts, CooperationSetup};
+        let built = |slot: &str| {
+            Cooperation::new(CooperationSetup {
+                identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime: slot.into(),
+                repository: crate::mesh::repository::of_root_commits(&["root".into()]),
+                endpoints: vec!["127.0.0.1:9".into()],
+                version: "test".into(),
+                config: CooperationConfig::default(),
+                trust: TrustConfig::default(),
+                journal_path: None,
+                registry: Arc::new(MeshRegistry::new()),
+                transport: Arc::new(crate::mesh::link::HttpTransport),
+                board: None,
+                checkout: CheckoutFacts::default(),
+            })
+            .unwrap()
+        };
+        let runtime = MeshRuntime::new();
+        let dir = tempfile::tempdir().unwrap();
+        let own = identity_in(&dir, "self.json");
+        runtime
+            .activate(&listed(&own), own, vec![], vec![], "0.5.0")
+            .unwrap();
+        let first = built("0000000000000001");
+        runtime.attach_cooperation(Arc::clone(&first));
+        // a running one keeps the slot
+        runtime.attach_cooperation(built("0000000000000002"));
+        assert_eq!(
+            runtime.cooperation().unwrap().runtime_key(),
+            first.runtime_key()
+        );
+        // closing stops it, and a second close finds nothing to close
+        assert!(runtime.close("closed: withdrawn in the test"));
+        assert!(first.stopped() && runtime.cooperation().is_none());
+        assert!(!runtime.close("closed: again"));
+        // the stopped one gives the slot to the cooperation of the next opening
+        let next = built("0000000000000003");
+        runtime.attach_cooperation(Arc::clone(&next));
+        assert_eq!(
+            runtime.cooperation().unwrap().runtime_key(),
+            next.runtime_key()
+        );
+        next.stop();
+    }
+
+    #[test]
+    fn an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider() {
+        let runtime = MeshRuntime::new();
+        let dir = tempfile::tempdir().unwrap();
+        let mut config = quiet_config();
+        config.multicast.enabled = true;
+        config.rendezvous.endpoints = vec!["http://127.0.0.1:9".into()];
+        config.trust.allow = vec!["cd".repeat(32)];
+        let own = identity_in(&dir, "self.json");
+        let key = own.public.public_key.clone();
+        runtime
+            .activate(&config, own, vec![], vec![], "0.5.0")
+            .unwrap();
+        let status = runtime.status();
+        assert!(
+            !status.active,
+            "an unlisted machine announces and dials nothing"
+        );
+        assert!(
+            status.providers.is_empty(),
+            "no provider started: {:?}",
+            status.providers
+        );
+        let reason = status.reason.unwrap();
+        assert!(
+            reason.starts_with("closed: ") && reason.contains(&key),
+            "{reason}"
+        );
+        assert!(runtime.decided(), "closed is a decision, not an absence");
+        // listed, the same declaration opens
+        let open = MeshRuntime::new();
+        config.multicast.enabled = false;
+        config.rendezvous.endpoints.clear();
+        config.trust.allow.push(key);
+        open.activate(
+            &config,
+            identity_in(&dir, "self.json"),
+            vec![],
+            vec![],
+            "0.5.0",
+        )
+        .unwrap();
+        assert!(open.status().active);
+        open.stop();
     }
 
     #[test]
@@ -953,7 +1393,7 @@ mod tests {
         assert!(!runtime.decided(), "reading a runtime decides nothing");
         runtime
             .activate(
-                &quiet_config(),
+                &listed(&identity_in(&dir, "a.json")),
                 identity_in(&dir, "a.json"),
                 vec![],
                 vec![],
@@ -969,7 +1409,7 @@ mod tests {
     fn activation_is_idempotent() {
         let dir = tempfile::tempdir().unwrap();
         let runtime = MeshRuntime::new();
-        let config = quiet_config();
+        let config = listed(&identity_in(&dir, "a.json"));
         runtime
             .activate(
                 &config,
@@ -990,6 +1430,32 @@ mod tests {
             .unwrap();
         let status = runtime.status();
         assert!(status.active);
+        runtime.stop();
+    }
+
+    #[test]
+    fn a_followed_source_moves_the_advertised_endpoints_of_an_active_mesh() {
+        let dir = tempfile::tempdir().unwrap();
+        let identity = Arc::new(identity_in(&dir, "self.json"));
+        let runtime = MeshRuntime::new();
+        runtime.follow_endpoints(Arc::new(|| vec!["10.0.0.9:8791".to_string()]));
+        assert!(
+            runtime.status().advertised.is_empty(),
+            "nothing is followed before an activation"
+        );
+        runtime
+            .activate_as(
+                &listed(&identity),
+                Arc::clone(&identity),
+                "0000000000000001",
+                vec!["192.168.100.96:8791".into()],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        assert_eq!(runtime.status().advertised, ["192.168.100.96:8791"]);
+        runtime.follow_endpoints(Arc::new(|| vec!["192.168.100.100:8791".to_string()]));
+        assert_eq!(runtime.status().advertised, ["192.168.100.100:8791"]);
         runtime.stop();
     }
 }

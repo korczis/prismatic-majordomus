@@ -74,8 +74,11 @@ pub struct ForgeObservation {
     #[serde(default)]
     pub up_to_date_required: Option<bool>,
     /// The merge methods the repository allows, in the forge's words (`merge`, `squash`,
-    /// `rebase`).
-    pub merge_methods: Vec<String>,
+    /// `rebase`); `None` when the forge's answer carried none of the three settings — a token
+    /// that may not read them gets the repository without them, and an unread setting is
+    /// unknown, never "allows nothing" (I2966). An observation recorded before this read an
+    /// array, which is `Some`.
+    pub merge_methods: Option<Vec<String>>,
     /// Every open pull request.
     pub pull_requests: Vec<PullRequestObservation>,
     /// Pull requests that are no longer open and that a supersession names, by number: a
@@ -244,6 +247,12 @@ pub const OPEN_LIMIT: usize = 500;
 /// How many open pull requests one page of the declarations read asks for.
 pub const DECLARATIONS_PAGE: usize = 50;
 
+/// The page sizes the declarations read asks for, largest first: [`DECLARATIONS_PAGE`], then
+/// each smaller one, asked of the same cursor when the one before it failed in a way a
+/// smaller page answers ([`declarations_need_smaller_pages`]). A size that answered is kept
+/// for every page after it; one that fails at a page of one fails the read.
+pub const DECLARATIONS_PAGES: [usize; 5] = [DECLARATIONS_PAGE, 25, 10, 5, 1];
+
 /// How many pages of one pull request's cross-references are read, a hundred each: five
 /// thousand mentions. One that more pull requests and issues mention is held, never taken to
 /// have no declaration. Every mention counts, an issue's and another repository's too, so the
@@ -396,9 +405,19 @@ fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> 
 /// `gh`, asked again on a transient failure ([`super::retry`]): every call here is a read,
 /// so asking twice is harmless. A refusal is returned as it came, for the caller to read.
 fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+    gh_retrying_unless(root, args, |_| false)
+}
+
+/// [`gh_retrying`], except that a failure `answered` holds is returned at the first attempt,
+/// as a refusal is, for a caller that has a better question to ask than the same one again.
+fn gh_retrying_unless(
+    root: &Path,
+    args: &[&str],
+    answered: fn(&str) -> bool,
+) -> Result<(bool, String, String), ForgeError> {
     super::retry::forge(|| {
         let (ok, out, err) = gh(root, args).map_err(|e| e.0)?;
-        if !ok && super::retry::transient(&err) {
+        if !ok && !answered(&err) && super::retry::transient(&err) {
             Err(format!("gh {} failed: {}", args.join(" "), err.trim()))
         } else {
             Ok((ok, out, err))
@@ -407,8 +426,96 @@ fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), For
     .map_err(ForgeError)
 }
 
+/// Whether a failure is the forge giving up on a query before it was answered: the answer a
+/// page too large to compute in time gets, again, on every attempt. It comes in two forms. The
+/// gateway's HTTP 504; and GraphQL's own, an HTTP 200 whose error `gh` prints as "GraphQL:
+/// Something went wrong while executing your query. This may be the result of a timeout, or
+/// it could be a GitHub bug." `gh pr list` asks a hundred pull requests a page with their
+/// whole rollups, and on master's pages runs 40796031540, 40803295553 and 40823254353 all
+/// four attempts at that page were 504 (I4380); a smaller page is asked instead of the same
+/// page four times. [`super::retry::transient`] reads both as an outage (by "timeout"), so
+/// without this every one of them was the same question asked four times.
+///
+/// ```text
+/// gateway_timed_out("HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)") == true
+/// gateway_timed_out("GraphQL: Something went wrong while executing your query. \
+///     This may be the result of a timeout, or it could be a GitHub bug.") == true
+/// gateway_timed_out("HTTP 502: Bad Gateway") == false
+/// ```
+pub fn gateway_timed_out(message: &str) -> bool {
+    let m = message.to_ascii_lowercase();
+    m.contains("http 504")
+        || m.contains("504 gateway time")
+        || m.contains("may be the result of a timeout")
+}
+
+/// Whether the answer to `gh pr list`'s hundred-a-page read is one a smaller page answers: the
+/// forge giving up on the query ([`gateway_timed_out`]), or a body cut off on its way, which
+/// `gh` reports as "unexpected end of JSON input". An overloaded page of a hundred with their
+/// whole rollups came back cut off on pages runs 120850143313, 120870713946, 120881119536 and
+/// 120966409314 (2026-10-24), and that page was asked four times and never read in smaller
+/// ones; it is now read again in pages of [`OPEN_PAGE`] (I4380). Every other read keeps a
+/// cut-off body an outage and asks the same question again (I4222).
+///
+/// ```text
+/// list_needs_smaller_pages("unexpected end of JSON input") == true
+/// list_needs_smaller_pages("HTTP 504: 504 Gateway Timeout") == true
+/// list_needs_smaller_pages("HTTP 502: Bad Gateway") == false
+/// ```
+pub fn list_needs_smaller_pages(message: &str) -> bool {
+    gateway_timed_out(message)
+        || message
+            .to_ascii_lowercase()
+            .contains("unexpected end of json input")
+}
+
+/// Whether a declarations page that still failed after its retries is one a smaller page
+/// answers: the forge giving up on the query ([`gateway_timed_out`]), or its gateway's 502.
+/// A page of fifty, each with a hundred cross-references and every source's body, was a 502
+/// on all four attempts in the queue's refreshes, jobs 126441443569 and 126677668106
+/// (2026-11-04), and the refresh failed with exit 12 on that one page. A refusal (401, 403)
+/// or a rate limit is the answer, and no smaller page is asked.
+///
+/// ```text
+/// declarations_need_smaller_pages("gh: HTTP 502 (after 4 attempts)") == true
+/// declarations_need_smaller_pages("HTTP 504: 504 Gateway Timeout") == true
+/// declarations_need_smaller_pages("HTTP 403: Resource not accessible by integration") == false
+/// ```
+pub fn declarations_need_smaller_pages(message: &str) -> bool {
+    let m = message.to_ascii_lowercase();
+    gateway_timed_out(message) || m.contains("http 502") || m.contains("502 bad gateway")
+}
+
+/// The merge methods a repository's settings allow, from `GET repos/{repository}`, in the
+/// forge's words; `None` when the answer carries none of `allow_merge_commit`,
+/// `allow_squash_merge` and `allow_rebase_merge`. The forge leaves them out for a token that
+/// may not read them (the Pages workflow's), and the snapshot it published read that as
+/// "allows no merge commit (it allows: nothing)" while all three were allowed (I2966).
+fn merge_methods_of(settings: &Value) -> Option<Vec<String>> {
+    let mut read = false;
+    let mut methods = Vec::new();
+    for (key, word) in [
+        ("allow_merge_commit", "merge"),
+        ("allow_squash_merge", "squash"),
+        ("allow_rebase_merge", "rebase"),
+    ] {
+        if let Some(allowed) = settings.get(key).and_then(Value::as_bool) {
+            read = true;
+            if allowed {
+                methods.push(word.to_string());
+            }
+        }
+    }
+    read.then_some(methods)
+}
+
 fn gh_json(root: &Path, args: &[&str]) -> Result<Value, ForgeError> {
-    let (ok, out, err) = gh_retrying(root, args)?;
+    json_of(args, gh_retrying(root, args)?)
+}
+
+/// What one `gh` call answered, as JSON: a failure is the error it said, and an answer that
+/// is not JSON is an error naming the call.
+fn json_of(args: &[&str], (ok, out, err): (bool, String, String)) -> Result<Value, ForgeError> {
     if !ok {
         return Err(ForgeError(format!(
             "gh {} failed: {}",
@@ -488,6 +595,11 @@ pub fn check_of(entry: &Value) -> CheckObservation {
                 .trim_start_matches("0001-01-01T00:00:00Z")
                 .to_string(),
             t => t.to_string(),
+        },
+        // a status context has no run to time, and a run's zero time means it has not started
+        started_at: match (kind, text("startedAt")) {
+            (CheckKind::StatusContext, _) | (_, "0001-01-01T00:00:00Z") => String::new(),
+            (_, t) => t.to_string(),
         },
     }
 }
@@ -1107,6 +1219,142 @@ fn gh_graphql(root: &Path, args: &[String]) -> Result<Value, ForgeError> {
     gh_json(root, &args.iter().map(String::as_str).collect::<Vec<_>>())
 }
 
+/// How many open pull requests one page of the paged open list asks for ([`OPEN_QUERY`]).
+/// `gh pr list` asks for a hundred a page, each with its whole rollup and its body, and a
+/// busy forge times that page out: HTTP 504 on all four attempts, on master's pages runs
+/// 40796031540, 40803295553 and 40823254353 with 124 pull requests open (I4380). A quarter of
+/// the page is a quarter of the work per request.
+pub const OPEN_PAGE: usize = 25;
+
+/// The GraphQL read of the open pull requests, a page at a time: every field `gh pr list
+/// --json` is asked for in [`GhForge::observe`], newest first as `gh pr list` lists them, so
+/// that [`open_node_of()`] can give each node the shape `gh pr list` gives it and
+/// [`pull_request_of()`] reads both alike. A rollup is its first hundred contexts, as
+/// `gh pr list` reads it, and a status context's `createdAt` is asked for as `startedAt`, as in
+/// [`WRITERS_QUERY`]. Variables: `owner`, `name`, `n` (the page size) and `after` (the cursor of
+/// the page before, absent for the first).
+pub const OPEN_QUERY: &str = "query($owner:String!,$name:String!,$n:Int!,$after:String){\
+repository(owner:$owner,name:$name){\
+pullRequests(states:OPEN,first:$n,after:$after,orderBy:{field:CREATED_AT,direction:DESC}){\
+pageInfo{hasNextPage endCursor}\
+nodes{number title author{login} headRefName headRefOid baseRefName isDraft \
+labels(first:100){nodes{name}} createdAt updatedAt body \
+statusCheckRollup{contexts(first:100){nodes{__typename \
+...on CheckRun{name status conclusion startedAt completedAt}\
+...on StatusContext{context state startedAt:createdAt}}}} \
+reviewDecision latestReviews(first:100){nodes{author{login} state commit{oid}}} \
+reviewRequests(first:100){nodes{requestedReviewer{__typename \
+...on User{login}...on Bot{login}...on Mannequin{login}...on Team{slug}}}} \
+autoMergeRequest{enabledAt} isCrossRepository}}}}";
+
+/// One node of an [`OPEN_QUERY`] answer in the shape `gh pr list --json` gives the same pull
+/// request: the connections (`labels`, the rollup's contexts, `latestReviews`) as the arrays
+/// of their nodes, and each review request as its reviewer. A connection the node does not
+/// carry is an empty array, as `gh pr list` writes one; every other field is kept as it came.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::open_node_of;
+/// let node = serde_json::json!({"number": 1, "labels": {"nodes": [{"name": "ci"}]},
+///     "statusCheckRollup": null, "reviewRequests": {"nodes": [
+///       {"requestedReviewer": {"__typename": "Team", "slug": "core"}}]}});
+/// let listed = open_node_of(&node);
+/// assert_eq!(listed["labels"], serde_json::json!([{"name": "ci"}]));
+/// assert_eq!(listed["statusCheckRollup"], serde_json::json!([]));
+/// assert_eq!(listed["reviewRequests"][0]["slug"], "core");
+/// ```
+pub fn open_node_of(node: &Value) -> Value {
+    let nodes = |pointer: &str| {
+        node.pointer(pointer)
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+    };
+    let mut listed = node.as_object().cloned().unwrap_or_default();
+    listed.insert("labels".into(), Value::Array(nodes("/labels/nodes")));
+    listed.insert(
+        "statusCheckRollup".into(),
+        Value::Array(nodes("/statusCheckRollup/contexts/nodes")),
+    );
+    listed.insert(
+        "latestReviews".into(),
+        Value::Array(nodes("/latestReviews/nodes")),
+    );
+    listed.insert(
+        "reviewRequests".into(),
+        Value::Array(
+            nodes("/reviewRequests/nodes")
+                .iter()
+                .filter_map(|r| r.get("requestedReviewer").filter(|v| v.is_object()))
+                .cloned()
+                .collect(),
+        ),
+    );
+    Value::Object(listed)
+}
+
+/// The open pull requests in the shape `gh pr list --json` lists them, read [`OPEN_PAGE`] at
+/// a time: `page` answers one [`OPEN_QUERY`] page after a cursor (`None` first), and pages are
+/// asked for until the forge has no more or `limit` pull requests' worth of pages were asked
+/// for, as `gh pr list --limit` stops. A page that fails fails the whole: a list that is
+/// missing a page is not the open pull requests.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::open_pull_requests;
+/// let page = serde_json::json!({"data": {"repository": {"pullRequests": {
+///   "pageInfo": {"hasNextPage": false}, "nodes": [{"number": 1}]}}}});
+/// let listed = open_pull_requests(500, |_| Ok(page.clone())).unwrap();
+/// assert_eq!(listed[0]["number"], 1);
+/// ```
+pub fn open_pull_requests(
+    limit: usize,
+    mut page: impl FnMut(Option<&str>) -> Result<Value, ForgeError>,
+) -> Result<Vec<Value>, ForgeError> {
+    let mut listed = Vec::new();
+    let mut cursor: Option<String> = None;
+    for _ in 0..limit.div_ceil(OPEN_PAGE) {
+        let answer = page(cursor.as_deref())?;
+        let nodes = answer
+            .pointer("/data/repository/pullRequests/nodes")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                ForgeError("the forge's page of open pull requests lists none".into())
+            })?;
+        listed.extend(nodes.iter().map(open_node_of));
+        cursor = next_cursor(&answer);
+        if cursor.is_none() {
+            break;
+        }
+    }
+    listed.truncate(limit);
+    Ok(listed)
+}
+
+/// One GraphQL read of the forge: the query, its typed size variable and the cursor of the
+/// page before, answered as the forge's JSON ([`open_list`] asks [`OPEN_QUERY`] through it).
+type ForgeAsk<'a> = dyn Fn(&str, &str, Option<&str>) -> Result<Value, ForgeError> + 'a;
+
+/// The open pull requests from what `gh pr list` answered (`listed`, as [`gh`] returns it): its
+/// list when it listed them, and when the forge timed the page out or cut its body off
+/// ([`list_needs_smaller_pages`]) the same list read again [`OPEN_PAGE`] at a time through
+/// `ask` ([`OPEN_QUERY`], the page size, the cursor). Every other failure is the error `gh`
+/// said, as [`json_of`] says it.
+fn open_list(
+    list_args: &[&str],
+    listed: (bool, String, String),
+    ask: &ForgeAsk,
+) -> Result<Value, ForgeError> {
+    if listed.0 || !list_needs_smaller_pages(&listed.2) {
+        return json_of(list_args, listed);
+    }
+    let size = format!("n={OPEN_PAGE}");
+    let paged = open_pull_requests(OPEN_LIMIT, |after| ask(OPEN_QUERY, &size, after))?;
+    Ok(Value::Array(paged))
+}
+
 /// The GraphQL read of who may declare and what was declared: the open pull requests, newest
 /// first as `gh pr list` lists them, each with its author's association, whether its head
 /// lives in a fork, and the first hundred cross-references to it. The source of a
@@ -1297,12 +1545,15 @@ fn whole_references(
 }
 
 /// What is declared about the open pull requests `wanted` names, and by whom. `page` answers
-/// one [`DECLARATIONS_QUERY`] page after a cursor (`None` first); pages are asked for until
-/// every wanted pull request was seen, the forge has no more, or `limit` pull requests' worth
-/// of pages were asked for. A wanted one that was not read whole by then — its
-/// cross-references did not fit its page, or no page listed it — is asked for alone with
-/// `rest` (its number, then the cursor), [`REFERENCE_PAGES`] pages at most; one that still
-/// does not fit is truncated, with no source at all, and held.
+/// one [`DECLARATIONS_QUERY`] page of a size after a cursor (`None` first); pages are asked
+/// for until every wanted pull request was seen, the forge has no more, or `limit` pull
+/// requests' worth of pages were asked for. A page that failed in a way a smaller page answers
+/// ([`declarations_need_smaller_pages`]) is asked again of the same cursor at the next of
+/// [`DECLARATIONS_PAGES`], and the size that answered is kept for the pages after it; one that
+/// fails at a page of one fails the read, naming where. A wanted one that was not read whole
+/// by then — its cross-references did not fit its page, or no page listed it — is asked for
+/// alone with `rest` (its number, then the cursor), [`REFERENCE_PAGES`] pages at most; one
+/// that still does not fit is truncated, with no source at all, and held.
 ///
 /// The two ways a read falls short are kept apart. A truncated read is that pull request's:
 /// it is held and the others are decided. A read the forge would not answer — a page, or one
@@ -1322,25 +1573,53 @@ fn whole_references(
 ///        "pageInfo": {"hasNextPage": false}, "nodes": []}}]}}}});
 /// let wanted = [1, 2].into_iter().collect();
 /// let gone = |_: u64, _: Option<&str>| Ok(serde_json::json!({"data": {"repository": {"pullRequest": null}}}));
-/// let read = declarations(&wanted, 500, |_| Ok(page.clone()), gone).unwrap();
+/// let read = declarations(&wanted, 500, |_, _| Ok(page.clone()), gone).unwrap();
 /// assert_eq!((read[&1].association.as_str(), read[&1].read), ("OWNER", CrossReferenceRead::Whole));
 /// assert!(!read.contains_key(&2), "one the forge no longer shows is unread, and #1 still is read");
 /// let refused = |_: u64, _: Option<&str>| Err(ForgeError("HTTP 403".into()));
-/// assert!(declarations(&wanted, 500, |_| Ok(page.clone()), refused).is_err(), "a failed read is an error");
+/// assert!(declarations(&wanted, 500, |_, _| Ok(page.clone()), refused).is_err(), "a failed read is an error");
 /// ```
 pub fn declarations(
     wanted: &BTreeSet<u64>,
     limit: usize,
-    mut page: impl FnMut(Option<&str>) -> Result<Value, ForgeError>,
+    mut page: impl FnMut(usize, Option<&str>) -> Result<Value, ForgeError>,
     mut rest: impl FnMut(u64, Option<&str>) -> Result<Value, ForgeError>,
 ) -> Result<Declarations, ForgeError> {
     let mut read = Declarations::new();
     let mut cursor: Option<String> = None;
-    for _ in 0..limit.div_ceil(DECLARATIONS_PAGE) {
+    // the sizes still to try, the one asked now first
+    let mut sizes: &[usize] = &DECLARATIONS_PAGES;
+    // how many pull requests' worth of pages were asked for, and the last one a page listed
+    let (mut asked, mut last): (usize, Option<u64>) = (0, None);
+    while asked < limit {
         if wanted.iter().all(|n| read.contains_key(n)) {
             break;
         }
-        let answer = page(cursor.as_deref())?;
+        let answer = loop {
+            match page(sizes[0], cursor.as_deref()) {
+                Ok(answer) => break answer,
+                Err(e) if declarations_need_smaller_pages(&e.0) && sizes.len() > 1 => {
+                    sizes = &sizes[1..];
+                }
+                Err(e) if declarations_need_smaller_pages(&e.0) => {
+                    let after = last.map(|n| format!(" after #{n}")).unwrap_or_default();
+                    let at = cursor.as_deref().unwrap_or("none, the first page");
+                    return Err(ForgeError(format!(
+                        "the declarations of the open pull request{after} (cursor: {at}) could \
+                         not be read, not even one at a time: {e}"
+                    )));
+                }
+                Err(e) => return Err(e),
+            }
+        };
+        asked += sizes[0];
+        last = answer
+            .pointer("/data/repository/pullRequests/nodes")
+            .and_then(Value::as_array)
+            .and_then(|nodes| nodes.last())
+            .and_then(|node| node.get("number"))
+            .and_then(Value::as_u64)
+            .or(last);
         read.extend(declarations_of(&answer));
         cursor = next_cursor(&answer);
         if cursor.is_none() {
@@ -1463,16 +1742,7 @@ impl Forge for GhForge<'_> {
         let delete_branch_on_merge = settings
             .get("delete_branch_on_merge")
             .and_then(Value::as_bool);
-        let mut merge_methods = Vec::new();
-        for (key, word) in [
-            ("allow_merge_commit", "merge"),
-            ("allow_squash_merge", "squash"),
-            ("allow_rebase_merge", "rebase"),
-        ] {
-            if settings.get(key).and_then(Value::as_bool).unwrap_or(false) {
-                merge_methods.push(word.to_string());
-            }
-        }
+        let merge_methods = merge_methods_of(&settings);
         let base_sha = gh_json(
             root,
             &[
@@ -1535,19 +1805,29 @@ impl Forge for GhForge<'_> {
             ),
             _ => (None, None, None),
         };
-        let list = gh_json(
-            root,
-            &[
-                "pr",
-                "list",
-                "--state",
-                "open",
-                "--limit",
-                &OPEN_LIMIT.to_string(),
-                "--json",
-                "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,latestReviews,reviewRequests,autoMergeRequest,isCrossRepository",
-            ],
-        )?;
+        let (owner, name) = repository
+            .split_once('/')
+            .unwrap_or((repository.as_str(), ""));
+        let ask = |query: &str, typed: &str, after: Option<&str>| {
+            gh_graphql(root, &writers_args(query, owner, name, typed, after))
+        };
+        let limit = OPEN_LIMIT.to_string();
+        let list_args = [
+            "pr",
+            "list",
+            "--state",
+            "open",
+            "--limit",
+            &limit,
+            "--json",
+            "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,latestReviews,reviewRequests,autoMergeRequest,isCrossRepository",
+        ];
+        // `gh pr list` in its pages of a hundred, the one read every scripted forge answers;
+        // a page the forge times out, or whose body is cut off on its way, is read again in
+        // pages of OPEN_PAGE, each asked again on an outage as every read is, rather than the
+        // same page four times
+        let listed = gh_retrying_unless(root, &list_args, list_needs_smaller_pages)?;
+        let list = open_list(&list_args, listed, &ask)?;
         // keyed by number, so the observation is in number order whatever the forge listed
         let mut pull_requests: Vec<PullRequestObservation> = list
             .as_array()
@@ -1566,13 +1846,7 @@ impl Forge for GhForge<'_> {
         let bound = required_checks
             .as_ref()
             .is_some_and(|r| r.iter().any(|c| c.app_id.is_some()));
-        let (owner, name) = repository
-            .split_once('/')
-            .unwrap_or((repository.as_str(), ""));
         let wanted: BTreeSet<u64> = pull_requests.iter().map(|p| p.number).collect();
-        let ask = |query: &str, typed: &str, after: Option<&str>| {
-            gh_graphql(root, &writers_args(query, owner, name, typed, after))
-        };
         if bound {
             let size = format!("n={WRITERS_PAGE}");
             let read = attributed_checks(
@@ -1589,12 +1863,12 @@ impl Forge for GhForge<'_> {
         // among the cross-references of the one it replaces, whenever it was closed: no
         // bounded search of closed pull requests decides. Nothing open, nothing asked; a read
         // that is partial holds the pull request it was about, and no other; a read that
-        // fails makes no observation at all.
-        let size = format!("n={DECLARATIONS_PAGE}");
+        // fails makes no observation at all. A page the gateway gave up on after its retries
+        // is asked again, smaller, from the same cursor.
         let read = declarations(
             &wanted,
             OPEN_LIMIT,
-            |after| ask(DECLARATIONS_QUERY, &size, after),
+            |n, after| ask(DECLARATIONS_QUERY, &format!("n={n}"), after),
             |number, after| ask(DECLARATIONS_OF_QUERY, &format!("number={number}"), after),
         )?;
         let sources = declare(&mut pull_requests, &read);
@@ -2206,6 +2480,19 @@ mod tests {
         assert_eq!(p.checks[2].kind, CheckKind::StatusContext);
         assert_eq!(p.checks[2].app_id, None);
         assert_eq!(p.checks[2].completed_at, "2026-09-01T00:07:00Z");
+        assert_eq!(
+            p.checks[0].started_at, "2026-09-01T00:00:00Z",
+            "a run says when it started"
+        );
+        assert_eq!(p.checks[1].started_at, "2026-09-01T00:06:00Z");
+        assert_eq!(
+            p.checks[2].started_at, "",
+            "a status context has no run to time"
+        );
+        assert_eq!(
+            p.checks[4].started_at, "",
+            "nor has a run the forge gave no start"
+        );
         assert_eq!(p.checks[3].state, CheckRunState::Passed);
         assert_eq!(
             p.checks[3].app_id, None,
@@ -2218,7 +2505,8 @@ mod tests {
         );
         let alone = check_of(&json!({
             "__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
-            "completedAt": "2026-09-01T00:05:00Z", "checkSuite": {"app": {"databaseId": 15368}}
+            "startedAt": "2026-09-01T00:00:00Z", "completedAt": "2026-09-01T00:05:00Z",
+            "checkSuite": {"app": {"databaseId": 15368}}
         }));
         assert_eq!(p.checks[0], alone, "one parser reads both rollups");
     }
@@ -2762,7 +3050,7 @@ mod tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: vec![pr(1, &one), pr(2, &two)],
             resolved: BTreeMap::new(),
             delete_branch_on_merge: None,
@@ -2876,7 +3164,7 @@ mod tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: vec![pr(1), pr(2)],
             resolved: BTreeMap::new(),
             delete_branch_on_merge: None,
@@ -3123,7 +3411,7 @@ mod tests {
         let read = declarations(
             &wanted,
             OPEN_LIMIT,
-            |after| {
+            |_, after| {
                 asked.push(after.map(str::to_string));
                 Ok(pages(after))
             },
@@ -3144,7 +3432,7 @@ mod tests {
         let read = declarations(
             &newest,
             OPEN_LIMIT,
-            |after| {
+            |_, after| {
                 calls += 1;
                 Ok(pages(after))
             },
@@ -3157,7 +3445,7 @@ mod tests {
         let read = declarations(
             &BTreeSet::new(),
             OPEN_LIMIT,
-            |_| panic!("a page was asked for"),
+            |_, _| panic!("a page was asked for"),
             none,
         )
         .unwrap();
@@ -3182,7 +3470,7 @@ mod tests {
         let read = declarations(
             &wanted,
             1,
-            |_| {
+            |_, _| {
                 calls += 1;
                 Ok(first())
             },
@@ -3202,7 +3490,7 @@ mod tests {
         let failed = declarations(
             &wanted,
             OPEN_LIMIT,
-            |after| match after {
+            |_, after| match after {
                 None => Ok(first()),
                 _ => Err(ForgeError("HTTP 403".into())),
             },
@@ -3219,7 +3507,7 @@ mod tests {
         let failed = declarations(
             &wanted,
             1,
-            |_| Ok(first()),
+            |_, _| Ok(first()),
             |_, _| Err(ForgeError("HTTP 502".into())),
         );
         assert_eq!(failed.unwrap_err().0, "HTTP 502");
@@ -3245,7 +3533,7 @@ mod tests {
         let read = declarations(
             &wanted,
             OPEN_LIMIT,
-            |_| Ok(first()),
+            |_, _| Ok(first()),
             |number, after| {
                 asked.push((number, after.map(str::to_string)));
                 Ok(match after {
@@ -3276,7 +3564,7 @@ mod tests {
             let read = declarations(
                 &wanted,
                 OPEN_LIMIT,
-                |_| Ok(first()),
+                |_, _| Ok(first()),
                 |_, after| {
                     pages += 1;
                     answer(after)
@@ -3324,6 +3612,346 @@ mod tests {
             _ => Err(ForgeError("HTTP 503".into())),
         });
         assert_eq!((pages, failed.unwrap_err().0.as_str()), (2, "HTTP 503"));
+    }
+
+    /// What the queue's refreshes of 2026-11-04 were told of the first page of fifty, after
+    /// every retry (jobs 126441443569 and 126677668106).
+    const BAD_GATEWAY: &str = "gh api graphql -F n=50 failed: gh: HTTP 502 (after 4 attempts)";
+
+    /// The forge's declarations pages over `nodes`, newest first: the page of `size` after the
+    /// cursor `c<offset>` (`None` first), with the cursor of the next when more follow.
+    fn sized_page(nodes: &[Value], size: usize, after: Option<&str>) -> Value {
+        let from = after.map_or(0, |c| c[1..].parse::<usize>().unwrap());
+        let to = (from + size).min(nodes.len());
+        let more = to < nodes.len();
+        let cursor = if more {
+            json!(format!("c{to}"))
+        } else {
+            Value::Null
+        };
+        writers_page(more, cursor, nodes[from..to].to_vec())
+    }
+
+    /// The numbers a declarations page lists, in its order.
+    fn listed_numbers(page: &Value) -> Vec<u64> {
+        page.pointer("/data/repository/pullRequests/nodes")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|node| node["number"].as_u64())
+            .collect()
+    }
+
+    /// `count` open pull requests, newest first from #`newest`, each mentioned once, by the
+    /// pull request numbered a thousand above it.
+    fn open_declared(newest: u64, count: u64) -> Vec<Value> {
+        (0..count)
+            .map(|i| newest - i)
+            .map(|n| {
+                let by = mention(source(n + 1000, "OPEN", "", "OWNER", false));
+                declared_node(n, json!(false), Value::Null, vec![by])
+            })
+            .collect()
+    }
+
+    fn mentioned_by(read: &DeclarationRead) -> Vec<u64> {
+        read.sources
+            .iter()
+            .filter_map(|s| s.get("number").and_then(Value::as_u64))
+            .collect()
+    }
+
+    #[test]
+    fn only_the_gateway_giving_up_shrinks_a_declarations_page() {
+        for given_up in [
+            "gh: HTTP 502 (after 4 attempts)",
+            "HTTP 502: Bad Gateway (https://api.github.com/graphql)",
+            "502 Bad Gateway",
+            "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)",
+            "GraphQL: Something went wrong while executing your query. This may be the result \
+             of a timeout, or it could be a GitHub bug.",
+        ] {
+            assert!(declarations_need_smaller_pages(given_up), "{given_up}");
+        }
+        for answer in [
+            "HTTP 401: Bad credentials (https://api.github.com/graphql)",
+            "gh: Resource not accessible by integration (HTTP 403)",
+            "API rate limit exceeded for installation ID 1 (HTTP 403)",
+            "You have exceeded a secondary rate limit",
+            "HTTP 503: Service Unavailable",
+            "unexpected end of JSON input",
+        ] {
+            assert!(!declarations_need_smaller_pages(answer), "{answer}");
+        }
+        // the open list's reads are as they were: a 502 there is the same question again
+        assert!(!gateway_timed_out(BAD_GATEWAY) && !list_needs_smaller_pages(BAD_GATEWAY));
+    }
+
+    #[test]
+    fn a_page_the_gateway_fails_is_read_again_smaller_from_the_same_cursor() {
+        let nodes = open_declared(160, 60);
+        let wanted: BTreeSet<u64> = (101..=160).collect();
+        let none = |number: u64, _: Option<&str>| -> Result<Value, ForgeError> {
+            panic!("#{number} was asked for alone")
+        };
+        let (mut asked, mut listed) = (Vec::new(), Vec::new());
+        let read = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |size, after| {
+                asked.push((size, after.map(str::to_string)));
+                if size == DECLARATIONS_PAGE {
+                    return Err(ForgeError(BAD_GATEWAY.into()));
+                }
+                let page = sized_page(&nodes, size, after);
+                listed.extend(listed_numbers(&page));
+                Ok(page)
+            },
+            none,
+        )
+        .unwrap();
+        assert_eq!(
+            asked,
+            [
+                (50, None),
+                (25, None),
+                (25, Some("c25".to_string())),
+                (25, Some("c50".to_string()))
+            ],
+            "the same cursor asked again smaller, and the smaller size kept"
+        );
+        assert_eq!(listed, (101..=160).rev().collect::<Vec<u64>>());
+        assert_eq!(
+            read.keys().copied().collect::<Vec<_>>(),
+            (101..=160).collect::<Vec<u64>>()
+        );
+        for (number, entry) in &read {
+            assert_eq!(entry.read, CrossReferenceRead::Whole, "#{number}");
+            assert_eq!(entry.association, "OWNER", "#{number}");
+            assert_eq!(entry.cross_repository, Some(false), "#{number}");
+            assert_eq!(mentioned_by(entry), [number + 1000], "#{number}");
+        }
+
+        // the limit is counted in pull requests, not pages: fifty is two pages of 25, and the
+        // ten no page listed are asked for alone
+        let (mut sizes, mut alone) = (Vec::new(), Vec::new());
+        let read = declarations(
+            &wanted,
+            50,
+            |size, after| {
+                sizes.push(size);
+                if size == DECLARATIONS_PAGE {
+                    return Err(ForgeError(BAD_GATEWAY.into()));
+                }
+                Ok(sized_page(&nodes, size, after))
+            },
+            |number, _| {
+                alone.push(number);
+                Ok(references_page(json!(false), Value::Null, vec![]))
+            },
+        )
+        .unwrap();
+        assert_eq!(sizes, [50, 25, 25]);
+        assert_eq!(alone, (101..=110).collect::<Vec<u64>>());
+        assert_eq!(read.len(), 60);
+    }
+
+    #[test]
+    fn a_page_shrunk_mid_read_skips_and_repeats_no_pull_request() {
+        let nodes = open_declared(220, 120);
+        let wanted: BTreeSet<u64> = (101..=220).collect();
+        let none = |number: u64, _: Option<&str>| -> Result<Value, ForgeError> {
+            panic!("#{number} was asked for alone")
+        };
+        let (mut asked, mut listed) = (Vec::new(), Vec::new());
+        let read = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |size, after| {
+                asked.push((size, after.map(str::to_string)));
+                // the second page of fifty, and only it, is too large for the gateway
+                if (size, after) == (DECLARATIONS_PAGE, Some("c50")) {
+                    return Err(ForgeError(BAD_GATEWAY.into()));
+                }
+                let page = sized_page(&nodes, size, after);
+                listed.extend(listed_numbers(&page));
+                Ok(page)
+            },
+            none,
+        )
+        .unwrap();
+        let at = |c: &str| Some(c.to_string());
+        assert_eq!(
+            asked,
+            [
+                (50, None),
+                (50, at("c50")),
+                (25, at("c50")),
+                (25, at("c75")),
+                (25, at("c100"))
+            ]
+        );
+        assert_eq!(
+            listed,
+            (101..=220).rev().collect::<Vec<u64>>(),
+            "every pull request once, in the forge's order"
+        );
+        assert_eq!(read.len(), 120);
+        assert!(read
+            .iter()
+            .all(|(n, d)| d.read == CrossReferenceRead::Whole && mentioned_by(d) == [n + 1000]));
+    }
+
+    #[test]
+    fn a_page_that_fails_one_at_a_time_fails_the_read_and_names_where() {
+        let nodes = open_declared(3, 3);
+        let wanted: BTreeSet<u64> = [1, 2, 3].into_iter().collect();
+        let (mut asked, mut alone) = (Vec::new(), Vec::new());
+        // #2, the second newest, is a 502 in every page that lists it
+        let failed = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |size, after| {
+                asked.push((size, after.map(str::to_string)));
+                let page = sized_page(&nodes, size, after);
+                if listed_numbers(&page).contains(&2) {
+                    return Err(ForgeError(BAD_GATEWAY.into()));
+                }
+                Ok(page)
+            },
+            |number, _| {
+                alone.push(number);
+                Ok(references_page(json!(false), Value::Null, vec![]))
+            },
+        );
+        let e = failed.unwrap_err().0;
+        assert_eq!(
+            asked,
+            [
+                (50, None),
+                (25, None),
+                (10, None),
+                (5, None),
+                (1, None),
+                (1, Some("c1".to_string()))
+            ],
+            "every size, and never past the pull request that fails"
+        );
+        assert!(
+            e.contains("after #3") && e.contains("(cursor: c1)") && e.ends_with(BAD_GATEWAY),
+            "{e}"
+        );
+        assert!(
+            alone.is_empty(),
+            "nothing is asked for alone, or decided, on a part"
+        );
+
+        // the first page failing one at a time says it was the first
+        let failed = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |_, _| Err(ForgeError(BAD_GATEWAY.into())),
+            |_, _| panic!("a pull request was asked for alone"),
+        );
+        let e = failed.unwrap_err().0;
+        assert!(
+            e.contains("(cursor: none, the first page)") && !e.contains("after #"),
+            "{e}"
+        );
+    }
+
+    #[test]
+    fn a_gateway_timeout_is_read_in_smaller_pages_too() {
+        let nodes = open_declared(30, 30);
+        let wanted: BTreeSet<u64> = (1..=30).collect();
+        let none = |number: u64, _: Option<&str>| -> Result<Value, ForgeError> {
+            panic!("#{number} was asked for alone")
+        };
+        for given_up in [
+            "gh: HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql) (after 4 attempts)",
+            "gh: GraphQL: Something went wrong while executing your query. This may be the \
+             result of a timeout, or it could be a GitHub bug. (after 4 attempts)",
+        ] {
+            let mut sizes = Vec::new();
+            let read = declarations(
+                &wanted,
+                OPEN_LIMIT,
+                |size, after| {
+                    sizes.push(size);
+                    if size == DECLARATIONS_PAGE {
+                        return Err(ForgeError(given_up.into()));
+                    }
+                    Ok(sized_page(&nodes, size, after))
+                },
+                none,
+            )
+            .unwrap();
+            assert_eq!(sizes, [50, 25, 25], "{given_up}");
+            assert_eq!(read.len(), 30, "{given_up}");
+        }
+    }
+
+    #[test]
+    fn a_refusal_or_a_rate_limit_asks_no_smaller_page() {
+        let wanted: BTreeSet<u64> = [1].into_iter().collect();
+        for answer in [
+            "gh: HTTP 401: Bad credentials (https://api.github.com/graphql)",
+            "gh: Resource not accessible by integration (HTTP 403)",
+            "gh: API rate limit exceeded for installation ID 1 (HTTP 403) (after 4 attempts)",
+        ] {
+            let mut sizes = Vec::new();
+            let failed = declarations(
+                &wanted,
+                OPEN_LIMIT,
+                |size, _| {
+                    sizes.push(size);
+                    Err(ForgeError(answer.into()))
+                },
+                |_, _| panic!("a pull request was asked for alone"),
+            );
+            assert_eq!(failed.unwrap_err().0, answer, "returned as it came");
+            assert_eq!(sizes, [DECLARATIONS_PAGE], "{answer}");
+        }
+    }
+
+    #[test]
+    fn references_a_shrunk_page_truncated_are_still_read_whole() {
+        let wanted: BTreeSet<u64> = [1, 2].into_iter().collect();
+        let declarer = |n: u64| mention(source(n, "MERGED", "Supersedes #2", "OWNER", false));
+        let nodes = vec![
+            declared_node(2, json!(true), json!("x2"), vec![declarer(5)]),
+            declared_node(1, json!(false), Value::Null, vec![]),
+        ];
+        let (mut sizes, mut alone) = (Vec::new(), Vec::new());
+        let read = declarations(
+            &wanted,
+            OPEN_LIMIT,
+            |size, after| {
+                sizes.push(size);
+                if size == DECLARATIONS_PAGE {
+                    return Err(ForgeError(BAD_GATEWAY.into()));
+                }
+                Ok(sized_page(&nodes, size, after))
+            },
+            |number, after| {
+                alone.push((number, after.map(str::to_string)));
+                Ok(match after {
+                    None => references_page(json!(true), json!("x2"), vec![declarer(5)]),
+                    _ => references_page(json!(false), Value::Null, vec![declarer(6)]),
+                })
+            },
+        )
+        .unwrap();
+        assert_eq!(sizes, [50, 25]);
+        assert_eq!(alone, [(2, None), (2, Some("x2".to_string()))]);
+        assert_eq!(read[&2].read, CrossReferenceRead::Whole);
+        assert_eq!(
+            mentioned_by(&read[&2]),
+            [5, 6],
+            "every page of its references"
+        );
+        assert_eq!(read[&1].read, CrossReferenceRead::Whole);
+        assert!(read[&1].sources.is_empty());
     }
 
     #[test]
@@ -3433,6 +4061,256 @@ mod tests {
         assert_eq!(marked(json!(true), Some(false)), owner(true));
     }
 
+    /// One pull request as `gh pr list --json` lists it, and as [`OPEN_QUERY`] answers it.
+    fn listed_and_paged(number: u64) -> (Value, Value) {
+        let run = json!({"__typename": "CheckRun", "name": "ci", "status": "COMPLETED",
+            "conclusion": "SUCCESS", "startedAt": "2026-10-29T06:00:00Z",
+            "completedAt": "2026-10-29T06:05:00Z"});
+        let status = json!({"__typename": "StatusContext", "context": "deploy",
+            "state": "PENDING", "startedAt": "2026-10-29T06:01:00Z"});
+        let review = json!({"author": {"login": "r"}, "state": "APPROVED",
+            "commit": {"oid": "h"}});
+        let common = json!({"number": number, "title": format!("change {number}"),
+            "author": {"login": "someone"}, "headRefName": format!("feature/{number}"),
+            "headRefOid": format!("h{number}"), "baseRefName": "master", "isDraft": false,
+            "createdAt": "2026-10-28T00:00:00Z", "updatedAt": "2026-10-29T00:00:00Z",
+            "body": "Closes #9", "reviewDecision": "APPROVED",
+            "autoMergeRequest": {"enabledAt": "2026-10-29T00:00:00Z"},
+            "isCrossRepository": false});
+        let with = |extra: Value| {
+            let mut v = common.clone();
+            v.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            v
+        };
+        let listed = with(json!({"labels": [{"name": "ci"}],
+            "statusCheckRollup": [run, status], "latestReviews": [review],
+            "reviewRequests": [{"login": "u"}, {"slug": "core"}]}));
+        let paged = with(json!({"labels": {"nodes": [{"name": "ci"}]},
+            "statusCheckRollup": {"contexts": {"nodes": [run, status]}},
+            "latestReviews": {"nodes": [review]},
+            "reviewRequests": {"nodes": [
+                {"requestedReviewer": {"__typename": "User", "login": "u"}},
+                {"requestedReviewer": {"__typename": "Team", "slug": "core"}},
+                {"requestedReviewer": null}]}}));
+        (listed, paged)
+    }
+
+    fn open_page(nodes: Vec<Value>, after: Option<&str>) -> Value {
+        json!({"data": {"repository": {"pullRequests": {
+            "pageInfo": {"hasNextPage": after.is_some(), "endCursor": after},
+            "nodes": nodes}}}})
+    }
+
+    #[test]
+    fn a_paged_open_pull_request_is_observed_as_gh_pr_list_lists_it() {
+        let (listed, paged) = listed_and_paged(7);
+        let from_list = pull_request_of(&listed).unwrap();
+        let from_page = pull_request_of(&open_node_of(&paged)).unwrap();
+        assert_eq!(from_page, from_list);
+        assert_eq!(from_page.checks.len(), 2);
+        assert_eq!(from_page.review_requests, ["u", "core"]);
+        assert!(from_page.auto_merge);
+        // a node without its connections is a pull request without them, not a failed read
+        let bare = open_node_of(&json!({"number": 8, "statusCheckRollup": null}));
+        let bare = pull_request_of(&bare).unwrap();
+        assert!(bare.checks.is_empty() && bare.labels.is_empty());
+        assert!(bare.latest_reviews.is_empty() && bare.review_requests.is_empty());
+    }
+
+    #[test]
+    fn the_open_list_is_read_a_page_at_a_time_until_the_forge_has_no_more() {
+        let pages = [
+            open_page(
+                vec![listed_and_paged(3).1, listed_and_paged(2).1],
+                Some("c1"),
+            ),
+            open_page(vec![listed_and_paged(1).1], None),
+        ];
+        let mut asked: Vec<Option<String>> = Vec::new();
+        let listed = open_pull_requests(OPEN_LIMIT, |after| {
+            asked.push(after.map(str::to_string));
+            Ok(pages[asked.len() - 1].clone())
+        })
+        .unwrap();
+        assert_eq!(
+            asked,
+            [None, Some("c1".to_string())],
+            "the cursor is followed"
+        );
+        let numbers: Vec<u64> = listed.iter().filter_map(|v| v["number"].as_u64()).collect();
+        assert_eq!(numbers, [3, 2, 1], "newest first, as the forge listed them");
+
+        // the limit stops the paging as `gh pr list --limit` stops
+        let mut calls = 0;
+        let full: Vec<Value> = (0..OPEN_PAGE as u64)
+            .map(|n| json!({"number": n}))
+            .collect();
+        let capped = open_pull_requests(OPEN_PAGE + 1, |_| {
+            calls += 1;
+            Ok(open_page(full.clone(), Some("more")))
+        })
+        .unwrap();
+        assert_eq!((calls, capped.len()), (2, OPEN_PAGE + 1));
+
+        // a page that fails, or lists nothing, fails the whole list: a page short is not it
+        let mut asked_pages = 0;
+        let failed = open_pull_requests(OPEN_LIMIT, |_| {
+            asked_pages += 1;
+            if asked_pages == 1 {
+                Ok(open_page(vec![json!({"number": 1})], Some("c1")))
+            } else {
+                Err(ForgeError(
+                    "HTTP 504: Gateway Timeout (after 4 attempts)".into(),
+                ))
+            }
+        });
+        assert!(failed.unwrap_err().0.contains("504"));
+        let unlisted = open_pull_requests(OPEN_LIMIT, |_| Ok(json!({"data": null})));
+        assert!(unlisted.unwrap_err().0.contains("lists none"));
+    }
+
+    #[test]
+    fn only_a_gateway_timeout_is_answered_with_smaller_pages() {
+        assert!(gateway_timed_out(
+            "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)"
+        ));
+        assert!(gateway_timed_out("504 Gateway Time-out"));
+        // GraphQL's own timeout, an HTTP 200 with an error, is the same answer: a smaller page
+        // is asked, never the same page four times
+        let graphql = "GraphQL: Something went wrong while executing your query. This may be \
+            the result of a timeout, or it could be a GitHub bug. Please include \
+            `C0DE:1234:5678:9ABC:DEF0` when reporting this issue.";
+        assert!(
+            super::super::retry::transient(graphql),
+            "the retry reads it as an outage"
+        );
+        assert!(gateway_timed_out(graphql));
+        // every other outage is the same question asked again, and a refusal is the answer
+        for other in [
+            "HTTP 502: Bad Gateway (https://api.github.com/graphql)",
+            "HTTP 503: Service Unavailable",
+            "unexpected end of JSON input",
+            "HTTP 401: Bad credentials",
+        ] {
+            assert!(!gateway_timed_out(other), "{other}");
+        }
+    }
+
+    #[test]
+    fn a_cut_off_list_is_answered_with_smaller_pages() {
+        // the cut-off body of an overloaded page of a hundred (pages runs of 2026-10-24) is read
+        // again in smaller pages, as a timeout is; the retry still reads it as an outage, so
+        // every other read asks the same question again
+        let cut = "unexpected end of JSON input";
+        assert!(
+            super::super::retry::transient(cut),
+            "the retry reads it as an outage"
+        );
+        assert!(!gateway_timed_out(cut), "it is not the forge giving up");
+        assert!(list_needs_smaller_pages(cut));
+        assert!(list_needs_smaller_pages("Unexpected end of JSON input"));
+        assert!(list_needs_smaller_pages(
+            "HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)"
+        ));
+        assert!(list_needs_smaller_pages(
+            "GraphQL: Something went wrong while executing your query. This may be the result \
+             of a timeout, or it could be a GitHub bug."
+        ));
+        for other in [
+            "HTTP 502: Bad Gateway (https://api.github.com/graphql)",
+            "HTTP 503: Service Unavailable",
+            "HTTP 401: Bad credentials",
+            "invalid character 'x' looking for beginning of value",
+        ] {
+            assert!(!list_needs_smaller_pages(other), "{other}");
+        }
+    }
+
+    #[test]
+    fn a_list_the_forge_gave_up_on_is_read_again_in_smaller_pages() {
+        let args = ["pr", "list"];
+        let asked = std::cell::RefCell::new(Vec::new());
+        let ask = |query: &str, size: &str, after: Option<&str>| -> Result<Value, ForgeError> {
+            asked.borrow_mut().push((
+                query == OPEN_QUERY,
+                size.to_string(),
+                after.map(str::to_string),
+            ));
+            Ok(match after {
+                None => open_page(vec![listed_and_paged(2).1], Some("c1")),
+                Some(_) => open_page(vec![listed_and_paged(1).1], None),
+            })
+        };
+        // listed: the list as `gh pr list` answered it, and no page is asked
+        let listed = (true, r#"[{"number": 5}]"#.to_string(), String::new());
+        assert_eq!(
+            open_list(&args, listed, &ask).unwrap(),
+            json!([{"number": 5}])
+        );
+        assert!(asked.borrow().is_empty());
+        // timed out, or cut off: the open query, a page of OPEN_PAGE, the cursor followed
+        for given_up in [
+            "HTTP 504: 504 Gateway Timeout",
+            "unexpected end of JSON input",
+        ] {
+            asked.borrow_mut().clear();
+            let list = open_list(&args, (false, String::new(), given_up.into()), &ask).unwrap();
+            let numbers: Vec<u64> = list
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|v| v["number"].as_u64())
+                .collect();
+            assert_eq!(numbers, [2, 1], "{given_up}");
+            let size = format!("n={OPEN_PAGE}");
+            assert_eq!(
+                *asked.borrow(),
+                [
+                    (true, size.clone(), None),
+                    (true, size, Some("c1".to_string()))
+                ]
+            );
+        }
+        // a page the forge fails while the list is read again fails the list, as gh said it
+        let failing = |_: &str, _: &str, _: Option<&str>| -> Result<Value, ForgeError> {
+            Err(ForgeError("HTTP 502: Bad Gateway".into()))
+        };
+        let given_up = (
+            false,
+            String::new(),
+            "HTTP 504: 504 Gateway Timeout".to_string(),
+        );
+        let err = open_list(&args, given_up, &failing).unwrap_err();
+        assert!(err.0.contains("502"), "{err}");
+        // any other failure is the error gh said, and no page is asked
+        asked.borrow_mut().clear();
+        let refused = (
+            false,
+            String::new(),
+            "HTTP 401: Bad credentials".to_string(),
+        );
+        let err = open_list(&args, refused, &ask).unwrap_err();
+        assert!(
+            err.0.contains("gh pr list failed") && err.0.contains("401"),
+            "{err}"
+        );
+        assert!(asked.borrow().is_empty());
+    }
+
+    #[test]
+    fn the_open_list_is_paged_with_this_query() {
+        assert_eq!(OPEN_PAGE, 25);
+        assert_eq!(
+            OPEN_QUERY,
+            "query($owner:String!,$name:String!,$n:Int!,$after:String){repository(owner:$owner,name:$name){pullRequests(states:OPEN,first:$n,after:$after,orderBy:{field:CREATED_AT,direction:DESC}){pageInfo{hasNextPage endCursor}nodes{number title author{login} headRefName headRefOid baseRefName isDraft labels(first:100){nodes{name}} createdAt updatedAt body statusCheckRollup{contexts(first:100){nodes{__typename ...on CheckRun{name status conclusion startedAt completedAt}...on StatusContext{context state startedAt:createdAt}}}} reviewDecision latestReviews(first:100){nodes{author{login} state commit{oid}}} reviewRequests(first:100){nodes{requestedReviewer{__typename ...on User{login}...on Bot{login}...on Mannequin{login}...on Team{slug}}}} autoMergeRequest{enabledAt} isCrossRepository}}}}"
+        );
+        let opened = OPEN_QUERY.matches('{').count();
+        assert_eq!(opened, OPEN_QUERY.matches('}').count(), "{OPEN_QUERY}");
+        assert!(!OPEN_QUERY.contains('\n'));
+    }
+
     #[test]
     fn the_forge_is_asked_exactly_this() {
         assert_eq!(
@@ -3464,12 +4342,45 @@ mod tests {
             ]
         );
         assert_eq!(format!("n={DECLARATIONS_PAGE}"), "n=50");
+        assert_eq!(DECLARATIONS_PAGES, [50, 25, 10, 5, 1]);
         assert_eq!(
             RESOLVED_FIELDS,
             "number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles"
         );
         assert_eq!(REFERENCE_PAGES, 50);
         assert_eq!(OBSERVATION_SCHEMA, 4);
+    }
+
+    #[test]
+    fn merge_settings_absent_from_the_answer_are_unread_and_present_ones_are_read() {
+        use serde_json::json;
+        // a token that may not read them: the repository without its merge settings
+        assert_eq!(
+            merge_methods_of(&json!({"name": "r", "default_branch": "master"})),
+            None
+        );
+        // read, and none allowed, is "allows nothing" — and only that is
+        assert_eq!(
+            merge_methods_of(
+                &json!({"allow_merge_commit": false, "allow_squash_merge": false, "allow_rebase_merge": false})
+            ),
+            Some(Vec::new())
+        );
+        assert_eq!(
+            merge_methods_of(
+                &json!({"allow_merge_commit": true, "allow_squash_merge": true, "allow_rebase_merge": true})
+            ),
+            Some(vec![
+                "merge".to_string(),
+                "squash".to_string(),
+                "rebase".to_string()
+            ])
+        );
+        // one setting read is enough to know the others are not granted
+        assert_eq!(
+            merge_methods_of(&json!({"allow_squash_merge": true})),
+            Some(vec!["squash".to_string()])
+        );
     }
 
     #[test]

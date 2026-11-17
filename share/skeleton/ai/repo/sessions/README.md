@@ -60,6 +60,19 @@ refused rather than guessed at.
 The file name is a convenience — the timestamp, the id, the branch, the head and a digest —
 and the identity is `session_id` in the front matter, which survives a rename.
 
+## On the trunk, a record waits in the outbox
+
+A trunk that changes only through pull requests cannot commit a file a close writes here, so
+on the trunk (the remote's default branch, `mj_on_trunk`) `session close` and `recover
+episodes` write the record to the checkout-local `.ai/local/state/outbox/sessions/` instead,
+beside the candidates `knowledge derive` stages there, and the trunk's tree stays clean. The
+next `session close` on any other branch of the clone moves each staged record here unchanged
+and under its own name, once: a record whose `session_id` this directory already holds is
+retired from the outbox, not written twice. A file in the outbox that is not a `session/v1`
+record is named on standard error and left where it is. Until a branch carries them,
+`context` and `doctor` name how many records wait. ADR 0091, amendment of 2026-10-15, and
+`docs/KNOWLEDGE.md` have the whole of it.
+
 ## What is derived from this directory
 
 The source class `session` in `../knowledge/sources.yaml` discovers `*.md` here; that one

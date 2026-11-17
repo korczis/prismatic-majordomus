@@ -1,0 +1,32 @@
+id: I3609
+milestone: surfaces-never-disagree
+title: "A claim replayed after a re-attach keeps the time it was made, and an announce answers with the claim it made"
+slug: a-replayed-claim-keeps-its-time
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When the MCP bridge replays a client's claims onto the board after a re-attach, carry each claim's original time rather than stamping it now, and make an announce answer with the announcement it just made, not with whichever claim of the peer sorts last."
+why: "On 2026-10-20 at 20:35Z the board connection of session d3 re-attached, and the bridge replayed its ten claims. Every one came back stamped 20:35:43Z: 'site-probe-split', written at 09:37Z and long superseded, read as the newest work on the board. The same call's announce answer named 'ui-trains' as its announcement although the claim announced was 'mesh-session-findings', because Peer::announcement is the claim with the latest time, every time was equal, and the tie went to the last name. A board that re-dates stale work says nothing true about when anything happened."
+current_state: "mcp/bridge.rs replays each remembered claim through announce after Bridge::reinitialize. PeerBoard::announce_claim stamps `at` with SystemTime::now(). PeerBoard::latest takes max_by `at`, and among equal times it returns the last in key order."
+desired_state: "The bridge stamps a claim with made_at when the server first accepts it, a replay or a takeover carries it, and the board keeps a made_at in the past as the claim's `at` (a newer or unparsable one is replaced by now), so a replayed claim is as old as it was. A server older than made_at, which refuses the unknown field, gets the claim again without it rather than not at all. announce answers with the announcement it made, and Peer::announcement breaks ties by the most recent announce call, never by name."
+scope:
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+non_scope:
+  - "The mesh journal's own claim times, which are lamport-ordered events"
+depends_on: []
+acceptance_criteria:
+  - "A claim replayed after a re-attach keeps the `at` it was announced with"
+  - "announce answers with the announcement it made, whatever the peer's other claims are called"
+  - "Among claims with equal times, Peer::announcement is the one announced last"
+  - "A made_at in the future or one that does not parse is replaced by now, and a replay that a server refuses for made_at is sent again without it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib peers"
+  - "cargo test --lib mcp::bridge"
+evidence_required:
+  - "a_replayed_claim_keeps_its_time_test"
+created_at: 2026-10-20
+updated_at: 2026-10-20

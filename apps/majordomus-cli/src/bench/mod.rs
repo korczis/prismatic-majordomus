@@ -17,7 +17,7 @@ pub(crate) mod stats;
 pub(crate) mod system;
 
 pub use coverage::{Coverage, CoverageLine, CoverageState};
-pub use projection::{BenchmarkProjection, BenchmarkTarget, TargetKind, Transport};
+pub use projection::{BenchmarkProjection, BenchmarkTarget, TargetKind, Transport, View};
 pub use results::{BenchmarkResult, ResultDocument, RESULT_SCHEMA};
 pub use runner::{Profile, Runner};
 pub use stats::Statistics;

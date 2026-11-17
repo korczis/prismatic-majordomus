@@ -26,7 +26,7 @@ status: active
 target: advisory
 actors: [operator]
 difficulty: basic
-commands: [version, start]
+commands: [version, start${2:+, $2}]
 doctrines: []
 claims: []
 responsibilities: []
@@ -89,8 +89,92 @@ steps:
     expect:
       exit: 0"
 expect_exit 10 "$MJ" usecase validate
-expect_grep "runs 'start', which is state-mutating, in a live scenario"
+expect_grep "runs 'majordomus start a task', which is state-mutating by command, in a live scenario"
 expect_grep 'share/commands.yaml'
+
+# Evidence for I1981 (live_scenario_reads_knowledge, live_scenario_refuses_writing_flag):
+# a class names a command as a whole, so the registry's effects say where a subcommand or a
+# flag differs, and a live step is judged on its whole argument vector, not its first word.
+
+# --- a read-only subcommand of a state-mutating command is admitted: `knowledge` writes as
+#     a whole, but `knowledge edges` does not, and a live scenario no longer has to copy the
+#     tree into a fixture to ask it
+write_live "mode: live
+steps:
+  - id: edges
+    run: ['knowledge', 'edges']
+    expect:
+      exit: 0
+  - id: nodes-as-json
+    run: ['knowledge', 'nodes', '--json']
+    expect:
+      exit: 0" "knowledge"
+expect_exit 0 "$MJ" usecase validate
+expect_grep 'usecase validate: 0 failure'
+
+# --- a writing subcommand of the same command is still refused, naming the command class
+write_live "mode: live
+steps:
+  - id: derive
+    run: ['knowledge', 'derive']
+    expect:
+      exit: 0" "knowledge"
+expect_exit 10 "$MJ" usecase validate
+expect_grep "runs 'majordomus knowledge derive', which is state-mutating by command, in a live scenario"
+
+# --- a flag that writes is refused at validate time, naming the flag: `check` is read-only
+#     and declares no writes, and `check --checkpoint` records a checkpoint
+write_live "mode: live
+steps:
+  - id: checkpointing
+    run: ['check', '--checkpoint']
+    expect:
+      exit: 0" "check"
+expect_exit 10 "$MJ" usecase validate
+expect_grep "runs 'majordomus check --checkpoint', which is state-mutating by flag '--checkpoint', in a live scenario"
+
+# --- the same command without the flag is the read-only question it always was
+write_live "mode: live
+steps:
+  - id: checking
+    run: ['check', '--json']
+    expect:
+      exit: 0" "check"
+expect_exit 0 "$MJ" usecase validate
+expect_grep 'usecase validate: 0 failure'
+
+# --- and it runs: a live `knowledge edges` asks this repository and leaves it unchanged
+write_live "mode: live
+steps:
+  - id: edges
+    run: ['knowledge', 'edges']
+    expect:
+      exit: 0" "knowledge"
+# the claim this fixture declares names three files, and an edge to a file that is not
+# there is a finding `knowledge edges` exits 10 for; give it what it names
+mkdir -p bin test/cases; printf '#!/bin/sh\n' > bin/majordomus; : > test/cases/00.sh; : > docs/CLI.md
+git add -A >/dev/null && git commit -qm "a live use case that reads knowledge"
+expect_exit 0 "$MJ" usecase run --live
+expect_grep '^ask-this-repository +pass'
+[ -z "$(git status --porcelain)" ] || { echo "    a live knowledge step changed the tracked tree"; git status --porcelain; exit 1; }
+# the evidence is local and not what this block is about; the section on evidence below
+# starts from a repository that has none
+rm -f .ai/local/evidence/live/ask-this-repository.json .ai/local/evidence/use-cases/ask-this-repository.json
+
+# --- doctor reconciles each declared effect with the command it is declared on, so an
+#     effect cannot name a flag the command does not take, or call a flag read-only
+INST="$T/installation"; mkdir -p "$INST"
+cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$INST/"
+sed -i.bak 's|^      - flag: --checkpoint$|      - flag: --nosuchflag|' "$INST/share/commands.yaml"
+grep -q -- '--nosuchflag' "$INST/share/commands.yaml" || { echo "    the flag probe did not take"; exit 1; }
+rc=0; out="$("$INST/bin/majordomus" doctor 2>&1)" || rc=$?
+printf '%s\n' "$out" | grep -q 'flag --nosuchflag is in an effect but not in the command syntax' \
+  || { echo "    doctor does not reconcile an effect's flag with the command syntax"; printf '%s\n' "$out" | sed 's/^/      | /'; exit 1; }
+cp "$ROOT/share/commands.yaml" "$INST/share/commands.yaml"
+sed -i.bak 's|^        class: state-mutating$|        class: read-only|' "$INST/share/commands.yaml"
+rc=0; out="$("$INST/bin/majordomus" doctor 2>&1)" || rc=$?
+printf '%s\n' "$out" | grep -q 'flag --checkpoint is declared read-only; a flag can only raise the command class' \
+  || { echo "    doctor admits a flag declared read-only"; printf '%s\n' "$out" | sed 's/^/      | /'; exit 1; }
 
 # --- an obligation step is a live step: a disposable fixture owes nothing
 write_live "setup: bare

@@ -24,7 +24,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/diagram-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v python3 >/dev/null 2>&1 || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj-272.XXXXXX")"
 trap 'rm -rf "$S"' EXIT
@@ -218,6 +218,51 @@ found="$(counted "$C")"
   MJ_ROOT="$C" "$GATE" --list; exit 1; }
 expect_exit 0 env MJ_ROOT="$C" "$GATE"
 expect_grep 'no hand-drawn diagram'
+
+# ---------------------------------- arrows that point down, and a margin that only looks like a tree
+# Version 1 of the gate read `└──` anywhere in a block as a file listing and knew no arrow
+# but `→`, `▶` and `-->`, so docs/COMMANDS.md, docs/DEVELOPMENT_RUNTIME.md and
+# docs/EXECUTIONS.md drew boxes and `▼`/`↓` flows past it. A listing keeps its glyphs in the
+# indentation, before a name; a glyph after a name connects two things.
+V="$S/down"; fixture "$V"
+cat > "$V/docs/A.md" <<'MD'
+```text
+ONE DECLARATION
+        ↓
+REGISTRY
+```
+MD
+cat > "$V/docs/B.md" <<'MD'
+```text
+   ┌──────────┐
+   │  layer   │
+   └────┬─────┘
+        ▼
+   ┌──────────┐
+   │ runtime  │
+   └──────────┘
+```
+MD
+cat > "$V/docs/C.md" <<'MD'
+```text
+executor ──┬── MCP
+           ├── UI
+           └── Cockpit
+```
+MD
+cat > "$V/docs/D.md" <<'MD'
+```text
+share/
+├── skeleton/                # what `init` copies
+│   ├── policy.yaml
+│   └── providers/           # body.md + one wrapper per provider
+└── allow/
+```
+MD
+found="$(counted "$V")"
+[ "$found" = 3 ] || {
+  echo "    the gate found $found of 3 drawings (two pointing down, one with a tree-like margin):"
+  MJ_ROOT="$V" "$GATE" --list; exit 1; }
 
 # ------------------------------------------- a block inside a fence is one block, not two
 # A Markdown page may fence a block of HTML that is itself a drawing. It is one finding: the

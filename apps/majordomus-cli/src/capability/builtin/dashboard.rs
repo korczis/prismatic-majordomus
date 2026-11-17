@@ -682,11 +682,7 @@ fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Result<Value, 
             .collect();
         asked
             .into_iter()
-            .map(|thread| {
-                thread
-                    .join()
-                    .unwrap_or_else(|_| Err("the source panicked while answering".into()))
-            })
+            .map(|thread| joined(thread.join()))
             .collect()
     });
     let mut out = BTreeMap::new();
@@ -695,6 +691,15 @@ fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Result<Value, 
         out.insert(source, answer);
     }
     out
+}
+
+/// What a source's thread came back with: its answer, or — when asking it panicked — a
+/// failure that says so, so one broken source fails its own card and not the overview.
+fn joined(thread: std::thread::Result<Result<Value, String>>) -> Result<Value, String> {
+    match thread {
+        Ok(answer) => answer,
+        Err(_) => Err("the source panicked while answering".into()),
+    }
 }
 
 /// One source asked through the executor, with the input its card declares.
@@ -789,6 +794,22 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// A source that panicked is that source's failure, and a card whose own input does not
+    /// parse fails with the reason; neither takes the overview down with it.
+    #[test]
+    fn a_panicked_source_and_an_unparsable_input_fail_their_own_card() {
+        assert_eq!(
+            joined(Err(Box::new("boom"))),
+            Err("the source panicked while answering".to_string())
+        );
+        assert_eq!(joined(Ok(Ok(Value::Null))), Ok(Value::Null));
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let reason =
+            ask(&ctx, "plan.status", "{not json").expect_err("an input that does not parse");
+        assert!(reason.contains("does not parse"), "{reason}");
+    }
 
     /// The next-version card names who answered: the contract, or the contract with the
     /// commits — and, when the contract cannot be measured, that no one did: the commit

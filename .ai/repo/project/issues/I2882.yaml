@@ -1,0 +1,37 @@
+id: I2882
+milestone: development-runtime
+title: "A remote derive builds only inside its own run directory"
+slug: an-offload-build-stays-in-its-run-dir
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The derive offload's remote script pins cargo's build directory, not only its target directory, to the run directory `<shared>-<tag>` that its traps remove, so nothing a remote derive compiles outlives the derive on the host, whether it succeeds or fails."
+why: "2026-10-18 lundra reached 0 bytes free twice. The checkout declares build-dir = {cargo-cache-home}/build-shared/majordomus, so the offload's CARGO_TARGET_DIR alone kept every intermediate in the host's shared build directory (87 GB, 48 GB of it llvm-cov-target), outside what the run's traps remove; the owner ordered disk space solved systemically on every machine."
+current_state: "offload/run.rs DERIVE exports CARGO_TARGET_DIR=$private and removes $private on EXIT/HUP/INT/TERM; CARGO_BUILD_BUILD_DIR is inherited, so the declared shared build-dir receives the intermediates."
+desired_state: "DERIVE exports CARGO_BUILD_BUILD_DIR=$private beside CARGO_TARGET_DIR; a unit test runs the real script locally with a decoy build directory in the environment and holds that the derive saw only the run directory, that nothing landed in the decoy, and that the run directory is gone after a successful and after a failed derive."
+scope:
+  - "apps/majordomus-cli/src/offload"
+  - "docs/OFFLOAD.md"
+acceptance_criteria:
+  - "The remote derive's build and target directories are both the run directory, whatever build directory the caller's environment names"
+  - "The run directory is removed after a derive that succeeds and after one that fails (exit 10)"
+  - "Nothing is written to the build directory the caller's environment named"
+validation:
+  - "cargo test --lib -- offload::run::tests::a_remote_derive_builds_only_inside_its_run_directory_and_removes_it"
+  - "majordomus plan validate"
+evidence_required:
+  - "offload_run_dir_test"
+created_at: 2026-10-18
+updated_at: 2026-10-20T15:30:47Z
+started_at: 2026-10-20T15:29:44Z
+started_event: sha256:f485dc83f21463867bccc203742a6dea0d4c8211d1409a2ec340e0b0d0f8c674
+completed_at: 2026-10-20T15:30:47Z
+completed_event: sha256:03a052b6cee41e030f8b922aa6eaa719b9cdf598275ed3c7801c230432551eba
+evidence:
+  - covers: offload_run_dir_test
+    type: ci
+    command: "cargo test --lib -- offload::run::tests::a_remote_derive_builds_only_inside_its_run_directory_and_removes_it"
+    result: "ok in validate run 39192952944, job rust (2) 117890228077 (3482 passed, 0 failed), every job green at master dd4c0a87cba, which contains the fix a4c19d60f0c"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944/job/117890228077"
+    commit: 9a5a9b77520bbe9504b04ff89235a6f232377788
+    recorded_at: 2026-10-20T15:30:27Z

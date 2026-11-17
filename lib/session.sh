@@ -45,6 +45,50 @@ mj_session_open_list() {
   return 0
 }
 
+# A close that names no episode of its own — no --provider-session, no MJ_SESSION_KEY, no
+# provider session in the environment that is open here — resolves through the pointer. With
+# one episode open that is the episode; with more, the pointer names the one opened last,
+# and closing it is the guess ADR 0164 forbids (decision 2): another worker's episode ended
+# and published under a hand-run command. It is refused, naming every key it could mean.
+mj_session_close_unambiguous() {
+  local outcome="$1" line f w sid n=0 keys="" key=""
+  [ -z "${MJ_SESSION_KEY:-}" ] || return 0
+  [ "$(mj_session_file)" = "$(mj_session_pointer)" ] || return 0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    f="${line#*|}"
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    n=$((n + 1)); key="${line%%|*}"
+    keys="$keys${keys:+, }$sid ($key)"
+  done <<EOF
+$(mj_session_open_list)
+EOF
+  [ "$n" -gt 1 ] || return 0
+  local again="session close"
+  [ "$outcome" = closed ] || again="$again --outcome $outcome"
+  mj_die "$MJ_EX_REFUSED" \
+    "session close: refused by adr-0164 (a record names the session that wrote it):" \
+    "$n episodes are open in this checkout — $keys — and this caller names none of them," \
+    "so the one the pointer names would be a guess. Name yours:" \
+    "majordomus $again --provider-session <key>, or MJ_SESSION_KEY=<key> majordomus $again" \
+    "(e.g. --provider-session $key)"
+}
+
+# The key of the episode this close resolved, read off the pointer's link when it came
+# through the pointer; nothing when the pointer is a copy, which names no key.
+mj_session_close_key() {
+  local f
+  if [ -n "${MJ_SESSION_KEY:-}" ]; then printf '%s' "$MJ_SESSION_KEY"; return 0; fi
+  f="$(mj_session_file)"
+  if [ "$f" = "$(mj_session_pointer)" ]; then
+    [ -L "$f" ] || return 0
+    f="$(readlink "$f")"
+  fi
+  basename "$f" .yaml
+}
+
 # The episodes open here that are not the one being reported. Two windows on one checkout
 # is now a supported state rather than a collision, so it is a state the tool says out loud:
 # a worker that cannot see the other episode cannot know that the pointer it resolved
@@ -138,6 +182,106 @@ mj_session_store_ready() {
   [ -f "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" ] || return 0
   cp "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$dir/README.md"
 }
+# Where a close writes its record, which is not always where records are read from: on the
+# trunk a tracked section would leave the trunk dirty with a file only a pull request may
+# bring, so the record waits in the outbox instead (ADR 0091, amendment of 2026-10-15). A
+# layer without a sessions section writes to the checkout-local store as before.
+mj_session_outbox_dir() { printf '%s/sessions' "$(mj_outbox_dir)"; }
+mj_session_write_store() {
+  if [ -n "${MJ_SESSIONS_DIR:-}" ] && mj_on_trunk; then mj_session_outbox_dir; else mj_session_store; fi
+}
+# The write store exists the moment a record needs it; the tracked section also gets its
+# contract (mj_session_store_ready), the outbox needs none.
+mj_session_write_store_ready() {
+  if [ "$1" = "$(mj_session_store)" ]; then mj_session_store_ready; else mkdir -p "$1"; fi
+}
+# The record of one episode, wherever a close wrote it: the store or the outbox. The
+# exclusion is mj_publish_record's staging name, see the close below.
+mj_session_find_record() {
+  local sid="$1" d
+  for d in "$(mj_session_store)" "$(mj_session_outbox_dir)"; do
+    [ -d "$d" ] || continue
+    grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$d" 2>/dev/null | head -n 1
+  done | head -n 1
+}
+# The other half of the outbox (ADR 0091, amendment of 2026-10-15, slice 2): an episode
+# boundary off the trunk moves what a trunk episode staged into the tracked sections, where
+# this branch's pull request carries it to the trunk. Each file moves unchanged under its
+# own name, so a record still names the session that wrote it and the branch it closed on,
+# never the episode that carried it.
+#
+# Exactly once, by identity: a session record the section already holds (by session_id) and
+# a candidate whose id is already decided there (promoted or superseded) are retired from the
+# outbox, not written again; a candidate still a candidate goes through derive's own atomic
+# write, which says `unchanged` for the same bytes. A file that is not a record is named on
+# stderr and left where it is: moving it would put an invalid file into a tracked section,
+# and removing it would drop whatever it was. Every line goes to stderr, because a close's
+# stdout is the path of its record. Nothing to carry says nothing.
+mj_session_outbox_drain() {
+  mj_on_trunk && return 0
+  local sbox cbox f sid store dest kept=0
+  sbox="$(mj_session_outbox_dir)"; cbox="$(mj_outbox_dir)/candidates"
+  [ -d "$sbox" ] || [ -d "$cbox" ] || return 0
+  mj_lock_take "$MJ_STATE_DIR/locks/outbox-drain" || true
+  store="$(mj_session_store)"
+  for f in "$sbox"/*.md; do
+    [ -f "$f" ] || continue
+    sid="$(awk 'NR == 1 && !/^---[ \t]*$/ { exit } NR > 1 && /^---[ \t]*$/ { exit }
+                /^session_id: / { sub(/^session_id: /, ""); print; exit }' "$f" 2>/dev/null)"
+    if [ -z "$sid" ] || ! grep -q '^schema: session/v1$' "$f"; then
+      mj_err "outbox: $(mj_rel "$f") is not a session record (no session/v1 front matter with a session_id); left in the outbox"
+      kept=$((kept + 1)); continue
+    fi
+    if grep -rlq --exclude='.tmp.*' "^session_id: $sid\$" "$store" 2>/dev/null; then
+      rm -f "$f"; mj_err "outbox: $sid is already tracked; the staged copy is retired"; continue
+    fi
+    mj_session_store_ready
+    dest="$store/$(basename "$f")"
+    if [ -e "$dest" ]; then
+      mj_err "outbox: $(mj_rel "$dest") exists and is another episode's; $(mj_rel "$f") is left in the outbox"
+      kept=$((kept + 1)); continue
+    fi
+    if cp "$f" "$dest" 2>/dev/null; then
+      rm -f "$f"; mj_err "outbox: carried $(mj_rel "$dest")"
+    else
+      rm -f "$dest"; mj_err "outbox: could not write $(mj_rel "$dest"); $(mj_rel "$f") is left in the outbox"
+      kept=$((kept + 1))
+    fi
+  done
+  if [ -d "$cbox" ]; then
+    # shellcheck source=knowledge.sh
+    . "$MJ_LIB_DIR/knowledge.sh"
+    local cdir id st verb
+    cdir="$(mj_knowledge_candidates_dir)"
+    for f in "$cbox"/*.md; do
+      [ -f "$f" ] || continue
+      id="$(basename "$f" .md)"
+      if ! sed -n '1p' "$f" | grep -q '^---[ \t]*$' || ! grep -q '^schema: knowledge/v1$' "$f" \
+          || ! grep -qx "id: $id" "$f"; then
+        mj_err "outbox: $(mj_rel "$f") is not a knowledge record (no knowledge/v1 front matter whose id is its file name); left in the outbox"
+        kept=$((kept + 1)); continue
+      fi
+      st=""; [ -f "$cdir/$id.md" ] && st="$(mj_knowledge_record_status "$cdir/$id.md")"
+      if [ -n "$st" ] && [ "$st" != candidate ]; then
+        rm -f "$f"; mj_err "outbox: $id is already decided ($st); the staged copy is retired"; continue
+      fi
+      mj_knowledge_candidates_ready || { mj_err "outbox: cannot create $(mj_rel "$cdir")/"; kept=$((kept + 1)); continue; }
+      if verb="$(mj_knowledge_write_record "$cdir" "$id" "$f")"; then
+        rm -f "$f"
+        case "$verb" in
+          unchanged) mj_err "outbox: $id is already tracked; the staged copy is retired" ;;
+          *) mj_err "outbox: carried $(mj_rel "$cdir")/$id.md" ;;
+        esac
+      else
+        mj_err "outbox: could not write $(mj_rel "$cdir")/$id.md; $(mj_rel "$f") is left in the outbox"
+        kept=$((kept + 1))
+      fi
+    done
+  fi
+  mj_lock_release
+  [ "$kept" = 0 ] || mj_err "outbox: $kept file(s) stay in $(mj_rel "$(mj_outbox_dir)")/ (run: majordomus doctor)"
+  return 0
+}
 # One line naming the work, for a listing: the task's title when the episode had a task.
 mj_session_title() {
   local task="$1" sid="$2"
@@ -179,7 +323,7 @@ mj_cmd_session() {
   local sub="${1:-status}"
   case "$sub" in
     --help|-h|help) mj_session_usage; return 0 ;;
-    start|status|close|list|show|latest|context) shift || true ;;
+    start|status|close|list|show|latest|context|archive) shift || true ;;
     *) mj_die "$MJ_EX_USAGE" "session: unknown subcommand '$sub' (see: majordomus session --help)" ;;
   esac
   mj_require_installed
@@ -191,6 +335,7 @@ mj_cmd_session() {
     show)   mj_session_show "$@" ;;
     latest) mj_session_latest "$@" ;;
     context) mj_session_context_cmd "$@" ;;
+    archive) mj_session_archive "$@" ;;
   esac
 }
 
@@ -206,11 +351,14 @@ usage: majordomus session <subcommand> [options]
   show <session-id> [--json]              one closed record, whole                 (read-only)
   latest [--path] [--json]                the newest that resolves here            (read-only)
   context [<session-id>] [--path]         the working context of an episode, now   (read-only)
+  archive [--dry-run]                     move the oldest records over the cap into archive/
 
   One open session per provider session, not one per worktree: a second window of the same
   provider gets an episode of its own, and start refuses (15) only while YOUR episode is
-  open. --provider-session names it; without one you are the hand-opened episode, of which
-  there is at most one. state/session-current.yaml points at the episode of this checkout.
+  open. --provider-session names it; without one, it is the provider session this process
+  runs inside (MAJORDOMUS_PROVIDER_SESSION, then each provider's own variable), and only
+  where none is observable the hand-opened episode, of which there is at most one.
+  state/session-current.yaml points at the episode of this checkout.
   A session is not a task: it claims no paths, gates no acceptance, and is optional.
 
   close derives what the episode produced from the ledger. Nothing writes into an open
@@ -226,6 +374,13 @@ usage: majordomus session <subcommand> [options]
   checkpoints, decisions and questions, taken from the ledger lines stamped with its own
   session id. It is derived on every read and cached nowhere, so it cannot be stale.
   --path prints the opening snapshot's path instead, which is what this printed before.
+
+  archive moves the oldest closed records beyond session.retention_max_files into the
+  section's archive/ directory, and it is the only thing that does: nothing archives in the
+  background. It never deletes, it refuses (15) when the policy's session.archive is not
+  true, and it refuses before moving anything when a record of the same name is already
+  archived. --dry-run names what would move and moves nothing. An archived record leaves
+  list, show, the index and the site; it stays in the tree, and git still has it.
 
   A provider hook opens and closes the episode where one is wired (majordomus capture
   install). --if-open and --if-none are what make that safe to run on every event: a
@@ -268,6 +423,26 @@ mj_session_start() {
   # provider session names, or the hand-opened one. Everything below — the already-open
   # test, the file written, the ledger stamp — resolves through it.
   [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
+  # Who opened it, kept apart from whose it is: only a provider's hook names --provider, and
+  # an episode a person opens from inside a provider's process is still opened by hand.
+  local opened_by=hand; [ -n "$provider" ] && opened_by=hook
+  # Opened by hand from inside a provider's process, the episode is that provider session's,
+  # resolved as the shell writers that later stamp a record resolve it (mj_open_session_id).
+  # Keyed as `hand` instead, it was an episode no later `knowledge observe` or decision of the
+  # same process could find, which refused them all. The record then carries the session it
+  # is keyed by, and the provider whose variable named it, because every reader that asks
+  # whose an episode is joins on those two fields (lifecycle.episodes, brief, ADR 0075).
+  if [ -z "${MJ_SESSION_KEY:-}" ]; then
+    MJ_SESSION_KEY="$(mj_provider_session_env)"
+    if [ -n "$MJ_SESSION_KEY" ]; then
+      psession="$MJ_SESSION_KEY"
+      # mj_provider_session_env sources the adapter table inside the command substitution
+      # above, so this shell has not got it yet.
+      # shellcheck source=capture.sh
+      [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
+      [ -n "$provider" ] || provider="$(mj_provider_of_session_env)"
+    fi
+  fi
 
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
@@ -319,7 +494,7 @@ mj_session_start() {
   # The working context is written after the episode exists, and its failure never costs
   # one: a session whose context could not be frozen is still a session, and the store
   # says so in its own log rather than through this command's exit code.
-  local ctx; ctx="$(mj_session_context_open "$id" "$([ -n "$provider" ] && printf hook || printf hand)" "$provider" "$psession" "$worker")"
+  local ctx; ctx="$(mj_session_context_open "$id" "$opened_by" "$provider" "$psession" "$worker")"
 
   printf 'session %s opened at %s (head %s)\n' "$id" "$now" "$(mj_git_head | cut -c1-7)"
   [ -n "$ctx" ] && printf 'working context: %s\n' "$ctx"
@@ -422,6 +597,11 @@ mj_session_close() {
     *) mj_die "$MJ_EX_USAGE" "session close: --outcome must be closed or interrupted" ;;
   esac
 
+  # A close that names no episode reaches one through the pointer, and with several open here
+  # the pointer names whichever was opened last: closing it would end, and publish, another
+  # worker's episode. That is the guess ADR 0164 forbids, so it is refused, with the keys.
+  mj_session_close_unambiguous "$outcome"
+
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
     1) [ "$if_none" = ignore ] && return 0
@@ -434,8 +614,11 @@ mj_session_close() {
   local sid started closed_at task profile owner
   sid="$(mj_ses session_id)"; started="$(mj_ses started_at)"; closed_at="$(mj_now)"
   owner="$(mj_ses owner)"
-  task=none; profile=none
-  if mj_load_current; then task="$(mj_cur id)"; profile="$(mj_cur profile)"; fi
+  # The record relates the active task only when it is this episode's to carry (ADR 0164),
+  # resolved through mj_record_attribution as this episode: by its own key, which a close
+  # that came through the pointer reads off the link it followed.
+  MJ_SESSION_KEY="$(mj_session_close_key)" mj_record_attribution
+  task="${MJ_RECORD_TASK:-none}"; profile="${MJ_RECORD_PROFILE:-none}"
 
   # The optional authored summary. Identity fields are refused in it for the same reason
   # they are refused in a checkpoint: a body that forges a commit hash looks checkable.
@@ -489,7 +672,9 @@ mj_session_close() {
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
-  mj_session_store_ready
+  # On the trunk the record goes to the outbox, not the tracked section (ADR 0091 amendment).
+  local wstore; wstore="$(mj_session_write_store)"
+  mj_session_write_store_ready "$wstore"
   # One episode, one record. `mj_publish_record` gives each file a unique name, which makes
   # a second close of the same episode a second *file* rather than a collision — so nothing
   # here ever refused it, and the identity contract this section declares was enforced only
@@ -518,7 +703,9 @@ mj_session_close() {
   # (which is what `majordomus recover orphans` is for). Without this, a close would name a
   # temp file as the episode's record — the ledger event, the context close and this
   # command's own output would all point at a path that is about to be removed.
-  existing="$(grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
+  # Both places a close may have written it: a record staged in the outbox is this
+  # episode's record as much as a tracked one.
+  existing="$(mj_session_find_record "$sid" || true)"
   if [ -n "$existing" ]; then
     # The episode's record is the one that already exists, and every reader downstream —
     # the ledger event, the context close, this command's own output — must name it, not
@@ -528,13 +715,17 @@ mj_session_close() {
     printf 'session: %s already has a record at %s; this close adds none\n' \
       "$sid" "$(mj_rel "$existing")" >&2
   else
-    final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
+    final="$(mj_publish_record "$wstore" "$sid" "$rec")" \
       || { rm -f "$rec" "$win"; mj_lock_release; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
     rm -f "$rec" "$win"
   fi
   # The record exists; everything after this is teardown, and holding the lock across it
   # would serialise two closes that are no longer racing for the same thing.
   mj_lock_release
+
+  # Off the trunk, this boundary also carries what a trunk episode staged (ADR 0091,
+  # amendment of 2026-10-15): after this episode's own record, so the two never share a lock.
+  mj_session_outbox_drain
 
   # What the episode learned, derived on the single path every close takes (ADR 0091):
   # after its record, so that the episode's own record exists before anything names it,
@@ -559,7 +750,8 @@ mj_session_close() {
   # Appended before the open record is removed, so the closing event carries this
   # session's stamp like every other event of the episode.
   mj_ledger_append session.closed \
-    "\"outcome\":\"$outcome\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
+    "\"outcome\":\"$outcome\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\"" \
+    "$sid"
 
   # This episode's own file goes, and the pointer goes with it only when it named this
   # episode: closing one window must leave the other window's episode exactly where it was.
@@ -1057,6 +1249,68 @@ mj_session_show_file() {
   mj_record_body "$f"
 }
 
+# ---------------------------------------------------------------- archive
+# The names of the section's own records, oldest first. The name opens with the closing
+# timestamp and is the same on every clone, which is why it is the order here as it is the
+# published order (see mj_session_keys). The section's contract is not a record, and what
+# was archived is not the section's any more.
+mj_session_record_names() {
+  local dir f; dir="$(mj_session_store)"
+  [ -d "$dir" ] || return 0
+  for f in $(ls -1 "$dir"/*.md 2>/dev/null | LC_ALL=C sort); do
+    mj_is_context_doc "$f" && continue
+    basename "$f"
+  done
+}
+mj_session_archive_dir() { printf '%s/archive' "$(mj_session_store)"; }
+
+# majordomus session archive [--dry-run]
+# The retention the policy asks for, applied when a person asks and at no other time.
+# `history --rotate` is the precedent: over the cap, the oldest move aside; nothing is
+# deleted; an archive that already holds the name is refused before anything is written.
+mj_session_archive() {
+  local a dry=0
+  for a in "$@"; do case "$a" in
+    --dry-run) dry=1 ;;
+    --help|-h) mj_session_usage; return 0 ;;
+    *) mj_die "$MJ_EX_USAGE" "session archive: unknown option $a" ;;
+  esac; done
+  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  local cap enabled dir dest names have over name moved=0
+  cap="$(mj_pol_req session.retention_max_files)" || mj_die "$MJ_EX_CONTRACT" "session archive: no cap to archive against"
+  enabled="$(mj_pol session.archive)"
+  dir="$(mj_session_store)"; dest="$(mj_session_archive_dir)"
+  names="$(mj_session_record_names)"
+  have=0; [ -n "$names" ] && have="$(printf '%s\n' "$names" | wc -l | tr -d ' ')"
+  if [ "$have" -le "$cap" ]; then
+    printf 'nothing to archive: %s record(s), cap %s\n' "$have" "$cap"; return 0
+  fi
+  over=$((have - cap))
+  names="$(printf '%s\n' "$names" | head -n "$over")"
+  if [ "$dry" = 1 ]; then
+    printf 'would archive %s of %s record(s) to %s/, %s kept:\n' "$over" "$have" "$(mj_rel "$dest")" "$cap"
+    printf '%s\n' "$names" | sed 's/^/  /'
+    return 0
+  fi
+  [ "$enabled" = true ] \
+    || mj_die "$MJ_EX_REFUSED" "session archive: $have record(s) over cap $cap, and the policy's session.archive is '${enabled:-absent}', not true; nothing moved"
+  # Every refusal comes before the first move: a run that archived half and then met a
+  # name already there would leave the section in a state no single command describes.
+  for name in $names; do
+    [ -e "$dest/$name" ] \
+      && mj_die "$MJ_EX_REFUSED" "session archive: $(mj_rel "$dest")/$name already exists; nothing moved"
+  done
+  mkdir -p "$dest" || mj_die "$MJ_EX_INTERNAL" "could not create $(mj_rel "$dest")"
+  for name in $names; do
+    mv -n "$dir/$name" "$dest/$name" && [ ! -e "$dir/$name" ] && [ -f "$dest/$name" ] \
+      || mj_die "$MJ_EX_INTERNAL" "could not move $name to $(mj_rel "$dest")/ ($moved moved before it)"
+    moved=$((moved + 1))
+  done
+  mj_ledger_append session.archived "\"archived\":$moved,\"kept\":$cap,\"archive\":\"$(mj_json_esc "$(mj_rel "$dest")")\""
+  printf 'archived: %s record(s) to %s/, %s kept\n' "$moved" "$(mj_rel "$dest")" "$cap"
+  printf 'next: git add -A %s && majordomus derive\n' "$(mj_rel "$dir")"
+}
+
 # ---------------------------------------------------------------- the doctrine
 # majordomus.session-records: a closed episode is a shared object with a closed field set,
 # carrying what the repository can prove and nothing about the machine that ran it.
@@ -1064,7 +1318,8 @@ mj_session_show_file() {
 # The Rust index refuses an unknown key when it builds; this is the same contract read from
 # the shell, so `doctor` answers for the section without a toolchain present.
 mj_validate_session_records() {
-  local dir f fm flat n=0 bad=0 ids="" id absolute
+  local dir f fm flat n=0 bad=0 ids="" id absolute missing missing_n missing_first my_worktree ref
+  my_worktree="$(mj_worktree_id)"
   dir="$(mj_session_store)"
   [ -n "${MJ_SESSIONS_DIR:-}" ] || return 0      # a layer with no sessions section owes nothing
   [ -d "$dir" ] || return 0
@@ -1105,6 +1360,24 @@ mj_validate_session_records() {
       mj_doctrine_fail session "$(basename "$f")" "carries an absolute path in: ${absolute% }" "grep -n ': /' $(mj_rel "$f")"
       bad=1
     }
+    # A record names the checkpoints and handovers its episode wrote, and those live in the
+    # checkout-local half of the layer. So "is what it names still there" has an answer
+    # only in the working copy that wrote the record: everywhere else the path was never
+    # there to be missing. Asked here, of this working copy's own records, a reference that
+    # resolves to nothing is reported with both names — as a warning, because the record
+    # is immutable and the finding is about what this checkout no longer has.
+    if [ "$(mj_yget "$flat" worktree_id)" = "$my_worktree" ]; then
+      missing=""; missing_n=0
+      for ref in $(awk -F= '$1 ~ /^(checkpoints|handovers)\.[0-9]+$/ { print $2 }' "$flat"); do
+        [ -e "$MJ_ROOT/$ref" ] && continue
+        missing_n=$((missing_n + 1))
+        [ "$missing_n" = 1 ] && missing_first="$ref"
+        [ "$missing_n" -le 3 ] && missing="$missing $ref"
+      done
+      [ "$missing_n" -gt 0 ] && mj_warn session "$(basename "$f")" \
+        "names $missing_n record(s) this checkout no longer has:${missing}$( [ "$missing_n" -gt 3 ] && printf ' …' )" \
+        "ls $missing_first"
+    fi
     id="$(mj_yget "$flat" session_id)"
     case " $ids " in
       *" $id "*) mj_doctrine_fail session "$id" "two records claim this identity" "grep -rln 'session_id: $id' $(mj_rel "$dir")"; bad=1 ;;

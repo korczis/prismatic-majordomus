@@ -1,0 +1,47 @@
+id: every-surface-follows-what-changed
+title: "Every surface follows what changed in the repository by push, and a surface that does not says so"
+statement: "When something the repository records changes — an execution, a peer's announcement, a claim, a move on an issue, a new intent — an open /ui screen, Cockpit page or Observatory shows it without a reload, over the one live channel the server already has, and a surface that is polling, reading a snapshot or disconnected says which, including a kiosk left running for days."
+invariants:
+  - "One WebSocket channel (/events) with named follow streams; no second socket server, event store or bus"
+  - "A frame is derived from a record that exists; a disconnected stream stops claiming liveness"
+  - "The published site carries snapshots labelled as snapshots and never pretends to be live"
+non_goals:
+  - "Live state on GitHub Pages without an authenticated runtime"
+  - "Push notifications outside the browser before the channel is proven"
+milestones:
+  - "every-surface-follows-what-changed"
+satisfaction:
+  - id: executions-are-in-the-stream
+    criterion: "An execution started anywhere appears in majordomus monitor and on /cockpit/monitor as a signal with its cursor (planned proof: case_an_execution_reaches_the_monitor (to be written by I3218))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: the-observatory-is-told
+    criterion: "The Observatory receives journal events over the live channel and falls back to its cursor read only when the socket is refused, saying which (planned proof: case_the_observatory_is_told (to be written by I3219))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: one-live-word
+    criterion: "Every live surface states its transport in ADR 0158's words, through one browser-side mapping shared by their scripts: LIVE, RECONNECTING, STALE or POLLING on a server, SNAPSHOT or REPLAY on the published site, and never LIVE while its socket is closed (planned proof: case_one_word_for_liveness (to be written by I3221))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: replay-converges
+    criterion: "A follower whose frames are dropped, delayed or reordered, or whose peer is partitioned, ends with a state equal to a fresh snapshot read (planned proof: case_a_follower_converges_after_loss (to be written by I3222))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: a-write-reaches-the-workspace
+    criterion: "An intent proposed or an issue moved by any client (the command line, MCP from a Claude Code session, another tab) reaches an open /ui/idd without a reload (planned proof: case_the_workspace_follows_every_client (to be written by I3220))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: stream-health-is-counted
+    criterion: "The Observatory shows the health of the stream it follows, counted from the frames it received: last frame age, resyncs, gaps and the renderer's frame rate (planned proof: interaction_spec_observatory_health (to be written by I3231))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: a-kiosk-keeps-following
+    criterion: "A kiosk left running keeps showing what changed: a lost drawing context is redrawn, and static marks drift, within bounds the Observatory benchmark manifest declares (planned proof: observatory_gate_burn_in_drift (to be written by I3232))"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: a-record-written-outside-the-server-reaches-an-open-view
+    criterion: "A record that a process outside the server writes reaches an open /ui view within one 20 s heartbeat of the live channel: a knowledge record that git brings into the index, a ledger line or a captured prompt. It arrives without a reload, a watcher or a per-object stat, and a woken reader writes nothing (planned proof: a_record_written_outside_reaches_an_open_view in apps/majordomus-cli/src/http/events.rs written by I3431)"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
+created_at: 2026-10-18
+updated_at: 2026-10-19

@@ -1,0 +1,54 @@
+id: a-session-proceeds-through-the-mesh
+title: "Every supervised session realises intents by proceeding through the mesh, unasked, resumably and watched"
+statement: "In this repository /proceed realises an intent and /watchdog keeps a proceeding session honest. Each /proceed step (proceed.step) derives one idempotent work order from intent_realization and the claim-aware plan: the item to take, with the model models.route selects and the effort of its profile; the independent items that may fan out beside it; the report to announce; and when to step again, which /loop consumes. The item is taken once, through one take path, under its mesh claim held by the run (locally when there is no mesh). A stuck, silent or dead session is detected from deadlines and events rather than polling, woken by a message to its holder, handed over and resumed by another, and reaped only by its owner or a seat after assess-before-deleting. Proceeding without a person's word is decided by an ADR the owner accepts before any step schedules itself. Heavy work shares the machine through one counting slot instead of starving on one lock. Each verb is one canonical declaration from which the command, the MCP tool and every provider's skill are generated, and a hand-edited projection is refused. It extends the intent a-session-proceeds (the /proceed stack I2972-I2977, I3040 and ADR 0177, not yet on master) and writes no second take path: proceed take and devtask.implement become one."
+invariants:
+  - "No new store, scheduler, journal kind or registry: state is the intent, the plan, the ledger and the mesh journal"
+  - "Every provider projection is generated from one canonical declaration; a hand-edited copy fails generate --check"
+  - "A session never stops or kills what it does not own (ADR 0200)"
+  - "Every wait has a deadline and a recovery path"
+milestones:
+  - a-session-proceeds-through-the-mesh
+satisfaction:
+  - id: a-fresh-session-finds-the-right-work
+    criterion: "a fresh session in a supervised repository is told by /proceed which admissible work to take, derived from intent_realization and the claim-aware plan.next, with no question asked of a person (planned proof: case 4005, issue I4005)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+  - id: two-sessions-never-share-an-item
+    criterion: "two sessions asking for work at once never receive the same item: the item's mesh claim is taken in the handler before any worker starts, an overlap is refused with a reason, and the claim is released when the run ends (planned proof: case 4004, issue I4004)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+  - id: a-dead-loop-resumes
+    criterion: "a proceeding loop that stopped is detected from deadlines and events, woken, its handover published and resumed by another session, and reaped only by its owner or a seat after assess-before-deleting (planned proof: case 4009, issue I4009)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+  - id: a-stall-is-signalled
+    criterion: "a stuck or silent session is signalled by a phase deadline and a liveness event, never by polling, and the signal names the claim, the holder and the overdue phase (planned proof: case 4009, issue I4009)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+  - id: heavy-work-shares-the-machine
+    criterion: "heavy work (pre-push, coverage, builds) takes one of N machine-wide slots with the disk floor read from rule data; a full queue answers a bounded wait naming its holders, and an idle serve and a deleting push cost the machine nothing (planned proof: cases 4006, 4007 and 4008, issues I4006, I4007 and I4008)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+  - id: it-stops-when-the-intent-is-met
+    criterion: "a /proceed step on an intent whose realisation is met answers that it is done and schedules no next step (planned proof: case 4005, issue I4005)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+  - id: an-implement-request-runs-once
+    criterion: "an implement request runs once: a repeated executions.start with the same idempotency key answers the same execution id and a double click never starts two executions (Mission Control) (planned proof: case 4000, issue I4000)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.no-new-nouns
+  - adr:adr-0200
+non_goals:
+  - "Push assignment of work to peers before I3198"
+  - "Changing a profile automatically from inferred routing"
+  - "Editing a person's .claude/settings.json or personal commands"
+  - "An /issue verb of its own, and /intent changes: a follow-up intent"
+  - "Generating hooks, mods and agent definitions per verb, declaring the edges to the existing skills as data, and refusing an unclaimed finish: a follow-up intent"
+  - "Detecting resource leaks: carried by nothing-in-the-mesh-waits-on-something-dead (I3182)"
+  - "A scheduler of its own: next_due_at is consumed by /loop on Claude Code, and a provider without one steps when asked"
+  - "Propagating the verbs into adopters' repositories through share/skeleton"
+created_at: 2026-10-22
+updated_at: 2026-10-23

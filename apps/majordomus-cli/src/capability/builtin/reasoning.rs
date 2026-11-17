@@ -42,7 +42,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, CapabilityKind, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::reasoning::availability::LinkedPeer;
-use crate::reasoning::check::{ReasoningFinding, CHECKS};
+use crate::reasoning::check::{applicable, ReasoningFinding};
 use crate::reasoning::record::{ReasoningInput, ReasoningRecord, RECORD_SCHEMA, RECORD_VERSION};
 use crate::reasoning::state::{
     derive, explain, render_markdown, ReasoningExplanation, ReasoningState, ReasoningStep,
@@ -518,15 +518,25 @@ pub struct ReasoningCheck {
 
 fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, CapabilityError> {
     let s = setting(ctx)?;
-    let findings = crate::reasoning::check::run(
+    // the checks this repository is held to: `ci` and `claims` judge what Majordomus's own
+    // workflows and documents say, and apply only where its rule is declared (I1996)
+    let checks = applicable(
+        ctx.index
+            .objects
+            .iter()
+            .filter(|o| o.kind == "rule")
+            .filter_map(|o| o.metadata.get("id").and_then(|v| v.as_str())),
+    );
+    let findings = crate::reasoning::check::run_checks(
         Path::new(&ctx.index.repository.root),
         &s.catalogue,
         &s.refs,
         &s.loaded,
+        &checks,
     );
     Ok(ReasoningCheck {
         ok: findings.is_empty(),
-        checks: CHECKS.iter().map(|c| c.to_string()).collect(),
+        checks: checks.iter().map(|c| c.to_string()).collect(),
         findings,
     })
 }
@@ -657,7 +667,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "reasoning.check",
                 title: "Check that reasoning stays provider-independent",
-                description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.",
+                description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites. The CI and claims checks judge what this repository's own workflows and documents say, so they apply only where the rule advisors-are-optional is declared; an adopter is held to what it adopted.",
                 input: super::Empty,
                 output: ReasoningCheck,
                 stability: Stability::Experimental,

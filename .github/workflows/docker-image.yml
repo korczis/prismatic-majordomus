@@ -1,0 +1,231 @@
+# The deployment image, built from the generated deploy/Dockerfile (the deployment object's
+# view, `majordomus generate deployment`), smoke-tested as the process it will be, and
+# published to GHCR under the one name that cannot move: the commit it was built from.
+#
+# Publication follows verification, never the other way round. The image is pushed only for
+# a master commit whose `validate` run on the push has already concluded `success`, so the
+# workflow listens for that run rather than for the push itself; a dispatch names a commit
+# and is held to the same proof before anything is built. Nothing here deploys.
+#
+# The caches. The Dockerfile compiles every dependency in a stage of its own (`deps`), as
+# ordinary layer content, so a registry cache export carries the compiled dependencies and a
+# fresh runner that imports it compiles only the package. The layers go to a GHCR ref, not
+# to the Actions cache: this repository's Actions cache is already past its 10 GB bound and
+# evicting the Rust jobs' entries, and image layers there would evict them faster. Every
+# cargo in the builder also runs behind sccache on a cache mount, which a registry export
+# never carries; the one small entry per toolchain and lockfile that holds it is carried in
+# and out of the builder below, so a lockfile change recompiles only the crates it changed.
+#
+# Trust. Only this workflow, on a verified master commit, writes `:buildcache`, the ref every
+# build reads. A pull request that changes the image definition is built and smoke-tested
+# here too, but it never pushes an image and never writes `:buildcache`: a same-repository
+# pull request writes its own `:buildcache-pr-<n>` (read by its own later pushes and by
+# nothing else), and a fork's pull request, whose token cannot write packages, writes none.
+name: docker-image
+
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+    branches: [master]
+  # The image definition's own inputs: a pull request that changes how the image is made
+  # proves that it still builds and still runs, before it can merge.
+  pull_request:
+    paths:
+      - .ai/repo/deployments/**
+      - deploy/Dockerfile
+      - .dockerignore
+      - rust-toolchain.toml
+      - apps/majordomus-cli/Cargo.toml
+      - apps/majordomus-cli/Cargo.lock
+      - apps/majordomus-cli/build.rs
+      - apps/majordomus-cli/src/deploy/**
+      - .github/workflows/docker-image.yml
+      - .github/actions/image-smoke/**
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: A master commit whose validate run on the push concluded success
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # One build per commit; a newer commit never cancels an older one's publication, because
+  # each publishes a different, immutable name.
+  group: docker-image-${{ github.event.workflow_run.head_sha || inputs.sha || github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/korczis/prismatic-majordomus
+
+jobs:
+  image:
+    # A validate run on master's push that succeeded, a dispatch (proved below), or a pull
+    # request. A pull request's own validate run on a branch called master never qualifies:
+    # its event is pull_request, not push.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    steps:
+      - name: the commit, and whether it may be published
+        id: subject
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.sha }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -eu
+          case "$EVENT" in
+            workflow_run) sha="$RUN_SHA"; publish=true; cache_to="$IMAGE:buildcache" ;;
+            workflow_dispatch)
+              sha="$DISPATCH_SHA"; publish=true; cache_to="$IMAGE:buildcache"
+              ok="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/validate.yml/runs?head_sha=$sha&event=push&branch=master&status=success" --jq '.total_count')"
+              [ "${ok:-0}" -gt 0 ] || { echo "::error::$sha has no successful validate run on a master push; nothing is published unverified"; exit 1; }
+              ;;
+            pull_request)
+              sha="$PR_SHA"; publish=false; cache_to=""
+              if [ "$PR_REPO" = "$GITHUB_REPOSITORY" ]; then cache_to="$IMAGE:buildcache-pr-$PR_NUMBER"; fi
+              ;;
+            *) echo "::error::unexpected event $EVENT"; exit 1 ;;
+          esac
+          case "$sha" in *[!0-9a-f]*|'') echo "::error::not a commit: '$sha'"; exit 1 ;; esac
+          [ "${#sha}" = 40 ] || { echo "::error::not a full commit: '$sha'"; exit 1; }
+          {
+            echo "sha=$sha"; echo "publish=$publish"; echo "cache_to=$cache_to"
+            echo "tag=$IMAGE:sha-$sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        timeout-minutes: 3
+        with:
+          ref: ${{ steps.subject.outputs.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@v3
+        timeout-minutes: 3
+
+      - uses: docker/login-action@v3
+        timeout-minutes: 2
+        # a fork's token cannot write packages, and the cache it reads is public
+        if: steps.subject.outputs.cache_to != ''
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # The sccache mount (SCCACHE_MOUNT_ID in src/deploy/render.rs) lives in the builder, and a
+      # hosted runner's builder is new every time, so its contents are carried in and out
+      # explicitly. One entry per toolchain and lockfile: the compiled dependencies are what it
+      # holds, and they change only when one of those does; when the lockfile moves, the
+      # previous lockfile's entry is restored and only the crates that changed miss. Only a
+      # verified master build saves it (a pull request restores and never writes), so no
+      # pull request's compilation output can reach another build.
+      - name: the sccache mount, restored and saved (master)
+        if: steps.subject.outputs.publish == 'true'
+        timeout-minutes: 5
+        uses: actions/cache@v4
+        with:
+          path: sccache-mount
+          key: docker-sccache-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'apps/majordomus-cli/Cargo.lock') }}
+          restore-keys: docker-sccache-${{ runner.arch }}-
+      - name: the sccache mount, restored (pull request)
+        if: steps.subject.outputs.publish != 'true'
+        timeout-minutes: 5
+        uses: actions/cache/restore@v4
+        with:
+          path: sccache-mount
+          key: docker-sccache-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'apps/majordomus-cli/Cargo.lock') }}
+          restore-keys: docker-sccache-${{ runner.arch }}-
+      - name: the sccache mount, carried into and out of the builder
+        timeout-minutes: 10
+        uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          cache-map: |
+            { "sccache-mount": { "target": "/sccache", "id": "majordomus-sccache" } }
+          skip-extraction: ${{ steps.subject.outputs.publish != 'true' }}
+
+      # Built once and loaded, so the smoke below runs the very image that is pushed after it.
+      # The cache import is advisory: an absent or unreadable cache is a cold build, never a
+      # failure, and buildx says which layers it reused in the log.
+      - name: build the image (cache from the master ref and this pull request's own)
+        id: build
+        timeout-minutes: 35
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          load: true
+          push: false
+          tags: ${{ steps.subject.outputs.tag }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          build-args: |
+            MAJORDOMUS_BUILD_COMMIT=${{ steps.subject.outputs.sha }}
+            MAJORDOMUS_BUILD_DIRTY=false
+          cache-from: |
+            type=registry,ref=${{ env.IMAGE }}:buildcache
+            ${{ steps.subject.outputs.cache_to != '' && format('type=registry,ref={0}', steps.subject.outputs.cache_to) || '' }}
+          cache-to: ${{ steps.subject.outputs.cache_to != '' && format('type=registry,ref={0},mode=max', steps.subject.outputs.cache_to) || '' }}
+
+      # The image is the deployment (.github/actions/image-smoke, the one definition every
+      # publishing workflow uses): unprivileged, no toolchain, ready, and naming its commit.
+      - name: the image runs as what it claims to be
+        timeout-minutes: 3
+        uses: ./.github/actions/image-smoke
+        with:
+          image: ${{ steps.subject.outputs.tag }}
+          commit: ${{ steps.subject.outputs.sha }}
+
+      # Pushed by the same builder from the same cached layers, so nothing is compiled again;
+      # the provenance and SBOM attestations are attached here because a loaded image cannot
+      # carry them.
+      - name: publish under the commit
+        id: publish
+        if: steps.subject.outputs.publish == 'true'
+        timeout-minutes: 10
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: true
+          tags: ${{ steps.subject.outputs.tag }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          build-args: |
+            MAJORDOMUS_BUILD_COMMIT=${{ steps.subject.outputs.sha }}
+            MAJORDOMUS_BUILD_DIRTY=false
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          provenance: mode=max
+          sbom: true
+
+      - name: summary
+        if: always()
+        timeout-minutes: 1
+        env:
+          TAG: ${{ steps.subject.outputs.tag }}
+          PUBLISH: ${{ steps.subject.outputs.publish }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+          CACHE_TO: ${{ steps.subject.outputs.cache_to }}
+        run: |
+          {
+            echo "### docker-image"
+            echo "- image: \`$TAG\`"
+            if [ "$PUBLISH" = true ] && [ -n "$DIGEST" ]; then echo "- published: \`$TAG@$DIGEST\`"
+            elif [ "$PUBLISH" = true ]; then echo "- published: no (the publish step did not finish)"
+            else echo "- published: no (a pull request is never published)"; fi
+            echo "- cache written: \`${CACHE_TO:-none}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

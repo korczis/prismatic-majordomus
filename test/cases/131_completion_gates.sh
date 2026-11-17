@@ -142,9 +142,26 @@ git checkout -q -- lib/a.sh
 [ "$(status_of unit)" = pass ] || { echo "    reverting the edit did not restore the run"; exit 1; }
 
 # ---------------------------------------------------------------- the done invariant
-# Nineteen questions, each with the source that answered it and the evidence it read.
-[ "$(completion | jq -r '.questions | length')" = 19 ] \
-  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, not 19"; exit 1; }
+# The questions are share/completion.yaml's — its ids, in its order, each in the stage it
+# names — and each carries the source that answered it and the evidence it read. The list
+# is read from the file, never written here: the policy is the one definition of done.
+awk '/^questions:/ { q = 1; next } /^[a-z]/ { q = 0 } q && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/questions.want"
+[ -s "$S/questions.want" ] || { echo "    no question was read from share/completion.yaml"; exit 1; }
+completion | jq -r '.questions[].id' | cmp -s - "$S/questions.want" \
+  || { echo "    the report does not ask share/completion.yaml's questions in its order"; exit 1; }
+[ "$(completion | jq -r .policy)" = share/completion.yaml ] \
+  || { echo "    the report does not name the policy it asked: $(completion | jq -r .policy)"; exit 1; }
+awk '/^stages:/ { s = 1; next } /^questions:/ { s = 0 } s && /^  - id:/ { print $3 }' \
+  "$ROOT/share/completion.yaml" > "$S/stages.want"
+completion | jq -r '.stage.stages[].id' | cmp -s - "$S/stages.want" \
+  || { echo "    the stage fold does not walk share/completion.yaml's stages in order"; exit 1; }
+completion | jq -e --rawfile st "$S/stages.want" '[.questions[] | select(.stage as $s | ($st | split("\n") | index($s)) == null)] | length == 0' >/dev/null \
+  || { echo "    a question names a stage the policy does not declare"; exit 1; }
+# questions are still owed here, so the task is not complete, and the stage says what it owes
+[ "$(completion | jq -r .complete)" = false ] || { echo "    a task with owed questions is complete"; exit 1; }
+completion | jq -e '.stage.complete == false and (.stage.owing | length) >= 1 and (.stage.state == "pending" or .stage.state == "blocked")' >/dev/null \
+  || { echo "    the stage does not hold the task where something is owed: $(completion | jq -c .stage)"; exit 1; }
 completion | jq -e '[.questions[] | select((.source | length) == 0 or (.evidence | length) == 0)] | length == 0' >/dev/null \
   || { echo "    a question carries no source or no evidence"; exit 1; }
 # every gate has reported and passed, so the CI question passes and says what it read
@@ -194,20 +211,85 @@ expect_exit 0 "$MJ" check
 expect_grep 'declares no CI model'
 
 # ---------------------------------------------------------------- one declaration, two readers
-# The executable's plan and scripts/ci-plan read the same file and must select the same set.
+# The executable's plan and scripts/ci-plan read the same file and must select the same set,
+# and give each gate, and the plan, the same mode and reason in the same words: ci-plan's,
+# which case 94 and the CI logs read, and which `gates done` and `finish` print.
 # Over this repository's own model, for paths that fall in one class, several, and none.
+tab="$(printf '\t')"
 for paths in 'apps/majordomus-cli/src/lib.rs' 'docs/CLI.md' 'site/templates/index.html lib/check.sh' \
              'share/obligations.yaml' 'nowhere/declared.txt' '.ai/repo/ci/gates.yaml'; do
-  sh_set="$(printf '%s\n' $paths | (cd "$ROOT" && scripts/ci-plan --files - --format json) \
-    | jq -r '.gates[] | select(.selected) | .id' | LC_ALL=C sort | tr '\n' ' ')"
+  sh_plan="$(printf '%s\n' $paths | (cd "$ROOT" && scripts/ci-plan --files - --format json))"
+  sh_set="$(printf '%s' "$sh_plan" | jq -r '.gates[] | select(.selected) | .id' | LC_ALL=C sort | tr '\n' ' ')"
   input="$(printf '%s\n' $paths | jq -R . | jq -sc '{changed: .}')"
-  rs_set="$("$BIN" run gates.completion --input "$input" --quiet --format json --repo "$ROOT" 2>/dev/null \
-    | jq -r '.output.plan.selected | keys[]' | LC_ALL=C sort | tr '\n' ' ')"
+  rs_plan="$("$BIN" run gates.completion --input "$input" --quiet --format json --repo "$ROOT" 2>/dev/null \
+    | jq -c '.output.plan')"
+  rs_set="$(printf '%s' "$rs_plan" | jq -r '.selected | keys[]' | LC_ALL=C sort | tr '\n' ' ')"
   [ -n "$rs_set" ] && [ "$sh_set" = "$rs_set" ] || {
     echo "    the two readers of gates.yaml disagree for: $paths"
     echo "      ci-plan:    $sh_set"
     echo "      executable: $rs_set"
     exit 1
   }
+  # The reasons. A plan ci-plan narrowed by a shape is set aside: the executable applies no
+  # shape, by design (the model's header says so), so its plan of a shape-only change is the
+  # union of the classes, and its reasons are the classes' rather than the shape's. That is a
+  # declared difference, not a disagreement. A shape ci-plan only tried leaves a parenthesised
+  # note on the plan's reason, the one part of a reason the executable cannot give; that note,
+  # and nothing else, is taken off before the comparison.
+  [ "$(printf '%s' "$sh_plan" | jq -r '.shape')" = null ] || continue
+  printf '%s' "$sh_plan" | jq -r '
+    "(plan)\t\(.mode)\t\(.reason | sub(" \\((not the shape |the head |git could not read the attributes ).*\\)$"; ""))",
+    (.gates[] | "\(.id)\t\(if .selected then "run" else "skip" end)\t\(.reason)")' > "$S/sh.why"
+  printf '%s' "$rs_plan" | jq -r '
+    "(plan)\t\(.mode)\t\(.reason)",
+    (.selected | to_entries[] | "\(.key)\trun\t\(.value)"),
+    (.excluded | to_entries[] | "\(.key)\tskip\t\(.value)")' > "$S/rs.why"
+  differ="$(awk -F"$tab" '
+    NR == FNR { sh[$1] = $2 ": " $3; next }
+    { rs[$1] = $2 ": " $3 }
+    END {
+      for (g in sh) if (!(g in rs) || sh[g] != rs[g]) print g "\t" sh[g] "\t" (g in rs ? rs[g] : "(absent)")
+      for (g in rs) if (!(g in sh)) print g "\t(absent)\t" rs[g]
+    }' "$S/sh.why" "$S/rs.why" | LC_ALL=C sort)"
+  [ -z "$differ" ] || {
+    echo "    the two readers of gates.yaml give different reasons for: $paths"
+    printf '%s\n' "$differ" | while IFS="$tab" read -r g sh rs; do
+      echo "      $g"
+      echo "        ci-plan:    $sh"
+      echo "        executable: $rs"
+    done
+    exit 1
+  }
+done
+# ... and the same lane for every gate (ADR 0186, I3946): a field one reader ignores is the
+# disagreement this section exists to catch, so the executable's gates.model and ci-plan's
+# plan are compared gate by gate
+(cd "$ROOT" && scripts/ci-plan --full --on-demand) | jq -r '.gates[] | "\(.id) \(.lane)"' | LC_ALL=C sort > "$S/sh.lanes"
+"$BIN" run gates.model --input '{}' --quiet --format json --repo "$ROOT" 2>/dev/null \
+  | jq -r '.output.gates[] | "\(.id) \(.lane)"' | LC_ALL=C sort > "$S/rs.lanes"
+[ -s "$S/rs.lanes" ] && cmp -s "$S/sh.lanes" "$S/rs.lanes" || {
+  echo "    the two readers of gates.yaml give different lanes:"
+  diff "$S/sh.lanes" "$S/rs.lanes" | head -10
+  exit 1
+}
+# ... and the same plan at every tier the model declares (ADR 0186, I3947): ci-plan --tier and
+# gates.completion's tier select the same set and give every gate the same reason, over a
+# change that plans everything and one of a single class
+tiers="$(awk '/^tiers:$/ { t = 1; next } t && /^  [a-z-]+: \[/ { sub(/^  /, ""); sub(/:.*/, ""); print; next } { t = 0 }' "$ROOT/.ai/repo/ci/gates.yaml")"
+[ -n "$tiers" ] || { echo "    the model declares no tiers to compare the readers at"; exit 1; }
+for tier in $tiers; do
+  for paths in '.ai/repo/ci/gates.yaml' 'apps/majordomus-cli/src/lib.rs'; do
+    printf '%s\n' $paths | (cd "$ROOT" && scripts/ci-plan --files - --tier "$tier") \
+      | jq -r '.gates[] | "\(.id)\t\(if .selected then "run" else "skip" end)\t\(.reason)"' | LC_ALL=C sort > "$S/sh.tier"
+    input="$(printf '%s\n' $paths | jq -R . | jq -sc --arg t "$tier" '{changed: ., tier: $t}')"
+    "$BIN" run gates.completion --input "$input" --quiet --format json --repo "$ROOT" 2>/dev/null \
+      | jq -r '.output.plan | ((.selected | to_entries[] | "\(.key)\trun\t\(.value)"), (.excluded | to_entries[] | "\(.key)\tskip\t\(.value)"))' \
+      | LC_ALL=C sort > "$S/rs.tier"
+    [ -s "$S/rs.tier" ] && cmp -s "$S/sh.tier" "$S/rs.tier" || {
+      echo "    the two readers of gates.yaml plan the $tier tier differently for: $paths"
+      diff "$S/sh.tier" "$S/rs.tier" | head -10
+      exit 1
+    }
+  done
 done
 exit 0

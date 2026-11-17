@@ -108,9 +108,10 @@ pub struct AreaInfo {
 /// The areas. Written here because they are concepts rather than entities; every catalogue
 /// under them is derived.
 ///
-/// Kept against the dispatcher by `cockpit::tests::every_area_has_a_route_and_every_route_its_area`:
-/// this list and `cockpit::STATIC_ROUTES` describe the same Cockpit, so an area with no route
-/// and a route with no area are both failures. Executions and Quality were the second kind —
+/// `cockpit::static_routes()` is derived from this list (I1009), and the dispatcher is held to
+/// it by `cockpit::tests::every_plain_arm_of_the_dispatcher_is_a_static_route`, so an area
+/// with no route and a route with no area are both failures. Executions and Quality were the
+/// second kind, while the routes were a second list kept by hand —
 /// answered by the dispatcher, named by the module documentation above, and absent from here,
 /// which left `/cockpit/quality` unreachable by a reader, by the navigation crawl the browser
 /// probe derives its routes from, and therefore by every test.

@@ -1,0 +1,28 @@
+id: operation-convergence
+title: "v1.0.0-alpha.1 ships only what is proved on the commit it is cut from"
+statement: "The first alpha is cut from one commit whose CI verdict is green, carries only the contracts that commit proves (a clean install and uninstall, an AI client attached to the supervisory layer, a scoped task that refuses an unverified completion, evidence and project state that agree, an alpha isolated from the stable channel), includes the IDD workspace only if its end-to-end browser case passes on that commit, presents browser compute as experimental, and opens no new front until it is out; after it, the value of the method is measured rather than asserted."
+invariants:
+  - "No new feature front (WebRTC, STUN/TURN, local LLM adapters, new dashboards, autonomous evolve) opens before the alpha is tagged"
+  - "At most three integration streams are active: landing, release safety, IDD"
+  - "A failed check is fixed where it fails; a recorded check result is never rewritten to green"
+  - "The backlog is classified as land, rebase, superseded or still required from git ancestry, never closed in bulk to lower a count"
+  - "No page claims a visitor can contribute compute to the mesh"
+  - "The alpha tag names a commit whose ci verdict is success, and the release record carries that commit (carried by work outside this intent's milestones)"
+  - "A pre-release version is parsed as one by Version::parse, published as a GitHub pre-release, and refused as latest by site-deploy, install-check and the release smoke (carried by work outside this intent's milestones)"
+  - "An installed alpha serves a foreign repository, and uninstalling it leaves no file the installer wrote (carried by work outside this intent's milestones)"
+  - "A scoped task whose required evidence is missing is refused at finish, through the installed executable (carried by work outside this intent's milestones)"
+  - "The release notes name the IDD workspace only when case 3220 passed on the tagged commit; otherwise they name it as not included (carried by work outside this intent's milestones)"
+  - "Every public page that mentions browser compute labels it experimental, and none says a visitor contributes to the mesh (carried by work outside this intent's milestones)"
+non_goals:
+  - "Mesh browser compute on the alpha's critical path"
+  - "Choosing post-alpha scope"
+  - "Closing pull requests to make a number look better"
+milestones:
+  - "operation-convergence"
+satisfaction:
+  - id: the-method-is-measured-after-the-alpha
+    criterion: "Time from intent to verified satisfaction, governance time, tokens and rework are derived for matched tasks with and without Majordomus, and published only past ADR 0082's rule (planned proof: test_intent_to_verified_done_is_measured in apps/majordomus-cli/tests/economics.rs, written by I3276, which rebinds this criterion to evidence test; it stays a command criterion until then because the crate's existing tests would otherwise satisfy it with nothing measured, and I3255 never counts a criterion's own intent explain as its proof)"
+    evidence: command
+    ref: "majordomus intent explain operation-convergence"
+created_at: 2026-10-18
+updated_at: 2026-10-18

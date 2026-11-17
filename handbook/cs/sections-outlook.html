@@ -1,0 +1,239 @@
+<!-- The outlook chapters. Three kinds of statement live here and each one is marked:
+     a repository fact (a placeholder the build fills from outlook-data.json, or a chart that
+     reads it), a model estimate (handbook/cs/outlook-model.json, the owner's report), and an
+     external claim (a public source, linked). Nothing of the first kind is typed. -->
+
+<section id="v-vyhled">
+  <h2>Výhled 2026–2027</h2>
+  <p>Majordomus se přesouvá z fáze rychlé výstavby architektury do fáze, kdy musí prokázat skutečnou autonomii, spolehlivost a ekonomický přínos. Další stovky commitů ho neposunou tolik jako desítky commitů, které zkrátí delivery cycle a prokážou fungování na cizím repozitáři. Tahle část příručky je vlastníkův strategický report převedený do repozitáře: prognóza, srovnání s trhem a jejich konfrontace s tím, co repozitář o sobě skutečně eviduje.</p>
+  <div class="note">
+    <p><span class="pill repo">repozitář</span> číslo sestavení odvodilo z tohoto stromu (<code>handbook/derive_data.py</code>) a změní se s ním. <span class="pill model">model</span> je odhad z reportu zapsaný jednou v <code>handbook/cs/outlook-model.json</code>, ne naměřené KPI. <span class="pill ext">externí</span> je tvrzení převzaté z veřejného zdroje, na který kapitola odkazuje.</p>
+  </div>
+
+  <h3>Tři možné budoucnosti <span class="pill model">model</span></h3>
+  <p>Prognóza stojí na indexu ověřeně dodané hodnoty, ne na počtu commitů. %%scenbase%% bodů je stav k %%scenday%%. Růst znamená víc úspěšně dokončených, integrovaných a ověřených změn za jednotku času, pokles víc režie, regresí, čekání na CI a konfliktů. Na konci horizontu %%scendays%% dní dává model pesimistickému scénáři %%scenlow%% bodů, realistickému %%scenmid%% a optimistickému %%scenhigh%%.</p>
+  <div class="lab" id="lab-scen">
+    <p class="lab-h">Vyzkoušej si · scénáře na %%scendays%% dní</p>
+    <div class="seg" id="scen-toggles" role="group" aria-label="Které scénáře graf ukazuje"></div>
+    <div class="graph-wrap"><svg id="scen-svg" role="img" aria-label="Projekce indexu dodané hodnoty ve třech scénářích"></svg></div>
+    <p class="lab-note" id="scen-readout" aria-live="polite">Najeď na graf: ukážu hodnotu každého viditelného scénáře v daném dni.</p>
+    <p class="lab-note">Ilustrativní scénáře, ne statistický interval spolehlivosti. Svislá čára je den, ke kterému je sestavená tahle příručka, počítaný od výchozího stavu.</p>
+  </div>
+  <div class="three">
+    <div class="card"><h4 class="vs-h pes">Pesimistický · %%scenlow%%</h4><p><b>Integrační gravitace.</b> Nové subsystémy přibývají rychleji než jejich propojení. Každé vydání přináší další vlnu oprav. Mesh generuje mnoho koordinačních událostí, ale málo dokončené práce. Provozní režie roste skoro stejně rychle jako schopnosti.</p></div>
+    <div class="card"><h4 class="vs-h real">Realistický · %%scenmid%%</h4><p><b>Konsolidace a produktizace.</b> Architektura zůstane stabilní. <code>/proceed</code>, mesh, governance, telemetrie, intent graph, vydání a UI se opřou o stejné kanonické modely. Méně nových konceptů, víc end-to-end workflow od záměru k ověřenému výsledku.</p></div>
+    <div class="card"><h4 class="vs-h opt">Optimistický · %%scenhigh%%</h4><p><b>Pozitivní automatizační smyčka.</b> Majordomus měří neproduktivní čekání, sám přerozděluje práci, včas zachytává konflikty a používá výsledky jedné session jako kontext další. Násobný růst propustnosti bez úměrného růstu počtu agentů. Vyžaduje empirický důkaz.</p></div>
+  </div>
+
+  <h3>Pravděpodobný vývoj podle horizontu <span class="pill model">model</span></h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Horizont</th><th>Co očekávám</th><th>Co rozhodne</th></tr></thead>
+    <tbody>
+      <tr><td>dny až dva týdny</td><td>Konsolidace aktuální řady vydání, gates, derive a UI; první alfa vydání řady 1</td><td>Stabilita integračního topu</td></tr>
+      <tr><td>měsíc</td><td>Lepší automatické workflow intent → PR → vydání</td><td>Méně ručních zásahů</td></tr>
+      <tr><td>dva až tři měsíce</td><td>Použitelný AI development control plane pro další repozitáře</td><td>Reprodukovatelný onboarding</td></tr>
+      <tr><td>čtvrt až půl roku</td><td>Začátek silnějšího self-improving orchestration systému</td><td>Evidence reálného ROI</td></tr>
+      <tr><td>půl roku až rok</td><td>Možný specializovaný komerční produkt</td><td>Externí adopce a retence</td></tr>
+    </tbody>
+  </table></div>
+  <p>Nejde o slib termínů. Poslední dva horizonty závisí na tom, zda se podaří oddělit funkční produkt od infrastruktury, která ho teprve umožňuje.</p>
+
+  <h3>Kde čekat největší růst <span class="pill model">model</span></h3>
+  <p>Největší potenciál Majordomusu není v tom, že umí provozovat víc AI agentů. Je v tom, že umí jejich práci formalizovat, koordinovat, ověřovat a ekonomicky vyhodnocovat. To je obtížnější a zároveň obhajitelnější než další AI chat obklopený dashboardem.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-potential"></div></div>
+
+  <h3>Tři rizika viditelná v historii</h3>
+  <div class="three">
+    <div class="card no"><h4>Integrační daň</h4><p>Release top, pak opravy, nový derive, nové testy, další derive. Může jít o poctivé vynucování, ale také o signál, že integrační kapacita zaostává za paralelním vývojem.</p><p class="small-note"><span class="pill repo">repozitář</span> %%windowshare%% všech commitů za posledních %%windowdays%% dní jsou merge commity (%%windowmerges%% z %%windowcommits%%).</p></div>
+    <div class="card no"><h4>Falešná autonomie</h4><p>Síť agentů může vypadat velmi aktivně, zatímco jen přesouvá úkoly, vytváří konflikty nebo čeká na cizí zdroje. Rozhoduje end-to-end dokončená práce, ne počet peers.</p><p class="small-note"><span class="pill repo">repozitář</span> %%intents%% deklarovaných záměrů, z nich %%intentsmet%% se všemi kritérii doloženými aktuálním důkazem.</p></div>
+    <div class="card no"><h4>Rozšiřování platformy</h4><p>WASM mesh, STUN/TURN, další provideři, generované stránky, nová DSL, další skills. Otevřené současně vytvoří infrastrukturu, jejíž integrace spotřebuje vlastní přínos.</p><p class="small-note"><span class="pill repo">repozitář</span> %%issuesblocked%% blokovaných a %%issuesready%% připravených issues v plánu.</p></div>
+  </div>
+
+  <h3>Jak poznáme, že prognóza vychází</h3>
+  <div class="eq" role="math" aria-label="Effective Delivery Rate rovná se ověřené užitečné změny děleno součtem času, integrační režie a nákladů na opravy">
+    <span class="eq-l">Effective Delivery Rate =</span>
+    <span class="eq-f"><span>ověřené užitečné změny</span><span>čas + integrační režie + náklady na opravy</span></span>
+  </div>
+  <p>Aby šlo srovnávat různě složité úkoly, musí být změny vážené podle předem definované obtížnosti a dopadu. Kdyby tempo commitů kleslo na polovinu a efektivní delivery rate se zdvojnásobila, byl by to výrazný úspěch. Šest veličin, které report navrhuje sledovat, a jejich dnešní hodnoty jsou v kapitole <a href="#v-realita">Report proti realitě</a>.</p>
+
+  <h3>Čtyři body zlomu, v pořadí, v jakém je nutné je projít</h3>
+  <ol class="pipeline">
+    <li><span class="n">P0</span><div><h4>Reprodukovatelný master</h4><p>Žádné neověřené completion claims, žádný nekontrolovaný generated drift, stabilní integrační pipeline. Nutný podvozek, ne konečná stanice.</p></div></li>
+    <li><span class="n">P1</span><div><h4>Prokazatelně produktivní mesh</h4><p>Víc agentů společně doručí práci rychleji a levněji než dobře řízená samostatná session, při stejné kvalitě.</p></div></li>
+    <li><span class="n">P2</span><div><h4>Closed-loop improvement</h4><p>Systém měří vlastní selhání a provádí omezené, testované a reverzibilní optimalizace bez přímého zásahu člověka.</p></div></li>
+    <li><span class="n">P3</span><div><h4>Přenositelný produkt</h4><p>Nezávislý vývojář připojí cizí projekt, dostane funkční workflow a naměří přínos bez znalosti vnitřností Majordomusu (<code>docs/ADOPTION_FIRST_RUN.md</code>).</p></div></li>
+  </ol>
+  <div class="note"><p><b>Strategický verdikt.</b> 2026: vybudovat mechanismus, konec 2026: prokázat mechanismus, 2027: opakovatelně zpeněžit výsledky. Nejbližší kritický test není nová verze. Je to dvoutýdenní dogfooding na cizích projektech s časovým baseline, provozní telemetrií, evidencí výsledků a srovnáním nákladů (<code>docs/DOGFOODING.md</code>). Pozitivní technická trajektorie, vysoký potenciál, zatím nedostatek důkazů pro kvantifikaci komerčního úspěchu.</p></div>
+</section>
+
+<section id="v-trh">
+  <h2>Trh a konkurence</h2>
+  <p>Většina vývojářů řeší, jak přimět AI napsat správný kód a vytvořit PR. Majordomus chce řídit celý životní cyklus práce: záměr, distribuovanou orchestraci, kontext, governance, evidenci, vydání, nasazení a zpětnou optimalizaci. Koncepčně je blíž AI development control plane než coding assistantovi. Řeší širší problém, ale zatím bez důkazu, že ho řeší lépe.</p>
+  <div class="lab" id="lab-v-scores">
+    <p class="lab-h">Analytické skóre · <span class="pill model">model</span></p>
+    <div id="v-scores"></div>
+    <p class="lab-note">Subjektivní analytické skóre z reportu, ne uživatelský percentil ani laboratorní benchmark. Otazník znamená, že pro odhad chybí data.</p>
+  </div>
+
+  <h3>Na které úrovni kdo pracuje <span class="pill model">model</span></h3>
+  <div class="ladder">
+    <div class="rung"><div class="k">L1<small>AI-assisted developer</small></div><div class="v"><p>Správnost kódu, context window, prompty, refaktoring, debugging. Jednotkou práce je člověk a jeho session.</p></div></div>
+    <div class="rung"><div class="k">L2<small>Agentic developer</small></div><div class="v"><p>Paralelní agenti, worktrees, konflikty PR, handover, automatizace issues, review a CI.</p></div></div>
+    <div class="rung mesh"><div class="k">L3 · Majordomus dnes<small>Agent platform engineer</small></div><div class="v"><p>Orchestrace, oprávnění, kvóty, retries, observability, audit trail, sandboxing, cost attribution.</p></div></div>
+    <div class="rung"><div class="k">L4 · ambice<small>Self-improving delivery</small></div><div class="v"><p>Systém měří vlastní delivery a sám ji optimalizuje, se zachovanou evidencí a reverzibilitou.</p></div></div>
+  </div>
+  <p>Umístění je kvalitativní úsudek, ne certifikace. Běžné agentic workflow: agent dostane ticket a vrátí PR. Majordomus navíc umí říct, proč úkol existuje (<a href="#x-intent">intent</a>), jaké závislosti odblokuje (<a href="#x-plan">plán</a>), jaké pravidlo ho řídí (<a href="#p-pravidla">pravidla</a>), kdo ho smí vykonat (<a href="#m-claims">claims</a>), jaká evidence prokazuje výsledek (<a href="#x-evidence">důkazy</a>) a co se musí aktualizovat po merge. To je kvalitativně odlišný návrh systému. Není ale automaticky lepší UX: pro vývojáře, který chce opravit jednu funkci, může být taková infrastruktura zbytečně těžká.</p>
+
+  <h3>Poptávka, na kterou Majordomus míří <span class="pill ext">externí</span></h3>
+  <div class="two">
+    <div class="card"><h4>Ověřování dokončené práce</h4><p>Analýza 526 diskusí o spolehlivosti AI agentů uvádí jako silný signál poptávky ověřování skutečně dokončené práce: falešná hlášení o dokončení, tichá selhání, drift po nasazení.</p><p class="small-note">Zdroj: <a href="https://problemsignal.com">problemsignal.com</a></p></div>
+    <div class="card"><h4>Náklady na běh agentů</h4><p>Komunitní rozbor 66 320 příspěvků označil rostoucí náklady na agenty za výrazně sílící problém roku 2026. Jde o analýzu stížností, ne o reprezentativní průzkum.</p><p class="small-note">Zdroj: <a href="https://openchamber.dev">openchamber.dev</a></p></div>
+  </div>
+  <p>Majordomus míří na skutečné problémy trhu. Rozpoznat správný problém ale není konkurenční výhoda, pokud ostatní nabídnou jednodušší funkční řešení.</p>
+
+  <h3>Pět platforem, proti kterým se měří <span class="pill ext">externí</span></h3>
+  <div class="two">
+    <div class="card"><h4><a href="https://factory.ai">Factory AI</a></h4><p class="small-note">Nejbližší strategický konkurent</p><p>Missions, model routing, persistent compute, readiness scoring, analytics a governance. Deklarovaná filozofie samooptimalizujícího vývojového systému je velmi blízko směru Majordomusu: důkaz, že podobnou kategorii už někdo komerčně buduje.</p></div>
+    <div class="card"><h4><a href="https://www.openhands.dev">OpenHands</a></h4><p class="small-note">Open-source alternativa</p><p>CLI, webové rozhraní, SDK, samostatní agenti a široký agentní ekosystém. Nebezpečný v rozšiřitelnosti, přístupnosti a distribuci. Majordomus musí nabídnout víc než vlastní orchestrátor.</p></div>
+    <div class="card"><h4><a href="https://devin.ai">Devin</a></h4><p class="small-note">Delegování úkolů</p><p>Delegování samostatných vývojových úkolů a návrat reviewovatelných výsledků. Síla je v uživatelském workflow a provozní infrastruktuře. Konkuruje jednoduchostí produktu.</p></div>
+    <div class="card"><h4><a href="https://github.com/features/copilot">GitHub Copilot Coding Agent</a></h4><p class="small-note">Distribuční riziko i partner</p><p>Agents tab, sessions s historií, přímé propojení s PR. Snižuje potřebu externího ovládacího panelu pro základní scénáře. Riziko pro samostatné UI, přirozený integrační cíl.</p></div>
+    <div class="card"><h4><a href="https://www.langchain.com/langgraph">LangGraph</a></h4><p class="small-note">Architektonický benchmark</p><p>Durable execution, persistence, streaming, fault tolerance, paměť a human-in-the-loop. Infrastrukturní základ pro stavové agenty, ne hotový vývojový cockpit. Řada primitiv, která Majordomus potřebuje, tu existuje jako etablovaná.</p></div>
+    <div class="card no"><h4>Unikátnost propojení už neplatí</h4><p>Factory veřejně propojuje mission control, model routing, readiness, analytics, persistent compute a self-improvement loop. Moat musí stát jinde: inference a derivace z existujícího repozitáře, explicitní evidence, ověřitelná pravidla, nízký overhead, heterogenní runtimy. A musí být změřený.</p></div>
+  </div>
+
+  <h3>Kde má kdo doloženou schopnost</h3>
+  <div class="table-wrap"><table class="mx-table">
+    <thead><tr><th>Oblast</th><th>Majordomus</th><th>Factory</th><th>OpenHands</th><th>GitHub Agent</th><th>Doklad v repozitáři</th></tr></thead>
+    <tbody>
+      <tr><td>Vývoj od intentu k PR</td><td class="mx p">◐</td><td class="mx y">✓</td><td class="mx y">✓</td><td class="mx y">✓</td><td><code>docs/PLANNING.md</code></td></tr>
+      <tr><td>Multi-agent orchestrace</td><td class="mx p">◐</td><td class="mx y">✓</td><td class="mx y">✓</td><td class="mx p">◐</td><td><code>docs/MESH.md</code></td></tr>
+      <tr><td>Kanonická provenance a evidence</td><td class="mx p">◐</td><td class="mx p">◐</td><td class="mx p">◐</td><td class="mx p">◐</td><td><code>docs/EVIDENCE.md</code></td></tr>
+      <tr><td>Persistentní kontext</td><td class="mx p">◐</td><td class="mx y">✓</td><td class="mx p">◐</td><td class="mx p">◐</td><td><code>docs/CONTEXT.md</code></td></tr>
+      <tr><td>Politiky a vynucování</td><td class="mx p">◐</td><td class="mx y">✓</td><td class="mx y">✓</td><td class="mx p">◐</td><td><code>docs/DOCTRINE.md</code></td></tr>
+      <tr><td>Víc rozhraní nad jedním stavem</td><td class="mx p">◐</td><td class="mx y">✓</td><td class="mx y">✓</td><td class="mx y">✓</td><td><code>docs/SURFACES.md</code></td></tr>
+      <tr><td>End-to-end ROI</td><td class="mx q">?</td><td class="mx p">◐</td><td class="mx q">?</td><td class="mx q">?</td><td><code>docs/ECONOMICS.md</code></td></tr>
+      <tr><td>Nezávislá adopce</td><td class="mx q">?</td><td class="mx y">✓</td><td class="mx y">✓</td><td class="mx y">✓</td><td><code>docs/ADOPTION.md</code></td></tr>
+    </tbody>
+  </table></div>
+  <p class="small-note">✓ výrazná schopnost ve veřejném produktu či dokumentaci · ◐ částečné nebo odlišně pojaté řešení · ? nedostatečně ověřené. Sloupce konkurentů jsou <span class="pill ext">externí</span>, sloupec Majordomusu je <span class="pill model">model</span>: ◐ je u něj záměrné, protože historie dokládá práci na schopnosti, ne úplné externí funkční testy. Poslední sloupec odkazuje na dokument, který schopnost v repozitáři popisuje.</p>
+
+  <h3>Kde má náskok a kde zaostává <span class="pill model">model</span></h3>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-position"></div></div>
+  <p>Největší síla: evidence a kanonický stav jsou základní vlastností systému, ne audit log nad agenty. Největší slabina: rozsáhlá interní architektura musí prokázat, že uživateli odstraňuje víc práce, než sama přidává.</p>
+
+  <h3>Komerční prostor <span class="pill model">model</span></h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Specializace</th><th>Potenciál</th><th>Obtížnost</th></tr></thead>
+    <tbody>
+      <tr><td><b>Evidence-driven AI development governance</b><br>Vrstva nad existujícími AI coding tools; nesoupeří s jejich modely, IDE ani hostingem.</td><td>velmi vysoký</td><td>střední až vysoká</td></tr>
+      <tr><td><b>Multi-agent delivery control plane</b></td><td>vysoký</td><td>vysoká</td></tr>
+      <tr><td><b>Kompletní alternativa Factory nebo Devina</b></td><td>nejistý</td><td>extrémní</td></tr>
+    </tbody>
+  </table></div>
+  <p>První varianta je nejslibnější. Přímý souboj ve všech funkcích by byl špatnou volbou.</p>
+
+  <h3>Šest důkazů pro příštích třicet dní</h3>
+  <p>Žádná nová vertikála, dokud tyhle testy neprojdou. Zaškrtnutí si pamatuje jen tento prohlížeč. Řádek „dnes“ je stav podle dat repozitáře v den sestavení.</p>
+  <div class="lab" id="lab-v-proofs">
+    <ol class="adopt" id="v-proofs">
+      <li class="adopt-i"><label class="adopt-h"><input type="checkbox" id="v-proof-0"><b>Externí onboarding</b></label><p>Připojit aspoň jeden repozitář, který nebyl vytvořen ani strukturován kolem Majordomusu.</p><p class="adopt-l">Dnes: postup popisuje <code>docs/ADOPTION_FIRST_RUN.md</code>; strom nezaznamenává žádné cizí nasazení.</p></li>
+      <li class="adopt-i"><label class="adopt-h"><input type="checkbox" id="v-proof-1"><b>A/B workflow</b></label><p>Dvacet srovnatelných úkolů s Majordomusem a bez něj, předem rozdělených podle obtížnosti.</p><p class="adopt-l">Dnes: metodika je v <code>docs/ECONOMICS.md</code>; zaznamenaných platných párů je %%pairsvalid%%, pravidlo publikace jich žádá %%pairsneed%%.</p></li>
+      <li class="adopt-i"><label class="adopt-h"><input type="checkbox" id="v-proof-2"><b>Delivery economics</b></label><p>Skutečný čas, lidské zásahy, CI reruny, výdaje a akceptované výsledky.</p><p class="adopt-l">Dnes: milník <code>execution-telemetry</code>, který by spotřebu zapisoval, je ve stavu <code>%%telemetrystatus%%</code> (%%telemetrydone%% z %%telemetry%% issues hotovo).</p></li>
+      <li class="adopt-i"><label class="adopt-h"><input type="checkbox" id="v-proof-3"><b>Mesh value</b></label><p>Prokázat zrychlení oproti jednomu agentovi při kontrolované kvalitě.</p><p class="adopt-l">Dnes: koordinace paralelních workerů je v <code>docs/ECONOMICS.md</code> výslovně mezi tím, co se neměří.</p></li>
+      <li class="adopt-i"><label class="adopt-h"><input type="checkbox" id="v-proof-4"><b>Resilience</b></label><p>Zabít workera, přerušit spojení, vyvolat konflikt a prokázat obnovu bez ztráty či duplicitního dokončení.</p><p class="adopt-l">Dnes: dílčí obnovu meshe popisuje kapitola <a href="#m-overeni">Ověřeno na železe</a>; řízený test obnovy celé práce strom nezaznamenává.</p></li>
+      <li class="adopt-i"><label class="adopt-h"><input type="checkbox" id="v-proof-5"><b>Product UX</b></label><p>Nový uživatel zvládne první ověřený intent bez znalosti interních doktrín, registrů a CLI archeologie.</p><p class="adopt-l">Dnes: %%intents%% záměrů, %%intentsmet%% se všemi kritérii doloženými aktuálním důkazem.</p></li>
+    </ol>
+    <p class="lab-note" id="v-proofs-count" aria-live="polite"></p>
+    <button type="button" class="btn ghost small" id="v-proofs-reset">Vymazat zaškrtnutí</button>
+  </div>
+
+  <h3>Celkové hodnocení <span class="pill model">model</span></h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Kritérium</th><th>Závěr</th></tr></thead>
+    <tbody>
+      <tr><td>Je Majordomus ambicióznější než běžné AI coding workflow?</td><td>Ano, výrazně.</td></tr>
+      <tr><td>Řeší reálné problémy ostatních vývojářů?</td><td>Ano, doložené veřejnou poptávkou.</td></tr>
+      <tr><td>Je jeho koncept unikátní?</td><td>Ne úplně. Factory a další míří podobně.</td></tr>
+      <tr><td>Má zajímavé architektonické odlišení?</td><td>Ano: evidence, inference, kanonické projekce.</td></tr>
+      <tr><td>Je už lepší než zavedené produkty?</td><td>Zatím neprokázáno.</td></tr>
+      <tr><td>Může vytvořit moat?</td><td>Ano, pokud vznikne ověřitelně levnější a spolehlivější delivery.</td></tr>
+      <tr><td>Je čas soustředit se na produktizaci?</td><td>Jednoznačně.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><p>Majordomus není hobby wrapper nad Claude Code. Architektonicky patří do stejné problémové oblasti jako seriózní agentní platformy. V prokázané komerční zralosti je výrazně za nejvyspělejšími hráči. Vysoká komplexita není úspěch ani moat. Výhoda vznikne teprve tehdy, když systém spolehlivě dodá stejný výsledek s menšími náklady, menším rizikem a menším lidským úsilím.</p></div>
+  <p class="small-note">Zdroje externích tvrzení: <a href="https://factory.ai">factory.ai</a>, <a href="https://www.openhands.dev">openhands.dev</a>, <a href="https://devin.ai">devin.ai</a>, <a href="https://github.com/features/copilot">github.com/features/copilot</a>, <a href="https://www.langchain.com/langgraph">langchain.com/langgraph</a>, <a href="https://problemsignal.com">problemsignal.com</a>, <a href="https://openchamber.dev">openchamber.dev</a>. Hodnocení v této kapitole nemá přístup ke statistikám uživatelů ostatních platforem, proto neobsahuje žádné tvrzení typu „top 1 %“.</p>
+</section>
+
+<section id="v-realita">
+  <h2>Report proti realitě</h2>
+  <p>Report navrhuje šest veličin k týdennímu sledování. Tady je jejich dnešní hodnota z dat, která repozitář o sobě eviduje, a poctivé „neměřeno“ tam, kde data chybí. Každé číslo v téhle kapitole sestavení odvodilo ze stromu commitu <code>%%commit%%</code>: z historie, z plánu (<code>site/data/generated/plan.json</code>), ze záměrů (<code>.ai/repo/project/intents/</code>), z ledgeru důkazů a z <code>docs/generated/economics.json</code>.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Metrika reportu</th><th>Dnešní hodnota</th><th>Zdroj</th><th>Stav</th></tr></thead>
+    <tbody>
+      <tr><td>Medián intent → ověřená dodávka</td><td>%%intents%% záměrů; %%criteriamet%% z %%criteria%% kritérií má aktuální důkaz, %%intentsmet%% záměrů je splněných celých</td><td>záměry a ledger důkazů</td><td><span class="pill warn">neměřeno</span></td></tr>
+      <tr><td>Čas oprav integračních topů</td><td>merge commity tvoří %%windowshare%% commitů za %%windowdays%% dní (%%windowmerges%% z %%windowcommits%%), za celou historii %%mergeshare%%</td><td>historie gitu</td><td><span class="pill warn">proxy</span></td></tr>
+      <tr><td>Sessions bez lidského zásahu</td><td>strom to jako metriku neeviduje</td><td>–</td><td><span class="pill bad">neměřeno</span></td></tr>
+      <tr><td>CI first-pass success rate</td><td>běhy CI žijí na GitHubu, ne ve stromu; měří je <code>majordomus_ci_timings</code> nad živým repozitářem</td><td>mimo strom</td><td><span class="pill warn">mimo strom</span></td></tr>
+      <tr><td>Náklady na dokončený intent</td><td>úspora tokenů je %%savings%%: %%pairsvalid%% platných párů z %%pairsneed%% požadovaných; spotřeba skutečných sessions se do stromu nezapisuje</td><td><code>docs/generated/economics.json</code></td><td><span class="pill warn">částečně</span></td></tr>
+      <tr><td>Externí adopce</td><td>strom nezaznamenává žádné cizí nasazení</td><td>–</td><td><span class="pill bad">neměřeno</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Integrační daň po týdnech <span class="pill repo">repozitář</span></h3>
+  <p>Commity a z nich merge commity po ISO týdnech podle data autora. Podíl merge commitů je nejpřímější měřítko integrační daně, které historie nabízí: %%mergeshare%% za celou historii (%%merges%% z %%commitsall%%), %%windowshare%% za posledních %%windowdays%% dní. Poslední týden bývá neúplný.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-weeks"></div></div>
+  <p>Složení nemerge commitů stejného okna podle typu z konvenční hlavičky. Nejčastější je <code>%%windowtop%%</code> (%%windowtopshare%%), <code>feat</code> nese %%windowfeatshare%%. Závěr „posun od funkcí k opravám“ tedy platí pro tohle okno; celou historii ukazuje kapitola <a href="#cisla-commity">Commity</a>.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-types"></div></div>
+
+  <h3>Plán <span class="pill repo">repozitář</span></h3>
+  <p>Plán má %%issues%% issues: %%issuesdone%% hotových (%%issuesdoneshare%%), %%issuesready%% připravených k převzetí a %%issuesblocked%% blokovaných závislostí. Z %%milestones%% milníků je %%milestonesdone%% hotových a %%milestonesactive%% aktivních. Aktivní milník je <code>%%activems%%</code>, další připravené issue <code>%%nextissue%%</code>. BLOCKED znamená čekání na jiné issue, ne chybu (<a href="#x-plan">Plán: milníky a vlny</a>).</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-plan"></div></div>
+
+  <h3>Záměry a jejich kritéria <span class="pill repo">repozitář</span></h3>
+  <p>Záměr říká, co se má stát pravdou, a jeho kritérium splní jen aktuální důkaz (<a href="#x-intent">Intents</a>). Sestavení posuzuje každé kritérium z ledgeru důkazů, který je součástí commitu, stejně jako <code>intent realization</code>: test, jehož běh je na tomto stromu stále platný, kritérium splňuje; jiný druh důkazu ho sám splnit nemůže. Lokální ledger pod <code>.ai/local/</code> součástí commitu není, takže kritérium dokázané jen na něčím stroji tu čte „not run“.</p>
+  <div class="table-wrap" id="v-intents"></div>
+
+  <h3>Pravidla a jejich důkaz <span class="pill repo">repozitář</span></h3>
+  <p>Že pravidlo existuje, ještě neznamená, že je vynucené. Stav důkazu %%rules%% pravidel: %%rulesgated%% spouští CI gate přímo, %%rulesnotrun%% jmenuje test, jehož běh commit nezaznamenal. Podrobnosti v kapitole <a href="#cisla-pravidla">Pravidla a brány v číslech</a>.</p>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-proof"></div></div>
+
+  <h3>Milník, který by měřil skutečné sessions <span class="pill repo">repozitář</span></h3>
+  <p>Milník <code>execution-telemetry</code> je ve stavu <code>%%telemetrystatus%%</code>, hotových issues má %%telemetrydone%% z %%telemetry%%. Proč na něm závisí celá ekonomika, vysvětluje kapitola <a href="#v-tokeny">Tokeny a ekonomika</a>.</p>
+  <div class="table-wrap" id="v-telemetry"></div>
+</section>
+
+<section id="v-tokeny">
+  <h2>Tokeny a ekonomika</h2>
+  <p>Tři různá čísla, která se nesmí plést: kolik tokenů skutečně spotřebovaly sessions nad tímto repozitářem, o kolik kontextový kompilátor zmenšuje kontext, a zda Majordomus šetří tokeny oproti práci bez něj. <code>docs/ECONOMICS.md</code> dává každému číslu třídu (observed, counted, derived, estimated, counterfactual) a číslo spočítané z několika vstupů není nikdy silnější než nejslabší z nich.</p>
+  <div class="three">
+    <div class="card"><h4>Pozorováno</h4><p>Spotřeba, kterou provider nahlásí za každý request skutečné session. Do stromu se zatím <b>nezapisuje</b>: zapisovat ji má milník <code>execution-telemetry</code>. Co nikdo nezapsal, nejde ani spočítat, ani tvrdit.</p></div>
+    <div class="card yes"><h4>Spočítáno</h4><p>Kolik kontextu kontextový kompilátor vynechá, spočítané tokenizerem bez modelu nad každým issue plánu. Je to <b>změřené</b>, ale je to vlastnost kompilátoru, ne úspora session.</p></div>
+    <div class="card no"><h4>Neprokázáno</h4><p>Že Majordomus šetří tokeny celé práce. Podle ADR 0082 smí takové tvrzení vzniknout jen ze spárovaných běhů stejné úlohy s Majordomusem a bez něj, posouzených stejnými skrytými testy, nad předem deklarovaným prahem.</p></div>
+  </div>
+
+  <h3>Změřené: kolik kontextu kompilátor vynechá <span class="pill repo">repozitář</span></h3>
+  <div class="lab" id="lab-v-gauge">
+    <div class="gauge-row">
+      <div class="graph-wrap gauge-wrap"><svg id="v-gauge" viewBox="0 0 160 160" role="img" aria-label="Medián vynechaného kontextu %%ctxmedian%%"></svg></div>
+      <div>
+        <p class="lab-h">Medián vynechaného kontextu · <code>context_reduction_ratio</code></p>
+        <p>%%ctxmedian%%, 95% interval %%ctxlow%% až %%ctxhigh%% (bootstrap mediánu, %%ctxresamples%% převzorkování), n = %%ctxn%% issues. Z %%ctxcandidate%% kandidátních tokenů kompilátor vybral %%ctxselected%% při rozpočtu %%ctxbudget%% tokenů na issue, tokenizer <code>%%ctxtokenizer%%</code>, měřeno %%ctxat%%.</p>
+      </div>
+    </div>
+  </div>
+  <p>Menší kontext neznamená automaticky méně tokenů za celý úkol: session si chybějící kontext může dočíst sama, a tím ho zaplatí znovu. Proto tohle číslo nikdy nevystupuje jako úspora.</p>
+
+  <h3>Neprokázané: šetří Majordomus tokeny? <span class="pill repo">repozitář</span></h3>
+  <p>Úspora tokenů celé práce je dnes <b>%%savings%%</b>. Pravidlo publikace žádá %%pairsneed%% platných párů živých běhů, zaznamenaných je %%pairsvalid%%. Z %%hypotheses%% hypotéz v <code>docs/ECONOMICS.md</code> je netestovaných %%hypuntested%%. Verdikt <code>economics check</code> doslova, s podmínkami, které chybí:</p>
+  <div class="lab" id="lab-v-verdict">
+    <blockquote class="v-statement" id="v-statement" lang="en"></blockquote>
+    <ul class="v-unmet" id="v-unmet" lang="en"></ul>
+  </div>
+  <div class="lab chart-lab"><div class="chart" id="chart-v-metrics"></div></div>
+  <div class="table-wrap" id="v-suites"></div>
+
+  <h3>Proč spotřeba sessions ještě není ve stromu</h3>
+  <p>Pozorovaná spotřeba skutečných sessions (requesty, vstup, cache, výstup) existuje jen v transcriptech providera na stroji, kde session běžela, a ty se do repozitáře nečtou ani neukládají (<code>project.never-store-transcripts</code>). Záznam, který by ji nesl jako fakt úkolu, je práce milníku <code>execution-telemetry</code>: nejdřív definovat záznam běhu včetně toho, jak vypadá nepřítomnost, pak zapisovat jen to, co provider nahlásí, dokázat, že mlčící provider dá výslovnou nepřítomnost a ne odhad, číst to zpět přes historii a nakonec publikovat garanci <code>telemetry</code>. První krok, I0301, je rozpracovaný v pull requestu <a href="https://github.com/korczis/prismatic-majordomus/pull/1051">#1051</a>; jeho stav je stav GitHubu, ne stromu, a tahle příručka ho proto neuvádí. Stav issues milníku, jak ho odvozuje plán:</p>
+  <div class="table-wrap" id="v-telemetry-chain"></div>
+  <p>Dokud milník neprojde, každá věta o tom, kolik vývoj Majordomusu stojí, je argument, ne měření. To je přesně ten rozdíl, který ADR 0082 drží: pozorovaná spotřeba bez kontrolní skupiny nenahradí spárované běhy, i když ji jednou zapisovat budeme.</p>
+</section>

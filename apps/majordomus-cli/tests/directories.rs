@@ -416,3 +416,29 @@ fn a_replacing_document_stands_in_for_what_it_supersedes() {
         "{ids:?}"
     );
 }
+
+/// A contract that declares its directory's layout (I2870) shows it: the lifecycle of what
+/// lives there and what must never appear, as the contract says; one that declares none
+/// shows no layout rather than a default it never stated.
+#[test]
+fn a_declared_layout_reaches_the_answer() {
+    let f = layered();
+    f.write(
+        ".ai/repo/README.md",
+        &context_doc("ai.repo", "The tracked half").replace(
+            "order: 100\n",
+            "order: 100\nlayout:\n  lifecycle: canonical\n  excludes: [cache, runtime]\n",
+        ),
+    );
+    f.commit("the tracked half declares its layout");
+
+    let r = report(&f, json!({}));
+    let repo = &node(&r, ".ai/repo")["contract"];
+    assert_eq!(repo["layout_lifecycle"], "canonical", "{repo:#}");
+    assert_eq!(repo["layout_excludes"], json!(["cache", "runtime"]));
+    let layer = &node(&r, ".ai")["contract"];
+    assert!(
+        layer.get("layout_lifecycle").is_none(),
+        "a contract without a layout states none: {layer:#}"
+    );
+}

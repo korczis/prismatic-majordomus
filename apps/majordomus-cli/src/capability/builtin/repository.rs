@@ -87,6 +87,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["repository", "introspection"],
+                cache: crate::capability::CachePolicy::Generation { max_entries: 1 },
                 handler: repository_info,
             },
             capability! {

@@ -1,0 +1,33 @@
+id: I2840
+milestone: mcp-transports-are-reliable
+title: "A cancelled MCP call stops, and the client is told it stopped"
+slug: a-cancelled-mcp-call-stops
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Honour notifications/cancelled on every MCP transport: the call it names stops within a declared bound, is answered as cancelled rather than with a late result, and a writer's effect is reported as complete, absent or unknown."
+why: "The milestone's acceptance criterion 'notifications/cancelled stops a running call within a bound' is the only one with no implementation; its two issues (I2145 at-most-once resend, I2147 bounds) are DONE, so the milestone read VERIFY with an unproved criterion. Read on master 01227a0f74a on 2026-10-17: Session::notification (apps/majordomus-cli/src/mcp/protocol.rs:245) handles notifications/initialized and drops every other notification at debug level; no transport tracks the request a cancellation names; the stdio bridge forwards one request at a time under a mutex (apps/majordomus-cli/src/commands/mcp.rs:82,217), so a cancellation arriving behind a running call is read only after the call ends. Tests send notifications/cancelled only as noise a session must survive (apps/majordomus-cli/tests/mcp_conformance.rs:463, mcp_shared.rs:810), never to stop anything. The execution engine already has a cooperative cancellation flag (apps/majordomus-cli/src/execution/engine.rs:340) that MCP does not reach."
+current_state: "notifications/cancelled is accepted and ignored on stdio, on the bridge and on the Streamable HTTP endpoint; a cancelled call runs to completion and its result is delivered."
+desired_state: "Each transport keeps the in-flight request ids of a session; notifications/cancelled naming one raises that request's cancellation flag, which the capability dispatcher and the execution engine read; the stdio bridge reads the client while a call is outstanding so a cancellation is forwarded, not queued; a cancelled request is answered with no result (per the MCP cancellation rule) and a declared-effect writer that may have run is logged as outcome unknown; a cancellation naming an unknown or finished id is ignored. docs/MCP.md states the bound and what a cancelled writer leaves."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance_http.rs"
+  - "apps/majordomus-cli/tests/mcp_shared.rs"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A long-running tool call named by notifications/cancelled stops within the declared bound on stdio, over the bridge and over Streamable HTTP, each proved by a real-process test"
+  - "A cancelled call delivers no late result, and the session answers the next request"
+  - "A cancelled writer is reported as completed, not started, or unknown, never silently"
+  - "A cancellation naming an unknown or already answered id changes nothing"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_conformance_http --test mcp_shared"
+evidence_required:
+  - "cancellation_test"
+created_at: 2026-10-17
+updated_at: 2026-10-17

@@ -31,6 +31,36 @@ mj_cmdreg_class() {
       if (k[2] + 0 > max) max = k[2] + 0 }
     END { for (i = 0; i <= max; i++) if ((i in id) && id[i] == want) { print cls[i]; exit } }' "$MJ_CMDREG_FLAT"
 }
+# the class of one whole argument vector: `mj_cmdreg_effective <command> [<arg>...]` prints
+# "<class><TAB><what decided it>". The command's own class is the worst case of everything
+# it can do; the registry's `effects` say where subcommands or flags differ. A subcommand
+# entry replaces the command's class for that subcommand, and a flag entry only ever raises
+# it, so a vector is never admitted as less than its worst part. The subcommand is the first
+# word that is not a flag. Empty when the registry does not describe the command.
+mj_cmdreg_effective() {
+  local cmd="$1"; shift
+  awk -F= -v want="$cmd" -v args="$*" '
+    function rank(c) { return c == "read-only" ? 0 : (c == "state-mutating" ? 1 : 2) }
+    /^commands\.[0-9]+\.id=/ { split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v); id[k[2]] = v; next }
+    /^commands\.[0-9]+\.class=/ { split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v); cls[k[2]] = v; next }
+    /^commands\.[0-9]+\.effects\.[0-9]+\.(subcommand|flag|class)=/ {
+      split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v)
+      e = k[2] SUBSEP k[4]; if (k[5] == "class") ecls[e] = v; else { ekind[e] = k[5]; ename[e] = v }
+      if (k[2] + 0 > max) max = k[2] + 0; if (k[4] + 0 > emax[k[2]]) emax[k[2]] = k[4] + 0; next }
+    END {
+      for (i in id) if (id[i] == want) c = i
+      if (c == "") exit
+      n = split(args, w, " "); subc = ""
+      for (j = 1; j <= n; j++) if (w[j] !~ /^-/) { subc = w[j]; break }
+      cur = cls[c]; why = "command"
+      for (m = 0; m <= emax[c] + 0; m++) { e = c SUBSEP m
+        if ((e in ekind) && ekind[e] == "subcommand" && ename[e] == subc && subc != "") { cur = ecls[e]; why = "subcommand \047" subc "\047" } }
+      for (j = 1; j <= n; j++) { f = w[j]; if (f !~ /^--/) continue; sub(/=.*/, "", f)
+        for (m = 0; m <= emax[c] + 0; m++) { e = c SUBSEP m
+          if ((e in ekind) && ekind[e] == "flag" && ename[e] == f && rank(ecls[e]) > rank(cur)) { cur = ecls[e]; why = "flag \047" f "\047" } } }
+      printf "%s\t%s\n", cur, why
+    }' "$MJ_CMDREG_FLAT"
+}
 # ids of the commands the registry marks public, one per line, in registry order. One pass
 # over the flat file: the previous shape ran one awk per index per field, and was called
 # from inside loops, which is where the command-coverage validator spent three seconds.
@@ -87,6 +117,25 @@ mj_validate_command_surface() {
     grep -qE "^  $c( |\$)" "$MJ_BIN_DIR/majordomus" || {
       mj_doctrine_fail command "$c" "declared public but the usage text does not list it" "bin/majordomus --help"; bad=1; }
   done
+
+  # An effect names something the command takes and a class the registry knows. A subcommand
+  # must be a word of the command's syntax, a flag must be written in it, and a flag may not
+  # claim to be read-only, because a flag only ever raises what the command already is.
+  local problem
+  while IFS= read -r problem; do
+    [ -n "$problem" ] || continue
+    mj_doctrine_fail command "${problem%%: *}" "${problem#*: }" "grep -n 'effects:' share/commands.yaml"; bad=1
+  done < <(awk -F= '
+    /^commands\.[0-9]+\.(id|syntax)=/ { split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v); if (k[3] == "id") id[k[2]] = v; else syn[k[2]] = v; next }
+    /^commands\.[0-9]+\.effects\.[0-9]+\.(subcommand|flag|class)=/ {
+      split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v); e = k[2] SUBSEP k[4]
+      if (k[5] == "class") ecls[e] = v; else { ekind[e] = k[5]; ename[e] = v }
+      cmd[e] = k[2]; next }
+    END { for (e in cmd) { c = cmd[e]; n = id[c]; s = syn[c]
+        if (ecls[e] !~ /^(read-only|state-mutating|generated-output-mutating)$/) { print n ": effect " ename[e] " declares class \047" ecls[e] "\047, which is not a class the registry has"; continue }
+        if (ekind[e] == "flag" && ecls[e] == "read-only") print n ": flag " ename[e] " is declared read-only; a flag can only raise the command class"
+        if (ekind[e] == "flag" && index(s, ename[e]) == 0) print n ": flag " ename[e] " is in an effect but not in the command syntax"
+        if (ekind[e] == "subcommand" && s !~ ("(^|[^a-z0-9-])" ename[e] "([^a-z0-9-]|$)")) print n ": subcommand " ename[e] " is in an effect but not in the command syntax" } }' "$MJ_CMDREG_FLAT")
 
   [ "$bad" = 0 ] && mj_doctrine_ok command "surface" \
     "$(printf '%s\n' "$public" | wc -w | tr -d ' ') public command(s), reconciled against the dispatch table" \

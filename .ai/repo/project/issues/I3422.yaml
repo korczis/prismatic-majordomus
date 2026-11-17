@@ -1,0 +1,37 @@
+id: I3422
+milestone: an-inference-names-its-source-and-budget
+title: "Advisor consultations are economics usage with their measurement class, and a consultation over its plan's budget is a finding"
+slug: consultation-usage-is-economics
+priority: p2
+profile: implementation
+objective: "Read each consultation's reported usage, model, latency and outcome into the economics usage record as reported tokens, with no invented cost and absent where the transport reported nothing. Report a consultation whose reported tokens exceed its plan's budget as an economics check finding."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for model calls and tokens to be attributed, and for estimates to be kept apart from billing (campaigns/prismatic-way-cognitive-fabric-prompt-pack/contracts/ECONOMICS.md). prompts/04_REASONING_MESH.md names unexpected model cost as a required test."
+current_state: "AdvisorUsage holds input and output tokens only (apps/majordomus-cli/src/reasoning/record.rs:384-390), and no file under apps/majordomus-cli/src/economics names a consultation or an advisor. I3292 plans reported, estimated and billed fields for provider usage."
+desired_state: "economics summary has an advisor-consultation row per source with reported tokens, latency and outcome counts. Cost is absent unless I3292's estimate applies, and economics check names an over-budget consultation."
+scope:
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Price lists or billing reconciliation (I3292)"
+  - "Provider session usage (milestone every-sessions-usage-is-observed)"
+  - "Any UI screen"
+depends_on:
+  - "I3418"
+  - "I3421"
+  - "I3292"
+serves:
+  - "a-change-reconciles-what-it-affects#inference-stays-within-a-declared-budget"
+acceptance_criteria:
+  - "A fixture task with two consultations yields their reported tokens in economics summary with class reported"
+  - "A consultation that reported no usage shows absent with a reason, never zero"
+  - "A consultation above its plan's budget is an economics check finding that names it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "bash test/run.sh 430_economics 431_economics_claims_gated"
+evidence_required:
+  - "economics test over a reasoning-store fixture"
+created_at: 2026-10-19
+updated_at: 2026-10-19

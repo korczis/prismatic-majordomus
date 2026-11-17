@@ -1,0 +1,32 @@
+id: I2870
+milestone: two-folder-integration
+title: "The layer's layout is declared as typed data: what each half holds, excludes, and the lifecycle of its contents"
+slug: the-layout-is-declared
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "A versioned layout declaration, defined in a .proto beside context/v1 and projected to JSON Schema by majordomus generate, states for `.ai/repo` and `.ai/local` and each of their directories what it holds, what it must never hold, and the lifecycle of its contents in I1101's vocabulary (canonical, derived, generated, cache, runtime, accidental). The declaration describes the tree as it is today. The local half, which carries no tracked contract of its own, is declared in the manifest's `local:` block; its Rust type and the hand-written manifest schema are held in step by a test, until I2873 generates that schema from typed sections."
+why: "The first slice of I1102. On 2026-10-21 a survey of master 905159df7cc found the boundary between authored knowledge and control-plane state stated only in prose (.ai/README.md) and in the context documents' Purpose sections; no typed field says what a directory may hold, so nothing can check it."
+current_state: "context/v1 declares a directory's status, scope and children but not its holds, excludes or lifecycle; share/schemas/majordomus/manifest/manifest.v1.schema.json is hand-written while the manifest's Rust types derive only Deserialize."
+desired_state: "One declaration, typed and versioned, names the contents of every directory of both halves; its schema is generated."
+scope:
+  - share/schemas
+  - apps/majordomus-cli/src/repository.rs
+  - apps/majordomus-cli/src/proto
+  - .ai/repo/project/issues/I2870.yaml
+non_scope:
+  - "Where control-plane state lives in the end (.ai/local or .majordomus/): the owner's open question on I1102"
+  - "Refusing a misplaced file (I2871) and deriving the skeleton (I2872)"
+  - "Generating the manifest schema from typed sections (I2873): today's open sections map would loosen it"
+depends_on:
+  - I1101
+acceptance_criteria:
+  - "A layout declaration names, for .ai/repo, .ai/local and each of their directories, what it holds, what it excludes and its lifecycle, typed and versioned"
+  - "The context schema is generated from its proto and generate --check holds it; a test holds the manifest's Rust type and its hand-written schema in step for the new local fields"
+validation:
+  - "cargo test --workspace --all-features"
+  - "majordomus generate --check"
+evidence_required:
+  - layout_declared
+created_at: 2026-10-21
+updated_at: 2026-10-21

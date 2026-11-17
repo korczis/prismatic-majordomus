@@ -1,0 +1,7 @@
+# M09: Chaos, recovery, operational visibility and explicit SLOs
+
+Build a failure-injection suite using actual process/network transports where possible and deterministic simulated clocks/networks for combinatorial cases. Enumerate failures: lost/duplicated/reordered packet, clock skew, server restart, SIGKILL during lease write, disk full, read-only state dir, permission change, truncated journal, corruption, partial write, network partition, handshake refused, compatibility mismatch, port collision, CPU/resource contention, slow peers, last-client departure, frozen process and UI reconnect. Verify bounded resource use and no permanent poisoned runtime state. No idle infinite retry loops or blocked `cd`/direnv.
+
+Expose typed diagnostic families, trace/operation IDs, safe structured logs, metrics and debug/doctor/explain paths via canonical capability registry. Health must distinguish process running vs ready vs mesh healthy vs policy-allowed vs degraded. Add bounded retry and jitter; circuit breakers only if justified; model recovery durations and document genuine limits. Benchmark startup, attach, discovery, journal sync, API, MCP and browser interactions with reproducible environment and measured baseline; choose budgets from observed behavior, not invented success claims.
+
+Gate: all named failure classes have test/evidence or explicit documented limitation; chaos runs reproducibly; errors actionable; no dropped silent corruption; no secret logging.

@@ -1,0 +1,189 @@
+{
+  "schema_version": "1",
+  "baseline_audit_commit": "3ede593c0e",
+  "audit_date": "2026-10-07",
+  "milestones": [
+    {
+      "id": "M00",
+      "slug": "CONTROL",
+      "title": "Campaign Governance & Verified Baseline",
+      "priority": "P0",
+      "dependencies": [],
+      "prompt": "prompts/00-control-campaign-governance-verified-baseline.md",
+      "issues": 5,
+      "goal": "Create the honest baseline and scoped execution contract; prevent this recovery program itself becoming another unbounded prompt campaign."
+    },
+    {
+      "id": "M01",
+      "slug": "TRUST",
+      "title": "Canonical Acceptance Contract & Trust Boundaries",
+      "priority": "P0",
+      "dependencies": [
+        "M00"
+      ],
+      "prompt": "prompts/01-trust-canonical-acceptance-contract-trust-boundaries.md",
+      "issues": 5,
+      "goal": "Make one typed, canonical, versioned acceptance contract that cannot be silently rewritten by the worker being judged."
+    },
+    {
+      "id": "M02",
+      "slug": "VERIFY",
+      "title": "Pinned Verification & Evidence Provenance",
+      "priority": "P0",
+      "dependencies": [
+        "M01"
+      ],
+      "prompt": "prompts/02-verify-pinned-verification-evidence-provenance.md",
+      "issues": 5,
+      "goal": "Replace worker-chosen vacuous verification with reviewer-controlled proof and replayable evidence."
+    },
+    {
+      "id": "M03",
+      "slug": "CI",
+      "title": "Independent CI / Forge Merge Gate",
+      "priority": "P0",
+      "dependencies": [
+        "M01",
+        "M02"
+      ],
+      "prompt": "prompts/03-ci-independent-ci---forge-merge-gate.md",
+      "issues": 5,
+      "goal": "Move acceptance to a verifier the worker cannot trivially bypass; keep canonical policy platform-neutral."
+    },
+    {
+      "id": "M04",
+      "slug": "DOCTOR",
+      "title": "Effect-Proof Doctrine & Enforcement Audit",
+      "priority": "P0",
+      "dependencies": [
+        "M00",
+        "M03"
+      ],
+      "prompt": "prompts/04-doctor-effect-proof-doctrine-enforcement-audit.md",
+      "issues": 5,
+      "goal": "Replace grep-existence proofs with behavioural enforcement probes, including inverse/orphan-wiring checks."
+    },
+    {
+      "id": "M05",
+      "slug": "CORRECT",
+      "title": "Policy Parser, Scope Diff & Safety Correctness",
+      "priority": "P0",
+      "dependencies": [
+        "M01",
+        "M03"
+      ],
+      "prompt": "prompts/05-correct-policy-parser,-scope-diff-safety-correctness.md",
+      "issues": 5,
+      "goal": "Fix correctness/security holes audit identified, not merely their examples."
+    },
+    {
+      "id": "M06",
+      "slug": "HOOKS",
+      "title": "Native Vendor Hook Projection",
+      "priority": "P1",
+      "dependencies": [
+        "M01",
+        "M03",
+        "M05"
+      ],
+      "prompt": "prompts/06-hooks-native-vendor-hook-projection.md",
+      "issues": 5,
+      "goal": "Compile one contract to vendor-native preventive hooks, with documented capability differences and independent CI fallback."
+    },
+    {
+      "id": "M07",
+      "slug": "LITE",
+      "title": "Minimal Adoption Profile & Fast First Run",
+      "priority": "P1",
+      "dependencies": [
+        "M03",
+        "M04",
+        "M05"
+      ],
+      "prompt": "prompts/07-lite-minimal-adoption-profile-fast-first-run.md",
+      "issues": 5,
+      "goal": "Make the essential acceptance workflow usable without the rest of the platform."
+    },
+    {
+      "id": "M08",
+      "slug": "CONVERGE",
+      "title": "Lifecycle Ownership & Surface Convergence",
+      "priority": "P1",
+      "dependencies": [
+        "M01",
+        "M02",
+        "M05"
+      ],
+      "prompt": "prompts/08-converge-lifecycle-ownership-surface-convergence.md",
+      "issues": 5,
+      "goal": "Eliminate shell/Rust split-brain by choosing a single authoritative write model; keep projections truly derived."
+    },
+    {
+      "id": "M09",
+      "slug": "MCP",
+      "title": "MCP Context-Surface Compression",
+      "priority": "P1",
+      "dependencies": [
+        "M08"
+      ],
+      "prompt": "prompts/09-mcp-mcp-context-surface-compression.md",
+      "issues": 5,
+      "goal": "Make MCP discovery proportional to tasks without destroying API usefulness."
+    },
+    {
+      "id": "M10",
+      "slug": "CLAIMS",
+      "title": "Claims, Evidence Ratchet & Honest Documentation",
+      "priority": "P0",
+      "dependencies": [
+        "M02",
+        "M03",
+        "M04"
+      ],
+      "prompt": "prompts/10-claims-claims,-evidence-ratchet-honest-documentation.md",
+      "issues": 5,
+      "goal": "Make public verification claims backed by recorded proof rather than link-presence or baseline waivers."
+    },
+    {
+      "id": "M11",
+      "slug": "PILOT",
+      "title": "Real Intent-to-Evidence Product Pilot",
+      "priority": "P2",
+      "dependencies": [
+        "M03",
+        "M07",
+        "M10"
+      ],
+      "prompt": "prompts/11-pilot-real-intent-to-evidence-product-pilot.md",
+      "issues": 5,
+      "goal": "Prove one real product outcome from intent to CI-verified acceptance rather than two self-referential intent records."
+    },
+    {
+      "id": "M12",
+      "slug": "ADOPTION",
+      "title": "Five External Users & Product Validation",
+      "priority": "P1",
+      "dependencies": [
+        "M07",
+        "M10"
+      ],
+      "prompt": "prompts/12-adoption-five-external-users-product-validation.md",
+      "issues": 5,
+      "goal": "Validate real adoption before resuming platform expansion; no fake cohorts."
+    },
+    {
+      "id": "M13",
+      "slug": "ARCH",
+      "title": "Optional Subsystems Audit & Scope Budget",
+      "priority": "P2",
+      "dependencies": [
+        "M00",
+        "M07",
+        "M12"
+      ],
+      "prompt": "prompts/13-arch-optional-subsystems-audit-scope-budget.md",
+      "issues": 5,
+      "goal": "Retain, isolate, or retire optional subsystems by measured costs and demonstrated use; no ideological bulk deletion."
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 //! tested; and an orphan, a binding to nothing and a broken contract are each refused, naming
 //! the finding.
 //!
-//! majordomus-skill: deploy-site implement repo-review assess-before-deleting report-verification-state pack-for-review pack-for-chatgpt
+//! majordomus-skill: deploy-site implement repo-review assess-before-deleting report-verification-state pack-for-review pack-for-chatgpt evolve rebaser integrator
 //!
 //! The marker above binds this file to every active skill of this repository: the last test
 //! reads each one from the repository itself and fails when one of them is not a valid,
@@ -12,9 +12,9 @@
 mod common;
 
 use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{run_in, Fixture, Served, BIN};
+use common::{run_in, Fixture, Served};
 use majordomus_cli::evidence::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use serde_json::{json, Value};
 
@@ -23,7 +23,7 @@ const MARKER: &str = concat!("majordomus-", "skill:");
 
 /// One MCP tool call over stdio; the structured content of its answer.
 fn tool(f: &Fixture, name: &str, arguments: Value) -> Value {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
@@ -153,7 +153,15 @@ fn the_command_line_http_and_mcp_answer_the_same_skills() {
     assert_eq!(cli_verify, mcp_verify);
     assert_eq!(cli_verify["valid"], true);
     assert_eq!(cli_verify["failures"], 0);
-    // a fixture has no ledger run, no site page and no gate: three debts, each a warning
+    // a fixture has no ledger run and no gate: two debts, each a warning; it publishes no
+    // skill pages, so no page is owed (I4256)
+    assert_eq!(codes(&cli_verify), ["warn:unevidenced", "warn:unenforced"]);
+
+    // once the repository publishes a skill page, every active skill without one owes it
+    f.write("site/content/skills/beta.md", "# beta\n\nThe page.\n");
+    f.commit("a published skill page");
+    let (code, cli_verify) = cli_json(&f.root(), &["skills", "verify"]);
+    assert_eq!(code, 0, "warnings alone do not refuse: {cli_verify}");
     assert_eq!(
         codes(&cli_verify),
         ["warn:unevidenced", "warn:undocumented", "warn:unenforced"]

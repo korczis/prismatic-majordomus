@@ -30,7 +30,7 @@ CRATE="$ROOT/apps/majordomus-cli"
 
 die() { printf 'release-fixture: %s\n' "$*" >&2; exit "${2:-12}"; }
 
-out=""; base=""; version=""; channel="stable"
+out=""; base=""; version=""; channel=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) out="${2:-}"; shift 2 ;;
@@ -42,8 +42,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -n "$out" ] && [ -n "$base" ] || die "--out and --base-url are required" 2
-[ -n "$version" ] || version="$("$ROOT/scripts/release-version")"
+# The default is the tree's own version, as a stable release: the installer's default path
+# resolves latest.json, and the latest release is never a pre-release, so a tree that declares
+# one (1.0.0-alpha.1) is served as its stable base (1.0.0), with the version the packed tool
+# reports restated below. A pre-release is still written when it is asked for by --version.
+[ -n "$version" ] || { version="$("$ROOT/scripts/release-version")"; version="${version%%-*}"; }
 tag="v$version"
+# The channel is the tag's own unless it is given, as release-record derives it.
+if [ -z "$channel" ]; then
+  case "$version" in *-*) channel="prerelease" ;; *) channel="stable" ;; esac
+fi
 
 mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
 [ -x "$mj" ] || die "the fixture needs the executable; build it or set MAJORDOMUS_DIST_BIN"

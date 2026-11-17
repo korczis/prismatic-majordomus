@@ -5,7 +5,16 @@
 //! The source of a value is shown in the UI itself — a tile's title, a panel's "Source"
 //! line. The UI is its own product; the Cockpit is its low-level reference, so each source
 //! carries one quiet "technical view" link to the Cockpit's page for that capability, for the
-//! reader who wants the registry behind a value. Nothing else leads there (ADR 0135).
+//! reader who wants the registry behind a value. An object a screen names and the UI has no
+//! screen of its own for — a document, a test, a declaring file, an ADR — leads to the
+//! Cockpit's page for that object, its technical view, and only when the index holds it.
+//! Nothing else leads there (ADR 0135: the diagnostic view of the capability, object or graph
+//! a panel read).
+//!
+//! Every entity a screen names is a link: to the UI's own screen or inspector for it when
+//! there is one, to its technical view when there is not, and to the address its source gives
+//! when it lives elsewhere. A value a source does not have is said as `none`, never left blank,
+//! and a list cut short says how much is left out and where the rest is.
 //!
 //! Charts are drawn here as SVG, on the server: they are complete without JavaScript, they
 //! carry their numbers as text beside them, and they draw only what a capability answered —
@@ -13,6 +22,7 @@
 
 use serde_json::Value;
 
+use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
@@ -28,6 +38,43 @@ pub const TONES: &[&str] = &["blue", "violet", "green", "cyan", "orange", "rose"
 /// The hero band every screen opens with: the screen's glyph, its title, one line saying
 /// what it is for, one sentence of lead, and the group of KPI tiles beside them.
 pub fn hero(glyph: &str, tone: &str, title: &str, tagline: &str, lead: &str, kpis: Vec<El>) -> El {
+    hero_of(None, glyph, tone, title, tagline, lead, kpis)
+}
+
+/// The hero of a screen that shows one record: the record's title is the heading, and the
+/// screen's own name stands above it as the eyebrow, so the page says first what it is about.
+pub fn hero_under(
+    eyebrow: &str,
+    glyph: &str,
+    tone: &str,
+    title: &str,
+    tagline: &str,
+    lead: &str,
+    kpis: Vec<El>,
+) -> El {
+    hero_of(Some(eyebrow), glyph, tone, title, tagline, lead, kpis)
+}
+
+fn hero_of(
+    eyebrow: Option<&str>,
+    glyph: &str,
+    tone: &str,
+    title: &str,
+    tagline: &str,
+    lead: &str,
+    kpis: Vec<El>,
+) -> El {
+    let heading = el("h1")
+        .attr("id", "mj-ui-title")
+        .class("mj-ui-title")
+        .text(title);
+    let heading = match eyebrow {
+        Some(eyebrow) => el("div")
+            .class("mj-ui-hero-titles")
+            .child(el("p").class("mj-ui-eyebrow").text(eyebrow))
+            .child(heading),
+        None => heading,
+    };
     el("section")
         .class("mj-ui-hero")
         .attr("aria-labelledby", "mj-ui-title")
@@ -42,12 +89,7 @@ pub fn hero(glyph: &str, tone: &str, title: &str, tagline: &str, lead: &str, kpi
                                 .class(format!("mj-ui-hero-glyph mj-tone--{tone}"))
                                 .child(icon(glyph)),
                         )
-                        .child(
-                            el("h1")
-                                .attr("id", "mj-ui-title")
-                                .class("mj-ui-title")
-                                .text(title),
-                        ),
+                        .child(heading),
                 )
                 .child(el("p").class("mj-ui-tagline").text(tagline))
                 .child(el("p").class("mj-ui-lead").text(lead)),
@@ -95,6 +137,30 @@ pub fn kpi_state(label: &str, reading: &Reading) -> El {
     kpi_with(label, reading, shown(reading), badge)
 }
 
+/// A KPI tile for a figure this process did not observe, and why: never a `0` and never a
+/// `no`, because a runtime that is not here measured nothing (a published snapshot's runner
+/// is on no mesh, a checkout may run no forge). The reason is the answer's own word.
+pub fn kpi_not_observed(label: &str, reason: &str, reading: &Reading) -> El {
+    el("span")
+        .class("mj-ui-kpi")
+        .attr(
+            "title",
+            format!("not observed: {reason}; read from {}", reading.cite()),
+        )
+        .child(el("span").class("mj-ui-kpi-label").text(label))
+        .child(el("span").class("mj-ui-kpi-value").text("not observed"))
+        .child(el("span").class("mj-ui-kpi-source").text(reading.cite()))
+}
+
+/// The body of a panel whose subject this process did not observe, with the reason the
+/// source gave: an unobserved subject is said in words, never drawn as an empty one.
+pub fn not_observed(subject: &str, reason: &str) -> El {
+    el("p")
+        .class("mj-ui-empty")
+        .child(word_badge("unknown"))
+        .text(format!(" {subject} was not observed here: {reason}"))
+}
+
 fn kpi_with(label: &str, reading: &Reading, value: String, badge: Option<El>) -> El {
     el("span")
         .class("mj-ui-kpi")
@@ -121,10 +187,9 @@ pub fn shown(r: &Reading) -> String {
 }
 
 fn number(n: &serde_json::Number) -> String {
-    match (n.as_u64(), n.as_i64(), n.as_f64()) {
-        (Some(u), _, _) => u.to_string(),
-        (_, Some(i), _) => i.to_string(),
-        (_, _, Some(f)) => {
+    // an integer is written as the source wrote it; only a fraction is rounded
+    match n.as_f64() {
+        Some(f) if n.is_f64() => {
             let s = format!("{f:.2}");
             s.trim_end_matches('0').trim_end_matches('.').to_string()
         }
@@ -188,6 +253,10 @@ pub fn wide(panel: El) -> El {
     el("div").class("mj-ui-span").child(panel)
 }
 
+/// The attribute a source line carries while its reading is not of the repository as it is
+/// now. The page's script reads the screen again shortly when it finds one.
+pub const CATCHING_UP: &str = "data-catching-up";
+
 /// The sources of a panel: for each, the capability and how long it took, then every other
 /// way to ask it the same question — the API route a browser opens, the command a person
 /// types, the MCP tool an agent calls — and its technical reference in the Cockpit. Each is
@@ -207,6 +276,14 @@ pub fn sources(answers: &[&Answer]) -> El {
                     .class("mj-ui-dim")
                     .text(format!("{} ms", a.took.as_millis())),
             );
+        // a reading that is not simply current says so, and one a newer reading is about to
+        // replace marks its line, which is what the page's script reads the screen again for
+        if let Some(note) = a.standing.note() {
+            line = line.child(el("span").class("mj-ui-dim").text(note));
+        }
+        if a.standing.catching_up() {
+            line = line.attr(CATCHING_UP, "");
+        }
         if let Some(path) = &a.exposure.get {
             line = line.child(chip_link("API", path, "open the same answer as JSON"));
         }
@@ -249,6 +326,117 @@ pub fn technical(capability: &str) -> String {
     format!("{}/capabilities/{capability}", crate::cockpit::PREFIX)
 }
 
+/// The Cockpit's page for one object of the index: the technical view of something a screen
+/// names and has no screen of its own for.
+pub fn object_href(uri: &str) -> String {
+    format!(
+        "{}/object?uri={}",
+        crate::cockpit::PREFIX,
+        crate::http::router::percent_encode(uri)
+    )
+}
+
+/// An object the index holds, as a link to its technical view, labelled as the screen names
+/// it. The caller knows the index holds it, because the source that named it said so (a
+/// rule's own `uri`, a test reported `present`); [`object_if`] asks when nothing said.
+pub fn object(uri: &str, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link mj-ui-mono")
+        .attr("href", object_href(uri))
+        .attr(
+            "title",
+            format!("{uri}: its technical view, in the Cockpit"),
+        )
+        .text(label)
+}
+
+/// [`object`] when the index holds `uri`, the label as text when it does not, so no link
+/// leads to a page that answers 404, and `none` when there is no label at all. Whether the
+/// index holds it is asked of `objects.get`, the capability every surface resolves a URI with
+/// (ADR 0012), never read from the index beside it. Asked as a reading, like every source of
+/// a screen (`project.no-screen-waits-for-a-source`): an object whose first reading has not
+/// arrived is its label as text until it has.
+pub fn object_if(ctx: &Context, uri: &str, label: &str) -> El {
+    if label.is_empty() {
+        return none();
+    }
+    match ctx
+        .read("objects.get", serde_json::json!({ "uri": uri }))
+        .value
+    {
+        Ok(_) => object(uri, label),
+        Err(_) => el("span").class("mj-ui-mono").text(label),
+    }
+}
+
+/// An object as its source names it: a link to its technical view when the source gave its
+/// URI, its label as text when it gave none, and `none` when it gave no label either.
+pub fn object_or(uri: &str, label: &str) -> El {
+    match (uri.is_empty(), label.is_empty()) {
+        (_, true) => none(),
+        (true, false) => el("span").class("mj-ui-mono").text(label),
+        (false, false) => object(uri, label),
+    }
+}
+
+/// A link inside the UI, labelled.
+pub fn link(href: impl Into<String>, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link")
+        .attr("href", href.into())
+        .text(label)
+}
+
+/// A link whose label is an identifier, set as code.
+pub fn code_link(href: impl Into<String>, label: impl Into<String>) -> El {
+    el("a")
+        .class("mj-ui-link mj-ui-mono")
+        .attr("href", href.into())
+        .text(label)
+}
+
+/// A value a source does not have, said: `none`, never a blank cell.
+pub fn none() -> El {
+    el("span").class("mj-ui-dim").text("none")
+}
+
+/// A string field of an entry, or `none` when the entry has no such field or it is empty:
+/// [`text`] for a cell a reader reads, where a blank would say nothing.
+pub fn value(entry: &Value, key: &str) -> String {
+    Some(text(entry, key))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "none".into())
+}
+
+/// What a list cut short leaves out: "the first `shown` of `total`", and where the whole list
+/// is when there is a place that shows it. Nothing when nothing was left out.
+pub fn more(shown: usize, total: usize, whole: Option<&str>) -> Option<El> {
+    (total > shown).then(|| {
+        let line = el("p").class("mj-ui-line mj-ui-dim").text(format!(
+            "The first {shown} of {total}; {} more not shown here. ",
+            total - shown
+        ));
+        match whole {
+            Some(href) => line.child(link(href, "Open the whole list")),
+            None => line,
+        }
+    })
+}
+
+/// An identifier as a fragment a page can carry: letters, digits, `-`, `_` and `.` kept,
+/// anything else a `-`, so an id a source writes never breaks out of the attribute.
+pub fn anchor(id: &str) -> String {
+    id.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.') {
+                c
+            } else {
+                '-'
+            }
+        })
+        .collect()
+}
+
 /// The body of a panel whose source could not answer.
 pub fn unanswered(a: &Answer) -> Option<El> {
     a.value.as_ref().err().map(|reason| {
@@ -260,6 +448,30 @@ pub fn unanswered(a: &Answer) -> Option<El> {
                 a.source.capability
             ))
     })
+}
+
+/// A command a reader runs again, as a code block with a copy control (I3002). The code is the
+/// whole command, wrapped rather than cut, selectable as text; the button copies exactly that
+/// text. It is on the page hidden, and `ui.js` shows it only where a clipboard can be written,
+/// so a reader without the script, or without a clipboard, is never offered a button that does
+/// nothing. What the copy did is said on the button and announced by the status beside it.
+pub fn command(text: &str) -> El {
+    el("div")
+        .class("mj-ui-command")
+        .child(
+            el("pre")
+                .class("mj-ui-command-text")
+                .child(el("code").text(text)),
+        )
+        .child(
+            el("button")
+                .attr("type", "button")
+                .class("mj-btn mj-btn--sm")
+                .attr("data-mj-copy", "")
+                .flag("hidden")
+                .text("Copy"),
+        )
+        .child(el("span").class("mj-sr-only").attr("role", "status"))
 }
 
 /// An empty list, said in words.
@@ -294,11 +506,18 @@ pub fn text(entry: &Value, key: &str) -> String {
 
 /// The list at `pointer` in an answer, or none.
 pub fn list(answer: &Answer, pointer: &str) -> Vec<Value> {
+    items(answer, pointer).to_vec()
+}
+
+/// The list at `pointer` in an answer, borrowed, or none: what a screen that only reads the
+/// rows asks, so that a large answer (`capabilities.list` holds thousands) is not copied on
+/// every request.
+pub fn items<'a>(answer: &'a Answer, pointer: &str) -> &'a [Value] {
     answer
         .ok()
         .and_then(|v| v.pointer(pointer))
         .and_then(Value::as_array)
-        .cloned()
+        .map(Vec::as_slice)
         .unwrap_or_default()
 }
 
@@ -554,14 +773,209 @@ mod tests {
     use crate::ui::source::{Exposure, Source};
     use std::time::Duration;
 
+    /// A command is a code block holding exactly its text, escaped, with a copy button the page
+    /// carries hidden for the script to offer, and a status beside it for what the copy did
+    /// (I3002).
+    #[test]
+    fn a_command_is_a_code_block_with_a_copy_button_held_back() {
+        let html = command("test -n 'a <b> & c' && echo \"held\"").render();
+        assert!(
+            html.contains(
+                "<pre class=\"mj-ui-command-text\"><code>test -n &#39;a &lt;b&gt; &amp; c&#39; &amp;&amp; echo &quot;held&quot;</code></pre>"
+            ),
+            "{html}"
+        );
+        assert!(
+            html.contains("<button type=\"button\" class=\"mj-btn mj-btn--sm\" data-mj-copy hidden>Copy</button>"),
+            "{html}"
+        );
+        assert!(html.contains("role=\"status\""), "{html}");
+    }
+
+    /// A source line whose reading is not of the repository as it is now says so and is
+    /// marked for the page's script; a current reading's line carries neither.
+    #[test]
+    fn a_source_line_that_is_catching_up_says_so_and_is_marked() {
+        use crate::capability::readings::Freshness;
+        use crate::ui::source::Standing;
+        let current = answer(Ok(Value::Null));
+        let line = sources(&[&current]).render();
+        assert!(!line.contains(CATCHING_UP), "{line}");
+        assert!(
+            !line.contains("read "),
+            "a reading taken now says no age: {line}"
+        );
+
+        let mut stale = answer(Ok(Value::Null));
+        stale.standing = Standing {
+            age: Some(Duration::from_secs(12)),
+            freshness: Freshness::Stale,
+            refreshing: true,
+        };
+        let line = sources(&[&stale]).render();
+        assert!(line.contains(CATCHING_UP), "{line}");
+        assert!(
+            line.contains("read 12 s ago, before the repository changed; reading again"),
+            "{line}"
+        );
+
+        let mut old = answer(Ok(Value::Null));
+        old.standing = Standing {
+            age: Some(Duration::from_secs(30)),
+            freshness: Freshness::Current,
+            refreshing: false,
+        };
+        let line = sources(&[&old]).render();
+        assert!(line.contains("read 30 s ago"), "{line}");
+        assert!(!line.contains(CATCHING_UP), "old is not stale: {line}");
+    }
+
     fn answer(value: Result<Value, String>) -> Answer {
         Answer {
             source: Source::of("plan.status"),
             route: Some("GET /api/v1/plan/status".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(5),
+            standing: crate::ui::source::Standing::NOW,
         }
+    }
+
+    fn reading(value: Value) -> Reading {
+        answer(Ok(serde_json::json!({ "v": value }))).read("/v")
+    }
+
+    /// A count tile counts the list or the map at its pointer, and says which way it is
+    /// missing otherwise; a state tile draws the word as a badge.
+    #[test]
+    fn a_count_tile_counts_the_answers_own_list_or_map() {
+        let list = kpi_count("Items", &reading(serde_json::json!([1, 2, 3]))).render();
+        assert!(list.contains(">3<"), "{list}");
+        let map = kpi_count("Keys", &reading(serde_json::json!({ "a": 1, "b": 2 }))).render();
+        assert!(map.contains(">2<"), "{map}");
+        let failed = answer(Err("refused".into())).read("/v");
+        assert!(kpi_count("Items", &failed)
+            .render()
+            .contains("not answered"));
+        let state = kpi_state("Health", &reading(serde_json::json!("warn"))).render();
+        assert!(
+            state.contains("mj-badge") && state.contains("warn"),
+            "{state}"
+        );
+        let blank = kpi_state("Health", &reading(serde_json::json!(""))).render();
+        assert!(
+            !blank.contains("mj-badge"),
+            "an empty word is no badge: {blank}"
+        );
+    }
+
+    /// Every kind of value has one way of being shown, and a negative integer is not
+    /// rounded as if it were a fraction.
+    #[test]
+    fn every_kind_of_value_is_shown_one_way() {
+        assert_eq!(shown(&reading(serde_json::json!(true))), "yes");
+        assert_eq!(shown(&reading(serde_json::json!(false))), "no");
+        assert_eq!(shown(&reading(serde_json::json!(-4))), "-4");
+        assert_eq!(shown(&reading(serde_json::json!(0.5))), "0.5");
+        assert_eq!(shown(&reading(serde_json::json!(2.0))), "2");
+        assert_eq!(shown(&reading(serde_json::json!(["a"]))), "[\"a\"]");
+    }
+
+    /// A meter of a total of zero draws no bar, only the two numbers.
+    #[test]
+    fn a_meter_of_nothing_draws_the_numbers_and_no_bar() {
+        let html = meter(Some(0), Some(0)).render();
+        assert!(
+            html.contains("0 of 0") && !html.contains("mj-ui-meter-fill"),
+            "{html}"
+        );
+        let full = meter(Some(5), Some(4)).render();
+        assert!(
+            full.contains("width:100%"),
+            "a meter never overflows: {full}"
+        );
+        assert!(meter(None, Some(4)).render().contains("unknown"));
+    }
+
+    /// A graph draws only the nodes that take part in an edge between known nodes, and an
+    /// edge to a node it does not have is left out rather than drawn to nowhere.
+    #[test]
+    fn a_graph_draws_only_related_nodes_and_known_edges() {
+        let node = |id: &str| GraphNode {
+            id: id.into(),
+            label: id.to_uppercase(),
+            tone: "blue",
+            href: format!("/ui/roadmap#{id}"),
+            kind: "milestone",
+        };
+        let html = graph(
+            "Milestones",
+            Layout::Directed,
+            &[node("a"), node("b"), node("lonely")],
+            &[("a".into(), "b".into()), ("b".into(), "ghost".into())],
+            el("p").text("the table"),
+        )
+        .render();
+        let data: Value = serde_json::from_str(
+            &html
+                .split("data-graph=\"")
+                .nth(1)
+                .and_then(|r| r.split('"').next())
+                .expect("the graph's data")
+                .replace("&quot;", "\"")
+                .replace("&amp;", "&"),
+        )
+        .expect("the graph's data is JSON");
+        assert_eq!(data["layout"], "directed");
+        let ids: Vec<&str> = data["nodes"]
+            .as_array()
+            .expect("nodes")
+            .iter()
+            .filter_map(|n| n["id"].as_str())
+            .collect();
+        assert_eq!(ids, ["a", "b"], "only nodes on a known edge: {html}");
+        assert_eq!(data["edges"].as_array().map(Vec::len), Some(1));
+        assert!(html.contains("the table"), "the fallback stays beneath");
+        let force = graph("Mesh", Layout::Force, &[], &[], el("p")).render();
+        assert!(force.contains("force"), "{force}");
+    }
+
+    /// A plan status is drawn in its word's tone, and an unknown word in the neutral one.
+    #[test]
+    fn a_status_is_drawn_in_its_words_tone() {
+        for (word, tone) in [
+            ("done", "green"),
+            ("ACTIVE", "blue"),
+            ("verify", "blue"),
+            ("ready", "cyan"),
+            ("blocked", "rose"),
+            ("planned", "violet"),
+            ("something-new", "orange"),
+        ] {
+            assert_eq!(status_tone(word), tone, "{word}");
+        }
+    }
+
+    /// A timeline keeps the source's order and shows each entry's day, with the full
+    /// timestamp in its datetime.
+    #[test]
+    fn a_timeline_keeps_the_order_and_shows_the_day() {
+        let html = timeline(vec![
+            (
+                "2026-10-11T09:00:00Z".into(),
+                "second".into(),
+                el("p").text("b"),
+            ),
+            (
+                "2026-10-10T09:00:00Z".into(),
+                "first".into(),
+                el("p").text("a"),
+            ),
+        ])
+        .render();
+        assert!(html.find("second") < html.find("first"), "{html}");
+        assert!(html.contains("datetime=\"2026-10-11T09:00:00Z\""));
+        assert!(html.contains(">2026-10-11<"));
     }
 
     #[test]
@@ -620,5 +1034,90 @@ mod tests {
             state_word(&serde_json::json!({ "status": "warn" }), "status"),
             "warn"
         );
+    }
+
+    /// A value a source does not have reads `none`, never a blank; one it has is itself.
+    #[test]
+    fn a_missing_value_reads_none() {
+        let e = serde_json::json!({ "title": "A", "empty": "" });
+        assert_eq!(value(&e, "title"), "A");
+        assert_eq!(value(&e, "empty"), "none");
+        assert_eq!(value(&e, "absent"), "none");
+        assert_eq!(none().render(), "<span class=\"mj-ui-dim\">none</span>");
+    }
+
+    /// A list cut short says how many it leaves out and where the whole list is; one that
+    /// was not cut says nothing.
+    #[test]
+    fn a_cut_list_says_what_it_leaves_out() {
+        assert!(more(8, 8, Some("/ui/roadmap")).is_none());
+        assert!(more(3, 2, None).is_none());
+        let html = more(8, 31, Some("/ui/roadmap"))
+            .expect("a cut list")
+            .render();
+        assert!(html.contains("The first 8 of 31; 23 more"), "{html}");
+        assert!(html.contains("href=\"/ui/roadmap\""), "{html}");
+        let nowhere = more(10, 12, None).expect("a cut list").render();
+        assert!(
+            nowhere.contains("2 more") && !nowhere.contains("href"),
+            "{nowhere}"
+        );
+    }
+
+    /// An object leads to its technical view by its URI, percent-encoded; an id becomes a
+    /// fragment that cannot break out of its attribute.
+    #[test]
+    fn an_object_leads_to_its_technical_view() {
+        assert_eq!(
+            object_href("majordomus://test/test/cases/1_a.sh"),
+            "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F1_a.sh"
+        );
+        let html = object("majordomus://adr/adr-0135", "ADR 0135").render();
+        assert!(html.contains("href=\"/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0135\""));
+        assert!(
+            html.contains(">ADR 0135<") && html.contains("technical view"),
+            "{html}"
+        );
+        assert_eq!(anchor("shell-suite"), "shell-suite");
+        assert_eq!(anchor("a b\"c/d@1"), "a-b-c-d-1");
+        assert_eq!(
+            link("/ui/docs", "Docs").render(),
+            "<a class=\"mj-ui-link\" href=\"/ui/docs\">Docs</a>"
+        );
+        assert!(code_link("/ui/x", "x").render().contains("mj-ui-mono"));
+    }
+
+    /// Whether an object is a link is asked of the index: one it holds leads to its technical
+    /// view, one it does not is its label as text, and no label at all is `none`.
+    #[test]
+    fn an_object_is_a_link_only_when_the_index_holds_it() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let held = object_if(&ctx, "majordomus://document/docs/DOC_0.md", "docs/DOC_0.md").render();
+        assert!(held.contains("href=\"/cockpit/object?uri="), "{held}");
+        let absent = object_if(&ctx, "majordomus://document/docs/NOPE.md", "docs/NOPE.md").render();
+        assert_eq!(absent, "<span class=\"mj-ui-mono\">docs/NOPE.md</span>");
+        assert_eq!(
+            object_if(&ctx, "majordomus://document/", "").render(),
+            none().render()
+        );
+    }
+
+    /// An object a source names with its URI is a link, one named without is text, and one
+    /// not named at all is `none`.
+    #[test]
+    fn an_object_is_drawn_as_its_source_names_it() {
+        assert!(object_or("majordomus://rule/a@1", "a.md")
+            .render()
+            .contains("href="));
+        assert_eq!(
+            object_or("", "a.md").render(),
+            "<span class=\"mj-ui-mono\">a.md</span>"
+        );
+        assert_eq!(
+            object_or("majordomus://rule/a@1", "").render(),
+            none().render()
+        );
+        assert_eq!(object_or("", "").render(), none().render());
     }
 }

@@ -15,7 +15,7 @@
 # scripts/derive-check's verdict, not this case's. --no-css: the styling is irrelevant to a
 # link. Skips itself without zola, as the other site cases do.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null 2>&1 || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 command -v jq >/dev/null 2>&1 || skip "jq absent"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj532.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 P="$S/public"
@@ -31,7 +31,9 @@ REPO="$(jq -r '.repository_url' "$ROOT/site/data/generated/project.json")"
 # row's first code span, or with `schema` its data-schema-file (and rows without one are skipped)
 rows() {
   awk -v mode="$2" 'BEGIN { RS = "<tr" } NR > 1 {
-    rec = $0; name = ""; hrefs = ""
+    # a row ends at its </tr>: the last row would otherwise run on to the end of the page and
+    # collect the links of whatever follows the table
+    rec = $0; name = ""; hrefs = ""; if ((e = index(rec, "</tr>")) > 0) rec = substr(rec, 1, e - 1)
     if (mode == "schema") {
       if (!match(rec, /data-schema-file="[^"]*"/)) next
       name = substr(rec, RSTART + 18, RLENGTH - 19)

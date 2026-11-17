@@ -1,0 +1,3 @@
+# Phase 04: Safe reconcile with ownership separation
+
+Read master prompt. Implement render/diff/check/status/explain/sync using same projection engine. Add tracked managed-ownership manifest with per-artifact fingerprints, transactional atomic staging + rollback, idempotence, conflict resolution and three-way merge or conflict refusal. Respect user-owned settings; refuse unsafe symlink/path traversals; do not leak secrets. Make sync explicit, checks read-only, and `cargo build` unrelated to editor config writes. Add precise diagnostics and migration of legacy generated files without destructive takeover. Test concurrency, partial failures, manual edits and sparse/readonly worktrees.

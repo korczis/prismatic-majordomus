@@ -452,8 +452,8 @@ pub fn derive(id: &str, registry: &CapabilityRegistry, index: &Index) -> Option<
 pub fn whole(graph: Graph) -> Result<Graph, String> {
     if graph.metadata.truncated {
         return Err(format!(
-            "the `{}` graph stopped at {MAX_NODES} nodes and would be committed as a prefix of the repository; derive it whole (graph::composed_complete) or raise the bound",
-            graph.id
+            "the `{}` graph stopped at {} nodes (the bound a person is shown is {MAX_NODES}) and would be committed as a prefix of the repository; derive it whole (graph::composed_complete) or raise the bound",
+            graph.id, graph.metadata.nodes
         ));
     }
     Ok(graph)
@@ -970,6 +970,12 @@ fn composed_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
 /// from. [`MAX_NODES`] bounds a graph a person is shown; a reader of the graph as data —
 /// the site's entity pages and catalogue counts, a context selection — would take a prefix
 /// for the repository and miss whatever sorted past it.
+///
+/// It has no node bound, so its size is a measurement rather than a limit. Measured on
+/// master 97c4521f91 (2026-10-14): 2795 nodes, 6128 edges and 3,339,236 bytes of
+/// `docs/generated/graph.json`, already past [`MAX_NODES`]. Generation still passes it
+/// through [`whole`], so a bound that comes back refuses the derive instead of committing a
+/// prefix (I1966).
 ///
 /// ```
 /// use majordomus_cli::graph;

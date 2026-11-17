@@ -10,12 +10,20 @@
 //! A source that could not answer is a reading whose state is [`Availability::Failed`],
 //! carrying the reason. A pointer that resolves to nothing is [`Availability::Absent`].
 //! Neither is ever shown as a zero.
+//!
+//! A screen does not wait for its sources either. It asks for the *latest reading* of each
+//! (`crate::capability::readings`): what this process knows now, handed over at once, read
+//! again behind the reader whenever it is not current. So every answer also says how it
+//! stands: [`Standing::age`], whether the repository has moved since, and whether a newer
+//! reading is on its way. A reading that is not current is shown as what it is.
 
 use std::collections::BTreeMap;
-use std::time::{Duration, Instant};
+use std::sync::Arc;
+use std::time::Duration;
 
 use serde_json::Value;
 
+use crate::capability::readings::{read_shared, Freshness, Latest, Patience};
 use crate::capability::Context;
 
 /// One capability asked with one input.
@@ -53,9 +61,70 @@ pub struct Answer {
     /// Every other way to ask the same question, as the capability declares it.
     pub exposure: Exposure,
     /// The answer, or why there is none.
-    pub value: Result<Value, String>,
+    pub value: Result<Arc<Value>, String>,
     /// How long the executor took to answer.
     pub took: Duration,
+    /// How the answer stands against the repository as it is now.
+    pub standing: Standing,
+}
+
+/// How an answer stands against the repository as it is now: when it was read, and whether
+/// a newer reading is on its way.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Standing {
+    /// How long ago the answer was read; `None` for a first reading that has not arrived.
+    pub age: Option<Duration>,
+    /// Read in the repository as it is now, before it last moved, or not yet at all.
+    pub freshness: Freshness,
+    /// Whether the source is being read again at this moment.
+    pub refreshing: bool,
+}
+
+impl Standing {
+    /// An answer taken just now.
+    pub const NOW: Standing = Standing {
+        age: Some(Duration::ZERO),
+        freshness: Freshness::Current,
+        refreshing: false,
+    };
+
+    fn of<V>(latest: &Latest<V>) -> Standing {
+        Standing {
+            age: latest.age,
+            freshness: latest.freshness,
+            refreshing: latest.refreshing,
+        }
+    }
+
+    /// Whether the screen is to be read again shortly: the answer is not of the repository
+    /// as it is now, and a newer one is being read.
+    pub fn catching_up(&self) -> bool {
+        self.freshness != Freshness::Current
+    }
+
+    /// What a reader is told about an answer that is not simply current, or `None` when
+    /// there is nothing to tell: a reading older than [`Standing::WORTH_SAYING`], a reading
+    /// the repository has moved past, a first reading still on its way.
+    pub fn note(&self) -> Option<String> {
+        let ago = |age: Duration| match age.as_secs() {
+            s if s < 120 => format!("read {s} s ago"),
+            s if s < 7200 => format!("read {} min ago", s / 60),
+            s => format!("read {} h ago", s / 3600),
+        };
+        match (self.freshness, self.age) {
+            (Freshness::Pending, _) => Some("first reading in progress".into()),
+            (Freshness::Stale, Some(age)) => Some(format!(
+                "{}, before the repository changed; reading again",
+                ago(age)
+            )),
+            (Freshness::Stale, None) => Some("read before the repository changed".into()),
+            (Freshness::Current, Some(age)) if age >= Standing::WORTH_SAYING => Some(ago(age)),
+            (Freshness::Current, _) => None,
+        }
+    }
+
+    /// The age from which a current reading says how old it is.
+    pub const WORTH_SAYING: Duration = Duration::from_secs(5);
 }
 
 impl Answer {
@@ -77,7 +146,7 @@ impl Answer {
 
     /// The whole answer, when there is one.
     pub fn ok(&self) -> Option<&Value> {
-        self.value.as_ref().ok()
+        self.value.as_deref().ok()
     }
 
     /// One line naming the source: what was asked, over which route, how long it took.
@@ -139,7 +208,6 @@ impl Reading {
     }
 
     /// The value as a count, when it is a number.
-    #[cfg(test)]
     pub fn count(&self) -> Option<u64> {
         match &self.state {
             Availability::Available(v) => v.as_u64(),
@@ -170,62 +238,72 @@ pub fn ask_all(ctx: &Context, sources: &[Source]) -> BTreeMap<Source, Answer> {
             .collect();
         asked
             .into_iter()
-            .map(|(source, thread)| {
-                thread.join().unwrap_or_else(|_| {
-                    let (route, exposure) = describe(ctx, source.capability);
-                    Answer {
-                        source,
-                        route,
-                        exposure,
-                        value: Err("the source panicked while answering".into()),
-                        took: Duration::ZERO,
-                    }
-                })
-            })
+            .map(|(source, thread)| joined(ctx, source, thread.join()))
             .collect()
     });
     answers.into_iter().map(|a| (a.source, a)).collect()
+}
+
+/// What a source's thread came back with: its answer, or — when asking it panicked — an
+/// answer that says so, so one broken source fails its own panel and not the screen.
+fn joined(ctx: &Context, source: Source, thread: std::thread::Result<Answer>) -> Answer {
+    match thread {
+        Ok(answer) => answer,
+        Err(_) => {
+            let (route, exposure) = describe(ctx, source.capability);
+            Answer {
+                source,
+                route,
+                exposure,
+                value: Err("the source panicked while answering".into()),
+                took: Duration::ZERO,
+                standing: Standing::NOW,
+            }
+        }
+    }
 }
 
 /// One capability asked with an input a reader chose (a screen's query), through the
 /// executor like any other source. The source line names the capability; the input is the
 /// reader's, so it is not a constant of the screen.
 pub fn ask_input(ctx: &Context, capability: &'static str, input: Value) -> Answer {
-    let started = Instant::now();
-    let value = ctx.execute(capability, input).map_err(|e| e.to_string());
-    let took = started.elapsed();
+    let latest = read_shared(ctx, capability, input, Patience::of_process());
     let (route, exposure) = describe(ctx, capability);
     Answer {
         source: Source::of(capability),
         route,
         exposure,
-        value,
-        took,
+        standing: Standing::of(&latest),
+        value: latest.value,
+        took: latest.took,
     }
 }
 
 /// One source asked through the executor.
 pub fn ask(ctx: &Context, source: Source) -> Answer {
-    let started = Instant::now();
-    let value = serde_json::from_str::<Value>(source.input)
-        .map_err(|e| {
-            format!(
+    let (route, exposure) = describe(ctx, source.capability);
+    let (value, took, standing) = match serde_json::from_str::<Value>(source.input) {
+        Err(e) => (
+            Err(format!(
                 "the screen's own input for {} does not parse: {e}",
                 source.capability
-            )
-        })
-        .and_then(|input| {
-            ctx.execute(source.capability, input)
-                .map_err(|e| e.to_string())
-        });
-    let took = started.elapsed();
-    let (route, exposure) = describe(ctx, source.capability);
+            )),
+            Duration::ZERO,
+            Standing::NOW,
+        ),
+        Ok(input) => {
+            let latest = read_shared(ctx, source.capability, input, Patience::of_process());
+            let standing = Standing::of(&latest);
+            (latest.value, latest.took, standing)
+        }
+    };
     Answer {
         source,
         route,
         exposure,
         value,
         took,
+        standing,
     }
 }
 
@@ -272,13 +350,62 @@ mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
 
+    /// A source whose thread panicked is a failed answer of its own, named and routed like
+    /// any other; the screen around it still renders.
+    #[test]
+    fn a_source_that_panicked_is_a_failed_answer_not_a_broken_screen() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let source = Source::of("plan.status");
+        let a = joined(&ctx, source, Err(Box::new("boom")));
+        assert_eq!(a.source, source);
+        assert_eq!(
+            a.value.as_ref().err().map(String::as_str),
+            Some("the source panicked while answering")
+        );
+        assert!(a.route.is_some(), "a failed source still names its route");
+        let ok = joined(&ctx, source, Ok(answer(Ok(serde_json::json!({})))));
+        assert!(ok.value.is_ok());
+    }
+
+    /// A screen's own input that does not parse is the source's failure, said with the
+    /// capability's name; it is never asked with something else instead.
+    #[test]
+    fn a_source_whose_input_does_not_parse_fails_and_says_which() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let broken = Source::with("plan.status", "{not json");
+        assert_eq!(broken.input, "{not json");
+        let a = ask(&ctx, broken);
+        let reason = a.value.expect_err("an input that does not parse");
+        assert!(
+            reason.contains("plan.status") && reason.contains("does not parse"),
+            "{reason}"
+        );
+        let refused = ask_input(&ctx, "no.such.capability", serde_json::json!({}));
+        assert!(refused.value.is_err(), "an unknown capability is refused");
+    }
+
+    /// The provenance line names the route when there is one, and only the capability and
+    /// its time when there is none; a value that is not a string is shown as JSON.
+    #[test]
+    fn a_provenance_without_a_route_names_the_capability_alone() {
+        let mut a = answer(Ok(serde_json::json!({ "n": 3, "on": true })));
+        assert!(a.provenance().contains("GET /api/v1/health"));
+        a.route = None;
+        assert_eq!(a.provenance(), "health.report · 12 ms");
+        assert_eq!(a.read("/on").text().as_deref(), Some("true"));
+        assert_eq!(a.read("/n").text().as_deref(), Some("3"));
+    }
+
     fn answer(value: Result<Value, String>) -> Answer {
         Answer {
             source: Source::of("health.report"),
             route: Some("GET /api/v1/health".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(12),
+            standing: Standing::NOW,
         }
     }
 
@@ -300,6 +427,70 @@ mod tests {
             Availability::Failed("refused".into())
         );
         assert_eq!(failed.read("/status").text(), None);
+    }
+
+    /// How an answer stands is said when there is something to say: an age worth saying, a
+    /// reading the repository has moved past, a first reading on its way. A stale or pending
+    /// reading is catching up; a current one never is, however old.
+    #[test]
+    fn a_standing_says_its_age_when_it_matters_and_never_calls_a_stale_reading_current() {
+        let standing = |freshness, seconds: Option<u64>| Standing {
+            age: seconds.map(Duration::from_secs),
+            freshness,
+            refreshing: true,
+        };
+        assert_eq!(Standing::NOW.note(), None);
+        assert!(!Standing::NOW.catching_up());
+        let young = standing(Freshness::Current, Some(4));
+        assert_eq!(young.note(), None, "younger than WORTH_SAYING");
+        let older = standing(Freshness::Current, Some(12));
+        assert_eq!(older.note().as_deref(), Some("read 12 s ago"));
+        assert!(!older.catching_up(), "old is not stale");
+        assert_eq!(
+            standing(Freshness::Current, Some(600)).note().as_deref(),
+            Some("read 10 min ago")
+        );
+        assert_eq!(
+            standing(Freshness::Current, Some(3 * 3600))
+                .note()
+                .as_deref(),
+            Some("read 3 h ago")
+        );
+        let stale = standing(Freshness::Stale, Some(12));
+        assert_eq!(
+            stale.note().as_deref(),
+            Some("read 12 s ago, before the repository changed; reading again")
+        );
+        assert!(stale.catching_up());
+        assert_eq!(
+            standing(Freshness::Stale, None).note().as_deref(),
+            Some("read before the repository changed")
+        );
+        let pending = standing(Freshness::Pending, None);
+        assert_eq!(pending.note().as_deref(), Some("first reading in progress"));
+        assert!(pending.catching_up());
+    }
+
+    /// A screen's source is a reading of the executor's store: asked twice, it is read once,
+    /// and what the screen is handed is current.
+    #[test]
+    fn a_source_is_a_reading_and_asked_twice_it_is_read_once() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let source = Source::of("plan.status");
+        let first = ask(&ctx, source);
+        assert!(first.value.is_ok());
+        assert_eq!(first.standing.freshness, Freshness::Current);
+        assert!(!first.standing.catching_up());
+        let ran = ctx.executor.handler_invocations();
+        let again = ask(&ctx, source);
+        assert_eq!(again.value, first.value);
+        assert_eq!(
+            ctx.executor.handler_invocations(),
+            ran,
+            "a reading at hand runs no handler on the path of the request"
+        );
+        assert!(ctx.executor.readings_remembered() >= 1);
     }
 
     /// The source line names the capability, its route and the time it took.

@@ -1,0 +1,46 @@
+id: I3000
+milestone: idd-reads-at-a-glance
+title: "The workspace's record texts are drawn as prose"
+slug: the-record-texts-are-drawn-as-prose
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Draw every record text on the workspace (statement, why, criteria, standing sentences, drift) through ui::prose, so code spans, strong words and links render and an id is linked only when the plan holds it; ui/idd.rs's own id linking goes."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: texts show raw backticks and markdown; ui::prose already renders them and only milestone.rs uses it."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Raw text and a second id linker."
+desired_state: "One renderer for every record text."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/prose.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "A backticked path in a criterion renders as code"
+  - "ui/idd.rs carries no id linker of its own"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib ui::"
+  - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+evidence_required:
+  - prose_screen_test
+created_at: 2026-10-18
+updated_at: 2026-10-20T15:36:22Z
+started_at: 2026-10-19T10:02:00Z
+started_event: sha256:2687377608759e925216b00659a2567de8a73021551dd84f408942ac5b70ba87
+verified_at: 2026-10-19T10:02:13Z
+verified_event: sha256:32e48a9d4c5fa3463855cbe89d99e5860408fdb8d60f773dcaed0471a4863de2
+completed_at: 2026-10-19T10:02:21Z
+completed_event: sha256:2a6e9808be476e3a67038251cf572d981cfe7acb93048a7bfec3d7ea705706b7
+evidence:
+  - covers: prose_screen_test
+    type: ci
+    command: "gh run view --job 117890226384 --log"
+    result: "tests/ui_idd_evidence.rs: 2 passed, 0 failed (the standing route's texts drawn as prose), in rust (3) of validate run 39192952944 on dd4c0a87cba, carrying d092324165f"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: eb72106294c22a8ac4714cf37d0d135eb917160c
+    recorded_at: 2026-10-20T15:36:22Z

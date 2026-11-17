@@ -1,7 +1,7 @@
 +++
 title = "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand"
 description = "No number about tokens, context or cost reaches a reader unless recorded evidence produced it. Hand-written prose that states one is refused, and a claim bound to a metric cannot be guaranteed while that metric's evidence does not stand."
-weight = 96
+weight = 97
 [extra]
 claim_id = "economics-claims-gated"
 status = "guaranteed"

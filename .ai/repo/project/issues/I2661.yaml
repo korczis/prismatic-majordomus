@@ -1,0 +1,33 @@
+id: I2661
+milestone: M004
+title: "A publication that did not arrive is a finding the next reader meets, never a green step"
+slug: a-publication-that-did-not-arrive-is-a-finding
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the gap between 'the workflow succeeded' and 'the site serves the commit' visible where a lander looks, the minute it exists."
+why: "The owner, 2026-10-13: 'investigate what is slow ... solve it systemically, prevent it next time' and 'this must be analysed and solved through .ai/; it must not happen again'. Measured that day: a merge reached production 45 to 61 minutes later, and two landings of the evening were not served an hour after they merged."
+current_state: "Measured 2026-10-13 on pages runs 38451796942 and 38446047641: the step that waits for /build.json to name the commit (scripts/pages verify --timeout 600) ran 602 s both times, to its limit, and is continue-on-error, so the deploy job ended green while production served the previous commit. The pages-live gate reads the live site only on the next validation run, which waited in the same queue."
+desired_state: "When the wait ends without the site serving the commit, the run says so in its summary and as an annotation, the timing row records 'not served', and a deployment record names the commit production does serve; a lander's verification reads that record. The wait itself is no longer the whole bound when the cause is known to be a queue: it reports what GitHub's deployment is waiting for."
+scope:
+  - ".github/workflows/pages.yml"
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - "docs/PAGES_STATUS.md"
+  - ".ai/repo/project/issues/I2661.yaml"
+non_scope:
+  - "Failing the deploy job for a wait this repository does not control"
+  - "Publishing by artifact, which is I2660"
+acceptance_criteria:
+  - "A run whose publication did not arrive within the bound is distinguishable from one that did without opening its log: summary, annotation and timing row"
+  - "scripts/pages verify names what the site serves and, when GitHub's own deployment is queued, that it is queued and since when"
+  - "A case breaks the wait with a site that never changes and proves each of the three signals"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/shell-lint"
+  - "bash test/run.sh <the new case>"
+evidence_required:
+  - "not_served_is_visible_case"
+  - "one_real_run_with_a_late_publication"
+created_at: 2026-10-13
+updated_at: 2026-10-13

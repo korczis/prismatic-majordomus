@@ -37,6 +37,7 @@ pub fn capability_of(object: &Object) -> Capability {
     Capability {
         availability: Availability::classify(kind, &exposure),
         execution: crate::capability::ExecutionPolicy::classify(kind),
+        skill: None,
         visibility: Visibility::classify(&exposure),
         id: CapabilityId::unchecked(&format!("{}.{}", object.kind, object.identity)),
         module: ModuleId::unchecked(&object.kind),

@@ -660,4 +660,184 @@ mod tests {
         assert_eq!(obs("free unknown\n").free_kib, None);
         assert_eq!(obs("free 20971520\n").free_gib(), Some(20));
     }
+
+    #[test]
+    fn every_queue_error_says_what_happened() {
+        assert_eq!(
+            QueueError::Host("lundra: refused".into()).to_string(),
+            "lundra: refused"
+        );
+        assert_eq!(
+            QueueError::Lost.to_string(),
+            "this waiter's ticket is gone from the host's queue: its holder was taken for dead"
+        );
+        assert_eq!(
+            QueueError::TimedOut(Duration::from_millis(61_500)).to_string(),
+            "gave up after 61 s in the queue"
+        );
+    }
+
+    /// A stand-in for ssh that runs the remote command here, after `before` — shell text that
+    /// sees the command as `$1` and may fail it, or remove the stand-in itself so that the
+    /// next command cannot even be started.
+    fn stand_in(dir: &Path, before: &str) -> std::path::PathBuf {
+        use std::os::unix::fs::PermissionsExt;
+        let p = dir.join("ssh");
+        std::fs::write(&p, format!("#!/bin/sh\n{before}\nexec sh -c \"$1\"\n")).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        p
+    }
+
+    /// A host that cannot be reached, answers with a failure, or cannot take a ticket is an
+    /// error of the queue, never an empty queue or a ticket that was not written.
+    #[test]
+    fn a_host_that_cannot_be_asked_is_a_queue_error() {
+        let tmp = tempfile::tempdir().unwrap();
+        let (dir, lock) = (tmp.path().join("queue"), tmp.path().join("lock"));
+
+        let gone = Remote::through(&tmp.path().join("no-such-ssh"));
+        let q = on_disk(&gone, &dir, &lock);
+        match q.observe() {
+            Err(QueueError::Host(e)) => assert!(e.starts_with("stand-in could not be asked: ")),
+            other => panic!("{other:?}"),
+        }
+        match q.enqueue(1, "aaaaaaaaaa") {
+            Err(QueueError::Host(e)) => {
+                assert!(e.starts_with("the ticket could not be written: "), "{e}")
+            }
+            other => panic!("{other:?}"),
+        }
+        let err = q.wait("1-1-a", 1, &mut std::io::sink()).unwrap_err();
+        assert!(matches!(err, QueueError::Host(_)), "{err}");
+
+        let refusing =
+            Remote::through(&stand_in(tmp.path(), "echo 'no shell for you' >&2; exit 1"));
+        match on_disk(&refusing, &dir, &lock).observe() {
+            Err(QueueError::Host(e)) => assert_eq!(
+                e,
+                "stand-in did not answer the observation (exit Some(1)): no shell for you"
+            ),
+            other => panic!("{other:?}"),
+        }
+
+        let file = tmp.path().join("a-file");
+        std::fs::write(&file, "").unwrap();
+        let blocked = file.join("queue");
+        let local = Remote::local();
+        match on_disk(&local, &blocked, &lock).enqueue(1, "aaaaaaaaaa") {
+            Err(QueueError::Host(e)) => {
+                assert!(e.starts_with("the ticket could not be written: "), "{e}")
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// A waiter whose ticket is not on the host is lost at once, and says so.
+    #[test]
+    fn a_waiter_without_a_ticket_is_lost() {
+        let tmp = tempfile::tempdir().unwrap();
+        let (dir, lock) = (tmp.path().join("queue"), tmp.path().join("lock"));
+        let r = Remote::local();
+        let err = on_disk(&r, &dir, &lock)
+            .wait("1-1-nowhere", 1, &mut std::io::sink())
+            .unwrap_err();
+        assert!(matches!(err, QueueError::Lost), "{err}");
+        assert!(!lock.exists(), "a lost waiter took the lock");
+    }
+
+    /// Somebody outside the queue takes the lock between the look and the take, or a stale
+    /// lock cannot be reclaimed this time: the waiter looks again rather than giving up.
+    #[test]
+    fn a_take_or_reclaim_that_fails_once_is_tried_again() {
+        let tmp = tempfile::tempdir().unwrap();
+        let (dir, lock) = (tmp.path().join("queue"), tmp.path().join("lock"));
+        let marks = tmp.path().join("marks");
+        std::fs::create_dir(&marks).unwrap();
+        let ssh = stand_in(
+            tmp.path(),
+            &format!(
+                r#"case "$1" in
+  *'|| exit 3; :'*) [ -e {m}/take ] || {{ : > {m}/take; exit 3; }} ;;
+  *'&& exit 3'*) [ -e {m}/reclaim ] || {{ : > {m}/reclaim; exit 3; }} ;;
+esac"#,
+                m = marks.display()
+            ),
+        );
+        let r = Remote::through(&ssh);
+        let q = on_disk(&r, &dir, &lock);
+
+        let me = Holder::start(&Remote::local()).unwrap();
+        let ticket = q.enqueue(me.pid, "tttttttttt").unwrap();
+        q.wait(&ticket, me.pid, &mut std::io::sink()).unwrap();
+        assert!(marks.join("take").exists(), "the take never failed");
+        assert!(lock.join(me.pid.to_string()).exists());
+        q.release(&[me.pid]);
+
+        let gone = Holder::start(&Remote::local()).unwrap();
+        let gone_pid = gone.pid;
+        drop(gone);
+        std::fs::create_dir(&lock).unwrap();
+        std::fs::write(lock.join(gone_pid.to_string()), "").unwrap();
+        let ticket = q.enqueue(me.pid, "rrrrrrrrrr").unwrap();
+        let mut log = Vec::new();
+        q.wait(&ticket, me.pid, &mut log).unwrap();
+        assert!(marks.join("reclaim").exists(), "the reclaim never failed");
+        let log = String::from_utf8(log).unwrap();
+        assert!(
+            log.contains(&format!(
+                "reclaimed the lock on stand-in from dead holder(s) {gone_pid}"
+            )),
+            "{log}"
+        );
+        q.release(&[me.pid]);
+        assert!(!lock.exists());
+    }
+
+    /// The host goes away between the look and the act: a take or a reclaim that cannot even
+    /// be started ends the wait with the host's error, and takes nothing on the host.
+    #[test]
+    fn a_host_that_vanishes_mid_wait_ends_it() {
+        // after the observation it serves, the stand-in removes itself
+        let vanish = r#"case "$1" in *'free ${f'*) sh -c "$1"; s=$?; rm -f "$0"; exit $s ;; esac"#;
+
+        let tmp = tempfile::tempdir().unwrap();
+        let (dir, lock) = (tmp.path().join("queue"), tmp.path().join("lock"));
+        let r = Remote::through(&stand_in(tmp.path(), vanish));
+        let q = on_disk(&r, &dir, &lock);
+        let local = Remote::local();
+        let me = Holder::start(&local).unwrap();
+        let ticket = on_disk(&local, &dir, &lock)
+            .enqueue(me.pid, "vvvvvvvvvv")
+            .unwrap();
+        match q.wait(&ticket, me.pid, &mut std::io::sink()) {
+            Err(QueueError::Host(e)) => {
+                assert!(e.starts_with("the lock could not be taken: "), "{e}")
+            }
+            other => panic!("{other:?}"),
+        }
+        assert!(!lock.exists(), "the lock was taken by a host that was gone");
+
+        let tmp = tempfile::tempdir().unwrap();
+        let (dir, lock) = (tmp.path().join("queue"), tmp.path().join("lock"));
+        let r = Remote::through(&stand_in(tmp.path(), vanish));
+        let q = on_disk(&r, &dir, &lock);
+        let gone = Holder::start(&local).unwrap();
+        let gone_pid = gone.pid;
+        drop(gone);
+        std::fs::create_dir(&lock).unwrap();
+        std::fs::write(lock.join(gone_pid.to_string()), "").unwrap();
+        let ticket = on_disk(&local, &dir, &lock)
+            .enqueue(me.pid, "wwwwwwwwww")
+            .unwrap();
+        match q.wait(&ticket, me.pid, &mut std::io::sink()) {
+            Err(QueueError::Host(e)) => {
+                assert!(e.starts_with("stand-in could not be asked: "), "{e}")
+            }
+            other => panic!("{other:?}"),
+        }
+        assert!(
+            lock.join(gone_pid.to_string()).exists(),
+            "a reclaim that never ran removed the dead holder's file"
+        );
+    }
 }

@@ -1,0 +1,52 @@
+id: I2475
+milestone: development-runtime
+title: "The issues are browsed: every issue of the plan by status, milestone, priority or text, each a link onward"
+slug: the-issues-are-browsed
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give majordomus ui an Issues screen (/ui/issues) that lists every issue of the plan, narrowed by the plan's own statuses as tabs and by milestone, priority and text in a GET form, each issue leading to its inspector, its milestone to the milestone's and what blocks it to that issue's."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots, maximally interactive (reference 05-issues-and-prs; pack v3 M05-01 issue list and detail). /ui/work shows only the ready and the active issues; the plan holds about 280, 152 of them blocked, and nothing let a reader find one or see a slice of them."
+current_state: "The UI shows two short lists of issues and one issue at a time on the PR Drain."
+desired_state: "/ui/issues paints at once from plan.issues, plan.status and plan.roadmap. Tabs are the statuses the issues hold with their counts; a GET form narrows by text (id, title, objective, slug), milestone (from the roadmap) and priority (from the issues), carrying the status tab; the pick stays picked. Each row shows the issue, its status, its milestone (a link to its inspector), its priority, what blocks it (each a link to that issue) and its evidence as a meter. A value that is no word of the plan is dropped."
+scope:
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2475.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1080_the_issues_are_browsed.sh"
+depends_on: ["I2470", "I2471"]
+acceptance_criteria:
+  - "/ui/issues lists every issue; a status tab narrows to it"
+  - "milestone, priority and text narrow together, and the pick stays picked"
+  - "an issue, its milestone and what blocks it are links to their inspectors"
+  - "a value that is no word of the plan is dropped"
+validation:
+  - "cargo test --lib ui::issues"
+  - "test/run.sh 1080_the_issues_are_browsed"
+evidence_required:
+  - "ui_issues_unit_tests"
+  - "ui_issues_case_1080"
+created_at: 2026-10-11
+updated_at: 2026-10-12T11:04:42Z
+started_at: 2026-10-12T11:04:21Z
+started_event: sha256:bbfae840572de5509765673f74fbce15e36e4d8e77d2be7e29f30f91f0c0c814
+verified_at: 2026-10-12T11:04:28Z
+verified_event: sha256:1dee7572e666bda318fd557678a84c8c72aefa677823c9c370998f2332191a16
+completed_at: 2026-10-12T11:04:42Z
+completed_event: sha256:f338f05cede2bd47dd9a5845e59575741c95a5d929b41acd0a0184048b9f068d
+evidence:
+  - covers: ui_issues_unit_tests
+    type: ci
+    command: "cargo test --lib ui::issues (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "5 ui::issues tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:04:35Z
+  - covers: ui_issues_case_1080
+    type: ci
+    command: "test/run.sh 1080_the_issues_are_browsed (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1080_the_issues_are_browsed ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:04:39Z

@@ -1,0 +1,151 @@
+intent: a-session-leaves-what-it-observed
+reviewed_at: 893a79be65
+reviewed_by: "claude-code subagent (read-only, fresh context, same model as the author) dispatched by session fa with the plan records and a summary of the owner's Session Evolution Protocol, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: accept with required changes; 10 of 17 findings blocking. The plan was redesigned in answer: per-episode files kept, recurrence grouped on read, friction rows deferred, about and route added, routing made adopter-correct."
+findings:
+  - id: protocol-test-list-unmapped
+    class: missed_requirement
+    subject: a-session-leaves-what-it-observed
+    finding: "Six of the protocol's nine tests have no criterion, named case or non_goal: ordinary session gives NO_CHANGE, a project-specific defect is not copied into platform governance, interrupted processing recovers, local work goes on without a provider or mesh, evolution that changes tooling does not loop, low confidence changes nothing."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2074
+      because: "NO_CHANGE is a criterion (an episode with nothing derives nothing and still records knowledge.derived written 0, case 981); project-specific not copied into the platform is a criterion (case 982 in an adopter with its own share/); no loop is an invariant tested by 982 (the derivation emits no event it reads); idempotence and interruption are cases 564 and 565, cited in I2074's acceptance; no provider or mesh is needed by construction (shell, ledger, no network). Low confidence is out of reach of a structural deriver and is the act of promotion."
+  - id: no-change-is-only-rejection
+    class: missed_requirement
+    subject: a-session-leaves-what-it-observed#an-observation-becomes-a-candidate
+    finding: "NO_CHANGE in the protocol is evaluating an episode and finding nothing; knowledge.derived with written 0 already records it and the plan neither names nor tests it."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2074
+      because: "The criterion an-observation-becomes-a-candidate now says it, and ADR 0118 names knowledge.derived written 0 as the NO_CHANGE record. With per-episode files a recurrence is a new file, so written keeps meaning new."
+  - id: observation-outside-an-episode-is-never-derived
+    class: unproven_assumption
+    subject: a-session-leaves-what-it-observed#an-observation-is-recorded
+    finding: "The ledger stamps a session only while an episode is open and the deriver selects by that stamp, so an observation recorded outside an episode is written and never derived."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2073
+      because: "knowledge observe refuses with exit 10 and names session start when no episode is open; case 980 asserts the refusal and that nothing is written."
+  - id: refused-finish-carries-no-scope
+    class: unproven_assumption
+    subject: I2074
+    finding: "task.refused carries no scope, and task.gate carries task rather than task_id."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Neither row is in this milestone any more: ADR 0118 defers deriving friction from task.refused and task.gate to a later decision with its own measurement, and the intent names it a non_goal."
+  - id: friction-rows-record-the-tool-working
+    class: regression_risk
+    subject: I2074
+    finding: "A refusal later satisfied and a gate red then green are the tool working; deriving a lesson from each is noise, and rejecting one would silence the gate."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Accepted as the reason the two rows are deferred: ADR 0118 says so in its decision and the intent lists it as a non_goal."
+  - id: key-too-coarse-and-rejection-permanent
+    class: unproven_assumption
+    subject: a-session-leaves-what-it-observed#recurrence-is-grouped
+    finding: "(kind, subject) as identity collapses different defects on one path and lets one rejection silence every later one; kind synonyms split one defect."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2074
+      because: "Identity stays ADR 0091's: episode plus a digest of kind, subject and statement. Grouping is by about (the subject) on read only, so different defects on one path are different records in one group, kind does not split the group, and a rejection supersedes one record while a later observation is listed beside it."
+  - id: lost-update-in-one-checkout
+    class: regression_risk
+    subject: I2074
+    finding: "Appending an episode to an existing obs- file is a read-merge-write without a lock; two concurrent closes lose a session."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "There is no shared file any more: every episode writes only its own records, so nothing is read, merged and written back."
+  - id: same-name-different-content-across-worktrees
+    class: regression_risk
+    subject: I2074
+    finding: "obs- files written by every worktree break ADR 0091's id invariant, depend on derivation order and conflict on every merge."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Same answer: per-episode files keep ADR 0091's invariant, so two branches that observed the same thing add two files and conflict on none; ADR 0118's rejected alternatives record why."
+  - id: adr-0118-contradicts-itself-on-rejection
+    class: unproven_assumption
+    subject: I2074
+    finding: "The ADR said both that a superseded key is skipped and that an episode adds itself to a superseded record; and claimed everything else of ADR 0091 stands while breaking its id invariant."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2074
+      because: "Rewritten: a rejected record is never rewritten, a later observation is a new record in the same group, and ADR 0118 now supersedes exactly two sentences of ADR 0091, leaving the id invariant standing."
+  - id: subject-has-no-resolvable-home
+    class: surface_missing
+    subject: I2074
+    finding: "No field holds the subject; derived_from does not admit rule:, gate:, capability:, command: or claim:, a relation to them resolves unknown and fails knowledge-integrity, and a deleted file: subject resolves missing."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2074
+      because: "The subject becomes a field, about, holding the subject as written and never resolved as a reference, so a renamed or deleted path neither fails integrity nor orphans anything; evidence references go to derived_from only when their kind is one derived_from admits, and claim: evidence stays on the ledger line."
+  - id: classifier-has-no-generated-category
+    class: unproven_assumption
+    subject: a-session-leaves-what-it-observed#route-is-structural
+    finding: "mj_changed_is_derived is the tool's whole exhaust, not 'generated'; routing it to generator sends sessions and local state there."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2075
+      because: "generator now means only a path under out.generated or marked merge=derived, and the order is stated: platform first, then enforcement, generator, documentation, project, so docs/generated routes generator before documentation."
+  - id: platform-route-assumes-this-repository
+    class: regression_risk
+    subject: I2075
+    finding: "share/ is an adopter's own directory, vendored rules live elsewhere, rule:project.* and rule:majordomus.* would route alike, and command:/capability: would route project."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2075
+      because: "Adopted as written: platform is command:, capability:, rule:majordomus.*, the vendored rules directory, or the tool's share/ only when it is inside the repository; case 982 runs in a fresh init with a share/ of its own."
+  - id: sequencing-against-i1984
+    class: regression_risk
+    subject: a-session-leaves-what-it-observed
+    finding: "Recurrence counted on tracked candidate files breaks if I1984 moves trunk candidates under .ai/local."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Recurrence is no longer counted in a tracked file; it is a grouping on read over whatever candidates exist where they are, so it holds under either outcome of I1984, which the intent names as a non_goal."
+  - id: generated-and-rust-surfaces-out-of-scope
+    class: surface_missing
+    subject: I2075
+    finding: "A proto field rewrites share/sections/knowledge.txt and the Rust candidates reader has no route or grouping; neither is in scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2074
+      because: "I2074's scope names share/sections, share/allow, knowledge_base.rs and tests/knowledge_base.rs, and its acceptance requires the Rust reader to group alike."
+  - id: contracts-still-state-episode-ids
+    class: surface_missing
+    subject: I2074
+    finding: "The candidates README, its skeleton copy and docs/KNOWLEDGE.md state the episode id and the closed table."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2074
+      because: "The episode id stays true; the table and the two new fields are documented in docs/KNOWLEDGE.md and both READMEs, which are in I2074's scope."
+  - id: briefing-branch-and-queue-age
+    class: regression_risk
+    subject: I2074
+    finding: "Rewriting an obs- file would misattribute the branch and reset the queue age."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "No file is rewritten: each record keeps its own episode, branch and derivation line."
+  - id: plan-record-inconsistencies
+    class: delivery_verification
+    subject: a-session-leaves-what-it-observed
+    finding: "Session counts disagree, subject forms differ between I2073, the ADR and the code, ADR 0118 sits in I2075 though I2073 cites it, new vocabulary needs docs/CONCEPTS.md, and I2073's code preceded this critique."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2073
+      because: "Counts aligned to four sessions and thirty-six observations; one subject form everywhere (a path, or capability:, rule:, command:, gate:); ADR 0118 and docs/CONCEPTS.md are in I2073's scope. The code written before the critique was the command shape only, and it was changed by finding 3."

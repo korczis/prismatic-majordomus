@@ -1,0 +1,46 @@
+id: "I3442"
+milestone: "truthful-plan-surfaces"
+title: "Where the work is is cached by what it reads, and a warm roadmap does not walk the trunk"
+slug: "plan-flight-is-cached-by-its-inputs"
+priority: "p1"
+profile: "implementation"
+parallel_safe: false
+objective: "plan.flight keeps its delivery inference under a key made of what it reads (the trunk's commit, the refs, the plan's records, the release records and the forge and deployment observations) and recomputes it only when that key changes, with the live mesh claims laid over the cached part on every call; a warm /ui/roadmap then answers without walking the trunk's history."
+why: "On 2026-10-19 the owner asked that /roadmap be correct and connected. Review finding U4: plan.flight is declared CachePolicy::Disabled, the readings layer revalidates a source after one second, and delivery::infer runs over the whole trunk history behind every warm view (the review measured 4.5 to 14 s). The work starts only after the exclusive mesh claim another session holds on apps/majordomus-cli/src/plan/flight.rs, apps/majordomus-cli/src/ui/roadmap.rs and apps/majordomus-cli/tests/ui_roadmap.rs is released or handed over."
+current_state: "plan.flight is declared with cache: CachePolicy::Disabled (apps/majordomus-cli/src/capability/builtin/plan.rs:712-727), as plan.delivery is (plan.rs:696-711). Its handler (plan.rs:861-896) calls flight::observe, which runs delivery::infer over the trunk on every call (apps/majordomus-cli/src/plan/flight.rs:518-525); infer reads the whole history with one git log of the trunk (apps/majordomus-cli/src/plan/delivery.rs:860-895, history_of at delivery.rs:610-622), then the branches, the forge observation, the release records and the deployment observation (published_live, delivery.rs:676-699). The readings layer reads any source again after REVALIDATE = 1 s (apps/majordomus-cli/src/capability/readings.rs:83), so a page open over a minute re-runs the whole inference. On 2026-10-19 one plan delivery at origin/master 9904000d2df took 7.3 s wall clock at a load average of 45, reading 1723 merge commits and 2841 other commits. The Overview does not read plan.flight at all because it is too slow for a first paint (apps/majordomus-cli/src/ui/dashboard.rs:137-139). CachePolicy::Checkout (apps/majordomus-cli/src/capability/model.rs:350-359) fingerprints HEAD, the index, the refs and the work tree but no other process and no ignored file, so it cannot hold the mesh claims or the observations under .ai/local."
+desired_state: "The delivery inference behind plan.flight is cached under an explicit key of its inputs (trunk commit, refs digest, plan generation, release records, forge and deployment observation digests); the mesh claims are read live and applied over the cached inference; a change to any input recomputes it and nothing else does. The capability's declaration states the policy, the executor's counters show a warm call that ran no git log, and a test proves an answer equal to an uncached one after each input moves."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/plan/flight.rs"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/tests/ui_roadmap.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "docs/PERFORMANCE.md"
+  - "docs/generated/capabilities.md"
+  - "docs/generated/modules/plan.md"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/benchmarks.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Making delivery::infer itself faster (an incremental history read); this record removes repeated work, not the first."
+  - "Caching the mesh claims, which stay live."
+  - "Changing REVALIDATE for other sources."
+depends_on: []
+acceptance_criteria:
+  - "A second plan.flight call with no input changed runs no git log of the trunk (the executor's counters or a git-invocation counter in the test say so) and returns an answer equal to the first"
+  - "A new commit on the trunk, a moved ref, an edited issue record, a new release record or a new forge or deployment observation each makes the next call recompute, and its answer equals an uncached call's"
+  - "A mesh claim added or released between two calls shows on the second with no recomputation of the inference"
+  - "A warm /ui/roadmap measured by majordomus bench answers within the policy's budget for system.http.live.ui targets on this machine, recorded as a run"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::flight"
+  - "bash test/run.sh 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "plan_flight_cached_by_inputs"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,0 +1,31 @@
+id: I3435
+milestone: a-prompt-reaches-the-work-it-serves
+title: "A Cockpit snapshot withholds every page that reads a capability refusing remote callers, not only the continuity page it names"
+slug: a-cockpit-snapshot-publishes-only-declared-readings
+priority: p2
+profile: implementation
+objective: "Replace the Cockpit subject's single-route list (snapshot.rs:111-114) with the same check I3433 gives the UI subject. The check takes the readings each Cockpit page declares in cockpit/pages.rs and withholds a page that reads an unlisted capability or one that declares I3434's checkout-private field. /cockpit/continuity stays withheld by that rule rather than by name."
+why: "The owner's 2026-10-19 Cognitive Fabric pack applies the whitelist to every public view, the Cockpit included (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md, verification/ACCEPTANCE.md)."
+current_state: "apps/majordomus-cli/src/web/report/snapshot.rs:111-114 withholds only /cockpit/continuity, a list of routes rather than of readings. The Cockpit pages are declared in apps/majordomus-cli/src/cockpit/pages.rs."
+desired_state: "Each Cockpit page is published or withheld by what it reads."
+scope:
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+non_scope:
+  - "The UI subject (I3433)"
+  - "Changing what the live Cockpit serves"
+depends_on:
+  - "I3433"
+serves:
+  - "a-change-reconciles-what-it-affects#nothing-private-is-published"
+acceptance_criteria:
+  - "/cockpit/continuity is still withheld, now by the rule"
+  - "A fixture Cockpit page reading a checkout-private capability is withheld"
+  - "Every other current Cockpit snapshot page renders byte-identically to before"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib web::report::snapshot"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+evidence_required:
+  - "a_cockpit_snapshot_publishes_only_declared_readings"
+created_at: 2026-10-19
+updated_at: 2026-10-19

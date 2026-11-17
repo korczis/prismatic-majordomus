@@ -1,0 +1,37 @@
+id: I3145
+milestone: the-session-domain-is-written-once
+title: "Continuity is resolved and judged fresh by one function, and the shell's copies are deleted"
+slug: continuity-is-resolved-once
+priority: p2
+profile: implementation
+objective: "ADR 0047 steps 5 and 6: continuity.state, lifecycle.*, episodes.* and the Cockpit read the domain's aggregates; mj_resolve_latest and mj_freshness are deleted and their callers ask the executable, so nothing in lib/ holds domain state."
+why: "Freshness is implemented twice (lib/common.sh mj_freshness and Freshness in capability/builtin/continuity.rs), both reading session.freshness in .ai/repo/policy.yaml; ADR 0047 names the duplicated resolution for deletion. Sources: chatgpt-majordomus:c116#7."
+current_state: "Two resolvers and two freshness functions agree today by construction of the same policy keys."
+desired_state: "One resolver and one freshness function, in Rust; a structural case proves the session libraries carry no lifecycle semantics."
+scope:
+  - "lib/common.sh"
+  - "lib/handover.sh"
+  - "lib/context.sh"
+  - "apps/majordomus-cli/src/continuity"
+  - "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "apps/majordomus-cli/src/capability/builtin/episodes.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+non_scope:
+  - "Changing the freshness thresholds"
+depends_on:
+  - "I3143"
+  - "I3144"
+serves:
+  - "a-session-record-says-what-it-served#no-shell-session-semantics"
+acceptance_criteria:
+  - "No freshness threshold or resolution order remains in shell"
+  - "cases 127, 131_freshness_has_an_age and 368 pass unchanged"
+  - "The inventory records of lib/session.sh, lib/checkpoint.sh and lib/handover.sh leave disposition A with a reason, as a consequence of the structural case, not as its proof"
+validation:
+  - "bash test/run.sh --no-skips 127_briefing_freshness 131_freshness_has_an_age 368_mesh_handover_resolves"
+  - "bin/majordomus-cli shell check"
+evidence_required:
+  - "case_one_resolver"
+created_at: 2026-10-18
+updated_at: 2026-10-18

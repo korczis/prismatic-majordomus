@@ -37,7 +37,7 @@ pub fn run(args: McpArgs) -> Result<u8> {
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
     if args.standalone {
-        let mut server = standalone(&args.repo)?;
+        let mut server = standalone(&args.repo, None)?;
         tracing::info!("standalone: no shared server, no HTTP, no peers");
         stdio::serve(stdin.lock(), stdout.lock(), |m| server.handle(m))?;
         return Ok(0);
@@ -49,12 +49,20 @@ pub fn run(args: McpArgs) -> Result<u8> {
     Ok(0)
 }
 
-/// A server answering one stdio session alone: no shared server, no HTTP, no peers.
-fn standalone(repo: &RepoArgs) -> Result<Server> {
-    let app = App::load(repo)?;
+/// A server answering one stdio session alone: no shared server, no HTTP, no peers. A
+/// repository the session already discovered is loaded as it is, not discovered again (I3015).
+fn standalone(repo: &RepoArgs, found: Option<Repository>) -> Result<Server> {
+    let app = match found {
+        Some(found) => App::load_from(repo, found)?,
+        None => App::load(repo)?,
+    };
     // a stdio session outlives commits like any other: it follows the repository too
     let live = Arc::new(Live::watching(repo.clone(), app.context.clone()));
     let peer = live.current().peers.attach(PeerTransport::Stdio);
+    // as on a shared server, the stdio client is the worker that started this process (I3956)
+    live.current()
+        .peers
+        .locate_known(&peer, crate::peers::PeerAddress::of_this_process());
     Ok(Server::new(
         Surface::new(Arc::clone(&live)).for_peer(peer),
         crate::VERSION,
@@ -139,12 +147,12 @@ impl Session {
         // (I2129). A policy that does not parse leaves the defaults; `doctor` reports it.
         let _ = crate::policy::LoadedPolicy::load(&repo);
         let backend = match lease::elect(&repo) {
-            Ok(Role::Server(lease)) => match Self::serve(&args, lease, None) {
+            Ok(Role::Server(lease)) => match Self::serve(&args, &repo, lease, None) {
                 Ok(backend) => backend,
-                Err(e) => Self::alone(&args, None, &format!("starting it failed: {e}"))?,
+                Err(e) => Self::alone(&args, &repo, None, &format!("starting it failed: {e}"))?,
             },
             Ok(Role::Peer { url }) => Self::attach(url),
-            Err(e) => Self::alone(&args, None, &e.to_string())?,
+            Err(e) => Self::alone(&args, &repo, None, &e.to_string())?,
         };
         Ok(Session {
             args,
@@ -155,8 +163,13 @@ impl Session {
 
     /// The shared server cannot be used: serve this client alone and say why. The layer
     /// itself still has to load; when it does not, that error is the answer, not this.
-    fn alone(args: &McpArgs, resume: Option<ClientInfo>, why: &str) -> Result<Backend> {
-        let mut server = standalone(&args.repo)?;
+    fn alone(
+        args: &McpArgs,
+        repo: &Repository,
+        resume: Option<ClientInfo>,
+        why: &str,
+    ) -> Result<Backend> {
+        let mut server = standalone(&args.repo, Some(repo.clone()))?;
         tracing::warn!(
             "cannot use the shared server: {why}; serving this client alone (no HTTP, no Swagger UI, no peers), as --standalone would"
         );
@@ -169,27 +182,38 @@ impl Session {
     /// Become the shared server: load the layer, bind, and answer this stdio locally.
     fn serve(
         args: &McpArgs,
+        repo: &Repository,
         lease: Lease,
         resume: Option<crate::peers::ClientInfo>,
     ) -> Result<Backend> {
         // the lease is kept young while the layer loads, so that a peer waiting on it
         // never mistakes a slow start for an abandoned one
         lease.keep_alive();
-        let app = App::load(&args.repo)?;
+        let app = App::load_from(&args.repo, repo.clone())?;
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
-        let (http_host, _) = crate::cli::local_http_host(args.http_host.as_deref());
+        let root = std::path::Path::new(&app.context.index.repository.root);
+        let (http_host, _) = crate::cli::checkout_http_host(args.http_host.as_deref(), root);
+        // the port this checkout asks for on every start, unless one was given (I2702)
+        let http_port = args
+            .http_port
+            .unwrap_or_else(|| crate::cli::checkout_port(root));
         let shared = SharedServer::start(
             Arc::clone(&live),
             crate::VERSION,
             &http_host,
-            args.http_port,
+            http_port,
             true,
             None,
             lease,
             Some(app.share.dir()),
+            &crate::shared::MeshHosting::default(),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
+        // the client on this process's own stdio started this process: its address is this
+        // process's environment (I3956); a bridged client's is carried in its initialize
+        ctx.peers
+            .locate_known(&peer, crate::peers::PeerAddress::of_this_process());
         let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)
             .with_endpoint(Some(shared.url()));
         if let Some(client) = resume {
@@ -252,7 +276,7 @@ impl Session {
         };
         match lease::elect(&self.repo) {
             Ok(Role::Server(lease)) => {
-                match Self::serve(&self.args, lease, client.clone()) {
+                match Self::serve(&self.args, &self.repo, lease, client.clone()) {
                     Ok(backend) => {
                         self.replace(backend);
                         tracing::info!(
@@ -357,7 +381,7 @@ impl Session {
         reason: &str,
         withheld: Option<&BridgeError>,
     ) -> Option<Reply> {
-        match Self::alone(&self.args, client, reason) {
+        match Self::alone(&self.args, &self.repo, client, reason) {
             Ok(backend) => {
                 self.replace(backend);
                 match withheld {
@@ -412,8 +436,13 @@ impl Session {
 /// client shows its model, because an older client that attached in silence is how a
 /// version difference went unseen (I2163). Any other answer is relayed as it is.
 fn told_of_version(mut answer: Value, mine: &str) -> Value {
-    let served = answer["result"]["serverInfo"]["version"]
-        .as_str()
+    let Some(result) = answer.get_mut("result").and_then(Value::as_object_mut) else {
+        return answer;
+    };
+    let served = result
+        .get("serverInfo")
+        .and_then(|info| info.get("version"))
+        .and_then(Value::as_str)
         .map(str::to_string);
     if lease::version_verdict(served.as_deref(), mine) != lease::VersionVerdict::ServerNewer {
         return answer;
@@ -423,14 +452,12 @@ fn told_of_version(mut answer: Value, mine: &str) -> Value {
         "This client is majordomus {mine}; the shared server it is bridged to runs {theirs}, a newer release. Its answers are the newer server's; this client process is the older one until it is started from the newer executable."
     );
     tracing::warn!("{note}");
-    if let Some(result) = answer.get_mut("result").and_then(Value::as_object_mut) {
-        let instructions = result
-            .get("instructions")
-            .and_then(Value::as_str)
-            .map(|i| format!("{note}\n\n{i}"))
-            .unwrap_or(note);
-        result.insert("instructions".into(), Value::String(instructions));
-    }
+    let instructions = result
+        .get("instructions")
+        .and_then(Value::as_str)
+        .map(|i| format!("{note}\n\n{i}"))
+        .unwrap_or(note);
+    result.insert("instructions".into(), Value::String(instructions));
     answer
 }
 
@@ -624,6 +651,19 @@ mod tests {
     }
 
     #[test]
+    fn an_answer_without_a_result_is_relayed_and_one_without_instructions_is_told_alone() {
+        let refused = json!({"jsonrpc": "2.0", "id": 1,
+                             "error": {"code": -32600, "message": "refused"}});
+        assert_eq!(told_of_version(refused.clone(), "0.20.0"), refused);
+        let bare = json!({"jsonrpc": "2.0", "id": 1, "result": {
+            "serverInfo": {"name": "majordomus", "version": "0.21.0"}}});
+        let told = told_of_version(bare, "0.20.0");
+        let instructions = told["result"]["instructions"].as_str().unwrap();
+        assert!(instructions.starts_with("This client is majordomus 0.20.0"));
+        assert!(instructions.ends_with("started from the newer executable."));
+    }
+
+    #[test]
     fn older_client_told_test() {
         // bridged to a newer release, the client is told, before what the server said
         let told = told_of_version(initialized("0.21.0"), "0.20.0");
@@ -643,6 +683,118 @@ mod tests {
         // and an error answer has nothing to be told in
         let error = json!({"jsonrpc": "2.0", "id": 1, "error": {"code": -32600}});
         assert_eq!(told_of_version(error.clone(), "0.20.0"), error);
+    }
+
+    fn url() -> String {
+        "http://127.0.0.1:1".into()
+    }
+
+    #[test]
+    fn a_request_whose_outcome_is_unknown_is_answered_with_its_id_and_a_notification_is_not() {
+        let cause = BridgeError::Unanswered {
+            url: url(),
+            reason: "timed out".into(),
+        };
+        let request = json!({ "jsonrpc": "2.0", "id": 7, "method": "tools/call" });
+        let Some(Reply::Value(answer)) = outcome_unknown(&request, &cause) else {
+            panic!("a request is answered");
+        };
+        assert_eq!(answer["id"], 7);
+        assert_eq!(answer["error"]["code"], -32603);
+        assert_eq!(answer["error"]["data"]["outcome"], "unknown");
+        assert_eq!(answer["error"]["data"]["request_id"], 7);
+        let text = answer["error"]["message"].as_str().unwrap();
+        assert!(text.starts_with("outcome unknown: request 7"), "{text}");
+        assert!(text.contains("timed out"), "the cause is named: {text}");
+        let notification = json!({ "jsonrpc": "2.0", "method": "notifications/initialized" });
+        assert!(outcome_unknown(&notification, &cause).is_none());
+        let null_id = json!({ "jsonrpc": "2.0", "id": null, "method": "ping" });
+        assert!(outcome_unknown(&null_id, &cause).is_none());
+    }
+
+    #[test]
+    fn a_refusal_is_answered_as_that_refusal_with_its_status() {
+        let request = json!({ "jsonrpc": "2.0", "id": 9, "method": "tools/call" });
+        let answer = |cause: &BridgeError| match refused(&request, cause) {
+            Some(Reply::Value(v)) => v,
+            _ => panic!("a request is answered with a value"),
+        };
+        let too_large = answer(&BridgeError::Rejected {
+            url: url(),
+            status: 413,
+            body: "too_large".into(),
+        });
+        assert_eq!(too_large["error"]["code"], -32600);
+        assert_eq!(too_large["error"]["data"]["status"], 413);
+        let text = too_large["error"]["message"].as_str().unwrap();
+        assert!(text.starts_with("payload too large: request 9"), "{text}");
+
+        let bad = answer(&BridgeError::Rejected {
+            url: url(),
+            status: 400,
+            body: "invalid".into(),
+        });
+        assert_eq!(bad["error"]["data"]["status"], 400);
+        assert!(bad["error"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("request 9 was refused"));
+
+        // a failure that carries no status is still named, with no status claimed for it
+        for cause in [
+            BridgeError::Unreachable {
+                url: url(),
+                reason: "connection refused".into(),
+            },
+            BridgeError::Unanswered {
+                url: url(),
+                reason: "timed out".into(),
+            },
+        ] {
+            let v = answer(&cause);
+            assert_eq!(v["error"]["data"]["status"], Value::Null, "{v}");
+            assert!(v["error"]["message"].as_str().unwrap().contains(&url()));
+        }
+        let notification = json!({ "jsonrpc": "2.0", "method": "notifications/cancelled" });
+        let rejected = BridgeError::Rejected {
+            url: url(),
+            status: 400,
+            body: String::new(),
+        };
+        assert!(refused(&notification, &rejected).is_none());
+    }
+
+    /// When no lease can be taken the client is served alone, and when the layer does not
+    /// load either, that error is the answer rather than the election's.
+    #[test]
+    fn a_failed_election_over_a_layer_that_does_not_load_answers_the_layers_error() {
+        use clap::Parser;
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        let repo = Repository::discover(&root).unwrap();
+        // the lease's directory cannot be made where a file stands in its way
+        let blocked = root.join(repo.local_path()).join("state");
+        std::fs::create_dir_all(blocked.parent().unwrap()).unwrap();
+        std::fs::write(&blocked, b"not a directory").unwrap();
+        assert!(lease::elect(&repo).is_err());
+
+        let missing = root.join("no-share-here");
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "mcp",
+            "--repo",
+            root.to_str().unwrap(),
+            "--share",
+            missing.to_str().unwrap(),
+        ])
+        .unwrap();
+        let crate::cli::Command::Mcp(args) = cli.command else {
+            panic!("not the mcp command")
+        };
+        match Session::open(args, repo) {
+            Err(e) => assert!(matches!(e, Error::ShareNotFound { .. }), "{e:?}"),
+            Ok(_) => panic!("a session was opened over a layer that does not load"),
+        }
     }
 
     #[test]

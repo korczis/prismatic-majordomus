@@ -1,0 +1,91 @@
+---
+schema: adr/v1
+id: adr-0144
+kind: adr
+title: An intent is proposed by a capability, and its stage stays derived
+status: proposed
+date: 2026-10-12
+tags:
+  - intent
+  - project
+  - capabilities
+related:
+  - file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md
+  - file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md
+  - test:test/cases/2978_an_intent_is_proposed_by_a_capability.sh
+  - file:apps/majordomus-cli/src/intent.rs
+  - file:apps/majordomus-cli/src/capability/builtin/intents.rs
+  - file:.ai/repo/project/intents/intent-lifecycle.yaml
+provenance:
+  origin: authored
+---
+
+# 144. An intent is proposed by a capability, and its stage stays derived
+
+## Context
+
+ADR 0070 made an intent a typed record whose stage is derived from the plan and the
+evidence, and said that no intent capability writes the repository. Every intent so far was
+written by hand: six capabilities read intents and none creates one, and `lib/plan.sh` has
+no create subcommand either.
+
+On 2026-10-12 the owner asked for a Claude Code integration derived from the capability
+registry, with `/intent <sentence>` as its first user journey. A projection can only adapt
+a capability that exists, so the journey needs a capability that writes an intent. And a
+sentence is not a valid intent: the schema requires milestones and satisfaction criteria,
+and `intent validate` fails an intent that names neither (`intent_without_milestone`,
+`intent_without_criterion`).
+
+## Decision
+
+**`intents.propose` writes one new intent record and nothing else.** It is a `Command` that
+declares `.writes_repository()`. Its input is a statement, plus an optional title and id.
+It writes `.ai/repo/project/intents/<id>.yaml` with the statement verbatim, empty
+`invariants`, `milestones` and `satisfaction`, and the creation date. The id defaults to the
+slug of the title, and the title to the statement's first line. An existing record is
+refused, never overwritten. The file is written beside its final name and linked into place,
+so it appears whole or not at all, and two proposals of one id cannot both succeed.
+
+**A proposal is an intent that names neither a milestone nor a criterion.** Its stage is
+`declared`, which ADR 0070 already defines as "none is named". For such a record the two
+absences are warnings, not failures. An intent that names one and not the other is half
+planned, and each absence stays a failure, as before. No issue can serve a proposal: there is
+no milestone to place work under and no criterion to serve, so the preflight refuses work
+that claims it. Planning a proposal stays a separate act. A person, or a later capability,
+adds the milestones, the criteria and the invariants.
+
+**What ADR 0070 keeps.** No intent status is stored, nothing transitions an intent, and the
+stage stays a derivation. The sentence "no intent capability writes the repository" becomes
+"one intent capability writes, and only a new record". The invariant of the
+`intent-lifecycle` intent changes with it.
+
+This step writes no ledger event. The event vocabulary (`share/events.yaml`) is reconciled
+against the shell module that emits each event (case 33), and this writer is Rust only.
+Recording a writer's call as an execution, whichever transport it arrived by, is the
+mission's own later step, and it covers every writer at once rather than this one.
+
+## Alternatives rejected
+
+**The capability writes placeholder milestones and criteria, so that the record validates.**
+That puts invented work into the plan, and a reader cannot tell a placeholder from a decision.
+
+**The caller (a model behind `/intent`) must supply a complete intent, and an incomplete
+one is refused.** It needs no change to validation. But the quality of the record then
+depends on the model's guess at milestones and criteria, which is the guess this layer
+exists to keep out of the repository.
+
+**A stored `status: proposed` field.** This is a second lifecycle beside the derived stage,
+which ADR 0070 rejected for the reasons it gives.
+
+## Consequences
+
+- `intents.propose` is projected from its one declaration to `majordomus intent propose`,
+  MCP `majordomus_intent_propose`, `POST /api/v1/intents/propose` and OpenAPI. Its exposure
+  ceiling is the one every repository write has. Its benchmark is waived as destructive, and
+  its case is the example the projections show.
+- `intent validate` stays green on a repository that holds proposals and reports each
+  proposal's two warnings. The `intent-check` gate fails on a half-planned intent as before.
+- The test that held the module read-only now holds that exactly one capability writes, and
+  that it is the proposal.
+- This decision is `proposed`. The owner allowed building on it before accepting it
+  (2026-10-12). If it is rejected, the capability is removed with it.

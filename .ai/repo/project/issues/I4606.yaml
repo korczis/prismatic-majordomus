@@ -1,0 +1,27 @@
+id: I4606
+milestone: a-second-adopter-is-served
+title: "A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`"
+slug: a-secret-gated-verdict-names-the-store-its-run-reads
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Where a verdict fails closed for want of a CI secret (the design licence's `MAJORDOMUS_KIT_EVIDENCE_<KIT>`, and any adopter gate the fleet pack documents the same way), the finding says which secret store the run reads and gives the command for it: on a Dependabot run (`GITHUB_ACTOR=dependabot[bot]`) the Dependabot store, `gh secret set <NAME> --app dependabot`; otherwise the Actions store."
+why: "An adopter (korczis.github.io, a public Zola site, 2026-11-15) had its NDA gate fail closed on a Dependabot pull request (#9) although the secret was set: a Dependabot run reads only the Dependabot secret store, so `secrets.<NAME>` was empty there. The finding said 'no denylist in CI' and gave the Actions command, which was already done; the cause took a log read to find. The licence evidence has the same shape: `not judged` on every Dependabot PR of a public kit tree unless the owner also set `MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO` with `--app dependabot` (that adopter happened to have it). The fix in the adopter's own gate was to read `GITHUB_ACTOR` and print the `--app dependabot` command; the tool owes the same for the verdicts it owns."
+current_state: "The licence's not-judged reason says 'this machine holds no licence evidence (ui.evidence, or MAJORDOMUS_KIT_EVIDENCE_<KIT> in CI)' on every run, a Dependabot run included, and names no store or command."
+desired_state: "On a Dependabot run the reason names the Dependabot secret store and the `gh secret set MAJORDOMUS_KIT_EVIDENCE_<KIT> -R <repo> --app dependabot` remedy (the value itself never printed); on any other CI run it names the Actions store; locally it names ui.evidence as now. The fleet pack's adopter guidance says a secret a CI verdict needs is set in both stores."
+scope:
+  - ".ai/repo/project/issues/I4606.yaml"
+  - "apps/majordomus-cli/src/design/licence.rs"
+  - "lib/fleet.sh"
+  - "test/cases/4606_a_secret_gated_verdict_names_its_store.sh"
+depends_on: []
+acceptance_criteria:
+  - "A public kit tree without evidence, judged with GITHUB_ACTOR=dependabot[bot], reports not judged with the Dependabot store and the --app dependabot command"
+  - "The same tree judged with another GITHUB_ACTOR in CI names the Actions store"
+  - "No run prints a secret's value"
+validation:
+  - "bash test/run.sh 4606_a_secret_gated_verdict_names_its_store"
+evidence_required:
+  - "case_a_secret_gated_verdict_names_its_store"
+created_at: 2026-11-15
+updated_at: 2026-11-15

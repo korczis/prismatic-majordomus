@@ -7,6 +7,7 @@
 //! still caught.
 
 use majordomus_cli::capability::builtin::rules::module;
+use majordomus_cli::capability::CachePolicy;
 use majordomus_cli::evidence::Ledger;
 use majordomus_cli::rules::{definitions, report, Class, Mode, RuleState};
 use majordomus_cli::synthetic::SyntheticRepository;
@@ -156,9 +157,15 @@ fn the_module_declares_every_projection_it_claims() {
         assert!(x.mcp.is_some(), "{id} is not reachable over MCP");
         assert!(x.http.is_some(), "{id} is not reachable over HTTP");
         assert!(x.cli.is_some(), "{id} has no command line");
+        // the ledger changes outside this process, so an answer is kept, if at all, only per
+        // checkout state, which an edit of the tracked ledger moves; never per process or
+        // per generation, which an edit of the ledger does not
         assert!(
-            !e.capability.cache.is_enabled(),
-            "{id} caches, but the ledger changes outside this process"
+            matches!(
+                e.capability.cache,
+                CachePolicy::Disabled | CachePolicy::Checkout { .. }
+            ),
+            "{id} caches beyond the checkout state, but the ledger changes outside this process"
         );
     }
 }

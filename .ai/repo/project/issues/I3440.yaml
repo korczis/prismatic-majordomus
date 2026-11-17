@@ -1,0 +1,37 @@
+id: "I3440"
+milestone: "truthful-plan-surfaces"
+title: "A milestone's meter counts the issues it requires, and a milestone with none says so"
+slug: "a-milestone-meter-counts-what-it-requires"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "Every UI meter of a milestone's issues draws DONE out of counts.required (total less cancelled), the denominator the milestone's own status derivation and the published /roadmap/ already use, and a milestone that holds no issue reads 'no issues' instead of '0 of 0'."
+why: "On 2026-10-19 the owner asked that /roadmap be correct and connected. Review finding P6: the milestone meter counts CANCELLED issues in its denominator (fly-deployment shown as 4 of 35 when only 26 were required at the review's reading), and foundation shows '0 of 0'. The work starts only after the exclusive mesh claim another session holds on apps/majordomus-cli/src/plan/flight.rs, apps/majordomus-cli/src/ui/roadmap.rs and apps/majordomus-cli/tests/ui_roadmap.rs is released or handed over: this record does not edit those files, but /ui/roadmap draws its rows through the code it changes."
+current_state: "milestone_row (apps/majordomus-cli/src/ui/dashboard.rs:173-190), which both the Overview and /ui/roadmap (apps/majordomus-cli/src/ui/roadmap.rs:96-103) draw, meters /counts/by_status/DONE out of /counts/total (dashboard.rs:174-175); so do the milestone inspector (apps/majordomus-cli/src/ui/milestone.rs:309-314) and the observatory's milestone nodes (apps/majordomus-cli/src/ui/observatory.rs:635-636, 883). PlanCounts.required exists for exactly this (apps/majordomus-cli/src/plan.rs:349-357, computed as total less cancelled at plan.rs:1495-1498) and is read by nothing in the UI. plan.roadmap at master 9904000d2df on 2026-10-19 gives fly-deployment total 32, required 23, DONE 4, CANCELLED 9, so the row reads 4 of 32; foundation is DONE with total 0, and meter (apps/majordomus-cli/src/ui/view.rs:479-505) prints '0 of 0' for a zero total, pinned by the test at view.rs:809-815. The published /roadmap/ already reads 'DONE of required' and draws no meter for a zero total (site/templates/roadmap.html:66-70), so the two surfaces disagree."
+desired_state: "Every milestone meter on /ui (Overview, Roadmap, milestone inspector, observatory) is DONE out of counts.required; a milestone with no issue reads 'no issues' and draws no bar; a milestone whose issues are all cancelled reads 'no issue required'. A crate test pins each case; the meter of an issue's evidence (apps/majordomus-cli/src/ui/issues.rs:337-340) keeps its own numbers."
+scope:
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+non_scope:
+  - "The published /roadmap/ page, which already reads required."
+  - "How PlanCounts is computed, or whether a CANCELLED issue belongs to its milestone."
+  - "The evidence meter of an issue."
+depends_on: []
+acceptance_criteria:
+  - "A milestone of 32 issues, 9 of them cancelled and 4 done, reads '4 of 23' on the Overview, /ui/roadmap and its inspector, and never '4 of 32'"
+  - "A milestone with no issue reads 'no issues' with no meter bar and never '0 of 0'"
+  - "A milestone whose every issue is cancelled reads that no issue is required, and its bar is not drawn as empty work"
+  - "A milestone with no cancelled issue reads DONE out of its total, as before"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::dashboard"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::milestone"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test dashboard"
+  - "scripts/ui audit --only /ui/roadmap"
+evidence_required:
+  - "milestone_meter_counts_required"
+created_at: 2026-10-19
+updated_at: 2026-10-19

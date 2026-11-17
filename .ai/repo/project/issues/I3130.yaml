@@ -1,0 +1,45 @@
+id: I3130
+milestone: the-product-shows-what-it-caught
+title: "The ledger answers how many false dones finish caught, by doctrine, with the tasks it counted"
+slug: the-ledger-counts-what-finish-caught
+priority: p2
+profile: implementation
+objective: "Declare one read capability in the gates family that aggregates task.refused and task.finished from this checkout's ledger: tasks accepted, tasks refused at least once before acceptance (false dones caught), refusals per doctrine, tasks refused and never accepted, and the time from first refusal to acceptance, each with the task ids behind it; project it to CLI, HTTP and MCP by majordomus generate."
+why: "share/events.yaml says task.refused exists because 'a refusal that was later satisfied is a false done that was caught'; the 2026-10-13 assessment named exactly that the primary product metric. The producer exists; there is still no reader. On 2026-10-18 the primary checkout's ledger held 2 task.refused lines and the linked worktrees' ledgers held 127 (recount: `git worktree list --porcelain | awk '/^worktree /{print $2}' | while read w; do cat \"$w/.ai/local/state/ledger.jsonl\" 2>/dev/null; done | grep -c '\"event\":\"task.refused\"'`), so one checkout's ledger is not a meaningful denominator. The term 'accepted' already belongs to I0401, and the Rust side already has a ledger reader to build on. Proposed in ADR 0208 (The product's value is stated as the false dones its finish caught, beside the friction it cost) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c256#2, chatgpt-majordomus:c119#7."
+current_state: "lib/finish.sh:108 appends task.refused to $MJ_STATE_DIR/ledger.jsonl; lib/history.sh:158 prints it line by line; gates.completion judges a single task; apps/majordomus-cli/src/ledger.rs reads the ledger; no aggregate exists."
+desired_state: "A gates.caught (name per the registry's conventions) capability with a typed answer, absence of a ledger reported as not observed, and a unit test over a fixture ledger."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "docs/EVIDENCE.md"
+  - "apps/majordomus-cli/src/ledger.rs"
+  - "docs/claims/finish-refusal-is-recorded.md"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Publishing the figure on the public site"
+  - "Any tracked copy of the ledger"
+  - "Preserving the ledger of a worktree removed after landing; the answer covers ledgers that exist when it runs"
+  - "Recording a finish --check forecast event (I2949's to decide)"
+depends_on:
+  - "I0401"
+serves:
+  - "the-product-shows-what-it-caught#false-dones-are-counted"
+acceptance_criteria:
+  - "Over a fixture ledger the capability returns the expected counts and task ids for accepted, caught, by-doctrine and never-accepted"
+  - "A checkout with no ledger answers not observed, never zero"
+  - "The capability is declared once and appears on every transport from majordomus generate alone"
+  - "The aggregate reads every checkout `git worktree list` reports, the primary included, and the answer names each ledger read with its task.* line count"
+  - "Not observed means no task.* event in any ledger read; a missing ledger, or one holding only other events, never reads zero"
+  - "The aggregate is built on ledger::read and Entry; no new JSONL parser is added, and corrupt lines are reported as ledger::read counts them"
+  - "Accepted uses I0401's written definition of an accepted outcome; I3130 defines none of its own"
+  - "The answer types a class for each refusal (caught, unanswered, downgraded, digest unknown) and assumes no tree-only rule; a refusal that predates the answer digest reads digest unknown"
+  - "The answer states it counts finish refusals only, and that finish --check forecasts are not counted"
+  - "docs/claims/finish-refusal-is-recorded.md and docs/CLAIMS.yaml no longer say the refusal counts nothing on its own, and a claim for the aggregate is added"
+  - "Criterion false-dones-are-counted of the intent carries evidence: test with ref apps/majordomus-cli/tests/gates_caught.rs"
+validation:
+  - "bash test/run.sh 32_refusal_lifecycle"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_gates_caught"
+created_at: 2026-10-18
+updated_at: 2026-10-18

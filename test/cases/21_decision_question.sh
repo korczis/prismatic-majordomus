@@ -17,6 +17,9 @@ expect_grep 'why is required'
 expect_exit 0 "$MJ" decision list
 expect_grep '^\(none\)$'          # the commented template is not an entry
 
+# A related task is opened by this explicit episode, not inferred from the checkout.
+MAJORDOMUS_PROVIDER_SESSION=decision-question-21; export MAJORDOMUS_PROVIDER_SESSION
+"$MJ" session start --provider-session "$MAJORDOMUS_PROVIDER_SESSION" >/dev/null
 "$MJ" start "t1" --scope lib >/dev/null
 id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
 

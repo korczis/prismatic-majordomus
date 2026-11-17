@@ -1,0 +1,35 @@
+id: I3377
+milestone: every-task-states-its-delivery-economics
+title: "A task's prompt records, restarts and manual changes are counted by type from the records that already hold them, each with the ids behind it"
+slug: interventions-from-existing-records
+priority: p1
+profile: implementation
+objective: "Fill three intervention types: prompt records under .ai/local/prompts whose episode is one of the task's and whose started_at falls in its span, with orphan and unlinked-legacy records reported as unattributed; restarts as each episode after the first, typed by a preceding task.handed_over, a session.recovered naming it, or unknown, plus each later task on the same issue after a non-completed finish; manual changes as commits on the task's branch in its span, reported as two signals (committer time in no open episode, and no Co-Authored-By trailer). Each count lists its ids or shas and classifying signal. approval stays not_observed."
+why: "T3 of the owner's report of 2026-10-19 asks for human interventions by type. Three of four leave records already. The archive cannot tell a person's prompt from an unmarked relayed message, so the field is named prompt records and states that limit."
+current_state: "lib/capture.sh:36 writes one prompt per file; :85-95 names the link strength; :239-249 filters injected messages by declared markers; share/events.yaml:40-46 declares task.handed_over and :152-158 session.recovered; commit/message.rs:206 reads trailers; grep -rn 'local/prompts' apps/majordomus-cli/src finds no Rust reader."
+desired_state: "Every record carries prompt, restart and manual_change counts with ids and signals."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Approval receipts (I3378)"
+  - "Reading a prompt's text"
+  - "Changing what capture writes"
+depends_on:
+  - "I3376"
+serves:
+  - "the-product-proves-it-pays#interventions-are-typed-and-sourced"
+acceptance_criteria:
+  - "Only prompts inside the task's span and episodes are counted; orphans are reported as unattributed"
+  - "A resume after a handover and one after a recovery each report one typed restart"
+  - "A second task on the same issue after a partial finish counts as a restart"
+  - "Commits with no open episode and commits without the trailer are reported under their own signals with shas"
+  - "No prompt text enters the reading"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_task_interventions_are_typed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

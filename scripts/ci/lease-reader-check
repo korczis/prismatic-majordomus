@@ -25,6 +25,9 @@
 #
 # Exempt by kind:
 #   documentation — *.md, docs/, site/, .ai/ — describes the lease and parses nothing;
+#   the chapters of a handbook edition — handbook/<language>/*.html and its sources/ —
+#   for the same reason: they are prose that explains the lease to a reader. The edition's
+#   scripts are not exempt: a script that named the lease would be a reader;
 #   tests — apps/majordomus-cli/tests/, test/cases/ — plant a lease and read it back,
 #   where the file is the subject under test rather than a dependency of the code.
 #
@@ -101,6 +104,9 @@ subject() {
       "$READER") continue ;;                                  # the reader
       .envrc) continue ;;                                     # watches, never opens
       *.md|docs/*|site/*|.ai/*) continue ;;                   # documentation
+      handbook/*/*.html) continue ;;                          # an edition's chapters: prose
+                                                               # about the lease. Its scripts
+                                                               # (*.js, *.py) stay subjects.
       apps/majordomus-cli/tests/*|test/cases/*) continue ;;    # the lease as a subject
       scripts/ci/lease-reader-check) continue ;;               # this gate: it names the lease
                                                                # path, file and schema because

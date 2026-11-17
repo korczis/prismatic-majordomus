@@ -1,0 +1,29 @@
+id: I2709
+milestone: M004
+title: "A red on the trunk has one named carrier, and nobody else may land until it is paid"
+slug: a-red-trunk-has-one-carrier
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on:
+  - I2664
+objective: "Make the trunk's red the first thing every lander knows about and the one thing that may land: a carrier is named on the board within the minute the red is read, and the landing claim is refused to anyone else until the fix is on master."
+why: "Split from I2664 on 2026-10-14: its first three criteria are delivered (a failed branch run cancels itself, the expedited-landing rule says which lanes each kind of change owes, a structure gate refuses an unnamed active skill); its fourth, about the board and the landing claim, is a different mechanism. On the night of 2026-10-13 the trunk was red three times in turn, and each time the carrier was named by hand on the board and other landings were held only because the release seat asked for it."
+current_state: "The landing claim is an exclusive mesh claim on campaign/majordomus-autonomous-convergence/landing; mesh.claim refuses a second exclusive claim but knows nothing of the trunk's verdict. A red on the trunk is read from the validate run by whoever looks; nothing names a carrier or holds the claim for one."
+desired_state: "When the trunk's validate run has a failed job, the board carries a red-trunk entry naming the failing job, the commit and its carrier once one announces it, and mesh.claim refuses the landing scope to any session but the carrier until a later trunk commit's run is green or the carrier releases it with a reason."
+scope:
+  - apps/majordomus-cli/src/mesh
+  - apps/majordomus-cli/src/capability/builtin
+  - docs/INTEGRATION.md
+  - .ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md
+  - test/cases
+non_scope:
+  - "Cancelling runs, which I2664 delivered"
+acceptance_criteria:
+  - "A red on the trunk has a named carrier on the board within the minute it is read, and the landing claim is refused to anyone else until the fix lands"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "red_trunk_holds_the_landing_claim_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

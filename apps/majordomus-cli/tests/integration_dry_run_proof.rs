@@ -197,7 +197,7 @@ fn path(fg: &Forge) -> String {
 fn proof(fg: &Forge, args: &[&str], env: &[(&str, &str)]) -> (i32, String, String) {
     let _ = std::fs::remove_file(fg.state.join("snapshots"));
     let _ = std::fs::remove_file(fg.state.join("refreshes"));
-    let mut c = Command::new(common::BIN);
+    let mut c = common::majordomus();
     c.arg("prs")
         .arg("prove-dry-run")
         .arg("--repo")
@@ -281,8 +281,9 @@ fn a_quiet_forge_proves_that_nothing_moved() {
     let log = log(&fg);
     assert!(!log.contains("WRITE-OR-UNEXPECTED"), "{log}");
     assert!(
-        !log.lines()
-            .any(|l| l.starts_with("pr merge") || l.starts_with("pr close")),
+        !log.lines().any(|l| ["pr merge", "pr close", "api -X"]
+            .iter()
+            .any(|w| l.starts_with(w))),
         "{log}"
     );
     assert_eq!(origin_refs(&fg), before);
@@ -344,7 +345,7 @@ fn a_forge_that_cannot_answer_fails_the_proof_rather_than_passing_it() {
 #[test]
 fn the_proof_answers_over_mcp_too() {
     let fg = forge();
-    let mut child = Command::new(common::BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .env("PATH", path(&fg))
@@ -472,7 +473,7 @@ fn an_empty_forge_has_nothing_to_merge_or_close() {
 }
 
 fn prs_cmd(fg: &Forge, args: &[&str]) -> (i32, String, String) {
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .arg("prs")
         .arg("--repo")
         .arg(fg.f.root())

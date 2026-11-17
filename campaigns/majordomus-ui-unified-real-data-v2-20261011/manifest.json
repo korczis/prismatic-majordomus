@@ -1,0 +1,621 @@
+{
+  "id": "majordomus-unified-ui-v2",
+  "date": "2026-10-11",
+  "status": "implementation_plan_not_deployed",
+  "references": [
+    {
+      "id": "01-dashboard-overview",
+      "path": "reference/01-dashboard-overview.png"
+    },
+    {
+      "id": "02-dashboard-alternative",
+      "path": "reference/02-dashboard-alternative.png"
+    },
+    {
+      "id": "03-pr-drain",
+      "path": "reference/03-pr-drain.png"
+    },
+    {
+      "id": "04-roadmap-overview",
+      "path": "reference/04-roadmap-overview.png"
+    },
+    {
+      "id": "05-issues-and-prs",
+      "path": "reference/05-issues-and-prs.png"
+    },
+    {
+      "id": "06-mesh",
+      "path": "reference/06-mesh.png"
+    },
+    {
+      "id": "07-ci-cd",
+      "path": "reference/07-ci-cd.png"
+    },
+    {
+      "id": "08-capabilities",
+      "path": "reference/08-capabilities.png"
+    },
+    {
+      "id": "09-evidence",
+      "path": "reference/09-evidence.png"
+    },
+    {
+      "id": "10-roadmap-detail",
+      "path": "reference/10-roadmap-detail.png"
+    },
+    {
+      "id": "11-documentation",
+      "path": "reference/11-documentation.png"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M00",
+      "title": "Repository reality, PR reconciliation and screenshot audit",
+      "depends_on": [],
+      "issues": [
+        {
+          "id": "M00-I01",
+          "title": "Live current-state audit",
+          "depends_on": []
+        },
+        {
+          "id": "M00-I02",
+          "title": "Provenance and cross-surface matrix",
+          "depends_on": [
+            "M00-I01"
+          ]
+        },
+        {
+          "id": "M00-I03",
+          "title": "Reference decomposition",
+          "depends_on": [
+            "M00-I02"
+          ]
+        },
+        {
+          "id": "M00-I04",
+          "title": "Existing UI asset and toolchain audit",
+          "depends_on": [
+            "M00-I03"
+          ]
+        },
+        {
+          "id": "M00-I05",
+          "title": "Baseline proof",
+          "depends_on": [
+            "M00-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M01",
+      "title": "Canonical screen and component contract",
+      "depends_on": [
+        "M00"
+      ],
+      "issues": [
+        {
+          "id": "M01-I01",
+          "title": "Typed screen descriptors",
+          "depends_on": [
+            "M00"
+          ]
+        },
+        {
+          "id": "M01-I02",
+          "title": "Typed widget projection",
+          "depends_on": [
+            "M01-I01"
+          ]
+        },
+        {
+          "id": "M01-I03",
+          "title": "Provenance and freshness",
+          "depends_on": [
+            "M01-I02"
+          ]
+        },
+        {
+          "id": "M01-I04",
+          "title": "Action contract",
+          "depends_on": [
+            "M01-I03"
+          ]
+        },
+        {
+          "id": "M01-I05",
+          "title": "Cross-surface contract tests",
+          "depends_on": [
+            "M01-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M02",
+      "title": "Reusable design system and adaptive shell",
+      "depends_on": [
+        "M01"
+      ],
+      "issues": [
+        {
+          "id": "M02-I01",
+          "title": "Token alignment",
+          "depends_on": [
+            "M01"
+          ]
+        },
+        {
+          "id": "M02-I02",
+          "title": "App shell",
+          "depends_on": [
+            "M02-I01"
+          ]
+        },
+        {
+          "id": "M02-I03",
+          "title": "Card, KPI and status primitives",
+          "depends_on": [
+            "M02-I02"
+          ]
+        },
+        {
+          "id": "M02-I04",
+          "title": "Tables, filters, detail drawers",
+          "depends_on": [
+            "M02-I03"
+          ]
+        },
+        {
+          "id": "M02-I05",
+          "title": "Responsive and accessibility proof",
+          "depends_on": [
+            "M02-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M03",
+      "title": "Dashboard and Command",
+      "depends_on": [
+        "M02"
+      ],
+      "issues": [
+        {
+          "id": "M03-I01",
+          "title": "Overview composition",
+          "depends_on": [
+            "M02"
+          ]
+        },
+        {
+          "id": "M03-I02",
+          "title": "Derived dashboard KPIs",
+          "depends_on": [
+            "M03-I01"
+          ]
+        },
+        {
+          "id": "M03-I03",
+          "title": "Command workspace",
+          "depends_on": [
+            "M03-I02"
+          ]
+        },
+        {
+          "id": "M03-I04",
+          "title": "Drill-down navigation",
+          "depends_on": [
+            "M03-I03"
+          ]
+        },
+        {
+          "id": "M03-I05",
+          "title": "Overview E2E proof",
+          "depends_on": [
+            "M03-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M04",
+      "title": "PR Drain and Issues & PRs",
+      "depends_on": [
+        "M03"
+      ],
+      "issues": [
+        {
+          "id": "M04-I01",
+          "title": "PR queue model",
+          "depends_on": [
+            "M03"
+          ]
+        },
+        {
+          "id": "M04-I02",
+          "title": "Drain operational page",
+          "depends_on": [
+            "M04-I01"
+          ]
+        },
+        {
+          "id": "M04-I03",
+          "title": "Issues and PR detail",
+          "depends_on": [
+            "M04-I02"
+          ]
+        },
+        {
+          "id": "M04-I04",
+          "title": "Secure actions",
+          "depends_on": [
+            "M04-I03"
+          ]
+        },
+        {
+          "id": "M04-I05",
+          "title": "Queue and recovery tests",
+          "depends_on": [
+            "M04-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M05",
+      "title": "Roadmap and milestones",
+      "depends_on": [
+        "M04"
+      ],
+      "issues": [
+        {
+          "id": "M05-I01",
+          "title": "Canonical roadmap projection",
+          "depends_on": [
+            "M04"
+          ]
+        },
+        {
+          "id": "M05-I02",
+          "title": "Timeline/Gantt",
+          "depends_on": [
+            "M05-I01"
+          ]
+        },
+        {
+          "id": "M05-I03",
+          "title": "Dependency visualization",
+          "depends_on": [
+            "M05-I02"
+          ]
+        },
+        {
+          "id": "M05-I04",
+          "title": "Milestone detail and objectives",
+          "depends_on": [
+            "M05-I03"
+          ]
+        },
+        {
+          "id": "M05-I05",
+          "title": "Roadmap consistency gate",
+          "depends_on": [
+            "M05-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M06",
+      "title": "Mesh topology, peers and tasks",
+      "depends_on": [
+        "M05"
+      ],
+      "issues": [
+        {
+          "id": "M06-I01",
+          "title": "Trust-aware mesh projection",
+          "depends_on": [
+            "M05"
+          ]
+        },
+        {
+          "id": "M06-I02",
+          "title": "Interactive topology",
+          "depends_on": [
+            "M06-I01"
+          ]
+        },
+        {
+          "id": "M06-I03",
+          "title": "Peer and task detail",
+          "depends_on": [
+            "M06-I02"
+          ]
+        },
+        {
+          "id": "M06-I04",
+          "title": "Live events and reconnect",
+          "depends_on": [
+            "M06-I03"
+          ]
+        },
+        {
+          "id": "M06-I05",
+          "title": "Mesh resilience tests",
+          "depends_on": [
+            "M06-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M07",
+      "title": "CI/CD, releases and deployments",
+      "depends_on": [
+        "M06"
+      ],
+      "issues": [
+        {
+          "id": "M07-I01",
+          "title": "Pipeline projection",
+          "depends_on": [
+            "M06"
+          ]
+        },
+        {
+          "id": "M07-I02",
+          "title": "CI performance charts",
+          "depends_on": [
+            "M07-I01"
+          ]
+        },
+        {
+          "id": "M07-I03",
+          "title": "Deployment/runtime model",
+          "depends_on": [
+            "M07-I02"
+          ]
+        },
+        {
+          "id": "M07-I04",
+          "title": "Operational actions",
+          "depends_on": [
+            "M07-I03"
+          ]
+        },
+        {
+          "id": "M07-I05",
+          "title": "CI UI verification",
+          "depends_on": [
+            "M07-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M08",
+      "title": "Capabilities and registry exploration",
+      "depends_on": [
+        "M07"
+      ],
+      "issues": [
+        {
+          "id": "M08-I01",
+          "title": "Canonical capability catalog",
+          "depends_on": [
+            "M07"
+          ]
+        },
+        {
+          "id": "M08-I02",
+          "title": "Capability graph",
+          "depends_on": [
+            "M08-I01"
+          ]
+        },
+        {
+          "id": "M08-I03",
+          "title": "Capability inspector",
+          "depends_on": [
+            "M08-I02"
+          ]
+        },
+        {
+          "id": "M08-I04",
+          "title": "Schema-driven runner",
+          "depends_on": [
+            "M08-I03"
+          ]
+        },
+        {
+          "id": "M08-I05",
+          "title": "Zero-registration proof",
+          "depends_on": [
+            "M08-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M09",
+      "title": "Evidence and verification",
+      "depends_on": [
+        "M08"
+      ],
+      "issues": [
+        {
+          "id": "M09-I01",
+          "title": "Evidence catalog",
+          "depends_on": [
+            "M08"
+          ]
+        },
+        {
+          "id": "M09-I02",
+          "title": "Evidence analytics",
+          "depends_on": [
+            "M09-I01"
+          ]
+        },
+        {
+          "id": "M09-I03",
+          "title": "Evidence relationship graph",
+          "depends_on": [
+            "M09-I02"
+          ]
+        },
+        {
+          "id": "M09-I04",
+          "title": "Findings and gaps",
+          "depends_on": [
+            "M09-I03"
+          ]
+        },
+        {
+          "id": "M09-I05",
+          "title": "Evidence failure tests",
+          "depends_on": [
+            "M09-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "title": "Documentation and global discovery",
+      "depends_on": [
+        "M09"
+      ],
+      "issues": [
+        {
+          "id": "M10-I01",
+          "title": "Doc navigation projection",
+          "depends_on": [
+            "M09"
+          ]
+        },
+        {
+          "id": "M10-I02",
+          "title": "Reference workspaces",
+          "depends_on": [
+            "M10-I01"
+          ]
+        },
+        {
+          "id": "M10-I03",
+          "title": "Search and keyboard navigation",
+          "depends_on": [
+            "M10-I02"
+          ]
+        },
+        {
+          "id": "M10-I04",
+          "title": "Living site integration",
+          "depends_on": [
+            "M10-I03"
+          ]
+        },
+        {
+          "id": "M10-I05",
+          "title": "Documentation proof",
+          "depends_on": [
+            "M10-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M11",
+      "title": "Asset performance and frontend polish",
+      "depends_on": [
+        "M10"
+      ],
+      "issues": [
+        {
+          "id": "M11-I01",
+          "title": "Libraries integration",
+          "depends_on": [
+            "M10"
+          ]
+        },
+        {
+          "id": "M11-I02",
+          "title": "Visual fidelity",
+          "depends_on": [
+            "M11-I01"
+          ]
+        },
+        {
+          "id": "M11-I03",
+          "title": "Optional p5 ambient",
+          "depends_on": [
+            "M11-I02"
+          ]
+        },
+        {
+          "id": "M11-I04",
+          "title": "Frontend budgets",
+          "depends_on": [
+            "M11-I03"
+          ]
+        },
+        {
+          "id": "M11-I05",
+          "title": "Screenshot regression",
+          "depends_on": [
+            "M11-I04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "M12",
+      "title": "Governance, delivery, rollout and self-hosting",
+      "depends_on": [
+        "M11"
+      ],
+      "issues": [
+        {
+          "id": "M12-I01",
+          "title": "Evolution of .ai invariants",
+          "depends_on": [
+            "M11"
+          ]
+        },
+        {
+          "id": "M12-I02",
+          "title": "Integration and tests",
+          "depends_on": [
+            "M12-I01"
+          ]
+        },
+        {
+          "id": "M12-I03",
+          "title": "Incremental release discipline",
+          "depends_on": [
+            "M12-I02"
+          ]
+        },
+        {
+          "id": "M12-I04",
+          "title": "Deployment and rollback",
+          "depends_on": [
+            "M12-I03"
+          ]
+        },
+        {
+          "id": "M12-I05",
+          "title": "Adopter self-hosting",
+          "depends_on": [
+            "M12-I04"
+          ]
+        }
+      ]
+    }
+  ]
+}

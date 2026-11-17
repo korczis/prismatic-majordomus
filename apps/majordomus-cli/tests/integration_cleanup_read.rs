@@ -129,7 +129,7 @@ fn path(fg: &Forge) -> String {
 }
 
 fn prs(fg: &Forge, args: &[&str]) -> (i32, String, String) {
-    let out = Command::new(common::BIN)
+    let out = common::majordomus()
         .arg("prs")
         .arg("--repo")
         .arg(fg.f.root())
@@ -150,7 +150,7 @@ fn prs(fg: &Forge, args: &[&str]) -> (i32, String, String) {
 /// One `tools/call` of `tool` against the fixture, with the scripted forge on the PATH so a
 /// tool that reached for the network would show in its log.
 fn mcp_call(fg: &Forge, tool: &str) -> Value {
-    let mut child = Command::new(common::BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .env("PATH", path(fg))

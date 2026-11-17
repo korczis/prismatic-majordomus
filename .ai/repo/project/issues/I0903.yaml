@@ -33,4 +33,33 @@ evidence_required:
   - benchmark_coverage
 risk: "A deployment status read wants to call flyctl, which turns a cheap capability into a network call on a hot path. Live provider state belongs behind an explicit operation with its own cost, not behind an ordinary read."
 created_at: 2026-09-06
-updated_at: 2026-09-10
+updated_at: 2026-10-14T09:04:42Z
+started_at: 2026-10-14T09:04:28Z
+started_event: sha256:1aedd9fb2f3639c70758badc39340e6796843bf16505a741c5e2d99875a75b3c
+completed_at: 2026-10-14T09:04:42Z
+completed_event: sha256:39fbac8b9a472e2047c932bbf16625c546d9c7c8ece3ffce01517224ebbe84dc
+evidence:
+  - covers: capability_declared
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::deploy"
+    result: "test result: ok. 5 passed; 0 failed (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:32Z
+  - covers: projections_derived
+    type: test
+    command: "majordomus capabilities validate"
+    result: "validate: 0 failure(s) (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:35Z
+  - covers: generate_check
+    type: test
+    command: "majordomus generate --check"
+    result: "generate --check: in sync (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:37Z
+  - covers: benchmark_coverage
+    type: test
+    command: "majordomus bench coverage --check"
+    result: "exit 0 (run 2026-10-14 between 08:59Z and 09:04Z on master e28daccd9b)"
+    commit: e28daccd9b29247efec9fe352e8b8c630f6f9919
+    recorded_at: 2026-10-14T09:04:39Z

@@ -5,15 +5,15 @@
 mod common;
 
 use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{run_in, Fixture, Served, BIN};
+use common::{run_in, Fixture, Served};
 use majordomus_cli::evidence::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use serde_json::{json, Value};
 
 /// One MCP tool call over stdio; the structured content of its answer.
 fn tool(f: &Fixture, name: &str, arguments: Value) -> Value {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())
@@ -712,7 +712,7 @@ fn run_into_a_closed_pipe(f: &Fixture, args: &[&str]) -> (i32, String) {
     // `std::io::pipe` is newer than the crate's rust-version. The writing end of a pipe whose
     // only reader has exited is the stdin std made for a process that is gone: std opens it
     // close-on-exec, so no process another test spawns meanwhile inherits either end.
-    let mut gone = Command::new(BIN)
+    let mut gone = common::majordomus()
         .arg("--version")
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
@@ -721,7 +721,7 @@ fn run_into_a_closed_pipe(f: &Fixture, args: &[&str]) -> (i32, String) {
         .unwrap();
     let writer = gone.stdin.take().unwrap();
     assert!(gone.wait().unwrap().success());
-    let child = Command::new(BIN)
+    let child = common::majordomus()
         .args(args)
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", common::dist_share())

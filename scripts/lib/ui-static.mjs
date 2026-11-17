@@ -321,6 +321,42 @@ export function nameTaskCheckboxes(text) {
   return { text: out, changed };
 }
 
+/** The utility each alignment a Markdown table can declare is drawn with. */
+const ALIGNMENT = { left: 'text-left', center: 'text-center', right: 'text-right' };
+
+/**
+ * Draw a Markdown table's column alignment with a class instead of an inline style.
+ *
+ * A table whose delimiter row says `---:` is rendered as `<td style="text-align: right">`:
+ * the renderer has no stylesheet to name, so it writes the declaration into the cell. The
+ * site's content policy refuses every inline style — it is what lets the policy forbid
+ * `style-src 'unsafe-inline'` — so one right-aligned column in one decision record stopped
+ * every publication (2026-10-12, ADR 0142, three deploys). The alignment is the author's and
+ * is kept; only where it is written changes.
+ *
+ * Only that shape is touched: a table cell whose whole `style` is one `text-align`
+ * declaration with a value Markdown can produce. Any other inline style is left exactly as it
+ * is, for the site check to refuse by name — this normalises what a renderer wrote, it does
+ * not launder what a person did.
+ */
+export function alignCells(text) {
+  let changed = 0;
+  const pattern = /<(t[hd])((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+  const out = text.replace(pattern, (whole, tag, raw) => {
+    const style = /\sstyle\s*=\s*"\s*text-align\s*:\s*(left|center|right)\s*;?\s*"/.exec(raw);
+    if (!style) return whole;
+    const utility = ALIGNMENT[style[1]];
+    let attributes = raw.replace(style[0], '');
+    const named = /\sclass\s*=\s*"([^"]*)"/.exec(attributes);
+    attributes = named
+      ? attributes.replace(named[0], ` class="${`${named[1]} ${utility}`.trim()}"`)
+      : `${attributes} class="${utility}"`;
+    changed += 1;
+    return `<${tag}${attributes}>`;
+  });
+  return { text: out, changed };
+}
+
 /** Escape a value for a double-quoted HTML attribute. */
 function escapeAttribute(value) {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -351,12 +387,13 @@ export function normaliseRendered(html, { scrollingTagNames = [] } = {}) {
   const before = textOf(html);
   const scrolling = normalise(html, { scrollingTagNames });
   const boxes = nameTaskCheckboxes(scrolling.text);
-  const after = textOf(boxes.text);
+  const cells = alignCells(boxes.text);
+  const after = textOf(cells.text);
   if (after !== before) {
     const at = [...before].findIndex((c, i) => c !== after[i]);
     throw new Error(
       `the accessibility normalisation changed what the page says, near "${before.slice(Math.max(0, at - 40), at + 40)}"`,
     );
   }
-  return { text: boxes.text, scrolling: scrolling.changed, named: boxes.changed };
+  return { text: cells.text, scrolling: scrolling.changed, named: boxes.changed, aligned: cells.changed };
 }

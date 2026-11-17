@@ -1,0 +1,35 @@
+id: landing-survives-any-session
+title: "Landing green work survives any session, any restart and any machine"
+slug: landing-survives-any-session
+order: 513
+priority: p0
+problem: "On 2026-10-22 a machine restart ended the landing seat, the release seat and the loop that landed green trains; the executor that exists, majordomus prs drain, had merged nothing since 2026-10-11, its trail and lease were one clone's, and the auto-mode classifier refused every landing a session tried. Green work waited for hours until the owner fast-forwarded master by hand."
+outcome: "Landing green work on master never waits on a person or on one session staying alive."
+current_state: "Landing is a loop inside one session reading a queue file in one home directory; prs drain lands one pull request at a time with a merge commit and keeps its audit trail in .git/majordomus/integration/events.jsonl of one clone; a seat whose holder died stays vacant; standing approvals live in one machine's ~/.claude/settings.json; train order lives in ~/.cache/mj-a3."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+scope:
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/autonomy"
+  - ".ai/repo/rules/project"
+  - "docs/INTEGRATION.md"
+  - "docs/MESH.md"
+acceptance_criteria:
+  - "Every landing on master, a combined top included, is a fast-forward made by majordomus prs drain; none is made by hand, by --admin or by a loop that lives in one session"
+  - "The executor reads its audit trail, its halt and its lease from origin, so a clone that takes over starts with the same verified count and the same halt, and a holder whose lease expired is refused before it lands"
+  - "A seat whose holder stopped beating is reported vacant within one expiry and offered to live sessions by capability, and the session that accepts it resumes from the newest handover for that seat"
+  - "The executor runs as a user service outside every agent session; an exit that is not a halt or a refusal is restarted, and a halt or refusal is not"
+  - "A standing approval of the owner is one dated, owner-attributed record in the repository, every machine says whether its settings carry it, and only the owner, interactively, writes it"
+  - "A combined top is composed by a typed command from members declared in a tracked train manifest, and two machines compose the same pre-derive tree from it"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "one_executor"
+  - "state_on_origin"
+  - "vacant_seat_is_taken"
+  - "survives_a_restart"
+  - "approvals_are_declared"
+  - "trains_are_composed"
+created_at: 2026-10-22
+updated_at: 2026-10-22

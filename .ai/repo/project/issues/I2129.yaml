@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Load the policy before mcp and serve elect, make every reader of a lease timing read the declared value, and declare the idle timeout beside the other server timings."
 why: "Timings (apps/majordomus-cli/src/lease.rs:89-191) is a OnceLock filled with compiled defaults on first read, and declare_timings is called only from LoadedPolicy::load (apps/majordomus-cli/src/policy.rs:364). In mcp and serve, Lease::keep_alive (apps/majordomus-cli/src/lease.rs:1043) and inspect read the timings before App::load, which does not load the policy (apps/majordomus-cli/src/commands/mcp.rs:173-174, apps/majordomus-cli/src/commands/serve.rs:72,89-90), so the later declaration is a silent no-op. Only env enter loads the policy first (apps/majordomus-cli/src/commands/env.rs:548). standing_of (apps/majordomus-cli/src/capability/builtin/server.rs:370,386) and the spawn claim (apps/majordomus-cli/src/commands/serve.rs:330,358) use the compiled BIND_GRACE whatever is declared. docs/MCP.md:284-303 and the comment at .ai/repo/policy.yaml:335-339 say the contest is judged by the declaration. apps/majordomus-cli/tests/lease_declared.rs calls declare_timings directly and case 354_a_lease_contest_is_judged_by_a_declaration.sh checks the schema only. Latent today because the declared values equal the defaults. The idle timeout DEFAULT_IDLE_SECONDS (apps/majordomus-cli/src/cli.rs:3427) is a compiled constant absent from policy.yaml server:. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 6 and drift 1."
 current_state: "Declared lease timings reach env enter only; mcp, serve, standing_of and the spawn claim use compiled values."
-desired_state: "mcp and serve read the policy before their first election, so the declared timings are the ones the election uses; standing_of and the spawn-claim bound read lease::timings() rather than the compiled BIND_GRACE and JOIN_TIMEOUT. Not done here: the idle timeout as a declared server key (it stays the compiled default, overridden by serve --idle)."
+desired_state: "mcp and serve read the policy before their first election, so the declared timings are the ones the election uses; standing_of and the spawn-claim bound read lease::timings() rather than the compiled BIND_GRACE and JOIN_TIMEOUT. The deferred part, the idle timeout as a declared server key, is I2701."
 scope:
   - "apps/majordomus-cli/src/lease.rs"
   - "apps/majordomus-cli/src/policy.rs"
@@ -25,7 +25,6 @@ depends_on: []
 acceptance_criteria:
   - "A real-process test that declares a busy grace different from the default observes the election wait the declared value, in both mcp and serve"
   - "No reader of a lease timing names a compiled constant directly"
-  - "The idle timeout is a declared policy key validated by the policy schema, and serve --idle overrides it"
 validation:
   - "bin/majordomus plan validate"
   - "cargo test --test lease_declared"
@@ -33,4 +32,15 @@ validation:
 evidence_required:
   - "declared_timings_reach_the_election_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T12:16:27Z
+started_at: 2026-10-14T12:15:47Z
+started_event: sha256:688f03bba5556ebf86c837623fc276287feb7e215ba328a01fd94fc581ed5845
+completed_at: 2026-10-14T12:16:27Z
+completed_event: sha256:4aebdce39765e7379117de73f94ae678fd42e880eb17be33c74a7659c9f31017
+evidence:
+  - covers: declared_timings_reach_the_election_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test lease_policy_process"
+    result: "test result: ok. 3 passed; 0 failed: serve and mcp each wait the declared busy grace; peers.rs and server.rs read lease::timings() (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:09Z

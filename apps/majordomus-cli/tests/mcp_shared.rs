@@ -18,7 +18,7 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 
-use common::{without_observation_times, Fixture, BIN};
+use common::{without_observation_times, Fixture};
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(20);
@@ -37,7 +37,7 @@ impl Mcp {
     fn spawn(cwd: &Path, args: &[&str]) -> Self {
         let mut all = vec!["mcp"];
         all.extend_from_slice(args);
-        let mut child = Command::new(BIN)
+        let mut child = common::majordomus()
             .args(&all)
             .current_dir(cwd)
             .env("MAJORDOMUS_LOG", "info")
@@ -1142,11 +1142,10 @@ fn mcp_over_http_refuses_malformed_traffic_and_keeps_serving() {
     assert_eq!(status, 404, "{body}");
     assert!(body.contains("session_not_found"), "{body}");
 
-    // an oversized body is refused with 413; the write may be cut short by the server
-    let big = format!(
-        r#"{{"jsonrpc":"2.0","id":9,"method":"ping","params":{{"pad":"{}"}}}}"#,
-        "x".repeat(2 * 1024 * 1024)
-    );
+    // an oversized body is refused with 413. It is one byte over the bound and no more: the
+    // server reads exactly that much and stops reading, so a longer body leaves bytes unread,
+    // and the reset they cause can discard the 413 before this test reads it.
+    let big = "x".repeat(majordomus_cli::http::server::MAX_BODY_BYTES + 1);
     let host = url.strip_prefix("http://").unwrap();
     let mut stream = TcpStream::connect(host).unwrap();
     stream

@@ -1,0 +1,45 @@
+id: I2527
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "An incremental derive equals a full derive byte for byte, and an omitted dependency turns a gate red"
+slug: incremental-derive-equals-full-derive
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Hold the invariant that an incremental derive and a clean full derive of the same inputs leave the same tracked bytes, by a differential case over disposable repositories, by mutation tests that break the graph on purpose, and by a project rule with a check that runs."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/10_10_CORRECTNESS_ENFORCEMENT.md asks for the equivalence to be codified at the byte level, creation and deletion included, for mutation tests that omit an edge or tamper with an output and see a gate go red, and for the rules to be executable through the repository's own rule and gate owners. The incremental path fails silently in one direction: an undeclared input leaves a stale file that every key calls current. The only thing that can catch that is a comparison with the full derivation, which is why 00_00_MASTER_ORCHESTRATOR.md keeps the full derivation as the oracle."
+current_state: "test/cases/51_derived_artifacts_committed.sh proves a second full derive changes nothing and test/cases/400_derivation_is_one_graph.sh proves the stage order with stand-in generators. No case compares two ways of deriving, and no rule states what a derivation node owes."
+desired_state: "A case builds fixture repositories with stand-in producers shaped like the real graph and, for each of a no-op, a staged and an unstaged edit, a new indexed document, a renamed one, a deleted one, a changed schema, a changed executable generation, an altered output, a deleted output and an index that disagrees with the work tree, runs both paths and compares every tracked file. A crate test removes one declared edge from a copy of the graph and asserts the differential comparison fails. Rule project.incremental-derive-equals-full states: one producer per output, declared inputs complete, no cycle, no copy of the graph kept by a consumer, a reused node is not a verdict; its check is registered in .ai/repo/ci/gates.yaml."
+scope:
+  - ".ai/repo/rules/project"
+  - ".ai/repo/ci/gates.yaml"
+  - "apps/majordomus-cli/tests/derivation_differential.rs"
+  - "apps/majordomus-cli/src/derivation"
+  - "test/cases"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/DERIVE.md"
+  - ".ai/repo/project/issues/I2527.yaml"
+non_scope:
+  - "Gating on a duration. Durations are recorded, and a timeout guessed from one machine is not a rule"
+  - "Regenerating golden files automatically when the comparison fails"
+  - "Running the real full derive twice inside the suite; the case uses stand-in producers, as case 400 does, and the real comparison is recorded as evidence on I2533"
+depends_on:
+  - "I2525"
+acceptance_criteria:
+  - "For every scenario of the case, the set of tracked files and their bytes are equal after the incremental and after the full path"
+  - "With one edge removed from the graph, the case fails and names the stale file"
+  - "With an output altered and its key left alone, the incremental path regenerates it and scripts/derive-check on the altered tree exits 10"
+  - "A consumer that carries its own list of nodes or of generated paths is reported by the rule's check"
+  - "The rule is listed by majordomus rules with its enforcement declared, and the claim page names the case that proves it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_differential"
+  - "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 51_derived_artifacts_committed 56_derived_current_gate"
+  - "scripts/ci-plan --check"
+evidence_required:
+  - "incremental_equals_full_case"
+  - "omitted_edge_turns_the_gate_red"
+  - "rule_check_registered"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,33 @@
+id: mesh-connectivity
+title: "Trusted nodes connect across NAT through proven transports, and every surface says which path"
+slug: mesh-connectivity
+order: 172
+priority: p3
+problem: "Master links nodes over multicast on one segment and through rendezvous hubs that must be directly reachable; docs/MESH.md states 'no NAT traversal'. The owner asked four times (10-12, 10-16 twice, 10-18) for NAT traversal, relays, WebRTC and a serverless bootstrap; Operation Convergence defers it past v1.0.0-alpha.1. Proposed in ADR 0202 (The mesh routes work to an identity, never an address, and selects among proven transports instead of implementing NAT traversal); ADR 0203 (GitHub Pages is a signed bootstrap anchor for the mesh, never its signalling channel) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c237#2, chatgpt-majordomus:c237#4, chatgpt-majordomus:c275#19, chatgpt-majordomus:c279#5."
+outcome: "A connectivity decision record, a relayed path through a trusted hub, a signed bootstrap manifest on Pages, and a NAT matrix in the mesh lab."
+current_state: "Verified: apps/majordomus-cli/src/mesh/{multicast,broadcast,rendezvous}.rs; rendezvous hubs register but do not relay; seeds: none; no WebRTC/STUN/TURN anywhere in apps/; test/mesh-lab/run has ten scenarios, none behind NAT. Tailscale and Bonjour providers are on branches (I2410)."
+desired_state: "Endpoint candidates are expiring observations; a link names its path; a node behind NAT cooperates through a relay; a cold node bootstraps from Pages."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "test/mesh-lab"
+  - "scripts/pages"
+  - "docs/MESH.md"
+non_scope:
+  - "WebRTC data channels for browsers: after the browser-authentication question (proposed on an unlanded branch, no ADR on master) is decided"
+  - "Route learning from telemetry: only after the relay is measured"
+  - "DHT, coordinator election, multi-region gossip"
+acceptance_criteria:
+  - "A relayed link and a direct link are both proved in the lab"
+  - "Pages unavailable leaves every existing link up"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "runtime-trust"
+  - "mesh-journal-converges"
+risks:
+  - "A relay is a hub that carries traffic: bandwidth and trust both grow; relayed frames stay authenticated by the existing link signatures but are not encrypted, so a relay hub is private, overlay or behind an encrypted ingress (case 491)"
+  - "Tailnet users may never need it (open question)"
+  - "It follows the-mesh-works-out-of-the-box in practice; the edge is kept off the milestone so two milestones of one order are not reordered."
+created_at: 2026-10-18
+updated_at: 2026-10-18

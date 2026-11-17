@@ -1,9 +1,10 @@
 # The mesh declaration of this repository. Enabled as committed: the runtimes this
 # repository is developed with — every worktree's shared server on the owner's machines —
 # find each other, link, and share one journal of sessions, claims, handovers and reviews
-# (ADR 0050, ADR 0067). Enabling it was this repository's reviewed decision; the tool's
-# own default is unchanged: the skeleton a new repository starts from ships no
-# declaration, and no socket opens there until its own operator commits one.
+# (ADR 0050, ADR 0067). Which machines it lists is this repository's reviewed decision.
+# A machine whose key is not listed below opens no socket at all (I2261); `majordomus mesh
+# enrol` adds a machine's key, and the skeleton `majordomus init` seeds is this shape with
+# an empty list (ADR 0137).
 # docs/MESH.md, "This repository's mesh", says what is on, what travels, and how to add
 # a machine.
 #
@@ -27,6 +28,15 @@
 # reach, one thread per hub and a 5-second bound per request; a hub that does not answer
 # is asked less and less often (the interval doubles per failure, up to eight times) and
 # stops nothing else.
+#
+# What the declaration says who may link, the host firewall says what reaches the socket
+# at all, and the two drifted: on 2026-10-08 lundra, a declared hub, ran ufw with default
+# deny and no rule for port 8791 or the multicast group, and dropped every registration and
+# every advertisement from the LAN while `mesh doctor` held. The admissions this file
+# implies on a machine are derived from it — `majordomus mesh firewall` prints them and the
+# commands that admit them, `sudo majordomus mesh firewall apply` admits them, and the
+# doctor's `firewall` check fails on a machine whose firewall observably drops them
+# (docs/MESH.md, "The host firewall"). Nothing here configures a firewall; it is read.
 schema: mesh/v1
 kind: mesh-declaration
 id: majordomus

@@ -30,6 +30,7 @@ use serde_json::Value;
 
 use crate::error::{Error, Result};
 use crate::mcp::bridge;
+use crate::release::version::Version;
 use crate::repository::Repository;
 
 /// The lease file, relative to the checkout-local half (`.ai/local/`).
@@ -71,6 +72,12 @@ pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 /// that would let a handful of slow sockets outlast a [`BUSY_GRACE`] contest many times over.
 pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 
+/// How long a server started for a checkout no client owns — by `serve ensure` or by a shell
+/// entering the checkout — outlives its last peer before it stops by itself:
+/// [`crate::cli::DEFAULT_IDLE_SECONDS`]. `serve --idle` on a command line overrides whatever
+/// is declared (I2701).
+pub const IDLE: Duration = Duration::from_secs(crate::cli::DEFAULT_IDLE_SECONDS);
+
 /// The timings above are the defaults. What a process actually judges a lease contest by is
 /// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
 ///
@@ -86,7 +93,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 ///
 /// ```
 /// use majordomus_cli::lease::{
-///     Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
+///     Timings, BIND_GRACE, BUSY_GRACE, IDLE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
 /// };
 /// // the defaults are the compiled constants, one for one
 /// let t = Timings::default();
@@ -95,6 +102,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 /// assert_eq!(t.join_timeout, JOIN_TIMEOUT);
 /// assert_eq!(t.busy_grace, BUSY_GRACE);
 /// assert_eq!(t.read_deadline, READ_DEADLINE);
+/// assert_eq!(t.idle, IDLE);
 /// // a busy owner is given up on before the election that waits on it gives up itself
 /// assert!(t.busy_grace < t.join_timeout);
 /// ```
@@ -110,6 +118,8 @@ pub struct Timings {
     pub busy_grace: Duration,
     /// `server.read_deadline_seconds:`
     pub read_deadline: Duration,
+    /// `server.idle_seconds:`
+    pub idle: Duration,
 }
 
 impl Default for Timings {
@@ -120,6 +130,7 @@ impl Default for Timings {
             join_timeout: JOIN_TIMEOUT,
             busy_grace: BUSY_GRACE,
             read_deadline: READ_DEADLINE,
+            idle: IDLE,
         }
     }
 }
@@ -165,6 +176,10 @@ impl Timings {
     /// assert_ne!(t.probe_timeout, Timings::default().probe_timeout);
     /// // the keys it says nothing about are untouched
     /// assert_eq!(t.bind_grace, Timings::default().bind_grace);
+    ///
+    /// // the idle timeout is declared beside the others (I2701)
+    /// let declared = ServerPolicy { idle_seconds: Some(3), ..ServerPolicy::default() };
+    /// assert_eq!(Timings::from_policy(&declared).idle, Duration::from_secs(3));
     /// ```
     pub fn from_policy(policy: &crate::policy::ServerPolicy) -> Self {
         let d = Self::default();
@@ -189,6 +204,10 @@ impl Timings {
                 .read_deadline_seconds
                 .map(Duration::from_secs)
                 .unwrap_or(d.read_deadline),
+            idle: policy
+                .idle_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.idle),
         }
     }
 }
@@ -563,6 +582,12 @@ pub fn elect(repo: &Repository) -> Result<Role> {
                 file.write_all(text.as_bytes())
                     .map_err(|e| Error::io(&path, e))?;
                 hold(&path, &lease.token);
+                record_runtime(
+                    &path,
+                    &lease.token,
+                    crate::capability::builtin::server::ServerStanding::Starting,
+                    "this process took the lease and is loading the layer",
+                );
                 return Ok(Role::Server(lease));
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
@@ -713,18 +738,49 @@ fn stale_reason(me: &ExecutableIdentity) -> Option<String> {
 /// to a debug build — makes no claim either way and is left alone, so two legitimate
 /// binaries never fight over the lease.
 fn superseded(doc: &LeaseDocument) -> Option<String> {
+    executable_identity().and_then(|me| superseded_by(doc, &me, crate::VERSION))
+}
+
+/// The judgement [`superseded`] makes, over the identity and version it is handed.
+///
+/// A file replaced at the lease's path says the server runs code no longer on disk, not that
+/// this process runs newer code: a build of an older tree written to the same path is a
+/// replacement too. So a server whose lease records a newer version than `my_version` is
+/// never taken over on that ground (I3097): this process is the older one, and attaching to
+/// the newer server is the verdict [`version_verdict`] already gives everywhere else.
+fn superseded_by(
+    doc: &LeaseDocument,
+    mine: &ExecutableIdentity,
+    my_version: &str,
+) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
-    let mine = executable_identity()?;
     if recorded.path != mine.path {
+        // a server started from the build output this process runs a copy of (I2059)
+        let origin = crate::served_executable::copied_from(&mine.path)?;
+        let same = origin == recorded.path
+            || matches!(
+                (fs::canonicalize(&origin), fs::canonicalize(&recorded.path)),
+                (Ok(a), Ok(b)) if a == b
+            );
+        if !same || recorded.replaced().is_none() {
+            return None;
+        }
+    } else if recorded.mtime == mine.mtime && recorded.size == mine.size {
         return None;
     }
-    if recorded.mtime == mine.mtime && recorded.size == mine.size {
+    if version_verdict(doc.version.as_deref(), my_version) == VersionVerdict::ServerNewer {
+        tracing::warn!(
+            server = doc.version.as_deref().unwrap_or_default(),
+            mine = my_version,
+            "the server's executable was replaced, but the server runs a newer version than this \
+             executable; attaching to it rather than taking it over"
+        );
         return None;
     }
     Some(format!(
         "superseded lease: the server was started from {} and that file has been replaced since \
          (it is serving code that is no longer on disk)",
-        mine.path.display()
+        recorded.path.display()
     ))
 }
 
@@ -733,7 +789,7 @@ fn superseded(doc: &LeaseDocument) -> Option<String> {
 /// One verdict, read by the election, by `serve ensure` and by `server.status`, so that the
 /// three never disagree about whether a server is older (I2163). The installer puts each
 /// release in a directory of its own, so an upgrade changes the executable's path and
-/// [`superseded`] — same path, different file — never fires on it: before this verdict a
+/// `superseded` — same path, different file — never fires on it: before this verdict a
 /// new client attached to the old server and was served yesterday's code until it idled out.
 ///
 /// ```
@@ -754,12 +810,18 @@ pub enum VersionVerdict {
     /// No version published: a server from before leases carried one. Reported as outdated,
     /// never taken over on that ground alone.
     Unpublished,
-    /// Two versions that do not order as releases (a pre-release, a local build tag):
-    /// reported as different, never acted on.
+    /// Two versions that do not order as releases — one is not a semantic version (a local
+    /// build tag), or the two differ only in build metadata: reported as different, never
+    /// acted on.
     Unordered,
 }
 
 /// Decide how `served`, the version in a lease, stands to `mine`.
+///
+/// Ordered by [`Version`], the crate's one reading of a version, so a server is older or
+/// newer by exactly the semantic-version precedence the release writer and the stable
+/// pointer use (ADR 0004): a pre-release sits below its own final and above every earlier
+/// release. A leading `v` is a tag's spelling and is read past.
 ///
 /// ```
 /// use majordomus_cli::lease::{version_verdict, VersionVerdict};
@@ -768,19 +830,14 @@ pub enum VersionVerdict {
 /// assert_eq!(version_verdict(Some("0.9.10"), "0.10.0"), VersionVerdict::ServerOlder);
 /// assert_eq!(version_verdict(Some("1.0.0"), "0.20.0"), VersionVerdict::ServerNewer);
 /// assert_eq!(version_verdict(None, "0.20.0"), VersionVerdict::Unpublished);
-/// // a pre-release is not ordered against its release: different, and left alone
-/// assert_eq!(version_verdict(Some("0.20.0-rc.1"), "0.20.0"), VersionVerdict::Unordered);
+/// // a pre-release orders by precedence: below its own final, above an earlier release
+/// assert_eq!(version_verdict(Some("0.20.0-rc.1"), "0.20.0"), VersionVerdict::ServerOlder);
+/// assert_eq!(version_verdict(Some("1.0.0-alpha.1"), "0.29.0"), VersionVerdict::ServerNewer);
+/// // what is not a semantic version orders nothing
+/// assert_eq!(version_verdict(Some("dev"), "0.20.0"), VersionVerdict::Unordered);
 /// ```
 pub fn version_verdict(served: Option<&str>, mine: &str) -> VersionVerdict {
-    fn release(v: &str) -> Option<(u64, u64, u64)> {
-        let mut parts = v.trim_start_matches('v').split('.');
-        let numbers = (
-            parts.next()?.parse().ok()?,
-            parts.next()?.parse().ok()?,
-            parts.next()?.parse().ok()?,
-        );
-        parts.next().is_none().then_some(numbers)
-    }
+    let release = |v: &str| Version::parse(v.strip_prefix('v').unwrap_or(v));
     let Some(served) = served else {
         return VersionVerdict::Unpublished;
     };
@@ -965,36 +1022,53 @@ fn lock_for_change(lease: &Path, patience: Duration) -> Option<ChangeLock> {
     #[cfg(unix)]
     {
         use std::os::unix::io::AsRawFd;
-        let Ok(file) = fs::OpenOptions::new()
-            .create(true)
-            .truncate(false)
-            .write(true)
-            .open(lock_path(lease))
-        else {
-            return Some(ChangeLock { _file: None });
-        };
-        let deadline = Instant::now() + patience;
-        loop {
-            // SAFETY: flock(2) on a descriptor this function owns; no memory is touched.
+        lock_for_change_with(lease, patience, |file| {
+            // SAFETY: flock(2) on a descriptor the caller owns; no memory is touched.
             if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
-                return Some(ChangeLock { _file: Some(file) });
+                Ok(())
+            } else {
+                Err(std::io::Error::last_os_error())
             }
-            let error = std::io::Error::last_os_error();
-            let contended = error.raw_os_error() == Some(libc::EWOULDBLOCK)
-                || error.kind() == std::io::ErrorKind::Interrupted;
-            if !contended {
-                return Some(ChangeLock { _file: None });
-            }
-            if Instant::now() >= deadline {
-                return None;
-            }
-            std::thread::sleep(Duration::from_millis(2));
-        }
+        })
     }
     #[cfg(not(unix))]
     {
         let _ = (lease, patience);
         Some(ChangeLock {})
+    }
+}
+
+/// [`lock_for_change`], taking the lock with `try_lock`: `flock(2)` in earnest, a test's own
+/// refusals in a test, since a file just opened is one the system never refuses for anything
+/// but contention.
+#[cfg(unix)]
+fn lock_for_change_with(
+    lease: &Path,
+    patience: Duration,
+    try_lock: impl Fn(&fs::File) -> std::io::Result<()>,
+) -> Option<ChangeLock> {
+    let Ok(file) = fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(lock_path(lease))
+    else {
+        return Some(ChangeLock { _file: None });
+    };
+    let deadline = Instant::now() + patience;
+    loop {
+        let Err(error) = try_lock(&file) else {
+            return Some(ChangeLock { _file: Some(file) });
+        };
+        let contended = error.raw_os_error() == Some(libc::EWOULDBLOCK)
+            || error.kind() == std::io::ErrorKind::Interrupted;
+        if !contended {
+            return Some(ChangeLock { _file: None });
+        }
+        if Instant::now() >= deadline {
+            return None;
+        }
+        std::thread::sleep(Duration::from_millis(2));
     }
 }
 
@@ -1018,6 +1092,52 @@ fn remove_if_held(path: &Path, token: &str) -> bool {
     holds(path, token) && fs::remove_file(path).is_ok()
 }
 
+/// Record a transition of this process's own runtime beside the lease at `path`, while the
+/// lease is still the one `token` names: the serving process is the one writer of its own
+/// `starting`, `ready` and `stopping` (I3179), and a process whose lease was taken over
+/// speaks for nobody. Written only when the state changes. Whether it wrote.
+fn record_runtime(
+    path: &Path,
+    token: &str,
+    state: crate::capability::builtin::server::ServerStanding,
+    reason: &str,
+) -> bool {
+    use crate::capability::builtin::server::{
+        record_transition, runtime_file_beside, RuntimeWriter,
+    };
+    if !holds(path, token) {
+        return false;
+    }
+    let Some(file) = runtime_file_beside(path) else {
+        return false;
+    };
+    record_transition(
+        &file,
+        state,
+        reason,
+        RuntimeWriter::Server,
+        Some(std::process::id()),
+    )
+    .inspect_err(|e| {
+        tracing::warn!(path = %file.display(), "could not record the runtime's transition: {e}");
+    })
+    .unwrap_or(false)
+}
+
+/// Record a transition of this process's own runtime, when it holds a lease: what the
+/// serving loop records when it is asked to stop, before it stops. Whether it wrote — `false`
+/// in a process that holds no lease, or one whose lease was taken over.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::ServerStanding;
+/// // a process that holds no lease records nothing
+/// assert!(!majordomus_cli::lease::record_own(ServerStanding::Stopping, "asked to stop"));
+/// ```
+pub fn record_own(state: crate::capability::builtin::server::ServerStanding, reason: &str) -> bool {
+    let holding = HOLDING.lock().ok().and_then(|h| h.clone());
+    holding.is_some_and(|(path, token)| record_runtime(&path, &token, state, reason))
+}
+
 /// A temporary file of one writer's own beside the lease: named for the token, so that two
 /// writers never write into, or rename, each other's half-written file.
 fn tmp_path(path: &Path, token: &str) -> PathBuf {
@@ -1032,8 +1152,8 @@ fn tmp_path(path: &Path, token: &str) -> PathBuf {
 /// a whole file even across a crash of the machine.
 fn write_synced(tmp: &Path, text: &str) -> std::io::Result<()> {
     let mut file = fs::File::create(tmp)?;
-    file.write_all(text.as_bytes())?;
-    file.sync_all()
+    file.write_all(text.as_bytes())
+        .and_then(|()| file.sync_all())
 }
 
 /// Sync the directory a rename happened in, so that the rename itself is durable. Best
@@ -1081,6 +1201,12 @@ pub(crate) fn release_held() {
 /// test can show it without touching what a concurrent test's election recorded.
 fn release_record(record: Option<(PathBuf, String)>) {
     if let Some((path, token)) = record {
+        record_runtime(
+            &path,
+            &token,
+            crate::capability::builtin::server::ServerStanding::Stopping,
+            "asked to stop by a signal; the lease is released",
+        );
         remove_if_held(&path, &token);
         if let Ok(mut slot) = published().lock() {
             if slot.as_ref().is_some_and(|d| d.token == token) {
@@ -1265,7 +1391,10 @@ enum Answer {
 /// Ask a published URL the probe's three questions within `timeout`, telling a server that
 /// said no apart from one that said nothing in time.
 fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
-    match bridge::request(url, "GET", "/", &[], None, timeout) {
+    // marked as a probe, so that asking whether a server is there does not keep it there
+    // (I4007): a server's idle timer counts a client reading its home page, not this
+    let probe = [(crate::idle::PROBE_HEADER, "1")];
+    match bridge::request(url, "GET", "/", &probe, None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
@@ -1490,6 +1619,12 @@ impl Lease {
         if let Ok(mut slot) = published().lock() {
             *slot = Some(document);
         }
+        record_runtime(
+            &self.path,
+            &self.token,
+            crate::capability::builtin::server::ServerStanding::Ready,
+            &format!("published {url}"),
+        );
         Ok(())
     }
 
@@ -1534,6 +1669,12 @@ impl Lease {
             *binding = false;
         }
         if !self.released {
+            record_runtime(
+                &self.path,
+                &self.token,
+                crate::capability::builtin::server::ServerStanding::Stopping,
+                "the lease is released",
+            );
             remove_if_held(&self.path, &self.token);
         }
         self.released = true;
@@ -1714,6 +1855,123 @@ mod tests {
         );
     }
 
+    /// A lease whose server was started from `exe` as it was then, at `version`.
+    fn lease_from(exe: &ExecutableIdentity, version: &str) -> LeaseDocument {
+        LeaseDocument {
+            schema: SCHEMA.into(),
+            pid: 1,
+            token: "t".into(),
+            root: "/r".into(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-10-20T22:25:31Z".into(),
+            executable: Some(exe.clone()),
+            version: Some(version.into()),
+        }
+    }
+
+    #[test]
+    fn older_replacement_attaches() {
+        // 2026-10-20 22:27:58Z: a 1.0.0-alpha.1 server lost its lease to 0.30.2, because a
+        // build of an older tree had rewritten the file the server was started from
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the newer code the server loaded").unwrap();
+        let lease = lease_from(&identity_of(&exe), "1.0.0-alpha.1");
+        fs::write(&exe, b"an older tree's build, written over the same path").unwrap();
+        // under a subscriber, so the warning that names both versions is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        crate::logging::with_scoped(subscriber, || {
+            assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
+        });
+    }
+
+    /// The holder of a lease whose runtime record cannot be written says it did not write,
+    /// and leaves the lease alone; a token that no longer holds the lease writes nothing
+    /// (I3179).
+    #[test]
+    fn a_runtime_record_the_holder_cannot_write_is_not_claimed() {
+        use crate::capability::builtin::server::{read_transition, ServerStanding};
+        let dir = tempfile::tempdir().unwrap();
+        let path = lease_file(dir.path(), ".ai/local");
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let held = lease_from(&identity_of(&exe), crate::VERSION);
+        fs::write(&path, serde_json::to_string(&held).unwrap()).unwrap();
+        // a file where the runtime record's directory would be
+        let runtime = dir.path().join(".ai/local/state/runtime");
+        fs::write(&runtime, "not a directory").unwrap();
+        // under a subscriber, so the warning that names the record is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        crate::logging::with_scoped(subscriber, || {
+            assert!(!record_runtime(
+                &path,
+                &held.token,
+                ServerStanding::Starting,
+                "took the lease"
+            ));
+        });
+        assert!(holds(&path, &held.token), "the lease is left alone");
+        assert!(read_transition(&runtime.join("state.json")).is_none());
+        // once the record can be written, the holder writes it and another token does not
+        fs::remove_file(&runtime).unwrap();
+        assert!(!record_runtime(
+            &path,
+            "another",
+            ServerStanding::Starting,
+            "not ours"
+        ));
+        assert!(record_runtime(
+            &path,
+            &held.token,
+            ServerStanding::Starting,
+            "took the lease"
+        ));
+        assert_eq!(
+            read_transition(&runtime.join("state.json")).map(|t| t.state),
+            Some(ServerStanding::Starting)
+        );
+    }
+
+    #[test]
+    fn a_lease_of_this_process_as_it_runs_is_not_superseded() {
+        // the judgement over the executable this process was started from: unchanged, it
+        // takes nothing over; a lease naming another path makes no claim either way
+        let me = executable_identity().expect("a test binary knows where it is");
+        assert_eq!(superseded(&lease_from(&me, crate::VERSION)), None);
+        let dir = tempfile::tempdir().unwrap();
+        let other = dir.path().join("majordomus");
+        fs::write(&other, b"another build at another path").unwrap();
+        assert_eq!(
+            superseded(&lease_from(&identity_of(&other), crate::VERSION)),
+            None
+        );
+    }
+
+    #[test]
+    fn newer_replacement_takes_over() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let pinned = identity_of(&exe);
+        fs::write(&exe, b"a rebuild of the same or a newer tree").unwrap();
+        let mine = identity_of(&exe);
+        for (served, version) in [
+            ("1.0.0-alpha.1", "1.0.0-alpha.1"),
+            ("0.30.2", "1.0.0-alpha.1"),
+        ] {
+            let reason = superseded_by(&lease_from(&pinned, served), &mine, version)
+                .unwrap_or_else(|| panic!("{version} replacing a {served} server takes it over"));
+            assert!(reason.contains("has been replaced since"), "{reason}");
+        }
+    }
+
     #[test]
     fn this_process_is_not_serving_replaced_code() {
         assert!(started_as().is_some(), "a test binary knows where it is");
@@ -1857,10 +2115,17 @@ mod tests {
         fs::write(&path, lease_text("owner", None)).unwrap();
         let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
         assert!(lock_for_change(&path, Duration::from_millis(20)).is_none());
-        assert!(
-            !remove_if_held(&path, "owner"),
-            "no removal without the lock"
-        );
+        // under a subscriber, so the warning that names the lease is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        crate::logging::with_scoped(subscriber, || {
+            assert!(
+                !remove_if_held(&path, "owner"),
+                "no removal without the lock"
+            );
+        });
         drop(held);
         assert!(remove_if_held(&path, "owner"));
     }
@@ -1922,5 +2187,656 @@ mod tests {
         );
         lease.release();
         assert_eq!(LeaseFile::read(&path), LeaseFile::Absent);
+    }
+
+    /// Only three dot-separated numbers are a release: anything shorter, longer or not
+    /// numeric on either side is different from the other version and not ordered against it.
+    #[cfg(unix)]
+    #[test]
+    fn a_lock_refused_for_anything_but_contention_lets_the_change_go_ahead_without_it() {
+        let dir = std::env::temp_dir().join(format!("mj-lease-refused-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let lease = dir.join("server.json");
+        let unsupported = lock_for_change_with(&lease, Duration::from_secs(5), |_| {
+            Err(std::io::Error::from_raw_os_error(libc::ENOLCK))
+        });
+        assert!(
+            unsupported.is_some_and(|lock| lock._file.is_none()),
+            "a filesystem that refuses flock is changed without the lock"
+        );
+        let tries = std::cell::Cell::new(0);
+        let taken = lock_for_change_with(&lease, Duration::from_secs(5), |_| {
+            tries.set(tries.get() + 1);
+            if tries.get() == 1 {
+                Err(std::io::Error::from(std::io::ErrorKind::Interrupted))
+            } else {
+                Ok(())
+            }
+        });
+        assert!(taken.is_some_and(|lock| lock._file.is_some()));
+        assert_eq!(tries.get(), 2, "an interrupted attempt is made again");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_version_that_is_not_three_numbers_is_not_ordered() {
+        for served in ["1", "1.2", "x.2.3", "1.x.3", "1.2.x", "1.2.3.4"] {
+            assert_eq!(
+                version_verdict(Some(served), "0.20.0"),
+                VersionVerdict::Unordered,
+                "served {served}"
+            );
+        }
+        assert_eq!(
+            version_verdict(Some("0.20.0"), "dev"),
+            VersionVerdict::Unordered,
+            "a client of no release orders nothing"
+        );
+    }
+
+    /// A take-over that finds the lock held by another change makes no change: the lease is
+    /// left for the next reading, which judges whatever the other change left there.
+    /// Every version that is not a semantic version is unordered against a release, and
+    /// three numbers are ordered as numbers.
+    #[test]
+    fn a_version_is_ordered_only_when_it_is_three_numbers() {
+        for served in [
+            "1",
+            "1.2",
+            "x.1.2",
+            "1.x.2",
+            "1.2.x",
+            "1.2.3.4",
+            "1..3",
+            "1.0.0-alpha..1",
+            "1.0.0-alpha.01",
+        ] {
+            assert_eq!(
+                version_verdict(Some(served), "0.20.0"),
+                VersionVerdict::Unordered,
+                "{served}"
+            );
+        }
+        assert_eq!(
+            version_verdict(Some("v0.19.1"), "0.20.0"),
+            VersionVerdict::ServerOlder
+        );
+        assert_eq!(
+            version_verdict(Some("0.21.0"), "0.20.0"),
+            VersionVerdict::ServerNewer
+        );
+    }
+
+    /// A server at a pre-release is ordered by semantic-version precedence, the one order
+    /// `release::version::Version` defines: above every earlier release, below a later
+    /// pre-release and below its own final — never left unordered.
+    #[test]
+    fn a_prerelease_server_is_ordered_by_precedence() {
+        let alpha = Some("1.0.0-alpha.1");
+        assert_eq!(
+            version_verdict(alpha, "0.29.0"),
+            VersionVerdict::ServerNewer
+        );
+        assert_eq!(
+            version_verdict(alpha, "1.0.0-alpha.2"),
+            VersionVerdict::ServerOlder
+        );
+        assert_eq!(version_verdict(alpha, "1.0.0"), VersionVerdict::ServerOlder);
+        assert_eq!(
+            version_verdict(alpha, "1.0.0-alpha.1"),
+            VersionVerdict::Same
+        );
+        assert_eq!(
+            version_verdict(Some("1.0.0-alpha.10"), "1.0.0-alpha.2"),
+            VersionVerdict::ServerNewer,
+            "numeric identifiers order as numbers"
+        );
+        assert_eq!(
+            version_verdict(Some("v1.0.0-alpha.1"), "0.29.0"),
+            VersionVerdict::ServerNewer,
+            "a tag's v is read past"
+        );
+        // what does not parse stays unordered, either side
+        assert_eq!(
+            version_verdict(Some("1.0.0-alpha.01"), "1.0.0"),
+            VersionVerdict::Unordered
+        );
+        assert_eq!(version_verdict(alpha, "dev"), VersionVerdict::Unordered);
+        // equal precedence, different text: different, never acted on
+        assert_eq!(
+            version_verdict(Some("1.0.0+a"), "1.0.0+b"),
+            VersionVerdict::Unordered
+        );
+    }
+
+    /// A take-over that cannot take the lock says so in the log, naming the lease.
+    #[test]
+    fn a_take_over_that_waits_on_the_lock_names_the_lease_in_the_log() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("stale", None)).unwrap();
+        let seen = LeaseFile::read(&path);
+        let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_writer(std::io::sink)
+            .finish();
+        let mut ran = false;
+        crate::logging::with_scoped(subscriber, || {
+            take_over_with(&path, &seen, Duration::ZERO, || ran = true).unwrap();
+        });
+        assert!(!ran, "nothing past the lock ran");
+        drop(held);
+        assert_eq!(token_on_disk(&path).as_deref(), Some("stale"));
+    }
+
+    #[test]
+    fn a_take_over_that_cannot_take_the_lock_leaves_the_lease_for_the_next_reading() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("stale", None)).unwrap();
+        let seen = LeaseFile::read(&path);
+        let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
+        let mut ran = false;
+        take_over_with(&path, &seen, Duration::ZERO, || ran = true)
+            .expect("a held lock is not an error");
+        assert!(!ran, "nothing past the lock ran");
+        assert_eq!(token_on_disk(&path).as_deref(), Some("stale"));
+        drop(held);
+        // Not a single attempt: closing `held` releases the flock only once no process holds
+        // its open file description, and a sibling test that forks (`pre_exec`,
+        // `process_group`) gives its child a copy of every descriptor until that child execs.
+        // A zero patience then met the lock still held and left the lease, under a parallel
+        // run alone. The wait ends as soon as the copy is gone; the bound is only a backstop.
+        take_over_with(&path, &seen, Duration::from_secs(30), || {}).unwrap();
+        assert_eq!(
+            LeaseFile::read(&path),
+            LeaseFile::Absent,
+            "with the lock it goes"
+        );
+    }
+
+    /// A lease path with no file name still gets a temporary file of the writer's own, under
+    /// the default name.
+    #[test]
+    fn a_temporary_name_for_a_path_without_a_file_name_uses_the_default_one() {
+        let tmp = tmp_path(Path::new("/"), "t1");
+        assert_eq!(
+            tmp.file_name().and_then(|n| n.to_str()),
+            Some("server.json.t1.tmp"),
+            "{tmp:?}"
+        );
+    }
+
+    /// A temporary file that cannot be created is an error, and nothing is written.
+    #[test]
+    fn a_temporary_file_that_cannot_be_created_is_an_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let tmp = dir.path().join("missing").join("server.json.t.tmp");
+        let e = write_synced(&tmp, "{}").expect_err("no directory to create it in");
+        assert_eq!(e.kind(), std::io::ErrorKind::NotFound, "{e}");
+        assert!(!dir.path().join("missing").exists(), "nothing was created");
+    }
+
+    /// A temporary file that cannot be written whole is an error: a lease is never published
+    /// from a file the disk did not take.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_temporary_file_on_a_full_disk_is_an_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let tmp = dir.path().join("server.json.t.tmp");
+        std::os::unix::fs::symlink("/dev/full", &tmp).unwrap();
+        let e = write_synced(&tmp, "{}").expect_err("a full device takes nothing");
+        assert_eq!(e.raw_os_error(), Some(libc::ENOSPC), "{e}");
+    }
+
+    /// Syncing the directory of a rename is best effort: a path with no parent, or a parent
+    /// that cannot be opened, loses only the durability, and nothing is created for it.
+    #[test]
+    fn syncing_the_directory_of_a_rename_is_best_effort() {
+        sync_dir(Path::new("/"));
+        let dir = tempfile::tempdir().unwrap();
+        let gone = dir.path().join("gone");
+        sync_dir(&gone.join("server.json"));
+        assert!(!gone.exists(), "the missing directory is not created");
+        sync_dir(&dir.path().join("server.json"));
+        assert!(dir.path().is_dir());
+    }
+
+    /// How long a keep-alive touch takes to come round, with room for a loaded machine.
+    fn keep_alive_tick() -> Duration {
+        timings().bind_grace / 3
+    }
+
+    /// Wait up to `bound` for `ok`, polling.
+    fn eventually(bound: Duration, mut ok: impl FnMut() -> bool) -> bool {
+        let deadline = Instant::now() + bound;
+        while Instant::now() < deadline {
+            if ok() {
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        ok()
+    }
+
+    /// The version a touch writes: what tells a touched lease from the one written by hand.
+    fn touched(path: &Path) -> bool {
+        LeaseFile::read(path)
+            .document()
+            .is_some_and(|d| d.version.as_deref() == Some(crate::VERSION))
+    }
+
+    /// A touch whose temporary file cannot be written leaves the lease as it is and tries
+    /// again at the next tick, rather than giving the lease up.
+    #[test]
+    fn a_keep_alive_touch_that_cannot_write_its_temporary_file_tries_again() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("owner", None)).unwrap();
+        // a directory where the touch's own temporary file goes: creating the file fails
+        let blocked = tmp_path(&path, "owner");
+        fs::create_dir(&blocked).unwrap();
+        let lease = binding_lease(&path);
+        lease.keep_alive();
+        std::thread::sleep(keep_alive_tick() + keep_alive_tick() / 2);
+        assert!(!touched(&path), "no touch landed while it could not write");
+        assert!(
+            blocked.is_dir(),
+            "a directory it did not create is left alone"
+        );
+        fs::remove_dir(&blocked).unwrap();
+        assert!(
+            eventually(keep_alive_tick() * 6, || touched(&path)),
+            "the next tick touched the lease"
+        );
+        assert_eq!(token_on_disk(&path).as_deref(), Some("owner"));
+        lease.release();
+        assert_eq!(LeaseFile::read(&path), LeaseFile::Absent);
+    }
+
+    /// A touch that finds the lock held by another change skips that touch, removes its
+    /// temporary file and waits for the next tick: it never renames without the lock.
+    #[test]
+    fn a_keep_alive_touch_skips_a_lease_whose_lock_another_change_holds() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("owner", None)).unwrap();
+        let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
+        let lease = binding_lease(&path);
+        lease.keep_alive();
+        std::thread::sleep(keep_alive_tick() + keep_alive_tick() / 2);
+        assert!(!touched(&path), "no touch without the lock");
+        assert!(
+            !tmp_path(&path, "owner").exists(),
+            "the skipped touch removed its temporary file"
+        );
+        drop(held);
+        assert!(
+            eventually(keep_alive_tick() * 6, || touched(&path)),
+            "the touch after the lock was freed landed"
+        );
+        lease.release();
+        assert_eq!(LeaseFile::read(&path), LeaseFile::Absent);
+    }
+
+    /// A publish whose temporary file cannot be written fails with the path it could not
+    /// write, and the lease is left as it was.
+    #[test]
+    fn a_publish_whose_temporary_file_cannot_be_written_leaves_the_lease() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("owner", None)).unwrap();
+        let blocked = tmp_path(&path, "owner");
+        fs::create_dir(&blocked).unwrap();
+        let lease = binding_lease(&path);
+        match lease.publish("http://127.0.0.1:5") {
+            Err(Error::Io { path: p, .. }) => assert_eq!(p, blocked),
+            other => panic!("expected the temporary file's I/O error, got {other:?}"),
+        }
+        assert_eq!(
+            LeaseFile::read(&path).document().map(|d| d.url.clone()),
+            Some(None),
+            "the lease still names no URL"
+        );
+        assert!(blocked.is_dir());
+    }
+
+    /// A publish waits for a change another process holds the lock for only as long as
+    /// [`LOCK_PATIENCE`], then refuses and removes its temporary file.
+    #[test]
+    fn a_publish_refuses_when_the_change_lock_stays_held() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("owner", None)).unwrap();
+        let held = lock_for_change(&path, Duration::ZERO).expect("a free lock is taken");
+        let lease = binding_lease(&path);
+        match lease.publish("http://127.0.0.1:6") {
+            Err(Error::Lease { reason }) => assert!(
+                reason.contains("stayed held for 2 seconds")
+                    && reason.contains("another process is changing"),
+                "{reason}"
+            ),
+            other => panic!("expected the lock refusal, got {other:?}"),
+        }
+        assert!(
+            !tmp_path(&path, "owner").exists(),
+            "the temporary file is gone"
+        );
+        assert_eq!(token_on_disk(&path).as_deref(), Some("owner"));
+        drop(held);
+        lease.release();
+    }
+
+    /// A rename that fails is an error naming the lease, and the temporary file is removed.
+    #[test]
+    fn a_publish_whose_rename_fails_names_the_lease_and_removes_its_temporary_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("server.json");
+        fs::write(&path, lease_text("owner", None)).unwrap();
+        let lease = binding_lease(&path);
+        let result = lease.publish_with("http://127.0.0.1:7", || {
+            // between the check and the rename, the lease becomes a directory that is not
+            // empty: no file can be renamed over it
+            fs::remove_file(&path).unwrap();
+            fs::create_dir(&path).unwrap();
+            fs::write(path.join("inside"), "x").unwrap();
+        });
+        match result {
+            Err(Error::Io { path: p, .. }) => assert_eq!(p, path),
+            other => panic!("expected the rename's I/O error, got {other:?}"),
+        }
+        assert!(
+            !tmp_path(&path, "owner").exists(),
+            "the temporary file is gone"
+        );
+        assert!(path.join("inside").is_file(), "what stands there is left");
+    }
+
+    /// The variable that makes a run of this test binary one of the child processes below.
+    #[cfg(unix)]
+    const CHILD: &str = "MAJORDOMUS_LEASE_TEST_CHILD";
+
+    /// Run `test` of this binary in a process of its own, with `CHILD` naming `dir`. With
+    /// `block_sighup`, the process starts with `SIGHUP` blocked in every thread: a signal the
+    /// test raises on its own thread, with the block lifted there, is still handled, but the
+    /// signal [`end_by_signal`] sends again is never delivered, so the process ends by the
+    /// exit that follows it, and the exit status is still `128 + signal`.
+    #[cfg(unix)]
+    fn in_a_process_of_its_own(test: &str, dir: &Path, block_sighup: bool) -> std::process::Output {
+        use std::os::unix::process::CommandExt;
+        let mut cmd = std::process::Command::new(std::env::current_exe().unwrap());
+        cmd.args([
+            "--exact",
+            &format!("lease::tests::{test}"),
+            "--nocapture",
+            "--test-threads",
+            "1",
+        ])
+        .env(CHILD, dir);
+        if block_sighup {
+            // SAFETY: runs in the forked child before exec; sigemptyset, sigaddset and
+            // pthread_sigmask are async-signal-safe and touch only this closure's own set.
+            unsafe {
+                cmd.pre_exec(|| {
+                    sighup_mask(libc::SIG_BLOCK);
+                    Ok(())
+                });
+            }
+        }
+        cmd.output().expect("the child process runs")
+    }
+
+    /// Block or unblock `SIGHUP` in the calling thread.
+    #[cfg(unix)]
+    fn sighup_mask(how: libc::c_int) {
+        // SAFETY: a signal set on this stack, initialised before use; pthread_sigmask only
+        // changes the calling thread's mask.
+        unsafe {
+            let mut set: libc::sigset_t = std::mem::zeroed();
+            libc::sigemptyset(&mut set);
+            libc::sigaddset(&mut set, libc::SIGHUP);
+            libc::pthread_sigmask(how, &set, std::ptr::null_mut());
+        }
+    }
+
+    /// Poison `lock` the way a holder that panicked would.
+    #[cfg(unix)]
+    fn poison<T: Send + 'static>(lock: &'static Mutex<T>) {
+        let _ = std::thread::spawn(move || {
+            let _held = lock.lock();
+            panic!("a holder of the lock panicked (on purpose)");
+        })
+        .join();
+        assert!(lock.is_poisoned());
+    }
+
+    /// The process-wide records stay usable when a holder panicked: recording, forgetting and
+    /// releasing through a poisoned lock change nothing and do not panic, and the release
+    /// still removes the lease the record names. In a process of its own, because the
+    /// records are the process's.
+    #[cfg(unix)]
+    #[test]
+    fn the_process_wide_records_tolerate_a_poisoned_lock() {
+        if let Some(dir) = std::env::var_os(CHILD) {
+            let path = Path::new(&dir).join("server.json");
+            fs::write(&path, lease_text("owner", None)).unwrap();
+            hold(&path, "owner");
+            poison(&HOLDING);
+            hold(&path, "successor");
+            forget(None);
+            HOLDING.clear_poison();
+            assert_eq!(
+                *HOLDING.lock().unwrap(),
+                Some((path.clone(), "owner".to_string())),
+                "a poisoned record is neither overwritten nor cleared"
+            );
+            poison(published());
+            release_record(Some((path.clone(), "owner".into())));
+            assert_eq!(LeaseFile::read(&path), LeaseFile::Absent);
+            published().clear_poison();
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let out = in_a_process_of_its_own(
+            "the_process_wide_records_tolerate_a_poisoned_lock",
+            dir.path(),
+            false,
+        );
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            out.status.success() && stdout.contains("1 passed"),
+            "{:?}\n{stdout}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// The child half of the two tests below: take a lease, publish it, declare that this
+    /// process answers stop requests, receive `signals` `SIGHUP`s, record when, and wait for
+    /// the watcher to end the process.
+    #[cfg(unix)]
+    fn receive_stop_signals(dir: &Path, signals: usize) {
+        let path = dir.join("server.json");
+        fs::write(&path, lease_text("owner", None)).unwrap();
+        let lease = binding_lease(&path);
+        lease.publish("http://127.0.0.1:8").unwrap();
+        hold(&path, "owner");
+        answer_stop_requests();
+        sighup_mask(libc::SIG_UNBLOCK);
+        for _ in 0..signals {
+            // SAFETY: raising a signal whose handler only touches atomics
+            unsafe { libc::raise(libc::SIGHUP) };
+        }
+        sighup_mask(libc::SIG_BLOCK);
+        assert_eq!(stop_requested(), Some(libc::SIGHUP));
+        let at = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        fs::write(dir.join("signalled"), at.to_string()).unwrap();
+        std::thread::sleep(Duration::from_secs(60));
+        drop(lease);
+    }
+
+    /// How long after the child recorded its signals it ended.
+    #[cfg(unix)]
+    fn ended_after_the_signals(dir: &Path) -> Duration {
+        let at: u128 = fs::read_to_string(dir.join("signalled"))
+            .expect("the child recorded its signals")
+            .parse()
+            .unwrap();
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        Duration::from_millis(now.saturating_sub(at) as u64)
+    }
+
+    /// A second stop signal ends the process at once, without waiting out the bound the
+    /// first one gave the ordered stop; on the way out the lease this process holds is
+    /// released, and the exit status names the signal.
+    #[cfg(unix)]
+    #[test]
+    fn a_second_stop_signal_ends_the_process_at_once_and_releases_its_lease() {
+        if let Some(dir) = std::env::var_os(CHILD) {
+            receive_stop_signals(Path::new(&dir), 2);
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let out = in_a_process_of_its_own(
+            "a_second_stop_signal_ends_the_process_at_once_and_releases_its_lease",
+            dir.path(),
+            true,
+        );
+        assert_eq!(
+            out.status.code(),
+            Some(128 + libc::SIGHUP),
+            "{:?}\n{}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let after = ended_after_the_signals(dir.path());
+        assert!(after < STOP_BOUND, "ended {after:?} after the signals");
+        assert_eq!(
+            LeaseFile::read(&dir.path().join("server.json")),
+            LeaseFile::Absent,
+            "the lease was released on the way out"
+        );
+    }
+
+    /// A first stop signal is left to the process that answers it, but only for
+    /// [`STOP_BOUND`]: an ordered stop that never finishes is ended then, and the lease is
+    /// released on the way out.
+    #[cfg(unix)]
+    #[test]
+    fn an_ordered_stop_that_overruns_the_bound_is_ended_and_releases_its_lease() {
+        if let Some(dir) = std::env::var_os(CHILD) {
+            // the watcher's warning is written, so that what it says is evaluated too
+            let _ = tracing::subscriber::set_global_default(
+                tracing_subscriber::fmt()
+                    .with_writer(std::io::sink)
+                    .finish(),
+            );
+            receive_stop_signals(Path::new(&dir), 1);
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let out = in_a_process_of_its_own(
+            "an_ordered_stop_that_overruns_the_bound_is_ended_and_releases_its_lease",
+            dir.path(),
+            true,
+        );
+        assert_eq!(
+            out.status.code(),
+            Some(128 + libc::SIGHUP),
+            "{:?}\n{}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let after = ended_after_the_signals(dir.path());
+        assert!(after >= STOP_BOUND, "ended {after:?} after the signal");
+        assert_eq!(
+            LeaseFile::read(&dir.path().join("server.json")),
+            LeaseFile::Absent,
+            "the lease was released on the way out"
+        );
+    }
+
+    /// A profile directory holding the build output `majordomus` (recorded in a lease as it
+    /// was) and a served copy of it, which is what a launcher runs (I2059).
+    fn copy_of_a_build(dir: &Path) -> (ExecutableIdentity, ExecutableIdentity) {
+        let build = dir.join("majordomus");
+        fs::write(&build, b"the code the server loaded").unwrap();
+        let recorded = identity_of(&build);
+        let served = dir.join("served");
+        fs::create_dir(&served).unwrap();
+        let copy = served.join("majordomus-1-2");
+        fs::write(&copy, b"the code the server loaded").unwrap();
+        (recorded, identity_of(&copy))
+    }
+
+    #[test]
+    fn a_rebuild_of_the_output_a_served_copy_runs_supersedes_the_lease() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, mine) = copy_of_a_build(dir.path());
+        fs::write(&recorded.path, b"a rebuild of the same tree, longer").unwrap();
+        let reason = superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0")
+            .expect("the output the copy came from was replaced");
+        assert!(reason.contains("has been replaced since"), "{reason}");
+    }
+
+    #[test]
+    fn an_unreplaced_build_output_is_not_superseded_by_its_served_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, mine) = copy_of_a_build(dir.path());
+        assert_eq!(
+            superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_lease_naming_another_build_is_not_superseded_by_a_served_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (_, mine) = copy_of_a_build(dir.path());
+        let other = dir.path().join("other");
+        fs::write(&other, b"another build").unwrap();
+        let recorded = identity_of(&other);
+        fs::write(&other, b"another build, rewritten longer").unwrap();
+        assert_eq!(
+            superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_lease_path_spelled_another_way_is_the_same_origin_as_the_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (mut recorded, mine) = copy_of_a_build(dir.path());
+        fs::write(&recorded.path, b"a rebuild of the same tree, longer").unwrap();
+        // the same file under a different spelling of its path
+        recorded.path = dir.path().join("served").join("..").join("majordomus");
+        let reason = superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0")
+            .expect("canonical paths agree, and the output was replaced");
+        assert!(reason.contains("has been replaced since"), "{reason}");
+    }
+
+    #[test]
+    fn a_path_that_is_no_served_copy_is_not_superseded_by_a_lease_for_another_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, _) = copy_of_a_build(dir.path());
+        let elsewhere = dir.path().join("elsewhere");
+        fs::write(&elsewhere, b"a build run in place").unwrap();
+        assert_eq!(
+            superseded_by(
+                &lease_from(&recorded, "1.0.0"),
+                &identity_of(&elsewhere),
+                "1.0.0"
+            ),
+            None
+        );
     }
 }

@@ -1,0 +1,34 @@
+id: I3379
+milestone: every-task-states-its-delivery-economics
+title: "Each issue's CI reruns and rounds are counted from the Actions run record, attributed through plan.delivery"
+slug: ci-reruns-are-attributed
+priority: p1
+profile: implementation
+objective: "Fill ci_reruns per issue from the run record I3202 writes into the forge observation: for each pull request plan.delivery attributes to the issue, runs of the same head with run_attempt above 1 are reruns, runs of a later head are rounds, cancelled and superseded runs are apart, each with run id and attempt, with runner minutes where I3202 measures them. The reading never asks the forge itself."
+why: "T3 of the owner's report of 2026-10-19 asks for CI reruns. I3202 already plans to read run_attempt, head_sha and conclusion, and I2740's plan.delivery attributes pull requests to issues, so this adds only the per-issue count."
+current_state: "apps/majordomus-cli/src/integration/metrics.rs:14-16 counts rounds from the drain's trail only; grep -rn run_attempt apps/majordomus-cli/src/integration finds nothing; apps/majordomus-cli/src/plan/delivery.rs:1-15 attributes branches and pull requests to issues."
+desired_state: "Every record carries its issue's reruns, rounds and cancelled or superseded runs, or not_observed with the reason."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Reading the forge directly"
+  - "Changing CI or the drain"
+depends_on:
+  - "I3376"
+  - "I3202"
+serves:
+  - "the-product-proves-it-pays#ci-reruns-are-attributed-to-the-issue"
+acceptance_criteria:
+  - "One head run twice and a later head run once yield one rerun and one round, each with run id and attempt"
+  - "Cancelled and superseded runs are counted apart and keep their conclusion"
+  - "The same observation read twice counts each run once"
+  - "A missing observation or an unattributed issue reads not_observed with the reason"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_task_ci_reruns_are_attributed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

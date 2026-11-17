@@ -64,8 +64,14 @@ def op_anchor: "op-" + gsub("\\."; "-");
 | ([ $doc.paths | to_entries[] | .value | to_entries[] | .value ]) as $ops
 | ($ops | map({ key: .operationId, value: (if ((.tags // []) | length) == 1 then .tags[0] else "shared" end) }) | from_entries) as $op_home
 | ($doc.components.schemas | to_entries | map({ key: .key, value: (.value | [.. | objects | select(has("$ref")) | refname] | unique) }) | from_entries) as $refs_of
-| ($doc.components.schemas | keys | map(. as $n | { key: $n, value: [ $refs_of | to_entries[] | select(.value | index($n)) | .key ] }) | from_entries) as $referrers
-| ($doc.components.schemas | keys | map(. as $n | { key: $n, value: [ $ops[] | select(([.. | objects | select(has("$ref")) | refname] | index($n)) != null) | $op_home[.operationId] ] | unique }) | from_entries) as $direct_tags
+# Every reference is read once and inverted, rather than asked again of every operation and
+# every schema per schema name: walking every operation twice for each schema made this
+# projection a minute of the generator, quadratic in the size of the document. $referrers holds, per schema, the schemas whose refs name it, in
+# document order (itself included when it refers to itself); $used_by the operations that
+# reach it, in document order; each operation counted once however often it names it.
+| (reduce ($refs_of | to_entries[]) as $e ({}; reduce $e.value[] as $r (.; .[$r] += [$e.key]))) as $referrers
+| (reduce $ops[] as $op ({}; reduce ($op | [.. | objects | select(has("$ref")) | refname] | unique)[] as $r (.; .[$r] += [$op.operationId]))) as $used_by
+| ($doc.components.schemas | keys | map(. as $n | { key: $n, value: (($used_by[$n] // []) | map($op_home[.]) | unique) }) | from_entries) as $direct_tags
 | def reach($n; $seen):
     if ($seen | index($n)) then [] else
       ($direct_tags[$n] // []) + ([ ($referrers[$n] // [])[] | reach(.; $seen + [$n]) ] | add // [])
@@ -135,8 +141,8 @@ def op_anchor: "op-" + gsub("\\."; "-");
           values: (if ($s | is_enum) then [ $s.oneOf[] | { value: (.const | tostring), description: ((.description // "") | demoted) } ] else [] end),
           properties: ($s | properties),
           variants: (if ($s | has("oneOf")) and (($s | is_enum) | not) then ($s | variants) else [] end),
-          used_by: [ $doc.paths | to_entries[] | .value | to_entries[] | .value | select(([.. | objects | select(has("$ref")) | refname] | index($name)) != null) | .operationId ],
-          used_by_schemas: [ $doc.components.schemas | to_entries[] | select(.key != $name) | select((.value | refs | index($name)) != null) | .key ] } ],
+          used_by: ($used_by[$name] // []),
+          used_by_schemas: (($referrers[$name] // []) | map(select(. != $name))) } ],
     # where each thing lives, for a link from any page, and the map an old single-page anchor
     # (#op-…, #tag-…, #schema-…) is sent on with: every key is an id the reference used to carry
     schema_homes: ($schema_home | map_values(slug)),

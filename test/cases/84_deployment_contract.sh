@@ -55,8 +55,6 @@ machines:
   autostart: true
   autostop: true
 region: fra
-provider:
-  name: fly
 MD
 git add -A >/dev/null
 
@@ -77,6 +75,22 @@ probe() {   # reason mutation...
 }
 probe 'key\(s\) the contract does not have: fly_api_token' \
   sed -i.bak 's|^region: fra$|region: fra\nfly_api_token: "x"|' "$d"
+# a provider the contract knows is accepted (ADR 0219); every other provider is refused by name
+provider='region: fra\nprovider:\n  name: gigalixir\n  app: example-app\n  stack: gigalixir-24\n  url: https://example-app.gigalixirapp.com'
+sed -i.bak "s|^region: fra\$|$provider|" "$d"; rm -f "$d".bak; git add -A >/dev/null
+"$MJ" doctor 2>&1 | grep -q 'OK   deployment' \
+  || { echo "    doctor did not accept a deployment naming a known provider:"; "$MJ" doctor 2>&1 | grep deployment; exit 1; }
+cp keep.yaml "$d"; git add -A >/dev/null
+probe "provider.name 'fly' is not a provider the contract knows" \
+  sed -i.bak "s|^region: fra\$|$(printf '%s' "$provider" | sed 's/name: gigalixir/name: fly/')|" "$d"
+probe "provider.url 'http://example-app.gigalixirapp.com' is not an https URL" \
+  sed -i.bak "s|^region: fra\$|$(printf '%s' "$provider" | sed 's|url: https://|url: http://|')|" "$d"
+probe 'lacks provider.stack, which a named provider states' \
+  sed -i.bak "s|^region: fra\$|$(printf '%s' "$provider" | sed 's/\\n  stack: gigalixir-24//')|" "$d"
+probe 'listen.interface is loopback and provider gigalixir hosts it' \
+  sed -i.bak "s|^region: fra\$|$provider|; s|^  interface: all\$|  interface: loopback|" "$d"
+probe 'key\(s\) the contract does not have: provider.api_key' \
+  sed -i.bak "s|^region: fra\$|$provider\\n  api_key: x|" "$d"
 probe 'this executable reads deployment/v1' \
   sed -i.bak 's|^schema: deployment/v1$|schema: deployment/v2|' "$d"
 probe 'lacks region' \
@@ -90,7 +104,7 @@ probe 'machines.min_running 2 exceeds machines.count 1' \
 probe 'is not a path beginning with /' \
   sed -i.bak 's|^  liveness: /healthz$|  liveness: http://example.invalid/healthz|' "$d"
 probe 'carries what reads as a credential' \
-  sed -i.bak 's|^  org: .*$||; s|^provider:$|provider:\n  fly:\n    org: "FlyV1 fm2_notarealtoken"|' "$d"
+  sed -i.bak 's|^description: .*$|description: "FlyV1 fm2_notarealtoken"|' "$d"
 rm -f "$d".bak
 
 # two objects, one identity
@@ -105,7 +119,12 @@ rm -f .ai/repo/deployments/a-second-claim.yaml; git add -A >/dev/null
 allow="$(dirname "$(dirname "$MJ")")/share/allow/deployment.txt"
 [ -f "$allow" ] || { echo "    share/allow/deployment.txt was not projected from the schema"; exit 1; }
 grep -qx '\^listen\\.port\$' "$allow" || { echo "    the allow-list does not close listen.port"; exit 1; }
-grep -qx '\^provider\\.fly\\.org\$' "$allow" || { echo "    the allow-list does not reach into the provider block"; exit 1; }
+grep -qx '\^budgets\\.blocking_check_ms\$' "$allow" || { echo "    the allow-list does not reach into the budgets block"; exit 1; }
+# the provider block is closed too: its four keys and nothing else, a credential least of all
+for key in name app stack url; do
+  grep -qx "\\^provider\\\\.$key\\\$" "$allow" || { echo "    the allow-list does not close provider.$key"; exit 1; }
+done
+[ "$(grep -c '^\^provider' "$allow")" = 4 ] || { echo "    the allow-list admits more than the provider's four keys"; exit 1; }
 
 # and the restored object is accepted again: every refusal above was the mutation, not the shape
 "$MJ" doctor 2>&1 | grep -q 'OK   deployment' || { echo "    the restored object is no longer accepted"; exit 1; }

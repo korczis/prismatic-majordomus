@@ -1,0 +1,31 @@
+id: I2675
+milestone: development-runtime
+title: "Build-cache health, headroom and hit statistics are visible where the mesh is"
+slug: build-cache-health-and-capacity-are-visible-where-the-mesh-is
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Show which offers exist, which is selected and why, headroom and the statistics sccache supports, labelling estimates, on the existing health, monitor and UI surfaces."
+why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157."
+current_state: "Measured on master b29cf4e487 on 2026-10-13: the UI has no mesh drill-down for services and health.rs has no build-cache check."
+desired_state: "A check in health, a row in monitor, a UI screen reading mesh.build_cache as a reading, and live updates over the existing event stream."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "apps/majordomus-cli/src/ui/"
+  - "apps/majordomus-cli/src/monitor/"
+non_scope:
+  - "A new streaming transport"
+depends_on:
+  - I2672
+acceptance_criteria:
+  - "A provider stopping is reflected on the screen within the stream's lifetime"
+  - "Estimates are labelled"
+  - "The screen is within the UI latency budget and executes nothing"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus bench system.http. --transport system --profile ci --no-write --check"
+evidence_required:
+  - "build_cache_screen"
+  - "health_check"
+created_at: 2026-10-13
+updated_at: 2026-10-13

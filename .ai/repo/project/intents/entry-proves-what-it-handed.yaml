@@ -1,0 +1,44 @@
+id: entry-proves-what-it-handed
+title: "Every session knows the governance and context it started under, and is told when either moves"
+statement: "On every agent start, in every supported client, the owner can see which governance is in force by one digest and which briefing the session was handed; the episode records both; a change to governance during the session is told at its next interaction; a handover says when governance moved since it was written; and every way around the preflight is either refused or a stated limit."
+invariants:
+  - "Entry opens no remote network socket (docs/ENTRY.md)"
+  - "No filesystem watcher is required"
+  - "The digest excludes volatile fields, so the same tree gives the same digest"
+  - "Advisory and unenforceable rules are labelled as such, never counted as enforced"
+non_goals:
+  - "Hard-coded rule counts in prose"
+  - "Regenerating context from the preflight"
+milestones:
+  - "entry-proves-what-it-handed"
+satisfaction:
+  - id: one-governance-digest
+    criterion: "The preflight, the brief and the episode record show the same governance digest for one tree, and editing a rule changes it while touching a timestamp does not (planned proof: apps/majordomus-cli/tests/governance_digest.rs (I3147 writes it))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+  - id: episode-pins-what-it-was-handed
+    criterion: "session.started carries the governance digest and its manifest, a session.briefed event carries the digest of the briefing the episode was handed, and the preflight's 'no compiled context revision' line is replaced by the recorded value (planned proof: case_episode_pins_what_it_was_handed (I3148 writes it))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+  - id: change-is-told
+    criterion: "A rule edited during an open episode is reported, with the inputs that moved, at that episode's next brief, check or lifecycle event in every provider that has one (planned proof: case_governance_change_is_told (I3149 writes it))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+  - id: entry-surfaces-agree
+    criterion: "direnv entry, the Claude Code SessionStart hook, a Codex/Gemini session entry, an MCP initialize, brief.session and the CLI preflight report one digest for one checkout, and the brief's digest equals the one in the episode's session.started (planned proof: case_entry_surfaces_agree (a new case I3151 writes; case 192 is not extended))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+  - id: handover-names-governance-drift
+    criterion: "A handover carries the governance digest and manifest it was written under, and resolving it names the inputs that moved since (planned proof: case_handover_reports_governance_drift (I3150 writes it))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+  - id: every-bypass-is-declared
+    criterion: "Every known route around the preflight and the edit guard names the case that proves its refusal or its line among SECURITY.md's limits, a route with neither fails the check, and advisory and unenforceable rules are labelled and never counted as enforced (planned proof: case_bypass_routes_are_declared (I3152 writes it))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+  - id: start-names-its-base
+    criterion: "task start reports how far merge-base(HEAD, refs/remotes/origin/master) is behind, with the age of the last fetch from the reflog, and refuses only when local master has diverged from refs/remotes/origin/master, naming the command that brings it current (planned proof: case_start_reports_base_divergence (I3153 writes it))"
+    evidence: command
+    ref: "majordomus intent explain entry-proves-what-it-handed"
+created_at: 2026-10-18
+updated_at: 2026-10-18

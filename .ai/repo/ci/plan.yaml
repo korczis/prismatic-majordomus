@@ -1,0 +1,27 @@
+# The model of the plan's drift gate: how long the trunk may carry merged work the plan has
+# not recorded, and whether a refusal fails the trunk yet. `scripts/ci/plan-drift-check` asks
+# the executable (`majordomus plan drift --gate head|trunk`, capability plan.drift), which
+# reads this file and nothing else for both values; test/cases/3101_merged_work_unrecorded_is_drift.sh
+# holds the gate to it with a fixture that declares its own (ADR 0166, decision 2).
+#
+# A merge on the trunk that names an issue is delivery, not acceptance: inference never writes
+# a stamp, and `majordomus plan verify|done <id>` remains the act that records it. Between the
+# merge and that act the plan says READY, BLOCKED or ACTIVE about work that is merged. The gate
+# reports that as PENDING on every head and on the trunk for `window` seconds, and refuses it on
+# the trunk afterwards, naming the command that settles it. A missing or unreadable window
+# refuses the gate: without one, no merge can be called young.
+version: 1
+
+drift:
+  # Seconds between the newest merge that names an issue and the moment the trunk refuses
+  # the plan for not recording it. A day: a worker records `plan verify` before its pull
+  # request lands, so the window covers the landing of an issue split over several pull
+  # requests and a release cut in between, not a forgotten stamp. On 2026-10-16 the trunk
+  # carried 23 such issues, the youngest 11 hours old and the oldest weeks old
+  # (`majordomus plan drift`, with the forge's merged titles read): a day separates the
+  # landing in progress from the drift that made the public roadmap a parallel universe.
+  window: 86400
+  # `advisory`: a refusal is reported and the gate exits 0. `blocking`: it fails the gate.
+  # Advisory until the drift that exists today is settled; I2748 settles it and makes the
+  # gate blocking, so that landing the gate does not turn the trunk red on work it predates.
+  enforcement: advisory

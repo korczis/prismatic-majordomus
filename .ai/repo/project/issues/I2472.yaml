@@ -1,0 +1,59 @@
+id: I2472
+milestone: development-runtime
+title: "How long CI takes is measured, from when each run started to when it completed, and the CI/CD screen draws it"
+slug: ci-timings-are-measured
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Record when each check run on an open pull request's head started, beside when it completed, and answer how long CI takes from that record with a typed capability (integration.timings): per check its measured runs, failures, median, 90th percentile and longest duration; per open head its wall time and slowest check; and how many runs could not be measured. The CI/CD screen of majordomus ui draws it in place of the panel that said no capability records CI timings."
+why: "The owner asked on 2026-10-11 to implement every view of the UI screenshots (pack v3 M08; reference 07-ci-cd shows build times and throughput). d3's CI/CD screen (I2462) says no capability records per-run CI timings, and none did: the forge observation kept when a check completed but not when it started, although the GitHub CLI's rollup answers both. CI time is the latency the integration lane waits on for every pull request, and nothing measured it."
+current_state: "A check observation holds its name, state, kind, app and completion time. The CI/CD screen's build-timings panel says nothing is measured."
+desired_state: "The forge observation records started_at for every check run (empty for a status context or a run that has not started; an observation recorded before is read with it empty, so the schema stays 4). integration.timings (GET /api/v1/pull-requests/timings, MCP majordomus_ci_timings) measures, from the recorded observation and without asking the forge, every check's runs with a start and an end: passed, failed, median and 90th percentile (nearest rank) and longest seconds, the slowest median first; every open head's wall time from its first check's start to its last check's completion and its slowest check, the longest wait first; and how many runs it could not measure, which are counted and never measured as zero. The CI/CD screen draws each check's median as a bar against the slowest with its numbers beside it, and the ten longest waits each leading to its pull request on the PR Drain; without an observation it says nothing is measured."
+scope:
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/timings.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/ui/timings.rs"
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - ".ai/repo/project/issues/I2472.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1077_ci_timings_are_measured.sh"
+depends_on: ["I2471"]
+acceptance_criteria:
+  - "check_of records startedAt as started_at, and an observation without it still reads"
+  - "integration.timings answers each check's measured runs, failures, median, 90th percentile and longest seconds, and each open head's wall time and slowest check, from the recorded observation alone"
+  - "a run without a start or an end, and a status context, is counted as unmeasured and never measured as zero"
+  - "the CI/CD screen draws the timings, and a head leads to its pull request; without an observation it says nothing is measured"
+validation:
+  - "cargo test --lib integration::timings"
+  - "cargo test --lib ui::"
+  - "test/run.sh 1077_ci_timings_are_measured"
+evidence_required:
+  - "integration_timings_unit_tests"
+  - "ci_timings_case_1077"
+created_at: 2026-10-11
+updated_at: 2026-10-12T11:03:32Z
+started_at: 2026-10-12T11:03:04Z
+started_event: sha256:b50319dc7e6a92546db7759806cd73dfacf540eaf106a46cd417bcca2b36bc55
+verified_at: 2026-10-12T11:03:13Z
+verified_event: sha256:521c1a60288a072c292196daa03e3f370a408b18b7bd62ad80232d86e9b5eefd
+completed_at: 2026-10-12T11:03:32Z
+completed_event: sha256:9a6e57cb1887ad0d1f5149ba5f820f8a4f871a7943d7576a12f0c927898913c5
+evidence:
+  - covers: integration_timings_unit_tests
+    type: ci
+    command: "cargo test --lib integration::timings (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "7 integration::timings tests ok, 5 ui::timings tests ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:03:22Z
+  - covers: ci_timings_case_1077
+    type: ci
+    command: "test/run.sh 1077_ci_timings_are_measured (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "case 1077_ci_timings_are_measured ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T11:03:27Z

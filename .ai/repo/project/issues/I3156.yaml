@@ -1,0 +1,30 @@
+id: I3156
+milestone: repository-automation-is-typed
+title: "Every command path is implemented by one executable, and the other only delegates"
+slug: one-executable-per-command
+priority: p1
+profile: implementation
+objective: "Derive, from the command graph's existing join of share/commands.yaml and the Rust registry, the implementing executable of every command path (program plus its full word sequence); report a path both implement outside a declared delegation as a commands validate finding; serve the reading on CLI, MCP and /ui. Delegation stays read from docs/generated/cli.yaml at run time."
+why: "The justfile header says two executables share the name majordomus. On 2026-10-12 the shell reading of the model reported 318 drift findings where the Rust executable reported 26 (.github/workflows/github.yml); the workflow now forces the Rust path, which fixes the symptom and not the class. It extends milestone automation. Proposed in ADR 0184 (Every command name is implemented by exactly one executable, and the other only delegates) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c225#2, chatgpt-majordomus:c233#2, chatgpt-majordomus:c268#2."
+current_state: "share/commands.yaml describes the shell tool and doctor proves it agrees with bin/majordomus; command_graph/mod.rs already joins both origins (qualify_collisions); bin/majordomus reads its delegation from docs/generated/cli.yaml (bin/majordomus:100-103) and hands over by subcommand word."
+desired_state: "One owner per command path, a finding otherwise; delegation unchanged in form."
+scope:
+  - "share/commands.yaml"
+  - "bin/majordomus"
+  - "apps/majordomus-cli/src/command_graph"
+  - "docs/COMMANDS.md"
+non_scope:
+  - "Porting a command (the cutover issues do that)"
+serves:
+  - "repository-automation-is-typed#one-executable-per-command"
+acceptance_criteria:
+  - "A name implemented by both executables without a delegation is a finding of commands validate"
+  - "The table is served on CLI and MCP"
+  - "Exit codes and output of delegated names are unchanged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib command_graph::"
+  - "bash test/run.sh 101_command_graph 30_command_registry"
+evidence_required:
+  - "test_one_executable_per_command"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -29,7 +29,7 @@ pub const STATUS_CSS: &str = "share/design/status.css";
 pub const TOKENS_CSS: &str = "apps/majordomus-cli/src/web/tokens.css";
 /// The declaration compiled into the executable.
 pub const COMPILED_YAML: &str = "apps/majordomus-cli/src/design/tokens.yaml";
-/// The mark compiled into the executable for the Cockpit's shell.
+/// The mark compiled into the executable for the UI's shell.
 pub const COMPILED_MARK: &str = "apps/majordomus-cli/src/cockpit/logo-mark.svg";
 /// The dataset the site's templates read.
 pub const SITE_JSON: &str = "site/data/registry/design.json";

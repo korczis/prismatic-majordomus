@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Scan the published graph, the static site and everything the client receives for credential material, private environment values and machine-absolute paths, and fail on a finding without printing it."
 why: "This milestone publishes a description of everything the repository knows. That is exactly the artifact in which an accidental token or a developer's home directory would travel furthest."
-current_state: "No such scan exists for the site or the Cockpit data."
+current_state: "One definition, apps/majordomus-cli/src/quality/leak-patterns.tsv, is read by scripts/ci/no-machine-paths (every tracked file), scripts/site-check check 12 (the built site) and `majordomus quality rustdoc` (the crate's reference). Since 2026-10-15 site-check names the file and the kind of each finding and never its text, and case 3047 plants synthetic markers to prove it. Not yet detected: a credential written as a quoted JSON key (the closing quote stands between the name and the colon) and raw authorization material (an `Authorization:` header or a bearer value)."
 desired_state: "One check inspects the generated data and the built site, reports findings by location and kind, and runs in CI."
 scope:
   - test/cases
@@ -28,4 +28,21 @@ evidence_required:
   - negative_test
 risk: "A scan tuned to be quiet finds nothing forever. The synthetic marker is what keeps it honest."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-19T13:52:54Z
+started_at: 2026-10-19T13:52:20Z
+started_event: sha256:28f02787a603e2bddee2c26468ce15f07d0e09508058384054570cf121c2bad6
+completed_at: 2026-10-19T13:52:54Z
+completed_event: sha256:64ac9b1dacb0256e99d1bf3a471301c111ce01173abd32e2c0c20558f7bc55bd
+evidence:
+  - covers: public_scan
+    type: test
+    command: "bash test/run.sh 3047_a_leak_finding_names_where_it_is"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:52:37Z
+  - covers: negative_test
+    type: test
+    command: "bash test/run.sh 3047_a_leak_finding_names_where_it_is"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:52:45Z

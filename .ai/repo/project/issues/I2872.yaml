@@ -1,0 +1,31 @@
+id: I2872
+milestone: two-folder-integration
+title: "The skeleton a new repository receives is derived from the layout declaration"
+slug: the-skeleton-is-derived
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "init seeds a new repository from I2870's declaration instead of lib/init.sh's hand-written list of files, and a derive-check proves share/skeleton's manifest and directory contracts agree with the declaration, so the skeleton cannot drift from the layer it seeds."
+why: "The third slice of I1102. On 2026-10-21 share/skeleton was found hand-copied by lib/init.sh, a second enumeration of the layout, and already drifted: its manifest lacks the `releases` section .ai/manifest.yaml has."
+current_state: "share/skeleton is 41 hand-written files; lib/init.sh copies them through a hard-coded list and creates the local directories itself; no generator or check covers it."
+desired_state: "The skeleton is derived from the declaration, and a check fails when they disagree."
+scope:
+  - share/skeleton
+  - lib/init.sh
+  - apps/majordomus-cli/src
+  - scripts
+  - .ai/repo/project/issues/I2872.yaml
+non_scope:
+  - "Adopting an existing repository (the adopter milestones)"
+depends_on:
+  - I2870
+acceptance_criteria:
+  - "init's seeded tree is derived from the declaration, not from a second list"
+  - "A check fails when share/skeleton and the declaration disagree; the skeleton's manifest carries `releases`"
+validation:
+  - "cargo test --workspace --all-features"
+  - "scripts/derive-check"
+evidence_required:
+  - skeleton_derived
+created_at: 2026-10-21
+updated_at: 2026-10-21

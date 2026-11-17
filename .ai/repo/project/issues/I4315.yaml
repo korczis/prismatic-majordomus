@@ -1,0 +1,39 @@
+id: I4315
+milestone: truthful-plan-surfaces
+title: "The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red"
+slug: the-deployed-stage-reads-what-pages-published
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "plan delivery reads releases/latest.json from the gh-pages commit the newest successful Pages deployment published, so an issue whose release that pointer names reads deployed; the Pages workflow refuses a snapshot whose publication source is unread."
+why: "Measured at origin/master 81ef931a3e1 on 2026-10-28: majordomus.dev serves 81ef931a3e1 and delivery report counts 29 of 29 features deployed and publicly verified, yet plan delivery read deployed 0 of 1036 issues and 208 stayed released with 'unread: publication'. Two causes. (1) The reader, written 2026-10-16 in ee02079b1bc (I2740), looked for site/static/releases/latest.json, the source path, in the deployed commit; every Pages deployment since 2026-09-05 (40ab2fd62d8) is a gh-pages commit ('deploy: site from <sha>') that carries the built site, where the pointer is releases/latest.json, so the read failed on every deployment from its first day. The test fixture committed the pointer at the source path and so encoded the same assumption. (2) Since 3e8225a4329 (2026-10-13) the deployments are observed only by `served forge`, which the Pages job runs and no local reader does, so a checkout read 'no deployment observed' until a person ran it."
+current_state: "delivery::published_live reads <deployed sha>:site/static/releases/latest.json only; plan_delivery.rs commits the pointer at that path; the ui-snapshot job runs `served forge` and publishes a delivery that reads no publication, with nothing red."
+desired_state: "published_live reads the pointer at the path the site serves it (releases/latest.json, derived from the static root and the release directory), and the source path only for a deployment of a source commit; the error names both paths. The test publishes the pointer the way scripts/site-deploy does, on a commit carrying the built tree. The ui-snapshot job fails when plan delivery reads no publication after `served forge` recorded a successful Pages deployment."
+scope:
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/tests/integration_merged_branches.rs"
+  - ".github/workflows/pages.yml"
+  - "docs/PLANNING.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/adrs"
+  - ".ai/repo/knowledge/curated/the-deployed-stage-read-a-path-nobody-published.md"
+  - ".ai/repo/project/issues/I4315.yaml"
+non_scope:
+  - "Observing deployments inside `prs refresh` again (3e8225a4329 separated them on purpose)"
+  - "served observe's own record (.ai/local/state/served), which answers whether a deployment serves a commit, not which release it publishes"
+depends_on: []
+acceptance_criteria:
+  - "Against a Pages deployment of a gh-pages commit carrying releases/latest.json, plan delivery reads publication and an issue released at or below that version reads deployed"
+  - "A deployment of a source commit carrying site/static/releases/latest.json still reads"
+  - "A deployed commit carrying neither names both paths in the unread reason"
+  - "The ui-snapshot job fails when the publication source is unread after the forge was observed"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+  - "majordomus served forge && majordomus plan delivery (deployed > 0 at origin/master)"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-10-28

@@ -141,10 +141,22 @@ grep -q '^translation site/content-src/' "$ROOT/scripts/ci/english-only-allow.tx
 # says, measured from the page; the assertion is that the Czech page's set is the same one.
 # That is what keeps this from being a hardcoded count: updating one page and not the other is
 # exactly the mutation it fails on, and updating both keeps it green without touching the case.
+#
+# A figure is either a number typed into the prose or a figure the page cites by name
+# (`cite_figure name="..."`, site/data/figures.toml): since the articles cite what the
+# repository measures instead of typing it, two pages citing the same names state the same
+# numbers wherever they are built, and a page that drops or adds a citation is the drift.
 figures() {
-  awk 'BEGIN{n=0} /^\+\+\+$/{n++; next} n>=2' "$1" \
-    | grep -oE '(^|[^[:alnum:].])[0-9]{2,4}([^[:alnum:].]|$)' \
-    | grep -oE '[0-9]{2,4}' | LC_ALL=C sort -u
+  local body
+  body="$(awk 'BEGIN{n=0} /^\+\+\+$/{n++; next} n>=2' "$1")"
+  {
+    printf '%s\n' "$body" \
+      | grep -oE '(^|[^[:alnum:].])[0-9]{2,4}([^[:alnum:].]|$)' \
+      | grep -oE '[0-9]{2,4}' || true
+    printf '%s\n' "$body" \
+      | grep -oE 'cite_figure name="[a-z_]+"' \
+      | sed -E 's/.*name="([a-z_]+)"/figure:\1/' || true
+  } | LC_ALL=C sort -u
 }
 PAIR_EN="$ROOT/site/content-src/proof-carrying-documentation.md"
 PAIR_CS="$ROOT/site/content-src/dokumentace-kterou-lze-odmitnout.md"

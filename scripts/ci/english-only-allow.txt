@@ -18,6 +18,10 @@
 
 name Korčák
 name Tomáš
+name Čeština
+fixture test/cases/3590_the_site_is_derived_in_every_language.sh the case seeds a translation memory with Czech segments to prove the derived copy carries them, which requires writing that language
+fixture test/cases/3728_an_unkeyed_memory_entry_is_refused.sh the case seeds a Czech translation memory entry to prove site-check refuses an entry rekey would still move, which requires writing that language
+fixture test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh the case seeds Czech translation memory entries to prove a commit, version or date that is a whole element is keyed as a placeholder and that rekey moves an old entry, which requires writing that language
 
 fixture apps/majordomus-cli/src/capability/model.rs a doctest proving a capability identity's local part is opaque bytes and not an ASCII identifier
 fixture apps/majordomus-cli/src/cockpit/html.rs a doctest proving the HTML escaper passes multi-byte text through unchanged
@@ -36,6 +40,7 @@ fixture scripts/ci/english-only-check the check carries the list of letters it t
 fixture docs/claims/authored-files-are-english.md the claim page names the letters the check looks for, so a reader knows what is decidable and what is not
 fixture test/cases/138_governance_gates.sh the case mutates a file into another language to prove the check goes red, which requires writing that language
 fixture test/cases/403_published_translation.sh the case writes a page in another language to prove the translation exemption refuses an undeclared one, which requires writing that language
+fixture test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh the case writes a file of an edition in another language to prove an undeclared edition is refused and a declared one is not, which requires writing that language
 fixture site/content/guarantees/authored-files-are-english.md the generated rendering of docs/claims/authored-files-are-english.md, which is itself a declared fixture; the derived copy inherits the letters the source names
 
 # Published translations (project.english-only v2, ADR 0077). Each names its language and its
@@ -46,3 +51,38 @@ fixture site/content/guarantees/authored-files-are-english.md the generated rend
 # same language the entry claims.
 translation site/content-src/dokumentace-kterou-lze-odmitnout.md cs a long-form article written for Czech readers, published beside its English counterpart rather than translated from it
 translation site/content/dokumentace-kterou-lze-odmitnout.md cs the generated projection of the Czech article above
+translation site/content-src/vsechno-v-jednom-proudu.md cs the Czech counterpart of everything-followed.md, written for Czech readers with the same facts and published beside it
+translation site/content/vsechno-v-jednom-proudu.md cs the generated projection of the Czech counterpart above
+translation site/content-src/teze.md cs a short essay written for Czech readers on why the product is a supervisory layer rather than another agent, published beside its English counterpart
+translation site/content/teze.md cs the generated projection of the Czech essay above
+translation site/content-src/vlozene-zadani-se-stava-planem.md cs a Czech article for Czech readers on how a pasted brief becomes a plan, published beside its English counterpart rather than translated from it
+translation site/content/vlozene-zadani-se-stava-planem.md cs the generated projection of the Czech article above
+translation site/content-src/kresla-ne-jmena.md cs the Czech translation of seats-not-names.md, on the cooperation model, written for Czech readers with the same facts and published beside it
+translation site/content/kresla-ne-jmena.md cs the generated projection of the Czech translation above
+translation site/content-src/plan-se-napadne-driv-nez-se-postavi.md cs the Czech translation of a-plan-is-attacked-before-it-is-built.md, on the plan critique, written for Czech readers with the same facts and published beside it
+translation site/content/plan-se-napadne-driv-nez-se-postavi.md cs the generated projection of the Czech translation above
+translation site/content-src/napsano-jednou-odvozeno-vsude.md cs the Czech translation of written-once-derived-everywhere.md, on derivation, written for Czech readers with the same facts and published beside it
+translation site/content/napsano-jednou-odvozeno-vsude.md cs the generated projection of the Czech translation above
+translation site/content-src/zabrano-driv-nez-se-stavi.md cs the Czech translation of claimed-before-it-is-built.md, on claiming work and identifiers, written for Czech readers with the same facts and published beside it
+translation site/content/zabrano-driv-nez-se-stavi.md cs the generated projection of the Czech translation above
+translation site/content-src/session-skonci-prace-ne.md cs the Czech translation of a-session-ends-the-work-does-not.md, on how work survives the session that was doing it, written for Czech readers with the same facts and published beside it
+translation site/content/session-skonci-prace-ne.md cs the generated projection of the Czech translation above
+translation site/content-src/jedna-vetev-jedno-misto.md cs the Czech translation of one-branch-one-place.md, on the worktree topology, written for Czech readers with the same facts and published beside it
+translation site/content/jedna-vetev-jedno-misto.md cs the generated projection of the Czech translation above
+translation site/content-src/mnoho-stroju-jeden-denik.md cs the Czech translation of many-machines-one-journal.md, on how sessions on several machines cooperate through the mesh, written for Czech readers with the same facts and published beside it
+translation site/content/mnoho-stroju-jeden-denik.md cs the generated projection of the Czech translation above
+translation site/content-src/pochybnost-rozhodne-experiment.md cs the Czech translation of a-doubt-is-settled-by-an-experiment.md, on how a doubt is settled by evidence and an experiment, written for Czech readers with the same facts and published beside it
+translation site/content/pochybnost-rozhodne-experiment.md cs the generated projection of the Czech translation above
+translation site/content-src/mlceni-neni-verdikt.md cs the Czech translation of silence-is-not-a-verdict.md, on why a check that never reported is not a passing one, written for Czech readers with the same facts and published beside it
+translation site/content/mlceni-neni-verdikt.md cs the generated projection of the Czech translation above
+translation site/content-src/automatizace-je-schopnost.md cs the Czech translation of automation-is-a-capability.md, on why repository automation is a typed or scripted capability rather than shell, written for Czech readers with the same facts and published beside it
+translation site/content/automatizace-je-schopnost.md cs the generated projection of the Czech translation above
+translation site/content-src/uspora-se-meri-netvrdi.md cs the Czech translation of a-saving-is-measured-not-claimed.md, on how a token saving is measured before it is published, written for Czech readers with the same facts and published beside it
+translation site/content/uspora-se-meri-netvrdi.md cs the generated projection of the Czech translation above
+fixture campaigns/majordomus-idd-completion-prompt-pack/README.md an operator brief kept byte for byte as provenance (campaigns/README.md, scripts/ci/campaigns-check): its Czech opening is the owner's words on its date, and rewriting it would forge the record
+fixture campaigns/majordomus-release-15min-pack/README.md an operator brief kept byte for byte as provenance (campaigns/README.md, scripts/ci/campaigns-check): it quotes the owner in Czech, and rewriting it would forge the record
+
+# Editions of the handbook (project.english-only v3, ADR 0149). One directory per language,
+# which declares that language in its own edition.toml; the generator beside it is English.
+edition handbook/cs cs the Czech edition of the handbook: the product explained to Czech readers, built by handbook/build.py from the tree it describes
+edition site/i18n/cs cs the Czech translation memory of the published site: every English segment of the built pages and its machine translation, which scripts/site-build turns into the /cs/ copy of the site (ADR 0218)

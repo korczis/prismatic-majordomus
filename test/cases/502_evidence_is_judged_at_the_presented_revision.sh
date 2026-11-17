@@ -25,6 +25,11 @@
 #      that declined to run is `failing`, and a finding
 #   7  a ledger row's commit is data: one git would read as an option (`--output=<file>`)
 #      is `stale` like any commit git cannot place, and no read writes that file
+#   8  what the site publishes is judged where it was recorded (I3916): scripts/pages evidence
+#      counts the guaranteed claims the run's own verdict supports, beside the commit the run
+#      was recorded at and how far behind the published one that is; a verdict that did not
+#      read the whole matrix, a run that kept no verdict and evidence from outside the history
+#      are each not measured, with a reason, and never a 0
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -348,4 +353,49 @@ ev opt_presented show --presented HEAD
 written "evidence show --presented HEAD"
 jqe opt_presented "$ALPHA | .execution.commit == \"$OPT\" and .state == \"stale\"" \
   "a committed row whose commit is an option is not stale at the presented commit"
+
+# ---------------------------------------------------------------- 8. the published figure
+# Proves `evidence-judged-at-the-presented-revision`, its publication half (I3916): the count of
+# supported guarantees the homepage and the evidence page show is the recorded run's, named by
+# the commit it was recorded at and its distance from the published commit, and nothing the run
+# did not measure reads as a number. Through the real script, over this repository's own
+# history (a revision is a commit there, not here), read-only: it writes only its --out.
+PUB="$(git -C "$ROOT" rev-parse HEAD)"
+ANC="$(git -C "$ROOT" rev-parse HEAD~2)"
+BEHIND="$(git -C "$ROOT" rev-list --count "$ANC..$PUB")"
+art() {          # art <dir> <commit> — an evidence artifact whose run was recorded at <commit>
+  mkdir -p "$1"
+  jq -n --arg c "$2" '{schema: 1, commit: $c, produced_at: "2026-10-22T00:00:00Z", absent: [], panels: [],
+    working_tree: "clean", report_tree: "clean", totals: {outcomes: {}}}' > "$1/manifest.json"
+}
+verdict() {      # verdict <dir> <complete> — the run's own verdict: a and c supported, b not
+  printf '{"subject":{"complete":%s},"ledger":{"present":true},"claims":[{"id":"a","status":"guaranteed"},{"id":"b","status":"guaranteed"},{"id":"c","status":"guaranteed"},{"id":"d","status":"advisory"}],"findings":[{"claim":"b"}]}\n' "$2" > "$1/run-report.json"
+}
+pub() {          # pub <name> <artifact dir> — what scripts/pages evidence publishes, into $W/<name>.json
+  expect_exit 0 "$ROOT/scripts/pages" evidence --commit "$PUB" --from "$2" --out "$W/$1.json"
+}
+art "$W/a-anc" "$ANC"; verdict "$W/a-anc" true
+pub anc "$W/a-anc"
+expect_grep "the run of ${ANC:0:12} supports 2 of 3 guaranteed claim"
+jqe anc ".commit == \"$ANC\" and .behind == $BEHIND and .state == \"stale\"" \
+  "a run recorded at an ancestor is not published with its commit and its distance"
+jqe anc '.claims == {measured: true, declared: 3, supported: 2, reason: null}' \
+  "the published count is not the guaranteed claims the run's own verdict supports"
+art "$W/a-pub" "$PUB"; verdict "$W/a-pub" true
+pub here "$W/a-pub"
+jqe here ".commit == \"$PUB\" and .behind == 0 and .claims.supported == 2" \
+  "a run recorded at the published commit is not published as that commit's, nothing behind"
+art "$W/a-part" "$ANC"; verdict "$W/a-part" false
+pub part "$W/a-part"
+jqe part '.claims.measured == false and .claims.supported == null and (.claims.reason | test("whole claims matrix"))' \
+  "a verdict that did not read the whole matrix published a count"
+art "$W/a-none" "$ANC"
+pub none "$W/a-none"
+expect_grep 'the guaranteed claims the run supports are not measured'
+jqe none '.claims.measured == false and .claims.supported == null and (.claims.reason | test("no verdict over its own executions"))' \
+  "a run that kept no verdict over its own rows published a count"
+art "$W/a-away" "$GHOST"; verdict "$W/a-away" true
+pub away "$W/a-away"
+jqe away '.available == false and .claims.measured == false and .claims.supported == null' \
+  "evidence from outside the published history published a count"
 exit 0

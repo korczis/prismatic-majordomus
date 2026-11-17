@@ -1,0 +1,609 @@
+{
+  "name": "majordomus-ui-execution-control-v4",
+  "version": "4.0",
+  "repository": "korczis/prismatic-majordomus",
+  "milestones": [
+    {
+      "id": "M00",
+      "title": "Reality audit and V3 reconciliation",
+      "issue_count": 5
+    },
+    {
+      "id": "M01",
+      "title": "Execution and work-graph contracts",
+      "issue_count": 5
+    },
+    {
+      "id": "M02",
+      "title": "Launch and authorization",
+      "issue_count": 5
+    },
+    {
+      "id": "M03",
+      "title": "Durable supervisor and mesh handoff",
+      "issue_count": 5
+    },
+    {
+      "id": "M04",
+      "title": "Realtime protocol and replay",
+      "issue_count": 5
+    },
+    {
+      "id": "M05",
+      "title": "Component foundations and shared UX",
+      "issue_count": 5
+    },
+    {
+      "id": "M06",
+      "title": "Intent and milestone workspaces",
+      "issue_count": 5
+    },
+    {
+      "id": "M07",
+      "title": "Issue and task workspaces",
+      "issue_count": 5
+    },
+    {
+      "id": "M08",
+      "title": "Cross-surface projection, API and CLI parity",
+      "issue_count": 5
+    },
+    {
+      "id": "M09",
+      "title": "Security, performance and accessibility",
+      "issue_count": 5
+    },
+    {
+      "id": "M10",
+      "title": "Executable enforcement and adversarial proof",
+      "issue_count": 5
+    },
+    {
+      "id": "M11",
+      "title": "Incremental rollout, adoption and proof",
+      "issue_count": 5
+    }
+  ],
+  "issues": [
+    {
+      "id": "M00-I01",
+      "milestone": "M00",
+      "title": "Map current capability registry to lifecycle actions",
+      "description": "Trace actual registered start/get/events, plan.transition, intent realization, devtask, mesh, prs, authorization, releases; record consumers and code owners.",
+      "depends_on": []
+    },
+    {
+      "id": "M00-I02",
+      "milestone": "M00",
+      "title": "Audit Cockpit routes and UI action paths",
+      "description": "Enumerate existing server routes, HTML semantics, scripts, WebSocket paths, navigation and accessibility; identify disconnected actions.",
+      "depends_on": [
+        "M00-I01"
+      ]
+    },
+    {
+      "id": "M00-I03",
+      "milestone": "M00",
+      "title": "Review current PRs and competing implementation work",
+      "description": "Fetch open PRs, branches, CI results and relevant issues; integrate work already done, avoid duplicate migrations.",
+      "depends_on": [
+        "M00-I02"
+      ]
+    },
+    {
+      "id": "M00-I04",
+      "milestone": "M00",
+      "title": "Derive execution baseline and evidence gaps",
+      "description": "Measure running/existing start-to-finish flows, reconnect, state recovery, failure reporting, latency and data freshness.",
+      "depends_on": [
+        "M00-I03"
+      ]
+    },
+    {
+      "id": "M00-I05",
+      "milestone": "M00",
+      "title": "Establish canonical mission intent and graph",
+      "description": "Create or reconcile canonical project intent and milestones; register each issue with acceptance evidence and relationships.",
+      "depends_on": [
+        "M00-I04"
+      ]
+    },
+    {
+      "id": "M01-I01",
+      "milestone": "M01",
+      "title": "Define unified WorkTarget reference",
+      "description": "Use existing typed IDs and adapters for intent, milestone, issue, task; preserve reference provenance and canonical ownership.",
+      "depends_on": [
+        "M00-I05"
+      ]
+    },
+    {
+      "id": "M01-I02",
+      "milestone": "M01",
+      "title": "Define WorkRun binding to canonical executions",
+      "description": "Represent parent/child execution lineage, work target, plan revisions, correlation IDs, policy and evidence without second execution ledger.",
+      "depends_on": [
+        "M01-I01"
+      ]
+    },
+    {
+      "id": "M01-I03",
+      "milestone": "M01",
+      "title": "Derive state machine and progress semantics",
+      "description": "Define state transitions and distinguish phase, attempt, completion, satisfaction, blocked, failed, stale, unknown and cancelled; reject invented percentages.",
+      "depends_on": [
+        "M01-I02"
+      ]
+    },
+    {
+      "id": "M01-I04",
+      "milestone": "M01",
+      "title": "Expose explainable work dependency graph",
+      "description": "Project target-to-intent/milestone/issue/task edges, readiness, blocking reasons and resource conflicts from existing models.",
+      "depends_on": [
+        "M01-I03"
+      ]
+    },
+    {
+      "id": "M01-I05",
+      "milestone": "M01",
+      "title": "Reconcile distributed ownership and reconciliation versions",
+      "description": "Pin repo identity, git revision, lease owner, intent revision, idempotency key and compare-and-set transitions.",
+      "depends_on": [
+        "M01-I04"
+      ]
+    },
+    {
+      "id": "M02-I01",
+      "milestone": "M02",
+      "title": "Start task and issue through canonical capability executor",
+      "description": "Design and implement guarded launch with real target readiness, plan linkage, response execution ID and refusal diagnostics.",
+      "depends_on": [
+        "M01-I05"
+      ]
+    },
+    {
+      "id": "M02-I02",
+      "milestone": "M02",
+      "title": "Start milestone and intent as durable supervised scopes",
+      "description": "Expand launch into existing issue/task DAG; avoid marking parent successful because children merely ended.",
+      "depends_on": [
+        "M02-I01"
+      ]
+    },
+    {
+      "id": "M02-I03",
+      "milestone": "M02",
+      "title": "Delegated authority envelope",
+      "description": "Define scope, repository, capabilities, allowed mutation/merge/deploy boundaries, expiry, budgets and audit for unattended execution.",
+      "depends_on": [
+        "M02-I02"
+      ]
+    },
+    {
+      "id": "M02-I04",
+      "milestone": "M02",
+      "title": "Preflight, dry-run, preview and safety UI",
+      "description": "Show impacted branches, gates, schedule, peers and authority; use same preflight behavior as CLI/MCP.",
+      "depends_on": [
+        "M02-I03"
+      ]
+    },
+    {
+      "id": "M02-I05",
+      "milestone": "M02",
+      "title": "Idempotent controls and authoritative actions",
+      "description": "Prevent duplicate launch and race; cancel/pause/resume/retry only where backend supports verified transitions.",
+      "depends_on": [
+        "M02-I04"
+      ]
+    },
+    {
+      "id": "M03-I01",
+      "milestone": "M03",
+      "title": "Discover existing lifecycle and mesh facilities",
+      "description": "Inventory durable records, peer handover, task claim, available runner and recovery; extend only missing parts.",
+      "depends_on": [
+        "M02-I05"
+      ]
+    },
+    {
+      "id": "M03-I02",
+      "milestone": "M03",
+      "title": "Persist supervision state and heartbeats",
+      "description": "Survive terminal/browser disconnection, server restart, peer crash and worker compaction; avoid ephemeral in-memory ownership as authority.",
+      "depends_on": [
+        "M03-I01"
+      ]
+    },
+    {
+      "id": "M03-I03",
+      "milestone": "M03",
+      "title": "Auto-dispatch eligible work to authenticated peers",
+      "description": "Match capability, scope, availability, leases and dependency DAG; enforce ownership, budget, fencing and deterministic replan.",
+      "depends_on": [
+        "M03-I02"
+      ]
+    },
+    {
+      "id": "M03-I04",
+      "milestone": "M03",
+      "title": "Recover stalled or abandoned tasks",
+      "description": "Bound retries, backoff, lease expiration and duplicate execution; detect non-progress and genuine blockers.",
+      "depends_on": [
+        "M03-I03"
+      ]
+    },
+    {
+      "id": "M03-I05",
+      "milestone": "M03",
+      "title": "Continuous PR convergence integration",
+      "description": "Connect issue/milestone intent work to existing prs drain; do not create a second merge daemon or bypass required CI.",
+      "depends_on": [
+        "M03-I04"
+      ]
+    },
+    {
+      "id": "M04-I01",
+      "milestone": "M04",
+      "title": "Extend existing execution event envelope",
+      "description": "Use typed versioned events with IDs, sequence, run and parent references, timestamp, kind, actor and sensitive-data redaction.",
+      "depends_on": [
+        "M03-I05"
+      ]
+    },
+    {
+      "id": "M04-I02",
+      "milestone": "M04",
+      "title": "WebSocket subscription per work scope",
+      "description": "Authorize project/intent/milestone/issue/task subscriptions through existing server; multiplex child execution events.",
+      "depends_on": [
+        "M04-I01"
+      ]
+    },
+    {
+      "id": "M04-I03",
+      "milestone": "M04",
+      "title": "Replay snapshot and gap repair",
+      "description": "Implement initial atomic snapshot plus cursor, ordered deduplicated events, bounded replay and snapshot resync on cursor expiration.",
+      "depends_on": [
+        "M04-I02"
+      ]
+    },
+    {
+      "id": "M04-I04",
+      "milestone": "M04",
+      "title": "Backpressure and network lifecycle",
+      "description": "Ping/pong, throttling, bounded buffers, reconnection with jitter, offline/read-only status and tab suspension.",
+      "depends_on": [
+        "M04-I03"
+      ]
+    },
+    {
+      "id": "M04-I05",
+      "milestone": "M04",
+      "title": "Cross-process live consistency tests",
+      "description": "Prove restart/reconnect, no lost terminal event, stale snapshot awareness and no cross-project leakage.",
+      "depends_on": [
+        "M04-I04"
+      ]
+    },
+    {
+      "id": "M05-I01",
+      "milestone": "M05",
+      "title": "Implement shared WorkActionBar and permission states",
+      "description": "Contextual Run, Preview, Pause, Resume, Retry, Cancel, Explain; render enabled only when canonical capability permits.",
+      "depends_on": [
+        "M04-I05"
+      ]
+    },
+    {
+      "id": "M05-I02",
+      "milestone": "M05",
+      "title": "Implement WorkStatus and EvidenceConfidence UI",
+      "description": "Distinct terminal, tentative, stale, unknown, blocked statuses; accessible textual explanation and source links.",
+      "depends_on": [
+        "M05-I01"
+      ]
+    },
+    {
+      "id": "M05-I03",
+      "milestone": "M05",
+      "title": "Implement LiveProgress and event timeline",
+      "description": "State and stage visualization with timestamps, attempt histories, current worker, blockers, completion and log links.",
+      "depends_on": [
+        "M05-I02"
+      ]
+    },
+    {
+      "id": "M05-I04",
+      "milestone": "M05",
+      "title": "Implement WorkGraph, inspector and breadcrumb",
+      "description": "Cytoscape dependent view, SSR list/table fallback, selectable entities with canonical URLs and drill-down.",
+      "depends_on": [
+        "M05-I03"
+      ]
+    },
+    {
+      "id": "M05-I05",
+      "milestone": "M05",
+      "title": "Implement virtualized tables and realtime summaries",
+      "description": "Flowbite/Tailwind from design tokens and Alpine progressive enhancement; avoid independent frontend state machine.",
+      "depends_on": [
+        "M05-I04"
+      ]
+    },
+    {
+      "id": "M06-I01",
+      "milestone": "M06",
+      "title": "Intent detail: launch and satisfy",
+      "description": "Display definition, acceptance criteria, coverage, milestone graph, evidence and launch/run controls using intent realization.",
+      "depends_on": [
+        "M05-I05"
+      ]
+    },
+    {
+      "id": "M06-I02",
+      "milestone": "M06",
+      "title": "Milestone detail: execute and supervise",
+      "description": "Display ready/blocked issues and DAG, batch start, critical path, workers, parent execution and replay.",
+      "depends_on": [
+        "M06-I01"
+      ]
+    },
+    {
+      "id": "M06-I03",
+      "milestone": "M06",
+      "title": "Milestone dashboard and roll-up",
+      "description": "Derive status from children plus acceptance evidence; aggregate exact counts and backed timestamps, not arbitrary percentages.",
+      "depends_on": [
+        "M06-I02"
+      ]
+    },
+    {
+      "id": "M06-I04",
+      "milestone": "M06",
+      "title": "Plan refinement under existing governance",
+      "description": "Offer capability-authorized plan updates with before/after graph and invariant checks; prevent unauthorized scope drift.",
+      "depends_on": [
+        "M06-I03"
+      ]
+    },
+    {
+      "id": "M06-I05",
+      "milestone": "M06",
+      "title": "Navigation and deep-link restoration",
+      "description": "Stable routable URLs, browser reload and back button, current selection, filtering and sharing.",
+      "depends_on": [
+        "M06-I04"
+      ]
+    },
+    {
+      "id": "M07-I01",
+      "milestone": "M07",
+      "title": "Issue detail: run + transitions",
+      "description": "Wire issue execution and plan.transition to same canonical executor; show readiness, linked intent, milestone, task and PRs.",
+      "depends_on": [
+        "M06-I05"
+      ]
+    },
+    {
+      "id": "M07-I02",
+      "milestone": "M07",
+      "title": "Task detail and worker controls",
+      "description": "Run/retry/cancel with worker claim and locks, live output, test evidence and recovery status.",
+      "depends_on": [
+        "M07-I01"
+      ]
+    },
+    {
+      "id": "M07-I03",
+      "milestone": "M07",
+      "title": "PR drain board and integration actions",
+      "description": "Display true PR mergeability, gates, conflicts, retry actions and relations; use existing prs commands.",
+      "depends_on": [
+        "M07-I02"
+      ]
+    },
+    {
+      "id": "M07-I04",
+      "milestone": "M07",
+      "title": "Execution logs and artifacts",
+      "description": "Stream redacted stdout/stderr/event records, search and downloads from trusted endpoints; no fake logs.",
+      "depends_on": [
+        "M07-I03"
+      ]
+    },
+    {
+      "id": "M07-I05",
+      "milestone": "M07",
+      "title": "Issue-to-PR-to-release traceability",
+      "description": "Clickable traversal of run lineage, commits, test evidence, release and deployment verification.",
+      "depends_on": [
+        "M07-I04"
+      ]
+    },
+    {
+      "id": "M08-I01",
+      "milestone": "M08",
+      "title": "Canonical descriptors and typed schemas",
+      "description": "Expose work launch and status via existing capabilities and metadata, not UI-specific API inventory.",
+      "depends_on": [
+        "M07-I05"
+      ]
+    },
+    {
+      "id": "M08-I02",
+      "milestone": "M08",
+      "title": "REST and OpenAPI projection",
+      "description": "Project operations into existing API/Swagger and verify request-response schemas and errors.",
+      "depends_on": [
+        "M08-I01"
+      ]
+    },
+    {
+      "id": "M08-I03",
+      "milestone": "M08",
+      "title": "MCP/CLI execution parity",
+      "description": "Ensure same authorization, readiness, execution IDs and state transitions from CLI/MCP/HTTP/UI.",
+      "depends_on": [
+        "M08-I02"
+      ]
+    },
+    {
+      "id": "M08-I04",
+      "milestone": "M08",
+      "title": "Web topology and route registration",
+      "description": "Reuse web::Topology and Cockpit conventions; expose no orphan or duplicate route and no route without navigation.",
+      "depends_on": [
+        "M08-I03"
+      ]
+    },
+    {
+      "id": "M08-I05",
+      "milestone": "M08",
+      "title": "Generated docs and examples",
+      "description": "Generate public command, endpoint, UI and workflow references from canonical descriptors and test executed examples.",
+      "depends_on": [
+        "M08-I04"
+      ]
+    },
+    {
+      "id": "M09-I01",
+      "milestone": "M09",
+      "title": "AuthN/AuthZ threat-model for websocket and mutations",
+      "description": "Origin checks, session auth, capability/target scopes, per-event filtering, CSRF and no privilege by peer discovery.",
+      "depends_on": [
+        "M08-I05"
+      ]
+    },
+    {
+      "id": "M09-I02",
+      "milestone": "M09",
+      "title": "Secrets and prompt privacy",
+      "description": "Redact tokens, credentials, prompts and local-only paths from stream, logs, snapshots, activity and public site.",
+      "depends_on": [
+        "M09-I01"
+      ]
+    },
+    {
+      "id": "M09-I03",
+      "milestone": "M09",
+      "title": "Efficient transport and chart performance",
+      "description": "Target bounded time-to-first-progress, low idle CPU, lazy graphs, throttled events and bounded log retention.",
+      "depends_on": [
+        "M09-I02"
+      ]
+    },
+    {
+      "id": "M09-I04",
+      "milestone": "M09",
+      "title": "Responsive mobile-first interactions",
+      "description": "Test 320/375/768/1024/1440 widths, keyboard/focus, drawers, touch targets and reduced-motion modes.",
+      "depends_on": [
+        "M09-I03"
+      ]
+    },
+    {
+      "id": "M09-I05",
+      "milestone": "M09",
+      "title": "Graceful degradation and no-JS correctness",
+      "description": "Ensure SSR initial state, forms/links, no-JS read-only evidence; unavailable services are clearly reported.",
+      "depends_on": [
+        "M09-I04"
+      ]
+    },
+    {
+      "id": "M10-I01",
+      "milestone": "M10",
+      "title": "Migrate .ai rules/doctrines, deprecate blockers",
+      "description": "Find conflicting constraints; replace superseded policy with scoped autonomy and verifiable consistency rules.",
+      "depends_on": [
+        "M09-I05"
+      ]
+    },
+    {
+      "id": "M10-I02",
+      "milestone": "M10",
+      "title": "Register executable gates in existing CI model",
+      "description": "Bind rule proofs to exact tests and gates; impact-select relevant checks, validate no bypass through direct route.",
+      "depends_on": [
+        "M10-I01"
+      ]
+    },
+    {
+      "id": "M10-I03",
+      "milestone": "M10",
+      "title": "Contract and property tests",
+      "description": "State transitions, idempotency, replay ordering, event loss, parent aggregation, stale plans and cache invalidation.",
+      "depends_on": [
+        "M10-I02"
+      ]
+    },
+    {
+      "id": "M10-I04",
+      "milestone": "M10",
+      "title": "Browser-driven E2E and visual regression",
+      "description": "Use real isolated repository fixture with real backend behavior, compare user-uploaded screenshots as styling reference only.",
+      "depends_on": [
+        "M10-I03"
+      ]
+    },
+    {
+      "id": "M10-I05",
+      "milestone": "M10",
+      "title": "Chaos and self-hosted dogfooding",
+      "description": "Kill server/worker, reconnect, stale lease, denied action, race start, failed CI, rejected merge; recover or block truthfully.",
+      "depends_on": [
+        "M10-I04"
+      ]
+    },
+    {
+      "id": "M11-I01",
+      "milestone": "M11",
+      "title": "Canary issue execution through UI",
+      "description": "Run a low-risk real issue from browser and verify CLI/MCP parity, progress, artifact and completion.",
+      "depends_on": [
+        "M10-I05"
+      ]
+    },
+    {
+      "id": "M11-I02",
+      "milestone": "M11",
+      "title": "Canary milestone and intent supervision",
+      "description": "Exercise real nested work graph in authorized self-hosted repository through browser, reconnect and resume.",
+      "depends_on": [
+        "M11-I01"
+      ]
+    },
+    {
+      "id": "M11-I03",
+      "milestone": "M11",
+      "title": "Update Docs and living landing page",
+      "description": "Derived explainable feature sections and examples; claims only reflect shipped functionality with proof and freshness.",
+      "depends_on": [
+        "M11-I02"
+      ]
+    },
+    {
+      "id": "M11-I04",
+      "milestone": "M11",
+      "title": "Version analysis, merge, release and deploy",
+      "description": "Bump using existing version policy, merge after relevant gates, release and deploy only authorized targets; verify health.",
+      "depends_on": [
+        "M11-I03"
+      ]
+    },
+    {
+      "id": "M11-I05",
+      "milestone": "M11",
+      "title": "Closeout with measurable adoption evidence",
+      "description": "List URLs, screenshots, tests, event transport measurements, run IDs, deployed SHA, remaining blockers and rollback instructions.",
+      "depends_on": [
+        "M11-I04"
+      ]
+    }
+  ],
+  "upstream": "majordomus-ui-complete-opus-fable-v3-20261011",
+  "acceptance": "ACCEPTANCE.md"
+}

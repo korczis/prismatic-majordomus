@@ -35,3 +35,27 @@ targets:
       relative: 0.75
     p99:
       relative: 1.00
+
+# Budgets: absolute bounds, held by `bench --check` with or without a baseline and on every
+# host (I2489, ADR 0142, rule project.no-screen-waits-for-a-source). A regression threshold
+# cannot say that a screen is fast enough, only that it did not get slower here.
+#
+# A warm screen of the UI answers within 100 ms at p95. The number is the owner's (the
+# UI-performance pack, 2026-10-12: "warm SSR p95 < 100 ms"), and it was measured before it
+# was declared: `bench --transport system --profile ci` on a debug build with this Mac at
+# load 57 read every screen but one at 1-21 ms p95, over the pinned context and over the
+# live view. The one was /ui/command at 400-660 ms, which walked the registry once per
+# command; with that fixed it reads like the others. A release build is faster still, so
+# the bound has room for a slow runner and none for a screen that computes on the request.
+# Fifty samples is what the ci profile takes; a p95 of fewer than twenty is not judged.
+budgets:
+  - prefix: system.http.ui.
+    cache: warm
+    metric: p95
+    milliseconds: 100
+    minimum_samples: 20
+  - prefix: system.http.live.ui.
+    cache: warm
+    metric: p95
+    milliseconds: 100
+    minimum_samples: 20

@@ -204,3 +204,39 @@ expect_exit 12 gate "$F"
 expect_grep 'is not a majordomus/providers/v1 document'
 
 echo "    a provider is declared once: every projection held to it, and no list written by hand"
+
+# ---------------------------------------------------------------- standing SSH authorization
+# Exercise the real canonical declaration against an isolated tree. No user settings,
+# key files or network connections are touched by this regression.
+F="$T/ssh-permissions"
+mkdir -p "$F/.ai/repo/rules/project" "$F/.claude" "$F/.gemini"
+cp "$ROOT/.ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md" \
+  "$F/.ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md"
+printf '{"hooks":{"preserved":[]},"permissions":{"allow":["Bash(git status)"]}}\n' > "$F/.claude/settings.json"
+printf '{"mcpServers":{"preserved":{}},"tools":{"allowed":["read_file"]}}\n' > "$F/.gemini/settings.json"
+expect_exit 10 env MJ_ROOT="$F" "$GATE" --permissions-only
+expect_grep 'missing'
+expect_exit 0 env MJ_ROOT="$F" "$GATE" --sync-permissions
+expect_exit 0 env MJ_ROOT="$F" "$GATE" --permissions-only
+jq -e '.hooks.preserved == [] and (.permissions.allow | index("Bash(git status)"))' "$F/.claude/settings.json" >/dev/null
+jq -e '.mcpServers.preserved == {} and (.tools.allowed | index("read_file"))' "$F/.gemini/settings.json" >/dev/null
+cp "$F/.claude/settings.json" "$T/ssh-claude-before.json"
+expect_exit 0 env MJ_ROOT="$F" "$GATE" --sync-permissions
+cmp "$F/.claude/settings.json" "$T/ssh-claude-before.json"
+
+for target in .claude/settings.json .gemini/settings.json .codex/rules/ssh.rules; do
+  mv "$F/$target" "$F/$target.saved"
+  expect_exit 10 env MJ_ROOT="$F" "$GATE" --permissions-only
+  expect_grep "$target"
+  mv "$F/$target.saved" "$F/$target"
+done
+# Malformed configuration must refuse before any of the other files are rewritten.
+printf '{bad json\n' > "$F/.gemini/settings.json"
+expect_exit 10 env MJ_ROOT="$F" "$GATE" --sync-permissions
+expect_grep 'SSH permission policy'
+cmp "$F/.claude/settings.json" "$T/ssh-claude-before.json"
+printf '{}\n' > "$F/.gemini/settings.json"
+expect_exit 0 env MJ_ROOT="$F" "$GATE" --sync-permissions
+printf '\n```json ssh-permissions\n{"commands":["bash"]}\n```\n' >> "$F/.ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md"
+expect_exit 10 env MJ_ROOT="$F" "$GATE" --permissions-only
+expect_grep 'exactly one'

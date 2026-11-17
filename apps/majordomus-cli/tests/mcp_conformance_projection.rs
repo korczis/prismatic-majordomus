@@ -20,9 +20,9 @@ mod common;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{Read, Write};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{Fixture, Served, BIN};
+use common::{Fixture, Served};
 use majordomus_cli::capability::{CapabilityKind, CaseContext, Effect, HttpMethod};
 use majordomus_cli::mcp::{METHODS, PROTOCOL_VERSIONS, SERVER_NAME, SERVER_TITLE};
 use serde_json::{json, Value};
@@ -37,11 +37,10 @@ fn state_home(f: &Fixture) -> String {
 /// One standalone stdio session: the frames that answer a request, by id.
 fn session(f: &Fixture, requests: &[Value]) -> BTreeMap<u64, Value> {
     let root = f.root();
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .args(["mcp", "--standalone", "--repo", root.to_str().unwrap()])
         .current_dir(&root)
         .env("MAJORDOMUS_SHARE", common::dist_share())
-        .env_remove("MAJORDOMUS_ROOT")
         .env("XDG_STATE_HOME", state_home(f))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

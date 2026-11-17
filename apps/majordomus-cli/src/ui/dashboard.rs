@@ -17,8 +17,9 @@ use crate::cockpit::view::word_badge;
 use super::shell::View;
 use super::source::{ask, ask_all, Answer, Availability, Source};
 use super::view::{
-    counts, day, donut, hero, kpi, kpi_count, kpi_state, kpi_to, list, meter, nothing, panel_to,
-    shown, state, strip, table, text, timeline, unanswered, wide,
+    counts, day, donut, hero, kpi, kpi_count, kpi_not_observed, kpi_state, kpi_to, list, meter,
+    more, not_observed, nothing, panel_to, shown, state, strip, table, text, timeline, unanswered,
+    value, wide,
 };
 
 /// The route of the pull-request queue panel.
@@ -32,9 +33,13 @@ const PLAN: Source = Source::of("plan.status");
 const ROADMAP: Source = Source::of("plan.roadmap");
 const MESH: Source = Source::of("mesh.peers");
 const QUEUE: Source = Source::of("integration.queue");
+/// This checkout's server alone: one lease read and one probe, never every worktree's (I3179).
+const SERVER: Source = Source::with("server.status", r#"{"checkouts":"this"}"#);
 
 /// The sources the first paint asks, together.
-pub const FIRST_PAINT: &[Source] = &[REPOSITORY, HEALTH, VERSION, RELEASES, PLAN, ROADMAP, MESH];
+pub const FIRST_PAINT: &[Source] = &[
+    REPOSITORY, HEALTH, VERSION, RELEASES, PLAN, ROADMAP, MESH, SERVER,
+];
 
 /// How many rows a panel shows before it says how many there are in all.
 pub const ROWS: usize = 8;
@@ -49,7 +54,9 @@ pub fn screen(ctx: &Context) -> View {
         (Some(branch), Some(head)) => format!(
             "{branch} at {} · working tree {}",
             &head[..12.min(head.len())],
-            git("/repository/git/working_tree").unwrap_or_else(|| "unknown".into())
+            git("/repository/git/working_tree")
+                .as_deref()
+                .unwrap_or("unknown")
         ),
         _ => "The repository's version control could not be read.".into(),
     };
@@ -61,7 +68,13 @@ pub fn screen(ctx: &Context) -> View {
         "How the delivery stands, read from the repository itself.",
         &lead,
         vec![
-            kpi_to(kpi_state("Health", &a(HEALTH).read("/status")), "#health"),
+            // the repository's verdict, not the whole report's: the whole one is `unknown`
+            // in every process that is no server, a published snapshot's reader among them,
+            // and the panel this leads to still lists every dimension with its own word
+            kpi_to(
+                kpi_state("Repository health", &a(HEALTH).read("/repository")),
+                "#health",
+            ),
             kpi_to(
                 kpi("Released", &a(RELEASES).read("/latest/version")),
                 super::delivery::ROUTE,
@@ -78,9 +91,12 @@ pub fn screen(ctx: &Context) -> View {
                 kpi("Issues blocked", &a(PLAN).read("/counts/by_status/BLOCKED")),
                 super::roadmap::ROUTE,
             ),
+            kpi_to(mesh_kpi(a(MESH)), super::mesh::ROUTE),
+            // the runtime's one state, as `server.status` derives it: the lease's word refined
+            // by the server's readiness report, its mesh and its last recorded transition
             kpi_to(
-                kpi_count("Mesh machines", &a(MESH).read("/machines")),
-                super::mesh::ROUTE,
+                kpi_state("Runtime", &a(SERVER).read("/runtime/state")),
+                "#health",
             ),
         ],
     );
@@ -90,7 +106,7 @@ pub fn screen(ctx: &Context) -> View {
         .child(plan_panel(a(ROADMAP), a(PLAN)))
         .child(issues_panel(a(PLAN)))
         .child(wide(queue_placeholder()))
-        .child(releases_panel(a(RELEASES), a(VERSION)))
+        .child(releases_panel(a(RELEASES), a(VERSION), Some(ROWS)))
         .child(mesh_panel(a(MESH)))
         .child(health_panel(a(HEALTH)));
 
@@ -117,22 +133,41 @@ pub fn pull_requests_panel(ctx: &Context, query: &[(String, String)]) -> View {
 /// out of those it holds.
 pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
     let body = unanswered(roadmap).unwrap_or_else(|| {
-        let rows = list(roadmap, "/milestones")
-            .iter()
+        let open: Vec<Value> = list(roadmap, "/milestones")
+            .into_iter()
             .filter(|m| m.get("status").and_then(Value::as_str) != Some("DONE"))
+            .collect();
+        let rows = open
+            .iter()
             .take(ROWS)
             .map(milestone_row)
             .collect::<Vec<_>>();
+        // `plan.roadmap` names the first open milestones in the plan's order, which is not
+        // where the work is: that is `plan.flight`, read live on the Roadmap screen, too slow
+        // for this first paint (ADR 0166, decision 4)
         el("div")
-            .child(el("p").class("mj-ui-line").text(format!(
-                "Now {} · next {}",
-                shown(&roadmap.read("/now")),
-                shown(&roadmap.read("/next"))
-            )))
+            .child(
+                el("p")
+                    .class("mj-ui-line")
+                    .text(format!(
+                        "First open in the plan's order {} · then {} · ",
+                        shown(&roadmap.read("/now")),
+                        shown(&roadmap.read("/next"))
+                    ))
+                    .child(super::view::link(
+                        super::roadmap::ROUTE,
+                        "where the work is in flight",
+                    )),
+            )
             .child(table(
                 &["Milestone", "State", "Issues done"],
                 rows,
                 "No milestone is open.",
+            ))
+            .children(more(
+                ROWS.min(open.len()),
+                open.len(),
+                Some(super::roadmap::ROUTE),
             ))
     });
     panel_to(
@@ -155,7 +190,7 @@ pub fn milestone_row(m: &Value) -> El {
             el("td").child(
                 el("a")
                     .class("mj-ui-row-link")
-                    .attr("href", format!("{}#milestone-{id}", super::roadmap::ROUTE))
+                    .attr("href", super::milestone::href(&id))
                     .child(el("span").class("mj-ui-mono mj-ui-dim").text(id.clone()))
                     .child(el("span").class("mj-ui-cell-title").text(text(m, "title"))),
             ),
@@ -177,22 +212,56 @@ pub fn issues_panel(plan: &Answer) -> El {
     )
 }
 
-/// What was published, newest first, as a timeline.
-pub fn releases_panel(releases: &Answer, version: &Answer) -> El {
+/// The label of the tile counting merges: the window is the queue's own (`throughput/
+/// window_days`), so the label says what the queue counted rather than a window of its own.
+pub fn merged_label(queue: &Answer) -> String {
+    match queue.read("/throughput/window_days").count() {
+        Some(days) => format!("Merged, {days} days"),
+        None => "Merged, over a window the queue does not state".into(),
+    }
+}
+
+/// The first two reasons of a pull request, and how many more there are: a row has room for
+/// two, and its inspector holds them all.
+pub fn first_reasons(reasons: &[String]) -> String {
+    match reasons.len() {
+        0 => "none".into(),
+        1 | 2 => reasons.join(", "),
+        n => format!("{} and {} more", reasons[..2].join(", "), n - 2),
+    }
+}
+
+/// What was published, newest first, as a timeline: the first `limit` of them, saying how
+/// many more there are, or every one of them when there is no limit.
+pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>) -> El {
     let body = unanswered(releases).unwrap_or_else(|| {
-        let entries = list(releases, "/releases")
+        let all = list(releases, "/releases");
+        let limit = limit.unwrap_or(all.len());
+        let entries = all
             .iter()
-            .take(ROWS)
+            .take(limit)
             .map(|r| {
                 let commit = text(r, "commit");
+                let record = text(r, "metadata_url");
                 (
                     text(r, "published_at"),
-                    format!("v{}", text(r, "version")),
-                    el("span").class("mj-ui-dim").text(format!(
-                        "{} · {}",
-                        text(r, "channel"),
-                        &commit[..10.min(commit.len())]
-                    )),
+                    format!("v{}", value(r, "version")),
+                    el("span")
+                        .class("mj-ui-dim")
+                        .text(format!(
+                            "{} · {}",
+                            value(r, "channel"),
+                            commit.get(..10).unwrap_or(if commit.is_empty() {
+                                "no commit"
+                            } else {
+                                &commit
+                            })
+                        ))
+                        // the release's own record, at the address the distribution gives
+                        .when(!record.is_empty(), |s| {
+                            s.text(" · ")
+                                .child(super::view::link(record.clone(), "its record"))
+                        }),
                 )
             })
             .collect::<Vec<_>>();
@@ -207,6 +276,11 @@ pub fn releases_panel(releases: &Answer, version: &Answer) -> El {
             } else {
                 timeline(entries)
             })
+            .children(more(
+                limit.min(all.len()),
+                all.len(),
+                Some(super::delivery::ROUTE),
+            ))
     });
     panel_to(
         "Releases",
@@ -217,20 +291,39 @@ pub fn releases_panel(releases: &Answer, version: &Answer) -> El {
     )
 }
 
+/// The mesh as one figure: how many machines the runtime knows, and where no runtime is
+/// active in this process, that — never a count. A process without a mesh runtime knows no
+/// machine because it asked nobody, and `0` there would read as a repository nobody works on.
+fn mesh_kpi(mesh: &Answer) -> El {
+    match super::mesh::unobserved(mesh) {
+        Some(why) => kpi_not_observed("Mesh", &why, &mesh.read("/active")),
+        None => kpi_count("Mesh machines", &mesh.read("/machines")),
+    }
+}
+
 /// The machines this runtime knows, with the liveness of each runtime.
 pub fn mesh_panel(mesh: &Answer) -> El {
-    let body = unanswered(mesh).unwrap_or_else(|| {
-        let rows = list(mesh, "/machines")
-            .iter()
-            .take(ROWS)
-            .map(machine_row)
-            .collect::<Vec<_>>();
-        table(
-            &["Machine", "Where", "Runtimes"],
-            rows,
-            "No machine is known to the mesh runtime.",
-        )
-    });
+    let body = unanswered(mesh)
+        .or_else(|| super::mesh::unobserved(mesh).map(|why| not_observed("The mesh", &why)))
+        .unwrap_or_else(|| {
+            let machines = list(mesh, "/machines");
+            let rows = machines
+                .iter()
+                .take(ROWS)
+                .map(machine_row)
+                .collect::<Vec<_>>();
+            el("div")
+                .child(table(
+                    &["Machine", "Where", "Runtimes"],
+                    rows,
+                    "No machine is known to the mesh runtime.",
+                ))
+                .children(more(
+                    ROWS.min(machines.len()),
+                    machines.len(),
+                    Some(super::mesh::ROUTE),
+                ))
+        });
     panel_to(
         "Mesh",
         "The machines this runtime knows, and how alive each runtime is.",
@@ -349,10 +442,11 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                 "Conflicting",
                 &tally("/queue/tallies/by_disposition/conflicting"),
             ),
-            kpi("Merged, 7 days", &tally("/throughput/merges")),
+            kpi(&merged_label(queue), &tally("/throughput/merges")),
             kpi("Merges per day", &tally("/throughput/merges_per_day")),
         ]);
-        let rows = list(queue, "/queue/assessments")
+        let assessments = list(queue, "/queue/assessments");
+        let rows = assessments
             .iter()
             .take(ROWS * 2)
             .map(|a| {
@@ -366,7 +460,6 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                     .map(|rs| {
                         rs.iter()
                             .filter_map(Value::as_str)
-                            .take(2)
                             .map(str::to_string)
                             .collect()
                     })
@@ -382,19 +475,19 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
                                 .attr(
                                     "href",
                                     n.map_or_else(
-                                        || super::work::ROUTE.to_string(),
-                                        |n| format!("{}?pr={n}#pr", super::work::ROUTE),
+                                        || super::prs::ROUTE.to_string(),
+                                        |n| format!("{}?pr={n}#pr", super::prs::ROUTE),
                                     ),
                                 )
                                 .child(el("span").class("mj-ui-cell-title").text(text(a, "title"))),
                         ),
                     )
                     .child(el("td").child(state(a, "disposition")))
-                    .child(el("td").text(text(a, "lane")))
+                    .child(el("td").text(value(a, "lane")))
                     .child(
                         el("td")
                             .class("mj-ui-mono mj-ui-dim")
-                            .text(reasons.join(", ")),
+                            .text(first_reasons(&reasons)),
                     )
             })
             .collect::<Vec<_>>();
@@ -418,14 +511,17 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
         });
         el("div")
             .class("mj-ui-stack")
-            .when(detail.is_some(), |s| {
-                s.child(detail.clone().unwrap_or_else(|| el("div")))
-            })
+            .children(detail)
             .child(tallies)
             .child(table(
                 &["PR", "Title", "Disposition", "Lane", "Why"],
                 rows,
                 "No pull request is open.",
+            ))
+            .children(more(
+                (ROWS * 2).min(assessments.len()),
+                assessments.len(),
+                Some(super::prs::ROUTE),
             ))
             .child(
                 el("p")
@@ -436,7 +532,7 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
     panel_to(
         "Pull-request queue",
         "What the integration lane would merge, repair or wait for, and why.",
-        Some(super::work::ROUTE),
+        Some(super::prs::ROUTE),
         body,
         &[queue],
     )
@@ -447,7 +543,11 @@ pub fn queue_panel(queue: &Answer, selected: Option<u64>) -> El {
 /// and the factors of its rank. Read from the queue's own answer, so it costs nothing more.
 fn pull_request_detail(a: &Value) -> El {
     let s = |k: &str| text(a, k);
-    let number = a.get("number").and_then(Value::as_u64).unwrap_or_default();
+    // an assessment without a number is shown as unknown, never as #0
+    let number = a
+        .get("number")
+        .and_then(Value::as_u64)
+        .map_or_else(|| "unknown".to_string(), |n| n.to_string());
     let strings = |k: &str| -> Vec<String> {
         a.get(k)
             .and_then(Value::as_array)
@@ -616,6 +716,62 @@ mod tests {
         assert!(html.contains(&format!("data-panel-src=\"{PULL_REQUESTS_PANEL}\"")));
     }
 
+    /// The first figures of the screen are what a publication shows first, and the process
+    /// that reads a snapshot is no server: it holds no board and runs no mesh. The health
+    /// figure is therefore the repository's verdict, decided in that process, and the mesh
+    /// figure says no runtime is active here instead of counting zero machines.
+    #[test]
+    fn the_first_figures_are_decided_where_no_server_runs() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        let cite = "read from health.report /repository";
+        let at = html
+            .find(cite)
+            .expect("the health figure cites the repository's verdict");
+        let tile = &html[at..];
+        let tile = &tile[..tile
+            .find("mj-ui-kpi-source")
+            .expect("the figure's source line")];
+        assert!(tile.contains("Repository health"), "{tile}");
+        // the word shown is the report's own, over the repository's dimensions alone
+        let report = ask(&ctx, HEALTH).value.expect("a health report");
+        let undecided: Vec<&str> = report["checks"]
+            .as_array()
+            .expect("checks")
+            .iter()
+            .filter(|c| c["status"] == "unknown")
+            .filter_map(|c| c["id"].as_str())
+            .collect();
+        assert!(
+            undecided.contains(&"peers") && undecided.contains(&"mesh"),
+            "{undecided:?}"
+        );
+        assert_eq!(report["status"], "unknown");
+        let word = report["repository"]
+            .as_str()
+            .expect("the repository's verdict");
+        assert!(tile.contains(&format!(">{word}<")), "{word}: {tile}");
+        let only_the_process = undecided
+            .iter()
+            .all(|id| crate::capability::builtin::health::PROCESS_DIMENSIONS.contains(id));
+        assert_eq!(word != "unknown", only_the_process, "{undecided:?}");
+        assert!(!html.contains("read from health.report /status"));
+        assert!(html.contains("not observed"), "no runtime here is said so");
+        assert!(!html.contains("Mesh machines"), "and never counted as zero");
+        assert!(
+            !html.contains("Mesh active"),
+            "nor drawn as a measured `no`"
+        );
+
+        // where a runtime is active the figure is the count of the machines it knows
+        let mut active = ask(&ctx, MESH);
+        active.value = Ok(serde_json::json!({ "active": true, "machines": [{}, {}] }).into());
+        let figure = mesh_kpi(&active).render();
+        assert!(figure.contains("Mesh machines"), "{figure}");
+        assert!(figure.contains(">2<"), "{figure}");
+    }
+
     /// A selected pull request opens its detail from the queue's own answer, with its gates
     /// and their verdicts; a number the queue did not observe says so.
     #[test]
@@ -631,8 +787,9 @@ mod tests {
                     "gates": [{ "gate": "base", "passed": true }, { "gate": "ci", "passed": false }],
                     "reasons": ["behind_master:2"], "next_action": "bring master in"
                 }]}
-            })),
+            }).into()),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         let html = queue_panel(&queue, Some(7)).render();
         assert!(
@@ -641,12 +798,20 @@ mod tests {
         );
         assert!(html.contains(">base<") && html.contains(">ci<"));
         assert!(
-            html.contains("/ui/work?pr=7#pr"),
+            html.contains("/ui/prs?pr=7#pr"),
             "rows lead to their detail"
         );
         assert!(queue_panel(&queue, Some(8))
             .render()
             .contains("#8 is not among"));
+    }
+
+    /// An assessment that carries no number is shown as unknown, never as #0.
+    #[test]
+    fn a_pull_request_without_a_number_is_unknown_never_zero() {
+        let html = pull_request_detail(&serde_json::json!({ "title": "unnumbered", "gates": [] }))
+            .render();
+        assert!(html.contains("unknown") && !html.contains("#0"), "{html}");
     }
 
     /// A failed source says it could not answer, and a queue never observed says so.
@@ -658,15 +823,240 @@ mod tests {
             exposure: Exposure::default(),
             value: Err("no".into()),
             took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
         };
         assert!(health_panel(&failed).render().contains("could not answer"));
         let unobserved = Answer {
             source: QUEUE,
-            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" })),
+            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" }).into()),
             ..failed.clone()
         };
         assert!(queue_panel(&unobserved, None)
             .render()
             .contains("never refreshed"));
+    }
+
+    /// An answer of `source` holding `value`, as the screen would read it.
+    fn answer(source: Source, value: Value) -> Answer {
+        Answer {
+            source,
+            route: None,
+            exposure: Exposure::default(),
+            value: Ok(value.into()),
+            took: std::time::Duration::ZERO,
+            standing: crate::ui::source::Standing::NOW,
+        }
+    }
+
+    /// What was published is a timeline, newest first, each entry with its channel and a
+    /// commit cut to ten characters; nothing published says so.
+    #[test]
+    fn the_releases_are_a_timeline_with_channel_and_commit() {
+        let version = answer(
+            VERSION,
+            serde_json::json!({ "declared": "0.21.0", "bump": "minor" }),
+        );
+        let releases = answer(
+            RELEASES,
+            serde_json::json!({ "releases": [
+                { "version": "0.20.0", "channel": "stable", "commit": "c8f0e4c5011234567890",
+                  "published_at": "2026-10-10T16:38:00Z",
+                  "metadata_url": "https://example.test/releases/v0.20.0.json" },
+                { "version": "0.19.1", "channel": "stable", "commit": "abc",
+                  "published_at": "2026-10-09T10:00:00Z" }
+            ]}),
+        );
+        let html = releases_panel(&releases, &version, Some(ROWS)).render();
+        assert!(
+            html.contains("v0.20.0") && html.contains("v0.19.1"),
+            "{html}"
+        );
+        assert!(
+            html.contains("stable · c8f0e4c501 · <a"),
+            "a commit is cut to ten: {html}"
+        );
+        assert!(
+            html.contains("href=\"https://example.test/releases/v0.20.0.json\">its record</a>"),
+            "a release leads to the record the distribution gives: {html}"
+        );
+        assert!(
+            html.contains("stable · abc<"),
+            "a short commit is kept whole: {html}"
+        );
+        assert!(html.contains("Declared 0.21.0"), "{html}");
+        let none = answer(RELEASES, serde_json::json!({ "releases": [] }));
+        assert!(releases_panel(&none, &version, Some(ROWS))
+            .render()
+            .contains("Nothing has been released yet."));
+    }
+
+    /// A machine says whether it is this one, and each of its runtimes is its own liveness
+    /// word; a machine that does not say where it is reads as unknown, never as this one.
+    #[test]
+    fn every_machine_says_where_it_is_and_how_alive_its_runtimes_are() {
+        let mesh = answer(
+            MESH,
+            serde_json::json!({ "machines": [
+                { "name": "lundra", "local": false,
+                  "runtimes": [{ "liveness": "live" }, { "liveness": "expired" }, {}] },
+                { "name": "this-mac", "local": true, "runtimes": [{ "liveness": "own" }] },
+                { "name": "elsewhere" }
+            ]}),
+        );
+        let html = mesh_panel(&mesh).render();
+        assert!(
+            html.contains(">lundra<") && html.contains(">remote<"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">this-mac<") && html.contains(">this machine<"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">elsewhere<") && html.contains(">unknown<"),
+            "{html}"
+        );
+        for word in ["live", "expired", "own"] {
+            assert!(html.contains(&format!(">{word}<")), "{word}: {html}");
+        }
+    }
+
+    /// The queue as the lane observed it: a row per pull request, a row with no number leads
+    /// to the work screen rather than to a detail, and the time it was observed is said.
+    /// The selected one opens its detail with every gate, its evidence, what it authors and
+    /// the factors of its rank; a gate with no verdict reads as unknown.
+    #[test]
+    fn a_full_queue_opens_every_part_of_a_pull_requests_detail() {
+        let queue = answer(
+            QUEUE,
+            serde_json::json!({
+                "observed": true,
+                "queue": {
+                    "observed_at": "2026-10-11T09:00:00Z",
+                    "tallies": { "open": 3, "by_disposition": { "needs_refresh": 1 } },
+                    "assessments": [
+                        {
+                            "number": 948, "title": "the UI has every screen",
+                            "author": "korczis", "head_ref": "feature/ui", "base_ref": "master",
+                            "disposition": "ready", "lane": "train", "risk": "low",
+                            "next_action": "",
+                            "reasons": ["stacked_on:940", "ci:pass", "third"],
+                            "gates": [
+                                { "gate": "ci", "passed": true },
+                                { "gate": "freshness", "passed": false },
+                                { "gate": "review" }
+                            ],
+                            "evidence": [
+                                { "kind": "check", "status": "pass", "detail": "ci is green" },
+                                { "kind": "review", "status": "pending", "detail": "requested" }
+                            ],
+                            "authored_paths": ["apps/majordomus-cli/src/ui", "share/ui"],
+                            "rank_factors": { "lane_order": 2, "stacked_on": "940" }
+                        },
+                        { "title": "a pull request with no number", "disposition": "blocked" }
+                    ]
+                },
+                "throughput": { "merges": 4, "merges_per_day": 0.57 }
+            }),
+        );
+        let html = queue_panel(&queue, Some(948)).render();
+        assert!(html.contains("id=\"pr-948\""), "{html}");
+        assert!(
+            html.contains(&format!("href=\"{}\"", super::super::prs::ROUTE)),
+            "a row with no number leads to the drain: {html}"
+        );
+        assert!(html.contains("Observed 2026-10-11 09:00:00Z"), "{html}");
+        assert!(
+            html.contains("stacked_on:940, ci:pass and 1 more<"),
+            "two reasons in a row, and how many it leaves out: {html}"
+        );
+        assert!(html.contains("Next: nothing to do"), "{html}");
+        assert!(
+            html.contains(">freshness<") && html.contains(">review<"),
+            "{html}"
+        );
+        assert!(html.contains(">unknown<"), "a gate with no verdict: {html}");
+        assert!(
+            html.contains("ci is green") && html.contains("requested"),
+            "{html}"
+        );
+        assert!(
+            html.contains("apps/majordomus-cli/src/ui, share/ui"),
+            "the paths it authors: {html}"
+        );
+        assert!(html.contains("<dt>lane order</dt>"), "{html}");
+        assert!(html.contains(">2<") && html.contains(">940<"), "{html}");
+        assert!(
+            html.contains("#948 · korczis · feature/ui → master"),
+            "{html}"
+        );
+    }
+
+    /// The panel's own route reads `?pr` as the selection; a value that is no number selects
+    /// nothing rather than failing.
+    #[test]
+    fn the_panel_route_reads_its_selection_from_the_query() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        for pr in ["12", "twelve"] {
+            let view = pull_requests_panel(&ctx, &[("pr".into(), pr.into())]);
+            assert_eq!(view.status, 200);
+            assert!(view.main.render().contains("Pull-request queue"));
+        }
+    }
+
+    /// The merge tile is labelled with the queue's own window, and says so when the queue
+    /// states none; a row names two reasons and how many more there are.
+    #[test]
+    fn the_merge_window_and_the_reasons_are_the_queues_own() {
+        let stated = answer(
+            QUEUE,
+            serde_json::json!({ "throughput": { "window_days": 7 } }),
+        );
+        assert_eq!(merged_label(&stated), "Merged, 7 days");
+        let silent = answer(QUEUE, serde_json::json!({ "throughput": {} }));
+        assert_eq!(
+            merged_label(&silent),
+            "Merged, over a window the queue does not state"
+        );
+        let r = |n: usize| (0..n).map(|i| format!("r{i}")).collect::<Vec<_>>();
+        assert_eq!(first_reasons(&r(0)), "none");
+        assert_eq!(first_reasons(&r(1)), "r0");
+        assert_eq!(first_reasons(&r(2)), "r0, r1");
+        assert_eq!(first_reasons(&r(5)), "r0, r1 and 3 more");
+    }
+
+    /// A panel that shows the first rows of a longer list says how many it leaves out and
+    /// leads to the screen that shows them all.
+    #[test]
+    fn a_panel_of_a_longer_list_says_how_many_it_leaves_out() {
+        let milestones: Vec<Value> = (0..ROWS + 3)
+            .map(|i| serde_json::json!({ "id": format!("M{i:03}"), "title": "t", "status": "ACTIVE" }))
+            .collect();
+        let roadmap = answer(ROADMAP, serde_json::json!({ "milestones": milestones }));
+        let html = plan_panel(&roadmap, &answer(PLAN, serde_json::json!({}))).render();
+        assert!(
+            html.contains(&format!("The first {ROWS} of {}; 3 more", ROWS + 3)),
+            "{html}"
+        );
+        let machines: Vec<Value> = (0..ROWS + 2)
+            .map(|i| serde_json::json!({ "name": format!("m{i}"), "runtimes": [] }))
+            .collect();
+        let mesh = mesh_panel(&answer(MESH, serde_json::json!({ "machines": machines }))).render();
+        assert!(mesh.contains("2 more"), "{mesh}");
+        let releases: Vec<Value> = (0..ROWS + 1)
+            .map(|i| serde_json::json!({ "version": format!("0.{i}.0"), "published_at": "2026-10-01T00:00:00Z" }))
+            .collect();
+        let all = answer(RELEASES, serde_json::json!({ "releases": releases }));
+        let version = answer(VERSION, serde_json::json!({}));
+        assert!(releases_panel(&all, &version, Some(ROWS))
+            .render()
+            .contains("1 more"));
+        let whole = releases_panel(&all, &version, None).render();
+        assert!(!whole.contains("more not shown"), "{whole}");
+        assert!(
+            whole.contains("none · no commit"),
+            "a release with neither says so: {whole}"
+        );
     }
 }

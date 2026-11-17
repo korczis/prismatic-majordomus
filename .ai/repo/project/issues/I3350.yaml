@@ -1,0 +1,32 @@
+id: I3350
+milestone: the-proof-scorecard-is-published
+title: "The homepage copy may not use a word of delivered value until a claim permits it"
+slug: homepage-copy-earns-its-value-words
+priority: p1
+profile: docs
+objective: "Add the value words the proof tests would settle to the [promises] table of site/data/homepage.toml, each mapped to the empty claim id, so scripts/ci/homepage-check refuses each in site/data/marketing.toml and site/data/manifesto.toml until a claim permits it: faster, cheaper, fewer interventions, less human effort, less effort, fewer reruns, saves time, more reliable, speeds up, speed-up, recovers without loss, pays for itself. Extend the table's comment to say the words wait for the proof scorecard's tests."
+why: "The owner's report of 2026-10-19 says public claims must be evidence-backed and that a landing-page feature count is not a test. The value dimensions of T2 to T5 are the words a landing page reaches for first. The promises mechanism already refuses a declared word no claim permits, so declaring them closes the homepage gap with no code change and refuses nothing the copy says today."
+current_state: "site/data/homepage.toml:53-68 declares 15 promise words mapped to the empty claim id, none about speed, cost, effort or recovery. scripts/ci/homepage-check:487-556 judges each declared word in site/data/marketing.toml and site/data/manifesto.toml. grep -niE over both files for the twelve words returns nothing at the import's head."
+desired_state: "The twelve words are declared with the empty claim id; homepage-check reports OK over the built site and refuses any of them once a copy line uses it."
+scope:
+  - "site/data/homepage.toml"
+non_scope:
+  - "Scanning prose beyond the two copy files"
+  - "Defining a claim that would permit the words"
+  - "Rewording existing copy"
+serves:
+  - "the-product-proves-it-pays#no-unbacked-value-claim"
+acceptance_criteria:
+  - "Each of the twelve words appears once under [promises] with the value \"\""
+  - "scripts/ci/homepage-check --only promises over the built site reports OK"
+  - "Adding a line using 'faster' to a scratch copy of site/data/marketing.toml makes homepage-check --only promises exit 10 naming the word and that no claim permits it"
+  - "bash test/run.sh 333_homepage_narrative stays green"
+validation:
+  - "scripts/site-build"
+  - "scripts/ci/homepage-check --only promises"
+  - "bash test/run.sh 333_homepage_narrative"
+  - "scripts/ci/english-only-check"
+evidence_required:
+  - "homepage_value_words_refused"
+created_at: 2026-10-19
+updated_at: 2026-10-19

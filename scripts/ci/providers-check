@@ -27,6 +27,86 @@
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
+# The owner's standing SSH authorization is a repository rule, not a tool default.
+# Keep its native projections together; do not invent a permission when the rule is absent.
+permission_mode="${1:-check}"
+case "$permission_mode" in
+  check|--permissions-only|--sync-permissions) ;;
+  *) echo "providers-check: unknown option $permission_mode" >&2; exit 12 ;;
+esac
+if [ "$permission_mode" != check ] || [ -f .ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md ]; then
+  python3 - "$ROOT" "$permission_mode" <<'PY'
+import json
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+mode = sys.argv[2]
+source = pathlib.Path('.ai/repo/rules/project/ssh-key-access-is-preauthorized.v1.md')
+try:
+    blocks = re.findall(r'^```json ssh-permissions\n(.*?)\n```$', (root / source).read_text(), re.M | re.S)
+    if len(blocks) != 1:
+        raise ValueError('expected exactly one ssh-permissions JSON block')
+    policy = json.loads(blocks[0])
+    commands = policy['commands']
+    if set(policy) != {'commands'} or not isinstance(commands, list) or not commands:
+        raise ValueError('expected a nonempty commands array')
+    if any(c not in ('ssh', '/usr/bin/ssh') for c in commands) or len(set(commands)) != len(commands):
+        raise ValueError('commands must be distinct SSH executable spellings')
+    if 'ssh' not in commands:
+        raise ValueError('the SSH authorization must include ssh')
+
+    outputs = {}
+    findings = []
+    for relative, section, field, entries in [
+        ('.claude/settings.json', 'permissions', 'allow', ['Bash(' + c + ' *)' for c in commands]),
+        ('.gemini/settings.json', 'tools', 'allowed', ['run_shell_command(' + c + ')' for c in commands]),
+    ]:
+        path = root / relative
+        data = json.loads(path.read_text()) if path.exists() else {}
+        bucket = data.setdefault(section, {})
+        current = bucket.setdefault(field, [])
+        if not isinstance(current, list) or any(not isinstance(x, str) for x in current):
+            raise ValueError(relative + ': permission list must contain strings')
+        missing = [entry for entry in entries if entry not in current]
+        if missing:
+            findings.append(relative + ': missing ' + ', '.join(missing))
+            current.extend(missing)
+        outputs[path] = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
+
+    rules = '# Generated from ' + str(source) + '; run scripts/ci/providers-check --sync-permissions.\n'
+    rules += ''.join('prefix_rule(pattern=[' + json.dumps(c) + '], decision="allow")\n' for c in commands)
+    path = root / '.codex/rules/ssh.rules'
+    if not path.exists() or path.read_text() != rules:
+        findings.append('.codex/rules/ssh.rules: missing or stale permission projection')
+    outputs[path] = rules
+
+    if mode == '--sync-permissions':
+        # Parse and validate every input before writing anything. Retries are idempotent.
+        for path, body in outputs.items():
+            if path.exists() and path.read_text() == body:
+                continue
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_name(path.name + '.permissions-tmp')
+            temporary.write_text(body)
+            if path.exists():
+                temporary.chmod(path.stat().st_mode & 0o777)
+            temporary.replace(path)
+        print('ok    SSH permission projections synchronized from ' + str(source))
+    elif findings:
+        for finding in findings:
+            print('FAIL  ' + finding, file=sys.stderr)
+        sys.exit(10)
+    else:
+        print('ok    owner-authorized SSH permissions are present in every native projection')
+except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+    print('FAIL  SSH permission policy: ' + str(error), file=sys.stderr)
+    sys.exit(10)
+PY
+fi
+[ "$permission_mode" = check ] || exit 0
+
 findings=0
 ok()   { printf 'ok    %s\n' "$*"; }
 fail() { printf 'FAIL  %s\n' "$*"; findings=$((findings+1)); }

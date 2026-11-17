@@ -1,0 +1,41 @@
+id: a-session-record-says-what-it-served
+title: "A session's lifecycle has one writer, and its record says what it served and whether it is complete"
+statement: "Whatever provider runs it, a session opens, checkpoints, hands over and closes through one typed implementation, with no command remembered by anyone; its closed record names the task, issue and milestone it served, what it changed and verified and what remains, and says by itself whether it is complete, so a fresh session continues from the record and not from a transcript."
+invariants:
+  - "One implementation of each lifecycle transition; shell parses arguments and renders output only (ADR 0047, ADR 0052)"
+  - "No transcript, prompt text or conversation reaches a record (rule project.never-store-transcripts)"
+  - "Episode state never reads task state (ADR 0052)"
+  - "No second session store (ADR 0014, ADR 0047)"
+non_goals:
+  - "An LLM-written summary as an authority"
+  - "A session/v2 island other hooks could bypass"
+  - "Reopening the exactly-once close, the composed body or freshness, which are in force"
+milestones:
+  - "the-session-domain-is-written-once"
+satisfaction:
+  - id: close-has-one-writer
+    criterion: "majordomus session close writes its record through the typed domain's closer only: lib/session.sh makes no record write, takes no session-close lock and appends no session.closed, and case 220_exactly_once_close stays green unchanged (planned proof: case_close_asks_the_domain (the structural case I3141 writes))"
+    evidence: command
+    ref: "majordomus intent explain a-session-record-says-what-it-served"
+  - id: open-records-its-task
+    criterion: "An episode records the task it began on as a ledger fact of its own provider session, never another window's, and the closed record lists that task and the issue it is bound to in tasks and issues (planned proof: apps/majordomus-cli/tests/session_open.rs (I3142 writes it))"
+    evidence: command
+    ref: "majordomus intent explain a-session-record-says-what-it-served"
+  - id: hooks-run-the-domain
+    criterion: "Every provider hook shim runs the lifecycle domain command instead of capture session, and every start and end duty of today (end handover, mesh join and leave, server ensure, the start briefing, the record commit, a typed knowledge-derive failure) still happens (planned proof: case_every_event_leaves_a_receipt (I3143 writes it))"
+    evidence: command
+    ref: "majordomus intent explain a-session-record-says-what-it-served"
+  - id: checkpoints-name-their-episode
+    criterion: "Checkpoint and handover records and their task.checkpoint and task.handed_over ledger lines name the episode that wrote them, and the domain is their only writer (planned proof: case_handover_written_by_the_domain (I3144 writes it))"
+    evidence: command
+    ref: "majordomus intent explain a-session-record-says-what-it-served"
+  - id: record-states-completeness
+    criterion: "A closed record that changed files or made commits with no task, issue or declared reason (a session.reason ledger event) is reported incomplete by doctor, and an open episode in that state by check and finish; an interrupted record with no handover or continuation is incomplete; the verdict is derived, never stored (planned proof: case_record_states_completeness (I3146 writes it))"
+    evidence: command
+    ref: "majordomus intent explain a-session-record-says-what-it-served"
+  - id: no-shell-session-semantics
+    criterion: "lib/session.sh, lib/checkpoint.sh and lib/handover.sh make no record write, no lifecycle lock and no lifecycle ledger append and read no session.freshness; one resolver and one freshness function remain, in the domain (planned proof: case_one_resolver (the structural case I3145 writes))"
+    evidence: command
+    ref: "majordomus intent explain a-session-record-says-what-it-served"
+created_at: 2026-10-18
+updated_at: 2026-10-18

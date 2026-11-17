@@ -28,4 +28,21 @@ evidence_required:
   - "installed_release_serves_foreign_repo_case"
   - "smoke_fails_on_launcher_failure_case"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T08:02:17Z
+started_at: 2026-10-14T08:02:09Z
+started_event: sha256:d074e47102ac7c209a791cb88f086ef8250a655d8647c10f5e1a5836b9d67085
+completed_at: 2026-10-14T08:02:17Z
+completed_event: sha256:ffc70cc943aeb4222d944865dc626f7efee2a98193738e7946b23529f6162881
+evidence:
+  - covers: installed_release_serves_foreign_repo_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:13Z
+  - covers: smoke_fails_on_launcher_failure_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+    result: "tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:15Z

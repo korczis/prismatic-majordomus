@@ -101,7 +101,8 @@ printf '%s' 'query($owner:String!,$name:String!,$number:Int!,$after:String){repo
 #   declarations-refused         every declarations read is a 403
 #   declarations-502             the next declarations read is a 502, once
 #   pr view <n> --json <RESOLVED_FIELDS>   view-<n>.json
-#   merges-allowed               `gh pr merge` merges as the forge does; absent, it is UNEXPECTED
+#   merges-allowed               `gh pr merge` merges and `gh api -X PATCH` fast-forwards master
+#                                as the forge does (I3910); absent, each is UNEXPECTED
 # A list of the closed pull requests, a page or a view nobody put there, another query, a typed
 # owner: all of it is UNEXPECTED, and the command that asked fails.
 {
@@ -180,6 +181,15 @@ case "$1 $2" in
       git fetch -q origin "refs/pull/$n/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #$n" &&
       git push -q origin HEAD:master && touch "$STATE/merged-$n" &&
+      jq -c --argjson n "$n" '[.[] | select(.number != $n)]' "$STATE/open.json" > "$STATE/open.next" &&
+      mv "$STATE/open.next" "$STATE/open.json" ;;
+  "api -X")
+    [ -f "$STATE/merges-allowed" ] || unexpected "a fast-forward to $6"
+    sha="${6#sha=}"; old="$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "$old" "$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "$sha" "$old" || exit 1
+    n="$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="$sha" '$1 == s { split($2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-$n" &&
       jq -c --argjson n "$n" '[.[] | select(.number != $n)]' "$STATE/open.json" > "$STATE/open.next" &&
       mv "$STATE/open.next" "$STATE/open.json" ;;
   "pr close") echo "CLOSE $3" >> "$STATE/log" ;;
@@ -279,8 +289,8 @@ out="$(prs cleanup --format json)" || { echo "    cleanup failed: $out"; exit 1;
 closes_nothing "its cross-references truncated"
 touch "$STATE/merges-allowed"
 drc=0; out="$(prs drain --max 2 2>&1)" || drc=$?
-grep -q '^pr merge 2 ' "$STATE/log" || { echo "    the drain (exit $drc) did not merge #2: $out"; said; exit 1; }
-grep -q '^pr merge 1 ' "$STATE/log" && { echo "    the drain asked to merge #1, whose cross-references were not read whole"; exit 1; }
+grep -q "^api -X PATCH .* sha=$(H 2) " "$STATE/log" || { echo "    the drain (exit $drc) did not land #2: $out"; said; exit 1; }
+grep -q "^pr merge\|sha=$(H 1) " "$STATE/log" && { echo "    the drain asked to land #1, whose cross-references were not read whole"; exit 1; }
 git -C "$ORIGIN" merge-base --is-ancestor "$(H 2)" master || { echo "    #2 is not on origin's master after the drain (exit $drc): $out"; exit 1; }
 if git -C "$ORIGIN" merge-base --is-ancestor "$(H 1)" master; then echo "    #1 is on origin's master"; exit 1; fi
 closes_nothing "after the drain, its cross-references still truncated"

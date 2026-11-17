@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Let a working tree narrow the mesh's trust and never widen it: obey the working tree's declaration with every widening of the trunk's committed copy removed, report each ignored line, and refuse a committed declaration that trusts on first use."
 why: "The server reads .ai/repo/mesh/ from the checkout's working tree once at start (apps/majordomus-cli/src/shared.rs:34-48,164-174). A branch, or an uncommitted edit, can add a key to trust.allow, add seeds or rendezvous.endpoints that make the runtime post its card and envelope to a host of the branch author's choosing, or set policy tofu, and that checkout's runtime obeys it (threat T12); peers judge by their own file, so the damage is local to that checkout, which is the one a reviewer runs a contributor's branch in. docs/MESH.md:365,382-399 and ADR 0050 rule 6 say the declaration is committed; ADR 0059 records this class of incident. No CI gate refuses a committed tofu declaration (enforcement table, 'no unknown remote auto-trust': unit tests only, apps/majordomus-cli/src/mesh/trust.rs:25-35, apps/majordomus-cli/src/mesh/config.rs:397). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 10 and drift 12."
-current_state: "Trust, seeds and rendezvous come from the working tree at server start."
+current_state: "Delivered by 4816d7c8ad and 11472da40d: mesh::root::resolve narrows the working tree's declaration to the trunk's committed copy (the trunk is the local branch the repository names as its trunk; a stale local trunk is older trust, the safe direction), every reader asks it, mesh doctor names each ignored line, and scripts/ci/mesh-check refuses a committed tofu, which case 301 now drives."
 desired_state: "mesh::root::resolve holds the working tree's declaration against the trunk's committed copy: enabled only if both are, a policy no looser than the trunk's, keys, endpoints, seeds and networks only as the trunk lists them (loopback endpoints and seeds admitted); with no trunk copy, tofu is refused. Every reader of the declaration asks it. mesh doctor's trust-root check names every ignored line; mesh-check refuses a committed tofu. Reading only the trunk was rejected: it broke loopback-worktree discovery and every fixture that declares a mesh, for no security gain over narrowing."
 scope:
   - "apps/majordomus-cli/src/shared.rs"
@@ -33,4 +33,25 @@ evidence_required:
   - "working_tree_trust_edit_ignored_test"
   - "tofu_declaration_refused_case"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-15T01:28:23Z
+started_at: 2026-10-15T01:28:05Z
+started_event: sha256:9307aa84797f761942ffe7303d554427b4915f2bb866412a376ee8cae78f31a5
+verified_at: 2026-10-15T01:28:17Z
+verified_event: sha256:9e72c8d0d920236fd929b8ff3610e87497d908111789ff60e3374a9ab6d309dc
+completed_at: 2026-10-15T01:28:23Z
+completed_event: sha256:0545eba6ca99b1ccf0ad6cc98d4b1fec81ea7059b125b2493c15975499e89a9a
+evidence:
+  - covers: working_tree_trust_edit_ignored_test
+    type: ci
+    command: "gh run view 38635619021 --json jobs (validate on master c0e3585dc8, push); job 116098148455 rust (3) runs tests/mesh_trust_root.rs"
+    result: "test result: ok. 4 passed; 0 failed at master c0e3585dc8 (Rust tree identical to e8505a431d): a_working_tree_edit_that_widens_trust_is_not_obeyed (an uncommitted edit adding key B, policy tofu and endpoint 198.51.100.7 leaves allow=[A], deny_unknown, no endpoint, 3 narrowed lines, and mesh doctor's trust-root check fails naming B, 198.51.100.7 and tofu), a_branch_that_commits_a_widening_is_held_to_the_trunk (a branch commit adding a rendezvous endpoint is not posted to until the trunk lists it), trust_on_first_use_is_honoured_only_from_a_committed_copy, a_working_tree_that_narrows_trust_is_obeyed_as_written; delivered by 4816d7c8ad and 11472da40d (mesh::root::resolve, the trunk being the local branch the repository names as its trunk)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38635619021/job/116098148455"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T01:28:11Z
+  - covers: tofu_declaration_refused_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 301_the_mesh_stays_one_subsystem 494_the_mesh_is_declared_and_held 1023_a_branch_cannot_widen_the_mesh_trust"
+    result: "3 passed on branch chore/the-trust-root-is-the-default-branch-is-done (master c0e3585dc8 + case 301 section 4): a committed .ai/repo/mesh/majordomus.yaml with trust.policy tofu makes scripts/ci/mesh-check exit 10 naming the file and the policy; the same declaration with deny_unknown passes; an untracked tofu is left to the runtime. Mutation: with the gate's tofu pattern disabled case 301 fails (expected exit 10, got 0). Case 1023 holds a branch's tofu, second key and hub out of force"
+    artifact: "test/cases/301_the_mesh_stays_one_subsystem.sh"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T01:28:14Z

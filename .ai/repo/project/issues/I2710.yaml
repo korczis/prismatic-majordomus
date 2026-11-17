@@ -1,0 +1,42 @@
+id: I2710
+milestone: M004
+title: "A release run never waits behind pull-request validates for a job slot"
+slug: a-release-run-never-starves
+priority: p0
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Give the release path (the release workflow, the record pull request's verdict and the Pages deploy that publishes the release) priority over branch validates on the shared runner pool, so that a published release reaches majordomus.dev within its own run time."
+why: "2026-10-14 19:07Z: v0.26.0 was published, but its record PR #1147 sat BLOCKED: the verdict run 38620987044 and the Pages deploy 38620990702 were queued because the pull-request validates of #897 and #946 held all 20 job slots. majordomus.dev kept offering 0.25.0 and the landing HOLD could not be lifted; the run of #897 was cancelled by hand to free slots. The owner: \"tohle se nesmi stavat\"."
+current_state: "Every workflow competes for the same runner pool first come, first served. Nothing makes a pull-request validate yield while a release, its record verdict or its Pages deploy waits for a slot."
+desired_state: "While a release run, a record pull request's verdict or a Pages deploy of master is queued or running, a pull-request validate that has not yet finished yields: it does not start new jobs (or cancels itself with a reason naming the release run and is re-requested after it), and the release path never waits for a slot a branch validate holds. Master's own validate is never cancelled by this."
+scope:
+  - .github/workflows/validate.yml
+  - .github/workflows/release.yml
+  - scripts/ci
+  - docs/CI.md
+  - docs/RELEASE.md
+  - test/cases
+non_scope:
+  - "Buying runners or changing the pool's size"
+acceptance_criteria:
+  - "With a release run or record verdict queued, a pull-request validate yields within one minute and says which release run it yielded to"
+  - "A yielded validate is re-requested once the release path is done, without a person"
+  - "Master's validate and the release path themselves are never cancelled by the rule"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "release_path_has_priority_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14T22:02:16Z
+started_at: 2026-10-14T22:00:40Z
+started_event: sha256:1fece0319e55694f6646b2269bb596c8208afe53001fe89460a061a16e8323bc
+completed_at: 2026-10-14T22:02:16Z
+completed_event: sha256:1a17ad59de0626364df99c43d796ba5cf9892986aba3cfdd303ff679f2feee05
+evidence:
+  - covers: release_path_has_priority_case
+    type: test
+    command: "MJ_TEST_JOBS=3 bash test/run.sh 3027_the_release_path_goes_first 3028_the_pages_job_waits_for_its_deployment 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue 3019_a_failed_branch_run_cancels_itself 103_release_projection 94_ci_plan"
+    result: "tests: 7 passed, 0 failed (run 2026-10-14 ~22Z on master c0e3585dc836201089d6b5dd49f5a79fe8bff798 plus this change); case 3027 drives scripts/ci/release-path over fixture run lists: a PR validate yields (cancel + label + comment naming the release run) while a release, record verdict or bot-dispatched Pages run is busy, preempt cancels queued PR validates on a tag push, resume reruns them once the path is clear, master's runs and dispatches are never touched"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:01:45Z

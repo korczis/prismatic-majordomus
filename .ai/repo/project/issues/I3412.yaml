@@ -1,0 +1,41 @@
+id: I3412
+milestone: an-entity-says-how-it-is-known-and-what-it-affects
+title: "entity.affected also answers the rules, claims and knowledge records whose declared references name an affected path or issue, and takes a revision range"
+slug: records-naming-a-path-are-affected
+priority: p2
+profile: implementation
+objective: "Extend entity.affected with two relations: the rules, claims and knowledge records whose declared references (file:, issue:) name an input path or a reached issue, read from the references the index already holds; and a revision range, whose changed paths come from git and give the same answer as those paths passed directly. This is the reader I3414 and I3430 use, so no second derivation of the same backlinks is written."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for the knowledge and rules a change affects to be found from existing references, and for a git-only change to reconcile only the impacted graph (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/02_EVENTS_INTENTS.md, prompts/03_KNOWLEDGE.md)."
+current_state: "Knowledge references admit knowledge, rule, adr and issue targets (knowledge_base.rs:1010), and curated notes cite file: and issue: references. No capability reverses them for a path. I3318 plans reverse edges on /ui from the entity layer."
+desired_state: "One answer names every record that cites an affected path or issue, with the relation that reached it."
+scope:
+  - "apps/majordomus-cli/src/entity.rs"
+  - "apps/majordomus-cli/src/capability/builtin/entity.rs"
+  - "apps/majordomus-cli/tests/objects.rs"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/entity.md"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "The /ui reverse-edge view (I3318)"
+  - "Writing any reference"
+  - "A filesystem watcher"
+depends_on:
+  - "I3407"
+serves:
+  - "a-change-reconciles-what-it-affects#what-a-change-affects-is-derived"
+acceptance_criteria:
+  - "A knowledge record whose related names a file answers under that file with relation cites"
+  - "A rule naming an issue reached through scope answers with relation cites_issue"
+  - "A revision range answers the same set as its changed paths given directly"
+  - "repository_scans and index_builds read the same before and after a call"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test objects"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "test_records_naming_a_path_are_affected"
+created_at: 2026-10-19
+updated_at: 2026-10-19

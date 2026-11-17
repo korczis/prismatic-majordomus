@@ -1,11 +1,37 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `worktree` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 1.0.2 -->
 # Module `worktree` — Worktree topology
 
 Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.
 
-Stability: behaviorally_verified. Capabilities: 5.
+Stability: behaviorally_verified. Capabilities: 8.
+
+## `worktree.create` — The canonical worktree of a branch, made or found
+
+Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.
+
+| | |
+|---|---|
+| kind | command |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_worktree_create` |
+| HTTP | `POST /api/v1/worktrees/create` |
+| CLI | `majordomus worktree ensure` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::worktree |
+| tags | worktree, git, topology, isolation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `branch` | string | yes | The branch, full name (`feature/improve-cli`). Checked out when it exists here,
+taken up from the remote when the remote has it, otherwise created at `base`. |
+| `base` | string or null | no | The commit or ref a new branch starts from, as given and never fetched. Default: the
+remote's trunk, fetched now within a deadline, then the local trunk, said in `start`.
+Ignored when the branch exists. |
+
+Output: `CreateReport`.
 
 ## `worktree.inspect` — One branch: where its worktree belongs and what is there
 
@@ -115,4 +141,53 @@ The repository, the container, the trunk and how it was decided, every registere
 Input: none.
 
 Output: `RepositoryTopology`.
+
+## `worktree.trunk` — How far a checkout is from the remote trunk
+
+The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_worktree_trunk` |
+| HTTP | `GET /api/v1/worktrees/trunk` |
+| CLI | `majordomus worktree trunk` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::worktree |
+| tags | worktree, git, freshness, introspection |
+
+| input | type | required | description |
+|---|---|---|---|
+| `path` | string or null | no | A directory inside one of this repository's worktrees; the answer is about that
+worktree. Relative to the primary checkout when relative (`.` is the primary
+checkout itself). Default: the repository the server was started for. A path in
+another repository is refused: the topology answers only about its own. |
+
+Output: `TrunkDistance`.
+
+## `worktree.uncommitted` — Uncommitted work in the linked worktrees, and what holds it
+
+Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_worktree_uncommitted` |
+| HTTP | `GET /api/v1/worktrees/uncommitted` |
+| CLI | `majordomus worktree uncommitted` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::worktree |
+| tags | worktree, git, continuity, introspection |
+
+| input | type | required | description |
+|---|---|---|---|
+| `older_than` | string or null | no | The age past which work nothing holds is abandoned, as a person writes it (`90s`,
+`30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also
+how long an open episode may be silent and still hold the work. |
+
+Output: `UncommittedReport`.
 

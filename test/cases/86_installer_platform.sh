@@ -112,7 +112,14 @@ printf '%s\n' "$out" | grep -q 'not HTTPS' \
 
 # --- --help says what it takes, and changes nothing --------------------------------------
 out="$(run_installer --help || true)"
-for flag in --version --install-dir --prefix --init --dry-run --force --verbose; do
+# The list is the parser's, not this case's: every option parse_arguments accepts must be in
+# the text, so a flag added to one and not the other fails here without anyone remembering
+# to extend a list (it used to be one, and --personal would have passed it undocumented).
+flags="$(sed -n '/^parse_arguments() {/,/^}/p' "$INSTALLER" \
+  | sed -n 's/^ *\(--[a-z][a-z-]*\)[|)].*/\1/p' | sort -u)"
+[ "$(printf '%s\n' "$flags" | grep -c .)" -ge 8 ] \
+  || { echo "    could not read the options from parse_arguments: $flags"; exit 1; }
+for flag in $flags; do
   printf '%s\n' "$out" | grep -q -- "$flag" || { echo "    --help does not document $flag"; exit 1; }
 done
 [ -d "$T/home/.local" ] && { echo "    a dry run or --help wrote into HOME"; exit 1; }

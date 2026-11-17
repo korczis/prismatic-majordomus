@@ -2,11 +2,10 @@
 
 mod common;
 
-use common::{run_in, Fixture, BIN};
-use std::process::Command;
+use common::{run_in, Fixture};
 
 fn run(args: &[&str]) -> (i32, String, String) {
-    let out = Command::new(BIN).args(args).output().expect("spawn");
+    let out = common::majordomus().args(args).output().expect("spawn");
     (
         out.status.code().unwrap_or(-1),
         String::from_utf8(out.stdout).unwrap(),
@@ -319,7 +318,7 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
         &std::fs::read_to_string(dist.join("distribution.yaml")).unwrap(),
     );
     f.commit("distribution");
-    let out = std::process::Command::new(BIN)
+    let out = common::majordomus()
         .args(["capabilities", "validate"])
         .current_dir(f.root())
         .env_remove("MAJORDOMUS_SHARE")
@@ -546,7 +545,7 @@ fn with_stdout_gone(f: &Fixture, args: &[&str]) -> (i32, String) {
     use std::process::Stdio;
     let (stdout, reader) = UnixStream::pair().expect("a socket pair");
     drop(reader);
-    let out = Command::new(BIN)
+    let out = common::majordomus()
         .args(args)
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", common::dist_share())
@@ -632,7 +631,7 @@ fn an_inspection_that_cannot_be_written_is_a_transport_failure() {
     let f = Fixture::new();
     // The writing end of a pipe whose only reader has exited: the stdin std made for a
     // process that is gone. `std::io::pipe` is newer than the crate's rust-version.
-    let mut gone = Command::new(BIN)
+    let mut gone = common::majordomus()
         .arg("--version")
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
@@ -641,7 +640,7 @@ fn an_inspection_that_cannot_be_written_is_a_transport_failure() {
         .unwrap();
     let writer = gone.stdin.take().unwrap();
     assert!(gone.wait().unwrap().success());
-    let child = Command::new(BIN)
+    let child = common::majordomus()
         .args(["mcp", "--inspect"])
         .current_dir(f.root())
         .env("MAJORDOMUS_SHARE", common::dist_share())

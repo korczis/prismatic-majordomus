@@ -1,0 +1,28 @@
+id: I3750
+milestone: truthful-plan-surfaces
+title: "The milestone graph reads each edge in the direction it means, in its text and in its detail panel"
+slug: the-graph-text-reads-each-edge-its-way
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every reading of the roadmap's milestone graph say which milestone unblocks which: the edge a milestone's depends_on produces is named by the direction it is drawn in (the dependency unblocks the dependent), and the text fallback lists each edge under both of its ends, so no surface reads a dependency backwards."
+why: "Found on 2026-10-20 by the owner-ordered audit of /roadmap/ (campaign defect D6). The text form of the graph on /roadmap/ and /cs/roadmap/ read 'foundation requires runtime-adapters' for all 39 edges, while runtime-adapters is the milestone that depends on foundation, and site/graph.js's detail panel read the same inversion ('requires -> runtime-adapters' under foundation)."
+current_state: "scripts/generate-site-data:1861-1866 writes roadmap-graph.json with edges {source: <the dependency>, target: <the dependent>, kind: 'requires'} and defines requires as 'the target cannot begin until the source is accepted', a meaning read from the target. site/templates/partials/graph.html prints, under each node, its outgoing edges as '<kind> <target>', and site/graph.js prints '<kind> -> <target>' under the source, so both read 'source requires target'. Only the roadmap graph uses the requires kind."
+desired_state: "The roadmap's edges carry kind 'unblocks' (the source unblocks the target), which reads correctly from the source as every other graph's kinds do. The text fallback lists each edge under its source as 'unblocks -> <target>' and under its target as '<source> unblocks -> this', the same two readings graph.js's detail panel gives, each with a data-graph-edge attribute naming source, kind and target."
+scope:
+  - "scripts/generate-site-data"
+  - "site/templates/partials/graph.html"
+  - "test/cases/3723_the_graph_text_reads_each_edge_its_way.sh"
+non_scope:
+  - "The edge kinds of the other graphs (map, evidence, why, features), which already read from their source"
+  - "Which milestones depend on which, which stays the plan's"
+acceptance_criteria:
+  - "Every edge of roadmap-graph.json has kind unblocks, and its target's depends_on names its source"
+  - "On the rendered /roadmap/, every edge is listed under its source as 'unblocks -> target' and under its target as 'source unblocks -> this'"
+  - "Negative: no edge listed in the text fallback carries the kind requires, so the inverted reading appears nowhere"
+validation:
+  - "bash test/run.sh 3723_the_graph_text_reads_each_edge_its_way 12_site_build"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_the_graph_text_reads_each_edge_its_way"
+depends_on: []

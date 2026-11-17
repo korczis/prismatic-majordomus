@@ -78,7 +78,7 @@ prs() { "$RB" prs --repo "$W" "$@"; }
 prs refresh >/dev/null || { echo "    refresh failed"; cat "$STATE/log"; exit 1; }
 # the executor's prepared heads: #1's is its head, #2's a commit the forge has never seen
 gitq update-ref refs/prep/1 "$(git rev-parse feature/1)"
-pending="$(git commit-tree -p "$(git rev-parse feature/2)" -m 'prepared, not pushed' "$(git rev-parse 'feature/2^{tree}')")"
+pending="$(gitq commit-tree -p "$(git rev-parse feature/2)" -m 'prepared, not pushed' "$(git rev-parse 'feature/2^{tree}')")"
 gitq update-ref refs/prep/2 "$pending"
 gitq update-ref refs/prep/9 "$(git rev-parse master)"
 refs_before="$(git for-each-ref --format='%(refname) %(objectname)')"
@@ -122,6 +122,17 @@ done
 ran="$("$RB" run integration.trains --repo "$W" --input '{}' --quiet)" || { echo "    majordomus run integration.trains failed"; exit 1; }
 [ "$(printf '%s' "$ran" | jq -cS '.trains')" = "$(printf '%s' "$j" | jq -cS '.trains')" ] \
   || { echo "    the capability and the command line disagree:"; printf '%s' "$ran" | head -c 600; exit 1; }
+# the MCP tool, as a client calls it, answers the same trains
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case1072","version":"0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_pull_request_trains","arguments":{}}}'
+} > "$STATE/mcp.in"
+"$RB" mcp < "$STATE/mcp.in" > "$STATE/mcp.out" 2> "$STATE/mcp.err" || { echo "    the MCP server failed"; tail -5 "$STATE/mcp.err"; exit 1; }
+mcp="$(jq -c 'select(.id == 2)' "$STATE/mcp.out")"
+printf '%s' "$mcp" | jq -e '.result.isError == false' >/dev/null || { echo "    majordomus_pull_request_trains failed:"; printf '%s' "$mcp" | head -c 600; exit 1; }
+[ "$(printf '%s' "$mcp" | jq -cS '.result.structuredContent.trains')" = "$(printf '%s' "$j" | jq -cS '.trains')" ] \
+  || { echo "    the MCP tool and the command line disagree:"; printf '%s' "$mcp" | head -c 600; exit 1; }
 
 # ---------------------------------------------------------------- 4. HTTP and the Cockpit
 serve_up "$STATE/out.txt" "$STATE/err.txt" || exit 1

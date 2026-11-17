@@ -12,17 +12,17 @@
 //! reading the snapshot and a client reading the stream can never disagree about what
 //! happened, only about how much of it they have seen.
 
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use serde_json::Value;
 
 use super::event::{EventPayload, ExecutionEvent};
 use super::model::{
-    Actor, Execution, ExecutionError, ExecutionId, ExecutionState, ProgressView, RepositoryRef,
-    StepState, StepView,
+    Actor, Execution, ExecutionError, ExecutionId, ExecutionState, IdempotencyKey, ProgressView,
+    RepositoryRef, StepState, StepView,
 };
 
 /// What the store keeps, and how much of it.
@@ -113,8 +113,47 @@ pub enum CancelOutcome {
     AlreadyRequested,
     /// It had already finished; nothing was done.
     AlreadyFinished(ExecutionState),
+    /// Its outcome is not known: whether the work happened waits for a reconciliation, and
+    /// a stop cannot change what already did or did not happen. Nothing was done.
+    OutcomeUnknown,
     /// No such execution.
     Unknown,
+}
+
+/// What an execution is when it is created: everything about it that does not move.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+/// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = || Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({ "steps": 1 }),
+///     cancellable: true,
+///     actor: Actor::reported(4242),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// let id = ExecutionId::fresh();
+/// store.adopt(id.clone(), seed(), 4242).unwrap();
+/// let held = store.get(&id).unwrap();
+/// assert_eq!(held.capability, "executions.demonstrate");
+/// assert_eq!((held.state, held.actor.pid), (ExecutionState::Queued, Some(4242)));
+/// ```
+#[derive(Debug, Clone)]
+pub struct Seed<'a> {
+    /// The capability's canonical id.
+    pub capability: &'a str,
+    /// Its title.
+    pub title: &'a str,
+    /// The input, with every sensitive value already replaced.
+    pub input: Value,
+    /// Whether asking it to stop will do anything.
+    pub cancellable: bool,
+    /// Who asked for it.
+    pub actor: Actor,
+    /// Which repository it runs against.
+    pub repository: RepositoryRef,
 }
 
 struct Subscriber {
@@ -122,6 +161,89 @@ struct Subscriber {
     filter: Filter,
     tx: std::sync::mpsc::SyncSender<Delivery>,
     dropped: u64,
+}
+
+/// How often a process that runs an execution and reports it to a server says so, at the
+/// least, while nothing else happens: the reporter's heartbeat.
+pub const REPORT_HEARTBEAT: Duration = Duration::from_secs(2);
+
+/// How long a reported execution may go without a report before this store stops believing
+/// it is still going: fifteen heartbeats. A `majordomus run` that was killed sends nothing
+/// more, and an execution shown as running for ever would be a history no writer reaches.
+pub const REPORT_SILENCE: Duration = Duration::from_secs(30);
+
+/// The outcome of one report from the process that runs an execution.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+/// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = || Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({ "steps": 1 }),
+///     cancellable: true,
+///     actor: Actor::reported(4242),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// let id = ExecutionId::fresh();
+/// store.adopt(id.clone(), seed(), 4242).unwrap();
+/// // the reporter's own sequence: 1 is its `created`, already held here
+/// use majordomus_cli::execution::ReportOutcome;
+/// let outcome: ReportOutcome = store.report(&id, vec![(2, EventPayload::Started)]).unwrap();
+/// assert_eq!((outcome.applied, outcome.through, outcome.cancel_requested), (1, 2, false));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReportOutcome {
+    /// How many of the reported events were applied here.
+    pub applied: usize,
+    /// The reporter's sequence this store holds everything up to: where its next report
+    /// starts. Behind what was sent when the report had a gap in it.
+    pub through: u64,
+    /// Whether somebody asked this process to stop the execution. Only the process that
+    /// runs it can, so the reporter is told and cancels its own.
+    pub cancel_requested: bool,
+}
+
+/// Why an execution was not adopted from a report.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+/// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = || Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({ "steps": 1 }),
+///     cancellable: true,
+///     actor: Actor::reported(4242),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// use majordomus_cli::execution::{ActorKind, AdoptError};
+/// let own = ExecutionId::fresh();
+/// let mut mine = seed();
+/// mine.actor = Actor::of(ActorKind::Http);
+/// store.create(
+///     own.clone(), mine.capability, mine.title, mine.input, mine.cancellable, mine.actor,
+///     mine.repository,
+/// );
+/// assert_eq!(store.adopt(own.clone(), seed(), 4242), Err(AdoptError::Own(own)));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum AdoptError {
+    /// The id names an execution this process runs itself; a report cannot write into it.
+    #[error("{0} is an execution this process runs itself, not one another process reports")]
+    Own(ExecutionId),
+}
+
+/// What a store keeps about an execution another process runs and reports here.
+struct Reported {
+    /// The reporter's sequence of the last event taken: where its next report resumes.
+    through: u64,
+    /// When it last reported.
+    heard: Instant,
+    /// The process that runs it.
+    pid: u32,
 }
 
 struct Record {
@@ -132,12 +254,117 @@ struct Record {
     cancel: Arc<AtomicBool>,
     cancel_requested: bool,
     started: Option<Instant>,
+    /// Present when the work runs in another process that reports it here.
+    reported: Option<Reported>,
+    /// The digest of the input a keyed start was sent with: what a repeated start with the
+    /// same key must match to be answered this execution.
+    digest: Option<String>,
+    /// The key a keyed start was sent with, as parsed: what [`scope_of`] holds it under.
+    key: Option<IdempotencyKey>,
+}
+
+/// What an idempotency key is unique within: one repository's one capability. The same key
+/// sent to two capabilities, or by two repositories to one process, names two requests.
+type KeyScope = (String, String, IdempotencyKey);
+
+/// The scope a keyed execution's key is held under; `None` for one started without a key.
+fn scope_of(record: &Record) -> Option<KeyScope> {
+    let key = record.key.clone()?;
+    Some((
+        record.snapshot.repository.id.clone(),
+        record.snapshot.capability.clone(),
+        key,
+    ))
 }
 
 struct Inner {
     records: BTreeMap<ExecutionId, Record>,
     order: VecDeque<ExecutionId>,
     subscribers: Vec<Subscriber>,
+    /// Which execution each idempotency key started, for as long as that execution is held:
+    /// the entry goes when [`ExecutionStore::evict`] forgets the record, and with it the
+    /// only thing a repeated start could be answered with.
+    keys: HashMap<KeyScope, ExecutionId>,
+}
+
+/// What a keyed start is held to: the key the client sent, and the digest of the input it
+/// sent with it (the engine takes it over the capability's input in canonical JSON, so two
+/// inputs equal as data are one input whatever order a client wrote their keys in).
+///
+/// The digest never leaves the store: it is not in the snapshot, the events or any answer.
+///
+/// ```
+/// use majordomus_cli::execution::{Idempotency, IdempotencyKey};
+/// let held = Idempotency {
+///     key: IdempotencyKey::parse("click-1").unwrap(),
+///     digest: majordomus_cli::policy::sha256_hex(r#"{"steps":1}"#),
+/// };
+/// assert_eq!(held.key.as_str(), "click-1");
+/// assert_eq!(held.digest.len(), 64, "a hex SHA-256");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Idempotency {
+    /// The key.
+    pub key: IdempotencyKey,
+    /// The digest of the input the key was sent with.
+    pub digest: String,
+}
+
+/// What [`ExecutionStore::create_once`] did with a start: recorded a new execution, or
+/// found the one its key had already started and recorded nothing.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, ActorKind, Admission, ExecutionId, ExecutionStore};
+/// use majordomus_cli::execution::{Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({}),
+///     cancellable: true,
+///     actor: Actor::of(ActorKind::Http),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// // without a key there is nothing to find: every start is created
+/// let created = store.create_once(ExecutionId::fresh(), seed, None).unwrap();
+/// assert!(matches!(created, Admission::Created(token) if !token.load(std::sync::atomic::Ordering::SeqCst)));
+/// ```
+#[derive(Debug, Clone)]
+pub enum Admission {
+    /// A new execution was recorded; this is its cancellation token.
+    Created(Arc<AtomicBool>),
+    /// The key had already started this execution with the same input: nothing new was
+    /// recorded, and this is the execution's snapshot as it stands.
+    Existing(Box<Execution>),
+}
+
+/// A key sent again with a different input: refused, because answering the first execution
+/// would tell the client its second request ran when it did not, and starting a second one
+/// would make the key mean nothing.
+///
+/// ```
+/// use majordomus_cli::execution::{ExecutionId, KeyConflict};
+/// let existing = ExecutionId::fresh();
+/// let refused = KeyConflict {
+///     key: "click-1".into(),
+///     capability: "executions.demonstrate".into(),
+///     existing: existing.clone(),
+/// };
+/// assert!(refused.to_string().contains(existing.as_str()), "the refusal names what the key started");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error(
+    "the idempotency key '{key}' already started {existing} of {capability} with a different \
+     input; send the same input to be answered {existing}, or a new key to start another \
+     execution"
+)]
+pub struct KeyConflict {
+    /// The key.
+    pub key: String,
+    /// The capability it was sent to.
+    pub capability: String,
+    /// The execution the key already started.
+    pub existing: ExecutionId,
 }
 
 /// The executions of one process.
@@ -156,6 +383,7 @@ impl ExecutionStore {
                 records: BTreeMap::new(),
                 order: VecDeque::new(),
                 subscribers: Vec::new(),
+                keys: HashMap::new(),
             }),
             next_subscriber: AtomicU64::new(1),
         }
@@ -188,6 +416,422 @@ impl ExecutionStore {
         actor: Actor,
         repository: RepositoryRef,
     ) -> Arc<AtomicBool> {
+        let (record, created) = self.record(
+            &id,
+            Seed {
+                capability,
+                title,
+                input,
+                cancellable,
+                actor,
+                repository,
+            },
+            None,
+            None,
+        );
+        let cancel = Arc::clone(&record.cancel);
+        self.hold(&mut self.lock(), id.clone(), record);
+        self.publish(&id, created);
+        cancel
+    }
+
+    /// Record a new execution that waits for a policy decision before it may be queued,
+    /// and publish its first events. Returns its cancellation token.
+    ///
+    /// The execution is created `authorizing`, the one state nothing moves into: whatever
+    /// takes the decision publishes `execution.queued` to admit it or `execution.refused`
+    /// to refuse it, and the store holds both to [`ExecutionState::may_move_to`]. Nothing in
+    /// this process runs an execution that is admitted this way: it is for a worker that
+    /// claims its tickets from the queue.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, EventPayload, ExecutionError};
+    /// use majordomus_cli::execution::{ExecutionId, ExecutionState, ExecutionStore, Limits};
+    /// use majordomus_cli::execution::{RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let admitted = ExecutionId::fresh();
+    /// store.create_authorizing(admitted.clone(), seed());
+    /// assert_eq!(store.get(&admitted).unwrap().state, ExecutionState::Authorizing);
+    /// assert!(store.publish(&admitted, EventPayload::Started).is_none(), "not authorised yet");
+    /// assert!(store.publish(&admitted, EventPayload::Queued { ahead: 0 }).is_some());
+    /// assert_eq!(store.get(&admitted).unwrap().state, ExecutionState::Queued);
+    ///
+    /// let refused = ExecutionId::fresh();
+    /// store.create_authorizing(refused.clone(), seed());
+    /// let error = ExecutionError {
+    ///     code: "refused".into(),
+    ///     message: "the policy does not allow this capability here".into(),
+    ///     suggestion: None,
+    ///     correlation_id: refused.to_string(),
+    /// };
+    /// let policy = Some("project.example".to_string());
+    /// assert!(store.publish(&refused, EventPayload::Refused { error, policy }).is_some());
+    /// let held = store.get(&refused).unwrap();
+    /// assert_eq!(held.state, ExecutionState::Refused);
+    /// assert_eq!(held.error.unwrap().code, "refused");
+    /// assert!(held.finished_at.is_some(), "refused is final");
+    /// ```
+    pub fn create_authorizing(&self, id: ExecutionId, seed: Seed<'_>) -> Arc<AtomicBool> {
+        let (mut record, created) = self.record(&id, seed, None, None);
+        record.snapshot.state = ExecutionState::Authorizing;
+        let cancel = Arc::clone(&record.cancel);
+        self.hold(&mut self.lock(), id.clone(), record);
+        self.publish(&id, created);
+        // the state it was created in, said as an event too, so the stream alone tells it
+        self.publish(&id, EventPayload::Authorizing);
+        cancel
+    }
+
+    /// Record a new execution unless its idempotency key already started one (I4000).
+    ///
+    /// Without a key this is [`Self::create`]. With one, the key is looked up and the
+    /// record inserted under one hold of the lock, so two starts sent at once with one key
+    /// record one execution, never two: the second is answered the first's snapshot when
+    /// its input digest is the same, and refused with [`KeyConflict`] when it is not. A key
+    /// is held for as long as the execution it started is: once the bound forgets a
+    /// finished execution, its key starts a new one.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, Admission, ExecutionId, ExecutionStore};
+    /// use majordomus_cli::execution::{Idempotency, IdempotencyKey, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let keyed = |digest: &str| Some(Idempotency {
+    ///     key: IdempotencyKey::parse("click-1").unwrap(),
+    ///     digest: digest.into(),
+    /// });
+    /// let first = ExecutionId::fresh();
+    /// assert!(matches!(store.create_once(first.clone(), seed(), keyed("a")), Ok(Admission::Created(_))));
+    /// match store.create_once(ExecutionId::fresh(), seed(), keyed("a")).unwrap() {
+    ///     Admission::Existing(e) => assert_eq!(e.id, first),
+    ///     Admission::Created(_) => panic!("a repeated start started a second execution"),
+    /// }
+    /// let refused = store.create_once(ExecutionId::fresh(), seed(), keyed("b")).unwrap_err();
+    /// assert_eq!(refused.existing, first);
+    /// assert_eq!(store.len(), 1);
+    /// ```
+    pub fn create_once(
+        &self,
+        id: ExecutionId,
+        seed: Seed<'_>,
+        idempotency: Option<Idempotency>,
+    ) -> Result<Admission, KeyConflict> {
+        let (record, created) = self.record(&id, seed, None, idempotency.as_ref());
+        let cancel = Arc::clone(&record.cancel);
+        {
+            let mut inner = self.lock();
+            if let Some(scope) = scope_of(&record) {
+                let held = inner
+                    .keys
+                    .get(&scope)
+                    .and_then(|existing| inner.records.get(existing));
+                if let Some(held) = held {
+                    return if held.digest == record.digest {
+                        Ok(Admission::Existing(Box::new(held.snapshot.clone())))
+                    } else {
+                        Err(KeyConflict {
+                            key: scope.2.to_string(),
+                            capability: scope.1,
+                            existing: held.snapshot.id.clone(),
+                        })
+                    };
+                }
+                inner.keys.insert(scope, id.clone());
+            }
+            self.hold(&mut inner, id.clone(), record);
+        }
+        self.publish(&id, created);
+        Ok(Admission::Created(cancel))
+    }
+
+    /// Hold an execution another process runs and reports here, so that this process's
+    /// listing, snapshot, history and live channel show it as they show their own.
+    ///
+    /// Nothing runs here: what the record says is what the reporter says, through
+    /// [`Self::report`]. Adopting an id already held as a reported execution changes
+    /// nothing, so a reporter may send its description with every report. An id this
+    /// process runs itself is refused.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let id = ExecutionId::fresh();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap(); // again: nothing changes
+    /// assert!(store.is_reported(&id));
+    /// assert_eq!(store.get(&id).unwrap().event_count, 1, "one `created` event");
+    /// ```
+    pub fn adopt(&self, id: ExecutionId, seed: Seed<'_>, pid: u32) -> Result<(), AdoptError> {
+        {
+            let inner = self.lock();
+            if let Some(record) = inner.records.get(&id) {
+                return match record.reported {
+                    Some(_) => Ok(()),
+                    None => Err(AdoptError::Own(id)),
+                };
+            }
+        }
+        let (record, created) = self.record(
+            &id,
+            seed,
+            Some(Reported {
+                // the reporter's first event is its own `created`, which this store has
+                // just published for itself
+                through: 1,
+                heard: Instant::now(),
+                pid,
+            }),
+            None,
+        );
+        self.hold(&mut self.lock(), id.clone(), record);
+        self.publish(&id, created);
+        Ok(())
+    }
+
+    /// Apply what the process running an execution reports, in its own sequence: each
+    /// event at most once and in order, so a report sent twice or cut short is harmless.
+    ///
+    /// An event after a gap is not applied; the answer's `through` says where the reporter
+    /// is to resume. An event this store's state machine refuses is passed over rather than
+    /// believed, as one from a handler of this process would be. `None` when the id is not
+    /// a reported execution of this store.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let id = ExecutionId::fresh();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap();
+    /// let started = store.report(&id, vec![(2, EventPayload::Started)]).unwrap();
+    /// assert_eq!((started.applied, started.through), (1, 2));
+    /// // sent twice: nothing more is applied
+    /// assert_eq!(store.report(&id, vec![(2, EventPayload::Started)]).unwrap().applied, 0);
+    /// // after a gap: nothing is applied, and the answer says where to resume
+    /// let done = EventPayload::Completed { output: serde_json::json!(1) };
+    /// assert_eq!(store.report(&id, vec![(4, done)]).unwrap().through, 2);
+    /// assert_eq!(store.get(&id).unwrap().state, ExecutionState::Running);
+    /// assert!(store.report(&ExecutionId::fresh(), Vec::new()).is_none(), "not a reported one");
+    /// ```
+    pub fn report(
+        &self,
+        id: &ExecutionId,
+        events: impl IntoIterator<Item = (u64, EventPayload)>,
+    ) -> Option<ReportOutcome> {
+        let mut published = Vec::new();
+        let outcome = {
+            let mut inner = self.lock();
+            let mut through = inner.records.get(id)?.reported.as_ref()?.through;
+            let mut applied = 0usize;
+            for (sequence, payload) in events {
+                if sequence <= through {
+                    continue;
+                }
+                if sequence != through + 1 {
+                    break;
+                }
+                through = sequence;
+                let state = inner.records.get(id).map(|r| r.snapshot.state);
+                let said_already = match &payload {
+                    // the record was created here, with its own first event
+                    EventPayload::Created { .. } => true,
+                    // a stop this process asked for, which the reporter now repeats
+                    EventPayload::Cancelling { .. } => state == Some(ExecutionState::Cancelling),
+                    _ => false,
+                };
+                if said_already {
+                    continue;
+                }
+                if let Some(event) = self.publish_locked(&mut inner, id, payload) {
+                    applied += 1;
+                    published.push(event);
+                }
+            }
+            // the record was found reported above, under this same lock: it is still there
+            inner.records.get_mut(id).map(|record| {
+                record.reported.iter_mut().for_each(|reported| {
+                    reported.through = through;
+                    reported.heard = Instant::now();
+                });
+                ReportOutcome {
+                    applied,
+                    through,
+                    cancel_requested: record.cancel_requested,
+                }
+            })
+        };
+        for (event, deliveries) in published {
+            traced(&event, deliveries);
+        }
+        outcome
+    }
+
+    /// Mark every reported execution that is not finished and has not been heard from for
+    /// longer than `silence` as of unknown outcome, and answer which. The process that ran
+    /// it was killed or lost its way to this one; what it did afterwards is unknown here, so
+    /// the execution says `unknown_outcome` — never `succeeded`, and not `failed` either,
+    /// which would be a claim nobody can back. A reporter that comes back reconciles it
+    /// with the outcome it reports; a `started` from it is refused, since nothing runs
+    /// again until the outcome is known.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// use std::time::Duration;
+    /// let id = ExecutionId::fresh();
+    /// store.adopt(id.clone(), seed(), 4242).unwrap();
+    /// store.report(&id, vec![(2, EventPayload::Started)]).unwrap();
+    /// assert!(store.abandon_silent(Duration::from_secs(30)).is_empty(), "heard just now");
+    /// std::thread::sleep(Duration::from_millis(20));
+    /// assert_eq!(store.abandon_silent(Duration::from_millis(5)), vec![id.clone()]);
+    /// let unknown = store.get(&id).unwrap();
+    /// assert_eq!(unknown.state, ExecutionState::UnknownOutcome);
+    /// assert_eq!(unknown.error.unwrap().code, "unavailable");
+    /// assert!(store.abandon_silent(Duration::from_millis(5)).is_empty(), "said once");
+    /// // the reporter is back: it may not run again, and its outcome reconciles the record
+    /// assert_eq!(store.report(&id, vec![(3, EventPayload::Started)]).unwrap().applied, 0);
+    /// let done = EventPayload::Completed { output: serde_json::json!(1) };
+    /// assert_eq!(store.report(&id, vec![(4, done)]).unwrap().applied, 1);
+    /// assert_eq!(store.get(&id).unwrap().state, ExecutionState::Succeeded);
+    /// ```
+    pub fn abandon_silent(&self, silence: Duration) -> Vec<ExecutionId> {
+        let mut published = Vec::new();
+        let abandoned = {
+            let mut inner = self.lock();
+            let silent: Vec<(ExecutionId, u32, u64)> = inner
+                .records
+                .iter()
+                .filter(|(_, r)| r.snapshot.state.is_active())
+                // said already: saying it again would only repeat the event
+                .filter(|(_, r)| r.snapshot.state != ExecutionState::UnknownOutcome)
+                .filter_map(|(id, r)| {
+                    let reported = r.reported.as_ref()?;
+                    let quiet = reported.heard.elapsed();
+                    (quiet > silence).then(|| (id.clone(), reported.pid, quiet.as_secs()))
+                })
+                .collect();
+            let mut abandoned = Vec::new();
+            for (id, pid, quiet) in silent {
+                let payload = EventPayload::UnknownOutcome {
+                    error: ExecutionError {
+                        code: "unavailable".into(),
+                        message: format!(
+                            "process {pid}, which ran this execution and reported it here, has not reported for {quiet} s; what it did afterwards is unknown to this server"
+                        ),
+                        suggestion: Some(
+                            "the terminal that ran it has the outcome; `majordomus run` reports to the server only while it is running".into(),
+                        ),
+                        correlation_id: id.to_string(),
+                    },
+                };
+                // a reported execution that still says queued was held by the process that
+                // reported it, which may have entered the handler without saying so before
+                // it went silent: that is the claim the table leaves unknown_outcome from,
+                // and it is said first rather than skipped. The id is named abandoned only
+                // when the outcome was published.
+                let queued = inner.records.get(&id).map(|r| r.snapshot.state)
+                    == Some(ExecutionState::Queued);
+                if queued {
+                    let claimed = EventPayload::Claimed {
+                        holder: format!("process {pid}"),
+                    };
+                    published.extend(self.publish_locked(&mut inner, &id, claimed));
+                }
+                let event = self.publish_locked(&mut inner, &id, payload);
+                abandoned.extend(event.is_some().then_some(id));
+                published.extend(event);
+            }
+            abandoned
+        };
+        for (event, deliveries) in published {
+            traced(&event, deliveries);
+        }
+        abandoned
+    }
+
+    /// Is this an execution another process runs and reports here?
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
+    /// use majordomus_cli::execution::{ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::reported(4242),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let reported = ExecutionId::fresh();
+    /// store.adopt(reported.clone(), seed(), 4242).unwrap();
+    /// assert!(store.is_reported(&reported));
+    /// assert!(!store.is_reported(&ExecutionId::fresh()), "nothing is held under that id");
+    /// ```
+    pub fn is_reported(&self, id: &ExecutionId) -> bool {
+        self.lock()
+            .records
+            .get(id)
+            .is_some_and(|r| r.reported.is_some())
+    }
+
+    /// A new record, queued, and the `created` event to publish for it once it is held and
+    /// the lock is let go. Built outside the lock: nothing in it reads the store.
+    fn record(
+        &self,
+        id: &ExecutionId,
+        seed: Seed<'_>,
+        reported: Option<Reported>,
+        idempotency: Option<&Idempotency>,
+    ) -> (Record, EventPayload) {
+        let Seed {
+            capability,
+            title,
+            input,
+            cancellable,
+            actor,
+            repository,
+        } = seed;
         let cancel = Arc::new(AtomicBool::new(false));
         let now = crate::peers::rfc3339(std::time::SystemTime::now());
         let snapshot = Execution {
@@ -212,32 +856,34 @@ impl ExecutionStore {
             actor,
             repository,
             correlation_id: id.to_string(),
+            idempotency_key: idempotency.map(|i| i.key.to_string()),
+            issue_claim: None,
         };
-        {
-            let mut inner = self.lock();
-            inner.records.insert(
-                id.clone(),
-                Record {
-                    snapshot,
-                    events: VecDeque::new(),
-                    first_retained: 1,
-                    cancel: Arc::clone(&cancel),
-                    cancel_requested: false,
-                    started: None,
-                },
-            );
-            inner.order.push_back(id.clone());
-            self.evict(&mut inner);
-        }
-        self.publish(
-            &id,
-            EventPayload::Created {
-                capability: capability.to_string(),
-                title: title.to_string(),
-                input,
-            },
-        );
-        cancel
+        let created = EventPayload::Created {
+            capability: capability.to_string(),
+            title: title.to_string(),
+            input,
+        };
+        let record = Record {
+            snapshot,
+            events: VecDeque::new(),
+            first_retained: 1,
+            cancel,
+            cancel_requested: false,
+            started: None,
+            reported,
+            digest: idempotency.map(|i| i.digest.clone()),
+            key: idempotency.map(|i| i.key.clone()),
+        };
+        (record, created)
+    }
+
+    /// Hold a record and evict what the bound asks. Its `created` event is not published
+    /// here: the caller does that once the lock is let go.
+    fn hold(&self, inner: &mut Inner, id: ExecutionId, record: Record) {
+        inner.records.insert(id.clone(), record);
+        inner.order.push_back(id);
+        self.evict(inner);
     }
 
     /// Forget the oldest finished executions until the bound holds. A running execution is
@@ -253,8 +899,16 @@ impl ExecutionStore {
             }) else {
                 break;
             };
-            if let Some(id) = inner.order.remove(position) {
-                inner.records.remove(&id);
+            // the position is of an id the records hold, so both removals find it
+            let gone = inner
+                .order
+                .remove(position)
+                .and_then(|id| inner.records.remove(&id));
+            // the key goes with the execution it started: the store answers a repeated start
+            // for as long as it holds the execution, and no longer. A held key always names
+            // the execution holding it, because a start under a held key starts nothing.
+            if let Some(scope) = gone.as_ref().and_then(scope_of) {
+                inner.keys.remove(&scope);
             }
         }
     }
@@ -316,6 +970,51 @@ impl ExecutionStore {
         self.lock().records.get(id).map(|r| r.snapshot.clone())
     }
 
+    /// The execution an idempotency key started for one capability of one repository, as it
+    /// stands now, while this store holds it (I4003).
+    ///
+    /// The lookup [`Self::create_once`] makes under its lock, asked without creating
+    /// anything: what a composition that must answer a repeated request before it does any
+    /// work of its own — `devtask.implement` creates a worktree before it starts — asks
+    /// first. It is the same index, so the two can never disagree about what a key started.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, ExecutionStore};
+    /// use majordomus_cli::execution::{Idempotency, IdempotencyKey, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let key = IdempotencyKey::parse("click-1").unwrap();
+    /// let seed = Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::of(ActorKind::Internal),
+    ///     repository: RepositoryRef { name: "r".into(), id: "repo".into(), branch: None },
+    /// };
+    /// let held = Idempotency { key: key.clone(), digest: "d".into() };
+    /// assert!(store.keyed("repo", "executions.demonstrate", &key).is_none());
+    /// let id = ExecutionId::fresh();
+    /// store.create_once(id.clone(), seed, Some(held)).unwrap();
+    /// assert_eq!(store.keyed("repo", "executions.demonstrate", &key).unwrap().id, id);
+    /// // a key is scoped to its repository and its capability
+    /// assert!(store.keyed("other", "executions.demonstrate", &key).is_none());
+    /// assert!(store.keyed("repo", "health.report", &key).is_none());
+    /// ```
+    pub fn keyed(
+        &self,
+        repository: &str,
+        capability: &str,
+        key: &IdempotencyKey,
+    ) -> Option<Execution> {
+        let inner = self.lock();
+        let scope: KeyScope = (repository.to_string(), capability.to_string(), key.clone());
+        inner
+            .keys
+            .get(&scope)
+            .and_then(|id| inner.records.get(id))
+            .map(|r| r.snapshot.clone())
+    }
+
     /// Every execution this process remembers, newest first, optionally narrowed.
     pub fn list(
         &self,
@@ -356,7 +1055,8 @@ impl ExecutionStore {
             .count()
     }
 
-    /// How many are not finished: running, starting, cancelling or queued.
+    /// How many are not finished: authorising, queued, claimed, running, verifying,
+    /// cancelling, or waiting for their outcome to be reconciled.
     pub fn active(&self) -> usize {
         self.lock()
             .records
@@ -417,13 +1117,23 @@ impl ExecutionStore {
             if state.is_final() {
                 return CancelOutcome::AlreadyFinished(state);
             }
+            if state == ExecutionState::UnknownOutcome {
+                return CancelOutcome::OutcomeUnknown;
+            }
             if record.cancel_requested {
                 return CancelOutcome::AlreadyRequested;
             }
             record.cancel_requested = true;
+            // a reported execution is stopped by the process that runs it, which the next
+            // report tells; a queued one there is still that process's to finish, so nothing
+            // is said here that its own report would then contradict
+            if record.reported.is_some() && state == ExecutionState::Queued {
+                return CancelOutcome::Requested;
+            }
             let token = Arc::clone(&record.cancel);
-            // a queued execution has no worker to notice the token, so it is finished here
-            let payload = if state == ExecutionState::Queued {
+            // a queued execution, or one still being authorised, has no worker to notice the
+            // token, so it is finished here
+            let payload = if matches!(state, ExecutionState::Queued | ExecutionState::Authorizing) {
                 EventPayload::Cancelled
             } else {
                 EventPayload::Cancelling { by: by.to_string() }
@@ -589,11 +1299,16 @@ fn apply(record: &mut Record, payload: &EventPayload, sequence: u64, limits: Lim
                 s.diagnostics.push(d.clone());
             }
         }
+        EventPayload::IssueClaim(claim) => {
+            s.issue_claim = Some(claim.clone());
+        }
         EventPayload::Completed { output } => {
             s.output = Some(output.clone());
             s.error = None;
         }
-        EventPayload::Failed { error } => {
+        EventPayload::Failed { error }
+        | EventPayload::Refused { error, .. }
+        | EventPayload::UnknownOutcome { error } => {
             s.error = Some(error.clone());
             s.output = None;
         }
@@ -960,6 +1675,446 @@ mod tests {
         );
     }
 
+    fn seed() -> Seed<'static> {
+        Seed {
+            capability: "demo.x",
+            title: "Demo",
+            input: serde_json::json!({}),
+            cancellable: true,
+            actor: Actor::reported(4242),
+            repository: repository(),
+        }
+    }
+
+    fn log(n: u32) -> EventPayload {
+        EventPayload::Log {
+            stream: LogStream::Handler,
+            message: format!("line {n}"),
+        }
+    }
+
+    #[test]
+    fn a_reported_execution_is_applied_once_in_order_and_resumes_after_a_gap() {
+        let store = store();
+        let (_, rx) = store.subscribe(Filter::All);
+        let id = ExecutionId::fresh();
+        store.adopt(id.clone(), seed(), 4242).expect("adopted");
+        assert!(store.is_reported(&id));
+        // adopting again — every report carries the description — changes nothing
+        store
+            .adopt(id.clone(), seed(), 4242)
+            .expect("adopted twice");
+        assert_eq!(store.get(&id).unwrap().event_count, 1, "one created event");
+
+        // the reporter's own sequence: 1 created, 2 queued, 3 started, 4 a log line
+        let first = vec![
+            (
+                1,
+                EventPayload::Created {
+                    capability: "demo.x".into(),
+                    title: "Demo".into(),
+                    input: serde_json::json!({}),
+                },
+            ),
+            (2, EventPayload::Queued { ahead: 0 }),
+            (3, EventPayload::Started),
+            (4, log(1)),
+        ];
+        let outcome = store
+            .report(&id, first.clone())
+            .expect("a reported execution");
+        assert_eq!((outcome.applied, outcome.through), (3, 4));
+        assert!(!outcome.cancel_requested);
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Running);
+
+        // the same report again is harmless
+        let again = store.report(&id, first).unwrap();
+        assert_eq!((again.applied, again.through), (0, 4));
+
+        // a report with a gap applies nothing past it and says where to resume
+        let gapped = store.report(&id, vec![(6, log(3))]).unwrap();
+        assert_eq!((gapped.applied, gapped.through), (0, 4));
+        let resumed = store
+            .report(
+                &id,
+                vec![
+                    (5, log(2)),
+                    (6, log(3)),
+                    (
+                        7,
+                        EventPayload::Completed {
+                            output: serde_json::json!({ "ok": true }),
+                        },
+                    ),
+                ],
+            )
+            .unwrap();
+        assert_eq!((resumed.applied, resumed.through), (3, 7));
+        let snapshot = store.get(&id).unwrap();
+        assert_eq!(snapshot.state, ExecutionState::Succeeded);
+        assert_eq!(snapshot.output, Some(serde_json::json!({ "ok": true })));
+        assert_eq!(snapshot.actor.pid, Some(4242));
+        // the live channel saw it as it sees this process's own
+        let types: Vec<&str> = rx
+            .try_iter()
+            .filter_map(|d| match d {
+                Delivery::Event(e) => Some(e.type_name()),
+                Delivery::Lagged { .. } => None,
+            })
+            .collect();
+        assert_eq!(
+            types,
+            [
+                "execution.created",
+                "execution.queued",
+                "execution.started",
+                "execution.log",
+                "execution.log",
+                "execution.log",
+                "execution.completed"
+            ]
+        );
+    }
+
+    /// A report about an id this store holds nothing under answers nothing, and a reporter
+    /// that repeats its own `created` past the one the store published is not believed twice.
+    #[test]
+    fn a_report_about_nothing_held_answers_nothing_and_a_repeated_created_is_passed_over() {
+        let store = store();
+        assert_eq!(
+            store.report(&ExecutionId::fresh(), vec![(2, EventPayload::Started)]),
+            None
+        );
+        let id = ExecutionId::fresh();
+        store.adopt(id.clone(), seed(), 4242).expect("adopted");
+        let outcome = store
+            .report(
+                &id,
+                vec![(
+                    2,
+                    EventPayload::Created {
+                        capability: "demo.x".into(),
+                        title: "Demo".into(),
+                        input: serde_json::json!({}),
+                    },
+                )],
+            )
+            .expect("a reported execution");
+        assert_eq!((outcome.applied, outcome.through), (0, 2));
+        assert_eq!(store.get(&id).unwrap().event_count, 1, "one created event");
+    }
+
+    #[test]
+    fn a_report_cannot_write_into_an_execution_this_process_runs() {
+        let store = store();
+        let own = start(&store);
+        assert_eq!(
+            store.adopt(own.clone(), seed(), 1),
+            Err(AdoptError::Own(own.clone()))
+        );
+        assert!(!store.is_reported(&own));
+        assert_eq!(
+            store.report(&own, vec![(2, EventPayload::Started)]),
+            None,
+            "a report names a reported execution or nothing"
+        );
+        assert_eq!(store.get(&own).unwrap().state, ExecutionState::Queued);
+    }
+
+    #[test]
+    fn a_stop_asked_here_is_handed_to_the_process_that_runs_it() {
+        let store = store();
+        let queued = ExecutionId::fresh();
+        store.adopt(queued.clone(), seed(), 7).unwrap();
+        store
+            .report(&queued, vec![(2, EventPayload::Queued { ahead: 1 })])
+            .unwrap();
+        // queued there: nothing is said here that the reporter would then contradict
+        assert_eq!(
+            store.request_cancel(&queued, "client"),
+            CancelOutcome::Requested
+        );
+        assert_eq!(store.get(&queued).unwrap().state, ExecutionState::Queued);
+        let told = store.report(&queued, Vec::new()).unwrap();
+        assert!(told.cancel_requested, "the reporter is told to stop it");
+        store
+            .report(&queued, vec![(3, EventPayload::Cancelled)])
+            .unwrap();
+        assert_eq!(store.get(&queued).unwrap().state, ExecutionState::Cancelled);
+
+        let running = ExecutionId::fresh();
+        store.adopt(running.clone(), seed(), 7).unwrap();
+        store
+            .report(
+                &running,
+                vec![
+                    (2, EventPayload::Queued { ahead: 0 }),
+                    (3, EventPayload::Started),
+                ],
+            )
+            .unwrap();
+        assert_eq!(
+            store.request_cancel(&running, "client"),
+            CancelOutcome::Requested
+        );
+        assert_eq!(
+            store.get(&running).unwrap().state,
+            ExecutionState::Cancelling
+        );
+        let before = store.get(&running).unwrap().event_count;
+        // the reporter cancels its own and says so; the repeat is not a second event
+        let outcome = store
+            .report(
+                &running,
+                vec![
+                    (
+                        4,
+                        EventPayload::Cancelling {
+                            by: "server".into(),
+                        },
+                    ),
+                    (5, EventPayload::Cancelled),
+                ],
+            )
+            .unwrap();
+        assert_eq!((outcome.applied, outcome.through), (1, 5));
+        let snapshot = store.get(&running).unwrap();
+        assert_eq!(snapshot.state, ExecutionState::Cancelled);
+        assert_eq!(snapshot.event_count, before + 1);
+    }
+
+    #[test]
+    fn a_reporter_that_goes_silent_ends_of_unknown_outcome_rather_than_running_for_ever() {
+        let store = store();
+        let id = ExecutionId::fresh();
+        store.adopt(id.clone(), seed(), 99).unwrap();
+        store
+            .report(
+                &id,
+                vec![
+                    (2, EventPayload::Queued { ahead: 0 }),
+                    (3, EventPayload::Started),
+                ],
+            )
+            .unwrap();
+        let own = start(&store);
+        store.publish(&own, EventPayload::Started);
+        assert!(
+            store.abandon_silent(REPORT_SILENCE).is_empty(),
+            "heard just now"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+        assert_eq!(
+            store.abandon_silent(Duration::from_millis(5)),
+            vec![id.clone()]
+        );
+        let snapshot = store.get(&id).unwrap();
+        assert_eq!(
+            snapshot.state,
+            ExecutionState::UnknownOutcome,
+            "what it did is not known: never completed, and not claimed failed"
+        );
+        assert!(snapshot.output.is_none());
+        let error = snapshot.error.expect("why the outcome is unknown");
+        assert_eq!(error.code, "unavailable");
+        assert!(error.message.contains("process 99"), "{}", error.message);
+        assert_eq!(
+            store.get(&own).unwrap().state,
+            ExecutionState::Running,
+            "this process's own execution is never abandoned"
+        );
+        assert!(store.abandon_silent(Duration::ZERO).is_empty(), "once");
+        assert_eq!(
+            store.request_cancel(&id, "client"),
+            CancelOutcome::OutcomeUnknown,
+            "a stop cannot change what did or did not happen"
+        );
+        // a reporter that comes back may not run it again, and its outcome reconciles it
+        let again = store.report(&id, vec![(4, EventPayload::Started)]).unwrap();
+        assert_eq!(
+            again.applied, 0,
+            "unknown_outcome never moves back to running"
+        );
+        assert_eq!(
+            store.get(&id).unwrap().state,
+            ExecutionState::UnknownOutcome
+        );
+        store.report(
+            &id,
+            vec![(
+                5,
+                EventPayload::Completed {
+                    output: Value::Null,
+                },
+            )],
+        );
+        let reconciled = store.get(&id).unwrap();
+        assert_eq!(reconciled.state, ExecutionState::Succeeded);
+        assert!(
+            reconciled.error.is_none(),
+            "the outcome replaced the uncertainty"
+        );
+    }
+
+    #[test]
+    fn a_silent_reporter_of_a_queued_execution_held_it_and_its_outcome_is_unknown() {
+        let store = store();
+        let id = ExecutionId::fresh();
+        store.adopt(id.clone(), seed(), 77).unwrap();
+        std::thread::sleep(Duration::from_millis(20));
+        assert_eq!(
+            store.abandon_silent(Duration::from_millis(5)),
+            vec![id.clone()]
+        );
+        let page = store.events(&id, 0, 10).unwrap();
+        let names: Vec<_> = page.events.iter().map(|e| e.type_name()).collect();
+        assert_eq!(
+            names,
+            [
+                "execution.created",
+                "execution.claimed",
+                "execution.unknown_outcome"
+            ]
+        );
+        assert_eq!(
+            store.get(&id).unwrap().state,
+            ExecutionState::UnknownOutcome
+        );
+    }
+
+    #[test]
+    fn the_new_states_are_entered_and_left_only_along_the_table() {
+        let store = store();
+        // claimed, entered, verified
+        let id = start(&store);
+        let claimed = EventPayload::Claimed {
+            holder: "worker-1".into(),
+        };
+        assert!(store.publish(&id, claimed).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Claimed);
+        assert!(store.publish(&id, EventPayload::Started).is_some());
+        assert!(store.publish(&id, EventPayload::Verifying).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Verifying);
+        assert!(
+            store
+                .publish(&id, EventPayload::Queued { ahead: 0 })
+                .is_none(),
+            "what ran is not requeued"
+        );
+        let done = EventPayload::Completed {
+            output: serde_json::json!(1),
+        };
+        assert!(store.publish(&id, done).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Succeeded);
+
+        // refused when the worker authorises the ticket it claims; refused is final
+        let id = start(&store);
+        let claimed = EventPayload::Claimed {
+            holder: "worker-2".into(),
+        };
+        store.publish(&id, claimed);
+        let refusal = EventPayload::Refused {
+            error: ExecutionError {
+                code: "forbidden".into(),
+                message: "not on this node".into(),
+                suggestion: None,
+                correlation_id: id.to_string(),
+            },
+            policy: None,
+        };
+        assert!(store.publish(&id, refusal).is_some());
+        let refused = store.get(&id).unwrap();
+        assert_eq!(refused.state, ExecutionState::Refused);
+        assert!(refused.finished_at.is_some());
+        assert!(store.publish(&id, EventPayload::Started).is_none());
+        assert_eq!(
+            store.request_cancel(&id, "client"),
+            CancelOutcome::AlreadyFinished(ExecutionState::Refused)
+        );
+
+        // a run whose outcome is lost: never back to running, only reconciled
+        let id = start(&store);
+        store.publish(&id, EventPayload::Started);
+        let lost = EventPayload::UnknownOutcome {
+            error: ExecutionError {
+                code: "unavailable".into(),
+                message: "the worker stopped answering".into(),
+                suggestion: None,
+                correlation_id: id.to_string(),
+            },
+        };
+        assert!(store.publish(&id, lost).is_some());
+        let before = store.get(&id).unwrap();
+        assert!(store.publish(&id, EventPayload::Started).is_none());
+        assert!(store
+            .publish(&id, EventPayload::Claimed { holder: "w".into() })
+            .is_none());
+        assert_eq!(
+            store.get(&id).unwrap(),
+            before,
+            "a refused move changes nothing"
+        );
+        assert!(store.publish(&id, EventPayload::Verifying).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Verifying);
+
+        // an execution waiting for its authorisation is cancelled at once: nobody runs it
+        let id = ExecutionId::fresh();
+        store.create_authorizing(id.clone(), seed());
+        assert_eq!(
+            store.request_cancel(&id, "client"),
+            CancelOutcome::Requested
+        );
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Cancelled);
+    }
+
+    #[test]
+    fn the_flows_of_the_engine_are_unchanged_by_the_new_states() {
+        let store = store();
+        let ok = start(&store);
+        for p in [
+            EventPayload::Queued { ahead: 0 },
+            EventPayload::Started,
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+        ] {
+            assert!(store.publish(&ok, p).is_some());
+        }
+        assert_eq!(store.get(&ok).unwrap().state, ExecutionState::Succeeded);
+        let bad = start(&store);
+        store.publish(&bad, EventPayload::Started);
+        store.publish(
+            &bad,
+            EventPayload::Failed {
+                error: ExecutionError {
+                    code: "internal".into(),
+                    message: "m".into(),
+                    suggestion: None,
+                    correlation_id: bad.to_string(),
+                },
+            },
+        );
+        assert_eq!(store.get(&bad).unwrap().state, ExecutionState::Failed);
+        let queued = start(&store);
+        assert_eq!(store.request_cancel(&queued, "c"), CancelOutcome::Requested);
+        assert_eq!(store.get(&queued).unwrap().state, ExecutionState::Cancelled);
+        let running = start(&store);
+        store.publish(&running, EventPayload::Started);
+        assert_eq!(
+            store.request_cancel(&running, "c"),
+            CancelOutcome::Requested
+        );
+        assert_eq!(
+            store.get(&running).unwrap().state,
+            ExecutionState::Cancelling
+        );
+        assert!(store.publish(&running, EventPayload::Cancelled).is_some());
+        assert_eq!(
+            store.get(&running).unwrap().state,
+            ExecutionState::Cancelled
+        );
+    }
+
     #[test]
     fn listing_is_newest_first_and_narrows_by_state_and_capability() {
         let store = store();
@@ -973,5 +2128,217 @@ mod tests {
         assert_eq!(store.list(None, Some("demo.x"), 10).len(), 2);
         assert!(store.list(None, Some("nothing.here"), 10).is_empty());
         assert_eq!(store.list(None, None, 1).len(), 1);
+    }
+
+    fn keyed(key: &str, digest: &str) -> Option<Idempotency> {
+        Some(Idempotency {
+            key: IdempotencyKey::parse(key).unwrap(),
+            digest: digest.into(),
+        })
+    }
+
+    fn seed_in(repository_id: &str, capability: &'static str) -> Seed<'static> {
+        Seed {
+            capability,
+            title: "Demo",
+            input: serde_json::json!({}),
+            cancellable: true,
+            actor: Actor::of(ActorKind::Http),
+            repository: RepositoryRef {
+                name: "r".into(),
+                id: repository_id.into(),
+                branch: None,
+            },
+        }
+    }
+
+    #[test]
+    fn two_starts_sent_at_once_with_one_key_record_one_execution() {
+        // I4000: the double click. Every thread is released at the same instant and sends
+        // the same key with the same input; exactly one may be told it created anything.
+        let store = Arc::new(store());
+        let threads = 16;
+        let gate = Arc::new(std::sync::Barrier::new(threads));
+        let handles: Vec<_> = (0..threads)
+            .map(|_| {
+                let store = Arc::clone(&store);
+                let gate = Arc::clone(&gate);
+                std::thread::spawn(move || {
+                    let id = ExecutionId::fresh();
+                    gate.wait();
+                    match store.create_once(id.clone(), seed_in("id", "demo.x"), keyed("k", "d")) {
+                        Ok(Admission::Created(_)) => (true, id),
+                        Ok(Admission::Existing(e)) => (false, e.id),
+                        Err(e) => panic!("the same input was refused: {e}"),
+                    }
+                })
+            })
+            .collect();
+        let answers: Vec<(bool, ExecutionId)> =
+            handles.into_iter().map(|h| h.join().unwrap()).collect();
+        let created: Vec<_> = answers.iter().filter(|(c, _)| *c).collect();
+        assert_eq!(
+            created.len(),
+            1,
+            "one start created, the rest were answered it"
+        );
+        let first = &created[0].1;
+        assert!(
+            answers.iter().all(|(_, id)| id == first),
+            "every answer names one id"
+        );
+        assert_eq!(store.len(), 1, "one execution is held");
+        assert_eq!(
+            store.get(first).unwrap().idempotency_key.as_deref(),
+            Some("k"),
+            "the key is carried on the record"
+        );
+    }
+
+    #[test]
+    fn a_key_sent_again_with_another_input_is_refused_and_names_what_it_started() {
+        let store = store();
+        let first = ExecutionId::fresh();
+        store
+            .create_once(first.clone(), seed_in("id", "demo.x"), keyed("k", "a"))
+            .unwrap();
+        let refused = store
+            .create_once(
+                ExecutionId::fresh(),
+                seed_in("id", "demo.x"),
+                keyed("k", "b"),
+            )
+            .unwrap_err();
+        assert_eq!(refused.existing, first);
+        assert_eq!(
+            (refused.key.as_str(), refused.capability.as_str()),
+            ("k", "demo.x")
+        );
+        assert!(refused.to_string().contains(first.as_str()), "{refused}");
+        assert_eq!(store.len(), 1, "a refusal records nothing");
+    }
+
+    #[test]
+    fn a_key_is_scoped_to_its_repository_and_capability_and_absent_keys_never_match() {
+        let store = store();
+        for (repository_id, capability) in [("id", "demo.x"), ("id", "demo.y"), ("other", "demo.x")]
+        {
+            assert!(matches!(
+                store.create_once(
+                    ExecutionId::fresh(),
+                    seed_in(repository_id, capability),
+                    keyed("k", "a")
+                ),
+                Ok(Admission::Created(_))
+            ));
+        }
+        for _ in 0..2 {
+            assert!(matches!(
+                store.create_once(ExecutionId::fresh(), seed_in("id", "demo.x"), None),
+                Ok(Admission::Created(_))
+            ));
+        }
+        assert_eq!(
+            store.len(),
+            5,
+            "three scopes of one key, and two starts without one"
+        );
+    }
+
+    #[test]
+    fn a_key_is_held_as_long_as_its_execution_and_freed_when_it_is_forgotten() {
+        let store = ExecutionStore::new(Limits {
+            max_executions: 1,
+            ..Limits::default()
+        });
+        let first = ExecutionId::fresh();
+        store
+            .create_once(first.clone(), seed_in("id", "demo.x"), keyed("k", "a"))
+            .unwrap();
+        store.publish(&first, EventPayload::Started);
+        store.publish(
+            &first,
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+        );
+        // finished and still held: a repeated start is answered it, not run again
+        match store
+            .create_once(
+                ExecutionId::fresh(),
+                seed_in("id", "demo.x"),
+                keyed("k", "a"),
+            )
+            .unwrap()
+        {
+            Admission::Existing(e) => {
+                assert_eq!((e.id, e.state), (first.clone(), ExecutionState::Succeeded))
+            }
+            Admission::Created(_) => panic!("a finished execution's key started another"),
+        }
+        // another execution pushes the finished one out of the bound, and its key with it
+        start(&store);
+        assert!(store.get(&first).is_none());
+        assert!(
+            matches!(
+                store.create_once(
+                    ExecutionId::fresh(),
+                    seed_in("id", "demo.x"),
+                    keyed("k", "b")
+                ),
+                Ok(Admission::Created(_))
+            ),
+            "a forgotten execution's key is free, whatever input it is sent with now"
+        );
+    }
+
+    #[test]
+    fn a_key_is_looked_up_without_creating_and_forgotten_with_its_execution() {
+        let store = ExecutionStore::new(Limits {
+            max_executions: 1,
+            ..Limits::default()
+        });
+        let key = IdempotencyKey::parse("k").unwrap();
+        assert!(
+            store.keyed("id", "demo.x", &key).is_none(),
+            "nothing started yet"
+        );
+        let first = ExecutionId::fresh();
+        store
+            .create_once(first.clone(), seed_in("id", "demo.x"), keyed("k", "a"))
+            .unwrap();
+        assert_eq!(
+            store.keyed("id", "demo.x", &key).map(|e| e.id),
+            Some(first.clone())
+        );
+        assert_eq!(store.len(), 1, "a lookup creates nothing");
+        assert!(
+            store.keyed("other", "demo.x", &key).is_none(),
+            "another repository"
+        );
+        assert!(
+            store.keyed("id", "demo.y", &key).is_none(),
+            "another capability"
+        );
+        store.publish(&first, EventPayload::Started);
+        store.publish(
+            &first,
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+        );
+        assert_eq!(
+            store.keyed("id", "demo.x", &key).map(|e| e.state),
+            Some(ExecutionState::Succeeded),
+            "a finished execution is still answered, as it stands now"
+        );
+        // an execution without a key is never found under one
+        store
+            .create_once(ExecutionId::fresh(), seed_in("id", "demo.x"), None)
+            .unwrap();
+        assert!(
+            store.keyed("id", "demo.x", &key).is_none(),
+            "the keyed one was pushed out of the bound, and its key with it"
+        );
     }
 }

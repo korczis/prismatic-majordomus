@@ -1,0 +1,309 @@
+<section id="osobni">
+  <h2>Osobní režim: přines si vlastní disciplínu</h2>
+  <p>Chceš Majordomus používat v cizím nebo týmovém repozitáři pro vlastní analýzu, konzistenci svých tasků a přehled, a strom týmu není tvůj k tomu, abys do něj něco přidával. Tomu se říká osobní režim: vrstva leží vedle kódu jen ve tvém klonu a repozitář zůstává bajt po bajtu takový, jaký ho tým commitnul. Hotový přepínač na to Majordomus zatím nemá. Dá se ale poskládat ze tří věcí, které git a Majordomus už umí: lokální <code>.git/info/exclude</code>, soukromá policy a zjišťování souborů z disku místo z indexu gitu.</p>
+  <div class="note"><p><strong>Co je ověřené.</strong> Postup jsem 12. 10. 2026 prošel ve zkušebním repozitáři s vydanou verzí 0.21.0. U každého kroku je napsáno, jestli je ověřený. Dvě věci ověřené nejsou: zapojení hooků Claude Code a registrace MCP serveru mimo repozitář.</p></div>
+
+  <h3>Proč se tomu říká osobní režim</h3>
+  <p>Firmy mají pro hardwarovou verzi téhož dávno zavedené slovo: BYOD, <em>bring your own device</em>. Vlastní telefon nebo notebook, firemní data pod firemními pravidly. Osobní režim je stejná dohoda o patro výš: <strong>Bring Your Own Discipline</strong>. Návyky a nástroj jsou tvoje, repozitář a jeho pravidla patří organizaci a jedno nemění druhé. Zkratku už jednou někdo schválil.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>O čem je řeč</th><th>Přesné slovo</th><th>Proč</th></tr></thead>
+    <tbody>
+      <tr><td>kde nástroj žije</td><td>osobní, lokální</td><td>nic se neskrývá: změny jdou běžným review a nástroj je ve stejné kategorii jako nastavení editoru</td></tr>
+      <tr><td>schvalování</td><td>nic ke schválení nevzniká</td><td>diff repozitáře je prázdný a žádná kontrola týmu se nemění</td></tr>
+      <tr><td>dopad na tým</td><td>nikoho to nic nestojí</td><td>checkout žádného kolegy se nechová jinak a CI běží stejně</td></tr>
+      <tr><td>zkouška nanečisto</td><td>osobní ověření před návrhem týmu</td><td>návrh pak stojí na záznamech, ne na názoru</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Tři režimy vedle sebe</h3>
+  <p>Osobní režim není slepá ulička, je to první sloupec. Druhý je běžné commitované <a href="#nasazeni">nasazení</a>, třetí přidává <a href="#m-vrstvy">mesh</a> mezi stroji. Sloupce jsou cesta stejně jako volba.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Osobní režim</th><th>Týmové nasazení</th><th>Týmové s meshem</th></tr></thead>
+    <tbody>
+      <tr><td>kde žije vrstva</td><td>jen tento klon, vyloučená z gitu</td><td><code>.ai/repo/</code> v repozitáři</td><td>totéž, runtimes propojené mezi stroji</td></tr>
+      <tr><td>kdo čte pravidla</td><td>ty a tvůj AI klient</td><td>každý klon a každý worker</td><td>každý stroj</td></tr>
+      <tr><td>kdo musí souhlasit</td><td>nikdo, protože se nikomu nic nemění</td><td>tým, revizí pull requestu</td><td>tým a vlastník strojů</td></tr>
+      <tr><td>co odmítne změnu</td><td>tvůj vlastní <code>pre-push</code> hook</td><td>hooky a <a href="#h-ci">CI gates</a></td><td>totéž</td></tr>
+      <tr><td><a href="#h-server">board</a></td><td>tvoje vlastní sessions</td><td>každý worker repozitáře</td><td>workeři všech strojů</td></tr>
+      <tr><td>záloha</td><td>musíš si ji udělat sám</td><td>git</td><td>git</td></tr>
+      <tr><td>odchod</td><td>smazání adresáře</td><td>pull request</td><td>pull request</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>K čemu to je</h3>
+  <p>Neinvazivní tu má přesný význam: diff repozitáře je prázdný, nikdo nic nereviduje, checkout žádného kolegy se nechová jinak, CI běží stejně jako předtím a odstranění je smazání jednoho adresáře. Díky tomu se to dá použít tam, kde běžné nasazení není k dispozici, nebo si ho tým ještě nezasloužil vidět.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Situace</th><th>Co z toho máš</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Vyzkoušet, než to navrhneš týmu</strong><br>Myslíš, že by to týmu pomohlo, a nemáš co ukázat.</td><td>Dva týdny vlastních tasků se scope, finish contractem a handovery na skutečném repu. Návrh pak stojí na záznamech, ne na názoru.</td></tr>
+      <tr><td><strong>Kontraktor nebo konzultant v repu klienta</strong><br>Konvence patří klientovi a nejsou tvoje k rozšiřování.</td><td>Vlastní disciplína cestuje s tebou: každá zakázka začíná briefingem a končí handoverem, a strom klienta zůstane, jak jsi ho našel.</td></tr>
+      <tr><td><strong>Audit, review, due diligence</strong><br>Zadání je číst a měnit repo se nesmí.</td><td>Nálezy, rozhodnutí a otevřené otázky jako typované záznamy vázané na commit, takže nález sám řekne, kdy se pod ním kód pohnul.</td></tr>
+      <tr><td><strong>Příspěvek do open-source projektu</strong><br>Upstream soubory tvého nástroje nechce, a právem.</td><td>Scope udrží příspěvek u cest, kterých se týká, a finish contract si vyžádá ověřovací příkaz dřív, než otevřeš pull request.</td></tr>
+      <tr><td><strong>Seznámení s cizí kódovou bází</strong></td><td>Co zjistíš, se zapíše jednou jako znalosti a rozhodnutí a je v briefingu další session, místo aby se to zjišťovalo znovu.</td></tr>
+      <tr><td><strong>Repo, kde je přidání souboru změnové řízení</strong><br>Regulovaný kód, zamrzlá release větev, dodávka od vendora.</td><td>Vrstva je vedle kódu, ne v něm, takže není co schvalovat.</td></tr>
+      <tr><td><strong>Práce s AI agentem na vlastní pěst</strong></td><td>Agent čte tvoje pravidla a kontext z <code>CLAUDE.local.md</code> a scope tasku odmítne změnu mimo cesty, které jsi určil. Týmové instrukce zůstanou nedotčené.</td></tr>
+      <tr><td><strong>Stejné návyky ve všech repozitářích</strong></td><td>Jeden životní cyklus všude, ať má které repo jakékoli vlastní konvence.</td></tr>
+    </tbody>
+  </table></div>
+  <p>K čemu to není: k ničemu, co potřebuje vrstvu sdílet. Pravidla, kterými se řídí tým, board, kde se kolegové vidí, plán pro víc lidí a důkazy zaznamenané v CI potřebují běžné, commitované <a href="#nasazeni">nasazení</a>. Osobní režim je nástroj jednoho člověka.</p>
+
+  <h3>Proč je to běžná praxe</h3>
+  <p>Ano. Každý mechanismus se tu používá k tomu, k čemu vznikl.</p>
+  <ul>
+    <li><strong><code>.git/info/exclude</code></strong> je odpověď gitu na „vzory specifické pro pracovní postup jednoho člověka, které se nemají sdílet“. Je to dokumentovaná alternativa k <code>.gitignore</code> přesně pro tenhle účel.</li>
+    <li><strong><code>CLAUDE.local.md</code></strong> je soubor, který AI klient čte jako osobní instrukce vedle projektových.</li>
+    <li><strong>Hooky v <code>.git/hooks/</code></strong> git nikdy nesdílel, každý klon má vlastní.</li>
+    <li>Osobní nastavení editoru, <code>.envrc.local</code>, pracovní adresář nebo soukromý soubor s poznámkami jsou stejná kategorie věcí a každý vývojář nějaké má.</li>
+  </ul>
+  <p>To, na čem záleží ostatním, zůstává beze změny. Tvoje commity jsou obyčejné commity a revidují se jako každé jiné. CI je posuzuje branami, které si zvolil tým. Žádná týmová kontrola se neobchází, neoslabuje ani se na ni neodpovídá za tým, a nic neopouští stroj: Majordomus nevolá model a nic nikam neposílá.</p>
+  <p>Tři věci osobní režim nemění a pořád je dlužíš:</p>
+  <ul>
+    <li><strong>Firemní pravidla pro nástroje.</strong> Pokud firma určuje, které nástroje smí repozitář číst, platí to i pro nástroj, který nikdo jiný nevidí. Soukromé není totéž co povolené.</li>
+    <li><strong>Datová pravidla AI klienta.</strong> Vrstva je lokální, klient, který ji čte, být nemusí. Pokud na tomhle kódu AI nástroje povolené nejsou, osobní režim je povolenými neudělá.</li>
+    <li><strong>Poctivost o vlastní práci.</strong> Lokální zůstává nástroj, nikdy změna. Když se kolega zeptá, jak si držíš pořádek v tascích, odpověď je jedna věta. A až se to osvědčí, další krok je navrhnout týmu běžné nasazení.</li>
+  </ul>
+
+  <h3>Odchod</h3>
+  <p>Odstranění je stejně malé jako zavedení a nechá repozitář bit po bitu, jak byl.</p>
+  <div class="code"><button type="button">Kopírovat</button><pre><code>rm -rf .ai CLAUDE.local.md .git/hooks/pre-push
+git status --short --ignored       <span class="c"># nic z vrstvy nezbylo</span></code></pre></div>
+  <p>Pak smaž řádky, které jsi přidal do <code>.git/info/exclude</code>. Opačná cesta, tedy sdílet vrstvu s týmem: smaž jen ty řádky, vrať projekce v policy a commitni <code>.ai/repo/</code>. <code>.ai/local/</code> zůstává ignorované.</p>
+
+  <h3>Kdo co uvidí</h3>
+  <p>Osobní režim stojí na jedné otázce: co z toho, co na disku vznikne, se může dostat k někomu jinému. Vyber, kdo se dívá, a graf ukáže, kam dosáhne. Tým, CI ani vzdálený repozitář nevidí nic, co by neviděli bez Majordomusu.</p>
+  <div class="lab" id="lab-visible">
+    <p class="lab-h">Vyzkoušej si · kdo kam dohlédne</p>
+    <div class="seg" id="vis-seg"></div>
+    <div class="graph-wrap"><svg id="vis-svg" viewBox="0 0 720 330" role="img" aria-label="Graf viditelnosti: kdo vidí které soubory a stopy"></svg></div>
+    <p class="flow-note" id="vis-note" aria-live="polite"></p>
+  </div>
+
+  <h3>Kde co skončí</h3>
+  <figure>
+    <div class="fig">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Tři místa: commitované soubory, které vidí tým, zůstávají nedotčené; pracovní strom obsahuje lokálně vyloučenou vrstvu .ai a CLAUDE.local.md; adresář .git obsahuje seznam vyloučení a hook.">
+        <rect x="16" y="20" width="216" height="210" rx="8" class="zone" stroke-width="1.25"/>
+        <text x="30" y="44" font-size="13" font-weight="600" class="ink">Commitované · vidí tým</text>
+        <text x="30" y="62" font-size="11.5" class="mut">nic se nemění</text>
+        <g font-size="12" class="ink mono">
+          <rect x="30" y="76" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="42" y="95">README.md, src/…</text>
+          <rect x="30" y="112" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="42" y="131">.gitignore</text>
+          <rect x="30" y="148" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="42" y="167">CLAUDE.md týmu</text>
+        </g>
+        <text x="30" y="204" font-size="11.5" class="mut">git status zůstává čistý</text>
+
+        <rect x="252" y="20" width="216" height="210" rx="8" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="266" y="44" font-size="13" font-weight="600" class="ink">Pracovní strom · vyloučené</text>
+        <text x="266" y="62" font-size="11.5" class="mut">existuje jen na tvém disku</text>
+        <g font-size="12" class="ink mono">
+          <rect x="266" y="76" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="278" y="95">.ai/repo/</text>
+          <rect x="266" y="112" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="278" y="131">.ai/local/</text>
+          <rect x="266" y="148" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="278" y="167">CLAUDE.local.md</text>
+        </g>
+        <text x="266" y="204" font-size="11.5" class="mut">pozor: git clean -x je smaže</text>
+
+        <rect x="488" y="20" width="216" height="210" rx="8" class="zone" stroke-width="1.25"/>
+        <text x="502" y="44" font-size="13" font-weight="600" class="ink mono">.git/ · jen tento klon</text>
+        <text x="502" y="62" font-size="11.5" class="mut">git ho nikdy nepushuje</text>
+        <g font-size="12" class="ink mono">
+          <rect x="502" y="76" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="514" y="95">info/exclude</text>
+          <rect x="502" y="112" width="188" height="28" rx="5" class="box" stroke-width="1"/><text x="514" y="131">hooks/pre-push</text>
+        </g>
+        <text x="502" y="204" font-size="11.5" class="mut">platí pro všechny worktrees</text>
+      </svg>
+    </div>
+    <figcaption><code>.git/info/exclude</code> má stejnou syntaxi jako <code>.gitignore</code>, ale neleží v pracovním stromu, takže se necommituje a nikdo další ho nevidí. Je ve společném adresáři gitu, proto platí i pro všechny worktrees tohoto klonu.</figcaption>
+  </figure>
+
+  <h3>Co Majordomus zapisuje a jak to nechat mimo git</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Co vznikne</th><th>Kdo to zapíše</th><th>Jak to nechat mimo git</th><th>Stav</th></tr></thead>
+    <tbody>
+      <tr><td>adresář <code>.ai/</code></td><td><code>init</code></td><td>řádek <code>.ai/</code> v <code>.git/info/exclude</code></td><td><span class="pill reports">ověřeno</span></td></tr>
+      <tr><td>dva řádky v <code>.gitignore</code></td><td><code>init</code></td><td><code>git checkout .gitignore</code>; vyloučení <code>.ai/</code> je pokrývá</td><td><span class="pill reports">ověřeno</span></td></tr>
+      <tr><td><code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>GEMINI.md</code></td><td><code>update</code></td><td>v soukromé policy nechat jedinou projekci do <code>CLAUDE.local.md</code> a tu vyloučit</td><td><span class="pill reports">ověřeno</span></td></tr>
+      <tr><td>git hooky</td><td>ty, ručně</td><td><code>.git/hooks/</code> je lokální sám o sobě; stačí <code>pre-push</code></td><td><span class="pill reports">ověřeno</span></td></tr>
+      <tr><td>nastavení a hooky Claude Code v adresáři <code>.claude/</code></td><td><code>capture install</code></td><td>vyloučit <code>.claude/hooks/</code> a soubor nastavení; když tým nastavení trackuje, <code>capture install</code> nepouštět a hooky dát do osobního <code>settings.local.json</code></td><td><span class="pill refuses">neověřeno</span></td></tr>
+      <tr><td><code>.mcp.json</code></td><td>ty, ručně</td><td>MCP server registrovat na úrovni uživatele, ne projektu</td><td><span class="pill refuses">neověřeno</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Přepínač: init --personal</h3>
+  <p>Ruční postup níž nahrazuje jeden přepínač. Staví ho větev <code>feature/a-personal-layer-changes-nothing-shared</code> (ADR 0145, případ 2979, issue I2491) a na masteru zatím není. Nástroj z té větve jsem 12. 10. 2026 nezávisle prošel ve zkušebním repozitáři; kroky níž jsou to, co opravdu vypsal.</p>
+  <div class="lab" id="lab-switch">
+    <p class="lab-h">Vyzkoušej si · osobní režim jedním přepínačem</p>
+    <div class="gc-ctl" id="sw-ctl"></div>
+    <ol class="flow-steps" id="sw-steps"></ol>
+    <div class="term" id="sw-out" aria-live="polite"></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Ručně</th><th>S přepínačem</th></tr></thead>
+    <tbody>
+      <tr><td><code>init</code> zapíše dva řádky do <code>.gitignore</code>, vrací se <code>git checkout .gitignore</code></td><td><code>.gitignore</code> se nezapisuje vůbec</td></tr>
+      <tr><td>řádky v <code>.git/info/exclude</code> píšeš ručně a nic je nekontroluje</td><td>jeden označený blok, ověřený při <code>init</code>, instalátorem a každým <code>doctor</code></td></tr>
+      <tr><td>policy zúžíš, aby <code>update</code> psal jeden soukromý soubor</td><td><code>update</code> každý cíl nejdřív vyloučí z gitu; cíl, který projekt trackuje, odmítne</td></tr>
+      <tr><td>záznam session se v policy vypíná</td><td>v osobní vrstvě se necommituje ani nepushuje, ať policy říká cokoli</td></tr>
+      <tr><td>server potřebuje <code>--discovery filesystem</code> a start před klientem</td><td>zjišťování prochází disk samo, když vrstva není trackovaná nikde</td></tr>
+      <tr><td><code>doctor</code> si nechá selhání o README</td><td>README projektu se na <code>AGENTS.md</code> neptá</td></tr>
+      <tr><td>předání týmu je mazání řádků a <code>init --extend</code></td><td><code>majordomus init --extend --shared</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Tři věci jsem při tom průchodu našel a větvi nahlásil. Všechny se týkají repozitáře, který už má vlastní ručně psaný <code>CLAUDE.md</code>, a výchozí policy:</p>
+  <ul>
+    <li><code>update</code> skončí odmítnutím (kód 15) s obecnou radou použít <code>--force</code>. V osobním režimu by to přepsalo týmový soubor. Správná rada je namířit projekci na <code>CLAUDE.local.md</code>; s takovou policy <code>update</code> projde.</li>
+    <li><code>doctor</code> hlásí šest selhání, mezi nimi že týmový <code>CLAUDE.md</code> neukazuje na vrstvu. Ten soubor patří projektu stejně jako README, které už výjimku má.</li>
+    <li><code>init --extend --shared</code> vypíše k commitu i <code>CLAUDE.local.md</code>, tedy osobní cíl projekce předaný týmu tak, jak je.</li>
+  </ul>
+
+  <h3>Postup ručně</h3>
+  <ol class="steps">
+    <li><div><h4>Inicializuj a vrať <code>.gitignore</code></h4>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus init
+git checkout .gitignore            <span class="c"># init do něj přidal dva řádky</span>
+printf '.ai/\nCLAUDE.local.md\n' &gt;&gt; .git/info/exclude
+git status --short                 <span class="c"># musí být prázdný</span></code></pre></div>
+    </div></li>
+    <li><div><h4>Uprav soukromou policy</h4>
+      <p>V <code>.ai/repo/policy.yaml</code> nech jediné vynucení a jedinou projekci. Policy je teď jen tvoje, nikdo jiný ji nečte.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>enforcement:
+  - name: finish-on-push
+    path: majordomus
+    args: [finish, --check]
+    wired_by: git-hook:pre-push
+
+projections:
+  - provider: claude-code
+    target: CLAUDE.local.md      <span class="c"># soukromý soubor instrukcí pro Claude Code</span>
+    always_loaded: true
+
+session:
+  commit_record_on_end: false    <span class="c"># výchozí je true: session record by se commitoval</span>
+  push_record_on_end: false      <span class="c"># výchozí je true: a pushoval</span></code></pre></div>
+      <p>Poslední dva řádky jsou pojistka. Výchozí policy má commit i push session recordu na konci session zapnutý. Co by udělaly s vyloučenou vrstvou, jsem neměřil, takže je vypni. Ze stejného důvodu nepoužívej <code>continuity publish</code> a <code>continuity sync</code>: posílají ref na sdílený remote, kde by ho viděl každý.</p>
+      <p>Prázdný seznam <code>enforcement</code> ani policy bez projekce označené <code>always_loaded</code> doctor nepřijme. Jedno vynucení a jedna projekce jsou minimum.</p>
+    </div></li>
+    <li><div><h4>Vygeneruj instrukce a zapoj lokální hook</h4>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus update                  <span class="c"># vytvoří jen CLAUDE.local.md</span>
+printf '#!/bin/sh\nmajordomus finish --check || exit $?\n' &gt; .git/hooks/pre-push
+chmod +x .git/hooks/pre-push</code></pre></div>
+      <p>Hook <code>pre-commit</code> s <code>doctor</code> nezapojuj. Doctor má v tomhle režimu jedno selhání, které nejde odstranit (viz níže), a blokoval by ti každý commit.</p>
+    </div></li>
+    <li><div><h4>Spusť server se zjišťováním z disku</h4>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus serve --discovery filesystem
+<span class="c"># otevři http://127.0.0.1:8741/ui  (nebo /cockpit)</span></code></pre></div>
+      <p>Tohle je nejdůležitější krok. Výchozí zjišťování <code>vcs</code> čte jen soubory trackované gitem, takže vyloučenou vrstvu nevidí: index vyjde <code>degraded</code> a hlásí, že povinné třídy nic nenašly. S <code>--discovery filesystem</code> je stav <code>ok</code> a <code>/ui</code> i <code>/cockpit</code> odpovídají. Server spusť dřív než AI klienta: klienti se připojují k běžícímu serveru a jeho nastavení přebírají.</p>
+    </div></li>
+    <li><div><h4>Pracuj jako obvykle</h4>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus start "Zmapovat autentizaci" --scope src/auth
+majordomus context
+majordomus check
+majordomus finish --outcome completed --verify-command "npm test -- auth"</code></pre></div>
+      <p>Ve zkoušce <code>check</code> správně viděl změněný soubor ve scope a <code>git status</code> ukazoval jen skutečnou změnu kódu. Finish odmítl jako ověřovací příkaz <code>true</code>, protože příkaz, který nic nedělá, nic nedokazuje.</p>
+    </div></li>
+  </ol>
+
+  <h3>Co se děje při každém příkazu</h3>
+  <p>Proč to funguje, je vidět na tom, kudy který příkaz jde. Majordomus zapisuje jen do vyloučené vrstvy, git se na ni neptá a hook je lokální. Dvě cesty končí špatně a je dobré je znát předem: server ve výchozím režimu a <code>git clean -x</code>.</p>
+  <div class="lab" id="lab-stflow">
+    <p class="lab-h">Vyzkoušej si · cesta příkazu</p>
+    <div class="seg" id="sf-seg"></div>
+    <div class="graph-wrap"><svg id="sf-svg" viewBox="0 0 720 250" role="img" aria-label="Tok příkazu přes nástroj, vyloučenou vrstvu, index gitu, hook a vzdálený repozitář"></svg></div>
+    <p class="flow-note" id="sf-note" aria-live="polite"></p>
+  </div>
+
+  <h3>Co jsem naměřil</h3>
+  <p>Dvě měření ze zkušebního repozitáře z 12. 10. 2026. První ukazuje, jak úprava soukromé policy a jeden lokální hook srazí počet selhání doctora. Druhé, proč je přepínač <code>--discovery filesystem</code> podmínkou: ve výchozím režimu server z vyloučené vrstvy nevidí skoro nic.</p>
+  <div class="lab chart-lab" id="lab-stnum">
+    <div class="st-chart" id="st-doctor"></div>
+    <div class="st-chart" id="st-objects"></div>
+  </div>
+
+  <h3>Techniky gitu, na kterých to stojí</h3>
+  <p>Git má čtyři způsoby, jak nechat soubor mimo historii. Liší se tím, kdo o pravidle ví a na co se dá použít. Osobní režim používá druhý. Třetí je pohodlný, ale nebezpečný. Čtvrtý je jediný, který umí nechat stranou lokální změnu v souboru, který tým trackuje.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mechanismus</th><th>Kde leží</th><th>Kdo ho vidí</th><th>Na co</th><th>Pozor</th></tr></thead>
+    <tbody>
+      <tr><td><code>.gitignore</code></td><td>v pracovním stromu, commituje se</td><td>celý tým</td><td>co nemá trackovat nikdo: build výstup, závislosti</td><td>řádek o <code>.ai/</code> by změnil soubor, který patří týmu</td></tr>
+      <tr><td><code>.git/info/exclude</code></td><td>ve společném adresáři gitu tohoto klonu</td><td>jen ty</td><td>osobní soubory v jednom repu; přesně tenhle případ</td><td>nový klon ho nemá, platí pro všechny worktrees klonu</td></tr>
+      <tr><td><code>core.excludesFile</code></td><td>v domovském adresáři, pro všechny repozitáře</td><td>jen ty</td><td>soubory editoru a systému</td><td>řádek <code>.ai/</code> by vyloučil vrstvu i tam, kde ji tým commituje</td></tr>
+      <tr><td><code>git update-index --skip-worktree</code></td><td>příznak v indexu tohoto klonu</td><td>jen ty</td><td>lokální úprava souboru, který tým trackuje</td><td>pull, který soubor změní, skončí konfliktem; snadno se na příznak zapomene</td></tr>
+    </tbody>
+  </table></div>
+  <div class="lab" id="lab-sttech">
+    <p class="lab-h">Vyzkoušej si · který mechanismus použít</p>
+    <fieldset class="checks" id="tq-checks"><legend class="lbl">Co chceš nechat mimo git</legend></fieldset>
+    <div class="term" id="tq-out" aria-live="polite"></div>
+  </div>
+  <h3>Další techniky</h3>
+  <ul>
+    <li><strong>Kontrola před commitem.</strong> <code>git status --short</code> má ukazovat jen tvoje změny kódu. <code>git status --ignored</code> vypíše, co je vyloučené, a <code>git check-ignore -v &lt;cesta&gt;</code> řekne, který řádek kterého souboru cestu vylučuje.</li>
+    <li><strong>Suchý běh úklidu.</strong> Než pustíš <code>git clean</code>, zkus <code>git clean -ndx</code>. Přepínač <code>-n</code> jen vypíše, co by smazal, a <code>.ai/</code> tam uvidíš.</li>
+    <li><strong>Záloha vrstvy.</strong> Nejjednodušší je <code>rsync</code> do adresáře mimo repo. Druhá možnost je udělat z <code>.ai/</code> vlastní soukromý git repozitář (<code>git init</code> uvnitř). Vnější repo ho díky vyloučení nevidí a ty máš historii svých pravidel a rozhodnutí. Tuhle variantu jsem neměřil.</li>
+    <li><strong>Víc repozitářů.</strong> Postup opakuj v každém klonu zvlášť. Globální vyloučení přes <code>core.excludesFile</code> vypadá lákavě, ale rozbije práci v repu, kde tým vrstvu commituje.</li>
+    <li><strong>Worktrees.</strong> <code>.git/info/exclude</code> leží ve společném adresáři gitu, takže vyloučení platí ve všech worktrees klonu. Vrstvu samotnou má ale každý worktree vlastní.</li>
+    <li><strong>Tichý terminál.</strong> <code>MAJORDOMUS_BANNER=off</code> vypne banner při vstupu do adresáře a <code>MAJORDOMUS_RUNTIME=off</code> zabrání automatickému startu serveru.</li>
+  </ul>
+
+  <h3>Co v osobním režimu nesedí</h3>
+  <ul>
+    <li><strong>Doctor má jedno trvalé selhání.</strong> Z původních šesti zbude <code>bootstrap README.md — does not name AGENTS.md</code>. Odstranit ho jde jen úpravou README, což nechceš. Ostatní kontroly procházejí.</li>
+    <li><strong>Příkaz <code>majordomus ui</code> ve vydání 0.21.0 není.</strong> Povrch <code>/ui</code> ale server servíruje, stačí ho otevřít v prohlížeči.</li>
+    <li><strong>Nic se nesdílí.</strong> ADR, znalosti, session records a plán zůstávají na tvém disku. To je cíl, ale znamená to i žádnou zálohu: nový klon nemá nic.</li>
+    <li><strong><code>git clean -fdx</code> vrstvu smaže.</strong> Přepínač <code>-x</code> maže i vyloučené soubory. Stejně tak <code>git stash -a</code> je odloží. Zálohuj si <code>.ai/</code> jinam.</li>
+    <li><strong>Vhled do týmu je omezený.</strong> Board ukáže jen tvoje sessions. O kolezích víš to, co je v gitu: branche, worktrees, commity. Plán a issues si píšeš sám. Jestli <code>/ui</code> umí v cizím repu načíst pull requesty, jsem nezkoušel.</li>
+  </ul>
+
+  <h3>Co zůstává vidět</h3>
+  <ul>
+    <li><code>git add -f</code> vyloučení obejde. Před commitem se dívej na <code>git status</code>.</li>
+    <li>Trailery v commitech (<code>Co-Authored-By</code>), konvence commit zpráv a jména branchí jsou vidět všem.</li>
+    <li>Sdílená obrazovka nebo záznam terminálu ukáže banner při vstupu do adresáře. Vypíná ho <code>MAJORDOMUS_BANNER=off</code>.</li>
+    <li>Kontrola: <code>git check-ignore -v .ai/manifest.yaml</code> má ukázat řádek z <code>.git/info/exclude</code> a <code>git status --ignored</code> vypíše všechno, co je vyloučené.</li>
+  </ul>
+  <div class="note"><p>Osobní neznamená mimo pravidla. Pokud firma určuje, jaké nástroje smí k repozitáři a kam smí kód, platí to i pro lokální použití. Majordomus sám nic neodesílá a model nevolá, ale AI klient, který ho používá, ano.</p></div>
+  <h3>Od osobního k týmovému</h3>
+  <p>Osobní režim splnil účel ve chvíli, kdy umíš ukázat, co ti dal. Návrh týmu je pak pull request a sada záznamů: tasky, které jsi vedl se scope, handovery, ze kterých session začínala, a případy, kdy <code>finish</code> odmítl. Převod jsem 12. 10. 2026 změřil ve zkušebním repozitáři, jehož vrstva měla ještě výchozí policy.</p>
+  <div class="lab" id="lab-grad">
+    <p class="lab-h">Vyzkoušej si · převod krok za krokem</p>
+    <div class="gc-ctl" id="gr-ctl"></div>
+    <ol class="flow-steps" id="gr-steps"></ol>
+    <div class="term" id="gr-out" aria-live="polite"></div>
+  </div>
+  <p>Policy, kterou sis pro osobní režim zúžil, se sama nerozšíří. Před <code>update</code> vrať bloky <code>projections</code> a <code>enforcement</code> do podoby, kterou chce tým, třeba podle <code>share/skeleton/policy.yaml</code>. Tuhle úpravu jsem neměřil. Tvoje vlastní záznamy pod <code>.ai/local/</code> zůstávají lokální v každém režimu.</p>
+
+  <h3>Jak to říct</h3>
+  <p>Na osobním režimu není nic, co by potřebovalo opatrnou odpověď. Každý, kdo se zeptá, potřebuje jednu krátkou větu a místo, kde si ji může ověřit.</p>
+  <div class="lab" id="lab-say">
+    <p class="lab-h">Vyzkoušej si · kdo se ptá</p>
+    <div class="seg" id="say-seg" role="tablist" aria-label="Kdo se ptá"></div>
+    <div class="say-card" id="say-card" aria-live="polite"></div>
+  </div>
+
+  <h3>Jak se to vynucuje přes vrstvu .ai</h3>
+  <p>Postup, který drží jen na tom, že si ho někdo pamatuje, přestane platit při první změně <code>init</code>. Proto má v repozitáři Majordomusu dostat stejné zacházení jako každé jiné tvrzení: pravidlo, test a garanci.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Vrstva</th><th>Co</th><th>Stav</th></tr></thead>
+    <tbody>
+      <tr><td>dokumentace</td><td><code>docs/PERSONAL_MODE.md</code>: postup, komu slouží, co bylo a nebylo změřeno</td><td><span class="pill reports">na masteru · pull request 1044</span></td></tr>
+      <tr><td>příkaz</td><td><code>majordomus init --personal</code>, <code>install.sh --personal</code> a <code>init --extend --shared</code></td><td><span class="pill reports">na větvi · mnou změřeno 12. 10.</span></td></tr>
+      <tr><td>test</td><td>případ 2979, <code>a_personal_layer_changes_nothing_shared</code>: <code>git status</code> čte po <code>init</code> stejně jako před ním</td><td><span class="pill reports">na větvi</span></td></tr>
+      <tr><td>pravidlo</td><td><code>project.a-personal-layer-changes-nothing-shared</code>, které jmenuje ten test jako svůj důkaz</td><td><span class="pill reports">na větvi · ADR 0145</span></td></tr>
+      <tr><td>garance</td><td><code>personal-layer-changes-nothing-shared</code> v <code>docs/CLAIMS.yaml</code> se stránkou na webu</td><td><span class="pill reports">na větvi</span></td></tr>
+      <tr><td>server</td><td>automatické čtení z disku, když vrstva není trackovaná nikde</td><td><span class="pill reports">na větvi · neměřil jsem</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>Řetěz je stejný jako u každé doktríny: <a href="#h-vynuceni">pravidlo musí něco volat</a>. Příkaz, test, pravidlo i garanci staví od 12. 10. 2026 samostatná větev (issue I2491, ADR 0145). Dokud není na masteru, je osobní režim ověřený postup, ne garance. Až tam bude, tahle tabulka se nepřepisuje ručně: panel „Na čem kapitola stojí“ pod kapitolou ukáže pravidlo, garanci i test samy, protože se počítá z grafu repozitáře. Tak je to taky napsané v dokumentu.</p>
+
+  <h3>Další čtení</h3>
+  <ul class="st-links">
+    <li><a href="https://git-scm.com/docs/gitignore">git: gitignore</a>, kde je popsaný i <code>$GIT_DIR/info/exclude</code> a <code>core.excludesFile</code></li>
+    <li><a href="https://git-scm.com/docs/git-check-ignore">git check-ignore</a>: který vzor cestu skrývá</li>
+    <li><a href="https://git-scm.com/docs/git-clean">git clean</a>: co přesně dělají <code>-n</code>, <code>-d</code> a <code>-x</code></li>
+    <li><a href="https://git-scm.com/docs/git-update-index">git update-index</a>: <code>--skip-worktree</code> a <code>--assume-unchanged</code></li>
+    <li><a href="https://git-scm.com/docs/githooks">git hooks</a>: proč jsou hooky lokální</li>
+    <li><a href="https://git-scm.com/docs/git-worktree">git worktree</a>: co worktrees sdílejí</li>
+    <li><a href="https://docs.claude.com/en/docs/claude-code/memory">Claude Code: soubory s instrukcemi</a> včetně osobních</li>
+    <li><a href="https://majordomus.dev/docs/adoption/">majordomus.dev: běžné nasazení</a>, <a href="https://majordomus.dev/docs/mcp/">sdílený server a zjišťování</a>, <a href="https://majordomus.dev/docs/scope/">scope repozitáře</a>, <a href="https://majordomus.dev/docs/install/">instalace</a></li>
+  </ul>
+
+</section>

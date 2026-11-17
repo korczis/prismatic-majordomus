@@ -27,4 +27,25 @@ evidence_required:
   - "overview_sources_concurrent_test"
   - "overview_latency_before_after"
 created_at: 2026-10-11
-updated_at: 2026-10-11
+updated_at: 2026-10-12T10:58:43Z
+started_at: 2026-10-12T10:58:12Z
+started_event: sha256:e6bbe9bad82bb4cc5f8d09232b25ccd708f4ee93661b99f625be65017592df72
+verified_at: 2026-10-12T10:58:22Z
+verified_event: sha256:4dcbddbe1c45b2a88f8082f4dc0886087735f077da070f5f4d08b9af6e0b0a7d
+completed_at: 2026-10-12T10:58:43Z
+completed_event: sha256:7a5ac4c521c7fdf1f3e7d3b4a1596785c6ddc5ddb0a301d7437d161acd514be8
+evidence:
+  - covers: overview_sources_concurrent_test
+    type: ci
+    command: "cargo test --lib capability::builtin::dashboard; cargo test --test dashboard; test/run.sh 534 (validate run 38223440282 on 722228ef3c, the v0.21.0 top)"
+    result: "9 capability::builtin::dashboard tests ok, tests/dashboard.rs ok, case 534_the_overview_answers_four_questions ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38223440282"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T10:58:32Z
+  - covers: overview_latency_before_after
+    type: manual
+    command: "dashboard.overview timed before and after in PR #934"
+    result: "before 6.0-6.2 s (shared server 0.20.0, primary checkout); after 1.2-1.3 s (the branch's build): the overview costs its slowest source"
+    artifact: "https://github.com/korczis/prismatic-majordomus/pull/934"
+    commit: 722228ef3c9d8db8af6039010f9bf88a106d6cc2
+    recorded_at: 2026-10-12T10:58:37Z

@@ -16,6 +16,7 @@ use crate::web::compose::{self, PUBLISH_ROOT};
 use crate::web::discover::{self, Runtime};
 use crate::web::manifest::Manifest;
 use crate::web::model::{Availability, Topology};
+use crate::web::report::snapshot::{self, Snapshot};
 use crate::web::validate::{self, Artifacts, Severity};
 
 /// The exit code when the topology does not validate.
@@ -92,6 +93,57 @@ pub fn run(args: WebArgs) -> Result<u8> {
                     let run = crate::web::report::ui::read(&from)?;
                     crate::web::report::ui::render(&root, &run)?
                 }
+                ReportCommand::UiSnapshot {
+                    limit,
+                    budget_seconds,
+                } => {
+                    // the UI reads the repository through the index, which the other reports
+                    // do not need: it is loaded for this one alone
+                    let app = crate::app::App::load(&args.repo)?;
+                    let ui = crate::ui::Ui::new(
+                        std::sync::Arc::clone(&app.context),
+                        crate::VERSION,
+                        Some(app.share.dir()),
+                    );
+                    let seeds = crate::ui::SCREENS
+                        .iter()
+                        .map(|s| s.route.to_string())
+                        .chain(crate::ui::PANELS.iter().map(|p| p.to_string()))
+                        .collect();
+                    let snapshot = snapshot::render(
+                        &root,
+                        &snapshot::UI,
+                        &|request| ui.handle(request),
+                        seeds,
+                        &topology,
+                        limit,
+                        budget_seconds,
+                    )?;
+                    said(&mut out, &snapshot)?;
+                    snapshot.dir
+                }
+                ReportCommand::CockpitSnapshot {
+                    limit,
+                    budget_seconds,
+                } => {
+                    let app = crate::app::App::load(&args.repo)?;
+                    let cockpit = crate::cockpit::Cockpit::new(
+                        std::sync::Arc::clone(&app.context),
+                        crate::VERSION,
+                        Some(app.share.dir()),
+                    );
+                    let snapshot = snapshot::render(
+                        &root,
+                        &snapshot::COCKPIT,
+                        &|request| cockpit.handle(request),
+                        snapshot::cockpit_seeds(&root),
+                        &topology,
+                        limit,
+                        budget_seconds,
+                    )?;
+                    said(&mut out, &snapshot)?;
+                    snapshot.dir
+                }
             };
             let rel = dir.strip_prefix(&root).unwrap_or(&dir);
             writeln!(out, "web report: {}", rel.display()).map_err(Error::Transport)?;
@@ -144,6 +196,24 @@ pub fn run(args: WebArgs) -> Result<u8> {
 
 /// A selector that names nothing is a mistake, not an empty selection: it silently serves or
 /// publishes less than the caller asked for.
+/// What a snapshot run wrote, in one line.
+fn said(out: &mut impl Write, snapshot: &Snapshot) -> Result<()> {
+    writeln!(
+        out,
+        "web report: {} page(s), {} asset(s), {} page(s) left to the live surface (stopped by {}), read at {}",
+        snapshot.pages.len(),
+        snapshot.assets.len(),
+        snapshot.left_out.len(),
+        snapshot.stopped_by,
+        snapshot
+            .origin
+            .revision
+            .as_deref()
+            .unwrap_or("an unknown commit")
+    )
+    .map_err(Error::Transport)
+}
+
 fn unknown_selectors(topology: &Topology, only: &[String], exclude: &[String]) -> Result<()> {
     let known: Vec<&str> = topology.ids();
     for id in only.iter().chain(exclude.iter()) {

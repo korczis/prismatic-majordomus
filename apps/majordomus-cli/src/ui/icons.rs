@@ -66,6 +66,16 @@ pub fn icon(name: &str) -> El {
 mod tests {
     use super::*;
 
+    /// Only the `[icons]` table's `name = '<markup>'` entries are read: another table, a
+    /// comment, a blank line and a line of another shape are passed over.
+    #[test]
+    fn only_the_icons_tables_entries_are_read() {
+        let set =
+            parse("[other]\nfoo = 'x'\n[icons]\n# a comment\n\nnot an entry\nbook = '<path/>'\n");
+        assert_eq!(set.len(), 1, "{set:?}");
+        assert_eq!(set.get("book").map(String::as_str), Some("<path/>"));
+    }
+
     /// The compiled copy is the declaration's: every name the declaration holds is here
     /// with the same markup, so the site and the UI draw one set.
     #[test]

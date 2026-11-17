@@ -162,6 +162,106 @@ mod tests {
     }
 
     #[test]
+    fn every_outcome_has_its_kind_severity_and_words() {
+        let table = [
+            ("merge_succeeded", "merged", false, "merged #9"),
+            ("merge_failed", "merge_failed", true, "could not merge #9"),
+            (
+                "verification_failed",
+                "verification_failed",
+                true,
+                "#9 failed verification",
+            ),
+            ("refreshed", "refreshed", false, "refreshed #9 onto master"),
+            (
+                "refresh_failed",
+                "refresh_failed",
+                true,
+                "could not refresh #9",
+            ),
+            (
+                "closed_redundant",
+                "closed",
+                false,
+                "closed #9: its work is on master",
+            ),
+            (
+                "closed_superseded",
+                "closed",
+                false,
+                "closed #9: superseded",
+            ),
+            ("close_failed", "close_failed", true, "could not close #9"),
+            ("repaired", "repaired", false, "repaired #9"),
+            (
+                "repair_refused",
+                "repair_refused",
+                true,
+                "refused to repair #9",
+            ),
+            (
+                "lease_acquired",
+                "lane_taken",
+                false,
+                "took the integration lane",
+            ),
+            (
+                "lease_released",
+                "lane_released",
+                false,
+                "released the integration lane",
+            ),
+            (
+                "observe_failed",
+                "observe_failed",
+                true,
+                "could not observe the forge",
+            ),
+        ];
+        for (action, kind, attention, words) in table {
+            let pr = (!action.starts_with("lease") && action != "observe_failed").then_some(9);
+            let trail = vec![event("2026-10-10T20:00:00Z", action, pr, "")];
+            let read = fold(&trail, None, 0, &Reader::default());
+            assert_eq!(read.signals.len(), 1, "{action} is an outcome");
+            let s = &read.signals[0].1;
+            assert_eq!(s.kind, kind, "{action}");
+            let want = if attention {
+                MonitorSeverity::Attention
+            } else {
+                MonitorSeverity::Info
+            };
+            assert_eq!(s.severity, want, "{action}");
+            assert_eq!(
+                s.summary,
+                format!("executor Tomas Korcak {words}"),
+                "{action}"
+            );
+            assert_eq!(
+                s.link.is_some(),
+                pr.is_some(),
+                "{action}: a link only with a PR"
+            );
+        }
+        let steps = [
+            "observed",
+            "selected",
+            "merge_attempted",
+            "repair_attempted",
+            "idle",
+        ];
+        for action in steps {
+            let read = fold(
+                &[event("2026-10-10T20:00:00Z", action, None, "")],
+                None,
+                0,
+                &Reader::default(),
+            );
+            assert!(read.signals.is_empty(), "{action} is a step, not news");
+            assert_eq!(read.suppressed, 1, "{action}");
+        }
+    }
+
+    #[test]
     fn a_position_resumes_and_a_rewritten_trail_reads_nothing_new() {
         let trail = vec![
             event("2026-10-10T20:00:00Z", "lease_acquired", None, ""),

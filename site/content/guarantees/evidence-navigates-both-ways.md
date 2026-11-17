@@ -1,7 +1,7 @@
 +++
-title = "Every claim names the test that proves it and every test names the claims it proves, from one derivation"
+title = "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation"
 description = "A relation that can only be walked one way is half a relation. majordomus evidence claim"
-weight = 208
+weight = 215
 [extra]
 claim_id = "evidence-navigates-both-ways"
 status = "guaranteed"

@@ -7,7 +7,7 @@ profile: deep-work
 parallel_safe: true
 objective: "Decide and implement where knowledge candidates are written so that deriving them at an episode boundary on the trunk never leaves the trunk's working tree dirty."
 why: "OSCILLA main carries untracked .ai/repo/knowledge/candidates/ (a README and 7 records). It can never commit them, because its main changes only through pull requests. Every checkpoint since records working_tree dirty, clean-tree release gates refuse, and the advisory rule candidates-reviewed asks for the very commit the process forbids."
-current_state: "lib/knowledge.sh (~626, 839-897) writes candidates under .ai/repo/knowledge/candidates/ in whichever checkout closes the episode; ADR 0091 intends the tracked path."
+current_state: "Slice 1 of the ADR 0091 amendment (2026-10-15): on the trunk (mj_on_trunk, lib/common.sh) session close and recovery (lib/session.sh, lib/recover.sh) and knowledge derive (lib/knowledge.sh) write to .ai/local/state/outbox/{sessions,candidates}/, and context and doctor name a non-empty outbox; case 3060. Slice 2: a session close off the trunk (mj_session_outbox_drain, lib/session.sh) moves the outbox into the tracked sections unchanged and exactly once, and leaves a file that is not a record in the outbox with a line on stderr; case 3063. Slice 3: docs/KNOWLEDGE.md, the candidates-reviewed rule text (share/standard/majordomus/rules, vendored) and the sessions README (tracked and skeleton) say where a trunk episode's records wait, when a branch carries them, what context and doctor say meanwhile, and what happens to a file in the outbox that is not a record."
 desired_state: "Candidates derived on the trunk are staged under .ai/local, or derivation is skipped there, until a branch promotes them. The decision is recorded against ADR 0091."
 scope:
   - "lib/knowledge.sh"
@@ -26,4 +26,21 @@ evidence_required:
   - "trunk_stays_clean_case"
   - "decision_recorded"
 created_at: 2026-10-04
-updated_at: 2026-10-04
+updated_at: 2026-10-15T11:21:05Z
+started_at: 2026-10-15T11:20:46Z
+started_event: sha256:d7b110162c6c39739bd1bb1eb51000e63225e9477430d88b85a60c5ff5d0b1cd
+completed_at: 2026-10-15T11:21:05Z
+completed_event: sha256:b7efcec68d0b38ff2b619a9525815b069d211f2be1a6b4590018bf4e506d2b1a
+evidence:
+  - covers: decision_recorded
+    type: artifact
+    result: "decided 2026-10-15: trunk episodes stage records in .ai/local/state/outbox, the next branch episode moves them into the tracked sections; ADR 0091 amendment names three slices"
+    artifact: ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T23:19:00Z
+  - covers: trunk_stays_clean_case
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 3060_trunk_stays_clean"
+    result: "1 passed, 0 failed (red on a53f08f11b: the close left .ai/repo/sessions/ and .ai/repo/knowledge/candidates/ untracked on main)"
+    commit: a53f08f11b0b40381b3b8bd602c84ee9b5b8b31d
+    recorded_at: 2026-10-15T08:46:34Z

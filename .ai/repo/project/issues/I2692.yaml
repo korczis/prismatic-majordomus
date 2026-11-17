@@ -1,0 +1,35 @@
+id: I2692
+milestone: development-runtime
+title: "The join state is projected to the briefing, the Cockpit, the UI, the handbook, the site and GitHub Pages"
+slug: the-join-state-is-on-every-surface-that-describes-the-cluster
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Show every surface the same derived state and the same rule, authored once, so that no page restates it by hand and a worker, a person and a visitor read one account of how workers keep together."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226."
+current_state: "Measured on master f0696ec535 on 2026-10-13: docs/MESH.md describes announcing in prose; the landing page and the handbook do not say what keeps a late worker from working alone; no screen shows who is stale or unannounced."
+desired_state: "The SessionStart briefing opens with the four facts; /ui and the Cockpit show each worker's state on the board; docs/MESH.md, the handbook and the site's description of coordination are generated from the rule and the capability; the landing page answers 'how do the workers not collide' with the evidence chain; the published Pages carry all of it."
+scope:
+  - "apps/majordomus-cli/src/ui/"
+  - "docs/MESH.md"
+  - "site/"
+  - "scripts/generate-site-data"
+non_scope:
+  - "Deriving or enforcing the state: I2690 and I2691"
+  - "A new screen framework"
+depends_on:
+  - "I2690"
+acceptance_criteria:
+  - "The briefing's first block names current, attached, announced and useful"
+  - "The board screen marks a worker that is behind or unannounced, linking its session"
+  - "docs/MESH.md and the site page are generated and majordomus generate --check is clean"
+  - "The deployed Pages answer with the same text at the released commit, which pages-live verifies"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus generate --check"
+  - "scripts/pages current"
+evidence_required:
+  - "join_state_on_ui"
+  - "join_state_on_pages"
+created_at: 2026-10-13
+updated_at: 2026-10-13

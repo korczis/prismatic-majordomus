@@ -536,7 +536,9 @@ fn internal(e: crate::error::Error) -> CapabilityError {
 }
 
 /// The whole joined report, read fresh: the ledger is a file that changes outside this
-/// process, and a cached answer would be the stale evidence this module exists to name.
+/// process, and an answer kept past a change of it would be the stale evidence this module
+/// exists to name. The executor keeps the capability's answer per checkout state only
+/// (`CachePolicy::Checkout`), which an edit of the ledger moves.
 fn full_report(ctx: &Context) -> Result<EvidenceReport, CapabilityError> {
     let root = root_of(ctx);
     let ledger = Ledger::load(&root).map_err(internal)?;
@@ -740,6 +742,7 @@ fn stamp(ctx: &Context, input: EvidenceStampInput) -> Result<EvidenceProvenance,
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::evidence::module;
+/// use majordomus_cli::capability::CachePolicy;
 ///
 /// let m = module();
 /// let report = m
@@ -762,7 +765,11 @@ fn stamp(ctx: &Context, input: EvidenceStampInput) -> Result<EvidenceProvenance,
 ///     .unwrap();
 /// assert_eq!(test.capability.exposure.cli.as_ref().unwrap().path[1], "proves");
 ///
-/// assert!(m.capabilities.iter().all(|e| !e.capability.cache.is_enabled()));
+/// // the ledger changes outside this process: kept, if at all, per checkout state only
+/// assert!(m.capabilities.iter().all(|e| matches!(
+///     e.capability.cache,
+///     CachePolicy::Disabled | CachePolicy::Checkout { .. }
+/// )));
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -774,7 +781,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "evidence.report",
                 title: "Every claim against the evidence recorded for it",
-                description: "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+                description: "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Kept per checkout state, never longer: the ledger is a file that changes outside this process, and an edit of it, of a test or of any tracked file, a new untracked file, a commit or a new ref is a new answer.",
                 input: EvidenceReportInput,
                 output: EvidenceReport,
                 stability: Stability::BehaviorallyVerified,
@@ -787,7 +794,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["evidence".into(), "show".into()] }),
                 },
                 tags: ["evidence", "claims", "tests", "verification", "provenance"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Checkout { max_entries: 8 },
                 handler: report,
             },
             capability! {
@@ -803,7 +810,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["evidence".into(), "claim".into()] }),
                 },
                 tags: ["evidence", "claims", "verification", "provenance"],
-                cache: CachePolicy::Disabled,
+                cache: CachePolicy::Checkout { max_entries: 32 },
                 handler: claim,
             },
             capability! {
@@ -919,9 +926,14 @@ mod tests {
                 Some(cli.iter().map(|s| s.to_string()).collect::<Vec<_>>()),
                 "{id} lost or renamed its command line"
             );
+            // the ledger changes outside this process, so an answer is kept, if at all, only
+            // per checkout state, which an edit of the ledger moves
             assert!(
-                !e.capability.cache.is_enabled(),
-                "{id} must not cache: the ledger changes outside this process"
+                matches!(
+                    e.capability.cache,
+                    CachePolicy::Disabled | CachePolicy::Checkout { .. }
+                ),
+                "{id} may cache only per checkout state: the ledger changes outside this process"
             );
         }
     }

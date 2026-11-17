@@ -204,6 +204,12 @@ pub enum WaiverReason {
     /// consulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,
     /// it simply does not exist yet where the benchmark runs.
     PublishedHistory,
+    /// The capability answers from a declaration this repository keeps about its own records
+    /// (the delivery board's lanes over this repository's milestones, share/board.yaml), and
+    /// refuses a record the declaration does not place. A benchmark fixture's records are in
+    /// no such declaration, so its honest answer there is a refusal, and timing it would time
+    /// an error path. The answer is proved over this repository by the capability's own tests.
+    RepositoryDeclaration,
 }
 
 /// What a repository must hold before a conditional benchmark requirement applies to it.
@@ -322,7 +328,10 @@ impl BenchmarkPolicy {
 /// Whether, and how, the executor keeps results of this capability. Cache lives in the
 /// executor and nowhere else, so MCP, HTTP and the command line share one; the key is the
 /// canonical id, the normalised input and the registry fingerprint, so a changed
-/// repository never answers from an old entry.
+/// repository never answers from an old entry. The two narrower policies add to the key
+/// what the registry fingerprint cannot see: the context's own reading of the repository
+/// ([`CachePolicy::Generation`]) and the state of the checkout itself
+/// ([`CachePolicy::Checkout`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "policy", rename_all = "snake_case")]
 pub enum CachePolicy {
@@ -336,6 +345,24 @@ pub enum CachePolicy {
         #[serde(skip_serializing_if = "Option::is_none")]
         ttl_seconds: Option<u64>,
     },
+    /// Results are kept for equal inputs while the context that computed them is the one
+    /// asked: for a capability that is a function of the index and the registry alone,
+    /// including the git state the index was read at, which the registry fingerprint does
+    /// not cover. A reload of the repository is a new context, and so a new key.
+    Generation {
+        /// The most entries kept for this capability; the oldest is evicted first.
+        max_entries: usize,
+    },
+    /// Results are kept for equal inputs while the context is the same *and* the checkout
+    /// is as it was: HEAD, the staging index, the refs and every changed or untracked path
+    /// of the work tree, fingerprinted again on every call
+    /// (`capability::checkout`). For a capability that reads git, the index and the
+    /// files of the work tree, and nothing that fingerprint cannot see: no ignored file, no
+    /// other process, no network, no clock. A checkout git cannot fingerprint is not cached.
+    Checkout {
+        /// The most entries kept for this capability; the oldest is evicted first.
+        max_entries: usize,
+    },
 }
 
 impl CachePolicy {
@@ -345,24 +372,88 @@ impl CachePolicy {
     /// use majordomus_cli::capability::CachePolicy;
     /// assert!(CachePolicy::Disabled.validate().is_ok());
     /// assert!(CachePolicy::Process { max_entries: 0, ttl_seconds: None }.validate().is_err());
+    /// assert!(CachePolicy::Checkout { max_entries: 0 }.validate().is_err());
+    /// assert!(CachePolicy::Generation { max_entries: 4 }.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), String> {
         match self {
             CachePolicy::Disabled => Ok(()),
-            CachePolicy::Process { max_entries: 0, .. } => {
+            _ if self.max_entries() == Some(0) => {
                 Err("a process cache with max_entries 0 keeps nothing".into())
             }
             CachePolicy::Process {
                 ttl_seconds: Some(0),
                 ..
             } => Err("a process cache with ttl_seconds 0 keeps nothing".into()),
-            CachePolicy::Process { .. } => Ok(()),
+            _ => Ok(()),
         }
     }
 
     /// Does the policy keep anything?
     pub fn is_enabled(&self) -> bool {
         !matches!(self, CachePolicy::Disabled)
+    }
+
+    /// The most entries the policy keeps per capability; `None` when it keeps nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// assert_eq!(CachePolicy::Disabled.max_entries(), None);
+    /// assert_eq!(CachePolicy::Checkout { max_entries: 2 }.max_entries(), Some(2));
+    /// ```
+    pub fn max_entries(&self) -> Option<usize> {
+        match *self {
+            CachePolicy::Disabled => None,
+            CachePolicy::Process { max_entries, .. }
+            | CachePolicy::Generation { max_entries }
+            | CachePolicy::Checkout { max_entries } => Some(max_entries),
+        }
+    }
+
+    /// Seconds an entry stays valid; `None` for as long as its key holds.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// let p = CachePolicy::Process { max_entries: 2, ttl_seconds: Some(5) };
+    /// assert_eq!(p.ttl_seconds(), Some(5));
+    /// assert_eq!(CachePolicy::Generation { max_entries: 2 }.ttl_seconds(), None);
+    /// ```
+    pub fn ttl_seconds(&self) -> Option<u64> {
+        match *self {
+            CachePolicy::Process { ttl_seconds, .. } => ttl_seconds,
+            _ => None,
+        }
+    }
+
+    /// The policy in a few words, as the Cockpit and the generated catalogue print it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// assert_eq!(CachePolicy::Disabled.summary(), "—");
+    /// assert_eq!(
+    ///     CachePolicy::Process { max_entries: 8, ttl_seconds: Some(5) }.summary(),
+    ///     "process, 8 entries, 5s"
+    /// );
+    /// assert_eq!(
+    ///     CachePolicy::Checkout { max_entries: 4 }.summary(),
+    ///     "process, 4 entries, per checkout state"
+    /// );
+    /// ```
+    pub fn summary(&self) -> String {
+        match *self {
+            CachePolicy::Disabled => "—".into(),
+            CachePolicy::Process {
+                max_entries,
+                ttl_seconds: Some(ttl),
+            } => format!("process, {max_entries} entries, {ttl}s"),
+            CachePolicy::Process { max_entries, .. } => format!("process, {max_entries} entries"),
+            CachePolicy::Generation { max_entries } => {
+                format!("process, {max_entries} entries, per generation")
+            }
+            CachePolicy::Checkout { max_entries } => {
+                format!("process, {max_entries} entries, per checkout state")
+            }
+        }
     }
 }
 
@@ -510,6 +601,15 @@ pub struct ExecutionPolicy {
     /// on another host; see [`ExecutionPolicy::admits_remote`].
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub signed_input: bool,
+    /// Whether only a caller on this machine may read it.
+    ///
+    /// A read that shows the mesh — its sessions, claims, handovers, nodes and journal — is
+    /// not the repository's to publish: a server reachable from another host would hand every
+    /// trusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read
+    /// answers a loopback caller only; a node reads the mesh through its own server, which the
+    /// journal already brings up to date. See [`ExecutionPolicy::admits_remote`].
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub local_only: bool,
 }
 
 impl ExecutionPolicy {
@@ -534,6 +634,7 @@ impl ExecutionPolicy {
                 cancellable: false,
                 concurrency: Concurrency::Unrestricted,
                 signed_input: false,
+                local_only: false,
             },
             // it changes this process's memory, so two of them are made to take turns
             CapabilityKind::Command => ExecutionPolicy {
@@ -541,6 +642,7 @@ impl ExecutionPolicy {
                 cancellable: false,
                 concurrency: Concurrency::Serial,
                 signed_input: false,
+                local_only: false,
             },
         }
     }
@@ -605,6 +707,24 @@ impl ExecutionPolicy {
         }
     }
 
+    /// The same policy, for a read only a caller on this machine may make.
+    ///
+    /// The fourth documented addition, and a narrowing: a query or resource whose answer is
+    /// the mesh's working state rather than the repository's (ADR 0220 decision 4).
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Query).reads_only_locally();
+    /// assert!(p.local_only && !p.admits_remote());
+    /// assert_eq!(p.effect, Effect::Read);
+    /// ```
+    pub fn reads_only_locally(self) -> Self {
+        ExecutionPolicy {
+            local_only: true,
+            ..self
+        }
+    }
+
     /// May a caller on another host run this?
     ///
     /// A request that arrives from an address that is not loopback has proved nothing about
@@ -619,9 +739,10 @@ impl ExecutionPolicy {
     /// assert!(ExecutionPolicy::classify(CapabilityKind::Query).admits_remote());
     /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).admits_remote());
     /// assert!(!ExecutionPolicy::classify(CapabilityKind::Command).writes_repository().admits_remote());
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Query).reads_only_locally().admits_remote());
     /// ```
     pub fn admits_remote(self) -> bool {
-        matches!(self.effect, Effect::Read) || self.signed_input
+        !self.local_only && (matches!(self.effect, Effect::Read) || self.signed_input)
     }
 
     /// Should a client ask before running this? True for anything that changes something.
@@ -925,6 +1046,130 @@ pub struct CliExposure {
     pub path: Vec<String>,
 }
 
+/// A capability as a skill a person invokes by a short name from an agent's prompt:
+/// `/intent <sentence>` in Claude Code. The name and the one input field the typed text
+/// fills are declared here, once; the file an agent product reads is generated from them
+/// (the `editors` module) and carries no description of what the capability does beyond
+/// the capability's own.
+///
+/// ```
+/// use majordomus_cli::capability::SkillExposure;
+/// let s = SkillExposure { alias: "intent".into(), argument: "statement".into(), follow: None };
+/// assert!(s.validate().is_ok());
+/// // a name an agent product already owns is refused, and so is one that is not a name
+/// let taken = SkillExposure { alias: "review".into(), argument: "x".into(), follow: None };
+/// assert!(taken.validate().unwrap_err().contains("reserved"));
+/// let shouted = SkillExposure { alias: "Intent".into(), argument: "x".into(), follow: None };
+/// assert!(shouted.validate().is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SkillExposure {
+    /// The name typed after the slash: lowercase letters, digits and hyphens, at most 64.
+    pub alias: String,
+    /// The input field the text typed after the name fills, verbatim.
+    pub argument: String,
+    /// What the agent does with the answer, when that is more than reporting it: a
+    /// capability that answers a work order says here that the order is carried out. One
+    /// sentence of the declaration's own, written into every projected skill; absent, the
+    /// skill only reports the answer.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
+}
+
+/// Names a skill may not take: commands and bundled skills of the agent products that read
+/// the projection (Claude Code 2.1), and the words the repository's own workflow skills are
+/// most likely to want. A capability that would be one of these is reached by its MCP tool.
+pub const RESERVED_SKILL_NAMES: &[&str] = &[
+    "add-dir",
+    "agents",
+    "bug",
+    "clear",
+    "compact",
+    "config",
+    "context",
+    "cost",
+    "doctor",
+    "exit",
+    "export",
+    "help",
+    "hooks",
+    "ide",
+    "init",
+    "login",
+    "logout",
+    "mcp",
+    "memory",
+    "model",
+    "peers",
+    "permissions",
+    "plan",
+    "pr-comments",
+    "release-notes",
+    "resume",
+    "review",
+    "rewind",
+    "security-review",
+    "skills",
+    "status",
+    "terminal-setup",
+    "todos",
+    "usage",
+    "vim",
+];
+
+impl SkillExposure {
+    /// Is the alias a name an agent product will accept and does not already own, and is
+    /// an argument named?
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{SkillExposure, RESERVED_SKILL_NAMES};
+    /// let skill = |alias: &str, argument: &str| SkillExposure {
+    ///     alias: alias.into(),
+    ///     argument: argument.into(),
+    ///     follow: None,
+    /// };
+    /// assert!(skill("propose-intent", "statement").validate().is_ok());
+    /// assert!(skill("-intent", "statement").validate().is_err());
+    /// assert!(skill("intent", "").validate().unwrap_err().contains("no input field"));
+    /// // every reserved name is refused, by name
+    /// for reserved in RESERVED_SKILL_NAMES {
+    ///     assert!(skill(reserved, "x").validate().unwrap_err().contains("reserved"));
+    /// }
+    /// // what the agent does with the answer is a sentence, or nothing at all
+    /// let blank = SkillExposure { follow: Some(" ".into()), ..skill("step", "x") };
+    /// assert!(blank.validate().unwrap_err().contains("follow"));
+    /// let said = SkillExposure { follow: Some("Carry it out.".into()), ..skill("step", "x") };
+    /// assert!(said.validate().is_ok());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        let a = self.alias.as_str();
+        if a.is_empty()
+            || a.len() > 64
+            || a.starts_with('-')
+            || a.ends_with('-')
+            || !a
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        {
+            return Err(format!(
+                "alias '{a}' is not lowercase letters, digits and inner hyphens, at most 64"
+            ));
+        }
+        if RESERVED_SKILL_NAMES.contains(&a) {
+            return Err(format!(
+                "alias '{a}' is reserved: an agent product already answers to it"
+            ));
+        }
+        if self.argument.is_empty() {
+            return Err("names no input field for the typed text".into());
+        }
+        if self.follow.as_deref().is_some_and(|f| f.trim().is_empty()) {
+            return Err("declares a follow that says nothing; leave it out instead".into());
+        }
+        Ok(())
+    }
+}
+
 /// The projections a capability declares. Absence is explicit: `None` means not exposed
 /// there, and nothing infers an exposure a descriptor did not declare.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
@@ -1089,6 +1334,9 @@ pub struct Capability {
     /// What running it as an execution means: classified from the kind, so that a client
     /// reads a fact rather than deciding for itself.
     pub execution: ExecutionPolicy,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The short name a person invokes it by from an agent's prompt, when it has one.
+    pub skill: Option<SkillExposure>,
 }
 
 /// A capability is presented by its id: the command line's table, the site's registry pages
@@ -1103,6 +1351,21 @@ impl crate::order::Ordered for Capability {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_skill_follows_with_a_sentence_or_not_at_all() {
+        let skill = |follow: Option<&str>| SkillExposure {
+            alias: "step".into(),
+            argument: "x".into(),
+            follow: follow.map(str::to_string),
+        };
+        assert!(skill(None).validate().is_ok());
+        assert!(skill(Some("Carry it out.")).validate().is_ok());
+        assert!(skill(Some("  "))
+            .validate()
+            .unwrap_err()
+            .contains("a follow that says nothing"));
+    }
 
     #[test]
     fn id_grammar() {

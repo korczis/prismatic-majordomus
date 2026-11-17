@@ -1,12 +1,12 @@
 id: safe-self-update
-title: "Clients and servers of different versions meet safely, and a release's provenance can be checked"
+title: "Every mesh node follows the published release by itself, versions meet safely, and a release's provenance can be checked"
 slug: safe-self-update
 order: 144
-priority: p2
+priority: p0
 problem: "The pack assumes a self-updater and signed releases. Both premises are refuted. `majordomus update` regenerates provider projections from policy (lib/update.sh:4); there is no self-update command, and docs/DISTRIBUTION.md:416-439 says so; to upgrade, a person reruns install.sh with --version. Artifacts are checksummed, not signed: sha256 and size in releases/<tag>.json are checked by site/static/install.sh:478 (called at :706), and docs/DISTRIBUTION.md:151-153 defers signing on purpose. What exists is compatibility risk: the superseded check covers only a binary replaced at the same path (apps/majordomus-cli/src/lease.rs:695-709), while the installer uses one directory per version, so a new client attaches to an older server and only an Outdated warning records it (apps/majordomus-cli/src/capability/builtin/server.rs:410-424). version-surface prices the public surface only; mesh discovery and link versions (apps/majordomus-cli/src/mesh/protocol.rs:36-40, apps/majordomus-cli/src/mesh/link.rs:50-53), the lease schema and journal events are outside it. Measured in the runtime baseline audit of 2026-10-09 at master 1fb8d6be44 (plan/RUNTIME_BASELINE.md)."
-outcome: "A newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks."
-current_state: "Implemented: install.sh verifies checksum and size, refuses traversal and non-HTTPS; release-verdict gates the release on CI; version-surface covers capabilities, routes, tools, commands and schemas; MCP protocol negotiation. Absent: cross-path version hand-off, wire-schema pricing, a v1 advertisement fixture, provenance."
-desired_state: "The compatibility matrix in plan/RUNTIME_BASELINE.md lists adjacent client/server and mesh versions with a test for each pair, and docs/DISTRIBUTION.md states what each install path verifies. Whether a background update check is wanted is an owner decision recorded as an ADR before any code; this milestone does not assume one."
+outcome: "An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks."
+current_state: "Implemented: install.sh verifies checksum and size, refuses traversal and non-HTTPS; release-verdict gates the release on CI; version-surface covers capabilities, routes, tools, commands and schemas; MCP protocol negotiation. Absent: a reader of the stable pointer on any node (every node is upgraded by hand), cross-path version hand-off, wire-schema pricing, a v1 advertisement fixture, provenance."
+desired_state: "The compatibility matrix in plan/RUNTIME_BASELINE.md lists adjacent client/server and mesh versions with a test for each pair, and docs/DISTRIBUTION.md states what each install path verifies. The owner decided on 2026-10-14 that a background update check is wanted (ADR 0161): every enrolled node follows releases/latest.json through self update, which re-runs install.sh, and the mesh shows each node's version (I2720-I2724)."
 scope:
   - "apps/majordomus-cli/src/lease.rs"
   - "apps/majordomus-cli/src/capability/builtin/server.rs"
@@ -21,11 +21,16 @@ scope:
   - "test/cases"
   - "docs/DISTRIBUTION.md"
   - "docs/MCP.md"
+  - "docs/MESH.md"
+  - "apps/majordomus-cli/src/mesh"
+  - ".ai/repo/mesh/majordomus.yaml"
 non_scope:
-  - "A second installer or updater; install.sh stays the one path (pack M11)."
+  - "A second installer or updater; install.sh stays the one path (pack M11), and self update re-runs it (ADR 0161)."
   - "A network fetch on entering a repository."
   - "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
 acceptance_criteria:
+  - "An enrolled, following node is on the version releases/latest.json names within one check interval of a release, with no person on it"
+  - "A failed activation rolls back to the previous version by itself and the board names node, version and failed check"
   - "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session"
   - "A wire or lease or journal schema change without a version bump fails version-surface"
   - "Each release archive carries an attestation that verifies for this repository"
@@ -36,10 +41,13 @@ validation:
 evidence_required:
   - "version_hand_off_test"
   - "wire_versions_gated"
+  - "node_follows_stable_pointer_test"
+  - "hub_rolls_back_failed_version_test"
   - "release_attestation"
 depends_on: []
 risks:
   - "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server."
+  - "Following automatically raises the cost of a bad archive; I2165 (attestation) is raised to p1 with ADR 0161."
   - "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14

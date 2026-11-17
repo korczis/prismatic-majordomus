@@ -1,0 +1,38 @@
+<section id="graf">
+  <h2>Stavba spočítaná z grafu repozitáře</h2>
+  <p>Obrázek v kapitole <a href="#stavba">Celá stavba</a> je nakreslený ručně, aby se dal přečíst za minutu. Tahle kapitola ukazuje totéž bez kreslení: repozitář si sám generuje graf všeho, co obsahuje, do souboru <code>docs/generated/graph.json</code>. Vzniká z registru capabilities a z indexu vrstvy, hlídá ho brána <code>generate --check</code> a zastaralý soubor neprojde commitem. Všechno níž se počítá z něj: každá dlaždice, každé číslo i každý krok toku. Popisy druhů a vztahů jsou vlastní slova repozitáře, proto jsou anglicky.</p>
+
+  <h3>Mapa druhů</h3>
+  <p>Kruh je druh objektu a jeho velikost je počet objektů. Čára je vztah mezi druhy a její tloušťka je počet takových vztahů. Klik na kruh vypíše objekty toho druhu, klik na čáru vypíše dvojice.</p>
+  <div class="lab" id="lab-kinds">
+    <p class="lab-h">Spočítáno · <span id="gk-total"></span></p>
+    <div class="rd-chart" id="gk-chart" role="img" aria-label="Mapa druhů objektů a vztahů mezi nimi"></div>
+    <div class="gk-legend" id="gk-legend"></div>
+    <div class="gk-panel" id="gk-panel" aria-live="polite">
+      <p class="lab-note">Klikni na druh nebo na vztah.</p>
+    </div>
+    <details class="md-src"><summary>Tabulka místo grafu</summary><div class="table-wrap"><table id="gk-table"></table></div></details>
+  </div>
+
+  <h3>Toky, které v repozitáři opravdu existují</h3>
+  <p>Každý tok je vzor, třeba „rozhodnutí zavede pravidlo, pravidlo procvičí use case, use case dokládá garanci, garanci dokazuje test“. Vzor je napsaný jednou. Příklady, počty a všechny dlaždice se hledají v grafu. Když poslední článek řetězu v repozitáři zmizí, tok tady přestane existovat a řekne to.</p>
+  <div class="lab" id="lab-chains">
+    <p class="lab-h">Vyzkoušej si · zvýraznit tok</p>
+    <div class="seg" id="gc-seg" role="tablist" aria-label="Tok"></div>
+    <p class="flow-note" id="gc-note" aria-live="polite"></p>
+    <div class="gc-ctl" id="gc-ctl"></div>
+    <ol class="gc-chain" id="gc-chain"></ol>
+  </div>
+
+  <h3>Sleduj jednu věc</h3>
+  <p>Vyber cokoli: pravidlo, garanci, capability, test, issue. Uprostřed je vybraný objekt, vlevo to, co na něj ukazuje, vpravo to, na co ukazuje on. Každá dlaždice je klikací a přesune střed na sebe, takže se dá projít celý repozitář po vztazích.</p>
+  <div class="lab" id="lab-trace">
+    <p class="lab-h">Vyzkoušej si · okolí objektu</p>
+    <div class="rd-filter">
+      <input class="inp" id="gt-q" type="search" placeholder="hledej objekt, např. scope, mesh.claim, finish, I2491" autocomplete="off" aria-label="Hledat objekt v grafu">
+    </div>
+    <ol class="rd-list" id="gt-hits" hidden></ol>
+    <p class="gt-trail" id="gt-trail"></p>
+    <div class="gt-grid" id="gt-grid"></div>
+  </div>
+</section>

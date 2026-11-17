@@ -8,7 +8,7 @@ use crate::app::App;
 use crate::bench::baseline::{self, Check, Policy};
 use crate::bench::results::{CacheMode, Provenance, ResultDocument};
 use crate::bench::{BenchmarkProjection, Coverage, Profile, Runner, Transport};
-use crate::cli::{BaselineCommand, BenchArgs, BenchCommand, OutputFormat, TransportArg};
+use crate::cli::{BaselineCommand, BenchArgs, BenchCommand, OutputFormat, RepoArgs, TransportArg};
 use crate::error::{Error, Result};
 
 /// Run `majordomus bench`.
@@ -48,7 +48,7 @@ pub fn run(args: BenchArgs) -> Result<u8> {
                     reason: "the work tree is dirty; a baseline is recorded from a clean commit (or pass --allow-dirty)".into(),
                 });
             }
-            let doc = measure(&app, &projection, profile, None, None)?;
+            let (doc, _) = measure(&app, &args.repo, &projection, profile, None, None)?;
             let path = baseline::write_baseline(&app.repository, &doc)?;
             writeln!(out, "{}", path.display()).map_err(Error::Transport)?;
             writeln!(
@@ -71,8 +71,15 @@ pub fn run(args: BenchArgs) -> Result<u8> {
                 TransportArg::Mcp => Some(Filter::Transport(Transport::Mcp)),
                 TransportArg::Http => Some(Filter::Transport(Transport::Http)),
             };
-            let doc = measure(&app, &projection, profile, args.id.as_deref(), transport)?;
-            if doc.results.is_empty() {
+            let (doc, skipped) = measure(
+                &app,
+                &args.repo,
+                &projection,
+                profile,
+                args.id.as_deref(),
+                transport,
+            )?;
+            if doc.results.is_empty() && skipped.is_empty() {
                 return Err(Error::CapabilityNotFound {
                     id: args
                         .id
@@ -90,6 +97,16 @@ pub fn run(args: BenchArgs) -> Result<u8> {
                 }
                 OutputFormat::Text => {
                     write!(out, "{}", render(&doc)).map_err(Error::Transport)?;
+                    if !skipped.is_empty() {
+                        writeln!(
+                            out,
+                            "\nnot measured by profile {} — {} deferred panel(s) of the UI, whose sources are why the UI defers them (--profile full measures them): {}",
+                            doc.profile,
+                            skipped.len(),
+                            skipped.join(", ")
+                        )
+                        .map_err(Error::Transport)?;
+                    }
                     if let Some(p) = &written {
                         writeln!(out, "written {}", p.display()).map_err(Error::Transport)?;
                     }
@@ -128,14 +145,16 @@ fn parse_profile(name: &str) -> Result<Profile> {
     })
 }
 
-/// Time the selected targets and assemble the document.
+/// Time the selected targets and assemble the document; beside it, the keys of the
+/// selected targets the profile does not admit (the UI's deferred panels, outside `full`).
 fn measure(
     app: &App,
+    repo: &RepoArgs,
     projection: &BenchmarkProjection,
     profile: Profile,
     id: Option<&str>,
     filter: Option<Filter>,
-) -> Result<ResultDocument> {
+) -> Result<(ResultDocument, Vec<String>)> {
     let ctx = app.context.clone();
     let mut child_args = Vec::new();
     if args_discovery_is_filesystem(app) {
@@ -144,8 +163,10 @@ fn measure(
     }
     let mut runner = Runner::new(ctx.clone(), profile, app.repository.root())
         .with_share(app.share.dir().to_path_buf())
-        .with_child_args(child_args);
+        .with_child_args(child_args)
+        .with_repo_args(repo.clone());
     let mut results = Vec::new();
+    let mut skipped = Vec::new();
     for target in &projection.targets {
         if let Some(id) = id {
             let matches = target.capability_id() == Some(id) || target.key.starts_with(id);
@@ -162,17 +183,22 @@ fn measure(
             Some(Filter::System) if target.capability_id().is_some() => continue,
             _ => {}
         }
+        if !profile.admits(target) {
+            skipped.push(target.key.clone());
+            continue;
+        }
         tracing::info!(target = %target.key, "benchmarking");
         results.extend(runner.run(target)?);
     }
     runner.finish();
-    Ok(ResultDocument {
+    let doc = ResultDocument {
         schema: crate::bench::RESULT_SCHEMA.into(),
         finished_at: crate::peers::rfc3339(std::time::SystemTime::now()),
         profile: profile.name.into(),
         provenance: Provenance::of(&app.repository, ctx.registry.fingerprint()),
         results,
-    })
+    };
+    Ok((doc, skipped))
 }
 
 /// The human report: slowest p95 first.

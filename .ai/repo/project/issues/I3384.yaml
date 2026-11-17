@@ -1,0 +1,44 @@
+id: I3384
+milestone: delivery-economics-are-measured-over-declared-windows
+title: "The first delivery window is measured at its close and published with its denominators, the work not accepted and the checkouts it could not read"
+slug: the-delivery-window-is-measured
+priority: p1
+profile: implementation
+objective: "At the window's close, run economics tasks over the period, write the T3 trial record with per field the count, median, denominator and not-observed count, every task not accepted, every checkout of the snapshots whose ledger could not be read, and the task count against the tracked session records; commit it under .ai/repo/benchmarks/trials/t3-delivery-economics/, add the window tests, regenerate the economics projections and let the T3 row compute its status."
+why: "T3 of the owner's report of 2026-10-19 asks for the real delivery economics, losses included. If I3379 or I3380 has not landed by the close, those fields read not observed and the row fails its bound, which is published as such rather than delaying the window."
+current_state: "No window record exists."
+desired_state: "A committed T3 record and a computed T3 row."
+scope:
+  - ".ai/repo/benchmarks"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Extending the window after it opens"
+  - "Excluding a task to improve a field"
+depends_on:
+  - "I3383"
+  - "I3377"
+  - "I3378"
+  - "I3381"
+  - "I3354"
+  - "I3356"
+serves:
+  - "the-product-proves-it-pays#delivery-is-measured-over-a-declared-window"
+acceptance_criteria:
+  - "The record passes the loader with the T3 digest"
+  - "Every field states its denominator and not-observed count"
+  - "Every unread checkout is named"
+  - "The task count is reconciled with the tracked session records, and any difference is listed"
+  - "A test fails on a fixture record that drops a not-accepted task"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics tasks"
+  - "majordomus economics proof"
+  - "majordomus generate --check"
+evidence_required:
+  - "t3_window_record_committed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

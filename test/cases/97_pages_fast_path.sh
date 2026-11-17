@@ -166,7 +166,9 @@ awk '/scripts\/pages (build|check)/,/^      - /' "$W" | grep -qE '\|\|[[:space:]
 #    them publishes. The count is not the invariant — a count would be a mirror of the
 #    directory (docs/DYNAMICITY.md); the invariant is that no workflow exists whose
 #    behaviour is decided in the workflow file rather than under .ai/repo/ci/, and that
-#    publication belongs to pages.yml alone.
+#    publication belongs to pages.yml alone — with one exception, ADR 0131: release.yml's
+#    publish job puts that release's metadata, and nothing else, onto what gh-pages serves
+#    (`scripts/site-deploy --release-metadata <tag>`), so the release does not wait for its record.
 for w in "$ROOT"/.github/workflows/*.yml; do
   n="$(basename "$w" .yml)"
   # validate.yml's model is gates.yaml; it was named before the convention
@@ -176,9 +178,11 @@ for w in "$ROOT"/.github/workflows/*.yml; do
 done
 for w in "$ROOT"/.github/workflows/*.yml; do
   [ "$(basename "$w")" = pages.yml ] && continue
-  grep -qE 'scripts/site-deploy' "$w" \
-    && { echo "    $(basename "$w") deploys the site; publication belongs to pages.yml alone"; exit 1; }
-  :
+  # a comment names the script without running it
+  calls="$(grep -vE '^[[:space:]]*#' "$w" | grep -E 'scripts/site-deploy' || true)"
+  [ "$(basename "$w")" = release.yml ] && calls="$(printf '%s\n' "$calls" | grep -vE 'scripts/site-deploy --release-metadata([^-[:alnum:]]|$)' || true)"
+  [ -z "$calls" ] \
+    || { echo "    $(basename "$w") deploys the site; publication belongs to pages.yml alone:"; printf '%s\n' "$calls" | sed 's/^/      /'; exit 1; }
 done
 
 # 7. the fingerprint is the generator's own value, not a second hash of the same files
@@ -197,7 +201,7 @@ expect_grep 'current for this tree'
 #    checkout rewrote catalogue.json and terminal.json under every neighbour and run.sh refused
 #    the shard ("the checkout changed during the parallel phase", batch H, #711).
 PUB="$ROOT/site/public"
-if command -v zola >/dev/null 2>&1 && [ -d "$ROOT/node_modules/tailwindcss" ]; then
+if mj_zola_ready "$ROOT" && [ -d "$ROOT/node_modules/tailwindcss" ]; then
   a="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-a.XXXXXX")"; b="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-b.XXXXXX")"
   wt="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-wt.XXXXXX")/tree"
   drop_wt() { git -C "$ROOT" worktree remove --force "$wt" >/dev/null 2>&1; rm -rf "$(dirname "$wt")"; }

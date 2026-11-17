@@ -1,0 +1,37 @@
+id: I3173
+milestone: external-workspaces
+title: "A synced workspace conversation proposes candidate records that cite their conversation and message, and nothing becomes canonical without an act"
+slug: a-workspace-conversation-proposes-records
+priority: p2
+profile: implementation
+objective: "Map synced workspace content (.ai/local/workspaces) into knowledge candidates and intent proposals through the existing candidate pipeline and intent.propose, each citing the typed workspace reference of ADR 0211 pinned to the upstream message identity (never a positional message index); promotion stays an act."
+why: "Owner, 2026-10-12 and 10-15: the ChatGPT Project should feed intents, milestones and issues automatically; this import was done by hand on 2026-10-18 (board p12). It is local: a vendor caller proposing over the remote surface is I3286. Milestone external-workspaces is named by no intent, so this is derived maintenance. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c239#0, chatgpt-majordomus:c267#0, chatgpt-majordomus:c267#2."
+current_state: "external-workspaces declares the kind and the sync (I1301-I1310); nothing proposes records from synced content."
+desired_state: "Proposals with citations; nothing tracked carries transcript text."
+scope:
+  - "lib/knowledge.sh"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "docs/KNOWLEDGE.md"
+  - ".ai/repo/workspaces/README.md"
+  - "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+  - "test/cases/2978_an_intent_is_proposed_by_a_capability.sh"
+  - "test/cases/93_workspace_kind.sh"
+non_scope:
+  - "Writing to the vendor"
+  - "Storing conversation text in the tracked tree"
+depends_on:
+  - "I1307"
+  - "I1308"
+  - "I3281"
+  - "I3284"
+acceptance_criteria:
+  - "Every proposal cites its workspace reference in the ADR 0211 form, pinned to the upstream message"
+  - "A transcript marker in a proposal is refused"
+  - "Nothing is promoted without an act"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "bash test/run.sh 93_workspace_kind 2978_an_intent_is_proposed_by_a_capability 981_an_observation_becomes_a_grouped_candidate"
+evidence_required:
+  - "case_workspace_proposes_records"
+created_at: 2026-10-18
+updated_at: 2026-10-18

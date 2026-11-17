@@ -1,0 +1,39 @@
+id: a-stranger-adopts-it-unaided
+title: "A developer who has never met the maintainer adopts Majordomus and is stopped from a false done within ten minutes"
+statement: "A developer who uses a coding agent daily, has never spoken to the maintainer and has only the public site installs Majordomus into a repository of their own, and within ten minutes sees it refuse a task their agent called finished and accept it once their own check passes. Every such first run by a real outside person, invited privately and with their consent, is recorded as they reported it, and each friction it met becomes a case that fails until the tool removes it. Nobody is invited to try Majordomus publicly until this is shown."
+invariants:
+  - "Nothing about an outside first run is simulated, edited or inferred; a run the person did not do is not a run"
+  - "No fix decides by the identity of the repository it runs in (as a-second-adopter-is-served already requires)"
+  - "An outside run is recorded without the person's name, employer or repository contents"
+  - "The time and the manual steps are measured on a clean machine from the published installer, not from a development checkout"
+  - "The scripted first-run stage measures tool overhead per platform; the ten-minute bar is a person's, settled only from outside-run records"
+non_goals:
+  - "Implementing the roadmap, the mesh or the intent engine for a stranger's first day"
+  - "Non-technical users; the product is aimed at engineers"
+  - "Choosing outreach channels or a launch date"
+  - "A live agent session inside the scripted CI proof; the outside runs carry the provider path"
+milestones:
+  - "a-stranger-adopts-it-unaided"
+satisfaction:
+  - id: first-refusal-in-ten-minutes
+    criterion: "From the published installer on a clean runner of each supported platform to a refused and then accepted finish in a foreign fixture repository, the install-check first-run stage records the elapsed seconds of each step as tool overhead and counts the commands typed beyond those the public site documents, and that count is zero (planned proof: the per-platform first-run receipts of the validate.yml install job and the release.yml smoke step, with a pre-merge regression case numbered by `scripts/case-numbers next` and announced on the board at start)"
+    evidence: command
+    ref: "majordomus intent explain a-stranger-adopts-it-unaided"
+  - id: init-says-what-it-found
+    criterion: "init in an existing repository ends with what it found there: the instruction files share/providers.yaml declares and whether they agree by the rule docs/ADOPTION.md states, the hooks git would run (core.hooksPath included) and whether they are wired, and whether the effective profile declares verification.verify_commands, each naming the file it read (planned proof: an init-findings case numbered by `scripts/case-numbers next` and announced on the board at start)"
+    evidence: command
+    ref: "majordomus intent explain a-stranger-adopts-it-unaided"
+  - id: outside-runs-are-recorded
+    criterion: "At least five first runs by outside developers, each with a real coding agent in the tester's own repository, are recorded as the tester's own answers to the fixed form of the outside-first-run workflow, redacted only in declared fields, each naming the tool version, platform, reached_accepted_finish, seconds_to_accepted_finish and every friction with its id (planned proof: an outside-run records case numbered by `scripts/case-numbers next` and announced on the board at start)"
+    evidence: command
+    ref: "majordomus intent explain a-stranger-adopts-it-unaided"
+  - id: outside-runs-reach-the-accepted-finish
+    criterion: "At least 3 of the recorded outside runs reached the accepted finish unaided within ten minutes, as their reached_accepted_finish and seconds_to_accepted_finish fields say (planned proof: the outside-run records case, reading the records' fields)"
+    evidence: command
+    ref: "majordomus intent explain a-stranger-adopts-it-unaided"
+  - id: friction-becomes-a-case
+    criterion: "Every friction id an outside-run record carries is cited by an issue whose case fails without its fix, or by a cancellation with its reason (planned proof: the outside-run records case, which fails on a friction id nothing cites)"
+    evidence: command
+    ref: "majordomus intent explain a-stranger-adopts-it-unaided"
+created_at: 2026-10-18
+updated_at: 2026-10-18

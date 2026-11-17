@@ -1,12 +1,12 @@
 id: fly-deployment
-title: A deployment is a projection of the repository model, and a reachable URL is its evidence
+title: The container image is a projection of the repository model, and its smoke is its evidence
 slug: fly-deployment
 order: 70
 priority: p1
 problem: "Majordomus has no deployment at all: no container, no hosting provider, no way for anyone who is not standing in front of this checkout to see the layer it serves. The obvious repair is the wrong one. A Dockerfile and a fly.toml written by hand would be a second description of facts the repository already holds — the port the server binds, the routes it registers, the assets the site build produces, the binary the workspace names — and every one of those pairs would drift the first time one half changed. The repository already refuses that shape everywhere else: capabilities are declared once and projected into CLI, HTTP, MCP, OpenAPI, docs and the site, and generate --check fails when a projection is stale. A deployment must arrive the same way or not at all."
-outcome: "One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers."
-current_state: "No Dockerfile, no fly.toml, no deployment kind, no deploy capability module and no container test exist anywhere in the repository. The HTTP server binds loopback by default and warns when it does not. system.health exists as a capability; /healthz and /readyz do not. The site is built by one pipeline already and deployed to GitHub Pages by scripts/site-deploy."
-desired_state: "majordomus deploy validates the canonical object, verifies that every generated projection matches it, builds the pinned multi-stage Alpine image, deploys one Machine to the chosen region, waits for Fly's health checks, asserts the Machine inventory against the declared cost profile, runs the route-derived smoke suite against the public URL and writes a machine-readable report. Changing the region, the memory, the port or the Machine count means changing one file and regenerating."
+outcome: "One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12."
+current_state: "Measured 2026-10-14 on master e28daccd9b: .ai/repo/deployments/majordomus.yaml is the canonical object; deploy/Dockerfile and its ignore file are generated from it (Alpine, uid 10001, exec-form entrypoint); docker-image.yml builds and smoke-tests the image on pull requests and on master, and release.yml publishes it to GHCR; .github/actions/image-smoke checks the image runs as non-root and answers /api/v1/live and /api/v1/ready; deploy.list, deploy.get, deploy.check and deploy.observed are capabilities. Missing: a smoke derived from the route registry, a secret and developer-path scan of the image, an SBOM, size, cold-start and memory baselines, a documentation page. The object still carries region, machines and resources, which nothing reads since Fly.io was disconnected on 2026-10-12."
+desired_state: "The GHCR image is a projection of the canonical object like every other artifact: generated, checked for drift, smoke-tested from the route registry, scanned for secrets and developer paths, measured against recorded budgets, documented and shown in the cockpit. Whether region, machines and resources leave the deployment/v1 schema is decided and recorded."
 scope:
   - .ai/repo/deployments
   - .ai/repo/adrs
@@ -16,7 +16,6 @@ scope:
   - apps/majordomus-cli/src/capability/builtin
   - apps/majordomus-cli/src/http
   - deploy
-  - fly.toml
   - share/kinds.yaml
   - share/allow
   - share/schemas
@@ -35,13 +34,13 @@ non_scope:
 
 acceptance_criteria:
   - One canonical deployment object is the only place the port, the region, the resources, the Machine count, the health routes, the build inputs and the budgets are stated
-  - Every provider artifact — the Dockerfile, its ignore file and fly.toml — is generated, marked as generated with its source and its regeneration command, and fails generate --check when edited by hand
+  - Every image artifact — the Dockerfile and its ignore file — is generated, marked as generated with its source and its regeneration command, and fails generate --check when edited by hand
   - The deployment reads are declared once in the capability registry and appear in the CLI, the HTTP API, MCP, OpenAPI and the generated documentation without a second registration
   - The smoke suite is derived from the route registry; no second list of endpoints exists anywhere
   - The production image runs as a non-root user, contains no build toolchain, no repository history, no secret and no absolute developer path
-  - The deployed service answers on its public HTTPS URL, its health and readiness checks pass from outside, and the Machine inventory matches the declared cost profile
+  - The published image answers live and ready in its smoke, run from outside the container on a free host port
   - Image size, binary size, build context size, cold start, resident memory and endpoint latency are measured, recorded as baselines and gated against unexplained regression
-  - No Fly credential is written to the repository, to a Docker layer, to a generated file, to the site or to a log, and CI deploys with an app-scoped token rather than an account-wide one
+  - No credential is written to the repository, to a Docker layer, to a generated file, to the site or to a log, and the image is published with the workflow's own token
   - Every rule this milestone states is enforced by a check that CI executes
 
 validation:
@@ -50,8 +49,6 @@ validation:
   - cargo test --workspace --all-features
   - cargo clippy --workspace --all-targets --all-features -- -D warnings
   - majordomus generate --check
-  - majordomus deploy doctor
-  - fly config validate
 
 evidence_required:
   - canonical_object
@@ -59,7 +56,7 @@ evidence_required:
   - generated_projections
   - registry_derived_smoke
   - container_minimal
-  - deployed_url
+  - image_smoke
   - budgets_measured
   - secrets_isolated
   - rules_enforced

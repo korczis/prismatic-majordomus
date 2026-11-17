@@ -38,11 +38,16 @@ pub enum SystemTarget {
     HttpCockpitCapabilities,
     /// `GET /cockpit/graphs/registry`: a page whose content is a derived graph.
     HttpCockpitGraph,
+    /// `GET /` over the live view a served process follows the repository with: the
+    /// per-request generation check (a stamp of the watched git control files, compared
+    /// with the generation held) and the surface resolution, on the cheapest route there
+    /// is. Its difference from `system.http.index` is what following git costs a request.
+    HttpIndexLive,
 }
 
 impl SystemTarget {
     /// Every system target, in a stable order.
-    pub const ALL: [SystemTarget; 13] = [
+    pub const ALL: [SystemTarget; 14] = [
         SystemTarget::McpProcessCold,
         SystemTarget::McpInitialize,
         SystemTarget::McpPing,
@@ -56,6 +61,7 @@ impl SystemTarget {
         SystemTarget::HttpCockpitOverview,
         SystemTarget::HttpCockpitCapabilities,
         SystemTarget::HttpCockpitGraph,
+        SystemTarget::HttpIndexLive,
     ];
 
     /// The stable key results and baselines use.
@@ -74,6 +80,7 @@ impl SystemTarget {
             SystemTarget::HttpCockpitOverview => "system.http.cockpit_overview",
             SystemTarget::HttpCockpitCapabilities => "system.http.cockpit_capabilities",
             SystemTarget::HttpCockpitGraph => "system.http.cockpit_graph",
+            SystemTarget::HttpIndexLive => "system.http.live.index",
         }
     }
 
@@ -92,7 +99,8 @@ impl SystemTarget {
             | SystemTarget::HttpSwagger
             | SystemTarget::HttpCockpitOverview
             | SystemTarget::HttpCockpitCapabilities
-            | SystemTarget::HttpCockpitGraph => super::Transport::Http,
+            | SystemTarget::HttpCockpitGraph
+            | SystemTarget::HttpIndexLive => super::Transport::Http,
         }
     }
 
@@ -121,6 +129,9 @@ impl SystemTarget {
             }
             SystemTarget::HttpCockpitGraph => {
                 "GET /cockpit/graphs/registry (a page whose content is a derived graph)"
+            }
+            SystemTarget::HttpIndexLive => {
+                "GET / over the live view a served process uses (the per-request git stamp and surface resolution)"
             }
         }
     }

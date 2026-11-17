@@ -1,9 +1,10 @@
 # The homepage's story, declared once.
 #
-# A landing page is an argument with an order, told overview first: what this is, what goes
-# wrong without it, what it controls, how one task moves through it, the proof that "done" can
-# be refused, how one declaration reaches every interface, the evidence, and how to try it. This file is that order, as the `id`s of the sections the homepage renders
-# inside <main>. It is not prose and carries no claim; the words are manifesto.toml's and
+# A landing page answers a visitor's questions in the order they are asked: what this is
+# (hero), why they should care (recognise), how it works (how), what they can do with it
+# (map, surfaces, blackboard), how they know it works (refuses, proof), and how to start
+# (install). This file is that order, as the `id`s of the sections the homepage renders inside
+# <main>. It is not prose and carries no claim; the words are manifesto.toml's and
 # marketing.toml's, and every figure beside them is derived.
 #
 # scripts/ci/homepage-check holds the rendered page to it in both directions, and the rule
@@ -13,11 +14,13 @@
 # stack of twenty-two sections once, each defensible alone; this is what stops it happening
 # again without a person deciding it should. In 2026-10 it became eight sections in a progressive
 # order — overview before reference — with the transcripts, the full failure catalogue and the
-# refusal corpus moved behind disclosures on the same page rather than off it.
+# refusal corpus moved behind disclosures on the same page; later that month the order became
+# the five questions above, and the transcripts and the replay became links to the pages that
+# already carried them, because a page that inlines its evidence is a page nobody finishes.
 #
 # To add a section: write it in site/templates/index.html with an id, name the id here where
 # it belongs in the argument, and give it at least one link or one derived figure.
-order = ["hero", "recognise", "map", "how", "refuses", "surfaces", "proof", "install"]
+order = ["hero", "recognise", "how", "map", "surfaces", "blackboard", "refuses", "proof", "install"]
 
 # The failures the homepage puts first, as the ids of the product domains whose `problem` it
 # shows (.ai/repo/features/domains/, ADR 0104). Editorial: which three, and in what order. The
@@ -25,11 +28,75 @@ order = ["hero", "recognise", "map", "how", "refuses", "surfaces", "proof", "ins
 # does not show or a problem the page does not render.
 problems = ["context", "coordination", "completion"]
 
-# What the homepage may make every visitor download from this site before they scroll: the
-# scripts and stylesheets it links, and graph data carried inline in the HTML. A figure is
-# measured, never aspired to — scripts/ci/homepage-check reports the current weight on every
-# build, and raising a budget is a reviewed change to this file. The HTML is not budgeted here:
-# its size follows the recorded runs the page replays.
+# The peer blackboard's section (ADR 0176). `doc` is the document it leads to, by its path under
+# docs/: the link is the route site/data/generated/docs.json gives that path. `waits` is the
+# work the blackboard waits for, as issue ids in the order the section lists them. Which issues
+# is docs/BLACKBOARD.md's own list under "Not yet", named here once more so the page can draw
+# each one from the plan: its title, its page and the status its record declares, and nothing
+# typed about how it stands (ADR 0166). test/cases/3387 holds this list and the document's to
+# each other both ways, and refuses one whose record is done.
+[blackboard]
+doc = "BLACKBOARD.md"
+waits = ["I2984", "I2999"]
+
+# What the homepage may make every visitor download from this site before they scroll: its own
+# HTML, the scripts and stylesheets it links, and graph data carried inline in the HTML. A
+# figure is measured, never aspired to — scripts/ci/homepage-check reports the current weight
+# on every build, and raising a budget is a reviewed change to this file.
+#
+# The HTML was not budgeted until 2026-10-12, on the reasoning that its size follows the
+# recorded runs the page replays. It reached 243,477 bytes: a navigation rendered three times
+# on every page and four sets of transcripts inline. The runs are evidence and they are still
+# published — on the pages that record them, which this one links.
+#
+# Raised once on 2026-10-21 (site seat 33), from 160000 to 172000. The budget holds the homepage
+# of every language (I3759 measures each), and three measurements set the number:
+# - The data alone already crosses 160000: top 1 (12 PRs, no template change) builds the English
+#   page at 160,014 bytes, because the records it adds are counted and listed (e7).
+# - The Czech homepage is the larger one. Live on alpha.2 it is 161,490 bytes against the
+#   English 158,714, so 1.75% more and already over 160000.
+# - I3223 and I3224 add the hero's recorded scenarios and the features each problem card and
+#   lifecycle step names. On a trial render that is 161,468 bytes raw before the build's passes
+#   (master's 156,421): about 165,300 in English and about 168,200 in Czech once the passes and the
+#   hero's 8 scenarios are in. Over the wire it is +520 bytes (gzip -9: 25,295 against 24,775).
+#   Their links were compacted to plain inline anchors first; 44% of the page is utility classes.
+# I3759's shorter capability picker takes bytes back; the budget can come down when a build
+# measures that. The "since the last deploy" link (#925, about 140 bytes) waited for this change.
 [budget]
+html_bytes = 172000
 assets_bytes = 340000
 inline_json_bytes = 8000
+
+# The capability words the hand-written copy (marketing.toml, manifesto.toml) may use only
+# while a claim permits them: word = the docs/CLAIMS.yaml id that permits it, "" when no claim
+# does yet. scripts/ci/homepage-check fails a word in either file unless its claim is
+# guaranteed and supported by a recorded run, fails a declaration naming a claim that does not
+# exist, and fails the name of a feature the product model does not call stable. Every word
+# here is "": the repository has no claim that work goes unattended, merges or releases
+# by itself, or repairs itself, so the copy may not say so. A word is matched whole and in any
+# case; comment lines are not copy. Adding a word or a claim is a reviewed change to this file.
+[promises]
+"proven" = ""
+"proves" = ""
+"unattended" = ""
+"autonomous" = ""
+"autonomously" = ""
+"fully automated" = ""
+"self-healing" = ""
+"zero-touch" = ""
+"hands-off" = ""
+"automatic merge" = ""
+"automatic merges" = ""
+"merges automatically" = ""
+"automatic release" = ""
+"automatic releases" = ""
+# I3136: the words the 2026-10-10 and 10-13 positioning work ruled out, each refused until a
+# recorded comparison permits it (chatgpt-majordomus:c250#5, c218#3)
+"revolutionary" = ""
+"revolutionize" = ""
+"10x" = ""
+"next-generation" = ""
+"AI-powered orchestration" = ""
+"unlock" = ""
+"transform" = ""
+"releases automatically" = ""

@@ -154,6 +154,9 @@ struct World {
     refresh_fails: bool,
     /// The merge methods the repository's settings allow, in the forge's words.
     merge_methods: Vec<&'static str>,
+    /// The forge's answer carries none of the merge settings (a token that may not read
+    /// them): `merge_methods` is then not observed at all.
+    merge_settings_unread: bool,
     /// Pull requests no longer open, and how they went: what the forge reports of those a
     /// supersession names.
     gone: Vec<(Sim, Gone)>,
@@ -174,12 +177,30 @@ struct World {
     outages: Vec<String>,
     /// Every closure comment that reached the forge.
     close_comments: Vec<String>,
+    /// Record pull requests the forge shows as opened with the workflow's token, old enough
+    /// and without a check of their own; any other is `NotYet`.
+    record_reopenable: BTreeSet<u64>,
+    /// How many times a record's standing was asked of the forge.
+    standing_calls: usize,
+    /// The forge closes these and then refuses to reopen them.
+    reopen_refuses: BTreeSet<u64>,
+    /// How many times a reopen reached the forge.
+    reopen_calls: usize,
     /// On this observation (1-based) the queue's policy names no merge method, whatever
     /// its pull requests say: an observation that contradicts itself.
     no_method_on: Option<usize>,
     /// Which pull request's merge made each master generation. A generation absent here was
     /// somebody else's merge.
     landed: BTreeMap<u32, u64>,
+    /// Every phase the executor said it advanced its queue with, in order (I3991).
+    progressed: Vec<String>,
+    /// Every act the executor asked whether it still holds its lease for.
+    holds_asked: Vec<String>,
+    /// The lease is no longer held, for this reason: another executor was admitted over it.
+    lease_lost: Option<String>,
+    /// When the lease is found lost, this trail refuses every append from then on: the loss
+    /// cannot be recorded.
+    trail_breaks_with_the_lease: Option<std::path::PathBuf>,
 }
 
 impl Default for World {
@@ -202,6 +223,7 @@ impl Default for World {
             close_calls: 0,
             refresh_fails: false,
             merge_methods: vec!["merge"],
+            merge_settings_unread: false,
             gone: Vec::new(),
             merged_onto: BTreeMap::new(),
             foreign_merge_before: BTreeSet::new(),
@@ -211,8 +233,16 @@ impl Default for World {
             trail_root: None,
             outages: Vec::new(),
             close_comments: Vec::new(),
+            record_reopenable: BTreeSet::new(),
+            standing_calls: 0,
+            reopen_refuses: BTreeSet::new(),
+            reopen_calls: 0,
             no_method_on: None,
             landed: BTreeMap::new(),
+            progressed: Vec::new(),
+            holds_asked: Vec::new(),
+            lease_lost: None,
+            trail_breaks_with_the_lease: None,
         }
     }
 }
@@ -235,7 +265,8 @@ impl World {
                 ..Default::default()
             }),
             up_to_date_required: Some(true),
-            merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
+            merge_methods: (!self.merge_settings_unread)
+                .then(|| self.merge_methods.iter().map(|m| m.to_string()).collect()),
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
             delete_branch_on_merge: None,
@@ -299,7 +330,10 @@ impl World {
         }
         let authored = s.paths.clone();
         if s.contains == self.master {
-            RelationToMaster::UpToDate { authored }
+            RelationToMaster::UpToDate {
+                authored,
+                owes_version: None,
+            }
         } else if self.carried(s) {
             RelationToMaster::CarriesMaster {
                 behind: u64::from(self.master - s.contains),
@@ -441,7 +475,6 @@ impl Integrator for World {
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
         self.merge_calls += 1;
-        assert_eq!(method, "merge", "the repository's merge method");
         if self.merge_refuses.contains(&pr) {
             return Err(
                 "Pull request is not mergeable: the base branch policy prohibits the merge".into(),
@@ -469,12 +502,23 @@ impl Integrator for World {
             self.open[i].labels.is_empty(),
             "merged a pull request that carries a label"
         );
+        // a head that contains master is fast-forwarded to; only one that carries it is merged
+        let fast_forward = self.open[i].contains == self.master;
+        assert_eq!(
+            method,
+            ["merge", drain::FAST_FORWARD][usize::from(fast_forward)],
+            "the landing method of #{pr}"
+        );
         if self.answer_lost_before_landing.contains(&pr) {
             return Err("Post https://api.github.com/graphql: timed out".into());
         }
         if self.foreign_merge_before.contains(&pr) {
-            // another change lands first; the forge then merges this one on top of it
+            // another change lands first; a fast-forward is then refused, as the forge does,
+            // and a merge is made on top of it
             self.master += 1;
+            if fast_forward {
+                return Err("gh: Update is not a fast forward (HTTP 422)".into());
+            }
         }
         let head = self.open[i].head.clone();
         self.merged_onto.insert(pr, (master_sha(self.master), head));
@@ -558,25 +602,114 @@ impl Integrator for World {
         self.gone_as(pr, Gone::Closed);
         Ok(())
     }
+
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> drain::RecordStanding {
+        self.standing_calls += 1;
+        match self.open.iter().find(|s| s.number == pr) {
+            Some(s) if s.head != head_sha => {
+                drain::RecordStanding::NotYet(format!("its head moved to {}", s.head))
+            }
+            Some(_) if self.record_reopenable.contains(&pr) => drain::RecordStanding::Reopenable,
+            Some(_) => drain::RecordStanding::NotYet("a person opened it".into()),
+            None => drain::RecordStanding::NotYet("it is CLOSED on the forge, not open".into()),
+        }
+    }
+
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        self.reopen_calls += 1;
+        self.close_comments.push(comment.to_string());
+        let s = self
+            .open
+            .iter()
+            .find(|s| s.number == pr)
+            .ok_or("not open")?;
+        // the forge side of the guard, as for a closure
+        if s.head != head_sha {
+            return Err(format!("#{pr}'s head moved to {}", s.head));
+        }
+        if self.reopen_refuses.contains(&pr) {
+            self.gone_as(pr, Gone::Closed);
+            return Err(format!(
+                "#{pr} was closed and could not be reopened (HTTP 403: Resource not accessible by integration)"
+            ));
+        }
+        // open again at the same head: the run its reopening started has reported nothing yet
+        Ok(())
+    }
+
+    fn progressed(&mut self, phase: &str) {
+        self.progressed.push(phase.to_string());
+    }
+
+    fn holds(&mut self, act: &str) -> Result<(), String> {
+        self.holds_asked.push(act.to_string());
+        if let (Some(_), Some(trail)) = (&self.lease_lost, &self.trail_breaks_with_the_lease) {
+            unwritable(trail);
+        }
+        self.lease_lost.clone().map_or(Ok(()), Err)
+    }
 }
 
 /// A fresh, empty temporary directory that no other test shares. The process id and the
 /// clock alone collided: tests started in the same microsecond were handed one directory, and
 /// the second `git init` found the first one's files. A per-process counter makes the name
 /// unique, and `create_dir` (not `create_dir_all`) refuses a directory that already exists.
+///
+/// Every one lives under this process's own directory ([`process_temp`]), never beside the
+/// system's other temporary files: one directory per test, left there, filled the system's
+/// temporary directory with tens of thousands of them until it could hold no new
+/// subdirectory, and every `mktemp -d` on the machine failed.
 fn unique_temp(prefix: &str) -> std::path::PathBuf {
     static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let d = std::env::temp_dir().join(format!(
-        "{prefix}-{}-{}-{n}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
+    let d = process_temp().join(format!("{prefix}-{n}"));
     std::fs::create_dir(&d).unwrap_or_else(|e| panic!("{}: {e}", d.display()));
     d
+}
+
+/// This test process's directory, `<temp>/mj-integration-tests/<pid>`, made on first use. A
+/// test process cannot clean up after itself (the harness has no teardown), so the next one
+/// does: the directory of every process that is no longer running is removed before this one
+/// is made, and what is left behind is bounded by the test processes alive at once.
+fn process_temp() -> &'static std::path::Path {
+    static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    DIR.get_or_init(|| {
+        let parent = std::env::temp_dir().join("mj-integration-tests");
+        std::fs::create_dir_all(&parent).unwrap_or_else(|e| panic!("{}: {e}", parent.display()));
+        for entry in std::fs::read_dir(&parent).into_iter().flatten().flatten() {
+            let pid = entry
+                .file_name()
+                .to_str()
+                .and_then(|n| n.parse::<i32>().ok());
+            if pid.is_some_and(|pid| !running(pid)) {
+                let _ = std::fs::remove_dir_all(entry.path());
+            }
+        }
+        let mine = parent.join(std::process::id().to_string());
+        std::fs::create_dir_all(&mine).unwrap_or_else(|e| panic!("{}: {e}", mine.display()));
+        mine
+    })
+}
+
+/// Whether a process with this id runs: signal 0 checks without sending, and a process this
+/// user may not signal still exists.
+fn running(pid: i32) -> bool {
+    // SAFETY: kill with signal 0 performs only the existence and permission check
+    let answered = unsafe { libc::kill(pid, 0) };
+    answered == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+#[test]
+fn a_test_directory_lives_under_its_process_and_a_dead_process_leaves_none() {
+    let parent = std::env::temp_dir().join("mj-integration-tests");
+    let d = unique_temp("mj-integration-placed");
+    assert_eq!(
+        d.parent(),
+        Some(parent.join(std::process::id().to_string()).as_path())
+    );
+    assert!(running(std::process::id() as i32));
+    // a pid beyond any the system hands out is never running
+    assert!(!running(i32::MAX));
 }
 
 /// A scratch repository: the audit trail is the repository's, under its common git
@@ -1406,6 +1539,12 @@ fn cleanup_lists_only_what_is_provably_on_master() {
         fn close(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
             unreachable!()
         }
+        fn record_standing(&mut self, _: u64, _: &str) -> drain::RecordStanding {
+            unreachable!()
+        }
+        fn reopen(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
+            unreachable!()
+        }
     }
     let items = drain::cleanup(&root, &mut DerivedTwo(&mut w), false).unwrap();
     let by: BTreeMap<u64, String> = items.into_iter().map(|i| (i.pr, i.action)).collect();
@@ -1746,7 +1885,7 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
     ));
     assert!(matches!(
         relation_to_master(&dir, &master, &up_to_date),
-        RelationToMaster::UpToDate { ref authored } if authored == &vec!["d.txt".to_string()]
+        RelationToMaster::UpToDate { ref authored, .. } if authored == &vec!["d.txt".to_string()]
     ));
     assert_eq!(
         relation_to_master(&dir, &master, &conflicting),
@@ -2166,6 +2305,162 @@ fn the_queue_reads_and_keeps_each_heads_shape() {
     assert!(keys.iter().all(|k| k.starts_with(&master)), "{keys:?}");
 }
 
+// ---------------------------------------------------------------- what the process remembers
+
+/// Pull requests of every relation, one stacked on another so that its head contains the
+/// other's, each mirrored as `prs refresh` mirrors it, and an unfetched one; beside them a
+/// later head for #1 that no observation names yet.
+struct RememberedWorld {
+    fixture: RelationFixture,
+    moved: String,
+    now: std::time::SystemTime,
+}
+
+const REMEMBERED: [&str; 8] = [
+    "authored",
+    "derived_only",
+    "conflicting",
+    "derived_conflict",
+    "up_to_date",
+    "same",
+    "absent",
+    "stacked",
+];
+
+fn remembered_world() -> RememberedWorld {
+    let mut fixture = relation_fixture();
+    let dir = fixture.dir.clone();
+    let authored = fixture.heads["authored"].clone();
+    let stacked = commit_on(&dir, "stacked", &authored, &[("e.txt", "e\n")]);
+    let moved = commit_on(&dir, "authored-2", &authored, &[("b.txt", "newer\n")]);
+    fixture.heads.insert("stacked", stacked);
+    let world = RememberedWorld {
+        fixture,
+        moved,
+        now: std::time::SystemTime::now(),
+    };
+    observe_remembered(&world, None);
+    world
+}
+
+/// Record the world's observation, #1 at `one` when given, and mirror every fetched head.
+fn observe_remembered(w: &RememberedWorld, one: Option<&str>) {
+    let RelationFixture { dir, master, heads } = &w.fixture;
+    let prs: Vec<PullRequestObservation> = REMEMBERED
+        .iter()
+        .enumerate()
+        .map(|(i, name)| {
+            let n = i as u64 + 1;
+            let head = one.filter(|_| n == 1).unwrap_or(&heads[name]);
+            if *name != "absent" {
+                git(
+                    dir,
+                    &["update-ref", &format!("refs/majordomus/prs/{n}"), head],
+                );
+            }
+            observed_pr(n, head)
+        })
+        .collect();
+    observed(dir, master, prs);
+}
+
+/// `project.cache-is-invisible`: the queue a remembering process answers, on its first read
+/// and on the next, is the queue decided as if nothing had been read before — and the next
+/// read asks git nothing that is a fact about two commits. Neither writes a file.
+#[test]
+fn the_remembered_queue_equals_the_queue_decided_afresh() {
+    use crate::integration::{memo::Memos, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let (fresh, _) = queue_with(None, dir, w.now).unwrap();
+    assert!(
+        fresh
+            .get(8)
+            .unwrap()
+            .dependencies
+            .iter()
+            .any(|d| d.number == 1),
+        "the stacked head carries #1"
+    );
+    let memos = Memos::new(4);
+    let (first, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let decided = memos.decided(dir);
+    assert!(decided.relations > 0 && decided.shapes > 0 && decided.containment > 0);
+    let (second, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    assert_eq!(first, fresh, "a first read differs from the fresh one");
+    assert_eq!(
+        second, fresh,
+        "a remembered read differs from the fresh one"
+    );
+    assert_eq!(memos.decided(dir), decided, "the second read decided again");
+    assert_eq!(crate::integration::queue_of(dir).unwrap(), fresh);
+    let cache = crate::integration::state_path(dir, crate::integration::RELATIONS_FILE);
+    assert!(!cache.exists(), "a read wrote the relation cache");
+}
+
+/// A pull request that moved is the only one decided again: one relation, one shape, and two
+/// containment questions — its new head against every mirror, its new mirror against every
+/// head — and the answer is the one a fresh read gives.
+#[test]
+fn a_moved_head_is_the_only_one_decided_again() {
+    use crate::integration::{memo::Memos, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let memos = Memos::new(4);
+    let (before, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let was = memos.decided(dir);
+    observe_remembered(&w, Some(&w.moved));
+    let (after, _) = queue_with(Some(&memos), dir, w.now).unwrap();
+    let (fresh, _) = queue_with(None, dir, w.now).unwrap();
+    assert_eq!(after, fresh);
+    assert_ne!(
+        after.get(1),
+        before.get(1),
+        "#1 was decided on its new head"
+    );
+    assert!(
+        !after
+            .get(8)
+            .unwrap()
+            .dependencies
+            .iter()
+            .any(|d| d.number == 1),
+        "the stacked head no longer carries #1"
+    );
+    let now = memos.decided(dir);
+    assert_eq!(now.relations - was.relations, 1, "{was:?} -> {now:?}");
+    assert_eq!(now.shapes - was.shapes, 1, "{was:?} -> {now:?}");
+    assert_eq!(now.containment - was.containment, 2, "{was:?} -> {now:?}");
+}
+
+/// Two readers of one checkout at once decide what one reader decides, and both answer the
+/// fresh queue: the second takes its turn and finds the first one's answers.
+#[test]
+fn concurrent_reads_of_one_checkout_decide_each_relation_once() {
+    use crate::integration::{computed, memo, queue_with};
+    let w = remembered_world();
+    let dir = &w.fixture.dir;
+    let memos = memo::Memos::new(4);
+    let barrier = std::sync::Barrier::new(2);
+    let read = || {
+        barrier.wait();
+        queue_with(Some(&memos), dir, w.now).unwrap().0
+    };
+    let (a, b) = std::thread::scope(|s| {
+        let (a, b) = (s.spawn(read), s.spawn(read));
+        (a.join().unwrap(), b.join().unwrap())
+    });
+    let mut alone = memo::CheckoutMemo::default();
+    let (fresh, _) = computed(dir, w.now, &mut alone).unwrap();
+    assert_eq!(a, fresh);
+    assert_eq!(b, fresh);
+    assert_eq!(
+        memos.decided(dir),
+        alone.decided,
+        "two readers decided more than one"
+    );
+}
+
 /// What a merge changes by kind decides overlaps, risk and rank (WP16): two pull requests
 /// that raise the version overlap as a version bump, two that change release records overlap
 /// as a release whatever files they name, a shared path is contention, and of ready pull
@@ -2286,7 +2581,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         required_checks: Some(vec!["ci".into()]),
         review_policy: Some(Default::default()),
         up_to_date_required: Some(true),
-        merge_methods: vec!["merge".into()],
+        merge_methods: Some(vec!["merge".into()]),
         pull_requests: prs,
         resolved: Default::default(),
         delete_branch_on_merge: None,
@@ -2782,6 +3077,12 @@ fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
         fn close(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
             unreachable!()
         }
+        fn record_standing(&mut self, _: u64, _: &str) -> drain::RecordStanding {
+            unreachable!()
+        }
+        fn reopen(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
+            unreachable!()
+        }
     }
     let stop = std::sync::atomic::AtomicBool::new(false);
     let report = drain::continuous(
@@ -2982,7 +3283,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 32] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -3004,6 +3305,9 @@ const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
     drain::IntegrationAction::ClosedRedundant,
     drain::IntegrationAction::ClosedSuperseded,
     drain::IntegrationAction::CloseFailed,
+    drain::IntegrationAction::ReopenAttempted,
+    drain::IntegrationAction::Reopened,
+    drain::IntegrationAction::ReopenFailed,
     drain::IntegrationAction::RepairSelected,
     drain::IntegrationAction::RepairAttempted,
     drain::IntegrationAction::Repaired,
@@ -3011,6 +3315,7 @@ const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
     drain::IntegrationAction::Idle,
     drain::IntegrationAction::FailureAcknowledged,
     drain::IntegrationAction::ObserveFailed,
+    drain::IntegrationAction::LeaseLost,
 ];
 
 /// A new action must be added to [`ALL_ACTIONS`] before this compiles: no wildcard.
@@ -3039,13 +3344,17 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::ClosedSuperseded
         | A::ClosedRedundant
         | A::CloseFailed
+        | A::ReopenAttempted
+        | A::Reopened
+        | A::ReopenFailed
         | A::RepairSelected
         | A::RepairAttempted
         | A::Repaired
         | A::RepairRefused
         | A::Idle
         | A::FailureAcknowledged
-        | A::ObserveFailed => (),
+        | A::ObserveFailed
+        | A::LeaseLost => (),
     }
 }
 
@@ -3337,6 +3646,14 @@ fn run_scenario(root: &std::path::Path, scenario: &str) -> World {
             w.meanwhile.push((2, Meanwhile::Closes(1)));
             drop(drain::cleanup(root, &mut w, true));
         }
+        "reopen" | "reopen_fails" => {
+            w.open = vec![record_sim(1)];
+            w.record_reopenable.insert(1);
+            if scenario == "reopen_fails" {
+                w.reopen_refuses.insert(1);
+            }
+            drop(drain::drain(root, &mut w, 2, false, false));
+        }
         // "lease": taken and given back
         _ => drop(drain::IntegrationLease::acquire(root, "master")),
     }
@@ -3394,6 +3711,8 @@ fn every_trail_write_can_fail_and_no_act_goes_unrecorded() {
         "reconcile_never",
         "reconcile_unproved",
         "cleanup_stale",
+        "reopen",
+        "reopen_fails",
     ] {
         // the k-th write fails, for every k until a run makes fewer than k writes
         for k in 1..64 {
@@ -3407,6 +3726,7 @@ fn every_trail_write_can_fail_and_no_act_goes_unrecorded() {
             assert!(w.merge_calls <= count("merge_attempted"), "{at}: {trail:?}");
             assert!(w.refresh_calls <= count("refresh_attempted"), "{at}");
             assert!(w.close_calls <= count("close_attempted"), "{at}");
+            assert!(w.reopen_calls <= count("reopen_attempted"), "{at}");
             if unspent > 0 {
                 assert!(k > 1, "{scenario} wrote nothing at all");
                 break;
@@ -3615,6 +3935,12 @@ impl Integrator for Shared {
     }
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
         self.0.lock().unwrap().close(pr, head_sha, comment)
+    }
+    fn record_standing(&mut self, pr: u64, head_sha: &str) -> drain::RecordStanding {
+        self.0.lock().unwrap().record_standing(pr, head_sha)
+    }
+    fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        self.0.lock().unwrap().reopen(pr, head_sha, comment)
     }
 }
 
@@ -4335,6 +4661,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::Label { .. }
         | R::AutoMergeArmed
         | R::MergeCommitNotAllowed
+        | R::MergeSettingsUnread
         | R::SupersededBy { .. }
         | R::SuccessorOpen { .. }
         | R::SuccessorNotLanded { .. }
@@ -4351,6 +4678,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::RequiredCheckFailed
         | R::BehindMaster { .. }
         | R::ForkHead
+        | R::VersionUnallocated { .. }
         | R::RequiredChecks { .. }
         | R::NoRequiredChecks
         | R::RequiredChecksUnread
@@ -4382,6 +4710,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         },
         R::AutoMergeArmed,
         R::MergeCommitNotAllowed,
+        R::MergeSettingsUnread,
         R::SupersededBy { number: 12 },
         R::SuccessorOpen { number: 13 },
         R::SuccessorNotLanded { number: 14 },
@@ -4399,6 +4728,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::RequiredCheckFailed,
         R::BehindMaster { commits: 12 },
         R::ForkHead,
+        R::VersionUnallocated {
+            version: "0.22.0".into(),
+        },
         R::NoRequiredChecks,
         R::RequiredChecksUnread,
         R::ContainsMaster,
@@ -4709,7 +5041,7 @@ proptest! {
                         "successor_not_landed",
                         "successor_unread",
                     ],
-                    G::MergeMethod => &["merge_commit_not_allowed"],
+                    G::MergeMethod => &["merge_commit_not_allowed", "merge_settings_unread"],
                     G::RelationToMaster => &[
                         "head_reachable_from_master",
                         "merge_changes_nothing",
@@ -4930,6 +5262,59 @@ fn a_repository_without_merge_commits_holds_every_candidate_and_merges_nothing()
     }
 }
 
+/// A forge answer that carries none of the merge settings (the Pages workflow's token reads
+/// the repository without them) is unknown, never "allows nothing": the published Cockpit said
+/// "allows no merge commit (it allows: nothing)" while all three were allowed (I2966). Every
+/// candidate is held as unknown with `merge_settings_unread`, nothing merges, and the
+/// diagnostic says the settings could not be read.
+#[test]
+fn unread_merge_settings_are_unknown_and_never_allow_nothing() {
+    use crate::integration::ReasonCode as R;
+    let mut ready = sim(1);
+    ready.contains = 1;
+    let mut w = World {
+        open: vec![ready],
+        master: 1,
+        merge_settings_unread: true,
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(q.policy.merge_method, None);
+    assert!(q.policy.merge_settings_unread);
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::Unknown,
+        "{:?}",
+        a.reasons
+    );
+    assert_eq!(a.reasons[0], R::MergeSettingsUnread, "{:?}", a.reasons);
+    let settings = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == crate::integration::EvidenceKind::RepositorySettings)
+        .expect("settings evidence");
+    assert_eq!(settings.status, "merge_settings_unread");
+    assert!(
+        q.diagnostics
+            .iter()
+            .any(|d| d.contains("merge settings could not be read")),
+        "{:?}",
+        q.diagnostics
+    );
+    assert!(
+        !q.diagnostics
+            .iter()
+            .any(|d| d.contains("allows no merge commit")),
+        "an unread setting was said to allow nothing: {:?}",
+        q.diagnostics
+    );
+    let root = scratch();
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.merge_calls, w.refresh_calls), (0, 0));
+}
+
 #[test]
 fn the_merge_method_is_a_merge_commit_and_never_another() {
     for allowed in [
@@ -4972,7 +5357,8 @@ fn the_merge_method_is_a_merge_commit_and_never_another() {
         .into_iter()
         .find(|e| e.action.as_str() == "merge_attempted")
         .expect("merge_attempted");
-    assert_eq!(attempted.detail, "--merge");
+    // a head that contains master is fast-forwarded to, whatever merge commits are allowed
+    assert_eq!(attempted.detail, "--fast-forward");
 }
 
 #[test]
@@ -5934,8 +6320,11 @@ fn asked(root: &std::path::Path, pr: u64, master: &str, head: &str) {
     .unwrap();
 }
 
+/// A fast-forward the forge refuses because master moved after the decision is a stale
+/// decision, not an unverified landing: the drain goes on, observes again and decides from
+/// the new master, where neither head contains master any more (I3910).
 #[test]
-fn a_foreign_merge_between_decision_and_merge_fails_verification() {
+fn a_fast_forward_refused_because_master_moved_is_decided_again() {
     let root = scratch();
     let mut w = World {
         open: vec![sim(1), sim(2)],
@@ -5944,14 +6333,51 @@ fn a_foreign_merge_between_decision_and_merge_fails_verification() {
     };
     let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
     assert!(report.merged.is_empty(), "{report:?}");
+    match report.steps.first() {
+        Some(DrainStepOutcome::MergeRefused { pr: 1, class, .. }) => {
+            assert_eq!(*class, drain::FailureClass::Stale)
+        }
+        other => panic!("expected a stale refusal, got {other:?}"),
+    }
+    assert!(
+        matches!(report.steps.last(), Some(DrainStepOutcome::Idle { .. })),
+        "{report:?}"
+    );
+    assert_eq!(w.merge_calls, 1);
+    let actions = trail_actions(&root);
+    assert!(
+        !actions.iter().any(|a| a == "verification_failed"),
+        "{actions:?}"
+    );
+    assert_eq!(drain::halted_by(&root), None, "nothing waits for a person");
+}
+
+/// A merge commit made onto a master another change reached first is caught by its parents:
+/// the head that carries master is merged, and what landed is not what was decided.
+#[test]
+fn a_foreign_merge_between_decision_and_merge_fails_verification() {
+    let root = scratch();
+    let mut above = sim(2);
+    above.carries = vec![1];
+    let mut w = World {
+        open: vec![sim(1), above],
+        foreign_merge_before: [2].into(),
+        ..Default::default()
+    };
+    assert_eq!(
+        drain::drain(&root, &mut w, 1, false, false).unwrap().merged,
+        [1]
+    );
+    let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
+    assert!(report.merged.is_empty(), "{report:?}");
     match report.steps.last() {
-        Some(DrainStepOutcome::VerificationFailed { pr: 1, reason }) => {
+        Some(DrainStepOutcome::VerificationFailed { pr: 2, reason }) => {
             assert!(reason.contains("unexpected_master"), "{reason}")
         }
         other => panic!("expected a failed verification, got {other:?}"),
     }
-    // the drain stopped there: #2 was not merged onto a master nobody verified
-    assert_eq!(w.merge_calls, 1);
+    // the drain stopped there: nothing else was merged onto a master nobody verified
+    assert_eq!(w.merge_calls, 2);
     assert_eq!(trail_actions(&root).last().unwrap(), "verification_failed");
 }
 
@@ -6019,7 +6445,7 @@ fn reconcile_closes_an_interrupted_merge_that_landed() {
         ..Default::default()
     };
     // the last executor asked, the forge merged, and the executor stopped before verifying
-    Integrator::merge(&mut w, 1, "h1.0", "merge").unwrap();
+    Integrator::merge(&mut w, 1, "h1.0", drain::FAST_FORWARD).unwrap();
     asked(&root, 1, "m0", "h1.0");
     let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
     assert!(
@@ -6678,6 +7104,12 @@ fn an_applied_repair_records_its_selection_and_attempt_before_the_push_and_its_o
         fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
             self.world.close(pr, head, comment)
         }
+        fn record_standing(&mut self, pr: u64, head: &str) -> drain::RecordStanding {
+            self.world.record_standing(pr, head)
+        }
+        fn reopen(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.world.reopen(pr, head, comment)
+        }
     }
     let root = scratch();
     let mut w = Watching {
@@ -6774,6 +7206,12 @@ fn an_applied_repair_whose_push_is_refused_records_the_class_and_reports_it() {
         }
         fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
             self.0.close(pr, head, comment)
+        }
+        fn record_standing(&mut self, pr: u64, head: &str) -> drain::RecordStanding {
+            self.0.record_standing(pr, head)
+        }
+        fn reopen(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.0.reopen(pr, head, comment)
         }
     }
     let root = scratch();
@@ -7777,4 +8215,988 @@ fn the_trail_0_14_0_wrote_is_still_read_and_no_event_needs_a_new_field() {
     let unknown: ReasonCode = serde_json::from_value(serde_json::json!("a_later_code:#7")).unwrap();
     assert_eq!(unknown, ReasonCode::Unrecognised("a_later_code:#7".into()));
     assert_eq!(serde_json::to_value(&unknown).unwrap(), "a_later_code:#7");
+}
+
+// ---------------------------------------------------------------- the record it reopens
+
+/// A release's record as the forge lists it: on its `release/record-<tag>` branch, containing
+/// master, and without a report of the required check.
+fn record_sim(number: u64) -> Sim {
+    Sim {
+        head_ref: "release/record-v9.9.9".into(),
+        ci_unreported: true,
+        ..sim(number)
+    }
+}
+
+#[test]
+fn a_record_no_run_was_started_for_is_reopened_once_trail_first() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert!(
+        matches!(report.steps.as_slice(), [DrainStepOutcome::Reopened { pr: 7, head }] if head == "h7.0"),
+        "{:?}",
+        report.steps
+    );
+    assert!(report.stopped.contains("closed and reopened"), "{report:?}");
+    assert_eq!((w.standing_calls, w.reopen_calls), (1, 1));
+    assert_eq!(w.close_comments, [drain::RECORD_REOPEN_COMMENT]);
+    let trail = trail_actions(&root);
+    let at = |a: &str| trail.iter().position(|x| x == a);
+    assert!(at("reopen_attempted") < at("reopened"), "{trail:?}");
+    let attempted = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action == drain::IntegrationAction::ReopenAttempted)
+        .unwrap();
+    assert_eq!(
+        (attempted.pr, attempted.head_sha.as_deref()),
+        (Some(7), Some("h7.0"))
+    );
+    assert!(attempted.detail.contains("release/record-v9.9.9"));
+
+    // the reopened record still reads `missing` until its run's last job exists: the same
+    // head is not asked after again, let alone closed again
+    let again = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert!(
+        matches!(again.steps.as_slice(), [DrainStepOutcome::Idle { .. }]),
+        "{:?}",
+        again.steps
+    );
+    assert_eq!((w.standing_calls, w.reopen_calls), (1, 1));
+
+    // and when its check passes it is merged like any other
+    w.open[0].ci_unreported = false;
+    let merged = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(merged.merged, [7], "{:?}", merged.steps);
+}
+
+#[test]
+fn a_dry_run_names_the_reopen_and_takes_no_act() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, true, false).unwrap();
+    assert!(
+        matches!(
+            report.steps.as_slice(),
+            [DrainStepOutcome::WouldReopen { pr: 7 }]
+        ),
+        "{:?}",
+        report.steps
+    );
+    assert!(report.stopped.contains("would be closed and reopened"));
+    assert_eq!(w.reopen_calls, 0);
+    assert!(trail_actions(&root)
+        .iter()
+        .all(|a| !a.starts_with("reopen")));
+}
+
+#[test]
+fn a_record_that_is_not_in_that_state_is_left_alone() {
+    // a person opened it, or it has a check of its own: the forge says so, nothing is done
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.standing_calls, w.reopen_calls), (1, 0));
+    assert!(trail_actions(&root)
+        .iter()
+        .all(|a| !a.starts_with("reopen")));
+
+    // any other branch waiting for a check that never reported is not even asked after
+    let root = scratch();
+    let mut w = World {
+        open: vec![Sim {
+            ci_unreported: true,
+            ..sim(8)
+        }],
+        record_reopenable: BTreeSet::from([8]),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.standing_calls, w.reopen_calls), (0, 0));
+
+    // and a record whose head moved since the queue was built is not this one
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    assert!(matches!(
+        w.record_standing(7, "another-head"),
+        drain::RecordStanding::NotYet(why) if why.contains("moved")
+    ));
+    assert!(matches!(
+        w.record_standing(99, "h99.0"),
+        drain::RecordStanding::NotYet(why) if why.contains("not open")
+    ));
+    assert!(w
+        .reopen(7, "another-head", "x")
+        .unwrap_err()
+        .contains("moved"));
+    drop(root);
+}
+
+#[test]
+fn a_reopen_that_fails_is_recorded_classed_and_not_tried_again() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        reopen_refuses: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    let [DrainStepOutcome::ReopenFailed {
+        pr: 7,
+        reason,
+        class,
+    }] = report.steps.as_slice()
+    else {
+        panic!("{:?}", report.steps)
+    };
+    assert!(
+        reason.contains("was closed and could not be reopened"),
+        "{reason}"
+    );
+    assert_eq!(*class, drain::FailureClass::PolicyViolation);
+    assert!(report.stopped.contains("reopening #7 failed"), "{report:?}");
+    let failed = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action == drain::IntegrationAction::ReopenFailed)
+        .unwrap();
+    assert_eq!(failed.class, Some(drain::FailureClass::PolicyViolation));
+    assert_eq!(w.reopen_calls, 1);
+}
+
+#[test]
+fn a_reopen_the_trail_cannot_name_is_not_made() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    // every write before `reopen_attempted` succeeds on a first, undisturbed run
+    let before = {
+        let probe = scratch();
+        let mut p = World {
+            open: vec![record_sim(7)],
+            record_reopenable: BTreeSet::from([7]),
+            ..Default::default()
+        };
+        drain::step(&probe, &mut p, false, false).unwrap();
+        trail_actions(&probe)
+            .iter()
+            .position(|a| a == "reopen_attempted")
+            .unwrap()
+    };
+    drain::FAIL_WRITE.with(|n| n.set(before + 1));
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    drain::FAIL_WRITE.with(|n| n.set(0));
+    assert!(
+        matches!(
+            &out,
+            DrainStepOutcome::TrailUnwritable { pr: 7, unrecorded, .. }
+                if *unrecorded == drain::IntegrationAction::ReopenAttempted
+        ),
+        "{out:?}"
+    );
+    assert_eq!(
+        w.reopen_calls, 0,
+        "the forge was asked without a trail line"
+    );
+}
+
+#[test]
+fn a_record_is_reopenable_only_in_the_one_state() {
+    use drain::{record_standing_of, RecordStanding};
+    let now = crate::peers::epoch_seconds("2026-10-10T02:00:00Z").unwrap();
+    let view = |patch: serde_json::Value| {
+        let mut v = serde_json::json!({
+            "state": "OPEN", "headRefOid": "abc", "createdAt": "2026-10-10T01:56:10Z",
+            "author": {"is_bot": true, "login": drain::WORKFLOW_TOKEN_AUTHOR},
+            "statusCheckRollup": []
+        });
+        for (k, val) in patch.as_object().unwrap() {
+            v[k] = val.clone();
+        }
+        v
+    };
+    let why = |patch| match record_standing_of(&view(patch), "abc", now) {
+        RecordStanding::NotYet(why) => why,
+        RecordStanding::Reopenable => panic!("reopenable"),
+    };
+    assert_eq!(
+        record_standing_of(&view(serde_json::json!({})), "abc", now),
+        RecordStanding::Reopenable
+    );
+    assert!(why(serde_json::json!({"state": "CLOSED"})).contains("CLOSED"));
+    assert!(why(serde_json::json!({"headRefOid": "def"})).contains("moved to def"));
+    assert!(why(serde_json::json!({"author": {"login": "someone"}})).contains("someone opened it"));
+    assert!(
+        why(serde_json::json!({"statusCheckRollup": [{"name": "plan"}]})).contains("1 check(s)")
+    );
+    assert!(why(serde_json::json!({"createdAt": "soon"})).contains("no readable creation time"));
+    // inside the grace an empty rollup is not yet a fact about the pull request
+    let early = crate::peers::epoch_seconds("2026-10-10T01:57:00Z").unwrap();
+    assert!(matches!(
+        record_standing_of(&view(serde_json::json!({})), "abc", early),
+        RecordStanding::NotYet(why) if why.contains("opened 50s ago")
+    ));
+    assert_eq!(drain::RECORD_REOPEN_GRACE.as_secs(), 120);
+    assert!("release/record-v0.19.1".starts_with(drain::RECORD_BRANCH_PREFIX));
+}
+
+#[test]
+fn a_record_a_person_opened_does_not_hide_the_stranded_one_behind_it() {
+    let root = scratch();
+    // #6 ranks first and is not in that state; #7 is
+    let mut w = World {
+        open: vec![record_sim(6), record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(&out, DrainStepOutcome::Reopened { pr: 7, .. }),
+        "{out:?}"
+    );
+    assert_eq!((w.standing_calls, w.reopen_calls), (2, 1));
+}
+
+// ---------------------------------------------------------------- allocation at landing, in git
+
+/// The layer's manifest, naming the one section a release policy is read from.
+const AI_MANIFEST: &str =
+    "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  \
+     tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n";
+
+const LANDING_POLICY: &str = "version: 1\nrelease:\n  allocation: landing\n  floor: minor\n";
+
+const POLICY: &str = ".ai/repo/policy.yaml";
+
+/// The crate manifest at `version`.
+fn crate_manifest(version: &str) -> String {
+    format!("[package]\nname = \"x\"\nversion = \"{version}\"\n")
+}
+
+/// On `branch`, made from `from`: write each file (`None` removes it) and commit.
+fn commit_tree(
+    dir: &std::path::Path,
+    branch: &str,
+    from: &str,
+    files: &[(&str, Option<&str>)],
+) -> String {
+    git(dir, &["checkout", "-q", "-B", branch, from]);
+    for (p, c) in files {
+        let path = dir.join(p);
+        match c {
+            Some(text) => {
+                std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+                std::fs::write(&path, text).unwrap();
+            }
+            None => std::fs::remove_file(&path).unwrap(),
+        }
+    }
+    git(dir, &["add", "-A"]);
+    git(dir, &["commit", "-q", "-m", branch]);
+    git(dir, &["rev-parse", "HEAD"])
+}
+
+/// A clone whose base commits a release policy that allocates at landing, a crate at 0.1.0,
+/// an empty registry and a `scripts/derive` that regenerates nothing. `master` commits
+/// `master_policy`, raises the crate to 0.3.0 and adds a file; `topic` is made from base
+/// with `topic`'s files. `origin` is a bare repository holding `topic`.
+struct Allocating {
+    dir: std::path::PathBuf,
+    origin: std::path::PathBuf,
+    master: String,
+    head: String,
+}
+
+fn allocating(master_policy: &str, topic: &[(&str, Option<&str>)]) -> Allocating {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = scratch();
+    git(&dir, &["init", "-q", "-b", "master"]);
+    for (k, v) in [
+        ("user.name", "t"),
+        ("user.email", "t@example.com"),
+        ("commit.gpgsign", "false"),
+    ] {
+        git(&dir, &["config", k, v]);
+    }
+    let manifest = crate_manifest("0.1.0");
+    for (p, c) in [
+        (".ai/manifest.yaml", AI_MANIFEST),
+        (POLICY, LANDING_POLICY),
+        (crate::release::version::MANIFEST, manifest.as_str()),
+        (
+            crate::release::surface::REGISTRY,
+            "{\"capabilities\": []}\n",
+        ),
+        ("scripts/derive", "#!/bin/sh\nexit 0\n"),
+    ] {
+        let path = dir.join(p);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, c).unwrap();
+    }
+    std::fs::set_permissions(
+        dir.join("scripts/derive"),
+        std::fs::Permissions::from_mode(0o755),
+    )
+    .unwrap();
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    let base = git(&dir, &["rev-parse", "HEAD"]);
+    let raised = crate_manifest("0.3.0");
+    let master = commit_tree(
+        &dir,
+        "master",
+        &base,
+        &[
+            (POLICY, Some(master_policy)),
+            (crate::release::version::MANIFEST, Some(raised.as_str())),
+            ("b.txt", Some("b\n")),
+        ],
+    );
+    let head = commit_tree(&dir, "topic", &base, topic);
+    git(&dir, &["checkout", "-q", "master"]);
+    let origin = unique_temp("mj-allocating-origin");
+    git(&origin, &["init", "-q", "--bare"]);
+    git(
+        &dir,
+        &["remote", "add", "origin", &origin.display().to_string()],
+    );
+    git(&dir, &["push", "-q", "origin", "topic"]);
+    Allocating {
+        dir,
+        origin,
+        master,
+        head,
+    }
+}
+
+/// A topic that raises the crate to 0.2.0 beside a change of its own: its merge with master
+/// conflicts on the version line alone.
+fn raised_topic() -> Vec<(&'static str, Option<&'static str>)> {
+    vec![
+        (
+            crate::release::version::MANIFEST,
+            Some("[package]\nname = \"x\"\nversion = \"0.2.0\"\n"),
+        ),
+        ("src/a.rs", Some("pub fn a() {}\n")),
+    ]
+}
+
+/// The assessment of #1 at the fixture's head, decided against its master.
+fn assessed(f: &Allocating) -> PullRequestAssessment {
+    let obs = ForgeObservation {
+        schema: OBSERVATION_SCHEMA,
+        repository: "owner/repo".into(),
+        base: "master".into(),
+        base_sha: f.master.clone(),
+        observed_at: "t0".into(),
+        required_checks: Some(vec!["ci".into()]),
+        review_policy: Some(Default::default()),
+        up_to_date_required: Some(true),
+        merge_methods: Some(vec!["merge".into()]),
+        pull_requests: vec![observed_pr(1, &f.head)],
+        resolved: Default::default(),
+        delete_branch_on_merge: None,
+    };
+    let q = build_queue(&obs, &f.master, |_| RelationToMaster::Behind {
+        behind: 1,
+        authored: vec!["src/a.rs".into()],
+    });
+    let mut a = q.get(1).expect("#1 is assessed").clone();
+    a.head_ref = "topic".into();
+    a.evaluated_against.master_sha = f.master.clone();
+    a.evaluated_against.head_sha = f.head.clone();
+    a
+}
+
+/// Under allocation at landing a merge that conflicts on the version line alone is not the
+/// author's to resolve; with allocation off the same merge is a conflict.
+#[test]
+fn a_version_only_conflict_under_allocation_at_landing_is_not_a_persons() {
+    let f = allocating(LANDING_POLICY, &raised_topic());
+    let r = crate::integration::relation_to_master(&f.dir, &f.master, &f.head);
+    let RelationToMaster::Behind { authored, .. } = &r else {
+        panic!("a version-only conflict was a person's: {r:?}");
+    };
+    assert!(authored.contains(&"src/a.rs".to_string()), "{r:?}");
+    let off = allocating("version: 1\nrelease:\n  allocation: off\n", &raised_topic());
+    assert_eq!(
+        crate::integration::relation_to_master(&off.dir, &off.master, &off.head),
+        RelationToMaster::Conflicting {
+            paths: vec![crate::release::version::MANIFEST.to_string()]
+        }
+    );
+}
+
+/// The refresh resolves the version-only conflict to master's number, allocates the next one,
+/// names it in the commit's trailer and pushes the merge onto the branch it observed.
+#[test]
+fn a_refresh_under_allocation_at_landing_resolves_the_version_and_names_its_number() {
+    let f = allocating(LANDING_POLICY, &raised_topic());
+    let mut forge = drain::ForgeIntegrator {
+        root: &f.dir,
+        lease: None,
+    };
+    let pushed = forge
+        .refresh_branch(&assessed(&f), "master")
+        .expect("the refresh pushes");
+    let message = git(&f.dir, &["log", "-1", "--format=%B", &pushed]);
+    assert!(
+        message.contains(&format!("{}: 0.4.0", crate::integration::allocate::TRAILER)),
+        "{message}"
+    );
+    let manifest = git(
+        &f.dir,
+        &[
+            "show",
+            &format!("{pushed}:{}", crate::release::version::MANIFEST),
+        ],
+    );
+    assert!(manifest.contains("version = \"0.4.0\""), "{manifest}");
+    assert_eq!(git(&f.origin, &["rev-parse", "topic"]), pushed);
+}
+
+/// A master whose committed policy cannot be read refreshes nothing: a head refreshed
+/// without its allocation would land owing a number.
+#[test]
+fn a_refresh_against_an_unreadable_policy_pushes_nothing() {
+    let f = allocating(
+        "version: 1\nrelease:\n  allocation: sometimes\n",
+        &raised_topic(),
+    );
+    let mut forge = drain::ForgeIntegrator {
+        root: &f.dir,
+        lease: None,
+    };
+    let err = forge.refresh_branch(&assessed(&f), "master").unwrap_err();
+    assert!(err.contains("could not be read"), "{err}");
+    assert_eq!(git(&f.origin, &["rev-parse", "topic"]), f.head);
+}
+
+/// An allocation that cannot be decided — the head carries no registry to judge — aborts
+/// the merge and pushes nothing.
+#[test]
+fn a_refresh_whose_allocation_cannot_be_decided_pushes_nothing() {
+    let f = allocating(
+        LANDING_POLICY,
+        &[
+            (crate::release::surface::REGISTRY, None),
+            ("src/a.rs", Some("pub fn a() {}\n")),
+        ],
+    );
+    let mut forge = drain::ForgeIntegrator {
+        root: &f.dir,
+        lease: None,
+    };
+    let err = forge.refresh_branch(&assessed(&f), "master").unwrap_err();
+    assert!(err.contains("could not be allocated"), "{err}");
+    assert_eq!(git(&f.origin, &["rev-parse", "topic"]), f.head);
+}
+
+// ---------------------------------------------------------------- the lease lives by progress
+
+/// The executor tells its lease it advanced exactly when it records a step of the queue's
+/// own — a plan, an act, an outcome, a pull request becoming or stopping being actionable —
+/// and never for taking the lease, observing, or finding nothing to do (I3991).
+#[test]
+fn only_queue_advances_beat() {
+    use drain::IntegrationAction as A;
+    let idle: Vec<A> = ALL_ACTIONS
+        .into_iter()
+        .filter(|a| !a.advances_queue())
+        .collect();
+    assert_eq!(
+        idle,
+        [
+            A::LeaseAcquired,
+            A::LeaseReleased,
+            A::ContinuousStarted,
+            A::ContinuousStopped,
+            A::Observed,
+            A::Idle,
+            A::FailureAcknowledged,
+            A::ObserveFailed,
+            A::LeaseLost,
+        ]
+    );
+
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![1]);
+    assert_eq!(
+        w.progressed,
+        [
+            "1 pull request(s) became or stopped being actionable",
+            "selected #1",
+            "merge_attempted #1",
+            "merge_succeeded #1",
+        ]
+    );
+    assert_eq!(
+        w.holds_asked,
+        ["merging #1"],
+        "asked once, before the merge"
+    );
+
+    // an executor that finds nothing to do, again and again, advances nothing
+    for _ in 0..3 {
+        let r = drain::drain(&root, &mut w, 1, false, false).unwrap();
+        assert!(
+            matches!(r.steps[..], [DrainStepOutcome::Idle { .. }]),
+            "{r:?}"
+        );
+    }
+    assert_eq!(w.progressed.len(), 4, "{:?}", w.progressed);
+    // a pull request that becomes, and then stops being, actionable is the queue moving
+    w.open.push(sim(2));
+    drain::drain(&root, &mut w, 1, false, false).unwrap();
+    w.open[0].labels.push("hold".into());
+    drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(
+        w.progressed[4..],
+        [
+            "1 pull request(s) became or stopped being actionable",
+            "1 pull request(s) became or stopped being actionable",
+        ]
+    );
+    // nor does a dry run
+    let mut dry = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    drain::drain(&scratch(), &mut dry, 1, true, false).unwrap();
+    assert!(dry.progressed.is_empty() && dry.holds_asked.is_empty());
+}
+
+/// An executor whose claim another was admitted over while it advanced nothing acts on
+/// nothing: no merge, no refresh, no repair and no closure reaches the forge or a branch, and
+/// the trail says why.
+#[test]
+fn an_overtaken_executor_merges_nothing() {
+    let lost = || Some("the integration claim s1/c-1 is released on the mesh".to_string());
+
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        lease_lost: lost(),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    let [DrainStepOutcome::LeaseLost { pr: 1, reason }] = &report.steps[..] else {
+        panic!("{report:?}");
+    };
+    assert!(reason.contains("released"), "{reason}");
+    assert!(
+        report.stopped.contains("integration lease was lost"),
+        "{report:?}"
+    );
+    assert_eq!((w.merge_calls, w.merged.len()), (0, 0));
+    let trail = trail_actions(&root);
+    assert_eq!(
+        trail.last().map(String::as_str),
+        Some("lease_lost"),
+        "{trail:?}"
+    );
+    assert!(!trail.iter().any(|a| a == "merge_attempted"), "{trail:?}");
+
+    // a refresh is not pushed either
+    let root = scratch();
+    let mut w = one_behind();
+    w.lease_lost = lost();
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(
+        matches!(out, DrainStepOutcome::LeaseLost { pr: 1, .. }),
+        "{out:?}"
+    );
+    assert_eq!(w.refresh_calls, 0);
+    assert_eq!(w.holds_asked, ["bringing master into #1"]);
+    assert!(!trail_actions(&root)
+        .iter()
+        .any(|a| a == "refresh_attempted"));
+
+    // nor a person's repair, which is refused as unusable
+    let root = scratch();
+    let mut w = repair_world();
+    w.lease_lost = lost();
+    let e = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap_err();
+    assert!(
+        e.contains("was not repaired") && e.contains("released"),
+        "{e}"
+    );
+    assert_eq!(w.refresh_calls, 0);
+    assert_eq!(trail_actions(&root), ["repair_selected", "lease_lost"]);
+
+    // nor a closure
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        lease_lost: lost(),
+        ..Default::default()
+    };
+    w.open[0].redundant_after = Some(99);
+    w.merged = vec![99];
+    let e = drain::cleanup(&root, &mut w, true).unwrap_err();
+    assert!(e.contains("was not closed"), "{e}");
+    assert_eq!(w.close_calls, 0);
+    assert_eq!(trail_actions(&root), ["lease_lost"]);
+}
+
+/// A continuous drain whose claim was lost ends there: another executor holds the base now,
+/// and this one does not wait for its next cycle to find out again.
+#[test]
+fn a_continuous_drain_ends_when_its_claim_is_lost() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        lease_lost: Some("the integration claim s1/c-1 is suspended on the mesh".into()),
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let mut waits = 0usize;
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(None),
+        &stop,
+        &mut |_| waits += 1,
+        &mut |_, _| {},
+    );
+    assert_eq!(report.cycles, 1);
+    assert!(report.merged.is_empty());
+    assert!(report.failure.is_none(), "{report:?}");
+    assert!(
+        report.stopped.contains("integration lease was lost"),
+        "{report:?}"
+    );
+    assert_eq!(waits, 0, "no cycle is waited for after the loss");
+    assert_eq!(w.merge_calls, 0);
+    let trail = trail_actions(&root);
+    assert_eq!(trail.last().map(String::as_str), Some("continuous_stopped"));
+    assert!(trail.iter().any(|a| a == "lease_lost"), "{trail:?}");
+}
+
+/// An observer that meets the record emptied by a renewal reads it again; a record that never
+/// reads as a holder is shown, with no holder, after the last attempt.
+#[test]
+fn a_record_that_never_reads_as_a_holder_is_shown_without_one() {
+    let root = scratch();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, "").unwrap();
+    let read = drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .unwrap();
+    assert!(read.holder.is_none(), "{read:?}");
+}
+
+/// Progress rewrites the lease's record with a newer `progressed_at`, and the record is still
+/// the lease's after it: renewed, kept alive, and removed when the lease is given back — the
+/// keep-alive never writes back the record a progress replaced.
+/// I4576: a reader that meets the record while its holder rewrites it every millisecond, and
+/// while a progress changes its length, always reads a holder: the record is never empty and
+/// never a prefix of itself.
+#[test]
+fn a_record_rewritten_under_a_reader_always_reads_a_holder() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let _alive = lease.keep_alive_every(std::time::Duration::from_millis(1));
+    for n in 0..2000usize {
+        if n % 50 == 0 {
+            // a longer, then a shorter record: the padding and the cut are both met
+            lease.progressed(&"phase ".repeat(1 + (n / 50) % 7));
+        }
+        let state = drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .expect("the lease file is there");
+        assert!(
+            state.holder.is_some(),
+            "read {n} met a lease without a holder"
+        );
+    }
+}
+
+#[test]
+fn progress_rewrites_the_record_and_the_lease_is_still_its_holders() {
+    let root = scratch();
+    // the ttl is the repository's mesh declaration's, read from its files
+    let mesh = root.join(".ai/repo/mesh");
+    std::fs::create_dir_all(&mesh).unwrap();
+    std::fs::write(
+        mesh.join("m.yaml"),
+        "enabled: true\ncooperation:\n  session_ttl_seconds: 120\n",
+    )
+    .unwrap();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let holder = || {
+        drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .holder
+            .unwrap()
+    };
+    let taken = holder();
+    assert_eq!(taken.progressed_at, Some(taken.since));
+    assert_eq!(taken.progress_ttl_seconds, Some(120));
+
+    let _alive = lease.keep_alive_every(std::time::Duration::from_millis(20));
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    lease.progressed("selected #1");
+    let after = holder();
+    assert!(
+        after.progressed_at > taken.progressed_at,
+        "{after:?} after {taken:?}"
+    );
+    assert_eq!((after.since, after.pid), (taken.since, taken.pid));
+    // the keep-alive runs on with the new record, and the lease is still this executor's
+    std::thread::sleep(std::time::Duration::from_millis(200));
+    assert_eq!(holder().progressed_at, after.progressed_at);
+    lease.renew().expect("still held");
+    drop(_alive);
+
+    // a lease guarding this clone alone holds whatever it is asked
+    assert!(lease.holds("merging #1").is_ok());
+    // a changed verdict between two observations is progress; the first one only marks
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    w.open[0].ci_pending = true;
+    let pending = w.queue();
+    lease.observed(&pending);
+    lease.observed(&pending);
+    let before = holder().progressed_at;
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    w.open[0].ci_pending = false;
+    lease.observed(&w.queue());
+    assert!(
+        holder().progressed_at > before,
+        "a check that passed is progress"
+    );
+
+    drop(lease);
+    assert!(drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .is_none());
+    let released = drain::events(&root).pop().unwrap();
+    assert_eq!(released.action.as_str(), "lease_released");
+    assert!(
+        released.detail.contains("\"progressed_at\""),
+        "{}",
+        released.detail
+    );
+
+    // the rule off in the declaration: no ttl is carried
+    std::fs::write(
+        mesh.join("m.yaml"),
+        "cooperation:\n  session_ttl_seconds: 0\n",
+    )
+    .unwrap();
+    assert_eq!(drain::progress_ttl(&root), None);
+    std::fs::remove_dir_all(&mesh).unwrap();
+    assert_eq!(
+        drain::progress_ttl(&root),
+        Some(crate::mesh::config::DEFAULT_SESSION_TTL)
+    );
+}
+
+/// The ttl is read from the mesh declaration's YAML files alone: a note or a file without
+/// an extension beside it says nothing, however it reads.
+#[test]
+fn the_progress_ttl_is_read_from_the_yaml_files_of_the_declaration_alone() {
+    let root = scratch();
+    let mesh = root.join(".ai/repo/mesh");
+    std::fs::create_dir_all(&mesh).unwrap();
+    let says = "cooperation:\n  session_ttl_seconds: 5\n";
+    std::fs::write(mesh.join("NOTES.md"), says).unwrap();
+    std::fs::write(mesh.join("README"), says).unwrap();
+    assert_eq!(
+        drain::progress_ttl(&root),
+        Some(crate::mesh::config::DEFAULT_SESSION_TTL)
+    );
+    std::fs::write(
+        mesh.join("mesh.yml"),
+        "cooperation:\n  session_ttl_seconds: 90\n",
+    )
+    .unwrap();
+    assert_eq!(drain::progress_ttl(&root), Some(90));
+}
+
+/// A progress whose record cannot be written leaves the record and the lease as they were:
+/// the lease still renews, because what it holds is still what the file says.
+#[test]
+fn a_progress_the_record_cannot_take_leaves_the_lease_as_it_was() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    let before = std::fs::read_to_string(&path).unwrap();
+    // a second later, so that the progress would write another record
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    drain::FAIL_WRITE.with(|n| n.set(1));
+    lease.progressed("selected #1");
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), before);
+    lease.renew().expect("still the lease's record");
+}
+
+/// A lease taken over by another holder is not rewritten by its old holder's progress: the
+/// loss is said at its next renewal, not overwritten here.
+#[test]
+fn a_progress_after_the_lease_was_lost_writes_nothing() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::write(&path, "another holder").unwrap();
+    lease.progressed("selected #1");
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), "another holder");
+    assert!(lease.renew().unwrap_err().contains("lease was lost"));
+}
+
+/// [`drain::recorded`] records every event, and tells the integrator only of those that
+/// advance the queue: taking the lease, idling or losing it is no progress.
+#[test]
+fn an_event_that_advances_nothing_is_recorded_and_said_to_nobody() {
+    let root = scratch();
+    let mut w = World::default();
+    for action in [
+        drain::IntegrationAction::Idle,
+        drain::IntegrationAction::LeaseLost,
+    ] {
+        drain::recorded(&root, &mut w, drain::IntegrationEvent::of(action)).unwrap();
+    }
+    assert!(w.progressed.is_empty(), "{:?}", w.progressed);
+    assert_eq!(trail_actions(&root), ["idle", "lease_lost"]);
+}
+
+/// A record pull request is not closed and reopened by an executor whose lease was lost:
+/// asked first, refused, and the trail says why.
+#[test]
+fn a_record_is_not_reopened_by_an_executor_that_lost_its_lease() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        lease_lost: Some("the integration claim s1/c-1 is suspended on the mesh".into()),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(&out, DrainStepOutcome::LeaseLost { pr: 7, reason } if reason.contains("suspended")),
+        "{out:?}"
+    );
+    assert_eq!(w.reopen_calls, 0);
+    assert_eq!(w.holds_asked, ["reopening #7"]);
+    let trail = trail_actions(&root);
+    assert_eq!(trail.last().map(String::as_str), Some("lease_lost"));
+    assert!(!trail.iter().any(|a| a == "reopen_attempted"), "{trail:?}");
+}
+
+/// A lost lease the trail cannot record is an error, and the act it stopped is still not
+/// taken: no merge, reopen, refresh, repair or closure reaches the forge or a branch.
+#[test]
+fn a_lost_lease_the_trail_cannot_record_is_an_error_and_nothing_is_done() {
+    let lost = |root: &std::path::Path, w: World| World {
+        lease_lost: Some("the integration claim s1/c-1 is released on the mesh".into()),
+        trail_breaks_with_the_lease: Some(trail_of(root)),
+        ..w
+    };
+
+    // a merge
+    let root = scratch();
+    let mut w = lost(
+        &root,
+        World {
+            open: vec![sim(1)],
+            ..Default::default()
+        },
+    );
+    assert!(drain::step(&root, &mut w, false, false).is_err());
+    assert_eq!((w.holds_asked.len(), w.merge_calls), (1, 0));
+
+    // a record's reopening
+    let root = scratch();
+    let mut w = lost(
+        &root,
+        World {
+            open: vec![record_sim(7)],
+            record_reopenable: BTreeSet::from([7]),
+            ..Default::default()
+        },
+    );
+    assert!(drain::step(&root, &mut w, false, false).is_err());
+    assert_eq!((w.holds_asked.len(), w.reopen_calls), (1, 0));
+
+    // bringing master into a branch
+    let root = scratch();
+    let mut w = lost(&root, one_behind());
+    assert!(drain::step(&root, &mut w, false, true).is_err());
+    assert_eq!((w.holds_asked.len(), w.refresh_calls), (1, 0));
+
+    // a person's repair
+    let root = scratch();
+    let mut w = lost(&root, repair_world());
+    assert!(repair::apply(&root, &mut w, &RepairTarget::Number(1)).is_err());
+    assert_eq!((w.holds_asked.len(), w.refresh_calls), (1, 0));
+
+    // a closure
+    let root = scratch();
+    let mut redundant = sim(1);
+    redundant.redundant_after = Some(99);
+    let mut w = lost(
+        &root,
+        World {
+            open: vec![redundant],
+            merged: vec![99],
+            ..Default::default()
+        },
+    );
+    assert!(drain::cleanup(&root, &mut w, true).is_err());
+    assert_eq!((w.holds_asked.len(), w.close_calls), (1, 0));
+}
+
+/// An executor that runs without a lease has nothing to beat for its progress and holds
+/// whatever it is asked; one with a lease asks it.
+#[test]
+fn a_forge_integrator_without_a_lease_beats_nothing_and_holds() {
+    let root = scratch();
+    let mut forge = drain::ForgeIntegrator {
+        root: &root,
+        lease: None,
+    };
+    forge.progressed("selected #1");
+    assert!(forge.holds("merging #1").is_ok());
+    assert!(drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .is_none());
+    assert!(drain::events(&root).is_empty());
+
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let mut forge = drain::ForgeIntegrator {
+        root: &root,
+        lease: Some(&lease),
+    };
+    forge.progressed("selected #1");
+    assert!(forge.holds("merging #1").is_ok());
 }

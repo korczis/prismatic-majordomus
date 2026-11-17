@@ -64,6 +64,31 @@ message Header {
   Provenance provenance = 12;
 
   repeated Relation relations = 13;
+
+  // What an observation is about, as the worker wrote its subject: a repository path, or
+  // `capability:`, `rule:`, `command:`, `gate:` with an identifier. Never resolved as a
+  // reference, so a path renamed or deleted since leaves the record valid. Present on the
+  // candidates derived from `observation.recorded`; `knowledge candidates` groups by it, so
+  // the same thing observed in several episodes reads as one group (ADR 0118).
+  string about = 14 [(majordomus.pattern) = "^((capability|rule|command|gate):[A-Za-z0-9][A-Za-z0-9._/@-]*|[A-Za-z0-9._][A-Za-z0-9._/-]*)$"];
+
+  // Which owner should look first, derived from `about`'s structure and never from the
+  // wording (ADR 0118). It decides nothing.
+  Route route = 15;
+}
+
+// platform: the tool itself — a command, a capability, a vendored rule, or the tool's own
+// share/ inside its own repository. enforcement: a project rule or a gate. generator: a path
+// the scope declares generated or the repository marks merge=derived. documentation: a path
+// under docs/. project: anything else, which in a repository that adopted the tool is the
+// project's own.
+enum Route {
+  ROUTE_UNSPECIFIED = 0;
+  ROUTE_PLATFORM = 1 [(majordomus.value) = "platform"];
+  ROUTE_ENFORCEMENT = 2 [(majordomus.value) = "enforcement"];
+  ROUTE_GENERATOR = 3 [(majordomus.value) = "generator"];
+  ROUTE_DOCUMENTATION = 4 [(majordomus.value) = "documentation"];
+  ROUTE_PROJECT = 5 [(majordomus.value) = "project"];
 }
 
 // fact: something true of this repository now. convention: how it is done here.
@@ -108,7 +133,8 @@ message Provenance {
 
   // Typed references to the evidence: `decision:<task-id>`, `session:<id>`,
   // `task:<task-id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`,
-  // `test:<repository-relative path>`. A file or test reference must resolve in the tree; a
+  // `test:<repository-relative path>`, optionally pinned as `file:<path>@<commit>`. A file or
+  // test reference resolves in the tree, or in git history once the file is deleted; a
   // decision, session, task or commit reference resolves against the ledger, the session
   // records and git, which `majordomus knowledge check` and `knowledge_base.record` do. A
   // decision and a question carry no identity of their own in the ledger, so the task they

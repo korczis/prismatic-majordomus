@@ -1,0 +1,28 @@
+id: I2911
+milestone: idd-reads-at-a-glance
+title: "The workspace is a list and its chosen intent side by side"
+slug: the-workspace-is-master-and-detail
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Lay the workspace out as master and detail at 1024 px and wider: the intent list on the left, the chosen intent on the right and sticky; stacked below that width."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: one column of panels is 2875 px tall on a desktop and 6145 px on a phone, the list far from the intent it opens."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "One stacked column."
+desired_state: "Master and detail."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "share/ui/src/ui.css"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "At 1280 px the intent list and the chosen intent are both in the first viewport"
+validation:
+  - "majordomus plan validate"
+  - "scripts/ui audit --only /ui/idd"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

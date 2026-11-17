@@ -22,4 +22,15 @@ validation:
 evidence_required:
   - "monitor_fold_unit_tests"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-14T08:02:52Z
+started_at: 2026-10-14T08:02:46Z
+started_event: sha256:c999fc43beff88980fb517b6ab04dfcc0dd71cb1c52f0c99892f8cca4dbeaaff
+completed_at: 2026-10-14T08:02:52Z
+completed_event: sha256:e5ae1498dcf876c09ca98ee9cfdf2fa958a088e1913f331a3f4c8efa3c02680a
+evidence:
+  - covers: monitor_fold_unit_tests
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor"
+    result: "test result: ok. 64 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:50Z

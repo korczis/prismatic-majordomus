@@ -63,6 +63,10 @@ pub struct MeshConfig {
     /// Rendezvous endpoints, for networks multicast cannot cross.
     #[serde(default)]
     pub rendezvous: RendezvousConfig,
+    /// The tailnet: every online Tailscale peer is asked as a rendezvous, so a machine
+    /// joining the tailnet is found with no address written by hand.
+    #[serde(default)]
+    pub tailscale: TailscaleConfig,
     /// Who to trust.
     #[serde(default)]
     pub trust: TrustConfig,
@@ -114,14 +118,25 @@ pub struct CooperationConfig {
     /// anyone.
     #[serde(default = "default_expiry")]
     pub expiry_seconds: u64,
-    /// Endpoints (`http://host:port`) to dial whether or not discovery heard them: a
-    /// static fleet, or a segment neither multicast nor a rendezvous reaches.
+    /// Endpoints (`https://host[:port]` or `http://host:port`) to dial whether or not
+    /// discovery heard them: a static fleet, or a segment neither multicast nor a rendezvous
+    /// reaches.
     #[serde(default)]
     pub seeds: Vec<String>,
     /// The repository's mesh identity, declared rather than derived from its root commits:
     /// what a shallow clone needs, and what separates two repositories sharing a history.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repository: Option<String>,
+    /// Seconds a session holding an exclusive claim may make no progress — no real work,
+    /// no `mesh beat` — before its exclusive claims are suspended: still held, refusing
+    /// nobody until it beats again; its session is not closed. 0 turns the rule off (I3990).
+    /// A runtime's beat proves the runtime is up and nothing about the worker behind it:
+    /// the 5d executor held the integration lease for hours waiting on nobody while its
+    /// server beat (2026-10-22). At least four heartbeats, so a working session is beaten
+    /// for several times inside one ttl, and at most an hour. Left out of the repository's
+    /// declaration on purpose: an older executable refuses a key it does not know.
+    #[serde(default = "default_session_ttl")]
+    pub session_ttl_seconds: u64,
 }
 
 impl Default for CooperationConfig {
@@ -132,8 +147,19 @@ impl Default for CooperationConfig {
             expiry_seconds: DEFAULT_EXPIRY,
             seeds: Vec::new(),
             repository: None,
+            session_ttl_seconds: DEFAULT_SESSION_TTL,
         }
     }
+}
+
+/// The default seconds a claiming session may make no progress before its exclusive claims
+/// are suspended:
+/// ten minutes — longer than any one tool call a working session waits on, far shorter
+/// than the hours a session stuck on a dialog used to hold a scope (I3990).
+pub const DEFAULT_SESSION_TTL: u64 = 600;
+
+fn default_session_ttl() -> u64 {
+    DEFAULT_SESSION_TTL
 }
 
 /// The default seconds between cooperation heartbeats.
@@ -225,15 +251,16 @@ impl Default for BroadcastConfig {
     }
 }
 
-/// Rendezvous settings: other Majordomus servers to register with. Plain HTTP on a
-/// private network; there is no TLS in this executable, and the protocol assumes none —
-/// candidates verify end-to-end by signature, a poisoned rendezvous can withhold nodes
-/// but not invent them.
+/// Rendezvous settings: other Majordomus servers to register with. An `https://` hub is
+/// reached over TLS with its certificate verified; an `http://` hub only at an address that is
+/// loopback, private or an overlay's, because the client refuses cleartext to a public one
+/// (ADR 0220). Either way candidates verify end-to-end by signature: a poisoned rendezvous can
+/// withhold nodes but not invent them.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct RendezvousConfig {
-    /// Base URLs, `http://host:port`. Several endpoints are several independent
-    /// sources; one failing never stops another.
+    /// Base URLs, `https://host[:port]` or `http://host:port` (a bare `host:port` is http).
+    /// Several endpoints are several independent sources; one failing never stops another.
     #[serde(default)]
     pub endpoints: Vec<String>,
     /// Seconds between registrations per endpoint (backoff stretches it on failure).
@@ -248,6 +275,57 @@ impl Default for RendezvousConfig {
             interval_seconds: rendezvous_interval(),
         }
     }
+}
+
+/// Tailscale discovery: the peers `tailscale status --json` lists online are asked as
+/// rendezvous at `http://<tailnet address>:<port>`. On by default; a machine without the
+/// Tailscale CLI reports the provider failed and the others run on. It proposes addresses
+/// only: what links is still decided by the signed answers and the trust list.
+///
+/// ```
+/// use majordomus_cli::mesh::config::TailscaleConfig;
+///
+/// let default = TailscaleConfig::default();
+/// assert!(default.enabled);
+/// assert_eq!((default.port, default.command.as_str()), (8791, "tailscale"));
+/// let stated: TailscaleConfig =
+///     serde_json::from_value(serde_json::json!({ "enabled": false })).unwrap();
+/// assert!(!stated.enabled && stated.interval_seconds == default.interval_seconds);
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TailscaleConfig {
+    /// Whether the tailnet is asked at all.
+    #[serde(default = "yes")]
+    pub enabled: bool,
+    /// The port a peer's Majordomus server answers `mesh.register` on.
+    #[serde(default = "tailscale_port")]
+    pub port: u16,
+    /// Seconds between two readings of the tailnet and two registrations per peer.
+    #[serde(default = "rendezvous_interval")]
+    pub interval_seconds: u64,
+    /// The Tailscale CLI to ask; `tailscale` on the PATH unless stated.
+    #[serde(default = "tailscale_command")]
+    pub command: String,
+}
+
+impl Default for TailscaleConfig {
+    fn default() -> Self {
+        TailscaleConfig {
+            enabled: true,
+            port: tailscale_port(),
+            interval_seconds: rendezvous_interval(),
+            command: tailscale_command(),
+        }
+    }
+}
+
+fn tailscale_port() -> u16 {
+    8791
+}
+
+fn tailscale_command() -> String {
+    "tailscale".into()
 }
 
 /// Trust settings: the policy, and the public keys trusted regardless of it.
@@ -286,14 +364,19 @@ fn rendezvous_interval() -> u64 {
 
 impl CooperationConfig {
     /// Refuse the settings that cannot work: a zero heartbeat, an expiry under three
-    /// heartbeats (one lost round would expire a live runtime), a seed that is not
-    /// `http://host:port`, an empty or oversized declared repository.
+    /// heartbeats (one lost round would expire a live runtime), a seed that is neither
+    /// `https://host[:port]` nor `http://host:port`, an empty or oversized declared repository.
     ///
     /// ```
     /// use majordomus_cli::mesh::config::CooperationConfig;
     /// assert!(CooperationConfig::default().validate().is_ok());
     /// let flapping = CooperationConfig { heartbeat_seconds: 10, expiry_seconds: 15, ..Default::default() };
     /// assert!(flapping.validate().is_err());
+    /// // a progress ttl a working session could lapse inside, and one that never lapses
+    /// let racing = CooperationConfig { session_ttl_seconds: 10, ..Default::default() };
+    /// assert!(racing.validate().is_err());
+    /// let off = CooperationConfig { session_ttl_seconds: 0, ..Default::default() };
+    /// assert!(off.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), String> {
         if self.heartbeat_seconds == 0 {
@@ -307,15 +390,29 @@ impl CooperationConfig {
             ));
         }
         for seed in &self.seeds {
-            let authority = seed.strip_prefix("http://").unwrap_or_default();
-            if authority.is_empty() || !authority.contains(':') || authority.contains('/') {
-                return Err(format!("cooperation seed '{seed}' is not http://host:port"));
+            if !endpoint_shape(seed, false) {
+                return Err(format!(
+                    "cooperation seed '{seed}' is not https://host[:port] or http://host:port"
+                ));
             }
         }
         if let Some(repository) = &self.repository {
             if repository.trim().is_empty() || repository.len() > 128 {
                 return Err("cooperation.repository is empty or over 128 characters".into());
             }
+        }
+        let ttl = self.session_ttl_seconds;
+        if ttl != 0 && ttl < 4 * self.heartbeat_seconds {
+            return Err(format!(
+                "cooperation.session_ttl_seconds {ttl} is under four heartbeats ({}): a working session would lapse between two beats",
+                4 * self.heartbeat_seconds
+            ));
+        }
+        if ttl > u64::from(super::journal::MAX_SESSION_TTL_SECONDS) {
+            return Err(format!(
+                "cooperation.session_ttl_seconds {ttl} is over {} (an hour)",
+                super::journal::MAX_SESSION_TTL_SECONDS
+            ));
         }
         Ok(())
     }
@@ -368,8 +465,51 @@ impl MeshConfig {
             .cooperation
             .validate()
             .map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
+        if let Some(endpoint) = parsed
+            .rendezvous
+            .endpoints
+            .iter()
+            .find(|e| !endpoint_shape(e, true))
+        {
+            return Err(MeshError::Config(format!(
+                "{uri}: rendezvous endpoint '{endpoint}' is not https://host[:port] or http://host:port"
+            )));
+        }
         Ok(parsed)
     }
+}
+
+/// Whether `value` is an endpoint the mesh client can dial: `https://host[:port]`, where the
+/// host may be a name and the port defaults to 443, or `http://host:port`, and — where
+/// `bare` allows it, as a rendezvous endpoint always has — `host:port` read as http. No path,
+/// no other scheme. Whether an http endpoint's address may carry cleartext is the client's
+/// question, asked at every dial ([`crate::mcp::bridge::transport`]): an address is not a
+/// shape, and a name resolves differently on different days.
+///
+/// ```
+/// use majordomus_cli::mesh::config::endpoint_shape;
+/// assert!(endpoint_shape("https://hub.example", false));
+/// assert!(endpoint_shape("https://hub.example:8443", false));
+/// assert!(endpoint_shape("http://10.0.0.2:8742", false));
+/// assert!(!endpoint_shape("http://10.0.0.2", false), "an http endpoint names its port");
+/// assert!(!endpoint_shape("10.0.0.2:8742", false));
+/// assert!(endpoint_shape("10.0.0.2:8742", true));
+/// assert!(!endpoint_shape("ws://hub.example:80", true));
+/// assert!(!endpoint_shape("https://hub.example/mesh", false));
+/// ```
+pub fn endpoint_shape(value: &str, bare: bool) -> bool {
+    let (tls, authority) = if let Some(rest) = value.strip_prefix("https://") {
+        (true, rest)
+    } else if let Some(rest) = value.strip_prefix("http://") {
+        (false, rest)
+    } else if bare && !value.contains("://") {
+        (false, value)
+    } else {
+        return false;
+    };
+    !authority.contains('/')
+        && crate::mcp::bridge::split_authority(authority)
+            .is_ok_and(|(_, port)| tls || port.is_some())
 }
 
 #[cfg(test)]
@@ -420,6 +560,32 @@ mod tests {
         );
     }
 
+    /// A progress ttl a working session could lapse inside — under four heartbeats, so one
+    /// lost round between two beats would suspend its claims — and one past the hour a beat
+    /// may carry are each refused, naming the bound; zero turns the rule off (I3990).
+    #[test]
+    fn a_session_ttl_under_four_heartbeats_or_over_an_hour_is_refused() {
+        let with = |session_ttl_seconds: u64| CooperationConfig {
+            heartbeat_seconds: 5,
+            expiry_seconds: 15,
+            session_ttl_seconds,
+            ..CooperationConfig::default()
+        };
+        let racing = with(19).validate().unwrap_err();
+        assert!(
+            racing.contains("session_ttl_seconds 19 is under four heartbeats (20)"),
+            "{racing}"
+        );
+        assert!(with(20).validate().is_ok(), "four heartbeats is enough");
+        let endless = with(3601).validate().unwrap_err();
+        assert!(
+            endless.contains("session_ttl_seconds 3601 is over 3600 (an hour)"),
+            "{endless}"
+        );
+        assert!(with(3600).validate().is_ok(), "an hour is the bound itself");
+        assert!(with(0).validate().is_ok(), "zero turns the rule off");
+    }
+
     #[test]
     fn a_minimal_declaration_parses_with_safe_defaults() {
         let config = MeshConfig::parse(&object(serde_json::json!({
@@ -453,5 +619,74 @@ mod tests {
             "multicast": {"interval_seconds": 0}
         })))
         .is_err());
+    }
+
+    #[test]
+    fn https_seeds_and_endpoints_are_accepted_by_host_name_and_other_schemes_are_refused() {
+        let declaration = |seeds: serde_json::Value, endpoints: serde_json::Value| {
+            MeshConfig::from_metadata(
+                &serde_json::json!({
+                    "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
+                    "rendezvous": { "endpoints": endpoints },
+                    "cooperation": { "seeds": seeds }
+                }),
+                "master:m.yaml",
+            )
+        };
+        let accepted = declaration(
+            serde_json::json!([
+                "https://hub.example",
+                "https://hub.example:8443",
+                "http://10.0.0.2:8742"
+            ]),
+            serde_json::json!([
+                "https://hub.example",
+                "http://192.168.100.30:8791",
+                "127.0.0.1:8791",
+                "http://[::1]:8791"
+            ]),
+        )
+        .unwrap();
+        assert_eq!(accepted.cooperation.seeds.len(), 3);
+        assert_eq!(accepted.rendezvous.endpoints.len(), 4);
+        // a public http hub is a shape the declaration accepts and the client refuses to dial
+        assert!(declaration(
+            serde_json::json!([]),
+            serde_json::json!(["http://203.0.113.5:8791"])
+        )
+        .is_ok());
+
+        let refused = |seeds: serde_json::Value, endpoints: serde_json::Value| {
+            declaration(seeds, endpoints).unwrap_err().to_string()
+        };
+        for seed in [
+            "ws://hub.example:80",
+            "10.0.0.2:8742",
+            "http://10.0.0.2",
+            "https://hub.example/mesh",
+            "https://:443",
+        ] {
+            let text = refused(serde_json::json!([seed]), serde_json::json!([]));
+            assert!(
+                text.contains(&format!(
+                    "cooperation seed '{seed}' is not https://host[:port] or http://host:port"
+                )),
+                "{text}"
+            );
+        }
+        for endpoint in [
+            "ftp://hub.example:21",
+            "http://hub.example",
+            "https://hub.example:0",
+            "http://10.0.0.2:8791/x",
+        ] {
+            let text = refused(serde_json::json!([]), serde_json::json!([endpoint]));
+            assert!(
+                text.contains(&format!(
+                    "master:m.yaml: rendezvous endpoint '{endpoint}' is not https://host[:port]"
+                )),
+                "{text}"
+            );
+        }
     }
 }

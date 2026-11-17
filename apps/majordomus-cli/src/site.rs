@@ -365,7 +365,7 @@ pub struct BenchmarksView {
 pub struct TargetView {
     /// `<id>|<transport>|<case>` or `system.<transport>.<name>`.
     pub key: String,
-    /// `capability` or `system`.
+    /// `capability`, `system` or `page`.
     pub kind: &'static str,
     /// The transport.
     pub transport: String,
@@ -658,6 +658,17 @@ pub fn dataset(
                 cached: false,
                 tool: None,
                 route: None,
+            },
+            TargetKind::Page { route, .. } => TargetView {
+                key: t.key.clone(),
+                kind: "page",
+                transport: crate::bench::Transport::Http.name().to_string(),
+                id: None,
+                module: "system".into(),
+                case: None,
+                cached: true,
+                tool: None,
+                route: Some(format!("GET {route}")),
             },
         })
         .collect();

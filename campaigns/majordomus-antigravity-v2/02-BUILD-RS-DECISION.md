@@ -1,0 +1,3 @@
+# Phase 02: Cargo build-time integration decision and implementation
+
+Read master prompt. Profile current builds and dependency graph; write a measurable go/no-go decision for build-time embedding. If worthwhile, implement minimal build-safe pure generator and small `build.rs` writing exclusively into `OUT_DIR`, accurate rerun-if-changed inputs, no recursion into Cargo, CLI, git, network or runtime. Include emitted module/bytes in consuming crate. Test clean/offline/cross-target behavior where available, incremental rebuild matrix, read-only sources, and no tracked-file changes. If not worthwhile, retain runtime derivation and produce decision note explaining cost/benefit. Never silently turn standard builds into repository mutation.

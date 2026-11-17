@@ -1,7 +1,7 @@
 +++
 title = "majordomus web report benchmarks"
 description = "The benchmark run: a results document, or the accepted baseline"
-weight = 26
+weight = 27
 [extra]
 route = "/docs/cli/web/report/benchmarks/"
 command = "majordomus web report benchmarks"

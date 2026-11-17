@@ -1,0 +1,32 @@
+id: I3938
+milestone: ci-critical-path
+title: "The rustdoc composition case proves its composition on a small site, not on the whole one"
+slug: the-rustdoc-composition-case-builds-a-small-site
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make test/cases/486_rustdoc_composition.sh prove the same relations (the topology composes the reference, the producer's absence is refused naming it, a second surface only the clone's topology declares is composed with no script changed, one path has one owner, and scripts/site-check refuses a build that lost the composition from sections 13m, 13d and 6) on a clone whose site is built in the source language alone, so that no build derives the whole second-language copy of the site."
+why: "The case cost 4017 s on CI run 39762797718 (recorded 642 s on 2026-10-10) and is the slowest case of the suite, so it is the floor under every suite shard: no shard can finish faster than it. It runs scripts/site-build --no-data about ten times over a clone of the checkout, and each build renders the whole site and then derives a copy of it for every other declared language (`== languages`, scripts/lib/site-i18n.mjs, ADR 0218), although the case judges only the composition of published static surfaces from the committed topology (ADR 0086) and site-check's refusals."
+current_state: "Measured on one loaded machine (load average 25-100) on 2026-10-22: one full scripts/site-build --no-data of the clone took 625 s and published 5340 routes; the `== languages` step alone, rerun over that tree, took 755 s (6316 pages under /cs/), against 6 s for zola, 8 s for the docs index, 12 s for the diagrams and 6 s for copying the reference. Declaring the source language alone in the clone made the same build take 71 s (2670 routes) and scripts/site-check --no-sync over it passed clean. The case body replayed over such a clone (a driver script, outside the harness) ran every assertion to the end in 621 s on the same loaded machine, of which scripts/site-check, run three times, is the larger part. The case builds with the language copy every time, four of those builds render a site and two are followed by a site check."
+desired_state: "The case's clone declares the source language alone (site/i18n/languages.json, the one declaration the build, the language switch and the check read), keeps the file clean for git so the build records the clone as clean, and builds the two sites nobody checks afterwards without the stylesheet. Every assertion of the case still runs; no skip path is added; scripts/site-build, scripts/site-check and every other case are untouched."
+scope:
+  - "test/cases/486_rustdoc_composition.sh"
+non_scope:
+  - "scripts/site-build and scripts/site-check, whose behaviour the case measures and does not change"
+  - "Any other case, and the sharding of the suite"
+  - "The cost of scripts/site-check itself (about 380 s on the loaded machine, mostly sections over the registry and the command line reference), which is now the larger part of the case and is its own change"
+depends_on: []
+acceptance_criteria:
+  - "The case's clone declares the source language alone and derives no language copy: no build of the case prints `== languages`"
+  - "Every assertion of the case still executes: the number of expect_*, grep and refusal checks is unchanged or larger, and the case has no new skip_case path"
+  - "scripts/site-build, scripts/site-check and every other case are unchanged by the change"
+  - "On the same machine the case costs a small fraction of what it did before; the figures measured before and after are recorded on the pull request"
+validation:
+  - "bash test/run.sh 486_rustdoc_composition"
+  - "scripts/ci/shell-lint"
+  - "scripts/ci/english-only-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "rustdoc_composition_test"
+created_at: 2026-10-22
+updated_at: 2026-10-22

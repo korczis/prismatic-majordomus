@@ -11,7 +11,7 @@ weight: 50
 domain: context
 featured: true
 areas: [context, coordination]
-modules: [continuity, lifecycle, session_domain, recover]
+modules: [continuity, lifecycle, session_domain, recover, brief, episodes]
 commands: [context, checkpoint, handover, session, capture, prompt, recover]
 kinds: [session, prompt]
 rules: [majordomus.handover-integrity, majordomus.session-lifecycle, majordomus.session-records, majordomus.prompt-capture, majordomus.task-continuity, majordomus.checkpoint-freshness, project.never-store-transcripts, majordomus.handovers-carry-state]

@@ -45,6 +45,24 @@
         },
         "implicit_context": {
           "type": "boolean"
+        },
+        "lifecycle": {
+          "description": "The lifecycle of what lives in the local half (I2870), in the classes of docs/TWO_FOLDER_CONSOLIDATION.md.",
+          "enum": [
+            "canonical",
+            "derived",
+            "generated",
+            "cache",
+            "runtime",
+            "accidental"
+          ]
+        },
+        "excludes": {
+          "description": "Lifecycles or kinds that must never appear in the local half.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -60,7 +78,7 @@
         },
         "deployments": {
           "type": "string",
-          "description": "The deployments of this repository's executable, one canonical object each; every provider artifact is generated from one of them."
+          "description": "The deployments of this repository's executable, one canonical object each; every artifact built from a deployment is generated from one of them."
         },
         "features": {
           "type": "string",

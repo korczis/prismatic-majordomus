@@ -1,0 +1,30 @@
+id: I3115
+milestone: a-claim-stands-only-on-its-evidence
+title: "A rule or guarantee that cites a proposed decision as its authority is listed, and the owner's acceptance queue is derived from it"
+slug: law-resting-on-a-proposed-adr-is-listed
+priority: p2
+profile: implementation
+objective: "Derive the citation edges from active rules, docs/CLAIMS.yaml guarantees and features to ADRs. Report every blocking rule or guarantee whose cited ADR has status proposed, ordered by how many rules rest on it, as the owner's acceptance queue. This is advisory, not a refusal."
+why: "On 2026-09-11 (c111#6) the owner was told a normative claim must not depend on a proposed ADR as if it were accepted. Counted on master 707a04c on 2026-10-18 with grep -l '^status: proposed' .ai/repo/adrs/*.md (and the same for accepted): 90 proposed and 27 accepted decisions. ADR 0048 (how a rule declares enforcement) and ADR 0087 (evidence at the presented revision) are both proposed and carry most of this domain. lib/adr.sh refuses to write any status but proposed, so acceptance is a person's act that nothing prompts. It extends milestone architecture-is-enforced. Sources: chatgpt-majordomus:c111#6."
+current_state: "lib/adr.sh: statuses proposed, accepted, superseded and rejected; propose writes proposed only. No reader joins rules to ADR status."
+desired_state: "majordomus adr list (or the decision capability) and the evidence view show \"rests on proposed\" per rule, plus a queue the owner can accept from."
+scope:
+  - "lib/adr.sh"
+  - "apps/majordomus-cli/src/rules"
+  - "scripts/generate-site-data"
+  - "docs/DOCTRINE.md"
+non_scope:
+  - "Accepting any ADR (owner's act)"
+  - "Refusing a rule because of its ADR status"
+serves:
+  - "a-claim-stands-only-on-its-evidence#proposed-adr-reported"
+acceptance_criteria:
+  - "A fixture rule citing a proposed ADR is listed; once the ADR is accepted the rule is not"
+  - "The queue is ordered by dependents and is identical on CLI and MCP"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 99_adr"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_rule_on_proposed_adr_listed"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# step-bound-check — every timed step declares a bound, and every bound is smaller than the
-# bound of the job that runs it.
+# step-bound-check — every step that can run out of time says so itself, rather than being
+# killed by its job and reported as a cancellation; and every gate the CI model selects has a
+# step that says it ran.
+#
+#   scripts/ci/step-bound-check
+#       every section: .github/workflows/validate.yml against .ai/repo/ci/gates.yaml, and
+#       .github/workflows/pages.yml against .ai/repo/ci/pages.yaml
+#   scripts/ci/step-bound-check [--gates FILE] [--budgets FILE] <workflow>
+#       sections 1 and 2 over <workflow>; section 3 with --gates, section 4 with --budgets
 #
 # The failure this refuses is not a slow step. It is a step killed by its *job's*
 # `timeout-minutes`, which GitHub reports as `cancelled` — and `cancelled` is what every
@@ -12,45 +19,333 @@
 # A step whose own bound is smaller than its job's always loses the race to its own message.
 # That is the whole invariant: the step reports, the job never has to.
 #
+# 1. A TIMED STEP. Every `scripts/ci/timed` step carries --bound, smaller than its job's
+#    bound.
+#
+# 2. A FULL-HISTORY CHECKOUT. An `actions/checkout` with `fetch-depth: 0` fetches every head
+#    and every tag. On 2026-10-20 the coverage job's did not return: it waited out the job's
+#    55 minutes and the run read as cancelled, with nothing measured (run 39438896504). The
+#    same checkouts take 95 to 212 s on the other jobs of validate.yml. So such a step declares
+#    its own `timeout-minutes`, smaller than its job's, and a stalled fetch fails by name.
+#
+# 3. A RECEIPT (--gates). scripts/ci/verdict asks every selected gate for a receipt, and a gate
+#    whose job is green with no receipt turns the `ci` check red at the end of a whole run:
+#    "gate site-languages was selected and its job site succeeded, but no step left a receipt
+#    for it" (run 39379416881), because its step ran bare instead of through scripts/ci/timed.
+#    Each gate of the model therefore has, in its job, one of: a `scripts/ci/run-plan --job
+#    <job>` step that does not --skip it, a `scripts/ci/timed --bound N <gate>` step, or a step
+#    that writes the gate's id to $MJ_CI_RECEIPTS itself. This is read before the run, not
+#    after it.
+#
+# 4. A BUDGETED ROW (--budgets). The publication model budgets each row a deploy measures. A
+#    step named after a row, or a job named after one, runs that row, and its bound is at least
+#    budget.bound.percent of the row's warm budget. On 2026-10-20 the `check` step of pages.yml
+#    was still bounded at the 3 minutes set while the site was English only; the Czech copy
+#    doubled its pages, the step was killed at 192 s (run 39392245576), publish was skipped and
+#    the site stayed old. Nothing had tied the bound to what the row was measured at.
+#
+# 5. AN OPTIONAL STEP. A step that degrades — a command whose failure is reported as a
+#    `::warning` and the job goes on — and declares its own `timeout-minutes` bounds each
+#    degrading command inside that bound (`timeout [--kill-after=K] N` or `scripts/ci/timed
+#    --bound N`), with every bounded command of the step, degrading or not, and its grace adding
+#    up to less than the step's minutes; or it is `continue-on-error`. A step killed by its own
+#    timeout-minutes is a failed step, and `||` never runs: on 2026-10-29 the `trends` step of
+#    pages.yml, bounded at 4 minutes, read the forge for longer, was killed ("The action
+#    'trends' has timed out after 4 minutes"), and publish was skipped on runs 40796031540,
+#    40803295553 and 40823254353 — an optional page holding back the whole site (I4380).
+#    The commands are read as the shell reads them: a line that ends in `\`, `||`, `&&` or
+#    `|` goes on, comments are not commands. A command degrades in three shapes: `cmd ||
+#    echo "::warning ..."` (or `|| { echo ...; }`); `cmd || {` with the `::warning` on a line
+#    of its block; and `if [!] cmd; then` with a `::warning` before its `fi`, in either branch
+#    (`[`, `[[` and `test` are tests, not commands that can hang). Its limit: a command with
+#    no bound that does not degrade is taken to be quick and is not judged, so `sleep 1000`
+#    beside a bounded degrading command passes, and only the step's own kill would stop it.
+#    Nested `if` blocks are read as one, the innermost condition being the one that degrades.
+#
 # It does NOT hold the sum: several steps can still add up past their job's bound and be
 # killed together, and nothing here sees that. The job bound remains the backstop it always
 # was; what changes is that one runaway step can no longer hide inside it.
 #
-# Exit: 0 ok · 10 a finding · 12 the workflow could not be read.
-set -eu
+# Exit: 0 ok · 10 a finding · 12 a file could not be read · 2 usage.
+set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-WF="${1:-$ROOT/.github/workflows/validate.yml}"
-[ -f "$WF" ] || { echo "step-bound-check: no workflow at $WF" >&2; exit 12; }
+
+gates="" budgets="" wf=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --gates) [ $# -ge 2 ] || { echo "step-bound-check: --gates needs a file" >&2; exit 2; }
+             gates="$2"; shift 2 ;;
+    --budgets) [ $# -ge 2 ] || { echo "step-bound-check: --budgets needs a file" >&2; exit 2; }
+               budgets="$2"; shift 2 ;;
+    -*) echo "step-bound-check: unknown option $1" >&2; exit 2 ;;
+    *) [ -z "$wf" ] || { echo "step-bound-check: one workflow at a time" >&2; exit 2; }
+       wf="$1"; shift ;;
+  esac
+done
+
+# With no argument at all, both workflows against the model each is an adapter over. The
+# worse exit wins: a file that could not be read (12) over a finding (10).
+if [ -z "$wf" ]; then
+  [ -z "$gates$budgets" ] || { echo "step-bound-check: --gates and --budgets need a workflow" >&2; exit 2; }
+  rc=0 one=0
+  "$0" --gates "$ROOT/.ai/repo/ci/gates.yaml" "$ROOT/.github/workflows/validate.yml" || rc=$?
+  "$0" --budgets "$ROOT/.ai/repo/ci/pages.yaml" "$ROOT/.github/workflows/pages.yml" || one=$?
+  [ "$one" -le "$rc" ] || rc="$one"
+  exit "$rc"
+fi
+
+[ -f "$wf" ] || { echo "step-bound-check: no workflow at $wf" >&2; exit 12; }
+[ -z "$gates" ] || [ -f "$gates" ] || { echo "step-bound-check: no CI model at $gates" >&2; exit 12; }
+[ -z "$budgets" ] || [ -f "$budgets" ] || { echo "step-bound-check: no publication model at $budgets" >&2; exit 12; }
 
 found="$(mktemp "${TMPDIR:-/tmp}/mj.sb.XXXXXX")"
-trap 'rm -f "$found"' EXIT
+model="$(mktemp "${TMPDIR:-/tmp}/mj.sbm.XXXXXX")"
+trap 'rm -f "$found" "$model"' EXIT
 
+# ---------------------------------------------------------------- 1 and 2: steps under their job
+# Two passes over the workflow: the first reads every job's bound, so a step is judged against
+# its job's bound wherever in the job that bound is written.
 awk '
-  /^  [a-z0-9_-]+:[ \t]*$/ { job = $0; sub(/:[ \t]*$/, "", job); gsub(/^[ \t]+/, "", job); bound = 0; next }
-  /^    timeout-minutes: [0-9]+[ \t]*$/ { b = $0; sub(/.*: /, "", b); bound = b + 0; next }
+  FNR == 1 { pass++ }
+  /^jobs:[ \t]*$/ { injobs = 1; job = ""; next }
+  /^[^ \t#]/ { if (pass == 2) close_step(); injobs = 0; job = ""; next }
+  !injobs { next }
+  /^  [a-zA-Z0-9_-]+:[ \t]*$/ {
+    if (pass == 2) close_step()
+    job = $0; sub(/:[ \t]*$/, "", job); gsub(/^[ \t]+/, "", job); next
+  }
+  pass == 1 && /^    timeout-minutes: [0-9]+[ \t]*$/ { b = $0; sub(/.*: /, "", b); jb[job] = b + 0; next }
+  pass == 1 { next }
+  /^      - / { close_step(); instep = 1; start = FNR }
+  instep && /^        continue-on-error: true[ \t]*(#.*)?$/ { coe = 1 }
+  # section 5 reads the run of the step: an inline `run: cmd`, or the lines of a `run: |` block
+  instep && inrun && /^[ \t]*[^ \t]/ && !/^          / { flush(); inrun = 0 }
+  instep && inrun { command_line($0) }
+  instep && /^(      - |        )run:/ {
+    r = $0; sub(/^ *(- )?run:[ \t]*/, "", r)
+    if (r ~ /^[|>][-+]?[ \t]*(#.*)?$/) inrun = 1
+    else { command_line(r); flush() }
+  }
+  instep && /^(      - |        )uses: actions\/checkout@/ { checkout = 1 }
+  instep && /^          fetch-depth: ["\047]?0["\047]?[ \t]*(#.*)?$/ { full = 1 }
+  instep && /^        timeout-minutes: [0-9]+[ \t]*$/ { t = $0; sub(/.*: /, "", t); sto = t + 0 }
   /scripts\/ci\/timed/ {
     if (job == "") next
+    bound = jb[job] + 0
     if (bound == 0) { printf "%d\t%s\tthe job declares no timeout-minutes, so its steps have nothing to be smaller than\n", FNR, job; next }
     line = $0
-    if (line !~ /scripts\/ci\/timed --bound [0-9]+/) {
+    if (line !~ /scripts\/ci\/timed --bound[ =][0-9]+/) {
       printf "%d\t%s\tthe step carries no --bound, so a step that never finishes is never measured\n", FNR, job; next
     }
-    s = line; sub(/.*scripts\/ci\/timed --bound /, "", s); sub(/[^0-9].*$/, "", s)
+    s = line; sub(/.*scripts\/ci\/timed --bound[ =]/, "", s); sub(/[^0-9].*$/, "", s)
     if (s + 0 >= bound * 60) {
       printf "%d\t%s\tthe step bound %ss is not smaller than the job bound %dm; the job would kill it first\n", FNR, job, s, bound
     }
   }
-' "$WF" > "$found"
+  # One line of a run, joined to the lines it goes on with; a whole command is judged.
+  function command_line(l) {
+    sub(/^[ \t]+/, "", l)
+    if (l ~ /^#/ || l ~ /^[ \t]*$/) { if (acc == "") return; l = "" }
+    if (l ~ /\\$/) { sub(/\\$/, "", l); acc = acc " " l; return }
+    acc = acc " " l
+    if (l ~ /(\|\||&&|\|)[ \t]*$/) return
+    flush()
+  }
+  function flush(   c) {
+    if (acc == "") return
+    c = acc; acc = ""
+    judge(c, FNR)
+  }
+  # A whole command: its bound is added up, and whether it degrades is read.
+  function judge(c, ln,   b, d) {
+    b = inner_bound(c)
+    if (b >= 0) inner += b
+    if (c ~ /\|\|[ \t]*\{?[ \t]*(echo|printf)[^#]*::warning/) {
+      d = c; sub(/\|\|.*$/, "", d); degrade(d, ln); return
+    }
+    if (c ~ /\|\|[ \t]*\{[ \t]*$/) { d = c; sub(/\|\|.*$/, "", d); pending = d; pendline = ln; return }
+    if (c ~ /^[ \t]*(if|elif)[ \t]/) {
+      d = c; sub(/^[ \t]*(if|elif)[ \t]+(![ \t]+)?/, "", d); sub(/;[ \t]*then([ \t;].*)?$/, "", d)
+      if (d !~ /^(\[|\[\[|test)[ \t]/) { pending = d; pendline = ln }
+    }
+    if (c ~ /::warning/ && pending != "") { degrade(pending, pendline); pending = ""; return }
+    if (c ~ /(^|[ \t;])(fi|\})[ \t;]*$/) pending = ""
+  }
+  function degrade(d, ln) {
+    ndeg++
+    if (inner_bound(d) < 0) { unbounded[ndeg] = ln; nunb++ }
+  }
+  # seconds, from a duration as timeout(1) takes it: 200, 200s, 4m
+  function seconds(d,   n) {
+    n = d + 0
+    if (d ~ /m$/) n *= 60
+    else if (d ~ /h$/) n *= 3600
+    return n
+  }
+  # The bound a command runs under, with its grace: `timeout [opts] N` (plus --kill-after) or
+  # `scripts/ci/timed --bound N` (plus the 30 s its timeout(1) is given to stop); -1 for none.
+  function inner_bound(cmd,   t, n, i, j, kill) {
+    n = split(cmd, t, /[ \t]+/)
+    for (i = 1; i <= n; i++) {
+      if (t[i] ~ /(^|\/)timed$/ && t[i + 1] == "--bound" && t[i + 2] ~ /^[0-9]+$/) return t[i + 2] + 30
+      if (t[i] ~ /(^|\/)timed$/ && t[i + 1] ~ /^--bound=[0-9]+$/) return substr(t[i + 1], 9) + 30
+      if (t[i] !~ /(^|\/)timeout$/) continue
+      kill = 0
+      for (j = i + 1; j <= n; j++) {
+        if (t[j] ~ /^--kill-after=/) { kill = seconds(substr(t[j], 14)); continue }
+        if (t[j] == "--kill-after" || t[j] == "-k") { kill = seconds(t[j + 1]); j++; continue }
+        if (t[j] == "--signal" || t[j] == "-s") { j++; continue }
+        if (t[j] ~ /^-/) continue
+        if (t[j] ~ /^[0-9]+[smh]?$/) return seconds(t[j]) + kill
+        break
+      }
+    }
+    return -1
+  }
+  function close_step(   bound, k) {
+    flush()
+    if (instep && ndeg > 0 && sto > 0 && !coe) {
+      for (k = 1; k <= ndeg; k++) if (k in unbounded)
+        printf "%d\t%s\tthe step degrades with a ::warning, but the command it degrades is not bounded inside the step'"'"'s own %dm (timeout N, or scripts/ci/timed --bound N); a step killed by its timeout-minutes is a failed step, and || never runs\n", unbounded[k], job, sto
+      if (nunb == 0 && inner >= sto * 60)
+        printf "%d\t%s\tthe step degrades with a ::warning, and the bounds inside it add up to %ds, not under the step'"'"'s own %dm (%ds); the step'"'"'s kill would come first, and || never runs\n", start, job, inner, sto, sto * 60
+    }
+    if (instep && checkout && full) {
+      bound = jb[job] + 0
+      if (bound == 0)
+        printf "%d\t%s\tthe job declares no timeout-minutes, so its full-history checkout has nothing to be smaller than\n", start, job
+      else if (sto == 0)
+        printf "%d\t%s\tthe full-history checkout declares no timeout-minutes of its own; a fetch of every head and tag that stalls waits out the job'"'"'s %dm and reads as cancelled\n", start, job, bound
+      else if (sto >= bound)
+        printf "%d\t%s\tthe full-history checkout'"'"'s bound %dm is not smaller than the job bound %dm; the job would kill it first\n", start, job, sto, bound
+    }
+    instep = 0; checkout = 0; full = 0; sto = 0; coe = 0; ndeg = 0; inner = 0; nunb = 0
+    inrun = 0; acc = ""; pending = ""
+    split("", unbounded)
+  }
+  END { close_step() }
+' "$wf" "$wf" >> "$found"
+
+# ---------------------------------------------------------------- 3: every gate leaves a receipt
+if [ -n "$gates" ]; then
+  # "<gate>\t<job>" for every gate of the model
+  awk '
+    /^gates:[ \t]*$/ { in_gates = 1; next }
+    /^[^ \t#]/ { in_gates = 0 }
+    !in_gates { next }
+    /^  - id: / { if (id != "") print id "\t" job; id = $3; job = ""; next }
+    /^    job: / { job = $2 }
+    END { if (id != "") print id "\t" job }
+  ' "$gates" > "$model"
+  [ -s "$model" ] || { echo "step-bound-check: no gate could be read from $gates" >&2; exit 12; }
+  awk -F'\t' '
+    FNR == 1 { pass++ }
+    pass == 1 { want[++n] = $1; jobof[$1] = $2; next }
+    /^jobs:[ \t]*$/ { injobs = 1; next }
+    /^[^ \t#]/ { injobs = 0; next }
+    !injobs { next }
+    /^  [a-zA-Z0-9_-]+:[ \t]*$/ { job = $0; sub(/:[ \t]*$/, "", job); gsub(/^[ \t]+/, "", job); jobs[job] = 1; next }
+    job == "" { next }
+    /scripts\/ci\/run-plan/ && /--job [a-zA-Z0-9_-]+/ {
+      j = $0; sub(/.*--job /, "", j); sub(/[^a-zA-Z0-9_-].*$/, "", j); dispatched[j] = 1
+      if ($0 ~ /--skip [a-zA-Z0-9_,-]+/) {
+        l = $0; sub(/.*--skip /, "", l); sub(/[^a-zA-Z0-9_,-].*$/, "", l)
+        k = split(l, sk, ","); for (i = 1; i <= k; i++) skipped[j SUBSEP sk[i]] = 1
+      }
+    }
+    /scripts\/ci\/timed --bound[ =][0-9]+ [a-zA-Z0-9_-]+/ {
+      g = $0; sub(/.*scripts\/ci\/timed --bound[ =][0-9]+ /, "", g); sub(/[^a-zA-Z0-9_-].*$/, "", g)
+      timed[job SUBSEP g] = 1
+    }
+    /MJ_CI_RECEIPTS/ && />>/ {
+      l = $0
+      while (match(l, /"[a-zA-Z0-9_-]+"/)) { written[job SUBSEP substr(l, RSTART + 1, RLENGTH - 2)] = 1; l = substr(l, RSTART + RLENGTH) }
+      l = $0
+      while (match(l, /\047[a-zA-Z0-9_-]+\\t/)) { written[job SUBSEP substr(l, RSTART + 1, RLENGTH - 3)] = 1; l = substr(l, RSTART + RLENGTH) }
+    }
+    END {
+      for (i = 1; i <= n; i++) {
+        g = want[i]; j = jobof[g]
+        if (j == "") { printf "0\t-\tgate %s names no job in the CI model\n", g; continue }
+        if (!(j in jobs)) { printf "0\t%s\tgate %s runs in job %s, which this workflow does not have\n", j, g, j; continue }
+        if ((j in dispatched) && !((j SUBSEP g) in skipped)) continue
+        if ((j SUBSEP g) in timed) continue
+        if ((j SUBSEP g) in written) continue
+        printf "0\t%s\tgate %s runs in job %s, and no step of it dispatches the gate through scripts/ci/run-plan, runs it through scripts/ci/timed or writes its receipt to $MJ_CI_RECEIPTS; the ci verdict would find the job green and the gate silent\n", j, g, j
+      }
+    }
+  ' "$model" "$wf" >> "$found"
+fi
+
+# ---------------------------------------------------------------- 4: a budgeted row is bounded from its budget
+if [ -n "$budgets" ]; then
+  # "row\t<row>\t<seconds>" per warm row, and "percent\t<n>" from budget.bound.percent
+  awk '
+    /^budget:[ \t]*$/ { inb = 1; sec = ""; next }
+    /^[^ \t#]/ { inb = 0 }
+    !inb { next }
+    /^  [a-zA-Z0-9_-]+:[ \t]*$/ { sec = $1; sub(/:$/, "", sec); next }
+    sec == "warm" && /^    [a-zA-Z0-9_-]+: [0-9]+[ \t]*(#.*)?$/ { k = $1; sub(/:$/, "", k); if (k != "controlled") print "row\t" k "\t" $2 + 0 }
+    sec == "bound" && /^    percent: [0-9]+[ \t]*(#.*)?$/ { print "percent\t" $2 + 0 }
+  ' "$budgets" > "$model"
+  grep -q '^row' "$model" || { echo "step-bound-check: no warm budget could be read from $budgets" >&2; exit 12; }
+  awk -F'\t' -v wfname="$(basename "$wf")" '
+    FNR == 1 { pass++ }
+    pass == 1 { if ($1 == "row") { budget[$2] = $3 } else if ($1 == "percent") { percent = $2 }; next }
+    /^jobs:[ \t]*$/ { injobs = 1; job = ""; next }
+    /^[^ \t#]/ { if (pass == 3) close_step(); injobs = 0; job = ""; next }
+    !injobs { next }
+    /^  [a-zA-Z0-9_-]+:[ \t]*$/ {
+      if (pass == 3) close_step()
+      job = $0; sub(/:[ \t]*$/, "", job); gsub(/^[ \t]+/, "", job); jobline[job] = FNR; next
+    }
+    pass == 2 && /^    timeout-minutes: [0-9]+[ \t]*$/ { b = $0; sub(/.*: /, "", b); jb[job] = b + 0; next }
+    pass == 2 { next }
+    /^      - / { close_step(); instep = 1; start = FNR; name = "" }
+    instep && /^(      - |        )name: / { name = $0; sub(/^ *- /, "", name); sub(/^ *name: /, "", name); gsub(/^["\047]|["\047][ \t]*$/, "", name); sub(/[ \t]+$/, "", name) }
+    instep && /^        timeout-minutes: [0-9]+[ \t]*$/ { t = $0; sub(/.*: /, "", t); sto = t + 0 }
+    function judge(line, what, row, minutes,   want) {
+      want = int((budget[row] * percent + 99) / 100)
+      if (minutes * 60 < want)
+        printf "%d\t%s\t%s runs the %s row, and its bound %dm (%ds) is under %d%% of that row'"'"'s warm budget of %ds (%ds); a run inside its own budget'"'"'s margin would be killed. Re-derive the row from a measured run and raise the bound with it\n", line, job, what, row, minutes, minutes * 60, percent, budget[row], want
+    }
+    function close_step() {
+      if (instep && name != "" && (name in budget)) {
+        seen++
+        if (sto == 0) printf "%d\t%s\tthe step %s runs the %s row and declares no timeout-minutes; it can be killed only by its job, and reads as cancelled\n", start, job, name, name
+        else if (jb[job] > 0 && sto >= jb[job]) printf "%d\t%s\tthe step %s bound %dm is not smaller than the job bound %dm; the job would kill it first\n", start, job, name, sto, jb[job]
+        else judge(start, "the step " name, name, sto)
+      }
+      instep = 0; sto = 0; name = ""
+    }
+    END {
+      close_step()
+      if (percent == "") { printf "0\t-\tthe publication model declares no budget.bound.percent, so no bound can be held to a budget\n"; exit }
+      for (j in jobline) if (j in budget) {
+        seen++
+        if (jb[j] == 0) printf "%d\t%s\tthe job %s runs the %s row and declares no timeout-minutes\n", jobline[j], j, j, j
+        else { job = j; judge(jobline[j], "the job " j, j, jb[j]) }
+      }
+      if (seen == 0) printf "0\t-\tno step or job of %s is named after a row the publication model budgets, so no bound was held to anything\n", wfname
+    }
+  ' "$model" "$wf" "$wf" >> "$found"
+fi
 
 n="$(grep -c . "$found" || true)"
 if [ "${n:-0}" = 0 ]; then
-  printf 'step-bound-check: every timed step is bounded under its job\n'
+  printf 'step-bound-check: every timed step is bounded under its job, as is every full-history checkout and every optional step'
+  [ -z "$gates" ] || printf '; every gate of %s leaves a receipt' "$(basename "$gates")"
+  [ -z "$budgets" ] || printf '; every budgeted row of %s is bounded from its budget' "$(basename "$budgets")"
+  printf ' (%s)\n' "$(basename "$wf")"
   exit 0
 fi
-printf 'step-bound-check: a step could be killed by its job rather than report its own time:\n'
+printf 'step-bound-check: a step could be killed by its job, or a gate could run without saying so:\n'
 while IFS="$(printf '\t')" read -r ln job msg; do
   [ -n "$ln" ] || continue
-  printf '  %s:%s  job %s — %s\n' "$(basename "$WF")" "$ln" "$job" "$msg"
+  # a finding about the model, or about a job as a whole, has no line of its own
+  where="$(basename "$wf")"; [ "$ln" = 0 ] || where="$where:$ln"
+  if [ "$job" = - ]; then printf '  %s  — %s\n' "$where" "$msg"
+  else printf '  %s  job %s — %s\n' "$where" "$job" "$msg"; fi
 done < "$found"
 printf '  [reproduce: scripts/ci/step-bound-check]\n'
 exit 10

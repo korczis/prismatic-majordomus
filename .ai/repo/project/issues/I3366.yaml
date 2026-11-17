@@ -1,0 +1,32 @@
+id: I3366
+milestone: a-registered-corpus-judges-majordomus
+title: "The economics calculator decides a binary paired outcome by an exact task-level test, intervals a continuous paired difference by task-clustered bootstrap, and turns either into one verdict"
+slug: a-paired-difference-has-a-test-and-a-verdict
+priority: p1
+profile: implementation
+objective: "Add to apps/majordomus-cli/src/economics/stats.rs pure seeded functions: an exact task-level test for a binary paired outcome (per-task mean difference of accepted share, a sign-flip permutation test over tasks, exact when the task count allows enumeration), its minimum detectable difference for a given task count and level, a percentile bootstrap of the mean paired difference resampling whole tasks for continuous outcomes, and one Verdict enum (favourable, unfavourable, inconclusive) with the declared better direction. All are deterministic for a seed, independent of input order, drop non-finite values, and return no result below min_n or with fewer than two clusters, as bootstrap_median_clustered does."
+why: "T2 of the owner's report of 2026-10-19 asks for a with/without comparison that says inconclusive when the sample cannot decide. The critique found that a percentile bootstrap over 20 task clusters of mostly-zero binary differences under-covers, and that the plan had two verdict enums. One exact test for the primary outcome and one enum, in the one calculator ADR 0082 mandates, answer both."
+current_state: "stats.rs:37 reduction returns None when the control is zero; stats.rs:182 and :260 compute intervals of a median only; model.rs:1186 EconomicsMetricStatus holds no direction verdict."
+desired_state: "stats.rs exposes the test, the MDE, the clustered mean-difference interval and Verdict, each with a doc test."
+scope:
+  - "apps/majordomus-cli/src/economics/stats.rs"
+non_scope:
+  - "Wiring into summarize (I3371)"
+  - "A methodology change"
+  - "A new statistics dependency"
+serves:
+  - "the-product-proves-it-pays#the-paired-analysis-says-inconclusive-when-underpowered"
+acceptance_criteria:
+  - "A doc test shows the same clusters in another order give the same result"
+  - "A doc test shows a non-rejecting test is inconclusive and a rejecting one is favourable or unfavourable by direction"
+  - "A doc test shows fewer than two clusters give no result"
+  - "A doc test computes the MDE for 20 tasks at the methodology's level"
+  - "Each result names its method"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::stats"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc economics::stats"
+evidence_required:
+  - "test_exact_paired_test"
+  - "test_interval_verdict"
+created_at: 2026-10-19
+updated_at: 2026-10-19

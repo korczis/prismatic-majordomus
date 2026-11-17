@@ -1,0 +1,36 @@
+id: I3419
+milestone: an-inference-names-its-source-and-budget
+title: "A conclusion's independent review count counts distinct sources, defined as adapter plus recorded model, so two answers from one source are one review"
+slug: independent-review-counts-sources
+priority: p1
+profile: implementation
+objective: "Define a source as the adapter plus the recorded model. A mesh-review consultation that reported no model counts as the adapter plus the answering peer runtime, and any other consultation without a model counts as the adapter alone. Compute independent_review_count and the task totals' independent reviewers from distinct sources instead of distinct advisor ids, and list the sources a conclusion was reviewed by."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for source diversity rather than a vote count, and names duplicate models through one adapter as a required test (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/04_REASONING_MESH.md)."
+current_state: "Selection treats an adapter as one source (apps/majordomus-cli/src/reasoning/policy.rs:356-358). The conclusion writer adds each distinct advisor id to reviewed_by (store.rs:789-791) and counts it (store.rs:841-843), so two mesh peers through the one mesh-review adapter count as two independent reviews."
+desired_state: "reviewed_by stays the advisors cited. reviewed_sources lists the distinct sources, and independent_review_count equals its length. The records check of reasoning check recomputes the count."
+scope:
+  - "apps/majordomus-cli/src/reasoning/store.rs"
+  - "apps/majordomus-cli/src/reasoning/state.rs"
+  - "apps/majordomus-cli/src/reasoning/check.rs"
+  - "docs/REASONING.md"
+non_scope:
+  - "Changing advisor selection order"
+  - "Weighting answers by source"
+depends_on:
+  - "I3418"
+serves:
+  - "a-change-reconciles-what-it-affects#review-counts-sources-not-votes"
+acceptance_criteria:
+  - "Two completed consultations through one adapter with the same model give independent_review_count 1"
+  - "Two mesh peers reporting the same model give 1, and two reporting different models give 2"
+  - "Two consultations through different adapters give 2"
+  - "reasoning check reports a stored conclusion whose count disagrees with its sources as a records finding"
+  - "Case 732's conclusion still records its computed count"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning"
+  - "bash test/run.sh 732_disagreement_is_settled_by_evidence 734_reasoning_survives_the_session"
+  - "majordomus reasoning check"
+evidence_required:
+  - "duplicate_sources_are_one_review"
+created_at: 2026-10-19
+updated_at: 2026-10-19

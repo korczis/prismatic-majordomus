@@ -138,8 +138,12 @@ file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 # SHA-256 for the cases, from the tool's own lib/sha256.sh: mj_sha256sum (files, or stdin),
 # mj_sha256_xargs (paths on stdin) and mj_sha256_hex. sha256sum, else openssl; never shasum,
 # which on macOS is a Perl script (case 575).
-# shellcheck source=../lib/sha256.sh
+# The linter runs from the repository root (scripts/ci/shell-lint), and a source= path is read
+# from there: the `../lib/sha256.sh` this said before resolved outside the tree (I4381).
+# shellcheck source=lib/sha256.sh
 . "$ROOT/lib/sha256.sh"
+# shellcheck source=lib/runnable.sh
+. "$ROOT/lib/runnable.sh"
 
 # The SHA-256 of a file, for a case that must prove a file did not change rather than that a
 # command said it did not.
@@ -147,40 +151,54 @@ sha256_of_file() { mj_sha256_hex "$1"; }
 
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
-# without it the crate is built once, debug profile, and the target path is printed.
+# without it the tree's own executable, or the installed release of this tree's generation —
+# resolved by lib/rust_bin.sh's mj_rust_resolve, the one answer the launcher and the gates
+# share. The harness never builds (ADR 0224): it ran a raw `cargo build` here once per Rust
+# case, outside the disk floor and the build lock, and a case is not the place to start one.
 # Prints the path on stdout and any complaint on stderr (the caller captures stdout).
-# Returns 3 when there is neither cargo nor MAJORDOMUS_BIN, which is the case's cue to skip
-# as the Rust cases always have, and 1 when the build fails or the named executable does
-# not exist, which is a failure and never a skip.
+# Returns 1 when the named executable does not exist, and 12 when the tree's is missing or
+# stale and no release stands in — the complaint names `just build`. Both are failures and
+# never skips: a suite that skipped every Rust case for a stale executable would read as green.
+# The one skip is the one the Rust cases always had, 3, for a machine with no cargo at all:
+# there the explicit build cannot be run either, and the case says so in its skip line.
+#
+# Both sources of lib/rust_bin.sh below point shellcheck at test/lib/rust_bin.functions.sh
+# (I4381), one stub per function and one empty assignment per global of rust_bin.sh. Every case
+# sources this file, and shellcheck -x followed it into rust_bin.sh's 1942 lines once per case:
+# the structure job's shell-lint grew from 416 s to 1388 s at p90 with no change to the gate.
+# Following it linted none of it (shellcheck reports no finding inside a file it follows);
+# rust_bin.sh is linted on its own, with -x, in shell-lint's lib/ set, which discovers a .sh by
+# its name. The stubs keep what the names told the linter: a case that hands one of these
+# functions to xargs, sudo or find -exec is still SC2033. A variable a function of rust_bin.sh
+# sets is not declared, so a case that reads one is reported (SC2154). Case 4381 holds the
+# stubs to rust_bin.sh's own names.
+# majordomus-on-stale-executable: fallback, else refuse
 rust_bin() {
-  local manifest="$ROOT/apps/majordomus-cli/Cargo.toml" log
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
     # Not there. The words matter more than the exit code: this failure is about the
     # environment the suite is running in and not about the code the case was written to
     # measure, and a reader who takes it for the second spends an afternoon on a branch that
     # was never broken. lib/rust_bin.sh says it, once, for every caller that resolves one.
     if [ ! -x "$MAJORDOMUS_BIN" ]; then
+      # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see above
       . "$ROOT/lib/rust_bin.sh"
       mj_rust_bin_missing "$ROOT" "$MAJORDOMUS_BIN" '    '
       return 1
     fi
     printf '%s' "$MAJORDOMUS_BIN"; return 0
   fi
-  command -v cargo >/dev/null 2>&1 || return 3
-  log="$(mktemp "${TMPDIR:-/tmp}/mj-rust-bin.XXXXXX")"
-  RUSTFLAGS='' cargo build -q --manifest-path "$manifest" 2>"$log" || { cat "$log" >&2; rm -f "$log"; echo "    cargo build failed" >&2; return 1; }
-  rm -f "$log"
-  # Where cargo put it, not where it would have without CARGO_TARGET_DIR — which is how
-  # several worktrees of this repository share one build directory, and composing the path
-  # under the crate then names a file that was never written. The variable is read rather
-  # than `cargo metadata` asked (lib/rust_bin.sh's mj_cargo_target_dir will ask, for callers
-  # that want a .cargo/config.toml honoured too): this runs once per case, and a suite of
-  # forty Rust cases should not spend forty processes learning that a variable is unset.
-  printf '%s' "${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
+  local rb
+  # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see above
+  . "$ROOT/lib/rust_bin.sh"
+  if ! rb="$(mj_rust_resolve "$ROOT" '    ')"; then
+    command -v cargo >/dev/null 2>&1 || return 3
+    return 12
+  fi
+  printf '%s' "$rb"
 }
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
-rust_bin_exit() { [ "$1" = 3 ] && skip "no cargo and no MAJORDOMUS_BIN"; exit 1; }
+rust_bin_exit() { [ "$1" = 3 ] && skip "no executable of this tree, no installed release of its generation and no cargo to build one"; exit 1; }
 
 # The end of a case that cannot measure its subject here, and why.
 #
@@ -192,7 +210,7 @@ rust_bin_exit() { [ "$1" = 3 ] && skip "no cargo and no MAJORDOMUS_BIN"; exit 1;
 # protects master never reports `ok` for a case that did not run. Anywhere else the case ends
 # with a line that names what was not measured, so a reader who greps a log for `skip:` finds
 # every pass that proved nothing.
-#   command -v zola >/dev/null || skip_case "zola is absent, so the site build was not measured"
+#   mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so the site build was not measured"
 skip_case() {
   if [ "${CI:-}" = true ]; then
     printf '    %s; under CI every tool the suite needs is installed, so this is a failure, not a skip\n' "$1"
@@ -288,6 +306,69 @@ Y
 # pj_status ID  — the derived status of one issue, from the tool
 pj_status() { "$MJ" plan list | awk -v i="$1" '$1==i{print $2}'; }
 
+# synthetic_repo N  — grow the initialised repository in the current directory by N of each
+# record the validators read: N milestones, N issues (one per milestone, in chains of four —
+# each issue depends on the one before it unless it starts a chain — so the graph has both
+# width and depth),
+# N project rules and N context documents. Every record is the shape the helpers above and
+# the skeleton write, so `plan validate` and `doctor` pass over it; a case grows N to see how
+# the work a command does grows with the repository, which a hand-built fixture of three
+# records cannot show. Calling it again with a larger N adds the records it did not write.
+synthetic_repo() {
+  local n="$1" i m id prev d
+  [ -f .ai/repo/project/project.yaml ] || pj_init
+  mkdir -p .ai/repo/rules/project
+  i=1
+  while [ "$i" -le "$n" ]; do
+    m="$(printf 'M%03d' "$i")"; id="$(printf 'I%04d' "$i")"
+    [ -f ".ai/repo/project/milestones/$m.yaml" ] || pj_milestone "$m" "$i"
+    if [ ! -f ".ai/repo/project/issues/$id.yaml" ]; then
+      if [ "$i" -gt 1 ] && [ $((i % 4)) != 1 ]; then
+        prev="$(printf 'I%04d' $((i - 1)))"; pj_issue "$id" "$m" "$prev"
+      else
+        pj_issue "$id" "$m"
+      fi
+    fi
+    d="$(printf 'synthetic-%03d' "$i")"
+    [ -f ".ai/repo/rules/project/$d.v1.md" ] || cat > ".ai/repo/rules/project/$d.v1.md" <<R
+---
+id: project.$d
+version: 1
+kind: rule
+title: Synthetic rule $i
+description: A rule a scaling case generated, so that the rule set has $n members.
+statement: Follow synthetic rule $i.
+status: active
+class: advisory
+depends_on: []
+tags: [synthetic]
+---
+
+# Rationale
+
+A scaling case needs a rule set of a size it chooses.
+
+# Required behaviour
+
+Nothing beyond being read.
+
+# Failure behaviour
+
+None; no command decides it.
+
+# Verification
+
+The scaling case that generated it.
+R
+    if [ ! -f "src/s$i/README.md" ]; then
+      mkdir -p "src/s$i"
+      printf -- '---\nschema: context/v1\nid: synthetic.s%s\nkind: context\ntitle: Synthetic context %s\ndescription: What src/s%s holds.\nstatus: active\nscope: subtree\nproviders: ["*"]\ncomposition: extend\norder: %s\n---\n\n# src/s%s\n' \
+        "$i" "$i" "$i" "$((100 + i))" "$i" > "src/s$i/README.md"
+    fi
+    i=$((i + 1))
+  done
+}
+
 # Build a fixture copy of the repository into $1: the runtime the tool needs to run, plus
 # every canonical input the site generator declares, plus any extra paths given after $1.
 #
@@ -327,6 +408,11 @@ fixture_repo() {
   [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/cli.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/cli.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/artifacts.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/artifacts.json" "$dst/docs/generated/"; }
+  # The skills the editors projection writes under .claude/skills/: the generator reads each one
+  # its artifacts manifest names for the description in its front matter (ADR 0165). They are
+  # stage A's output, not canonical inputs, so `--inputs` does not list them and a fixture built
+  # from that list alone failed with "No such file" at the first skill (I3999).
+  [ -d "$ROOT/.claude/skills" ] && [ ! -e "$dst/.claude/skills" ] && { mkdir -p "$dst/.claude"; cp -R "$ROOT/.claude/skills" "$dst/.claude/skills"; }
   # Every file the templates load. `--inputs` names the site generator's own canonical
   # inputs, which is not the same set: site/data/registry/registry.json and
   # distribution.json are written by `majordomus generate`, so the generator does not call
@@ -407,8 +493,8 @@ start_http() {
   local dir="$1" tries=0 port
   HTTP_PORT=""; HTTP_BASE=""; HTTP_PID=""
   local runner=""
-  if command -v python3 >/dev/null 2>&1; then runner=python3
-  elif command -v node >/dev/null 2>&1; then runner=node
+  if mj_runs python3; then runner=python3
+  elif mj_runs node; then runner=node
   else return 1; fi
   while [ "$tries" -lt 20 ]; do
     port=$(( 20000 + ((( $$ + tries * 977 ) * 31 ) % 20000) ))
@@ -449,6 +535,39 @@ start_http() {
 }
 
 stop_http() { [ -n "${HTTP_PID:-}" ] && kill "$HTTP_PID" 2>/dev/null; HTTP_PID=""; return 0; }
+
+# What a publication holds that the site build does not compose (deploy.snapshots of the
+# publication model: the UI read once at a commit, ADR 0141), as a stand-in in a site
+# directory. The real one is written by the Rust executable and placed by the deploy job of
+# the pages workflow; a case that deploys or serves a fixture site is not about that producer
+# and must not need it built, but the site it handles is short of a surface without one, and
+# `scripts/site-deploy` and the live gate both refuse a site that is. So the case places the
+# smallest whole snapshot: the declaration, a landing page whose banner states the commit, the
+# run's record, and the one other page that record lists.
+#   publication_snapshots <repository> <site-directory> <commit>
+# Which snapshots, and at which mount, is <repository>'s own model, read through its own
+# `scripts/pages snapshots`, so a snapshot the model gains is placed because it was declared.
+# The commit is abbreviated to ten characters, as the producer states it. Answers 1 when the
+# model cannot be read.
+publication_snapshots() {
+  local repo="$1" site="$2" commit="${3:0:10}" rows s_id s_mount s_marker
+  rows="$(cd "$repo" && env -u MAJORDOMUS_ROOT -u MAJORDOMUS_SHARE scripts/pages snapshots)" || return 1
+  while IFS="$(printf '\t')" read -r s_id s_mount _ _ s_marker; do
+    [ -n "$s_id" ] || continue
+    mkdir -p "$site$s_mount/one"
+    jq -n --arg i "$s_id-snapshot" --arg m "$s_mount" --arg c "$commit" \
+      '{schema: "web-surface/v1", id: $i, mount: $m, index: "index.html", availability: "published-only", built_from: $c}' \
+      > "$site$s_mount/surface.json"
+    printf '<html><body data-snapshot><p %s="%s">a snapshot read at %s</p><a href="one/index.html">one</a></body></html>\n' \
+      "$s_marker" "$commit" "$commit" > "$site$s_mount/index.html"
+    printf '<html><body data-snapshot><p %s="%s">one</p></body></html>\n' "$s_marker" "$commit" > "$site$s_mount/one/index.html"
+    jq -n --arg m "$s_mount" --arg c "$commit" \
+      '{origin: {revision: $c}, pages: {($m): "index.html", ($m + "/one"): "one/index.html"}, left_out: [], stopped_by: "complete"}' \
+      > "$site$s_mount/snapshot.json"
+  done <<EOF
+$rows
+EOF
+}
 
 # `majordomus serve` of the current directory on an ephemeral port, for the cases that ask a
 # real socket. Once it listens, SRV is its pid and U its base URL (http://127.0.0.1:<port>);
@@ -593,7 +712,7 @@ reasoning_fixture() {
   # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
   local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
     [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
-    skip "no node"; }
+    skip "$(mj_runs_why node)"; }
   ln -sf "$node" "$RZ_BIN/node"
   RZ_ENV=""
 }

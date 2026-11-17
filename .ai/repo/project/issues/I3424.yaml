@@ -1,0 +1,32 @@
+id: I3424
+milestone: an-inference-names-its-source-and-budget
+title: "No inference transport is reachable from the shell closure of any declared hook command, and reasoning check refuses one that is"
+slug: hooks-invoke-no-inference
+priority: p1
+profile: implementation
+objective: "Add a hooks check to reasoning check that derives the hook closure. It starts from each hook command share/providers.yaml declares and the shims under .claude/hooks, takes the majordomus subcommand each shim runs, and follows the lib/ shell units that subcommand sources. It refuses a closure that names scripts/advisor-consult, scripts/lib/advisors or scripts/lib/inference. The check lists any Rust capability a hook subcommand reaches as outside its closure, so the limit is stated rather than hidden. A person-invoked consultation outside the closure is not refused."
+why: "The owner's 2026-10-19 Cognitive Fabric pack puts deterministic work first and hooks on the sensor side (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/04_REASONING_MESH.md, contracts/ECONOMICS.md). This is wave 0: one check over a tree that is clean today."
+current_state: "The tree is clean today by grep: git grep for advisor-consult or lib/advisors over lib, bin, .claude/hooks and share finds only share/advisors.yaml. lib/session.sh:662-672 derives knowledge with no model, and no Rust code in reasoning/ spawns a process. The hooks exec bin/majordomus subcommands (.claude/hooks/majordomus-capture). Nothing refuses a regression. CHECKS (apps/majordomus-cli/src/reasoning/check.rs:454) has catalogue, adapters, coupling, ci, claims and records."
+desired_state: "CHECKS gains hooks. A fixture hook whose closure reaches the transport is a finding, and this repository is clean. doctor reports the check like the others."
+scope:
+  - "apps/majordomus-cli/src/reasoning/check.rs"
+  - "docs/REASONING.md"
+non_scope:
+  - "Forbidding a consultation a person invokes explicitly"
+  - "Inspecting provider client internals"
+  - "Following Rust call graphs (listed as outside the closure)"
+serves:
+  - "a-change-reconciles-what-it-affects#deterministic-work-calls-no-model"
+acceptance_criteria:
+  - "A fixture shim whose subcommand sources a lib/ unit naming scripts/advisor-consult yields a hooks finding naming the file and the hook"
+  - "A lib/ unit outside every hook closure that names the transport yields no finding"
+  - "This checkout yields no hooks finding"
+  - "The check runs with no network and no model"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::check"
+  - "bash test/run.sh 736_reasoning_check_refuses_drift"
+  - "majordomus reasoning check"
+evidence_required:
+  - "a_hook_that_calls_an_advisor_is_refused"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,0 +1,39 @@
+id: I2712
+milestone: development-runtime
+title: "release-check treats a tag whose release run is still going as pending, not as a missing record"
+slug: a-tag-in-flight-is-pending
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on:
+  - I2054
+objective: "Make scripts/ci/release-check tell a tag whose release workflow is still running (or whose record branch is about to be opened by it) from a published release that nobody recorded."
+why: "2026-10-14 18:37Z: the structure job of #1146 (I1510) failed release-check with \"v0.26.0 is published and the layer holds no release record for it ... and no release/record-v0.26.0 branch proposes one\" while the release workflow 38613749519 for v0.26.0 was still building; the GitHub release did not exist yet. Every branch judged in that window was red for a reason that was not its own. I2054 stopped a pending tag from freezing the queue once the record branch exists; the window before the branch remained."
+current_state: "release-check counts a pushed tag as published and demands a record or a record branch at once."
+desired_state: "A tag whose release run for that tag is queued or in progress, or whose GitHub release does not exist yet, is reported as pending with the run named, not as a finding; a published release with neither record nor record branch after its run concluded stays a finding."
+scope:
+  - scripts/ci/release-check
+  - docs/RELEASE.md
+  - test/cases
+non_scope:
+  - "What the release workflow itself does"
+acceptance_criteria:
+  - "Between a tag push and its record branch, release-check reports the tag as pending with its run and exits 0"
+  - "After the release run concluded with no record and no record branch, it is still a finding"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "tag_in_flight_is_pending_case"
+created_at: 2026-10-14
+updated_at: 2026-10-14T22:02:55Z
+started_at: 2026-10-14T22:01:24Z
+started_event: sha256:31e54c2864bd6ef23accd2311aa33df387f47fb178d7ca404de50bd4ed8e643c
+completed_at: 2026-10-14T22:02:55Z
+completed_event: sha256:c635dd6ed62bc6fce042f9d66f6321192e0182e6eb7b71d214e565db6e0b01dd
+evidence:
+  - covers: tag_in_flight_is_pending_case
+    type: test
+    command: "MJ_TEST_JOBS=3 bash test/run.sh 3027_the_release_path_goes_first 3028_the_pages_job_waits_for_its_deployment 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue 3019_a_failed_branch_run_cancels_itself 103_release_projection 94_ci_plan"
+    result: "tests: 7 passed, 0 failed (run 2026-10-14 ~22Z on master c0e3585dc836201089d6b5dd49f5a79fe8bff798 plus this change); case 3029: a tag with no record and no record branch whose release run is queued or running (or has no GitHub release yet, within the grace) is reported pending with its run and exits 0; after the run concluded it stays a finding with a note"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-14T22:02:05Z

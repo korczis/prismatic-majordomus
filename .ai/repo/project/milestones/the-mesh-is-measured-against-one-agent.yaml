@@ -1,0 +1,41 @@
+id: the-mesh-is-measured-against-one-agent
+title: "Coordinated workers on the mesh are compared with a single agent on the same batch tasks, at quality held by a registered non-inferiority guard"
+slug: the-mesh-is-measured-against-one-agent
+order: 207
+priority: p1
+problem: "T4 of the owner's report of 2026-10-19 asks to show a speed-up of the mesh against a single agent at controlled quality. The economics runner runs one job as sequential sessions in one workspace (runner.rs:1-26); I3298 only declares topology arms as data (its acceptance: economics summary lists every arm with status untested); no task is a set of issues several workers could share; no analysis holds a speed-up to a quality guard."
+outcome: "The runner runs a coordinated-workers arm; batch tasks compose existing corpus tasks; a registered suite compares it with a single agent; the verdict on wall time is allowed only under a non-inferiority guard on accepted share, and is published on the T4 row."
+current_state: "I3298 is READY at p3 in every-sessions-usage-is-observed with scope apps/majordomus-cli/src/economics. runner.rs:103 RunOptions has no concurrency. The mesh lab (test/mesh-lab/run:187-245) proves claims, handovers, partition and crash at the mesh layer with scripted nodes, not with agents doing work."
+desired_state: "suites/mesh.yaml registered with its T4 protocol; the arm runs N sessions in worktrees of one workspace sharing a server; the guarded verdict is published."
+scope:
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/stats.rs"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - ".ai/repo/benchmarks/economics/suites"
+  - ".ai/repo/benchmarks/economics/tasks"
+  - ".ai/repo/benchmarks/economics/runs"
+  - ".ai/repo/benchmarks"
+  - "docs/ECONOMICS.md"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Cross-machine mesh runs; the arm runs on one host, and the published result says so"
+  - "Lease-based assignment (I3198)"
+  - "Per-mechanism attribution (I3298)"
+acceptance_criteria:
+  - "A replaying harness runs the coordinated arm end to end without a provider"
+  - "No favourable verdict is printed while the accepted-share guard fails"
+  - "The T4 row publishes the verdict with every lost or invalid pair"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "Concurrent live sessions multiply account usage; the budget ceiling is an owner decision"
+  - "On one host the workers share CPU and disk; the result is a one-host result"
+  - "Merge conflicts between workers are part of the treatment's cost and are counted, not excluded"
+created_at: 2026-10-19
+updated_at: 2026-10-19

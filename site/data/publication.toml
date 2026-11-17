@@ -153,6 +153,11 @@ projection = "none"
 reason = "A deployment object carries the target a release is published to. Its rendered artifacts are in the repository and its state is on the Cockpit; a public page would say only what /docs/install/ already says."
 
 [[kinds]]
+kind = "derive-offload"
+projection = "none"
+reason = "The derive-offload declaration names the machines of this repository's owner that a branch's derive may run on, and the limits each must meet; `majordomus offload` reads it. It is an operating record of one cluster, and a public page would publish the owner's host addresses without telling a reader anything about Majordomus."
+
+[[kinds]]
 kind = "distribution-model"
 projection = "none"
 reason = "The distribution model is the input the release matrix, the installer and /docs/install/ are all generated from. The generated pages are the publication; the model behind them is not a second one."

@@ -212,6 +212,7 @@ fn echo<I: serde::de::DeserializeOwned + 'static>(
             benchmark: BenchmarkPolicy::Required,
             cache: CachePolicy::Disabled,
             execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
+            skill: None,
         },
         handler: handler::<I, Echoed, _>(|_, _| Ok(Echoed { foo: "x".into() })),
         cases: |_| vec![],

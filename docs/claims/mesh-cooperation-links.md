@@ -39,8 +39,10 @@ posts garbage, a forged card and a future protocol range and reads each refusal 
 
 ## What it does not cover
 
-It does not encrypt: the executable has no TLS, so links belong on a private network or an
-overlay (a tailnet, WireGuard) that provides confidentiality. It authenticates keys, not
+It encrypts only what is addressed `https://`: a seed or hub written so is reached over TLS
+with its certificate verified, and an `http://` one only at a loopback, private or overlay
+address (ADR 0220). A link dialed at an advertised address is cleartext, so links belong on a
+private network or an overlay (a tailnet, WireGuard) that provides confidentiality. It authenticates keys, not
 people: whoever holds an allowed node key is that node.
 
 ## Why it exists

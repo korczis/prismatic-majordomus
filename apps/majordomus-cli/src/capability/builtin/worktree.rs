@@ -1,16 +1,23 @@
 //! The `worktree` module: the branch-to-worktree topology of this repository, projected.
 //!
-//! Four questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
-//! the same service the command line renders and the git hooks ask. Declaring them here is
-//! what puts them on MCP (as tools and as a resource), on HTTP, in the OpenAPI document, in
-//! the Swagger UI, in the Cockpit and in the generated reference, without any of those
-//! carrying a route, a schema or a sentence of their own.
+//! Six questions, all read-only, and one command, all answered by
+//! [`crate::worktree::WorktreeService`] — the same service the command line renders and the
+//! git hooks ask. Declaring them here is what puts them on MCP (as tools and as a resource),
+//! on HTTP, in the OpenAPI document, in the Swagger UI, in the Cockpit and in the generated
+//! reference, without any of those carrying a route, a schema or a sentence of their own.
 //!
-//! Creating, migrating, repairing and removing are deliberately *not* here. A capability that
-//! writes the repository must declare `Effect::RepositoryMutation`, and the set of those is
-//! pinned by a test in `builtin`; moving worktrees on disk is not a thing the shared MCP
-//! server takes on. They are command-line operations, they call the same service, and the
-//! Cockpit names the exact command for each.
+//! The one command is `worktree.create` (I4002): the canonical worktree of a branch, made or
+//! found, which is what an executor needs before it can do any work in isolation. It is
+//! [`WorktreeService::ensure`] and nothing else — the path is derived, a misplaced or
+//! conflicting worktree is refused with the service's own reason, `git worktree add` runs
+//! under a deadline — and it declares `Effect::RepositoryMutation`, so every surface asks
+//! before it runs. Its command-line projection is `majordomus worktree ensure`, which has
+//! the same idempotent contract; `worktree create` stays the command that refuses a worktree
+//! already there.
+//!
+//! Migrating, repairing and removing are deliberately *not* here: they move or delete work
+//! that exists, which is not a thing the shared MCP server takes on. They are command-line
+//! operations, they call the same service, and the Cockpit names the exact command for each.
 
 use std::path::Path;
 
@@ -20,16 +27,17 @@ use serde::{Deserialize, Serialize};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
-    CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
+    CachePolicy, CapabilityKind, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
-    migrate, Detail, InspectReport, MigrationPlan, Reconciliation, RepositoryTopology,
-    StatusReport, WorktreeError, WorktreeService,
+    migrate, CreateReport, CreateRequest, Detail, InspectReport, MigrationPlan, Reconciliation,
+    RepositoryTopology, StatusReport, Threshold, TrunkDistance, UncommittedReport, WorktreeError,
+    WorktreeService,
 };
 use crate::{capability, module};
 
-use super::{get, mcp, Empty};
+use super::{get, mcp, post, Empty};
 
 /// The URI under which the topology is read as an MCP resource.
 pub const WORKTREES_URI: &str = "majordomus://worktrees";
@@ -77,6 +85,60 @@ impl BenchmarkCases for InspectInput {
             "feature-branch",
             InspectInput {
                 branch: "feature/example".into(),
+            },
+        )]
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// What to judge uncommitted work against.
+pub struct UncommittedInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The age past which work nothing holds is abandoned, as a person writes it (`90s`,
+    /// `30m`, `12h`, `1d`). Default: the policy's `session.stranded_after`, which is also
+    /// how long an open episode may be silent and still hold the work.
+    pub older_than: Option<String>,
+}
+
+impl BenchmarkCases for UncommittedInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("policy-threshold", UncommittedInput { older_than: None }),
+            NamedCase::new(
+                "one-hour",
+                UncommittedInput {
+                    older_than: Some("1h".into()),
+                },
+            ),
+        ]
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The branch whose canonical worktree is wanted.
+pub struct CreateInput {
+    /// The branch, full name (`feature/improve-cli`). Checked out when it exists here,
+    /// taken up from the remote when the remote has it, otherwise created at `base`.
+    pub branch: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The commit or ref a new branch starts from, as given and never fetched. Default: the
+    /// remote's trunk, fetched now within a deadline, then the local trunk, said in `start`.
+    /// Ignored when the branch exists.
+    pub base: Option<String>,
+}
+
+impl BenchmarkCases for CreateInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // A benchmark must not create worktrees: the one case is a name the service refuses
+        // before git is asked anything, so it measures the whole path to the refusal and
+        // leaves the repository as it was.
+        vec![NamedCase::new(
+            "refused-name",
+            CreateInput {
+                branch: "feature/../escape".into(),
+                base: None,
             },
         )]
     }
@@ -146,12 +208,37 @@ fn worktree_inspect(ctx: &Context, input: InspectInput) -> Result<InspectReport,
     service_of(ctx)?.inspect(&input.branch).map_err(refused)
 }
 
+fn worktree_create(ctx: &Context, input: CreateInput) -> Result<CreateReport, CapabilityError> {
+    service_of(ctx)?
+        .ensure(&CreateRequest {
+            branch: input.branch,
+            base: input.base,
+        })
+        .map_err(refused)
+}
+
 fn worktree_migration_plan(ctx: &Context, _: Empty) -> Result<MigrationPlan, CapabilityError> {
     migrate::plan(&service_of(ctx)?).map_err(refused)
 }
 
 fn worktree_reconciliation(ctx: &Context, _: Empty) -> Result<Reconciliation, CapabilityError> {
     service_of(ctx)?.reconciliation().map_err(refused)
+}
+
+fn worktree_trunk(ctx: &Context, input: StatusInput) -> Result<TrunkDistance, CapabilityError> {
+    Ok(service_at(ctx, input.path.as_deref())?.trunk_distance())
+}
+
+fn worktree_uncommitted(
+    ctx: &Context,
+    input: UncommittedInput,
+) -> Result<UncommittedReport, CapabilityError> {
+    let threshold = Threshold::declared_at(
+        Path::new(&ctx.index.repository.root),
+        input.older_than.as_deref(),
+    )
+    .map_err(CapabilityError::InvalidInput)?;
+    service_of(ctx)?.uncommitted(&threshold).map_err(refused)
 }
 
 // ---------------------------------------------------------------- the module
@@ -216,6 +303,25 @@ pub fn module() -> ModuleDescriptor {
                 handler: worktree_inspect,
             },
             capability! {
+                id: "worktree.create",
+                kind: CapabilityKind::Command,
+                title: "The canonical worktree of a branch, made or found",
+                description: "Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.",
+                input: CreateInput,
+                output: CreateReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_create"),
+                    http: post("/api/v1/worktrees/create"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "ensure".into()] }),
+                },
+                tags: ["worktree", "git", "topology", "isolation"],
+                handler: worktree_create,
+            }
+            // It adds a branch, a registration under the common directory and a directory
+            // beside the checkout: a write, and every surface asks before it runs.
+            .writes_repository(),
+            capability! {
                 id: "worktree.migration_plan",
                 title: "What it would take to bring every worktree home",
                 description: "One step per misplaced worktree with a branch: where it is, where it belongs, how it would move, the uncommitted work that moves with it, and what blocks it; plus the exceptions the migration cannot address by design — detached worktrees, stale registrations, the primary checkout off the trunk — each with what a person does about it. Planning changes nothing; `majordomus worktree migrate` applies it with a fingerprint taken before and after every move.",
@@ -246,6 +352,38 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["worktree", "git", "topology", "reconciliation"],
                 cache: CachePolicy::Disabled,
                 handler: worktree_reconciliation,
+            },
+            capability! {
+                id: "worktree.uncommitted",
+                title: "Uncommitted work in the linked worktrees, and what holds it",
+                description: "Every linked worktree whose index or working tree holds changes no commit carries: how many paths (staged, unstaged, untracked, conflicted), when the oldest change was made (the earliest modification time among the changed paths, the index file's standing in for a deleted one), and what holds the work — an active task record, an open episode that is not stranded, or a process whose working directory is inside. Work nothing holds and older than the threshold is `abandoned`, with the command that would put it on a remote `rescue/` ref; it is suggested, never run. The threshold is the policy's `session.stranded_after` unless `older_than` names another. Reads every worktree and writes none: every status runs without optional locks, so no index is refreshed.",
+                input: UncommittedInput,
+                output: UncommittedReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_uncommitted"),
+                    http: get("/api/v1/worktrees/uncommitted"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "uncommitted".into()] }),
+                },
+                tags: ["worktree", "git", "continuity", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_uncommitted,
+            },
+            capability! {
+                id: "worktree.trunk",
+                title: "How far a checkout is from the remote trunk",
+                description: "The checkout's `HEAD` and the local trunk branch, each counted against the remote-tracking trunk — commits behind and ahead, a merge in progress counting what it brings in — as of the last fetch, whose time is part of the answer; judged against the policy's `checkout.trunk_distance` as `current`, `lagging`, `stale`, `unjudged` (no threshold declared) or `unmeasured` (no remote trunk), with the commands that bring it current. What doctor renders and what `server.status` and the MCP instructions say about the tree a server serves (`project.a-checkout-serves-the-current-trunk`). Fetches nothing and writes nothing.",
+                input: StatusInput,
+                output: TrunkDistance,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_trunk"),
+                    http: get("/api/v1/worktrees/trunk"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "trunk".into()] }),
+                },
+                tags: ["worktree", "git", "freshness", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_trunk,
             },
         ],
     }
@@ -278,6 +416,11 @@ mod tests {
                 "/api/v1/worktrees/inspect",
             ),
             (
+                "worktree.create",
+                "majordomus_worktree_create",
+                "/api/v1/worktrees/create",
+            ),
+            (
                 "worktree.migration_plan",
                 "majordomus_worktree_migration_plan",
                 "/api/v1/worktrees/migration",
@@ -286,6 +429,16 @@ mod tests {
                 "worktree.reconciliation",
                 "majordomus_worktree_reconciliation",
                 "/api/v1/worktrees/reconciliation",
+            ),
+            (
+                "worktree.uncommitted",
+                "majordomus_worktree_uncommitted",
+                "/api/v1/worktrees/uncommitted",
+            ),
+            (
+                "worktree.trunk",
+                "majordomus_worktree_trunk",
+                "/api/v1/worktrees/trunk",
             ),
         ];
         let ids: Vec<&str> = m
@@ -321,16 +474,169 @@ mod tests {
         assert_eq!(resource.map(|r| r.uri.as_str()), Some(WORKTREES_URI));
     }
 
-    /// Every capability of the module is read-only: the registry's contract, and the
-    /// reason the mutations live on the command line.
+    /// An `older_than` that is not a duration is the caller's error, refused as invalid
+    /// input before any work tree is read.
     #[test]
-    fn every_capability_is_a_query() {
+    fn an_uncommitted_reading_against_no_duration_is_invalid_input() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let refused = app
+            .context
+            .execute(
+                "worktree.uncommitted",
+                serde_json::json!({ "older_than": "soon" }),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::InvalidInput(m) if m.contains("older_than")),
+            "{refused:?}"
+        );
+    }
+
+    /// Every capability of the module is read-only but the one that creates, and that one
+    /// says it writes the repository, by POST: migrating, repairing and removing stay on
+    /// the command line.
+    #[test]
+    fn every_capability_is_a_query_but_the_create() {
         for e in module().capabilities {
-            assert!(
-                e.capability.kind.is_read_only(),
-                "{} writes",
-                e.capability.id
-            );
+            let c = &e.capability;
+            if c.id.as_str() == "worktree.create" {
+                assert_eq!(
+                    c.execution.effect,
+                    crate::capability::Effect::RepositoryMutation
+                );
+                assert!(c.execution.needs_confirmation());
+                assert_eq!(
+                    c.exposure.http.as_ref().map(|h| h.method.as_str()),
+                    Some("POST")
+                );
+                continue;
+            }
+            assert!(c.kind.is_read_only(), "{} writes", c.id);
         }
+    }
+
+    /// A git repository with one commit, a bare `origin` holding it as its trunk, and the
+    /// executable's context over it.
+    fn served() -> (tempfile::TempDir, std::path::PathBuf, crate::app::App) {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        let repo = root.join("repo");
+        let git = |cwd: &Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(cwd)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+        };
+        copy_tree(fixture.root(), &repo);
+        git(&repo, &["init", "-q", "-b", "master"]);
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-q", "-m", "init"]);
+        let origin = root.join("origin.git");
+        git(
+            &root,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(
+            &repo,
+            &["remote", "add", "origin", &origin.to_string_lossy()],
+        );
+        git(&repo, &["push", "-q", "-u", "origin", "master"]);
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(repo.clone()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        drop(fixture);
+        (tmp, repo, app)
+    }
+
+    fn copy_tree(from: &Path, to: &Path) {
+        std::fs::create_dir_all(to).unwrap();
+        for entry in std::fs::read_dir(from).unwrap() {
+            let entry = entry.unwrap();
+            let target = to.join(entry.file_name());
+            if entry.file_type().unwrap().is_dir() {
+                if entry.file_name() == ".git" {
+                    continue;
+                }
+                copy_tree(&entry.path(), &target);
+            } else {
+                std::fs::copy(entry.path(), &target).unwrap();
+            }
+        }
+    }
+
+    /// Created at the canonical path from the remote's trunk, then found there on the
+    /// second call with nothing created, and refused for a branch checked out elsewhere.
+    #[test]
+    fn a_create_makes_finds_and_refuses() {
+        let (_tmp, repo, app) = served();
+        let ask = |branch: &str| {
+            app.context
+                .execute("worktree.create", serde_json::json!({ "branch": branch }))
+        };
+        let canonical = repo
+            .parent()
+            .unwrap()
+            .join("repo-wt/feature/x/y")
+            .to_string_lossy()
+            .to_string();
+
+        let made: CreateReport = serde_json::from_value(ask("feature/x/y").unwrap()).unwrap();
+        assert_eq!(made.path, canonical);
+        assert_eq!(made.branch, "feature/x/y");
+        assert!(!made.existed && made.branch_created);
+        assert_eq!(made.base.as_deref(), Some("origin/master"));
+        let head = made.head.clone().expect("a head");
+        assert_eq!(made.start_commit.as_deref(), Some(head.as_str()));
+
+        let found: CreateReport = serde_json::from_value(ask("feature/x/y").unwrap()).unwrap();
+        assert!(found.existed && !found.branch_created);
+        assert_eq!(found.path, canonical);
+        assert_eq!(found.head.as_deref(), Some(head.as_str()));
+
+        // the branch checked out by hand somewhere else is refused, and stays there
+        let away = repo.parent().unwrap().join("away");
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(["worktree", "add", "-q", "-b", "fix/elsewhere"])
+            .arg(&away)
+            .output()
+            .unwrap();
+        assert!(out.status.success());
+        let refused = ask("fix/elsewhere").unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::Refused(m) if m.contains("fix/elsewhere")),
+            "{refused:?}"
+        );
+        assert!(away.is_dir());
+        assert!(!repo
+            .parent()
+            .unwrap()
+            .join("repo-wt/fix/elsewhere")
+            .exists());
+
+        // a name with no place in the container is refused before git is asked
+        let escape = ask("feature/../escape").unwrap_err();
+        assert!(matches!(escape, CapabilityError::Refused(_)), "{escape:?}");
     }
 }

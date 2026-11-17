@@ -1463,9 +1463,14 @@ pub(crate) fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String
     // "the tree in front of you is the tree the run measured" about a tree carrying code
     // the run never saw. Ignored files stay ignored: `--exclude-standard` is what makes
     // this the set a person would call "new here" rather than every build artifact.
-    let mut changed: BTreeSet<String> = git(&["diff", "--name-only", commit, "--"])?
-        .into_iter()
-        .collect();
+    //
+    // `--no-renames`: with rename detection a moved file is listed by its new path only, so
+    // the path the run measured, now gone, never counted as changed; and pairing thousands
+    // of differing paths into renames was half of what each comparison cost.
+    let mut changed: BTreeSet<String> =
+        git(&["diff", "--no-renames", "--name-only", commit, "--"])?
+            .into_iter()
+            .collect();
     changed.extend(git(&["ls-files", "--others", "--exclude-standard"])?);
     Some(changed)
 }
@@ -2099,6 +2104,22 @@ mod tests {
     }
 
     // ---------------------------------------------------------------- at a presented commit
+
+    /// A commit git cannot compare against is an unanswerable comparison, never "nothing
+    /// changed"; one it can answers with the moved file at both of its paths.
+    #[test]
+    fn a_commit_git_cannot_compare_against_answers_nothing() {
+        let f = Fixture::new(&["01_a"]);
+        let head = f.git(&["rev-parse", "HEAD"]);
+        assert_eq!(
+            changed_since(f.root(), "0000000000000000000000000000000000000000"),
+            None
+        );
+        f.git(&["mv", "test/cases/01_a.sh", "test/cases/02_b.sh"]);
+        let changed = changed_since(f.root(), &head).expect("git answers");
+        assert!(changed.contains("test/cases/01_a.sh"), "{changed:?}");
+        assert!(changed.contains("test/cases/02_b.sh"), "{changed:?}");
+    }
 
     /// A repository with one guaranteed claim per case, and the index the report reads.
     struct Fixture {

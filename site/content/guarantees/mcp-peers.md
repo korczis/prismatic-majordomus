@@ -1,7 +1,7 @@
 +++
 title = "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch"
 description = "When two or three AI clients are open in one checkout, each of them can ask the shared server who else is there. A peer is a session: the server's own stdio client, every bridged majordomus mcp, and every client speaking /mcp directly. It is named by what its client sent in initialize (clientInfo.name and version), numbered p1, p2, ... in attachment order, with its transport, when it attached and when it was last seen. A client can announce one line of intent and the repository-relative paths it expects to touch; the others see it in majordomus_peers and in the instructions they get from initialize, which name the server's URL, the caller's own id and every other peer before the first tool call."
-weight = 132
+weight = 134
 [extra]
 claim_id = "mcp-peers"
 status = "guaranteed"
@@ -15,7 +15,7 @@ When two or three AI clients are open in one checkout, each of them can ask the 
 
 ## How it works
 
-`src/peers.rs` is the board: attach, identify, touch, announce, detach, list, in one process's memory. `src/capability/builtin.rs` declares `peers.list` (a query) and `peers.announce` (the one capability of kind `command`, because it changes that memory) as typed descriptors with explicit exposures, and the registry projects them like every other: tools `majordomus_peers` and `majordomus_announce`, `GET /api/v1/peers`, `POST /api/v1/peers/announce`, the OpenAPI operations, the reference. A handler learns who is calling through the context's `caller`, set per session by `Surface::for_peer`; over plain HTTP there is no caller, so `POST /api/v1/peers/announce` is refused and `GET /api/v1/peers` answers without one. The kind decides the rest: a command is bound to `POST` and announced to MCP clients as not read-only, both checked by the registry.
+`src/peers.rs` is the board: attach, identify, touch, announce, detach, list, in one process's memory. `src/capability/builtin.rs` declares `peers.list` (a query) and `peers.announce` (a capability of kind `command`, because it changes that memory) as typed descriptors with explicit exposures, and the registry projects them like every other: tools `majordomus_peers` and `majordomus_announce`, `GET /api/v1/peers`, `POST /api/v1/peers/announce`, the OpenAPI operations, the reference. A handler learns who is calling through the context's `caller`, set per session by `Surface::for_peer`; over plain HTTP there is no caller, so `POST /api/v1/peers/announce` is refused and `GET /api/v1/peers` answers without one. The kind decides the rest: a command is bound to `POST` and announced to MCP clients as not read-only, both checked by the registry.
 
 ## How to see it
 

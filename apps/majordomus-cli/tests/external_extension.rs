@@ -4,14 +4,14 @@
 mod common;
 
 use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use common::{rule, Fixture, BIN};
+use common::{rule, Fixture};
 use serde_json::{json, Value};
 
 /// Ask a fresh server for its resource list and the repository diagnostics.
 fn observe(f: &Fixture) -> (Vec<String>, Vec<Value>) {
-    let mut child = Command::new(BIN)
+    let mut child = common::majordomus()
         .arg("mcp")
         .env("MAJORDOMUS_SHARE", common::dist_share())
         .current_dir(f.root())

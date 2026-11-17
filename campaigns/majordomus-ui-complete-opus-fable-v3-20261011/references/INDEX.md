@@ -1,0 +1,25 @@
+# All uploaded reference images
+
+Images are visual-only fictional UI mockups. Do not mine them for real counts, identities, feature support or endpoints.
+
+- **R01** `a_dark_futuristic_ui_dashboard_screenshot_with_a.png` → `references/01-a_dark_futuristic_ui_dashboard_screenshot_with_a.png` (SHA256 `a32ae6ab9372c009f9fe1bc05c8e062ee115860495296c8e3672202c1baecb64`)
+- **R02** `a_dark_polished_ui_dashboard_screenshot_in_a_wide.png` → `references/02-a_dark_polished_ui_dashboard_screenshot_in_a_wide.png` (SHA256 `a1ab45b7687af2ad1b1f67c6ec9f03c6ea782f9269da4e89b9cebde94dd48579`)
+- **R03** `a_detailed_cinematic_screenshot_style_ui_dashboar.png` → `references/03-a_detailed_cinematic_screenshot_style_ui_dashboar.png` (SHA256 `cf6c9d443f42353056946f3eb04b701ac0de50fb9602b4845d05531a5266b455`)
+- **R04** `a_detailed_ui_screenshot_a_dark_themed_futuristi.png` → `references/04-a_detailed_ui_screenshot_a_dark_themed_futuristi.png` (SHA256 `1a18eaaee1f7686e314f8327c46fd8c3063b6e0dc1812239e8cb0733208a1ac6`)
+- **R05** `a_high_detail_dark_mode_ui_screenshot_of_a_web_app.png` → `references/05-a_high_detail_dark_mode_ui_screenshot_of_a_web_app.png` (SHA256 `1dc5552b6eaaad62cafbfde9fe9089e6c477787f2a9a0d5a81bd8b7868ba5f99`)
+- **R06** `a_high_resolution_dark_mode_dashboard_ui_screensho.png` → `references/06-a_high_resolution_dark_mode_dashboard_ui_screensho.png` (SHA256 `1cd56d62c545cdbe7ee1b7182e139c15ca46bdb72f35a0f1eb916ad254ad774f`)
+- **R07** `a_wide_dark_mode_developer_ui_dashboard_screenshot.png` → `references/07-a_wide_dark_mode_developer_ui_dashboard_screenshot.png` (SHA256 `f36c34d954110145de2c6ebff596b1f2744873baa6d1ec5759939a2c1e657a59`)
+- **R08** `a_wide_dark_mode_ui_dashboard_mockup_screenshot_o.png` → `references/08-a_wide_dark_mode_ui_dashboard_mockup_screenshot_o.png` (SHA256 `fb9657ca6c878a80bde47837b0e08fad918ae8e19272291cd0a7e6d6cb17cadf`)
+- **R09** `a_wide_dark_themed_dashboard_ui_screenshot_in_a_c.png` → `references/09-a_wide_dark_themed_dashboard_ui_screenshot_in_a_c.png` (SHA256 `39c36e8b63815e7adf99c3818c40cda03bd6185ddb4f2226d325b5046f818e62`)
+- **R10** `a_wide_dark_themed_dashboard_ui_screenshot_moder.png` → `references/10-a_wide_dark_themed_dashboard_ui_screenshot_moder.png` (SHA256 `264a8b87cbf498a3b925fef7a9046f2e066e736b6955d95581e3c5d9f8a769cd`)
+- **R11** `a_wide_dark_themed_futuristic_ui_dashboard_scree.png` → `references/11-a_wide_dark_themed_futuristic_ui_dashboard_scree.png` (SHA256 `fb4a30215cd18ab41d5c09e8bdb91870cfacc07dc93cd621b8f2b6f0d31194a5`)
+- **R12** `a_wide_dark_themed_futuristic_web_dashboard_ui_s.png` → `references/12-a_wide_dark_themed_futuristic_web_dashboard_ui_s.png` (SHA256 `1effb52fb64b76a9bbad92aacea2d43539b3457eb40ddaa4421d448b4710082f`)
+- **R13** `a_wide_dark_themed_modern_dashboard_ui_screensho.png` → `references/13-a_wide_dark_themed_modern_dashboard_ui_screensho.png` (SHA256 `fdf0ee4a1556492244aa015b7a22d8065466a042483e50a9603b49ec2c1a984a`)
+- **R14** `a_wide_dark_themed_modern_ui_dashboard_screenshot.png` → `references/14-a_wide_dark_themed_modern_ui_dashboard_screenshot.png` (SHA256 `3279337218794318ee46bd5f8e9a709a3a82f86451d8964e8bf8778ae199f27a`)
+- **R15** `a_wide_dark_themed_ui_dashboard_screenshot_futuri.png` → `references/15-a_wide_dark_themed_ui_dashboard_screenshot_futuri.png` (SHA256 `389b1b4008449c5038fce63b95cbbddfe4ac5caa8340ab236f6109b5184dfb81`)
+- **R16** `a_wide_high_resolution_dark_theme_dashboard_ui_s.png` → `references/16-a_wide_high_resolution_dark_theme_dashboard_ui_s.png` (SHA256 `6393d816ceb9e22e2dc94cb290295f04c3dbcc45aec39fdc5c44600698672358`)
+- **R17** `a_wide_high_resolution_dark_ui_dashboard_app_in.png` → `references/17-a_wide_high_resolution_dark_ui_dashboard_app_in.png` (SHA256 `73dd55c91e64fe3a0bddc23d88ccfbff0a1645e787a257e9274c398ea6276065`)
+- **R18** `autonomous_development_dashboard_in_neon_dark_mode.png` → `references/18-autonomous_development_dashboard_in_neon_dark_mode.png` (SHA256 `5983bada636d1e43d522a61dc40ef7e688daa37e408a78e72ef93398669bbdcc`)
+- **R19** `futuristic_pr_drain_developer_dashboard.png` → `references/19-futuristic_pr_drain_developer_dashboard.png` (SHA256 `762e91889d3270f73d88d2d3b5ae3116cc2431cd74dd762153d3bbaf14214944`)
+- **R20** `wide_dark_themed_dashboard_ui_screenshot_for_maj.png` → `references/20-wide_dark_themed_dashboard_ui_screenshot_for_maj.png` (SHA256 `09674589843ca31c95dae6dcd6a541548a43c2a99e58a9c7b81c625f5dc04bd8`)
+- **R21** `wide_dark_themed_ui_screenshot_of_a_developer_devo.png` → `references/21-wide_dark_themed_ui_screenshot_of_a_developer_devo.png` (SHA256 `53ef9c2434fe2092525833ee45a04dc4f0efee9fc4ac1f0a4cd748ac1bf508a2`)

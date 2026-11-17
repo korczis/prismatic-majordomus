@@ -547,7 +547,7 @@ fn a_schema_violation_names_the_field_and_the_constraint() {
 #[test]
 fn without_a_share_directory_nothing_starts_and_the_search_is_named() {
     let f = Fixture::new();
-    let child = std::process::Command::new(common::BIN)
+    let child = common::majordomus()
         .args(["mcp", "--inspect"])
         .current_dir(f.root())
         .env_remove("MAJORDOMUS_SHARE")
@@ -629,4 +629,273 @@ fn a_layer_readme_without_the_context_contract_is_named_by_the_manifest_conventi
     f.commit("docs readme");
     let (_, v, _) = inspect(&f.root(), &[]);
     assert!(resource_uris(&v).contains(&"majordomus://document/docs/README.md".to_string()));
+}
+
+// ---------------------------------------------------------------- the telemetry record
+//
+// The record is checkout-local (`.ai/local/state/telemetry/`), so no source class of a real
+// repository discovers it and no index ever reads one. The fixture maps a tracked path
+// inside its scope to the kind, which puts the kind's contract in front of the same index
+// and the same validator every other kind goes through — the contract is what is under
+// test here, not where a record lives.
+
+/// A fixture whose `.ai/repo/telemetry/*.yaml` files are read as telemetry records.
+fn telemetry_fixture() -> Fixture {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/knowledge/sources.yaml",
+        &format!(
+            "{}\n  - id: telemetry\n    kind: telemetry\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/telemetry/*.yaml'\n    required: false\n",
+            common::SOURCES
+        ),
+    );
+    f
+}
+
+/// The eight facts of a record, each written by `fact(name)`.
+fn telemetry_record(task: &str, fact: impl Fn(&str) -> String) -> String {
+    let mut text = format!(
+        "schema: telemetry/v1\nkind: telemetry\ntask_id: {task}\n\
+         recorded_at: 2026-10-12T21:04:10Z\nfacts:\n"
+    );
+    for name in [
+        "input_uncached_tokens",
+        "cache_write_tokens",
+        "cache_read_tokens",
+        "output_tokens",
+        "reasoning_tokens",
+        "requests",
+        "tool_calls",
+        "cost_microusd",
+    ] {
+        text.push_str(&format!("  {name}:\n{}", fact(name)));
+    }
+    text
+}
+
+const REPORTED: &str = "    value: 12\n    reporter: claude-code\n";
+const ABSENT: &str = "    not_reported: \"the provider reports nothing\"\n    reporter: codex\n";
+
+/// The one diagnostic an invalid record produces, as `(code, message)`.
+fn telemetry_refusal(f: &Fixture, path: &str) -> (String, String) {
+    let (code, v, err) = inspect(&f.root(), &[]);
+    assert_eq!(code, 10, "an invalid record makes inspect exit 10: {err}");
+    let hit = diagnostics(&v)
+        .into_iter()
+        .find(|d| d["path"] == path)
+        .unwrap_or_else(|| panic!("no diagnostic names {path}: {:?}", diagnostics(&v)));
+    assert!(
+        !resource_uris(&v)
+            .iter()
+            .any(|u| u.starts_with("majordomus://telemetry/")),
+        "a refused record is not an object"
+    );
+    (
+        hit["code"].as_str().unwrap().to_string(),
+        hit["message"].as_str().unwrap().to_string(),
+    )
+}
+
+#[test]
+fn a_telemetry_record_holds_values_and_explicit_absences_side_by_side() {
+    let f = telemetry_fixture();
+    // every fact reported, one of them as zero: zero is a measurement
+    f.write(
+        ".ai/repo/telemetry/reported.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "tool_calls" {
+                "    value: 0\n    reporter: claude-code\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    // a provider that reported nothing: every fact is an absence with its reason
+    f.write(
+        ".ai/repo/telemetry/silent.yaml",
+        &telemetry_record("t-20261012201706-0a1b", |_| ABSENT.into()),
+    );
+    // and the mixed record a real provider produces
+    f.write(
+        ".ai/repo/telemetry/mixed.yaml",
+        &telemetry_record("t-20261012201707-c2d3", |name| {
+            if name == "reasoning_tokens" || name == "cost_microusd" {
+                ABSENT.into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("telemetry");
+    let (code, v, err) = inspect(&f.root(), &[]);
+    assert_eq!(code, 0, "{err}\n{:?}", diagnostics(&v));
+    let uris = resource_uris(&v);
+    for task in [
+        "t-20261012201705-7bf9",
+        "t-20261012201706-0a1b",
+        "t-20261012201707-c2d3",
+    ] {
+        assert!(
+            uris.contains(&format!("majordomus://telemetry/{task}")),
+            "missing {task} in {uris:?}"
+        );
+    }
+}
+
+#[test]
+fn a_telemetry_fact_without_a_reporter_is_refused() {
+    let f = telemetry_fixture();
+    f.write(
+        ".ai/repo/telemetry/anonymous.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "output_tokens" {
+                "    value: 12\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("anonymous");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/anonymous.yaml");
+    assert_eq!(code, "schema_violation");
+    assert!(
+        msg.contains("schema 'majordomus.telemetry/v1'")
+            && msg.contains("facts.output_tokens")
+            && msg.contains("reporter"),
+        "{msg}"
+    );
+}
+
+#[test]
+fn a_telemetry_absence_needs_its_reason_and_is_never_also_a_value() {
+    let f = telemetry_fixture();
+    // an absence with nothing said about why
+    f.write(
+        ".ai/repo/telemetry/unexplained.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "requests" {
+                "    not_reported: \"\"\n    reporter: codex\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("unexplained");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/unexplained.yaml");
+    assert_eq!(code, "schema_violation");
+    assert!(msg.contains("facts.requests"), "{msg}");
+    f.remove(".ai/repo/telemetry/unexplained.yaml");
+
+    // a fact that is both reported and not reported says nothing
+    f.write(
+        ".ai/repo/telemetry/both.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "requests" {
+                "    value: 3\n    not_reported: \"unknown\"\n    reporter: codex\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("both");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/both.yaml");
+    assert_eq!(code, "schema_violation");
+    assert!(msg.contains("facts.requests"), "{msg}");
+    f.remove(".ai/repo/telemetry/both.yaml");
+
+    // and one that is neither: a reporter alone is not a fact
+    f.write(
+        ".ai/repo/telemetry/neither.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "requests" {
+                "    reporter: codex\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("neither");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/neither.yaml");
+    assert_eq!(code, "schema_violation");
+    assert!(msg.contains("facts.requests"), "{msg}");
+}
+
+#[test]
+fn a_telemetry_record_that_omits_a_fact_is_refused_rather_than_read_as_zero() {
+    let f = telemetry_fixture();
+    let whole = telemetry_record("t-20261012201705-7bf9", |_| REPORTED.into());
+    let gap = whole.replace(&format!("  cost_microusd:\n{REPORTED}"), "");
+    assert_ne!(whole, gap, "the fixture removed nothing");
+    f.write(".ai/repo/telemetry/gap.yaml", &gap);
+    f.commit("gap");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/gap.yaml");
+    assert_eq!(code, "schema_violation");
+    assert!(msg.contains("cost_microusd"), "{msg}");
+}
+
+#[test]
+fn a_telemetry_record_refuses_a_key_or_a_number_the_contract_does_not_name() {
+    let f = telemetry_fixture();
+    // an estimate has no field: the key is unknown at the level it was written
+    f.write(
+        ".ai/repo/telemetry/estimated.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "output_tokens" {
+                "    value: 12\n    estimated: true\n    reporter: claude-code\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("estimated");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/estimated.yaml");
+    assert_eq!(code, "unknown_key");
+    assert!(msg.contains("facts.output_tokens.estimated"), "{msg}");
+    f.remove(".ai/repo/telemetry/estimated.yaml");
+
+    // a derived total is not a fact either
+    f.write(
+        ".ai/repo/telemetry/total.yaml",
+        &(telemetry_record("t-20261012201705-7bf9", |_| REPORTED.into())
+            + "  total_tokens:\n    value: 48\n    reporter: claude-code\n"),
+    );
+    f.commit("total");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/total.yaml");
+    assert_eq!(code, "unknown_key");
+    assert!(msg.contains("facts.total_tokens"), "{msg}");
+    f.remove(".ai/repo/telemetry/total.yaml");
+
+    // a negative count is not a measurement, and a version nobody knows is not guessed at
+    f.write(
+        ".ai/repo/telemetry/negative.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |name| {
+            if name == "requests" {
+                "    value: -1\n    reporter: claude-code\n".into()
+            } else {
+                REPORTED.into()
+            }
+        }),
+    );
+    f.commit("negative");
+    let (code, msg) = telemetry_refusal(&f, ".ai/repo/telemetry/negative.yaml");
+    assert_eq!(code, "schema_violation");
+    assert!(msg.contains("facts.requests"), "{msg}");
+    f.remove(".ai/repo/telemetry/negative.yaml");
+
+    f.write(
+        ".ai/repo/telemetry/future.yaml",
+        &telemetry_record("t-20261012201705-7bf9", |_| REPORTED.into())
+            .replace("schema: telemetry/v1", "schema: telemetry/v2"),
+    );
+    f.commit("future");
+    let (code, v, _) = inspect(&f.root(), &[]);
+    assert_eq!(code, 10);
+    assert!(
+        diagnostics(&v)
+            .iter()
+            .any(|d| d["path"] == ".ai/repo/telemetry/future.yaml"),
+        "{:?}",
+        diagnostics(&v)
+    );
 }

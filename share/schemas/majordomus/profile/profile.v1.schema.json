@@ -114,6 +114,15 @@
         },
         "architecture_notes": {
           "type": "boolean"
+        },
+        "knowledge": {
+          "type": "boolean",
+          "description": "Whether `majordomus context` carries the knowledge pointers: a bounded slice of the knowledge graph selected from what the task's issue references. Absent means no."
+        },
+        "knowledge_max_items": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The most knowledge pointers the context carries; the policy's context.max_list_items when absent, and never more than it."
         }
       }
     },
