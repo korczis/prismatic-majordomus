@@ -3179,6 +3179,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:monitor steps",
+      "path": "/evidence/commands/monitor-steps/"
+    },
+    {
+      "kind": "command",
       "subject": "command:monitor",
       "path": "/evidence/commands/monitor/"
     },
@@ -17138,6 +17143,25 @@
       "kind": "command",
       "id": "monitor",
       "page": "/evidence/commands/monitor/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:monitor steps": {
+      "kind": "command",
+      "id": "monitor steps",
+      "page": "/evidence/commands/monitor-steps/",
       "programs": [
         "native"
       ],

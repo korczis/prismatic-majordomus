@@ -143,9 +143,53 @@ fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
+    let called = call(program, root, args, &[], BUDGET)?;
+    if !called.success {
+        let reason = called
+            .stderr
+            .lines()
+            .next()
+            .unwrap_or("no reason given")
+            .trim()
+            .to_string();
+        return Err((
+            MonitorSourceHealth::Error,
+            format!("gh {} failed: {reason}", args[0]),
+        ));
+    }
+    serde_json::from_str(&called.stdout).map_err(|e| {
+        (
+            MonitorSourceHealth::Error,
+            format!("gh {} printed no JSON: {e}", args[0]),
+        )
+    })
+}
+
+/// What one bounded call of a program printed, and whether it exited 0.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Called {
+    /// Whether the program exited 0.
+    pub(crate) success: bool,
+    /// Its standard output, whole.
+    pub(crate) stdout: String,
+    /// Its standard error, whole.
+    pub(crate) stderr: String,
+}
+
+/// One call of `program` in `root` with `envs` set, bounded by `budget`: what it printed, or
+/// why it could not be started or did not finish in time. The step watcher reads `gh api`
+/// through the same call, because a `gh` that hangs is the same fault for both readers.
+pub(crate) fn call(
+    program: &str,
+    root: &Path,
+    args: &[&str],
+    envs: &[(&str, &str)],
+    budget: Duration,
+) -> Result<Called, (MonitorSourceHealth, String)> {
     let mut child = crate::process::retrying_busy(|| {
         Command::new(program)
             .args(args)
+            .envs(envs.iter().copied())
             .current_dir(root)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -158,7 +202,11 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
             format!("gh could not be started: {e}"),
         )
     })?;
-    let deadline = Instant::now() + BUDGET;
+    // Drained while the child runs: a jobs answer is past 100 KiB, and a child whose pipe is
+    // full blocks on its write and never exits, which the budget would then misreport as slow.
+    let stdout = drain(child.stdout.take());
+    let stderr = drain(child.stderr.take());
+    let deadline = Instant::now() + budget;
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
@@ -169,33 +217,26 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
                 let _ = child.wait();
                 return Err((
                     MonitorSourceHealth::Error,
-                    format!("gh {} took longer than {}s", args[0], BUDGET.as_secs()),
+                    format!("gh {} took longer than {}s", args[0], budget.as_secs()),
                 ));
             }
         }
     };
-    let mut out = String::new();
-    let mut err = String::new();
-    // both were piped above, so both are there to read
-    let _ = child.stdout.take().map(|mut s| s.read_to_string(&mut out));
-    let _ = child.stderr.take().map(|mut s| s.read_to_string(&mut err));
-    if !status.success() {
-        let reason = err
-            .lines()
-            .next()
-            .unwrap_or("no reason given")
-            .trim()
-            .to_string();
-        return Err((
-            MonitorSourceHealth::Error,
-            format!("gh {} failed: {reason}", args[0]),
-        ));
-    }
-    serde_json::from_str(&out).map_err(|e| {
-        (
-            MonitorSourceHealth::Error,
-            format!("gh {} printed no JSON: {e}", args[0]),
-        )
+    Ok(Called {
+        success: status.success(),
+        stdout: stdout.join().unwrap_or_default(),
+        stderr: stderr.join().unwrap_or_default(),
+    })
+}
+
+/// Read `pipe` to its end on a thread of its own; a missing pipe reads as empty.
+fn drain(pipe: Option<impl Read + Send + 'static>) -> std::thread::JoinHandle<String> {
+    std::thread::spawn(move || {
+        let mut text = String::new();
+        if let Some(mut pipe) = pipe {
+            let _ = pipe.read_to_string(&mut text);
+        }
+        text
     })
 }
 

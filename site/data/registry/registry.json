@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "848d3e55b6aa20cb5a98d28cbe7adb232676457948a43956e64edd5305415b74",
+    "fingerprint": "93b0caf1f601351f255ce3be56b78c4c35daf9741d2b9b0e669e0486095795e1",
     "summary": {
-      "total": 4032,
+      "total": 4033,
       "builtin": 231,
-      "declarative": 3801,
+      "declarative": 3802,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3801
+        "resource": 3802
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3811
+        "implemented": 3812
       },
       "mcp_tools": 215,
-      "mcp_resources": 3858,
+      "mcp_resources": 3859,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1258,
+        "capabilities": 1259,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "93ce90036774ceba42c491ead7b58ccd675b663e9d74c248e7cc4206cba27f94",
+    "fingerprint": "df573d81950abd08ef295442022887b4a1e675ae29f01cef84164894f40bf00e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1258,
+      "issue": 1259,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105452,7 +105452,7 @@
         "title": "The monitor",
         "path": "docs/MONITOR.md",
         "source_class": "document",
-        "bytes": 9961
+        "bytes": 13353
       },
       {
         "uri": "majordomus://document/docs/OFFLOAD.md",
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 137749
+        "bytes": 137938
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123329,6 +123329,17 @@
         "bytes": 2213
       },
       {
+        "uri": "majordomus://issue/I4624",
+        "kind": "issue",
+        "identity": "I4624",
+        "title": "majordomus monitor steps waits until every step of a range of one job is success, fails at the first that is not, and polls gently",
+        "description": "A command, `majordomus monitor steps`, takes a run id (or a branch and its head SHA), a job-name pattern and a step range, reads the run and its jobs through `gh api`, and waits until every step in the range of every matching job concluded success. It exits at once on a step that concluded anything else (failure, cancelled, timed_out, skipped unless allowed), treats a step whose conclusion is empty or null, or whose status is not completed, as pending, polls at an interval no shorter than 120 s, backs off on a rate-limit answer, and exits 0 green, 10 red, 11 timed out, 12 unreadable, printing the run, each job and each step's verdict.",
+        "path": ".ai/repo/project/issues/I4624.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4361
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -139872,7 +139883,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1258
+      "objects": 1259
     },
     {
       "name": "knowledge",
@@ -164252,7 +164263,7 @@
         ],
         "route": "/docs/cli/monitor/",
         "executable": true,
-        "usage": "majordomus monitor [OPTIONS]",
+        "usage": "majordomus monitor [OPTIONS] [COMMAND]",
         "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
         "args": [
           {
@@ -164525,7 +164536,258 @@
             "expectation": "exits 10"
           }
         ],
-        "subcommands": []
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "monitor",
+              "steps"
+            ],
+            "route": "/docs/cli/monitor/steps/",
+            "executable": true,
+            "usage": "majordomus monitor steps [OPTIONS]",
+            "about": "Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read",
+            "args": [
+              {
+                "name": "run",
+                "long": "run",
+                "positional": false,
+                "help": "The workflow run, by its id (the number in its URL)",
+                "value_name": "RUN",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "branch",
+                "long": "branch",
+                "positional": false,
+                "help": "The branch whose run to watch; needs --sha, and the newest run for that head is read",
+                "value_name": "BRANCH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "sha",
+                "long": "sha",
+                "positional": false,
+                "help": "The head commit the run is for, with --branch",
+                "value_name": "SHA",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "workflow",
+                "long": "workflow",
+                "positional": false,
+                "help": "Only a run of this workflow (* matches any run of characters); needed when several workflows ran for the head",
+                "value_name": "WORKFLOW",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "job",
+                "long": "job",
+                "positional": false,
+                "help": "The job's name over the whole name, * matching any run of characters; every matching job is judged",
+                "value_name": "JOB",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "steps",
+                "long": "steps",
+                "positional": false,
+                "help": "The steps that must be success: N or N-M, by the step number the jobs API reports",
+                "value_name": "STEPS",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "allow_skipped",
+                "long": "allow-skipped",
+                "positional": false,
+                "help": "Count a step that concluded skipped as passing rather than as red",
+                "value_name": "ALLOW_SKIPPED",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "interval",
+                "long": "interval",
+                "positional": false,
+                "help": "Seconds between two reads, at least 120; a rate-limited answer waits until the limit resets",
+                "value_name": "INTERVAL",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "180"
+                ]
+              },
+              {
+                "name": "timeout",
+                "long": "timeout",
+                "positional": false,
+                "help": "Give up after this long while pending, exiting 11: seconds, or a number with s, m, h or d",
+                "value_name": "TIMEOUT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "2h"
+                ]
+              },
+              {
+                "name": "github",
+                "long": "github",
+                "positional": false,
+                "help": "The GitHub repository as OWNER/NAME; default: the one gh resolves from this checkout's remotes",
+                "value_name": "OWNER/NAME",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "monitor-steps",
+                "title": "Wait until steps 4-12 of a head's test job are success",
+                "description": "Read the newest ci run for the head every three minutes: exit 0 when every step 4-12 of each job named test (…) concluded success, 10 at the first that concluded failure, cancelled, timed_out or skipped, 11 after 90 minutes still pending. A checkout with no GitHub remote cannot name a repository, so here the answer is why, with exit 12.",
+                "argv": [
+                  "monitor",
+                  "steps",
+                  "--branch",
+                  "main",
+                  "--sha",
+                  "0a1b2c3d4e5f",
+                  "--workflow",
+                  "ci",
+                  "--job",
+                  "test (*)",
+                  "--steps",
+                  "4-12",
+                  "--timeout",
+                  "90m"
+                ],
+                "command": "majordomus monitor steps --branch main --sha 0a1b2c3d4e5f --workflow ci --job 'test (*)' --steps 4-12 --timeout 90m",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       },
       {
         "path": [

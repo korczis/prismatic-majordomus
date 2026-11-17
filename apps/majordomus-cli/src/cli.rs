@@ -2276,8 +2276,14 @@ pub struct MeshReviewAnswerArgs {
 ///
 /// // a duration is seconds, or a number with s, m, h or d
 /// assert!(Cli::try_parse_from(["majordomus", "monitor", "--since", "soon"]).is_err());
+/// // the stream's flags and a subcommand are two different questions
+/// assert!(Cli::try_parse_from(["majordomus", "monitor", "--follow", "steps"]).is_err());
 /// ```
+#[command(args_conflicts_with_subcommands = true)]
 pub struct MonitorArgs {
+    #[command(subcommand)]
+    /// `steps`; none reads the stream.
+    pub command: Option<MonitorCommand>,
     /// Keep following: ask again every `--interval` seconds and print only what is new
     #[arg(long)]
     pub follow: bool,
@@ -2317,6 +2323,173 @@ pub struct MonitorArgs {
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Subcommand)]
+/// What `monitor` does instead of reading the stream: a question the stream cannot answer
+/// because no source of it carries the answer, such as the steps of a job, asked of GitHub
+/// directly and without a running server.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MonitorCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "monitor", "steps", "--run", "42", "--job", "ci", "--steps", "4-12",
+/// ])
+/// .unwrap();
+/// let Command::Monitor(m) = cli.command else { panic!("expected `monitor`") };
+/// assert!(matches!(m.command, Some(MonitorCommand::Steps(ref s)) if s.run == Some(42)));
+///
+/// // without a subcommand, `monitor` reads the stream
+/// let cli = Cli::try_parse_from(["majordomus", "monitor"]).unwrap();
+/// let Command::Monitor(m) = cli.command else { panic!("expected `monitor`") };
+/// assert!(m.command.is_none());
+/// ```
+pub enum MonitorCommand {
+    /// Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read
+    Steps(MonitorStepsArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(group(clap::ArgGroup::new("subject").required(true).args(["run", "branch"])))]
+/// `monitor steps`: read a run and its jobs through `gh api` every `--interval` seconds (at
+/// least 120) until every step of `--steps` of every job matching `--job` concluded success,
+/// any of them concluded anything else, or `--timeout` passes. A conclusion of `""` or
+/// `null` is pending, never done; a run that finished settles a missing job or step as red.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MonitorCommand, MonitorStepsArgs, StepRange};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "monitor", "steps", "--branch", "main", "--sha", "0a1b2c3",
+///     "--workflow", "ci", "--job", "test (*)", "--steps", "4-12", "--timeout", "90m",
+/// ])
+/// .unwrap();
+/// let Command::Monitor(m) = cli.command else { panic!("expected `monitor`") };
+/// let Some(MonitorCommand::Steps(s)) = m.command else { panic!("expected `steps`") };
+/// let s: MonitorStepsArgs = s;
+/// assert_eq!(s.steps, StepRange { first: 4, last: 12 });
+/// assert_eq!((s.interval, s.timeout), (180, 5400));
+/// assert_eq!(s.job, "test (*)");
+///
+/// // a run, or a branch with its head: one of the two, and never both
+/// let base = ["majordomus", "monitor", "steps", "--job", "test", "--steps", "4"];
+/// assert!(Cli::try_parse_from(base).is_err());
+/// assert!(Cli::try_parse_from([&base[..], &["--branch", "main"]].concat()).is_err());
+/// assert!(Cli::try_parse_from([&base[..], &["--run", "1", "--sha", "0a1b"]].concat()).is_err());
+/// // no poll more often than every 120 s
+/// assert!(Cli::try_parse_from([&base[..], &["--run", "1", "--interval", "60"]].concat()).is_err());
+/// ```
+pub struct MonitorStepsArgs {
+    /// The workflow run, by its id (the number in its URL)
+    #[arg(long, conflicts_with_all = ["branch", "sha", "workflow"])]
+    pub run: Option<u64>,
+    /// The branch whose run to watch; needs --sha, and the newest run for that head is read
+    #[arg(long, requires = "sha")]
+    pub branch: Option<String>,
+    /// The head commit the run is for, with --branch
+    #[arg(long, requires = "branch")]
+    pub sha: Option<String>,
+    /// Only a run of this workflow (* matches any run of characters); needed when several workflows ran for the head
+    #[arg(long, requires = "branch")]
+    pub workflow: Option<String>,
+    /// The job's name over the whole name, * matching any run of characters; every matching job is judged
+    #[arg(long)]
+    pub job: String,
+    /// The steps that must be success: N or N-M, by the step number the jobs API reports
+    #[arg(long, value_parser = parse_step_range)]
+    pub steps: StepRange,
+    /// Count a step that concluded skipped as passing rather than as red
+    #[arg(long)]
+    pub allow_skipped: bool,
+    /// Seconds between two reads, at least 120; a rate-limited answer waits until the limit resets
+    #[arg(long, default_value_t = crate::monitor::steps::DEFAULT_INTERVAL, value_parser = parse_interval)]
+    pub interval: u64,
+    /// Give up after this long while pending, exiting 11: seconds, or a number with s, m, h or d
+    #[arg(long, default_value = "2h", value_parser = parse_duration)]
+    pub timeout: u64,
+    /// The GitHub repository as OWNER/NAME; default: the one gh resolves from this checkout's remotes
+    #[arg(long, value_name = "OWNER/NAME")]
+    pub github: Option<String>,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+/// The steps of a job a caller needs, by the number the jobs API gives each step. Both ends
+/// are inclusive, and it prints the way a person writes it, so a reason names the range the
+/// caller typed.
+///
+/// ```
+/// use majordomus_cli::cli::StepRange;
+/// assert_eq!(StepRange { first: 4, last: 12 }.to_string(), "4-12");
+/// assert_eq!(StepRange { first: 7, last: 7 }.to_string(), "7");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub struct StepRange {
+    /// The first step of the range.
+    pub first: u64,
+    /// The last step of the range, at least `first`.
+    pub last: u64,
+}
+
+impl std::fmt::Display for StepRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.first == self.last {
+            write!(f, "{}", self.first)
+        } else {
+            write!(f, "{}-{}", self.first, self.last)
+        }
+    }
+}
+
+/// A step range as a person writes it: `N` or `N-M`, from 1, never backwards.
+///
+/// ```
+/// use majordomus_cli::cli::{parse_step_range, StepRange};
+/// assert_eq!(parse_step_range("4-12"), Ok(StepRange { first: 4, last: 12 }));
+/// assert_eq!(parse_step_range("7"), Ok(StepRange { first: 7, last: 7 }));
+/// assert_eq!(parse_step_range("4-12").unwrap().to_string(), "4-12");
+/// assert!(parse_step_range("12-4").is_err());
+/// assert!(parse_step_range("0-3").is_err());
+/// assert!(parse_step_range("four").is_err());
+/// ```
+pub fn parse_step_range(text: &str) -> std::result::Result<StepRange, String> {
+    let text = text.trim();
+    let number = |part: &str| {
+        part.trim()
+            .parse::<u64>()
+            .ok()
+            .filter(|n| *n >= 1)
+            .ok_or_else(|| format!("{text:?} is not a step range: write N or N-M, from 1"))
+    };
+    let (first, last) = match text.split_once('-') {
+        Some((a, b)) => (number(a)?, number(b)?),
+        None => {
+            let n = number(text)?;
+            (n, n)
+        }
+    };
+    if last < first {
+        return Err(format!(
+            "{text:?} runs backwards: write the lower step first"
+        ));
+    }
+    Ok(StepRange { first, last })
+}
+
+/// A poll interval in seconds, refused below the floor of `monitor steps`.
+fn parse_interval(text: &str) -> std::result::Result<u64, String> {
+    let floor = crate::monitor::steps::FLOOR;
+    let seconds = parse_duration(text)?;
+    if seconds < floor {
+        return Err(format!(
+            "{seconds}s is below the {floor}s floor: several watchers polling every minute spent an account's API limit"
+        ));
+    }
+    Ok(seconds)
 }
 
 /// A duration as a person writes it: `90`, `90s`, `30m`, `2h`, `1d`, in seconds.
@@ -8494,6 +8667,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::ExitCode(10),
             },
         ],
+    },
+    CommandExamples {
+        command: "monitor steps",
+        examples: &[ExampleDoc {
+            id: "monitor-steps",
+            title: "Wait until steps 4-12 of a head's test job are success",
+            description: "Read the newest ci run for the head every three minutes: exit 0 when every step 4-12 of each job named test (…) concluded success, 10 at the first that concluded failure, cancelled, timed_out or skipped, 11 after 90 minutes still pending. A checkout with no GitHub remote cannot name a repository, so here the answer is why, with exit 12.",
+            argv: &["monitor", "steps", "--branch", "main", "--sha", "0a1b2c3d4e5f", "--workflow", "ci", "--job", "test (*)", "--steps", "4-12", "--timeout", "90m"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
     },
     CommandExamples {
         command: "mesh events",

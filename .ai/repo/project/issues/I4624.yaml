@@ -1,0 +1,40 @@
+id: I4624
+milestone: a-second-adopter-is-served
+title: "majordomus monitor steps waits until every step of a range of one job is success, fails at the first that is not, and polls gently"
+slug: a-step-watcher-waits-on-the-job-steps
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A command, `majordomus monitor steps`, takes a run id (or a branch and its head SHA), a job-name pattern and a step range, reads the run and its jobs through `gh api`, and waits until every step in the range of every matching job concluded success. It exits at once on a step that concluded anything else (failure, cancelled, timed_out, skipped unless allowed), treats a step whose conclusion is empty or null, or whose status is not completed, as pending, polls at an interval no shorter than 120 s, backs off on a rate-limit answer, and exits 0 green, 10 red, 11 timed out, 12 unreadable, printing the run, each job and each step's verdict."
+why: "The algoglyph integration session of 2026-11-15 gated landings on the hosted job's steps 4-12 and hand-wrote `gh api` loops, which broke three ways: a running step reports conclusion \"\" (`gh run view`) or null (REST), and a jq `//` fallback read \"\" as done, so the watcher declared green after 4 of 9 steps; a run cancelled by concurrency or cut at its timeout reads `cancelled` and must be red, never pending; and several watchers polling every 60 s exhausted the account's core API limit. Nothing in Majordomus reads steps."
+current_state: "On origin/master e54bbdb12a9, apps/majordomus-cli/src/monitor/github.rs reads run-level status and conclusion through `gh run list` (and a failed deploy run's jobs through `gh run view --json jobs`), and apps/majordomus-cli/src/integration/classify.rs reads a pull request's statusCheckRollup. No code reads a job's steps, and `majordomus monitor --until` waits for a stream signal kind, never for a step."
+desired_state: "`majordomus monitor steps --run ID | --branch B --sha S [--workflow W] --job PATTERN --steps N-M [--interval 180] [--timeout 2h] [--allow-skipped] [--github OWNER/NAME]` judges each poll from the run and its jobs, and its verdict is tested over recorded `gh api` responses: a step whose conclusion is \"\" or null is pending, a cancelled step is red, a run that finished with no matching job is red, a range past the steps of a finished job is red, and a finished range of success is green. A rate-limited answer lengthens the wait to the limit's reset; no wait is shorter than the floor."
+scope:
+  - "apps/majordomus-cli/src/monitor/steps.rs"
+  - "apps/majordomus-cli/src/monitor/mod.rs"
+  - "apps/majordomus-cli/src/monitor/github.rs"
+  - "apps/majordomus-cli/src/commands/monitor.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/fixtures/gh-api-steps"
+  - "docs/MONITOR.md"
+  - ".ai/repo/project/issues/I4624.yaml"
+non_scope:
+  - "A capability over MCP or HTTP: a wait of minutes belongs to a command a worker runs, and one reading of the steps is a later capability if a surface needs it"
+  - "Reading statusCheckRollup or changing how the integration engine classifies a pull request"
+  - "Merging, landing or re-running anything: the watcher reads and exits"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A step whose status is in_progress or pending and whose conclusion is \"\" or null is pending, and the verdict stays pending while any step of the range is"
+  - "A step that concluded cancelled, failure or timed_out is red at once, even while other steps of the range are still pending"
+  - "A run that finished with no job matching the pattern is red; while the run is still going, a missing job is pending"
+  - "A range that runs past the steps of a finished job is red and names the steps the job has"
+  - "A finished range of success is green; skipped is red unless --allow-skipped"
+  - "An interval below 120 s is refused; a rate-limited answer waits until the limit's reset; a deadline reached while pending exits 11"
+  - "Negative: the verdict reads \"\" as pending, so a reading that treats a present conclusion as done fails the empty-string test"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::steps"
+evidence_required:
+  - "a_running_step_whose_conclusion_is_empty_is_pending"
+created_at: 2026-11-17

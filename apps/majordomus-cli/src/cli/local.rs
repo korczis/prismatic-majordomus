@@ -381,6 +381,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "asks this checkout's running server for monitor.stream and renders a page, or follows it.",
     },
     LocalCommand {
+        command: "monitor steps",
+        reason: LocalReason::SessionLocal,
+        note: "reads GitHub as the invoking shell's gh does — its credentials and the repository this checkout's remotes name — and waits minutes for a verdict; a caller over a socket shares neither the gh nor the wait.",
+    },
+    LocalCommand {
         command: "mesh events",
         reason: LocalReason::RendersCapability("mesh.events"),
         note: "asks this checkout's running server for mesh.events and renders one page of the journal.",

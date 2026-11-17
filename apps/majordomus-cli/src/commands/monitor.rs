@@ -10,6 +10,10 @@
 //!
 //! Exit codes: 0 answered (or a follow ended by `--count` or `--until`); 10 refused (a bad
 //! cursor, an unknown source) or a follow that reached `--timeout` first.
+//!
+//! `monitor steps` asks no server: it reads one workflow run and its jobs through `gh api`
+//! until a range of steps is decided ([`crate::monitor::steps`], I4624), and exits 0 green,
+//! 10 red, 11 timed out while pending, 12 when GitHub cannot be read.
 
 use std::io::{IsTerminal, Write};
 use std::path::Path;
@@ -18,8 +22,9 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use crate::app::App;
-use crate::cli::{MonitorArgs, OutputFormat};
+use crate::cli::{MonitorArgs, MonitorCommand, MonitorStepsArgs, OutputFormat};
 use crate::error::{Error, Result};
+use crate::monitor::steps::{self, Subject, SystemClock, Watch};
 
 /// One bounded request to the running server; the GitHub source alone may take seconds.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
@@ -28,8 +33,56 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 const EXIT_REFUSED: u8 = 10;
 
 /// Run `majordomus monitor`.
-pub fn run(args: MonitorArgs) -> Result<u8> {
-    run_with(args, server_url)
+pub fn run(mut args: MonitorArgs) -> Result<u8> {
+    match args.command.take() {
+        Some(MonitorCommand::Steps(steps)) => Ok(run_steps(steps, args.query.repo.repo.as_deref())),
+        None => run_with(args, server_url),
+    }
+}
+
+/// Run `majordomus monitor steps` against GitHub through `gh`, in the checkout at `repo` (or
+/// the current directory), so that `gh` resolves the repository from its remotes.
+fn run_steps(args: MonitorStepsArgs, repo: Option<&Path>) -> u8 {
+    let root = repo
+        .map(Path::to_path_buf)
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_else(|| ".".into());
+    let mut api = steps::gh_api(&root, args.github.clone());
+    let outcome = steps::watch(
+        &mut api,
+        &mut SystemClock,
+        &watch_of(&args),
+        args.interval,
+        args.timeout,
+        &mut |line| eprintln!("monitor steps: {line}"),
+    );
+    match args.format {
+        OutputFormat::Json => println!(
+            "{}",
+            serde_json::to_string_pretty(&outcome).unwrap_or_default()
+        ),
+        OutputFormat::Text => print!("{}", steps::render(&outcome)),
+    }
+    outcome.exit_code()
+}
+
+/// What `monitor steps` was asked to watch.
+fn watch_of(args: &MonitorStepsArgs) -> Watch {
+    let subject = match (args.run, &args.branch, &args.sha) {
+        (Some(id), _, _) => Subject::Run(id),
+        // clap requires a run, or a branch with its head
+        (None, branch, sha) => Subject::Head {
+            branch: branch.clone().unwrap_or_default(),
+            sha: sha.clone().unwrap_or_default(),
+            workflow: args.workflow.clone(),
+        },
+    };
+    Watch {
+        subject,
+        job: args.job.clone(),
+        steps: args.steps,
+        allow_skipped: args.allow_skipped,
+    }
 }
 
 /// [`run`], finding the server with `discover`: this checkout's ready server in earnest, a
@@ -846,5 +899,75 @@ mod tests {
         assert!(matches!(err, Error::Io { .. }), "{err}");
         let left: Vec<_> = std::fs::read_dir(dir.path()).unwrap().flatten().collect();
         assert_eq!(left.len(), 1, "the temporary named .cursor.* was removed");
+    }
+
+    #[test]
+    fn steps_is_watched_by_run_or_by_head_and_reads_no_server() {
+        let steps = |argv: &[&str]| match args(argv).command {
+            Some(MonitorCommand::Steps(s)) => s,
+            None => panic!("expected `steps`"),
+        };
+        let by_run = watch_of(&steps(&[
+            "steps", "--run", "42", "--job", "ci", "--steps", "4-12",
+        ]));
+        assert_eq!(by_run.subject, Subject::Run(42));
+        assert_eq!((by_run.steps.first, by_run.steps.last), (4, 12));
+        assert!(!by_run.allow_skipped);
+        let by_head = watch_of(&steps(&[
+            "steps",
+            "--branch",
+            "main",
+            "--sha",
+            "0a1b",
+            "--workflow",
+            "validate",
+            "--job",
+            "rust (*)",
+            "--steps",
+            "3",
+            "--allow-skipped",
+        ]));
+        assert_eq!(
+            by_head.subject,
+            Subject::Head {
+                branch: "main".into(),
+                sha: "0a1b".into(),
+                workflow: Some("validate".into())
+            }
+        );
+        assert_eq!(by_head.job, "rust (*)");
+        assert!(by_head.allow_skipped);
+    }
+
+    #[test]
+    fn steps_outside_a_github_checkout_exits_12_with_the_reason() {
+        // no remote names a repository, so gh cannot resolve one: unreadable, at once
+        let dir = tempfile::tempdir().unwrap();
+        let ok = std::process::Command::new("git")
+            .args(["init", "-q"])
+            .current_dir(dir.path())
+            .status()
+            .is_ok_and(|s| s.success());
+        assert!(ok, "git init");
+        let code = run_steps(
+            match args(&[
+                "steps",
+                "--run",
+                "1",
+                "--job",
+                "ci",
+                "--steps",
+                "1",
+                "--timeout",
+                "1",
+            ])
+            .command
+            {
+                Some(MonitorCommand::Steps(s)) => s,
+                None => panic!("expected `steps`"),
+            },
+            Some(dir.path()),
+        );
+        assert_eq!(code, 12);
     }
 }

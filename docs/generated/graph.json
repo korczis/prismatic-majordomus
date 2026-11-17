@@ -81932,6 +81932,55 @@
         }
       },
       {
+        "id": "majordomus://issue/I4624",
+        "kind": "issue",
+        "label": "I4624",
+        "summary": "majordomus monitor steps waits until every step of a range of one job is success, fails at the first that is not, and polls gently",
+        "route": "/cockpit/objects/issue/i4624",
+        "source": ".ai/repo/project/issues/I4624.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A step whose status is in_progress or pending and whose conclusion is \\\"\\\" or null is pending, and the verdict stays pending while any step of the range is",
+            "A step that concluded cancelled, failure or timed_out is red at once, even while other steps of the range are still pending",
+            "A run that finished with no job matching the pattern is red; while the run is still going, a missing job is pending",
+            "A range that runs past the steps of a finished job is red and names the steps the job has",
+            "A finished range of success is green; skipped is red unless --allow-skipped",
+            "An interval below 120 s is refused; a rate-limited answer waits until the limit's reset; a deadline reached while pending exits 11",
+            "Negative: the verdict reads \\\"\\\" as pending, so a reading that treats a present conclusion as done fails the empty-string test"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_running_step_whose_conclusion_is_empty_is_pending"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "A capability over MCP or HTTP: a wait of minutes belongs to a command a worker runs, and one reading of the steps is a later capability if a surface needs it",
+            "Reading statusCheckRollup or changing how the integration engine classifies a pull request",
+            "Merging, landing or re-running anything: the watcher reads and exits"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor/steps.rs",
+            "apps/majordomus-cli/src/monitor/mod.rs",
+            "apps/majordomus-cli/src/monitor/github.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/tests/fixtures/gh-api-steps",
+            "docs/MONITOR.md",
+            ".ai/repo/project/issues/I4624.yaml"
+          ],
+          "serves": [],
+          "slug": "a-step-watcher-waits-on-the-job-steps",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::steps"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -151730,6 +151779,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4624",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4624",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164611,8 +164670,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4503,
-      "edges": 10157,
+      "nodes": 4504,
+      "edges": 10159,
       "acyclic": false,
       "truncated": false
     }

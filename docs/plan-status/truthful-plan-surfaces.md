@@ -350,6 +350,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4294` | shares site with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I4294` | shares site with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4294` | shares site with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I4294` | shares apps/majordomus-cli/src/commands/mod.rs with I4624; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares .ai/repo/adrs with I4316; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares docs/PLANNING.md with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares docs/PLANNING.md with I4330; they may not run concurrently |

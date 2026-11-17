@@ -21,6 +21,7 @@
 pub(crate) mod executor;
 pub(crate) mod github;
 pub(crate) mod mesh;
+pub(crate) mod steps;
 #[cfg(test)]
 pub(crate) mod testing;
 
