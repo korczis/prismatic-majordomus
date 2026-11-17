@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.2"
+    "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "0d0b95c4ca79e2c7e3c63c66cfc1177852275db5f3a6b282a9dc9fbc24429314",
+    "fingerprint": "d54d516682dbe9ad0561e40ab0c5893bc11008d7ba4460c9f14077c5579dab90",
     "summary": {
-      "total": 4045,
+      "total": 4058,
       "builtin": 231,
-      "declarative": 3814,
+      "declarative": 3827,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3814
+        "resource": 3827
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3824
+        "implemented": 3837
       },
       "mcp_tools": 215,
-      "mcp_resources": 3871,
+      "mcp_resources": 3884,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -28400,6 +28400,17 @@
               "run_record": {
                 "$ref": "#/$defs/EvidenceRunRecord",
                 "description": "The recording as a typed run."
+              },
+              "suite_coverage": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SuiteCoverage"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How much of the suite a suite report covered: the cases it named against the cases\nthe suite holds (I4600). Absent when no suite report was given."
               }
             },
             "required": [
@@ -28411,7 +28422,7 @@
               "ledger",
               "run_record"
             ],
-            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
+            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    suite_coverage: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
             "title": "RecordReport",
             "$defs": {
               "EvidenceDropped": {
@@ -29202,6 +29213,28 @@
                   }
                 ],
                 "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              },
+              "SuiteCoverage": {
+                "type": "object",
+                "properties": {
+                  "in_report": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The suite cases this report named that exist in the repository."
+                  },
+                  "on_disk": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The suite cases the repository holds."
+                  }
+                },
+                "required": [
+                  "in_report",
+                  "on_disk"
+                ],
+                "description": "How much of the suite a suite report covered: the cases it named that exist, against the\ncases the suite holds (`test/cases/*.sh`, where `TestId::source` puts a suite case).\n\nA partial run is merged by design and keeps the evidence of what it did not run, so this\nrefuses nothing. It is said so that a report cut short is visible: on 2026-11-15 a nested\nrunner truncated an adopter's ten-case report to two rows, the recorder answered\n\"recorded 2 execution(s)\", and the other eight skills stayed stale with nothing saying why.\n\n```\nuse majordomus_cli::evidence::SuiteCoverage;\n\nlet partial = SuiteCoverage { in_report: 2, on_disk: 10 };\nassert_eq!(partial.kept(), 8);\nassert!(!partial.whole());\nassert!(SuiteCoverage { in_report: 10, on_disk: 10 }.whole());\n```"
               }
             }
           }
@@ -95717,9 +95750,23 @@
                     ],
                     "description": "Reachable from the trunk. Absent when the trunk is unknown."
                   },
+                  "landed_by_content": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Not reachable from the trunk, and merging it into the trunk's remote-tracking branch\nwould change nothing (`git merge-tree --write-tree`): squash-merged, carried in a\ntrain or cherry-picked. Read for a checked-out branch in the full topology only."
+                  },
+                  "uncommitted_in_trunk": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Its work tree has uncommitted changes, and every one already holds what the trunk's\nremote-tracking branch holds at that path. Absent for a clean or unmeasured tree."
+                  },
                   "cleanup_eligible": {
                     "type": "boolean",
-                    "description": "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically."
+                    "description": "Landed in the trunk (merged into it, or landed by content), not the trunk, and either\nnot checked out (merged only) or checked out in a work tree that is clean or whose every\nuncommitted change is already in the trunk. Derived state, never acted on automatically."
                   },
                   "issue": {
                     "type": [
@@ -97172,7 +97219,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1269,
+        "capabilities": 1276,
         "capability_ids": []
       },
       {
@@ -97785,7 +97832,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 701,
+        "capabilities": 707,
         "capability_ids": []
       },
       {
@@ -97878,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d0dff888859996f89206c885d0139284dc3da6af3e3e5b852aaf980546e49894",
+    "fingerprint": "8435ffd6223d8a796c6e6e606c505194e79247110e16766738bf6a33d38c849e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97965,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 46,
-      "issue": 1269,
+      "issue": 1276,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 118,
@@ -97932,7 +97979,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 701,
+      "test": 707,
       "use-case": 49,
       "workspace": 1
     },
@@ -105526,7 +105573,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138448
+        "bytes": 139631
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105715,7 +105762,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 54360
+        "bytes": 56210
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -108652,7 +108699,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 21358
+        "bytes": 22101
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -108932,7 +108979,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 110429
+        "bytes": 119989
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -119894,7 +119941,7 @@
         "path": ".ai/repo/project/issues/I3825.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2133
+        "bytes": 3200
       },
       {
         "uri": "majordomus://issue/I3826",
@@ -121709,7 +121756,7 @@
         "path": ".ai/repo/project/issues/I4324.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 9438
+        "bytes": 11148
       },
       {
         "uri": "majordomus://issue/I4325",
@@ -123417,6 +123464,28 @@
         "bytes": 4290
       },
       {
+        "uri": "majordomus://issue/I4598",
+        "kind": "issue",
+        "identity": "I4598",
+        "title": "A refusal for a path outside the scope names the remedies that exist",
+        "description": "When check or a completed finish refuses a path outside the task's scope, one INFO line names the two ways out: mark a generated file merge=derived in .gitattributes, which the scope admits beside the change that produced it (I2114), or close the task partial and start it again with the wider scope, noting that in-place widening is planned (I4260); the line names no command that does not exist yet.",
+        "path": ".ai/repo/project/issues/I4598.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3563
+      },
+      {
+        "uri": "majordomus://issue/I4600",
+        "kind": "issue",
+        "identity": "I4600",
+        "title": "evidence record says how much of the suite its report covers",
+        "description": "When `evidence record` is given a suite report, it says how many of the suite's cases the report named against how many the suite holds, and that the rest keep their earlier evidence. It still records a partial run as before, because a merged partial run is by design.",
+        "path": ".ai/repo/project/issues/I4600.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3759
+      },
+      {
         "uri": "majordomus://issue/I4602",
         "kind": "issue",
         "identity": "I4602",
@@ -123426,6 +123495,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3393
+      },
+      {
+        "uri": "majordomus://issue/I4605",
+        "kind": "issue",
+        "identity": "I4605",
+        "title": "commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)",
+        "description": "commit.validate gains the rule commit.control_character, with a policy level in .ai/repo/policy.yaml's commit block (control_character: error). Every character of the message is checked: C0 (U+0000 to U+001F) other than a line feed or a tab, DEL (U+007F) and C1 (U+0080 to U+009F). A message carrying one is refused. The finding names the line, the column and the code point (for example `line 1, column 1: U+001B ESCAPE`). The check runs before the conventional parse, so a control code in front of the type is reported as itself and not as a word that is not a type. It also covers git-generated subjects, because the exemption of I3976 is about naming an issue, not about what bytes a message may hold. The commit-msg hook and scripts/ci/commit-policy refuse through the same verdict. The history on trunk is judged against the existing count baseline, so commits that are already published are not rewritten.",
+        "path": ".ai/repo/project/issues/I4605.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5589
       },
       {
         "uri": "majordomus://issue/I4606",
@@ -123470,6 +123550,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2213
+      },
+      {
+        "uri": "majordomus://issue/I4618",
+        "kind": "issue",
+        "identity": "I4618",
+        "title": "The executable resolver borrows a same-generation executable another worktree built, before it refuses",
+        "description": "Before mj_rust_resolve refuses with exit 12, it asks the other worktrees of this checkout, and answers through an executable one of them already built when that executable is of this tree's generation. It says which worktree on stderr, builds nothing, and names every worktree it judged in the refusal when none fits.",
+        "path": ".ai/repo/project/issues/I4618.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4061
+      },
+      {
+        "uri": "majordomus://issue/I4627",
+        "kind": "issue",
+        "identity": "I4627",
+        "title": "scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why",
+        "description": "Where the tree's crate came through a merge, scripts/derive uses a borrowed MAJORDOMUS_BIN only when mj_rust_same_generation accepts it: the commit it was built from (MAJORDOMUS_BIN_COMMIT) carries the tree's crate inputs (MJ_RUST_CRATE_INPUTS) byte for byte. Otherwise the derive drops the borrowed executable, prints which merge and which generation answer it refused, and builds this tree's own. The crate came through a merge in exactly two cases. Either MERGE_HEAD is present and the staged merge changes MJ_RUST_CRATE_INPUTS against HEAD, or HEAD is a merge whose crate inputs differ from its first parent's. A merge that leaves the crate alone borrows as before. The scratch derive of a merge in progress is handed the commit its executable is of: the merge commit when the outer derive built it, or the commit a borrowed one was vouched for by. That way it does not build a second time. The release job records the commit its executable was built from right after the build, because the default branch's tip is usually a merge.",
+        "path": ".ai/repo/project/issues/I4627.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5678
+      },
+      {
+        "uri": "majordomus://issue/I4628",
+        "kind": "issue",
+        "identity": "I4628",
+        "title": "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy",
+        "description": "finish --outcome completed compares the tree its verify command ran over (task.finished verify.tree) with HEAD's tree, and compares HEAD with the head the task started at. When the verified tree is not HEAD's tree, the change the task verified is not in a commit. The first line finish prints then says so: `finish: <task> completed, NOT COMMITTED: the verified tree <tree> is not HEAD's <tree>`, followed by the command that commits it. task.finished records `committed: false`. Where the policy says completed means complete (verification.completed_means_complete, the key open pull request #2748 wires for I4433), the same condition refuses as #2748 decides. This record changes only what the shipped policy prints and records, so a session that reads finish's last line cannot take uncommitted work for finished.",
+        "path": ".ai/repo/project/issues/I4628.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4899
+      },
+      {
+        "uri": "majordomus://issue/I4630",
+        "kind": "issue",
+        "identity": "I4630",
+        "title": "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
+        "description": "A plan finding never puts a path into a derived page unless the path exists or the sentence says it is planned. When an issue's scope holds a directory (test/cases) and another READY issue's scope holds a file under it that does not exist yet (test/cases/4616_a_reserved_issue_id_is_refused_locally.sh), lib/project.awk's scope_conflict finding names the directory, which is the scope as written. It does not name the other issue's planned file. plan validate also warns on a scope entry that is a directory holding more than a policy-set number of tracked files, and names the narrower path the issue's evidence implies (its own case). scripts/ci/reference-check over the derived plan pages runs in the before-push plan, so a page that names a missing file is found on the machine and not first in CI's core-check.",
+        "path": ".ai/repo/project/issues/I4630.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3995
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -131936,7 +132060,7 @@
         "path": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 16228,
+        "bytes": 16362,
         "tags": [
           "process",
           "integration",
@@ -136672,6 +136796,14 @@
         "bytes": 4181
       },
       {
+        "uri": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "kind": "test",
+        "identity": "test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "path": "test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "source_class": "case",
+        "bytes": 4863
+      },
+      {
         "uri": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
         "kind": "test",
         "identity": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
@@ -137368,6 +137500,14 @@
         "bytes": 7105
       },
       {
+        "uri": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "kind": "test",
+        "identity": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "path": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "source_class": "case",
+        "bytes": 7044
+      },
+      {
         "uri": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "test",
         "identity": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
@@ -137496,12 +137636,44 @@
         "bytes": 4299
       },
       {
+        "uri": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "kind": "test",
+        "identity": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "path": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "source_class": "case",
+        "bytes": 3186
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
         "path": "test/cases/45_github_projection.sh",
         "source_class": "case",
         "bytes": 15204
+      },
+      {
+        "uri": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "kind": "test",
+        "identity": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "path": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "source_class": "case",
+        "bytes": 2978
+      },
+      {
+        "uri": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "path": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "source_class": "case",
+        "bytes": 5465
+      },
+      {
+        "uri": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "path": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "source_class": "case",
+        "bytes": 7104
       },
       {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -138013,7 +138185,7 @@
         "identity": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "source_class": "case",
-        "bytes": 8188
+        "bytes": 9075
       },
       {
         "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -140018,7 +140190,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1269
+      "objects": 1276
     },
     {
       "name": "knowledge",
@@ -140180,7 +140352,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 701
+      "objects": 707
     },
     {
       "name": "use-case",

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.2",
+  "generator": "majordomus-cli 1.1.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -67462,8 +67462,7 @@
             "I3824"
           ],
           "evidence_required": [
-            "builder_cap_refuses",
-            "disk_floor_refuses"
+            "a_build_is_bounded_by_the_machine"
           ],
           "milestone": "ci-critical-path",
           "parallel_safe": true,
@@ -67472,14 +67471,13 @@
           "scope": [
             "lib/rust_bin.sh",
             "test/cases",
-            ".ai/repo/project/issues/I3825.yaml"
+            ".ai/repo/project/issues/I3825.yaml",
+            "test/lib/rust_bin.functions.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ],
           "serves": [],
           "slug": "a-build-is-bounded-by-the-machine",
-          "updated_at": "2026-10-29",
-          "validation": [
-            "bash test/run.sh"
-          ]
+          "updated_at": "2026-11-16"
         }
       },
       {
@@ -82326,6 +82324,90 @@
         }
       },
       {
+        "id": "majordomus://issue/I4598",
+        "kind": "issue",
+        "label": "I4598",
+        "summary": "A refusal for a path outside the scope names the remedies that exist",
+        "route": "/cockpit/objects/issue/i4598",
+        "source": ".ai/repo/project/issues/I4598.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A task with a path outside its scope fails check with the FAIL line as before, plus one INFO scope line naming merge=derived in .gitattributes and finish --outcome partial with a new start",
+            "Once .gitattributes marks that path merge=derived, it is no longer refused",
+            "A check whose every path is in scope prints no remedy",
+            "finish --outcome partial warns about the path and prints no remedy",
+            "Negative: the case fails against lib/check.sh before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_scope_refusal_names_its_remedies"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Admitting derived paths, which I2114 delivered",
+            "Widening a running task's scope, which is I4260; its command is not settled (#2598 scope widen, #2612 start --widen), and once one lands this line names it instead of partial plus start",
+            "Declaring an adopter's derived files; each repository writes its own .gitattributes (sonic-playground 11032e71)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/check.sh",
+            "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+            ".ai/repo/project/issues/I4598.yaml"
+          ],
+          "serves": [],
+          "slug": "the-scope-refusal-names-its-remedies"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4600",
+        "kind": "issue",
+        "label": "I4600",
+        "summary": "evidence record says how much of the suite its report covers",
+        "route": "/cockpit/objects/issue/i4600",
+        "source": ".ai/repo/project/issues/I4600.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A suite report naming 1 of 3 cases is recorded, and the text says '1 of 3 case(s) of the suite are in this report; the other 2 keep their earlier evidence'",
+            "The JSON carries suite_coverage {in_report: 1, on_disk: 3}",
+            "A name the repository lacks is not counted as a case",
+            "A report naming every case says 'all 3 case(s) of the suite are in this report'",
+            "A recording without a suite report prints no suite line",
+            "Negative: the case fails against the recorder before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "evidence_record_names_its_suite_coverage"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Refusing a partial report: a deliberate re-run of one case must keep recording as it does",
+            "The crate runner's coverage: its binaries are listed per binary already, and dropped names what no claim can name",
+            "An adopter's own runner; sonic-playground's runner now also refuses a report whose rows differ from its cases"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence/record.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+            ".ai/repo/project/issues/I4600.yaml"
+          ],
+          "serves": [],
+          "slug": "evidence-record-names-its-suite-coverage",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4600_evidence_record_names_its_suite_coverage 391_skills_are_proven_capabilities",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --doc -- SuiteCoverage RecordReport evidence::record::record"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4602",
         "kind": "issue",
         "label": "I4602",
@@ -82358,6 +82440,56 @@
           "slug": "a-test-repository-never-inherits-the-hooks-git",
           "validation": [
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4605",
+        "kind": "issue",
+        "label": "I4605",
+        "summary": "commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)",
+        "route": "/cockpit/objects/issue/i4605",
+        "source": ".ai/repo/project/issues/I4605.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "commit validate refuses `fix(plan): x ESC[1mbold ESC[m (I4591)` with code commit.control_character, and the finding names line 1, the column of the escape and U+001B",
+            "The defect as seen: a control code before the type (`ESC[33mfix(plan): x (I4591)`) reports commit.control_character and not commit.not_conventional",
+            "A C1 code (U+009B) and a C0 code other than a line feed or a tab (U+0001) anywhere in the subject or the body are each refused. A body with tabs and blank lines is accepted",
+            "A git-generated subject (Merge ...) that carries a control code is refused; the same subject without one stays exempt as I3976 defines",
+            "policy.yaml's commit block sets control_character: error, and a level of warning or off changes the verdict as the other commit rules do",
+            "commit-policy over the repository reports the count baseline unchanged and refuses a new branch commit that carries a control code"
+          ],
+          "created_at": "2026-11-16",
+          "depends_on": [],
+          "evidence_required": [
+            "commit_validate_refuses_a_control_character"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Rewriting published commits or the trunk history that carries a control code",
+            "Stripping or repairing a message: the hook refuses, it never changes what the author wrote",
+            "Characters outside C0, DEL and C1, such as other Unicode format characters",
+            "Readers of commit text (an adopter's fetchers and pages), which keep their own guards"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commit/verdict.rs",
+            "apps/majordomus-cli/src/commit/policy.rs",
+            ".ai/repo/policy.yaml",
+            "scripts/ci/commit-policy",
+            ".ai/repo/commit-policy-baseline.txt",
+            ".ai/repo/rules/project/conventional-commits.v2.md",
+            "test/cases/274_commit_policy.sh",
+            ".ai/repo/project/issues/I4605.yaml"
+          ],
+          "serves": [],
+          "slug": "commit-validate-refuses-a-control-character",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- commit::",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 274_commit_policy"
           ]
         }
       },
@@ -82499,6 +82631,163 @@
           "updated_at": "2026-11-15",
           "validation": [
             "bash test/run.sh 4616_a_reserved_issue_id_is_refused_locally"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4618",
+        "kind": "issue",
+        "label": "I4618",
+        "summary": "The executable resolver borrows a same-generation executable another worktree built, before it refuses",
+        "route": "/cockpit/objects/issue/i4618",
+        "source": ".ai/repo/project/issues/I4618.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A current executable of the same crate in another worktree is borrowed, and the worktree is named on stderr",
+            "An executable whose worktree has uncommitted crate changes is not borrowed, and the refusal names that reason",
+            "An executable older than its own sources is not borrowed, with its reason",
+            "An executable whose branch carries another crate is not borrowed, with its reason",
+            "With no executable in any other worktree, the refusal says so",
+            "Under CARGO_TARGET_DIR no worktree is asked, and the refusal says why",
+            "No step builds",
+            "Negative: the case fails against lib/rust_bin.sh before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_resolver_borrows_a_sibling_executable"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Building anything (ADR 0224)",
+            "The shared master-build cache and its freshness",
+            "Removing the race between this check and the exec, which the tree's own executable shares"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/lib/rust_bin.functions.sh",
+            "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+            ".ai/repo/project/issues/I4618.yaml"
+          ],
+          "serves": [],
+          "slug": "the-resolver-borrows-a-sibling-executable"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4627",
+        "kind": "issue",
+        "label": "I4627",
+        "summary": "scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why",
+        "route": "/cockpit/objects/issue/i4627",
+        "source": ".ai/repo/project/issues/I4627.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_merge_does_not_borrow_a_foreign_executable"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "majordomus generate's own check 3 (refuse_foreign_generation, projects_the_committed_registry): the Rust follow-up named in desired_state",
+            "A tree whose crate moved through a rebase or a cherry-pick rather than a merge",
+            "The landing seat's integration script, which is outside the repository and already fixed",
+            "lib/rust_bin.sh, which two open members of the combined top change: the condition lives in scripts/derive and uses mj_rust_same_generation as it is"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive",
+            ".github/workflows/release.yml",
+            "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+            ".ai/repo/project/issues/I4627.yaml"
+          ],
+          "serves": [],
+          "slug": "a-merge-does-not-borrow-a-foreign-executable",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 4627_a_merge_does_not_borrow_a_foreign_executable 3837_a_derive_does_not_run_mid_merge 3963_a_merge_of_master_derives_in_one_go 87_release_pipeline"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4628",
+        "kind": "issue",
+        "label": "I4628",
+        "summary": "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy",
+        "route": "/cockpit/objects/issue/i4628",
+        "source": ".ai/repo/project/issues/I4628.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_finish_over_uncommitted_work_says_so"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Turning verification.completed_means_complete on, or changing what #2748 refuses",
+            "Committing on the task's behalf: finish reports, it never commits",
+            "A task whose verify command changes no tracked file and leaves HEAD's tree as it was"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/gates.sh",
+            "lib/finish.sh",
+            "test/cases/4628_a_finish_over_uncommitted_work_says_so.sh",
+            ".ai/repo/project/issues/I4628.yaml"
+          ],
+          "serves": [],
+          "slug": "a-finish-over-uncommitted-work-says-so",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4630",
+        "kind": "issue",
+        "label": "I4630",
+        "summary": "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
+        "route": "/cockpit/objects/issue/i4630",
+        "source": ".ai/repo/project/issues/I4630.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two READY issues, one scoped to test/cases and one to test/cases/9999_missing.sh: the scope_conflict finding names test/cases, and the derived plan-status page names no test/cases/9999_missing.sh",
+            "plan validate warns on a scope entry that is a directory holding more tracked files than the policy's threshold, and the warning names the issue's own case path",
+            "The before-push plan includes the reference check over the derived plan pages, and a page that names a missing file fails it before the push",
+            "Negative control: against master's lib/project.awk the case finds the missing path named in the page"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "desired_state": "A record whose scope is too wide is told so by plan validate, a conflict line names what both issues declared, and no derived page reaches CI naming a file the tree does not hold.",
+          "evidence_required": [
+            "a_directory_scope_names_no_missing_file"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "Forbidding a directory in a scope: a directory is a legitimate scope for work that touches it",
+            "reference-check's rules for hand-written documents",
+            "Re-deriving or re-landing pages already on master"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/project.awk",
+            "lib/plan.sh",
+            "scripts/ci/run-plan",
+            "test/cases/4630_a_directory_scope_names_no_missing_file.sh",
+            ".ai/repo/project/issues/I4630.yaml"
+          ],
+          "serves": [],
+          "slug": "a-directory-scope-names-no-missing-file",
+          "validation": [
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -109678,6 +109967,13 @@
         "source": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "kind": "test",
+        "label": "test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "route": "/cockpit/objects/test/test-cases-3825-a-build-is-bounded-by-the-machine-sh",
+        "source": "test/cases/3825_a_build_is_bounded_by_the_machine.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
         "kind": "test",
         "label": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
@@ -110287,6 +110583,13 @@
         "source": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "kind": "test",
+        "label": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "route": "/cockpit/objects/test/test-cases-4324-a-worktree-whose-work-is-in-trunk-is-finished-sh",
+        "source": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "test",
         "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
@@ -110399,11 +110702,39 @@
         "source": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "kind": "test",
+        "label": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "route": "/cockpit/objects/test/test-cases-4598-the-scope-refusal-names-its-remedies-sh",
+        "source": "test/cases/4598_the_scope_refusal_names_its_remedies.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "label": "test/cases/45_github_projection.sh",
         "route": "/cockpit/objects/test/test-cases-45-github-projection-sh",
         "source": "test/cases/45_github_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "kind": "test",
+        "label": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "route": "/cockpit/objects/test/test-cases-4600-evidence-record-names-its-suite-coverage-sh",
+        "source": "test/cases/4600_evidence_record_names_its_suite_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "kind": "test",
+        "label": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-4618-the-resolver-borrows-a-sibling-executable-sh",
+        "source": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "kind": "test",
+        "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
+        "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -152554,6 +152885,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4598",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4598",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4600",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4600",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4602",
         "target": "kind:issue",
         "kind": "is_a"
@@ -152564,6 +152915,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4605",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4605",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4606",
         "target": "kind:issue",
         "kind": "is_a"
@@ -152601,6 +152962,46 @@
       {
         "source": "majordomus://issue/I4616",
         "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4618",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4618",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4627",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4627",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4628",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4628",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4630",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4630",
+        "target": "majordomus://milestone/derived-data-integrity",
         "kind": "belongs_to"
       },
       {
@@ -159844,6 +160245,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -160279,6 +160685,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -160359,7 +160770,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -165485,8 +165916,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4516,
-      "edges": 10207,
+      "nodes": 4529,
+      "edges": 10227,
       "acyclic": false,
       "truncated": false
     }
