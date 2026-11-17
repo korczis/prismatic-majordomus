@@ -69,3 +69,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3309` | shares .ai/repo/profiles/README.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares lib/finish.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares apps/majordomus-cli/src/gates with I4615; they may not run concurrently |
+| WARN | `scope_conflict` | `I3309` | shares lib/finish.sh with I4628; they may not run concurrently |
