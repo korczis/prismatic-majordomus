@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-claim-stands-only-on-its-evidence](https://majordomus.dev/plan/a-claim-stands-only-on-its-evidence/) | ACTIVE | 1/23 | 17 | 5 | 0 | 0 | 0 | The owner wants every rule, guarantee and delivered feature that Majordomus states to be backed by a recorded execution at the revision being shown. For a blocking rule, that execution shows a violation being refused. Every way around a gate (an override, a disabled protection, a proposed decision cited as law) must be visible. Any statement that lacks this evidence reads as not proven on every surface, never as done. |
+| [a-claim-stands-only-on-its-evidence](https://majordomus.dev/plan/a-claim-stands-only-on-its-evidence/) | ACTIVE | 1/24 | 18 | 5 | 0 | 0 | 0 | The owner wants every rule, guarantee and delivered feature that Majordomus states to be backed by a recorded execution at the revision being shown. For a blocking rule, that execution shows a violation being refused. Every way around a gate (an override, a disabled protection, a proposed decision cited as law) must be visible. Any statement that lacks this evidence reads as not proven on every surface, never as done. |
 
 ## Issues
 
@@ -38,6 +38,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4372](https://majordomus.dev/plan/i4372/) | BLOCKED | 3 | I3113, I3200, I4370 | A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it |
 | [I4583](https://majordomus.dev/plan/i4583/) | READY | 0 | — | An outbound message that cites repository facts carries locators re-verified against the trunk when it is sent |
 | [I4585](https://majordomus.dev/plan/i4585/) | READY | 0 | — | A claim sourced outside the repository records where it came from and whether that source is official, and an unofficial one reads unverified |
+| [I4631](https://majordomus.dev/plan/i4631/) | READY | 0 | — | Three integration lessons ship in the baseline: a relayed approval is confirmed with the owner, a shared plan lives in the repository, and an oracle never reads the state under test |
 
 ## Findings
 
@@ -47,6 +48,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `no_evidence_required` | `I3087` | requires no evidence; nothing gates its completion |
 | WARN | `no_evidence_required` | `I3089` | requires no evidence; nothing gates its completion |
 | WARN | `no_evidence_required` | `I3861` | requires no evidence; nothing gates its completion |
+| WARN | `no_evidence_required` | `I4631` | requires no evidence; nothing gates its completion |
 | WARN | `scope_conflict` | `I3083` | shares .ai/repo/project/issues/I3083.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3083` | shares lib/capture.sh with I3304; they may not run concurrently |
 | WARN | `scope_conflict` | `I3083` | shares docs/WORKTREES.md with I3316; they may not run concurrently |

@@ -1,7 +1,7 @@
 +++
 title = "Note integrity"
 description = "Note integrity"
-weight = 33
+weight = 36
 [extra]
 kind = "rule"
 slug = "majordomus-note-integrity-1"

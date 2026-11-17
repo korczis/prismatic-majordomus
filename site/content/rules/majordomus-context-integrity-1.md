@@ -1,7 +1,7 @@
 +++
 title = "Context integrity"
 description = "Context integrity"
-weight = 12
+weight = 15
 [extra]
 kind = "rule"
 slug = "majordomus-context-integrity-1"

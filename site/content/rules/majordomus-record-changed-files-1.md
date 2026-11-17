@@ -1,7 +1,7 @@
 +++
 title = "A record's changed_files names the work, not the tool's exhaust"
 description = "A record's changed_files names the work, not the tool's exhaust"
-weight = 46
+weight = 49
 [extra]
 kind = "rule"
 slug = "majordomus-record-changed-files-1"

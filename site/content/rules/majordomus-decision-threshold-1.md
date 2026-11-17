@@ -1,7 +1,7 @@
 +++
 title = "The decision threshold"
 description = "The decision threshold"
-weight = 15
+weight = 18
 [extra]
 kind = "rule"
 slug = "majordomus-decision-threshold-1"

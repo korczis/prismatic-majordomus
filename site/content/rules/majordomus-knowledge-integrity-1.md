@@ -1,7 +1,7 @@
 +++
 title = "Knowledge integrity"
 description = "Knowledge integrity"
-weight = 27
+weight = 30
 [extra]
 kind = "rule"
 slug = "majordomus-knowledge-integrity-1"
