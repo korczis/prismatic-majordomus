@@ -12,6 +12,9 @@
 #   2. preflight in a checkout configured for Claude Code (.mcp.json) reports the bridge
 #      unavailable on a machine without its native messaging host, with the person's step,
 #      and active once the host is there; a checkout configured for nothing hears nothing
+#   3. the executable's own read of share/providers.yaml (`product providers`) answers
+#      claude-code's bridge from the distribution, and refuses, naming the file, a copy whose
+#      offers blocks carry no browser_evidence and a copy whose offers blocks carry no browser
 #
 # The in-process half — the declaration, the refusal of an unknown word, every verdict and
 # the providers document's column — is apps/majordomus-cli/tests/provider_browser.rs.
@@ -66,3 +69,21 @@ must "the bridge host is installed, and the check is not active: $got" \
   [ "$(jq -r .verdict <<<"$got")" = active ]
 must "the active check does not cite the host's manifest: $got" \
   grep -qF "$HOST.json" <<<"$(jq -r '.evidence[].source' <<<"$got")"
+
+# ---------------------------------------------------------------- 3. the read itself refuses
+providers() { MAJORDOMUS_SHARE="$1" "$RB" product providers --repo "$T" --format json; }
+got="$(providers "$ROOT/share" | jq -r '.providers[] | select(.id == "claude-code") | .offers.browser')"
+must "the distribution's declaration does not read claude-code as a bridge: $got" [ "$got" = bridge ]
+refused() {   # <what the copy lacks> <the line the copy drops>
+  grep -v "^      $2: " "$ROOT/share/providers.yaml" > "$S/share/providers.yaml"
+  rc=0; providers "$S/share" >"$S/read.out" 2>&1 || rc=$?
+  must "a declaration without $1 read (exit $rc)" [ "$rc" = 10 ]
+  grep -qF "share/providers.yaml: provider 'agents' declares offers without $1" "$S/read.out" \
+    || { echo "    the read failed for another reason than $1:"; sed 's/^/    | /' "$S/read.out"; exit 1; }
+}
+refused browser_evidence browser_evidence
+refused browser browser
+if grep -qF 'without browser_evidence' "$S/read.out"; then
+  echo "    a missing browser word was reported as a missing citation:"
+  sed 's/^/    | /' "$S/read.out"; exit 1
+fi

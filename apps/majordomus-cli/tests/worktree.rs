@@ -901,6 +901,30 @@ fn the_command_line_and_the_capability_registry_see_one_topology() {
         .unwrap();
     assert_eq!(plan_cli, plan_registry);
 
+    // `worktree ensure` is the command-line projection of `worktree.create` (I4002): over
+    // the canonical worktree both find it, and answer one report serialised twice
+    let ensure_cli = json(&root, &["worktree", "ensure", "feature/parity"]);
+    let create_registry = app
+        .context
+        .execute(
+            "worktree.create",
+            serde_json::json!({ "branch": "feature/parity" }),
+        )
+        .unwrap();
+    assert_eq!(ensure_cli, create_registry);
+    assert_eq!(create_registry["existed"], true);
+    assert!(create_registry["head"].is_string(), "{create_registry}");
+    // and the branch checked out outside its place is refused, not moved
+    let err = app
+        .context
+        .execute(
+            "worktree.create",
+            serde_json::json!({ "branch": "fix/outside" }),
+        )
+        .unwrap_err();
+    assert!(err.to_string().contains("refused"), "{err}");
+    assert!(outside.is_dir());
+
     let status_registry = app
         .context
         .execute(

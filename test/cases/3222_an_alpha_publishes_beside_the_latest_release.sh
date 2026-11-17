@@ -81,4 +81,32 @@ meta 0.2.0-ai-documents > site/static/releases/v0.2.0-ai-documents.json
 git add site/static/releases
 expect_exit 10 scripts/site-deploy --release-metadata v0.2.0-ai-documents
 expect_grep 'REFUSE .*latest.json names v0.29.0, not v0.2.0-ai-documents'
-echo "    a pre-release publishes its tag file beside the latest release and never replaces it; a latest.json naming one is refused; any other suffix is held to the stable rules"
+# ---------------------------------------------------------------- 5. master moves before the pre-release's record lands
+# 2026-11-06: v1.0.0-alpha.10's document was published at 17:09Z and three deploys of master took
+# it off the site, each putting alpha.9 back into the homepage's hero, because the build carries
+# the documents of its records alone (I4531). An ordinary deploy keeps every release document
+# gh-pages serves that the build does not carry, whatever its channel, and says so.
+git reset -q -- site/static/releases; git checkout -q -- site/static/releases
+rm -f site/static/releases/v1.0.0-alpha.*.json site/static/releases/v0.2.0-ai-documents.json
+[ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "    the case left the tree dirty:"; git status --short; exit 1; }
+echo change > change.txt && gitq add change.txt && gitq commit -qm "an unrelated change" && git push -q origin HEAD:master
+build
+expect_exit 0 scripts/site-deploy --skip-build
+expect_grep 'kept the published release documents this build does not carry: v1.0.0-alpha.1.json'
+served releases/v1.0.0-alpha.1.json | jq -e '.tag == "v1.0.0-alpha.1"' >/dev/null \
+  || { echo "    a deploy of master took the published pre-release's document off the site"; exit 1; }
+[ "$(tag_served)" = v0.29.0 ] || { echo "    keeping the pre-release's document moved latest.json to $(tag_served)"; exit 1; }
+served index.html | grep -q "/commit/$(git rev-parse HEAD)" || { echo "    the deploy did not publish the new build"; exit 1; }
+git --no-pager log -1 --format=%s origin/gh-pages | grep -q 'published documents kept: v1.0.0-alpha.1.json' \
+  || { echo "    the gh-pages commit does not say which published documents it kept"; exit 1; }
+
+# ---------------------------------------------------------------- 6. the record lands: nothing to keep
+meta 1.0.0-alpha.1 prerelease > site/static/releases/v1.0.0-alpha.1.json
+gitq add -A && gitq commit -qm "release v1.0.0-alpha.1 recorded" && git push -q origin HEAD:master
+build
+expect_exit 0 scripts/site-deploy --skip-build
+expect_no_grep 'kept the published release documents'
+served releases/v1.0.0-alpha.1.json | jq -e '.tag == "v1.0.0-alpha.1"' >/dev/null \
+  || { echo "    after the record landed the pre-release's document is not served"; exit 1; }
+
+echo "    a pre-release publishes its tag file beside the latest release and never replaces it; a latest.json naming one is refused; any other suffix is held to the stable rules; a deploy of master keeps the document until the record lands"

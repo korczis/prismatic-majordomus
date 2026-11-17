@@ -30,6 +30,7 @@
 #      deleting a decision somebody is entitled to make;
 #   4. it does not propose the same version twice.
 . "$ROOT/test/lib.sh"
+mj_runs python3 -c 'import yaml' || skip "python3 has no yaml module ($(mj_runs_why python3))"
 
 WF="$ROOT/.github/workflows/version.yml"
 [ -f "$WF" ] || { echo "    no .github/workflows/version.yml: the version is measured and gated,"

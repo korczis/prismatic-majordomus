@@ -82,6 +82,7 @@ mj_cmd_doctor() {
   mj_report_environment
   mj_report_reasoning
   mj_report_layout
+  mj_fleet_report_licence
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -121,7 +122,77 @@ mj_validate_policy() {
   else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml" \
     "ls $(mj_rel "$MJ_PROFILES_DIR")"; fi
 
+  mj_profile_limits_reconcile
   return 0
+}
+
+# share/profile-limits.yaml against the profiles and lib/ (I0201): every declared axis is set
+# on every profile, every declared adapter is a function that names its limit in a
+# `# majordomus-limit: <limit>` line above it, and no function names a limit the file does
+# not declare. Each profile's limits are then printed as data, one name=value per limit.
+mj_profile_limits_reconcile() {
+  local reg="$MJ_BIN_DIR/../share/profile-limits.yaml" rel="share/profile-limits.yaml"
+  local flat tagged i id axis derive adapter ids="" pf n v line vals bad
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.pl.XXXXXX")"
+  if ! mj_yaml_flatten "$reg" > "$flat" 2>/dev/null; then
+    mj_doctrine_fail profile-limits "$rel" "does not parse" "cat $rel"; rm -f "$flat"; return 0
+  fi
+  if [ "$(mj_yget "$flat" version)" != 1 ]; then
+    mj_doctrine_fail profile-limits "$rel" "unsupported version '$(mj_yget "$flat" version)' (want 1)" "grep -n '^version:' $rel"
+    rm -f "$flat"; return 0
+  fi
+  # file, limit, function: each function under lib/ with the marker lines directly above it
+  tagged="$(awk '
+    FNR == 1 { n = 0 }
+    /^# majordomus-limit: / { t[n++] = $3; next }
+    /^#/ { next }
+    /^[a-z_][a-z0-9_]*\(\) *\{/ { f = $0; sub(/\(.*/, "", f); for (k = 0; k < n; k++) print FILENAME, t[k], f; n = 0; next }
+    { n = 0 }' "$MJ_LIB_DIR"/*.sh)"
+  i=0
+  while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
+    axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+    adapter="$(mj_yget "$flat" "limits.$i.adapter")"; ids="$ids $id"
+    case "$derive" in
+      count|duration_seconds) ;;
+      *) mj_doctrine_fail profile-limits "$id" "derive '$derive' is not count or duration_seconds" "grep -n -A4 'id: $id' $rel" ;;
+    esac
+    printf '%s\n' "$tagged" | awk -v l="$id" -v f="$adapter" '$2 == l && $3 == f { ok = 1 } END { exit ok ? 0 : 1 }' \
+      || mj_doctrine_fail profile-limits "$id" "declares adapter $adapter, and no function $adapter under lib/ carries '# majordomus-limit: $id'" \
+        "grep -rn -A1 'majordomus-limit: $id' lib/"
+    i=$((i+1))
+  done
+  while read -r line; do
+    [ -n "$line" ] || continue
+    set -- $line
+    case " $ids " in *" $2 "*) ;;
+      *) mj_doctrine_fail profile-limits "$2" "$(mj_rel "$1"): $3 applies limit '$2', which $rel does not declare" "grep -n 'majordomus-limit: $2' $(mj_rel "$1")" ;;
+    esac
+  done <<EOF
+$tagged
+EOF
+  for pf in "$MJ_PROFILES_DIR"/*.yaml; do
+    [ -f "$pf" ] || continue; n="$(basename "$pf" .yaml)"
+    mj_load_profile "$n" 2>/dev/null || continue
+    vals=""; bad=0; i=0
+    while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
+      axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+      v="$(mj_pro "$axis")"
+      if [ -z "$v" ]; then
+        mj_doctrine_fail profile-limits "$n" "does not set $axis, from which $rel derives $id" "cat $(mj_rel "$pf")"; bad=1
+      else
+        case "$derive" in
+          duration_seconds) v="$(mj_duration_secs "$v")" || v="" ;;
+          count) case "$v" in *[!0-9]*) v="" ;; esac ;;
+        esac
+        if [ -z "$v" ]; then
+          mj_doctrine_fail profile-limits "$n" "$axis: '$(mj_pro "$axis")' is not a $derive value" "grep -n '$(printf '%s' "$axis" | sed 's/.*\.//'):' $(mj_rel "$pf")"; bad=1
+        else vals="$vals $id=$v"; fi
+      fi
+      i=$((i+1))
+    done
+    [ "$bad" = 1 ] || mj_doctrine_ok profile-limits "$n" "limits${vals}"
+  done
+  rm -f "$flat"
 }
 
 # A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the
@@ -880,7 +951,8 @@ mj_validate_policy_defaults() {
   for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
              | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | LC_ALL=C sort -u); do
     n=$((n + 1))
-    if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
+    # declared is a line for the key, an empty value included (`ui.kit: ""` declares no kit)
+    if ! grep -qE "^$(printf '%s' "$k" | sed 's/\./\\./g')(=|\.)" "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
     fi
   done
@@ -1161,6 +1233,8 @@ mj_validate_rule_package() {
   if [ -f "$MJ_STD_RULES_DIR/manifest.yaml" ] && ! diff -rq "$vend" "$MJ_STD_RULES_DIR" >/dev/null 2>&1; then
     mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
   fi
+  # the fleet pack beside the baseline: its stamp, and its lag behind the pack on this machine
+  mj_fleet_report
   mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
   # A verdict states what it is a verdict about. "122 rule(s) resolve in one deterministic
   # order" is true and is read as covering the whole set, while the doctrine check below

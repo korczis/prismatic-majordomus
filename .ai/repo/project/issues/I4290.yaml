@@ -29,4 +29,15 @@ evidence_required:
   - "absences_told_apart_case"
 serves: []
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-10-30T11:14:06Z
+started_at: 2026-10-30T11:13:11Z
+started_event: sha256:6f5d2fd187fe1797c444e712ae6e47c31ddad7b81fb2cc650fb93cdf6fd0545d
+completed_at: 2026-10-30T11:14:06Z
+completed_event: sha256:4b163a503ceb8eef5f09fba42a3a7392d1de2a502b3c83cb7cfb6ebdff0ae267
+evidence:
+  - covers: absences_told_apart_case
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 45_github_projection"
+    result: "ok: a fixture remote dated after the records land reads deleted-remotely, one dated before reads never-created, a remote with no projected record dates nothing; --apply through a gh stub refuses I0002 (exit 15, REFUSED line, no issue create call) and creates it under MJ_GH_RECREATE=I0002; making absence_of answer one state always fails the case"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-30T11:13:47Z

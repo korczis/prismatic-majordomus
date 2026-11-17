@@ -1017,6 +1017,12 @@ mj_adr_check() {
   local out; out="$(mktemp "${TMPDIR:-/tmp}/mj.ack.XXXXXX")"
   local rc=0
   mj_adr_examine mj_adr_report_line > "$out" || rc=$?
+  # Discovery reads the version-control index, so a decision written and not yet added is
+  # not examined. Say so by name (I4264): "examined 0 decision(s) ... every identity unique"
+  # over nine untracked files read as a pass for decisions nobody had looked at.
+  local untracked
+  untracked="$(mj_git ls-files --others --exclude-standard -- "$(mj_rel "$MJ_ADRS_DIR")" 2>/dev/null \
+    | grep -E '/[0-9]{4}-[^/]+\.md$' || true)"
   if [ "$MJ_JSON" = 1 ]; then
     local first=1 line
     printf '{"schema":1,"examined":%s,"findings":[' "$MJ_ADR_N"
@@ -1028,6 +1034,10 @@ mj_adr_check() {
     printf '],"refs":{"surveyed":%s' "$([ -n "$MJ_ADR_REFS_SKIP" ] && printf false || printf true)"
     [ -n "$MJ_ADR_REFS_SKIP" ] && printf ',"reason":"%s"' "$(mj_json_esc "$MJ_ADR_REFS_SKIP")"
     printf ',"added_here":%s}' "$MJ_ADR_REFS_N"
+    printf ',"untracked":['
+    local u ufirst=1
+    for u in $untracked; do [ "$ufirst" = 1 ] || printf ','; ufirst=0; printf '"%s"' "$(mj_json_esc "$u")"; done
+    printf ']'
     printf ',"ok":%s}\n' "$([ "$rc" = 0 ] && printf true || printf false)"
   else
     if [ "$rc" = 0 ]; then
@@ -1040,6 +1050,11 @@ mj_adr_check() {
     # Always stated, clean or not: a survey that could not reach the other refs has not
     # cleared this branch of a collision, and a reader who cannot tell the two apart is
     # given a confident wrong answer (project.empty-is-not-failure).
+    if [ -n "$untracked" ]; then
+      printf '%s decision file(s) are not tracked and were NOT examined (git add them):\n' \
+        "$(printf '%s\n' "$untracked" | grep -c .)"
+      printf '  %s\n' $untracked
+    fi
     if [ -n "$MJ_ADR_REFS_SKIP" ]; then
       printf 'the other refs were NOT surveyed: %s\n' "$MJ_ADR_REFS_SKIP"
     else

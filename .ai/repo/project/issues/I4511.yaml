@@ -1,0 +1,45 @@
+id: I4511
+milestone: a-profile-is-resolved-once-and-enforced
+title: "The profile system is documented where a reader looks, its claims say what is now enforced, and one real task is delivered under it"
+slug: the-profile-system-is-documented-claimed-and-used
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Close the milestone in the open: the guide, the concepts page, the profiles directory's own README and the claims state the system as built, the profile table of docs/PROFILES.md shows the granted effects, and one bounded task of this repository is run under review and under implementation with the recorded difference as evidence."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 07, asks to prove the system by using it on a real bounded change, to capture a deliberately denied action as evidence from the command line, the API and the UI, and to update the canonical documents and claims; PROMPT 06 item 9 asks that documentation and help be coherent and carry migration notes. docs/claims/profile-axes.md calls every axis advisory, docs/claims/profile-validate.md describes doctor's shell loop, and .ai/repo/profiles/README.md says the keys are closed by the allowlist and names no resolver."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. Profiles are described in .ai/repo/profiles/README.md, docs/CONCEPTS.md, docs/GUIDE.md, docs/CLI.md and two claim pages, docs/claims/profile-validate.md and docs/claims/profile-axes.md (advisory), both held by docs/CLAIMS.yaml. The provider templates .ai/repo/providers/{agents,claude-code,gemini}.tmpl include no PROFILE_TABLE placeholder, and the Rust provider renderer refuses one. No docs/PROFILES.md exists."
+desired_state: "docs/PROFILES.md is the manual: definitions, the resolver and its order, the fingerprint, the standing table, the granted effects, the refusal and its event, changing a task's profile, and what a layer written before this milestone needs to do, which is nothing. The claim pages state what each axis's standing is and add a claim for the refusal with the test that proves it. The profile table of docs/PROFILES.md, drawn from the resolver, names the effects each profile grants; no provider template gains a profile table, because a generated instruction file carries no rule of its own. The evidence is a recorded run on this repository: one issue's task started under review, a refused plan.transition with its typed error read from the command line, the API and the Governance panel, then the same issue done under implementation, with both fingerprints."
+scope:
+  - "docs/PROFILES.md"
+  - "docs/CONCEPTS.md"
+  - "docs/GUIDE.md"
+  - "docs/CLI.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - ".ai/repo/profiles/README.md"
+  - "share/skeleton"
+  - ".ai/repo/project/issues/I4511.yaml"
+non_scope:
+  - "A release of its own: the change lands and is versioned as every pull request is"
+  - "An autonomous execution mode to compare against: the tool starts no worker"
+  - "Marking the milestone accepted: acceptance is the owner's act"
+depends_on:
+  - I4509
+  - I4510
+acceptance_criteria:
+  - "Every command, capability and key docs/PROFILES.md names exists, held by the documentation gates that hold docs/CLI.md"
+  - "The claim for the refusal names a test that fails when the executor's comparison is removed, and the claim pages no longer call an enforced axis advisory"
+  - "The recorded run holds the refused call's error from three surfaces with one fingerprint, and the ledger lines it produced"
+  - "A layer initialised by the previous release passes doctor after update with no profile file changed"
+  - "The profile table of docs/PROFILES.md is generated from the resolver and names the effects each profile grants, and no provider template carries a profile table"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus doctor"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles 01_init"
+evidence_required:
+  - "profiles_manual"
+  - "refusal_claim_with_proof"
+  - "dogfood_run_record"
+created_at: 2026-10-30
+updated_at: 2026-10-30

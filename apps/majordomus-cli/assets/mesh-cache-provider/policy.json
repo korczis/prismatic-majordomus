@@ -14,6 +14,8 @@
   "local_node": "lundra",
   "nodes": ["lundra", "mbp", "mb2", "imac", "jetson"],
   "critical_services": ["minio", "gitlab-runner", "tailscaled"],
+  "runner_homes": ["/home/ghrunner", "/home/gitlab-runner"],
+  "runner_units": ["actions.runner.*.service", "gitlab-runner.service"],
   "build_host_tenants": [
     {"name": "korczis home", "path": "/home/korczis", "bound_gib": 159},
     {"name": "docker", "path": "/var/lib/docker", "bound_gib": 53}

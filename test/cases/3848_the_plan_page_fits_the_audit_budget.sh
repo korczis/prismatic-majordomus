@@ -16,7 +16,7 @@
 #      under ELEMENT_CEILING elements, the bound the audit's per-visit deadline needs
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || skip "jq absent"
-command -v python3 >/dev/null || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 # The ceiling, on the elements the HTML carries. axe, the audit's slowest pass, measured about
 # 0.4 ms an element on a loaded machine (14.4 s over 35,516 before this case, 4.6 s over 21,589

@@ -358,7 +358,7 @@ stages run in this order [C15]:
 flowchart TD
   build["build step<br>cargo build, or MAJORDOMUS_BIN"]
   a["stage A: majordomus generate --strict<br>code-only projections: openapi, registry, cli,<br>capabilities.md, modules/*.md, share/allow, provider bootstraps"]
-  b["stage B: scripts/generate-site-data<br>site/data/generated, site/content, docs/SITE_CLAIMS.md,<br>docs/PLAN_STATUS.md, docs/PAGES_STATUS.md"]
+  b["stage B: scripts/generate-site-data<br>site/data/generated, site/content, docs/SITE_CLAIMS.md,<br>docs/PLAN_STATUS.md, docs/plan-status/*.md, docs/PAGES_STATUS.md"]
   c["stage C: majordomus generate<br>projections over the index stage B changed:<br>site/data/registry, benchmarks, artifacts manifest"]
   d["stage D: scripts/gitattributes<br>the merge=derived block, from the artifact manifest<br>and the published content tree"]
   check["scripts/derive-check<br>generate --check, generate-site-data --check,<br>gitattributes --check: 0 current, 10 stale, 15 refused"]

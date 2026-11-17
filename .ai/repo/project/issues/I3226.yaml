@@ -5,7 +5,7 @@ slug: a-response-says-where-its-time-went
 priority: p2
 profile: implementation
 objective: "Write a Server-Timing header on every /ui, /cockpit and /api response from a request-scoped recorder installed in Router::handle and fed by ui/source.rs's capability reads (with cache hit or miss) and by the executor, named in the perf::Phase vocabulary plus the route, render and bytes stages this issue adds, and let the bench record it per route so a budget miss names its stage."
-why: "Owner, 2026-10-11: majordomus ui must be blazing fast; the 2026-10-11 and 2026-10-13 plans both put per-stage measurement before optimisation. No response carries a timing today. perf.rs holds process-global AtomicU64 totals over eight phases and has no per-request record, and the server is multi-threaded, so the header needs its own recorder. Sources: chatgpt-majordomus:c223#0, chatgpt-majordomus:c223#2, chatgpt-majordomus:c255#7."
+why: "Owner, 2026-10-11: majordomus ui must be blazing fast; the 2026-10-11 and 2026-10-13 plans both put per-stage measurement before optimisation. No response carries a timing today. perf.rs holds process-global AtomicU64 totals over eight phases and has no per-request record, and the server is multi-threaded, so the header needs its own recorder. Sources: chatgpt-majordomus:c223#0, chatgpt-majordomus:c223#2, chatgpt-majordomus:c255#7. The owner's pack asks for the same in campaigns/majordomus-ui-speed-pack/00-MASTER.md; PR #1058 planned it as I2567, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "crate::perf::COUNTERS (perf.rs) is one process-global set of AtomicU64 totals over eight phases (repository_discovery, index_build, registry_build, open_api_build, mcp_projection_build, graph_build, handler_execution, cache_lookup), with no route, render or bytes phase and no per-request record; the HTTP server runs several worker threads; capability/builtin/perf.rs reports those totals; no Server-Timing in apps/ or share/; I2489 holds budgets; I2828 (branch) caches the Cockpit overview."
 desired_state: "The header is recorded per request in the same Phase vocabulary perf.counters reports, written by the router, partial for streamed and upgraded responses, absent from published snapshots, and explained to a reader in docs/MAJORDOMUS_UI.md."
 scope:
@@ -30,6 +30,8 @@ acceptance_criteria:
   - "Entry names use the perf::Phase vocabulary, plus the route, render and bytes stages this issue adds to it"
   - "A WebSocket upgrade (/events) or a streamed response carries only the stages completed before its headers, marked partial and without a total; documented in docs/MAJORDOMUS_UI.md"
   - "The first commit adds apps/majordomus-cli/tests/http_server_timing.rs and rewrites criterion a-response-says-where-its-time-went to `evidence: test` with that ref, worded 'in the same Phase vocabulary perf.counters reports'; `cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_server_timing` passes"
+  - "Each source entry names its reading's freshness (current, stale or pending) and the wait it cost the request"
+  - "The header is sent to a local caller only, by the rule the remote-caller guard applies"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::"
   - "majordomus bench --check"
@@ -37,4 +39,4 @@ validation:
 evidence_required:
   - "apps/majordomus-cli/tests/http_server_timing.rs"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

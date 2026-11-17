@@ -1,0 +1,28 @@
+id: I4268
+milestone: a-second-adopter-is-served
+title: "An adopter runs every gate of its CI model and records it with one command"
+slug: an-adopter-runs-and-records-its-gates
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the adopter declared .ai/repo/ci/gates.yaml and check then reported every gate as never reported; recording them took a hand-written loop over `evidence --gate`, because scripts/ci-plan, which runs a plan, exists only in the tool's source tree."
+current_state: "Gate evidence is recorded one gate at a time by hand."
+desired_state: "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it."
+scope:
+  - ".ai/repo/project/issues/I4268.yaml"
+  - "bin/majordomus"
+  - "lib/evidence.sh"
+  - "scripts/ci-plan"
+  - "docs/CI.md"
+  - "test/cases/4268_an_adopter_runs_and_records_its_gates.sh"
+depends_on: []
+acceptance_criteria:
+  - "gates run records every selected gate and check reports them passing"
+  - "A failing gate refuses completed"
+validation:
+  - "bash test/run.sh 4268_an_adopter_runs_and_records_its_gates"
+evidence_required:
+  - "case_an_adopter_runs_and_records_its_gates"
+created_at: 2026-10-27
+updated_at: 2026-10-27

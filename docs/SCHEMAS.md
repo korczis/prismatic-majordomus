@@ -251,6 +251,28 @@ The four shipped profiles:
 | decision record | no | no | no | required |
 | checkpoint | 30m | 15m | 15m | 30m |
 
+### Which axis becomes which limit — `share/profile-limits.yaml`
+
+An axis is prose until a limit is derived from it. `share/profile-limits.yaml`, shipped with
+the tool beside `share/obligations.yaml`, is the one place that says which axis may become a
+runtime limit, how the value is derived, and which function applies it (I0201). It declares
+only the limits this repository already applies:
+
+| limit | axis | derive | adapter |
+|---|---|---|---|
+| `checkpoint_max_age_seconds` | `checkpoint_interval` | `duration_seconds` | `mj_validate_checkpoint` |
+| `history_events` | `context.recent_history_depth` | `count` | `mj_ctx_history` |
+| `knowledge_pointers` | `context.knowledge_max_items` | `count` | `mj_context_pointers` |
+
+`doctor` reconciles it in both directions and prints each profile's limits as data
+(`OK profile-limits routine — limits checkpoint_max_age_seconds=1800 history_events=0
+knowledge_pointers=0`). It refuses, by name, a declared axis a profile does not set, a value
+the derivation cannot read, a declared adapter that no function under `lib/` carries with a
+`# majordomus-limit: <limit>` line above it, and a function that carries that line for a
+limit the file does not declare. Capability, effort and verbosity are absent on purpose:
+nothing here can observe them being enforced. `test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh`
+holds it.
+
 ---
 
 ## `.ai/repo/rules/**/*.md` — rule objects
@@ -495,6 +517,8 @@ acceptance_criteria: [...]            # what would make the outcome true
 validation: [...]                     # commands that demonstrate it
 evidence_required: [...]              # tokens gating milestone acceptance
 risks: [...]
+due_on: 2026-11-11                    # optional: the day it is expected; projected to the
+                                      # forge's due date, never read to derive a status
 cancelled: false                      # optional
 evidence:                             # appended; each entry covers one required token
   - covers: suite
@@ -533,6 +557,8 @@ desired_state: "…"
 scope: [...]                          # the paths this issue may touch
 non_scope: [...]
 depends_on: [I0005]                   # issue ids; the edges of the DAG
+traces: [PROJ-12, A7]                 # optional: what it answers to outside the layer (tracker
+                                      # keys, requirement ids, URLs), rendered as written
 acceptance_criteria: [...]            # required; an issue without one is a placeholder
 validation: [...]                     # required; the commands that demonstrate it
 evidence_required: [...]              # tokens that gate completion

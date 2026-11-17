@@ -1,0 +1,50 @@
+id: I4367
+milestone: work-graph-github
+title: "The merged pull requests' observation records the machine-written Refs region, and the live delivery answer reads the region and never the prose around it"
+slug: delivery-reads-the-projected-refs-region
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "`majordomus served forge` asks, for each merged pull request, its body. ObservedMergedPullRequest keeps the state of the managed region between `<!-- majordomus:pr-meta begin <hash> -->` and `<!-- majordomus:pr-meta end -->`: none, malformed (a marker repeated or unclosed), edited (the hash does not verify) or verified. Only for a verified region does it keep record ids, and only the leading id of each list line github-sync writes (`- Refs #<n> (<id> — <title>)`, `- <id> — <title> (not on GitHub yet ...)`, `- <id> (its record is in this pull request ...)`, github-sync:406-412), never an id inside a title or on the `**Milestone:**` line, each decided by I2901's plan::is_record_id. The body is reduced to that state and those ids before the observation is recorded, so no prose is stored. SCHEMA moves to 2, and load (deploy/observed.rs:416-436, which today refuses every schema but 1) still reads a schema 1 record, with the region unread. The hash contract is github-sync's, reproduced exactly: carriage returns stripped from the decoded body (github-sync:600); the region is the lines strictly between the one begin line and the one end line, each ending in a newline, as pr_region_read (github-sync:457-467) extracts them; hash16 (github-sync:484) is the first 16 hex characters of the sha256 of those bytes, compared with the begin marker's hash as github-sync:611-619 does. The Rust reader is held to a golden body github-sync wrote. plan.delivery adds the edge `projected_region` beside title_or_branch, slug, subject and forge_title, under forge_title's landing rule (plan/delivery.rs:1016-1052): it counts only when the pull request's merge commit or head is in the history read, at that commit's time, and a merge that only plans is judged as forge_title's is. It exists only in the live answer, like the forge's merged titles (plan/delivery.rs:1001-1015); an answer at a commit reads that commit's history only and reports the region source unread with its reason. An edited or malformed region names nothing, and the delivery source that reads the regions names each such pull request by number and state, in github-sync's words."
+why: "Delivery names an issue by a branch, by a pull request's title, head branch or slug (named_by, plan/delivery.rs:447-471), by a commit's subject (:996-1000) and, live, by the forge's merged titles (forge_title, :1001-1052), and never by a body, by design, because a body mentions the issues around the work as readily as the one it realises (plan/delivery.rs:27-29 and :994-995). The pr-meta region is not prose: scripts/github-sync --prs writes it from the records (I3970) for an open pull request, from its title, its commits' subjects and the issue records its head changes (github-sync:390-400), and marks it with the hash of what it wrote, so it is as machine-derived as the title. The ids it carries that nothing in git names (an issue record the head changes, and, under the forge command draft (I4370), ids an adopter's `facts:` command supplies) are attributed to nothing today. OSCILLA merges by merge commit only (owner decision C1) and adopts the forge command, so every pull request it merges once the projection runs carries a region delivery can read without trusting text a person wrote. Its planned backfill of merged pull requests writes `semver:*` labels and the milestone only (C6), not the region, so this issue does not make merges from before adoption attributable."
+current_state: "Measured at 5370ee63d19: apps/majordomus-cli/src/deploy/observed.rs:54-56 MERGED_QUERY asks number, title, headRefName, headRefOid, mergedAt and mergeCommit{oid} only; observed.rs:58-74 ObservedMergedPullRequest carries number, title, head_ref, head_sha, merge_commit and merged_at, with no labels and no body; SCHEMA is 1 (observed.rs:32), load (observed.rs:416-436) refuses any other schema by its number, and the test at observed.rs:641 holds that refusal; integration/forge.rs:527-552 pull_request_of records labels (:541-549) and body (:552) for open pull requests, but plan/delivery.rs reads neither; plan/delivery.rs:1001-1015 reads the merged titles in the live answer only (merged_titles, :788-802, through observed::load) and reports them unread at a commit; plan.delivery's description (capability/builtin/plan.rs:699) says a commit is named `never by its body`, and docs/PLANNING.md:497-504 documents forge_title; scripts/github-sync projects only an open pull request (:530), strips carriage returns from the decoded body (:600), extracts the region in pr_region_read (:457-467), defines hash16 (:484), compares it with the begin marker's hash (:612) and reports `edited` (:617) or `malformed` (:609-610); cases 3100 (:131-133) and 3101 (:80-81) write schema 1 deployments.json fixtures."
+desired_state: "In the live answer, a merged pull request whose verified Refs region names a record, and whose merge commit or head is in the history read, is attributed to it with the edge projected_region; prose names nothing; an edited or malformed region names nothing and is reported by number; an answer at a commit reports the region unread. The observation stores the region's state and ids and no body text, and a schema 1 observation still reads. Enforced by case 4367, cases 3100, 3101 and 3970, and library tests in deploy::observed and plan::delivery."
+scope:
+  - ".ai/repo/project/issues/I4367.yaml"
+  - "apps/majordomus-cli/src/deploy/observed.rs"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "test/fixtures/pr-meta"
+  - "test/cases/4367_delivery_reads_the_projected_refs_region.sh"
+  - "docs/PLANNING.md"
+  - "docs/generated"
+non_scope:
+  - "Reading ids from a pull request body outside the managed region"
+  - "Writing the region, or writing it on a merged pull request (I3970 and the forge command draft, I4370)"
+  - "Recording a merged pull request's labels, and attributing an issue by them: nothing reads them, and a field recorded with no reader is a contract without a reader; a later record adds them for a named reader"
+  - "Importing labels into a canonical record (work-graph-github's non-scope)"
+  - "Reading the region in an answer at a commit, including from a merge commit's message"
+acceptance_criteria:
+  - "Library test in deploy::observed: the region reader reproduces github-sync's contract (carriage returns stripped, the lines between the single begin and end markers each ending in a newline, hash16 the first 16 hex characters of their sha256); a golden body under test/fixtures/pr-meta, written by `scripts/github-sync --prs --apply` against case 3970's scripted forge, is verified and yields its ids; the same body with one character changed inside the region is edited; one changed outside the region is still verified with the same ids; its CRLF form is verified; a repeated or unclosed marker is malformed; a body with no marker is none"
+  - "Library test in deploy::observed: only the leading id of each region list line is kept; an id inside a served issue's title, the id on the `**Milestone:**` line and an id-shaped word with no record file name nothing"
+  - "Library test in plan::delivery (live mode): a fixture merged pull request whose id appears only in a verified region, with its merge commit in the history read, is attributed with edge projected_region at that commit's time; the same pull request with neither its merge commit nor its head in the history is not; one whose id appears only in prose is not; one whose region is edited or malformed is not, and the region source's detail names its number and state; a merge that changes only .ai/repo/project is counted as planning, as for forge_title"
+  - "Library test in plan::delivery: the same fixture answered at a commit attributes nothing through the region, and the region source is unread with a reason saying the region is read only in the live answer"
+  - "Library test in deploy::observed: an observation of schema 1 is still read, with the region unread; a schema 2 observation round-trips region state and region ids; any other schema is refused by its number as today"
+  - "Case 4367: `majordomus served forge` against a fake gh answers MERGED_QUERY pages with bodies, one of them a body github-sync --prs --apply wrote through case 3970's scripted forge; the recorded deployments.json carries the region states and ids and no word of the fixture bodies' prose; the live `majordomus plan delivery` reports the region-only issue at stage merged with via projected_region, and `majordomus plan delivery --at HEAD` reports the region source unread"
+  - "The observation stays within MERGED_WINDOW and MERGED_PAGE, and MERGED_QUERY asks no labels"
+  - "plan.delivery's description (capability/builtin/plan.rs) and docs/PLANNING.md name the projected_region edge and say that a body outside the region is never read; `bin/majordomus generate --check` passes"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- deploy::observed plan::delivery"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4367_delivery_reads_the_projected_refs_region 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3970_a_pull_request_carries_its_metadata"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on:
+  - "I3970"
+  - "I2901"
+  - "I4366"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

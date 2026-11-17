@@ -138,8 +138,12 @@ file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 # SHA-256 for the cases, from the tool's own lib/sha256.sh: mj_sha256sum (files, or stdin),
 # mj_sha256_xargs (paths on stdin) and mj_sha256_hex. sha256sum, else openssl; never shasum,
 # which on macOS is a Perl script (case 575).
-# shellcheck source=../lib/sha256.sh
+# The linter runs from the repository root (scripts/ci/shell-lint), and a source= path is read
+# from there: the `../lib/sha256.sh` this said before resolved outside the tree (I4381).
+# shellcheck source=lib/sha256.sh
 . "$ROOT/lib/sha256.sh"
+# shellcheck source=lib/runnable.sh
+. "$ROOT/lib/runnable.sh"
 
 # The SHA-256 of a file, for a case that must prove a file did not change rather than that a
 # command said it did not.
@@ -157,6 +161,17 @@ sha256_of_file() { mj_sha256_hex "$1"; }
 # never skips: a suite that skipped every Rust case for a stale executable would read as green.
 # The one skip is the one the Rust cases always had, 3, for a machine with no cargo at all:
 # there the explicit build cannot be run either, and the case says so in its skip line.
+#
+# Both sources of lib/rust_bin.sh below point shellcheck at test/lib/rust_bin.functions.sh
+# (I4381), one stub per function and one empty assignment per global of rust_bin.sh. Every case
+# sources this file, and shellcheck -x followed it into rust_bin.sh's 1942 lines once per case:
+# the structure job's shell-lint grew from 416 s to 1388 s at p90 with no change to the gate.
+# Following it linted none of it (shellcheck reports no finding inside a file it follows);
+# rust_bin.sh is linted on its own, with -x, in shell-lint's lib/ set, which discovers a .sh by
+# its name. The stubs keep what the names told the linter: a case that hands one of these
+# functions to xargs, sudo or find -exec is still SC2033. A variable a function of rust_bin.sh
+# sets is not declared, so a case that reads one is reported (SC2154). Case 4381 holds the
+# stubs to rust_bin.sh's own names.
 # majordomus-on-stale-executable: fallback, else refuse
 rust_bin() {
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
@@ -165,6 +180,7 @@ rust_bin() {
     # measure, and a reader who takes it for the second spends an afternoon on a branch that
     # was never broken. lib/rust_bin.sh says it, once, for every caller that resolves one.
     if [ ! -x "$MAJORDOMUS_BIN" ]; then
+      # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see above
       . "$ROOT/lib/rust_bin.sh"
       mj_rust_bin_missing "$ROOT" "$MAJORDOMUS_BIN" '    '
       return 1
@@ -172,6 +188,7 @@ rust_bin() {
     printf '%s' "$MAJORDOMUS_BIN"; return 0
   fi
   local rb
+  # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see above
   . "$ROOT/lib/rust_bin.sh"
   if ! rb="$(mj_rust_resolve "$ROOT" '    ')"; then
     command -v cargo >/dev/null 2>&1 || return 3
@@ -193,7 +210,7 @@ rust_bin_exit() { [ "$1" = 3 ] && skip "no executable of this tree, no installed
 # protects master never reports `ok` for a case that did not run. Anywhere else the case ends
 # with a line that names what was not measured, so a reader who greps a log for `skip:` finds
 # every pass that proved nothing.
-#   command -v zola >/dev/null || skip_case "zola is absent, so the site build was not measured"
+#   mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so the site build was not measured"
 skip_case() {
   if [ "${CI:-}" = true ]; then
     printf '    %s; under CI every tool the suite needs is installed, so this is a failure, not a skip\n' "$1"
@@ -476,8 +493,8 @@ start_http() {
   local dir="$1" tries=0 port
   HTTP_PORT=""; HTTP_BASE=""; HTTP_PID=""
   local runner=""
-  if command -v python3 >/dev/null 2>&1; then runner=python3
-  elif command -v node >/dev/null 2>&1; then runner=node
+  if mj_runs python3; then runner=python3
+  elif mj_runs node; then runner=node
   else return 1; fi
   while [ "$tries" -lt 20 ]; do
     port=$(( 20000 + ((( $$ + tries * 977 ) * 31 ) % 20000) ))
@@ -695,7 +712,7 @@ reasoning_fixture() {
   # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
   local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
     [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
-    skip "no node"; }
+    skip "$(mj_runs_why node)"; }
   ln -sf "$node" "$RZ_BIN/node"
   RZ_ENV=""
 }

@@ -1,10 +1,15 @@
-# majordomus-covers: decision question checkpoint check session handover knowledge
-# majordomus-negative: decision question checkpoint check handover knowledge
+# majordomus-covers: decision question checkpoint check session handover knowledge finish evidence capture
+# majordomus-negative: decision question checkpoint check handover knowledge finish evidence session
 # I0701's original no-episode counterexample and ADR 0164's two real episodes.
 # A record belongs to its caller. The active task is related unless another episode that is
 # still open opened it; nothing is refused, and nobody advances somebody else's task. With
 # no episode at all the workers cannot be told apart, and the task is the caller's (the
 # answer accepted with ADR 0164): the cost the ADR names, paid without inventing identity.
+# The records that decide whether work is done — evidence, a gate verdict, an outcome — have
+# no meaning without a task, so those three refuse by name instead, with the command that
+# resolves it; a hand-run session close that cannot tell which episode is its own refuses
+# too, and an observation no episode would derive names its rule and a remedy that works
+# (I4292).
 . "$ROOT/test/lib.sh"
 unset MAJORDOMUS_PROVIDER_SESSION CLAUDE_CODE_SESSION_ID MJ_SESSION_KEY
 MAJORDOMUS_RUNTIME=off; export MAJORDOMUS_RUNTIME
@@ -81,11 +86,17 @@ BODY
 
 # ---------------------------------------------------------------- two real episodes, the same OS user
 fixture "$T/two-episodes"
+# one gate over lib/, so a gate verdict has something to be about
+mkdir -p .ai/repo/ci
+printf 'version: 1\ngates:\n  - id: unit\n    job: suite\n    runs: "true"\n    summary: unit\n' \
+  > .ai/repo/ci/gates.yaml
+printf 'classes:\n  - id: src\n    paths: [lib/**]\n    gates: [unit]\n' >> .ai/repo/ci/gates.yaml
+git add -A; git commit -qm gates
 MAJORDOMUS_NOW=2026-09-01T12:00:00Z; export MAJORDOMUS_NOW
 expect_exit 0 "$MJ" session start --provider-session worker-a-0701 --worker worker-a
 sid_a="$(sed -n 's/^session_id: //p' .ai/local/state/sessions-open/worker-a-0701.yaml)"
 must "A has no actual episode" test -n "$sid_a"
-expect_exit 0 a "$MJ" start "A task with its own history" --scope lib
+expect_exit 0 a "$MJ" start "A task with its own history" --scope lib --requires tests
 id="$(task_id)"; must "A has no task id" test -n "$id"
 event_is task.started "$sid_a" "$id"
 expect_exit 0 "$MJ" session start --provider-session worker-b-0701 --worker worker-b
@@ -174,9 +185,22 @@ expect_grep '^task_id: none$' "$HO"
 must "B's handover --close closed A's task" test "$(sed -n 's/^outcome: //p' "$current")" = active
 must "B's handover advanced A's task" test "$(checkpoint_at)" = 2026-09-01T12:00:20Z
 expect_exit 0 b "$MJ" knowledge observe --kind friction --subject lib "B met friction beside A's task"
-event_is observation.recorded "$sid_b" none
+event_is observation.recorded "$sid_b" ""
 expect_exit 0 a "$MJ" knowledge observe --kind friction --subject lib "A met friction in its own task"
 event_is observation.recorded "$sid_a" "$id"
+# An observation nobody's episode would stamp is refused by its rule (ADR 0118), with the
+# remedy that works for that caller: `session start` alone leaves an anonymous caller among
+# two episodes as nameless as before.
+obs_before="$(grep -c '"event":"observation.recorded"' "$ledger")"
+expect_exit 10 "$MJ" knowledge observe --kind friction --subject lib "Nobody met friction"
+expect_grep 'refused by adr-0118'
+expect_grep 'MJ_SESSION_KEY=<key> majordomus knowledge observe'
+expect_grep 'worker-a-0701, worker-b-0701'
+expect_exit 10 unknown "$MJ" knowledge observe --kind friction --subject lib "Unknown met friction"
+expect_grep 'refused by adr-0118'
+expect_grep 'majordomus session start --provider-session missing-0701'
+must "a refused observation was written" \
+  test "$(grep -c '"event":"observation.recorded"' "$ledger")" = "$obs_before"
 
 # No declared caller, or an explicit key with no episode: neither may borrow B's pointer.
 for caller in unknown anonymous; do
@@ -191,4 +215,110 @@ for caller in unknown anonymous; do
 done
 expect_exit 0 "$MJ" session status
 expect_grep "Session: +$sid_b"
+
+# ---------------------------------------------------------------- the records that decide done
+# Evidence, a gate verdict and an outcome mean nothing without a task, so where ADR 0164
+# would drop the relation they refuse instead, naming the rule and the command that resolves
+# it, and write nothing. A's own evidence, gate and finish name A's episode and A's task.
+count_of() { grep -c "\"event\":\"$1\"" "$ledger" || true; }
+refused_by_name() { # <what> <command...>: refused with the rule and the remedy, nothing written
+  local what="$1"; shift
+  local ev=0 gt=0 fin=0 ref=0
+  ev="$(count_of task.evidence)"; gt="$(count_of task.gate)"
+  fin="$(count_of task.finished)"; ref="$(count_of task.refused)"
+  expect_exit 15 "$@" || { echo "    $what was not refused"; return 1; }
+  expect_grep 'refused by adr-0164'
+  expect_grep "task $id was opened by episode $sid_a"
+  expect_grep 'MJ_SESSION_KEY=worker-a-0701 majordomus '
+  expect_grep 'majordomus session close --provider-session worker-a-0701'
+  local now
+  now="$(count_of task.evidence) $(count_of task.gate)"
+  now="$now $(count_of task.finished) $(count_of task.refused)"
+  must "$what wrote a ledger line under A's task" test "$now" = "$ev $gt $fin $ref"
+}
+envelope_is() { # <event> <session> <field> <value>: the newest such line names them
+  local line
+  line="$(jq -c --arg e "$1" 'select(.event == $e)' "$ledger" | tail -n 1)"
+  printf '%s\n' "$line" | jq -e --arg s "$2" --arg f "$3" --arg v "$4" \
+    '.session == $s and .[$f] == $v' >/dev/null \
+    || { printf '    %s should name session=%s %s=%s, got: %s\n' "$1" "$2" "$3" "$4" "$line"
+         return 1; }
+}
+
+refused_by_name "B's evidence" b "$MJ" evidence --covers tests --command "sh test/unit.sh"
+expect_grep 'majordomus evidence --covers tests --command "sh test/unit.sh"'
+refused_by_name "an anonymous caller's evidence" "$MJ" evidence --covers tests --command true
+expect_grep 'caller is no episode it can name \(2 are open here\)'
+refused_by_name "B's gate verdict" b "$MJ" evidence --gate unit --exit 0 --command true
+expect_grep 'majordomus evidence --gate unit --exit 0'
+refused_by_name "B's finish" b "$MJ" finish --outcome blocked
+expect_grep 'majordomus finish --outcome blocked'
+refused_by_name "an anonymous caller's finish" "$MJ" finish --outcome blocked
+must "a refused finish moved A's task" test "$(sed -n 's/^outcome: //p' "$current")" = active
+expect_exit 0 a "$MJ" evidence --covers tests --command "sh test/unit.sh"
+envelope_is task.evidence "$sid_a" task "$id"
+expect_exit 0 a "$MJ" evidence --gate unit --exit 0 --command true
+envelope_is task.gate "$sid_a" task "$id"
+
+# ---------------------------------------------------------------- the mesh join
+# A start event joins the mesh naming the task only when it is that session's to carry. The
+# executable is a stand-in that says a server is ready and writes down what it was asked.
+mkdir -p "$T/fake"
+cat > "$T/fake/majordomus" <<'FAKE'
+#!/bin/sh
+case "$1 $2 $3" in
+  "serve ensure"*) echo "ready http://127.0.0.1:9"; exit 0 ;;
+  "mesh session open") printf '%s\n' "$*" >> "$MESH_LOG" ;;
+esac
+exit 0
+FAKE
+chmod +x "$T/fake/majordomus"
+MESH_LOG="$T/mesh.log"; export MESH_LOG; : > "$MESH_LOG"
+join_as() { # <worker wrapper> <provider session>
+  printf '{"session_id":"%s","source":"resume"}' "$2" \
+    | MAJORDOMUS_BIN="$T/fake/majordomus" "$1" "$MJ" capture session --provider claude-code \
+      --event start >/dev/null 2>"$T/join.err" \
+    || { echo "    the start event of $2 failed"; cat "$T/join.err"; return 1; }
+  JOINED="$(grep -F -- "--session claude-code-$2 " "$MESH_LOG" | tail -n 1)"
+  must "the start event of $2 did not join the mesh" test -n "$JOINED"
+}
+join_as b worker-b-0701
+case "$JOINED" in *" --task "*) echo "    B joined the mesh claiming A's task: $JOINED"; exit 1 ;; esac
+join_as a worker-a-0701
+case "$JOINED" in *" --task $id "*) ;;
+  *) echo "    A joined the mesh without its own task: $JOINED"; exit 1 ;; esac
+
+# ---------------------------------------------------------------- finish counts its own checkpoints
+printf '# Objective\n\nA stops.\n\n# Current State\n\nA is blocked.\n\n' > "$T/note.md"
+printf '# Next Action\n\nA waits.\n' >> "$T/note.md"
+mine="$(grep -l "^task_id: $id$" .ai/local/state/checkpoints/*.md | wc -l | tr -d ' ')"
+all="$(find .ai/local/state/checkpoints -name '*.md' | wc -l | tr -d ' ')"
+must "the fixture has no checkpoint outside A's task to miscount" test "$all" -gt "$mine"
+expect_exit 0 a "$MJ" finish --outcome blocked --note "$T/note.md"
+envelope_is task.finished "$sid_a" task_id "$id"
+counted="$(jq -c 'select(.event == "task.finished") | .checkpoints' "$ledger" | tail -n 1)"
+must "finish counted $counted checkpoints, of which $mine are its task's ($all in the store)" \
+  test "$counted" = "$mine"
+
+# ---------------------------------------------------------------- session close
+# By hand, with two episodes open, a close names neither and is refused; each worker's own
+# close names its episode, and B's record does not name the task A opened.
+expect_exit 15 "$MJ" session close
+expect_grep 'refused by adr-0164'
+expect_grep '2 episodes are open in this checkout'
+expect_grep 'majordomus session close --provider-session <key>, or MJ_SESSION_KEY=<key>'
+must "a refused close closed an episode" test -f .ai/local/state/sessions-open/worker-a-0701.yaml
+must "a refused close closed an episode" test -f .ai/local/state/sessions-open/worker-b-0701.yaml
+expect_exit 0 b "$MJ" session close </dev/null
+envelope_is session.closed "$sid_b" outcome closed
+SR="$(jq -r 'select(.event == "session.closed") | .session_path' "$ledger" | tail -n 1)"
+expect_file "$SR"
+expect_grep '^task_id: none$' "$SR"
+expect_grep "^session_id: $sid_b$" "$SR"
+expect_exit 0 "$MJ" session close --provider-session worker-a-0701 </dev/null
+envelope_is session.closed "$sid_a" outcome closed
+SR="$(jq -r 'select(.event == "session.closed") | .session_path' "$ledger" | tail -n 1)"
+expect_grep "^task_id: $id$" "$SR"
+must "a ledger line carries the literal task_id none" \
+  test "$(jq -c 'select(.task_id == "none")' "$ledger" | wc -l | tr -d ' ')" = 0
 echo "    ok: records name their caller, task relations require that caller, and foreign checkpoints preserve the active task"

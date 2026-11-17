@@ -75,8 +75,10 @@ permissions:
 # decide nothing about that head while they hold the runners the trunk's run and the
 # deployments wait for; on 2026-10-13 a run with two failed jobs kept nine more running for
 # twenty minutes. So the last step of every gate job, `if: failure()` on a pull_request event
-# alone, cancels the run by its own id: the jobs that `if: always()` (ci, evidence, the suite's
-# union) still run and report it red. A run of master, the schedule or a dispatch (which is how
+# alone, cancels the run by its own id: the ci job (`if: always()`) still runs and reports it
+# red. The fan-ins (the suite's and the audit's unions, site-probe, interactions) are
+# `!cancelled()` and do not: after a cancel their shards left nothing to join, and each would
+# only add a false sharding red beside the real one. A run of master, the schedule or a dispatch (which is how
 # the release pipeline asks for its record's verdict) is never cancelled this way: the
 # trunk's other jobs are the only reading of its other lanes. Case 3019 holds every job to it.
 #
@@ -135,6 +137,8 @@ jobs:
       installer_live: ${{ steps.plan.outputs.installer_live }}
       pages_live: ${{ steps.plan.outputs.pages_live }}
       rustdoc: ${{ steps.plan.outputs.rustdoc }}
+      github_projection: ${{ steps.plan.outputs.github_projection }}
+      worktree_topology: ${{ steps.plan.outputs.worktree_topology }}
     steps:
       # I4338: a pull request labelled hold is a train member. Its train's top runs the validate
       # that judges it, and it lands only with that top, so its own run decides nothing and only
@@ -156,15 +160,69 @@ jobs:
           sleep 120
           echo "::error::the run was not cancelled; a held member's run must not go on"
           exit 1
+      # A run that reaches its plan for a head the pull request no longer has gives its runners
+      # back before any gate asks for one. That is not a newer commit cancelling a started run
+      # (`concurrency` above keeps that rule): no gate of this run has started, and its verdict
+      # would judge a head nobody can merge. On 2026-11-07 three such runs held 19 queued jobs
+      # (42414190309, 42415589257, 42416714967) under the account's shared hosted cap. A head
+      # that cannot be read lets the run proceed; a cancel that does not take hold fails here.
+      - name: a superseded head gives its runners back
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          now="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha 2>/dev/null)" || now=""
+          if [ -z "$now" ]; then echo "the pull request's head could not be read; the run proceeds"; exit 0; fi
+          if [ "$now" = "$RUN_SHA" ]; then echo "head ${RUN_SHA:0:11} is the pull request's head"; exit 0; fi
+          {
+            echo "## superseded"; echo
+            echo "Pull request #$PR_NUMBER moved from ${RUN_SHA:0:11} to ${now:0:11} before this run planned; it gives its runners back."
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120
+          echo "::error::the run was not cancelled; a superseded head's run must not go on"
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      # I2717: the record's dispatch starts the record pull request's own run. That pull
+      # request is opened with GITHUB_TOKEN, and GitHub creates its pull_request run waiting
+      # for approval, which branch protection waits on while this dispatch's ci counts for
+      # nothing (docs/DISTRIBUTION.md, "Who starts the record's verdict"). This approves that
+      # run and only that run: validate, pull_request, this branch, this head. It writes no
+      # status and no check. A refusal or an unreadable forge is a warning naming the remedy,
+      # never this run's failure. Enforcer: scripts/ci/record-run-approve; case 4574.
+      - name: the record's own pull request run is approved
+        if: github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'release/record-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: scripts/ci/record-run-approve --branch "$BRANCH" --sha "$GITHUB_SHA" || echo "::warning::the record's pull request run was not approved (exit $?); approve it on its page, or close and reopen the pull request"
+      # I4347: a label that changes nothing starts no second verdict. `labeled` starts this
+      # workflow for every label, and only ci:full and hold change what a run does; any other
+      # label on a head that already carries a verdict gives the runners back here, before any
+      # gate job asks for one, and the ci job writes that verdict again rather than skipping
+      # (a skipped required check reads as passing). A head with no verdict yet runs its plan.
+      # Before the release path, so a redundant run never waits for a release only to carry.
+      # Enforcer: scripts/ci/carried-verdict; case 26.
+      - name: a label that changes nothing carries the head's verdict
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/ci/carried-verdict yield --action "$ACTION" --label "$LABEL" --sha "$HEAD_SHA" --self "$GITHUB_RUN_ID"
       # I2710: the release path goes first. While a release run, its record's verdict or the
       # deploy it asked for is queued or running, a pull request's run gives its slots back:
       # it labels its pull request, says which run it yielded to, and cancels itself, before
       # any job of its own has asked for a runner. `release-path resume` runs it again once
-      # the path is clear. Never on master, the schedule or a dispatch, and never on a record
-      # branch; a reading that cannot be made lets the run proceed. Model and enforcer:
+      # the path is clear. Never on master, the schedule or a dispatch, never on a record
+      # branch, and never on a pull request labelled train (the exempt_label: the landing
+      # seat's combined top); a reading that cannot be made lets the run proceed, except that
+      # labels which cannot be read exempt nothing. Model and enforcer:
       # .ai/repo/ci/release-path.yaml, scripts/ci/release-path; case 3027.
       - name: the release path goes first
         if: github.event_name == 'pull_request'
@@ -233,8 +291,8 @@ jobs:
   # them. The `if:` of each producer is the union of its consumers' (test/cases/3939): a plan
   # that selects a consumer selects its producer, and a plan that selects neither skips both.
   # A consumer that runs on every plan makes its producer run on every plan, with no `if:`.
-  #   build             -> structure (every plan), site, suite-shard, evidence, ui-shard,
-  #                        ui-checks, ui, mesh-lab
+  #   build             -> structure (every plan), structure-b, site, suite-shard, evidence,
+  #                        ui-shard, ui-checks, ui, mesh-lab
   #   rustdoc-surface   -> suite-shard, ui-shard, ui-checks
   # No gate builds (ADR 0224), so the structure and site jobs, whose gates and generator run the
   # executable, take this one rather than building their own. The macos job keeps its own build
@@ -314,7 +372,10 @@ jobs:
   # core-check 698-714 s and shell-lint about 300 s, so 25 minutes cancelled it at 25:00.
   # On the v0.21.0 top it ran 36:01 (run 38210149288) and was killed at 40:00 the next time
   # (run 38214783248): 55 minutes until the structure gates are made cheaper (#972 takes
-  # about 8 minutes off), which is the fix this bound is waiting for.
+  # about 8 minutes off), which is the fix this bound is waiting for. By 2026-10-29 the full
+  # plan ran p50 2720 / p90 3256 s here, and run 40813274272 was killed at the bound with every
+  # gate green (I4381): shellcheck no longer re-reads lib/rust_bin.sh for every case, and the
+  # network-bound github-projection and worktree-topology run beside it in structure-b.
   structure:
     needs: [plan, build]
     timeout-minutes: 55
@@ -375,7 +436,8 @@ jobs:
           setup: "false"
       # Every gate the model assigns to this job, in its order, as the plan selected them:
       # shell-lint, ui-check and core-check on every plan, and the structural gates a change
-      # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched
+      # needs — site-basepath, rust-command, providers-data (worktree-topology and
+      # github-projection run in structure-b, I4381). Dispatched
       # from the plan rather than listed here, so a gate declared in the model cannot be
       # reported as run and never executed, which is what happened to four of them.
       - name: the structure gates of the plan
@@ -394,6 +456,76 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-receipts-structure-a${{ github.run_attempt }}
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  # ------------------------------------------------------------------ structure-b
+  # The structure gates that need not share structure's 55 minutes (I4381): github-projection,
+  # network-bound (p50 389 / p90 589 s), and worktree-topology (p50 156 / p90 179 s). With
+  # them in structure, train 10a's run 40813274272 passed all 59 gates in 3263 s and was
+  # killed 8 s later in its post-steps, so no receipt reached the ci verdict. The same setup
+  # as structure, a job of its own, on the plans that select either gate; the ci job needs it.
+  structure-b:
+    needs: [plan, build]
+    if: needs.plan.outputs.github_projection == 'true' || needs.plan.outputs.worktree_topology == 'true'
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    env:
+      # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      # structure's setup, step for step (see there for why each is needed): the full history
+      # with a bound of its own, the linters, just, the plan, the toolchain and the executable
+      # worktree-topology's behavioural case drives.
+      - uses: actions/checkout@v4
+        timeout-minutes: 10
+        with:
+          fetch-depth: 0
+      - run: sudo apt-get install -y shellcheck >/dev/null
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+      - name: pinned actionlint
+        env:
+          ACTIONLINT_VERSION: "1.7.7"
+        run: |
+          curl -sSL --max-time 120 "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin actionlint
+          actionlint -version
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-plan
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable every gate runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
+      # The gates the model assigns to structure-b, dispatched from the plan as structure's are.
+      - name: the structure-b gates of the plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job structure-b
+      - if: always()
+        run: scripts/ci/summary --job structure-b --timings timings.tsv
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-structure-b
+          path: timings.tsv
+          retention-days: 14
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-structure-b-a${{ github.run_attempt }}
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
@@ -548,7 +680,11 @@ jobs:
   # ci verdict read it exactly as they read the single job it replaces.
   suite:
     needs: [plan, suite-shard]
-    if: always() && needs.plan.outputs.shell_suite == 'true'
+    # !cancelled(), not always(): the union still runs after a shard's red, and reports it, but
+    # never after the run was cancelled, when the shards uploaded header-only reports and the
+    # union read that as a sharding defect ("no row for", 2026-11-07, runs 42382824182 and
+    # 42405310757). The ci job reads the skipped union as red; nothing turns a cancel green.
+    if: ${{ !cancelled() && needs.plan.outputs.shell_suite == 'true' }}
     # 225, re-measured. The bound is a backstop against a wedged runner, and every case
     # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
     # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
@@ -706,6 +842,11 @@ jobs:
         timeout-minutes: 20
         with:
           fetch-depth: 0
+      # the site tools as well: the plan's release-record-cases gate runs case 3045, which
+      # builds a site with zola and skips without it, and `--no-skips` counts the skip as a
+      # failure (the record of v1.0.0-alpha.10 found it on 2026-11-06)
+      - id: site
+        uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
@@ -784,9 +925,12 @@ jobs:
           # The case gates of this job (release-record-cases, plan-record-cases) drive the
           # executable rust-check's `cargo test` built, as the suite shards do: without it a
           # case takes the shell path, and `knowledge validate` warns that it could not ask
-          # the index (case 3075, top 70 run 38980212746).
+          # the index (case 3075, top 70 run 38980212746). The commit it was built from goes
+          # with it: scripts/ci/run-plan keeps an executable only of this tree's generation,
+          # and without MAJORDOMUS_BIN_COMMIT it dropped this one, so a case running a copy
+          # of the tool found no executable (case 47, run 42393755816).
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
-        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
+        run: MAJORDOMUS_BIN_COMMIT="$(git rev-parse HEAD)" MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3
         run: |
@@ -975,19 +1119,23 @@ jobs:
   # The reports and the result live under the runner's temporary directory, never in the
   # checkout the report is derived in. It is not a gate and the verdict does not need it: it
   # reads jobs that have already decided, and a red suite is exactly the evidence worth
-  # keeping. It runs whenever the plan ran the suite or the crate's tests (shell_suite,
-  # rust_check), whatever they concluded. A plan of records alone runs neither: its rust lanes
-  # build the executable and run the registry checks (rust_integration), which write no test
-  # output, so the job is skipped there rather than failing at evidence-collect's "no report to
-  # record" (#1745, #1746 and #1749 were red for that alone; I3013, case 3402). A planned lane
-  # that left no report is still refused.
+  # keeping. It runs on every run whose plan decided, and the collector is told what the plan
+  # owed: the suite when it selected shell_suite, the crate's tests when it selected rust_check,
+  # coverage when it selected rust_coverage, each with its job's result. A plan of records
+  # alone owes no test report (its rust lanes build the executable and run the registry checks,
+  # rust_integration, which write no test output), so the job writes a receipt saying
+  # not_required and why, instead of failing at "no report to record" (#1745, #1746 and #1749
+  # were red for that alone; I3013, I3668, case 3402). A required report that is missing,
+  # refused or left by a cancelled job fails it, after the receipt names which; the receipt is
+  # kept as the artifact `evidence-receipt` on every run.
   #
-  # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
-  # site that was published at once with the nearest older evidence (labelled stale) republishes
-  # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
+  # On master, when this commit is still the tip and a run was recorded, it then dispatches the
+  # pages workflow, so the site that was published at once with the nearest older evidence
+  # (labelled stale) republishes with the evidence of the commit it shows. A run that recorded
+  # nothing keeps the nearest older evidence there. pages.yml stays triggered by the push alone.
   evidence:
     needs: [plan, suite, rust, coverage, build]
-    if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
+    if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true') }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
@@ -997,24 +1145,41 @@ jobs:
     env:
       # the head a pull request was built from, carried beside the merge commit that ran
       MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      # what the plan owed and what each producing job concluded, for the receipt
+      MJ_OWES_SUITE: ${{ needs.plan.outputs.shell_suite }}
+      MJ_OWES_CRATE: ${{ needs.plan.outputs.rust_check }}
+      MJ_OWES_COVERAGE: ${{ needs.plan.outputs.rust_coverage }}
+      MJ_RESULT_SUITE: ${{ needs.suite.result }}
+      MJ_RESULT_RUST: ${{ needs.rust.result }}
+      MJ_RESULT_COVERAGE: ${{ needs.coverage.result }}
+      MJ_PLAN_MODE: ${{ needs.plan.outputs.mode }}
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
           fetch-depth: 0
+      # whether anything a recording needs was owed: a plan that owes no test report needs no
+      # executable and downloads nothing, and its receipt says not_required
+      - id: owed
+        run: |
+          if [ "$MJ_OWES_SUITE" = true ] || [ "$MJ_OWES_CRATE" = true ]; then tests=true; else tests=false; fi
+          echo "tests=$tests" >> "$GITHUB_OUTPUT"
       # the build job's executable, downloaded; the toolchain is set up only if it has to be built
       - name: the executable
+        if: steps.owed.outputs.tests == 'true'
         uses: ./.github/actions/majordomus-bin
         with:
           exe: "true"
       - uses: actions/download-artifact@v4
+        if: steps.owed.outputs.tests == 'true'
         with:
           pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-suite-tree}'
           path: ${{ runner.temp }}/reports
           merge-multiple: true
       # each lane in a directory of its own: every lane names its measurement crate-tree.json
       - uses: actions/download-artifact@v4
+        if: steps.owed.outputs.tests == 'true'
         with:
           pattern: ci-evidence-crate-*
           path: ${{ runner.temp }}/lanes
@@ -1023,8 +1188,9 @@ jobs:
       # The crate ran in three trees: clean only when all three were and on one commit, and
       # unknown (no file) when a lane left no measurement.
       - name: gather
+        id: gather
         run: |
-          r="$RUNNER_TEMP/reports"; mkdir -p "$r"
+          r="$RUNNER_TEMP/reports"; mkdir -p "$r" "$RUNNER_TEMP/lanes"
           cat "$RUNNER_TEMP"/lanes/*/cargo-test-*.txt > "$r/cargo-test.txt" 2>/dev/null || : > "$r/cargo-test.txt"
           set -- "$RUNNER_TEMP"/lanes/*/crate-tree.json
           if [ "$#" -eq 3 ] && [ -f "$1" ]; then
@@ -1033,14 +1199,29 @@ jobs:
                                    then "clean" else "dirty" end),
                     excluded: .[0].excluded}' "$@" > "$r/crate-tree.json"
           fi
-          scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$r/suite.tsv" --suite-tree "$r/suite-tree.json" --crate-output "$r/cargo-test.txt" --crate-tree "$r/crate-tree.json" --coverage "$r/coverage.json"
+          # the receipt reaches its artifact whatever the gather decides
+          rc=0
+          scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$r/suite.tsv" --suite-tree "$r/suite-tree.json" --crate-output "$r/cargo-test.txt" --crate-tree "$r/crate-tree.json" --coverage "$r/coverage.json" \
+            --obligation "suite=${MJ_OWES_SUITE:-false}:$MJ_RESULT_SUITE" \
+            --obligation "crate=${MJ_OWES_CRATE:-false}:$MJ_RESULT_RUST" \
+            --obligation "coverage=${MJ_OWES_COVERAGE:-false}:$MJ_RESULT_COVERAGE" \
+            --planner "validate.yml plan, mode ${MJ_PLAN_MODE:-unknown}" || rc=$?
+          if [ -f "$RUNNER_TEMP/evidence/manifest.json" ]; then echo "recorded=true" >> "$GITHUB_OUTPUT"; fi
+          exit "$rc"
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: evidence-receipt
+          path: ${{ runner.temp }}/evidence/receipt.json
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: steps.gather.outputs.recorded == 'true'
         with:
           name: evidence
           path: ${{ runner.temp }}/evidence
           retention-days: 90
       - name: refresh the publication
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && steps.gather.outputs.recorded == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/ci/evidence-collect --refresh-publication
@@ -1256,7 +1437,11 @@ jobs:
   # proves the reports are the whole sweep, each route once, before the gate's receipt.
   site-probe-shard:
     needs: [plan, site]
-    if: always() && needs.plan.outputs.site_probe == 'true' && needs.site.result != 'skipped'
+    # Only on the site job's success: its artifact is the shards' input, and a site that failed
+    # or was cancelled left none. On 2026-11-07 `!= 'skipped'` let twelve shards per cancelled
+    # run start, fail on "Artifact not found for name: site-probe-inputs" and hold runners
+    # (run 42400249801). site-probe below still reports a failed site's shards as red.
+    if: ${{ !cancelled() && needs.plan.outputs.site_probe == 'true' && needs.site.result == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -1304,7 +1489,7 @@ jobs:
 
   site-probe:
     needs: [plan, site-probe-shard]
-    if: always() && needs.plan.outputs.site_probe == 'true'
+    if: ${{ !cancelled() && needs.plan.outputs.site_probe == 'true' }}
     timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
@@ -1355,7 +1540,8 @@ jobs:
   # drove; the interactions job below proves the reports are every page once before the gate's receipt.
   interaction-probe-shard:
     needs: [plan, site]
-    if: always() && needs.plan.outputs.interaction_probe == 'true' && needs.site.result != 'skipped'
+    # Only on the site job's success, as site-probe-shard above: no artifact, no shard.
+    if: ${{ !cancelled() && needs.plan.outputs.interaction_probe == 'true' && needs.site.result == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -1405,7 +1591,7 @@ jobs:
 
   interactions:
     needs: [plan, interaction-probe-shard]
-    if: always() && needs.plan.outputs.interaction_probe == 'true'
+    if: ${{ !cancelled() && needs.plan.outputs.interaction_probe == 'true' }}
     timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
@@ -1604,7 +1790,9 @@ jobs:
 
   ui:
     needs: [plan, ui-shard, ui-checks]
-    if: always() && needs.plan.outputs.ui_audit == 'true'
+    # !cancelled(), as the suite's union: a cancelled run's shards are not "shards [2 3 4]
+    # reported, not each of 1..4 once" (2026-11-07, run 42382824182).
+    if: ${{ !cancelled() && needs.plan.outputs.ui_audit == 'true' }}
     # the join is seconds; the report needs the executable, which the Rust cache restores
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -1989,32 +2177,54 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, build, rustdoc-surface, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, build, rustdoc-surface, structure, structure-b, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    # The verdict builds nothing: it reads the needs, the receipts and the timings. On
+    # 2026-11-02 a train whose every gate had passed waited 27 minutes for this job to get one
+    # of the account's hosted slots, held by other trains' builds, so it may run where the
+    # owner points vars.MJ_AGGREGATE_RUNNER (a runner label, e.g. lundra). Unset, it is hosted
+    # as before, and a fork's pull request always is: a fork never runs on the repository's own
+    # machines. The remedy for an offline pool is to unset the variable.
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || vars.MJ_AGGREGATE_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      # I4347: a run started by a label that changes nothing ran no gate (the plan job's
+      # first step gave its runners back); its verdict is the one the head already carries,
+      # written again here — success or failure, never a skip. Every other run decides from
+      # its own gates below.
+      - id: carried
+        name: a label that changes nothing carries the head's verdict
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/ci/carried-verdict verdict --action "$ACTION" --label "$LABEL" --sha "$HEAD_SHA" --self "$GITHUB_RUN_ID"
+      - if: steps.carried.outputs.carried != 'true'
+        uses: actions/download-artifact@v4
         with:
           name: ci-plan
-      - uses: actions/download-artifact@v4
+      - if: steps.carried.outputs.carried != 'true'
+        uses: actions/download-artifact@v4
         with:
           pattern: ci-metrics-*
           path: metrics
       # every gate job's receipts: what each selected gate's steps said about themselves.
       # None arriving leaves the directory empty, and every selected gate red.
-      - uses: actions/download-artifact@v4
+      - if: steps.carried.outputs.carried != 'true'
+        uses: actions/download-artifact@v4
         with:
           pattern: ci-receipts-*
           path: receipts
-      - env:
+      - if: steps.carried.outputs.carried != 'true'
+        env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
           printf '%s' "$NEEDS" > needs.json
           scripts/ci/metrics metrics > ci-metrics.tsv
           scripts/ci/verdict --plan plan.json --needs needs.json --receipts receipts
-      - if: always()
+      - if: always() && steps.carried.outputs.carried != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ci-performance-metrics

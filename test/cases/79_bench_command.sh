@@ -25,7 +25,7 @@ printf '%s\n' "$LAST_OUT" | jq -e '.targets | map(.command) | index("doctor")' >
 #     gains a public command, and the copy's bench lists it
 C="$(mktemp -d "${TMPDIR:-/tmp}/mj-bench-copy.XXXXXX")"; trap 'rm -rf "$C"' EXIT
 fixture_repo "$C" test/fixtures/commands
-python3 - "$C/share/commands.yaml" <<'PY' 2>/dev/null || skip "python3 absent"
+python3 - "$C/share/commands.yaml" <<'PY' 2>/dev/null || skip "$(mj_runs_why python3)"
 import sys
 p = sys.argv[1]; s = open(p).read()
 i = s.index('  - id: help\n')

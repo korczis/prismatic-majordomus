@@ -1,7 +1,7 @@
 +++
 title = "Extraction Report"
 description = "how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan"
-weight = 39
+weight = 40
 [extra]
 source = "docs/EXTRACTION_REPORT.md"
 +++

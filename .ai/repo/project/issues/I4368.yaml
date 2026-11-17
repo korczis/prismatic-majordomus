@@ -1,0 +1,52 @@
+id: I4368
+milestone: adopter-upgrades
+title: "An adopter's changelog links into its own repository and trunk, and a repository that declares first-parent history is listed by its pull requests"
+slug: an-adopters-changelog-links-into-its-own-repository
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "release/changelog.rs takes its forge base from the repository's .ai/repo/project/project.yaml `repository` (https://github.com/<repository>) and its trunk from `default_branch`, falling back to CARGO_PKG_REPOSITORY and master only where there is no project.yaml (the project schema requires both keys). Every link it builds reads that base and trunk: the unreleased compare and tree links (today `...master` and `tree/master`), the notes, compare, tree and commit links of each release, and each decision's `blob/<trunk>/<path>` link (today `blob/master`). How the release window is read is something a repository declares: an optional project.yaml key `history: first-parent`, added to the project schema. Where nothing is declared, release/commits.rs keeps `git log --no-merges` exactly as today. With first-parent declared, it reads the window with --first-parent, and each first-parent commit is one change. A merge commit whose subject ends in ` (#N)` (merge_commit_title=PR_TITLE) is read by its subject without that suffix; one whose subject is the forge's `Merge pull request #N from ...` is read by its body's first line; a squash or direct commit whose subject ends in ` (#N)` is read as today. The first-parent mode reads a merge's pull request and title by calling I4366's shared merge-subject reader (merge_subject), and release/commits.rs keeps no ` (#` or `Merge pull request #` matcher of its own. Each of the three carries pull request N in a new optional Change field, linked to <base>/pull/N; outside first-parent mode the field stays empty. With first-parent declared, no changelog line begins with 'Merge pull request'. This repository declares nothing, so `majordomus release changelog` and its page docs/generated/changelog.{md,json,yaml} are byte-identical, although it too lands mostly by merge commits (313 of the last 400 first-parent commits on master)."
+why: "OSCILLA keeps 19 release records under .ai/repo/releases and lands by merge commits; from 2026-10-29 its owner disabled squash and rebase and set merge_commit_title=PR_TITLE and merge_commit_message=PR_BODY. In such a repository the changelog's every compare, tree, notes, commit and decision link points into korczis/prismatic-majordomus, because forge() is the crate's own manifest repository. The unreleased section compares against master and decisions link blob/master, a branch OSCILLA does not have. git log --no-merges drops exactly the commits that carry the pull request titles, so the changelog lists each branch's inner commits, fixups included. Switching every repository to --first-parent would rewrite this repository's own page, which lands mostly by merge commits ('Merge pull request #2653 ...', 'merge: master (...) into I4241, derived'), so the mode is declared, not assumed. OSCILLA's own release notes are fixed in OSCILLA by its planned release-analysis issue; this is the tool's half."
+current_state: "Measured at 5370ee63d19: apps/majordomus-cli/src/release/changelog.rs:31-44 forge() returns about::REPOSITORY, which is env!(CARGO_PKG_REPOSITORY) (about.rs:24, https://github.com/korczis/prismatic-majordomus in apps/majordomus-cli/Cargo.toml:8); changelog.rs:139-142 writes `compare/<tag>...master` and `tree/master` for the unreleased section; changelog.rs:176-184 builds the notes, compare and tree links and :219-224 the commit links from the same base; changelog.rs:700 links each decision as `blob/master/<path>`; release/commits.rs:53-63 in_range runs `git log --no-merges` (:59); release/model.rs:217-237 Change has no pull request field; the committed page is docs/generated/changelog.{md,json,yaml}, written by compose_published and checked by `majordomus generate changelog --check` (case 103); the project schema share/schemas/majordomus/project/project.v1.schema.json is additionalProperties false with required schema_version, name, repository and default_branch, and has no history key; I2826 (open) requires this repository's GitHub release body to equal the composed changelog; OSCILLA's .ai/repo/project/project.yaml declares repository korczis/oscilla and default_branch main."
+desired_state: "`majordomus release changelog` in an adopter links to that adopter's repository and trunk, and in a repository that declares first-parent history lists one line per landed pull request with its number; this repository's own page renders byte-identical. Enforced by case 4368 and library tests in release::changelog and release::commits."
+scope:
+  - ".ai/repo/project/issues/I4368.yaml"
+  - "apps/majordomus-cli/src/release/changelog.rs"
+  - "apps/majordomus-cli/src/release/commits.rs"
+  - "apps/majordomus-cli/src/release/model.rs"
+  - "apps/majordomus-cli/src/release/mod.rs"
+  - "share/schemas/majordomus/project"
+  - "share/allow/project.txt"
+  - "share/schemas/generated/changelog.schema.json"
+  - "test/cases/4368_an_adopters_changelog_links_into_its_own_repository.sh"
+  - "site/data/generated"
+  - "docs"
+non_scope:
+  - "The tool's distribution model and its release metadata URL (distribution/mod.rs:530-532 from share/distribution.yaml installer.base_url), which name Majordomus' own releases and are correct in any adopter"
+  - "Recognising an adopter's id grammar in a change's record references (release/commits.rs record_candidates); that is I2901's"
+  - "A managed header in an adopter's GitHub Release body (`forge apply --release`): planned with or after I4370; not filed by this record"
+  - "OSCILLA's scripts/release-publish.mjs and release-analyze.mjs (OSCILLA's planned release-analysis issue)"
+  - "This repository's release body, which I2826 governs"
+  - "Changing this repository's history mode"
+acceptance_criteria:
+  - "Library test in release::changelog: with project.yaml repository korczis/oscilla and default_branch main and release records v3.12.1 and v3.13.0, the v3.13.0 section links https://github.com/korczis/oscilla/compare/v3.12.1...v3.13.0, tree/v3.13.0 and releases/tag/v3.13.0, a change links https://github.com/korczis/oscilla/commit/<sha>, a decision links blob/main/<path>, and the unreleased section links compare/v3.13.0...main and tree/main"
+  - "Library test in release::changelog: with no project.yaml the links are https://github.com/korczis/prismatic-majordomus and master, exactly as today"
+  - "Library test in release::commits: with `history: first-parent` declared, a fixture range of three first-parent commits yields exactly three changes carrying pull requests 247, 245 and 246, and none of the merged branches' inner commits. The commits are a merge 'feat(studio): V603 pinch zoom on the timeline (#247)' (PR_TITLE form, read as feat, scope studio), a merge 'Merge pull request #245 from korczis/test/s080-pattern-matrix' whose body's first line is 'test(engine): S080 every pattern through the §80 matrix leaves no node' (read as test, scope engine), and a squash commit 'test(plan): the two heads of #238 are squash-merged evidence commits (#246)'"
+  - "Library test in release::commits: the same fixture range with no history declared yields exactly the changes `git log --no-merges` lists, with no pull request field set"
+  - "Case 4368 renders `majordomus release changelog` in a fixture shaped like OSCILLA's v3.12.1..v3.13.0 window (nine `Merge pull request #N from ...` merges, #223 to #226, #230 and #232 to #235, and the squash commits #229, #236 and #237) with `history: first-parent`: it lists exactly twelve changes, each linked to https://github.com/korczis/oscilla/pull/<N>, and no line begins with 'Merge pull request'; without the declaration it lists the branches' non-merge commits as today"
+  - "Case 4368: a project.yaml carrying `history: first-parent` raises no undeclared-key finding in `majordomus doctor` (share/allow/project.txt lists it); one carrying `history: no-such-mode` makes `majordomus release changelog` exit non-zero naming the key and the value, never a silent fallback to --no-merges; `majordomus generate --check` reports share/allow/project.txt and share/schemas/generated/changelog.schema.json in sync"
+  - "`majordomus generate changelog --check` passes on this repository after the change, and the pull request changes no byte of docs/generated/changelog.{md,json,yaml} or site/data/generated/changelog.json"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- release::"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4368_an_adopters_changelog_links_into_its_own_repository 103_release_projection"
+  - "bin/majordomus generate changelog --check"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on:
+  - "I4366"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

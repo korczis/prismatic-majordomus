@@ -14,9 +14,9 @@
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 command -v curl >/dev/null 2>&1 || skip "no curl"
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v jq >/dev/null 2>&1 || skip "no jq"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 
 # ---------------------------------------------------------------- the Cockpit's client
 # share/cockpit/socket.js is the one client of the channel, and it is where a gap, a

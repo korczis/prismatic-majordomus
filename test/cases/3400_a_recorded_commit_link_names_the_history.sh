@@ -14,7 +14,7 @@
 #   template    a field no template links is not decided, whatever it holds
 #   shallow     a shallow clone cannot know, so it defers (exit 12), never a finding
 . "$ROOT/test/lib.sh"
-command -v python3 >/dev/null 2>&1 || skip "python3 is not installed"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj3400.XXXXXX")"
 trap 'rm -rf "$S"' EXIT

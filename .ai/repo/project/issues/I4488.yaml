@@ -1,0 +1,48 @@
+id: I4488
+milestone: automation
+title: "A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise"
+slug: a-behavioural-case-may-be-a-rust-test
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the suite a second kind of case, a Rust integration test declared as a behavioural case, that appears in the report test/run.sh writes; add a tracked mapping from each removed shell case to the tests that carry its assertions; and refuse a head whose count of shell cases is above its base."
+why: "campaigns/majordomus-shellfall/04-port-tests-to-rust-rhai.md asks for a reusable Rust harness (a temporary repository per test, direct argv, bounded processes, no change to the home directory), for a generated equivalence matrix from each legacy case to its new tests, and that no case be deleted until its replacement passes; 07-enforcement-rollout.md asks that a migrated test be traceable in both directions. Today the runner's contract makes every behavioural case a shell script (docs/SHELL.md says so and exempts test/ from shell check for that reason), so each new feature adds shell: the suite is 660 cases and 91,904 lines, and rules, claims and evidence cite cases by their file name. A Rust test cannot be what a claim or a rule points at, which is why even tests of the Rust executable are written in bash."
+current_state: "Measured at 51b38035a71. test/run.sh (472 lines) and test/lib.sh (721 lines) discover only test/cases/*.sh, and --verify-report checks a full run's report. test/cases has 660 files and 91,904 lines; apps/majordomus-cli/tests has 120 entries with shared helpers in tests/common/mod.rs. No mapping file exists under .ai/repo/ci and nothing compares the case count with a base. By a text heuristic 273 cases call rust_bin and never name bin/majordomus. I3160 (planned, milestone automation) builds a Rust fixture builder and ports continuity cases 821-827, with no suite-report row, mapping file or case-count ratchet."
+desired_state: "A Rust integration test carries a declared case identity; the runner lists it, runs it from the prebuilt test executable without a build per case, and writes its row in the same report, and --verify-report holds both kinds. .ai/repo/ci holds a mapping file with one row per removed case: the case, the tests that replaced it and the commit that removed it; a gate fails when a file leaves test/cases with no row and when a row names a test that does not exist. The same gate compares the number of files under test/cases with the merge base and fails a rise, except for a case whose header declares that its subject is shell. Evidence subjects accept the new identity."
+scope:
+  - "test/run.sh"
+  - "test/lib.sh"
+  - "apps/majordomus-cli/tests/common"
+  - ".ai/repo/ci"
+  - "scripts/ci/suite-budget"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "docs/SHELL.md"
+  - "test/cases/4488_a_case_may_be_a_rust_test.sh"
+  - ".ai/repo/project/issues/I4488.yaml"
+non_scope:
+  - "Porting any case, which starts with I4489"
+  - "A second runner or report format, and a Rhai assertion framework: a Rust test asserts in Rust"
+  - "Snapshot or mocking libraries the crate does not already depend on: tempfile and proptest are what is there"
+  - "Rewriting test/run.sh in Rust: it stays the one entry point until the cases it runs are few"
+depends_on: []
+acceptance_criteria:
+  - "A Rust test declared as a case appears in MJ_TEST_LIST output and in the TSV report with its result and seconds"
+  - "A report missing the row of a declared Rust case fails --verify-report"
+  - "Deleting a file under test/cases in a fixture repository with no mapping row fails the gate, and adding the row with an existing test passes it"
+  - "A fixture head with one more shell case than its base fails, and the same case with the shell-subject header passes"
+  - "A failing Rust case fails the run with its name in the summary, and a skipped one is not counted as passed"
+  - "Running the declared Rust cases performs one cargo build at most, which the runner's log shows"
+  - "I3160's ported continuity cases (821-827) are recorded as mapping rows once this issue lands"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_LIST=1 bash test/run.sh"
+  - "bash test/run.sh --verify-report <the report of a full run>"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 123_case_bound 94_ci_plan"
+  - "scripts/ci/suite-budget"
+evidence_required:
+  - "rust_case_in_suite_report"
+  - "case_mapping_gate"
+  - "shell_case_count_never_rises"
+created_at: 2026-10-30
+updated_at: 2026-10-30

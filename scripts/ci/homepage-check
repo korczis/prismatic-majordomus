@@ -102,13 +102,16 @@
 # 12 when site/public or a declaration it reads is missing.
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/../.." && pwd)" || true
 MJ_HOMEPAGE_ONLY=""
 if [ "${1:-}" = --only ]; then
   [ $# -ge 2 ] || { echo "homepage-check: --only needs a comma-separated list of checks" >&2; exit 2; }
   MJ_HOMEPAGE_ONLY="$2"
 fi
 export MJ_HOMEPAGE_ONLY
-command -v python3 >/dev/null 2>&1 || { echo "homepage-check: python3 is not installed" >&2; exit 12; }
+mj_runs python3 || { echo "homepage-check: $(mj_runs_why python3)" >&2; exit 12; }
 [ -f "$ROOT/site/public/index.html" ] || { echo "homepage-check: $ROOT/site/public/index.html missing; run scripts/site-build" >&2; exit 12; }
 # The pages walked below are the site's own: a surface scripts/site-build composes into the
 # build at its mount (ADR 0086) is another producer's pages, which neither tell this story nor
@@ -1320,6 +1323,23 @@ else:
             elif shown_l != want_l:
                 pp.append(f"the product view counts v{rel.get('version')}'s changes as [" + ", ".join(f"{k} {n}" for k, n in shown_l)
                           + "], and the changelog gives [" + ", ".join(f"{k} {n}" for k, n in want_l) + "]")
+# a published page reads delivery at the commit it was built from (I3769): on a clean build the
+# commit the hero's delivery card names is the build's, and the build's own reading was taken
+# there. A dirty build is rendered from bytes no commit holds and names what it can: not judged.
+# A build that carries no reading (delivery null: scripts/site-build found no executable of the
+# tree, said so and fell back) renders the committed projection, and the card names that
+# projection's commit, which is the truth of that page: judging it against the build commit
+# refused every master deploy that has no executable (run 42367964782, 2026-11-07).
+bcommit = build.get("commit") or ""
+if build and bcommit and bcommit != "unknown" and not build.get("dirty"):
+    named_d = re.search(r'\bdata-product-delivery-commit="([0-9a-f]+)"', hero)
+    if build.get("delivery") and named_d and named_d.group(1) != bcommit:
+        pp.append(f"the hero names delivery inferred at {named_d.group(1)[:11]}, and this clean build was made from {bcommit[:11]}: "
+                  "a published page reads delivery at the commit it was built from (I3769)")
+    observed = ((build.get("delivery") or {}).get("observed") or {}).get("commit") or ""
+    if build.get("delivery") and observed != bcommit:
+        pp.append(f"the build's own delivery reading was observed at {observed[:11] or 'no commit'}, not at the build commit {bcommit[:11]}: "
+                  "scripts/site-build reads plan delivery --at the commit it builds (I3769)")
 for pr in pp:
     bad("product", pr)
 if not pp:
@@ -1411,7 +1431,8 @@ for dirpath, _, files in site_walk():
     pages += 1
     parts = path.split("/")
     by_policy = len(parts) >= 4 and parts[1] in unlisted
-    has_noindex = bool(noindex_re.search(text[:6000]))
+    # the whole head, not a prefix of it: a long description must not hide the robots meta
+    has_noindex = bool(noindex_re.search(text.split("</head>", 1)[0]))
     in_sitemap = path in locs
     if by_policy and not has_noindex:
         problems.append(f"{path} is below an unlisted section and carries no noindex")

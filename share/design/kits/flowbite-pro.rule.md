@@ -1,0 +1,81 @@
+---
+id: project.ui-uses-flowbite-pro
+version: 1
+kind: rule
+title: Every user interface is built on Flowbite Pro
+description: Every user interface this repository builds or generates uses the owner's licensed Flowbite Pro shell, blocks and components on Tailwind and Flowbite, and no other UI kit; `majordomus design kit --check` judges the tree against the flowbite-pro profile in CI and before every push.
+statement: Build every user interface in this repository on Flowbite Pro, starting from the matching Pro template or block, with Flowbite as the dependency, its Tailwind plugin and source configured, Flowbite's JavaScript behind every interactive attribute, no second kit, and the Pro shell on every root layout; declare every exemption with its reason under ui.exempt in the policy, and never publish a Pro source file.
+status: active
+class: blocking
+depends_on: []
+tags: [ui, flowbite, design-system]
+
+x-majordomus:
+  reviewed_because: the decision is the distribution's command majordomus design kit --check, which CI and the pre-push hook run; no validator of the doctrine dispatches it and no case of the adopting repository holds it
+---
+
+# Rationale
+
+The owner holds a Flowbite Pro licence and requires it for every project. One design system
+across products keeps them consistent, and the licence already pays for the components a
+project would otherwise reinvent. A rule a reviewer has to remember drifts: kits were mixed,
+shells were rebuilt by hand and Tailwind was loaded from a CDN in projects that all claimed
+to follow it. This rule is therefore judged by a command, from markers in the tree.
+
+# Required behaviour
+
+- **Every surface.** A surface is one interface manifest and the files below it: the
+  root's (the `package.json` at the root, or the one in the `assets` directory Phoenix keeps),
+  every declared workspace's, and every nested app's. Published pages are an interface
+  whatever builds them. Every rule below holds for each surface in its own files, and a
+  manifest that is no surface is reported, not judged.
+- **Dependency, and the kit in use.** `flowbite` is a dependency of each surface; a React or
+  Next.js surface uses `flowbite-react`. Wiring is not use: each surface's own files carry
+  Flowbite's attributes, its `flowbite-react` components or calls of its JavaScript API.
+- **Plugin and source.** Under Tailwind 4, the stylesheet that imports Tailwind carries
+  `@plugin "flowbite/plugin"` and an `@source` over Flowbite. Under Tailwind 3,
+  `tailwind.config.*` requires `flowbite/plugin` and its `content` globs Flowbite. Tailwind
+  compiled in the browser (the Play CDN) and Flowbite fetched only from a CDN are not a build.
+- **Flowbite JS.** Any `data-drawer-*`, `data-dropdown-*`, `data-modal-*`, `data-tabs-*`,
+  `data-collapse-*` or `data-tooltip-*` attribute is driven by Flowbite's JavaScript, loaded
+  by the build. A script that reads those attributes itself re-implements Flowbite.
+- **One kit.** daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal
+  Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation and Materialize are
+  not used. Alpine.js is reported, not refused.
+- **The Pro shell on every root layout.** A fixed top navbar; an `aside` labelled
+  `Sidebar` whose id both `data-drawer-target` and `data-drawer-toggle` name; a
+  `nav[aria-label="Breadcrumb"]` page header on application pages; the page, surface and
+  border roles (`bg-gray-50`/`dark:bg-gray-900`, `bg-white`/`dark:bg-gray-800`,
+  `border-gray-200`/`dark:border-gray-700`, or the role aliases a token rule declares). A
+  brand's colour is Tailwind's `primary` scale on the Pro structure (ADR 0230).
+- **Exemptions are declared, never silent.** `.ai/repo/policy.yaml` carries
+  `ui: {kit: flowbite-pro, exempt: [{path, because}]}`; adoption writes `ui.kit`, and each
+  exemption is the repository's own entry, exactly a path and its reason, covering every
+  finding at that path. A published site's layout (under `site/`, `www/` or `docs/`) is a
+  marketing page, judged by the Pro marketing blocks instead: a navbar and a footer.
+- **Licence.** Pro markup is adapted into the owner's products. Pro source files (templates,
+  blocks, bundles) are never committed to a public repository or published verbatim. Where
+  the tree carries the licensed distribution itself, the licence evidence decides it, and a
+  licence nobody could judge is a finding no exemption moves.
+
+# Failure behaviour
+
+`majordomus design kit --check` exits 10 and names each finding with its signal, path,
+evidence and remedy; CI and the pre-push hook run it (enforcement entries `design-kit` and
+`design-kit-on-push`). A policy that cannot be read, or an exemption without a reason, exits
+2. A repository with no user interface passes vacuously, and what S0 leaves out is printed
+as a notice.
+
+# Verification
+
+`majordomus design kit --check` in CI and before every push; `majordomus doctor` reports
+whether both entries are wired. A review of a UI change compares it with the Pro template or
+block it starts from: spacing, radius, typography, cards, tables, badges and buttons.
+
+# In this repository
+
+This section is the repository's own. `majordomus design kit adopt` writes it once, with
+this paragraph, and never again: a later adoption brings everything above the heading up to
+the distribution's template and keeps this section as the repository wrote it. Record here
+what is particular to this repository: its interface surfaces, the Pro template or block
+each root layout starts from, and the context of each exemption its policy declares.
