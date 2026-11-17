@@ -81822,6 +81822,39 @@
         }
       },
       {
+        "id": "majordomus://issue/I4604",
+        "kind": "issue",
+        "label": "I4604",
+        "summary": "A declared .ai extension in a gitignored subtree is discovered, checked and reported",
+        "route": "/cockpit/objects/issue/i4604",
+        "source": ".ai/repo/project/issues/I4604.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Tracking ignored content in git, or copying it into the repository layer",
+            "Indexing extension content into knowledge, search or any projection",
+            "Walking the filesystem for undeclared .ai directories"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4604.yaml"
+          ],
+          "serves": [],
+          "slug": "a-declared-extension-in-an-ignored-subtree-is-discovered",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh I4604_declared_extension_in_ignored_subtree"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4605",
         "kind": "issue",
         "label": "I4605",
@@ -151844,6 +151877,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4604",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4604",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4605",
         "target": "kind:issue",
         "kind": "is_a"
@@ -164800,8 +164843,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4509,
-      "edges": 10166,
+      "nodes": 4510,
+      "edges": 10168,
       "acyclic": false,
       "truncated": false
     }
