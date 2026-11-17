@@ -4,7 +4,7 @@ description: "Publish the website to GitHub Pages from a terminal, through the o
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/deploy-site/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.3 -->
+     Generator: majordomus-cli 1.1.0 -->
 
 # Deploy the site by hand
 
