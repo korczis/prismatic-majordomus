@@ -67430,8 +67430,7 @@
             "I3824"
           ],
           "evidence_required": [
-            "builder_cap_refuses",
-            "disk_floor_refuses"
+            "a_build_is_bounded_by_the_machine"
           ],
           "milestone": "ci-critical-path",
           "parallel_safe": true,
@@ -67440,14 +67439,13 @@
           "scope": [
             "lib/rust_bin.sh",
             "test/cases",
-            ".ai/repo/project/issues/I3825.yaml"
+            ".ai/repo/project/issues/I3825.yaml",
+            "test/lib/rust_bin.functions.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ],
           "serves": [],
           "slug": "a-build-is-bounded-by-the-machine",
-          "updated_at": "2026-10-29",
-          "validation": [
-            "bash test/run.sh"
-          ]
+          "updated_at": "2026-11-16"
         }
       },
       {
@@ -81705,6 +81703,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4600",
+        "kind": "issue",
+        "label": "I4600",
+        "summary": "evidence record says how much of the suite its report covers",
+        "route": "/cockpit/objects/issue/i4600",
+        "source": ".ai/repo/project/issues/I4600.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A suite report naming 1 of 3 cases is recorded, and the text says '1 of 3 case(s) of the suite are in this report; the other 2 keep their earlier evidence'",
+            "The JSON carries suite_coverage {in_report: 1, on_disk: 3}",
+            "A name the repository lacks is not counted as a case",
+            "A report naming every case says 'all 3 case(s) of the suite are in this report'",
+            "A recording without a suite report prints no suite line",
+            "Negative: the case fails against the recorder before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "evidence_record_names_its_suite_coverage"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Refusing a partial report: a deliberate re-run of one case must keep recording as it does",
+            "The crate runner's coverage: its binaries are listed per binary already, and dropped names what no claim can name",
+            "An adopter's own runner; sonic-playground's runner now also refuses a report whose rows differ from its cases"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence/record.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+            ".ai/repo/project/issues/I4600.yaml"
+          ],
+          "serves": [],
+          "slug": "evidence-record-names-its-suite-coverage",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4600_evidence_record_names_its_suite_coverage 391_skills_are_proven_capabilities",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --doc -- SuiteCoverage RecordReport evidence::record::record"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4602",
         "kind": "issue",
         "label": "I4602",
@@ -81929,6 +81973,48 @@
           "validation": [
             "bash test/run.sh 4616_a_reserved_issue_id_is_refused_locally"
           ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4618",
+        "kind": "issue",
+        "label": "I4618",
+        "summary": "The executable resolver borrows a same-generation executable another worktree built, before it refuses",
+        "route": "/cockpit/objects/issue/i4618",
+        "source": ".ai/repo/project/issues/I4618.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A current executable of the same crate in another worktree is borrowed, and the worktree is named on stderr",
+            "An executable whose worktree has uncommitted crate changes is not borrowed, and the refusal names that reason",
+            "An executable older than its own sources is not borrowed, with its reason",
+            "An executable whose branch carries another crate is not borrowed, with its reason",
+            "With no executable in any other worktree, the refusal says so",
+            "Under CARGO_TARGET_DIR no worktree is asked, and the refusal says why",
+            "No step builds",
+            "Negative: the case fails against lib/rust_bin.sh before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_resolver_borrows_a_sibling_executable"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Building anything (ADR 0224)",
+            "The shared master-build cache and its freshness",
+            "Removing the race between this check and the exec, which the tree's own executable shares"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/lib/rust_bin.functions.sh",
+            "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+            ".ai/repo/project/issues/I4618.yaml"
+          ],
+          "serves": [],
+          "slug": "the-resolver-borrows-a-sibling-executable"
         }
       },
       {
@@ -109047,6 +109133,13 @@
         "source": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "kind": "test",
+        "label": "test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "route": "/cockpit/objects/test/test-cases-3825-a-build-is-bounded-by-the-machine-sh",
+        "source": "test/cases/3825_a_build_is_bounded_by_the_machine.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
         "kind": "test",
         "label": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
@@ -109780,6 +109873,20 @@
         "label": "test/cases/45_github_projection.sh",
         "route": "/cockpit/objects/test/test-cases-45-github-projection-sh",
         "source": "test/cases/45_github_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "kind": "test",
+        "label": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "route": "/cockpit/objects/test/test-cases-4600-evidence-record-names-its-suite-coverage-sh",
+        "source": "test/cases/4600_evidence_record_names_its_suite_coverage.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "kind": "test",
+        "label": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-4618-the-resolver-borrows-a-sibling-executable-sh",
+        "source": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151670,6 +151777,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4600",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4600",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4602",
         "target": "kind:issue",
         "kind": "is_a"
@@ -151727,6 +151844,16 @@
       {
         "source": "majordomus://issue/I4616",
         "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4618",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4618",
+        "target": "majordomus://milestone/adopter-upgrades",
         "kind": "belongs_to"
       },
       {
@@ -158965,6 +159092,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -159486,6 +159618,16 @@
       },
       {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -164611,8 +164753,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4503,
-      "edges": 10157,
+      "nodes": 4508,
+      "edges": 10164,
       "acyclic": false,
       "truncated": false
     }
