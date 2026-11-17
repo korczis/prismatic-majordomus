@@ -18,7 +18,7 @@
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq absent"
 command -v curl >/dev/null 2>&1 || skip "curl absent"
-command -v python3 >/dev/null 2>&1 || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib site && echo a > lib/a && echo s > site/s && git add . && git commit -qm base

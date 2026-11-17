@@ -43,6 +43,7 @@ mj_rust_reclaim() { :; }
 mj_free_mb() { :; }
 mj_rust_space_check() { :; }
 MJ_INCREMENTAL_IDLE_MIN_DEFAULT=
+mj_cargo_empty_dir_vars() { :; }
 mj_cargo_metadata_dir() { :; }
 mj_cargo_build_dir() { :; }
 mj_rust_is_build_dir() { :; }

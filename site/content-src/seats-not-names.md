@@ -25,7 +25,7 @@ The owner answered the sessions that morning in a few lines of Czech. Split the 
 
 The first decision was about who does what. Integration needs a few roles that only one session may hold at a time: someone lands, someone releases. The obvious way to record that is a name in a document: "session 9c releases". That name is out of date the moment the session reconnects under another identity, crashes, or hands the job over, and nothing would notice.
 
-So a role is a **seat**, and a seat is held by holding an exclusive claim on the mesh, and in no other way. A claim is already a signed event that every machine replicates, that lives only while its session's heartbeat does, and that another session cannot take while it holds. The rule [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-2.md) lists four seats:
+So a role is a **seat**, and a seat is held by holding an exclusive claim on the mesh, and in no other way. A claim is already a signed event that every machine replicates, that lives only while its session's heartbeat does, and that another session cannot take while it holds. The rule [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-3.md) lists four seats:
 
 | seat | claims | does |
 |---|---|---|

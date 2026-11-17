@@ -14,7 +14,7 @@
 #   3. the screen read again after a second announcement shows it at once: it reads the
 #      blackboard the live channel reads, not a reading from before the change.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 command -v curl >/dev/null 2>&1 || skip "curl not installed"
 

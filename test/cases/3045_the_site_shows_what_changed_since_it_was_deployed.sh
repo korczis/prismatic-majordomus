@@ -29,7 +29,7 @@
 #      hand it the previous deployment, and the homepage's trust strip links the section.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || { echo "    jq is not installed"; exit 1; }
-command -v zola >/dev/null 2>&1 || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 # site-build reaches the executable through bin/majordomus-cli, which uses this one and never builds

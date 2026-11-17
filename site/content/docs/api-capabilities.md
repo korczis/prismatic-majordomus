@@ -1,7 +1,7 @@
 +++
 title = "HTTP API: capabilities"
 description = "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
-weight = 1003
+weight = 1004
 path = "docs/api/capabilities"
 template = "api-tag.html"
 [extra]

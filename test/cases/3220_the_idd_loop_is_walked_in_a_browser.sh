@@ -42,7 +42,7 @@ RB="$(rust_bin)" || rust_bin_exit $?
 if [ -n "${CI:-}" ] && [ "${MAJORDOMUS_RUNS_IN:-}" != ui ]; then
   skip "the IDD loop is walked in the ui job (--runs-in ui), not in this CI run"
 fi
-command -v node >/dev/null 2>&1 || skip "node is absent, so the IDD loop was not walked"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] \
   || skip "playwright is not installed (npm ci), so the IDD loop was not walked"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE

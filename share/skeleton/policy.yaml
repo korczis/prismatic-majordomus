@@ -214,3 +214,20 @@ projections:
     target: CLAUDE.md
   - provider: gemini
     target: GEMINI.md
+
+# The user interface and the design kit it is built on (I4336). `kit` names the kit the UI
+# declares ("" is none, and the licence gate is then skipped). `visibility` is declared,
+# never fetched: a public tree never carries a licensed file of the kit, and a public tree
+# that declares a kit and has a UI fails closed when nothing could judge it.
+# MAJORDOMUS_VISIBILITY=public tightens a private declaration; nothing loosens one.
+# `publish` names the directories a deploy publishes (the upload-pages-artifact path), whose
+# untracked files the gate also hashes. `evidence` names the owner's kit-evidence/v1 files,
+# `~/`-relative and never absolute; CI reads MAJORDOMUS_KIT_EVIDENCE_<KIT> instead.
+# `exempt` (declared in the schema, absent here until the first one) lists the surfaces the
+# kit-use judge does not hold to the kit, each `- {path: <glob>, because: <why>}` with both
+# keys; the never-publish gate exempts nothing.
+ui:
+  kit: ""
+  visibility: public
+  publish: []
+  evidence: []

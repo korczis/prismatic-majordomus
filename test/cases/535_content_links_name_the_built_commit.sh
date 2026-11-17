@@ -21,7 +21,7 @@
 #      `zola serve` that re-renders site/content in memory past the pass; a preview that runs
 #      zola serve again fails the check.
 . "$ROOT/test/lib.sh"
-command -v python3 >/dev/null 2>&1 || skip "no python3 for scripts/ci/link-check"
+mj_runs python3 || skip "no python3 for scripts/ci/link-check"
 
 AWK="$ROOT/scripts/lib/project-links.awk"
 BUILD="$ROOT/scripts/site-build"
@@ -91,7 +91,7 @@ pins() {
 }
 
 HAVE_ZOLA=1
-if ! command -v zola >/dev/null 2>&1; then
+if ! mj_zola_ready "$ROOT"; then
   [ "${CI:-}" != true ] || { echo "    zola is absent on CI, where the site cases must run rather than skip"; exit 1; }
   HAVE_ZOLA=0; echo "    zola absent; the rendering is skipped (projection, pass and refusals still run)"
 fi
