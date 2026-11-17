@@ -94,6 +94,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares lib/knowledge.sh with I4585; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares share/events.yaml with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |
