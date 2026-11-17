@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "22289f3c7bbb199d6c5a9e2afd173e04d66945536da222b83ff1cd08f69414ad",
+    "fingerprint": "55892cdfef50c25d12e8d493aa57569d2334654ac6684c7377a8581871673e74",
     "summary": {
-      "total": 4033,
+      "total": 4034,
       "builtin": 231,
-      "declarative": 3802,
+      "declarative": 3803,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3802
+        "resource": 3803
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3812
+        "implemented": 3813
       },
       "mcp_tools": 215,
-      "mcp_resources": 3859,
+      "mcp_resources": 3860,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1259,
+        "capabilities": 1260,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6f4eb2895f1415b555a4a2250f933ddef41a91a882312f3e5ad08b5c3591c1e0",
+    "fingerprint": "3fdd3e09d0d507d33ac5dc6a0641841a2116230e4ae21ed0aac8f17adb4a6152",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1259,
+      "issue": 1260,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138012
+        "bytes": 138141
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123337,7 +123337,18 @@
         "path": ".ai/repo/project/issues/I4628.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4852
+        "bytes": 4899
+      },
+      {
+        "uri": "majordomus://issue/I4630",
+        "kind": "issue",
+        "identity": "I4630",
+        "title": "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
+        "description": "A plan finding never puts a path into a derived page unless the path exists or the sentence says it is planned. When an issue's scope holds a directory (test/cases) and another READY issue's scope holds a file under it that does not exist yet (test/cases/4616_a_reserved_issue_id_is_refused_locally.sh), lib/project.awk's scope_conflict finding names the directory, which is the scope as written. It does not name the other issue's planned file. plan validate also warns on a scope entry that is a directory holding more than a policy-set number of tracked files, and names the narrower path the issue's evidence implies (its own case). scripts/ci/reference-check over the derived plan pages runs in the before-push plan, so a page that names a missing file is found on the machine and not first in CI's core-check.",
+        "path": ".ai/repo/project/issues/I4630.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3995
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -139883,7 +139894,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1259
+      "objects": 1260
     },
     {
       "name": "knowledge",

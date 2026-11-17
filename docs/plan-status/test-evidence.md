@@ -81,5 +81,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3668` | shares .github/workflows/validate.yml with I3970; they may not run concurrently |
 | WARN | `scope_conflict` | `I3668` | shares docs/generated with I4523; they may not run concurrently |
 | WARN | `scope_conflict` | `I4325` | shares docs/EVIDENCE.md with I4583; they may not run concurrently |
-| WARN | `scope_conflict` | `I4325` | shares test/cases/4325_node_test_and_playwright_are_runners.sh with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I4342` | shares apps/majordomus-cli/src/integration/drain.rs with I4523; they may not run concurrently |

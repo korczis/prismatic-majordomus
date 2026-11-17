@@ -81956,11 +81956,54 @@
           "scope": [
             "lib/gates.sh",
             "lib/finish.sh",
-            "test/cases",
+            "test/cases/4628_a_finish_over_uncommitted_work_says_so.sh",
             ".ai/repo/project/issues/I4628.yaml"
           ],
           "serves": [],
           "slug": "a-finish-over-uncommitted-work-says-so",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4630",
+        "kind": "issue",
+        "label": "I4630",
+        "summary": "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
+        "route": "/cockpit/objects/issue/i4630",
+        "source": ".ai/repo/project/issues/I4630.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two READY issues, one scoped to test/cases and one to test/cases/9999_missing.sh: the scope_conflict finding names test/cases, and the derived plan-status page names no test/cases/9999_missing.sh",
+            "plan validate warns on a scope entry that is a directory holding more tracked files than the policy's threshold, and the warning names the issue's own case path",
+            "The before-push plan includes the reference check over the derived plan pages, and a page that names a missing file fails it before the push",
+            "Negative control: against master's lib/project.awk the case finds the missing path named in the page"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "desired_state": "A record whose scope is too wide is told so by plan validate, a conflict line names what both issues declared, and no derived page reaches CI naming a file the tree does not hold.",
+          "evidence_required": [
+            "a_directory_scope_names_no_missing_file"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "Forbidding a directory in a scope: a directory is a legitimate scope for work that touches it",
+            "reference-check's rules for hand-written documents",
+            "Re-deriving or re-landing pages already on master"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/project.awk",
+            "lib/plan.sh",
+            "scripts/ci/run-plan",
+            "test/cases/4630_a_directory_scope_names_no_missing_file.sh",
+            ".ai/repo/project/issues/I4630.yaml"
+          ],
+          "serves": [],
+          "slug": "a-directory-scope-names-no-missing-file",
           "validation": [
             "bin/majordomus plan validate"
           ]
@@ -151775,6 +151818,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4630",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4630",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164656,8 +164709,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4504,
-      "edges": 10159,
+      "nodes": 4505,
+      "edges": 10161,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,33 @@
+id: I4630
+milestone: derived-data-integrity
+title: "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does"
+slug: a-directory-scope-names-no-missing-file
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A plan finding never puts a path into a derived page unless the path exists or the sentence says it is planned. When an issue's scope holds a directory (test/cases) and another READY issue's scope holds a file under it that does not exist yet (test/cases/4616_a_reserved_issue_id_is_refused_locally.sh), lib/project.awk's scope_conflict finding names the directory, which is the scope as written. It does not name the other issue's planned file. plan validate also warns on a scope entry that is a directory holding more than a policy-set number of tracked files, and names the narrower path the issue's evidence implies (its own case). scripts/ci/reference-check over the derived plan pages runs in the before-push plan, so a page that names a missing file is found on the machine and not first in CI's core-check."
+why: "On 2026-11-17 the record I4628 (#3070) declared the scope `test/cases`. plan validate reported 0 failures. The 47-gate before-push plan said `nothing CI would find here first`. The derive rewrote docs/plan-status/*.md with 57 scope_conflict lines of the form `shares test/cases/<n>_<name>.sh with I4628`. Each one named the planned case of another issue, and most of those files do not exist. In the combined top #3073 (run 44041509018), the structure job's core-check then failed at `every reference resolves` (scripts/ci/reference-check), after 944 s of gates, and the top had to be rebuilt. The cause was one directory in a record. The finding text named a path the repository does not hold, and nothing before CI read the page the way reference-check does."
+current_state: "Measured on 2026-11-17 at origin/master 7222b343dcb. lib/project.awk:324-334: for two READY issues in the same wave, the first overlapping pair of scope entries is reported as `shares <a's entry> with <b>`, where <a> is the earlier issue in the iteration order. When <a> names a file and <b> names its parent directory, the sentence carries <a>'s file whether or not it exists. scripts/generate-site-data writes the findings into docs/plan-status/<milestone>.md. scripts/ci/reference-check, called from scripts/ci/core-check, refuses a document that names a missing file. The before-push plan (scripts/ci/run-plan --before-push) ran 47 gates on this branch and did not include it."
+desired_state: "A record whose scope is too wide is told so by plan validate, a conflict line names what both issues declared, and no derived page reaches CI naming a file the tree does not hold."
+scope:
+  - "lib/project.awk"
+  - "lib/plan.sh"
+  - "scripts/ci/run-plan"
+  - "test/cases/4630_a_directory_scope_names_no_missing_file.sh"
+  - ".ai/repo/project/issues/I4630.yaml"
+non_scope:
+  - "Forbidding a directory in a scope: a directory is a legitimate scope for work that touches it"
+  - "reference-check's rules for hand-written documents"
+  - "Re-deriving or re-landing pages already on master"
+acceptance_criteria:
+  - "Two READY issues, one scoped to test/cases and one to test/cases/9999_missing.sh: the scope_conflict finding names test/cases, and the derived plan-status page names no test/cases/9999_missing.sh"
+  - "plan validate warns on a scope entry that is a directory holding more tracked files than the policy's threshold, and the warning names the issue's own case path"
+  - "The before-push plan includes the reference check over the derived plan pages, and a page that names a missing file fails it before the push"
+  - "Negative control: against master's lib/project.awk the case finds the missing path named in the page"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_directory_scope_names_no_missing_file"
+depends_on: []
+serves: []
+created_at: 2026-11-17

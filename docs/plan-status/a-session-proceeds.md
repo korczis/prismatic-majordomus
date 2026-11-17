@@ -98,7 +98,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/commands with I4577; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4583; they may not run concurrently |
-| WARN | `scope_conflict` | `I2972` | shares test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3110; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3155; they may not run concurrently |
@@ -156,4 +155,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4583; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh with I4628; they may not run concurrently |

@@ -34,6 +34,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 ## Findings
 
-| level | code | subject | message |
-|---|---|---|---|
-| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4628; they may not run concurrently |
+None about this milestone or its issues.
