@@ -67430,8 +67430,7 @@
             "I3824"
           ],
           "evidence_required": [
-            "builder_cap_refuses",
-            "disk_floor_refuses"
+            "a_build_is_bounded_by_the_machine"
           ],
           "milestone": "ci-critical-path",
           "parallel_safe": true,
@@ -67440,14 +67439,13 @@
           "scope": [
             "lib/rust_bin.sh",
             "test/cases",
-            ".ai/repo/project/issues/I3825.yaml"
+            ".ai/repo/project/issues/I3825.yaml",
+            "test/lib/rust_bin.functions.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ],
           "serves": [],
           "slug": "a-build-is-bounded-by-the-machine",
-          "updated_at": "2026-10-29",
-          "validation": [
-            "bash test/run.sh"
-          ]
+          "updated_at": "2026-11-16"
         }
       },
       {
@@ -109133,6 +109131,13 @@
         "label": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
         "route": "/cockpit/objects/test/test-cases-3824-the-bootstrap-says-what-the-cooperation-rule-says-sh",
         "source": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "kind": "test",
+        "label": "test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "route": "/cockpit/objects/test/test-cases-3825-a-build-is-bounded-by-the-machine-sh",
+        "source": "test/cases/3825_a_build_is_bounded_by_the_machine.sh"
       },
       {
         "id": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
@@ -159094,6 +159099,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3825_a_build_is_bounded_by_the_machine.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164755,8 +164765,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4508,
-      "edges": 10164,
+      "nodes": 4509,
+      "edges": 10165,
       "acyclic": false,
       "truncated": false
     }
