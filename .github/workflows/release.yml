@@ -267,10 +267,14 @@ jobs:
       # the one that would publish releases/latest.json — refuses the tree. The whole
       # derivation graph, in its own order, is what keeps the release readable by the
       # installer it was published for.
+      # MAJORDOMUS_BIN_COMMIT is the commit the executable was built from, this checkout's HEAD:
+      # the default branch's tip is usually a merge, and where a merge changed the crate the
+      # derive borrows only an executable whose commit carries it (I4627), so without the
+      # commit it would build a second one inside this job's bound.
       - name: every projection of the new record, regenerated in dependency order
         env:
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
-        run: scripts/derive
+        run: MAJORDOMUS_BIN_COMMIT="$(git rev-parse HEAD)" scripts/derive
 
       # The verdict CI will give the record's pull request, given here, where a red one can
       # still be withheld. It is taken over the index as it will be committed, because that is

@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [adopter-upgrades](https://majordomus.dev/plan/adopter-upgrades/) | ACTIVE | 14/29 | 10 | 5 | 0 | 0 | 0 | An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean. |
+| [adopter-upgrades](https://majordomus.dev/plan/adopter-upgrades/) | ACTIVE | 14/30 | 11 | 5 | 0 | 0 | 0 | An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean. |
 
 ## Issues
 
@@ -44,6 +44,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4600](https://majordomus.dev/plan/i4600/) | READY | 0 | — | evidence record says how much of the suite its report covers |
 | [I4602](https://majordomus.dev/plan/i4602/) | READY | 0 | — | A test that builds a repository under a hook never inherits the hook's repository |
 | [I4618](https://majordomus.dev/plan/i4618/) | READY | 0 | — | The executable resolver borrows a same-generation executable another worktree built, before it refuses |
+| [I4627](https://majordomus.dev/plan/i4627/) | READY | 0 | — | scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why |
 
 ## Findings
 
@@ -235,6 +236,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4618; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares test/cases with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2654; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2700; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2704; they may not run concurrently |
@@ -450,6 +452,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4618; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2059; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2114; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I2115; they may not run concurrently |
@@ -705,6 +708,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares lib with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4618; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares test/cases with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4416; they may not run concurrently |

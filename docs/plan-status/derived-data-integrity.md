@@ -49,6 +49,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4513; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4586; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4588; they may not run concurrently |
+| WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I4400; they may not run concurrently |
@@ -59,4 +60,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4586; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
+| WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I4586` | shares scripts/derive with I4588; they may not run concurrently |
+| WARN | `scope_conflict` | `I4586` | shares scripts/derive with I4627; they may not run concurrently |
+| WARN | `scope_conflict` | `I4588` | shares scripts/derive with I4627; they may not run concurrently |
