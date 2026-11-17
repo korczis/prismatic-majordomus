@@ -394,7 +394,7 @@ table, rule bullets, a rules or lifecycle or finish-contract heading — and a
 | `migrate` | move pre-`.ai` project data from `.majordomus/` into `.ai/` | git moves, a verified backup, the index | 0 / 2 / 10 / 12 / 13 / 15 |
 | `rules` | the effective rule set: vendored baseline plus project rules, resolved | only `vendor update` | 0 / 2 / 10 / 11 / 12 / 13 / 15 |
 | `doctor` | is Majordomus itself real and wired here? | no | 0 / 2 / 10 / 12 |
-| `start <task>` | begin a scoped task under a profile | task record, ledger | 0 / 2 / 10 / 12 / 15 |
+| `start <task>` | begin a scoped task under a profile | task record, ledger | 0 / 2 / 10 / 12 / 13 / 15 |
 | `check` | is the task consistent with policy, scope, state? | no (`--checkpoint` updates one timestamp) | 0 / 2 / 10 / 12 / 13 |
 | `watch` | what has drifted? | no | 0 / 2 / 10 / 11 |
 | `doctrine` | what rules are enforced, by what, and are they wired? | no | 0 / 2 / 10 / 12 / 13 |
