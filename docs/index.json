@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "a134a0fbc7acc7f22aa423263000ae01d418b041",
+  "commit": "e54bbdb12a99cd3ff4572f2a1574c1e5566ae8ef",
   "source_version": "1.0.2",
-  "registry_fingerprint": "3bddaa7b4810620914c667d8800be06700be6adb0a64431b75b0184819b1aed4"
+  "registry_fingerprint": "848d3e55b6aa20cb5a98d28cbe7adb232676457948a43956e64edd5305415b74"
  },
  "counts": {
-  "pages": 6524,
-  "capabilities": 4031,
+  "pages": 6526,
+  "capabilities": 4032,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3857,
+  "mcp_resources": 3858,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1257
+   "count": 1258
   },
   {
    "kind": "knowledge",
@@ -15999,6 +15999,12 @@
    "route": "/cs/plan/i4602/",
    "title": "I4602 — A test that builds a repository under a hook never inherits the hook's repository",
    "description": "An adopter is told, before a push does the damage, when a test script it runs from a hook builds its own git repository without first dropping the variables git names as repository-local (`git rev-parse --local-env-vars`).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4605/",
+   "title": "I4605 — commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)",
+   "description": "commit.validate gains the rule commit.control_character, with a policy level in .ai/repo/policy.yaml's commit block (control_character: error). Every character of the message is checked: C0 (U+0000 to U+001F) other than a line feed or a tab, DEL (U+007F) and C1 (U+0080 to U+009F). A message carrying one is refused. The finding names the line, the column and the code point (for example `line 1, column 1: U+001B ESCAPE`). The check runs before the conventional parse, so a control code in front of the type is reported as itself and not as a word that is not a type. It also covers git-generated subjects, because the exemption of I3976 is about naming an issue, not about what bytes a message may hold. The commit-msg hook and scripts/ci/commit-policy refuse through the same verdict. The history on trunk is judged against the existing count baseline, so commits that are already published are not rewritten.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33450,6 +33456,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4605/",
+   "title": "I4605 — commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)",
+   "description": "commit.validate gains the rule commit.control_character, with a policy level in .ai/repo/policy.yaml's commit block (control_character: error). Every character of the message is checked: C0 (U+0000 to U+001F) other than a line feed or a tab, DEL (U+007F) and C1 (U+0080 to U+009F). A message carrying one is refused. The finding names the line, the column and the code point (for example `line 1, column 1: U+001B ESCAPE`). The check runs before the conventional parse, so a control code in front of the type is reported as itself and not as a word that is not a type. It also covers git-generated subjects, because the exemption of I3976 is about naming an issue, not about what bytes a message may hold. The commit-msg hook and scripts/ci/commit-policy refuse through the same verdict. The history on trunk is judged against the existing count baseline, so commits that are already published are not rewritten.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4606/",
    "title": "I4606 — A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`",
    "description": "Where a verdict fails closed for want of a CI secret (the design licence's `MAJORDOMUS_KIT_EVIDENCE_<KIT>`, and any adopter gate the fleet pack documents the same way), the finding says which secret store the run reads and gives the command for it: on a Dependabot run (`GITHUB_ACTOR=dependabot[bot]`) the Dependabot store, `gh secret set <NAME> --app dependabot`; otherwise the Actions store.",
@@ -37418,7 +37430,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.2 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit a134a0fbc7acc7f22aa423263000ae01d418b041: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit e54bbdb12a99cd3ff4572f2a1574c1e5566ae8ef: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.2 — Rust API reference"
   },
   {
