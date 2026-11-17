@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/6 | 5 | 0 | 0 | 0 | 1 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. |
+| [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/7 | 6 | 0 | 0 | 0 | 1 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. |
 
 ## Issues
 
@@ -22,6 +22,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4512](https://majordomus.dev/plan/i4512/) | READY | 0 | — | No derived page grows past the scope's size limit, so one derive is a fixpoint |
 | [I4586](https://majordomus.dev/plan/i4586/) | READY | 0 | — | A deriver that meets a reference to an object that does not exist names the object and the record that cites it, and fails; it never crashes |
 | [I4588](https://majordomus.dev/plan/i4588/) | READY | 0 | — | A gate snapshots the index when it starts and refuses its own verdict when the index changed while it ran |
+| [I4630](https://majordomus.dev/plan/i4630/) | READY | 0 | — | A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does |
 
 ## Findings
 
@@ -64,3 +65,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4586` | shares scripts/derive with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4586` | shares scripts/derive with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I4588` | shares scripts/derive with I4627; they may not run concurrently |
+| WARN | `scope_conflict` | `I4588` | shares scripts/ci/run-plan with I4630; they may not run concurrently |
