@@ -1,0 +1,40 @@
+id: I4594
+milestone: one-kit-on-every-surface
+title: "design.kit S5 accepts a localised landmark when the Flowbite Pro structure is present"
+slug: s5-accepts-a-localised-landmark
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "design.kit's shell signal S5 recognises the Pro sidebar and breadcrumb by their structure, not by an English label. A sidebar is an <aside> whose id a data-drawer-target and a data-drawer-toggle name and which carries a non-empty aria-label of any value, a template expression included. A breadcrumb is a <nav> with a non-empty aria-label, literal or template, that contains an <ol> or carries the Pro breadcrumb classes. A label that is empty or only whitespace is no label."
+why: "Proposed by sonic-playground-28 on 2026-11-14 (~18:40Z) from Sonic Playground, a bilingual (EN/CS) Zola adopter on Flowbite Pro. It renders landmark names through its translation template: the aria-label is a Tera expression, opened by two left braces, calling its tr shortcode with key landmark.sidebar. S5 fails with '1 aside element(s), none with aria-label=\"Sidebar\"', quoting as found the opening of that expression (the two braces and `<tr key=`). Its stopgap keeps the English literals and translates them in JavaScript (its main 96818c4), so a Czech page read without JavaScript announces its landmarks in English. The literal demands a label no localised site may give, and an accessible name in the page's own language is what the landmark is for. The proposer noted the change is the owner's call. The fixtures are the proposer's: positives 1-3 come from its production markup and repository, the four negatives are minimal ones it wrote."
+current_state: "Measured at origin/master defd88e5896. share/design/kits/flowbite-pro.yaml:202 declares shell.sidebar as a pattern matching only an <aside> whose aria-label is the literal Sidebar, and :205 shell.breadcrumb as one matching only a <nav> whose aria-label is the literal Breadcrumb. apps/majordomus-cli/src/design/kit.rs application_shell reports '<layout> has no <aside aria-label=\"Sidebar\">' (:2448) when no aside matches, and 'no page carries <nav aria-label=\"Breadcrumb\">' (:2481). The drawer check (data-drawer-target and data-drawer-toggle naming the aside's id) runs only after the label matched. The unit test s5_every_part_of_the_shell_is_owed (:3712-3735) pins the same literals: it replaces aria-label=\"Sidebar\" with aria-label=\"Menu\" (:3716-3720) and expects a finding, and removes aria-label=\"Breadcrumb\" (:3722). A breadcrumb with an empty <ol> or none is accepted today if its label is the literal."
+desired_state: "S5 passes a layout whose sidebar and breadcrumb have the Pro structure with a label in any language or a template expression in place of one, and still fails a sidebar no drawer toggle names, a toggled sidebar with no label, a labelled nav with no list and no Pro breadcrumb classes, and a whitespace label. Each finding names the structure that is missing, not an English word. The kit profile declares the structure, so the patterns stay in share/design/kits/flowbite-pro.yaml."
+scope:
+  - ".ai/repo/project/issues/I4594.yaml"
+  - "apps/majordomus-cli/src/design/kit.rs"
+  - "share/design/kits/flowbite-pro.yaml"
+  - "docs/DESIGN_SYSTEM.md"
+non_scope:
+  - "The owner's flowbite-pro skill (its verify.mjs, about lines 700 and 811), which carries the same literal checks and lives outside this repository"
+  - "Translating any label, or judging whether a label is in the page's language"
+  - "The React shell (shell.react_sidebar and shell.react_breadcrumb), which already accepts any label"
+  - "The other S5 parts: the fixed top navbar, the marketing navbar and footer, and the page, surface and border roles"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Positive 1 of the proposer's fixtures (Zola/Tera template): a toggle button with data-drawer-target=\"sidebar\" and data-drawer-toggle=\"sidebar\", <aside id=\"sidebar\"> whose aria-label is the Tera expression calling the tr shortcode with key landmark.sidebar, and a <nav> whose aria-label is the same expression with key landmark.breadcrumb, holding an <ol>, raise no S5 finding for the sidebar or the breadcrumb"
+  - "Positive 2 (rendered EN, the same toggle): <aside id=\"sidebar\" aria-label=\"Sidebar\"> and <nav class=\"mb-8 flex\" aria-label=\"Breadcrumb\"> holding an <ol> raise none"
+  - "Positive 3 (rendered CS, the same toggle): <aside id=\"sidebar\"> whose aria-label is the Czech sidebar label (\"side panel\") and <nav class=\"mb-8 flex\"> whose aria-label is the Czech breadcrumb label (\"breadcrumb navigation\"), holding an <ol>, raise none"
+  - "Negative sidebar 1: <aside id=\"sidebar\"> labelled with the Czech sidebar label, with no data-drawer-target or data-drawer-toggle naming sidebar anywhere, fails S5, naming the missing toggle"
+  - "Negative sidebar 2: <button data-drawer-target=\"sidebar\" data-drawer-toggle=\"sidebar\"> with <aside id=\"sidebar\"> and no aria-label fails S5, naming the missing label"
+  - "Negative breadcrumb 1: <nav class=\"mb-8 flex\"> labelled with the Czech breadcrumb label and holding only a link home (<a href=\"/\">, its text the Czech word for home), a labelled nav with no <ol> and no Pro breadcrumb classes, fails S5"
+  - "Negative breadcrumb 2: <nav aria-label=\" \"><ol><li><a href=\"/\">Home</a></li></ol></nav>, a whitespace label, fails S5"
+  - "The seven fixtures are unit tests in kit.rs, and s5_every_part_of_the_shell_is_owed is rewritten to remove structure (the label, the toggle, the list) instead of replacing one English word with another; each fails against kit.rs and flowbite-pro.yaml at defd88e5896 where that version decides otherwise (positive 1 and 3 and negative breadcrumb 1)"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib design::kit::"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "s5_localised_landmark_fixtures"
+created_at: 2026-11-15
+updated_at: 2026-11-15

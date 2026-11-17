@@ -13,14 +13,22 @@ current_state: "Not built: this issue is planned by the milestone a-session-proc
 desired_state: "The acceptance criteria below hold and case 4006 proves them."
 scope:
   - "apps/majordomus-cli/src/capability/builtin"
-  - "apps/majordomus-cli/src/machine"
-  - "docs/MACHINE.md"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "lib/rust_bin.sh"
+  - "lib/machine_lock.sh"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+  - "docs/OFFLOAD.md"
   - "test/cases/4006_machine_slot_shares_heavy_work.sh"
   - ".ai/repo/project/issues/I4006.yaml"
 acceptance_criteria:
   - "At most N holders run at once and below the disk floor none starts"
   - "A full queue answers within a deadline naming each holder, never waits unbounded"
   - "A holder that died releases its slot by deadline, and the slot adds no new store"
+  - "One mechanism, not a third lock: the slot carries I3825's refusal (five builders, 35 GiB free) with the numbers read once from the policy's machine.heavy_work, which states clause 7 of project.the-cooperation-model-is-the-owners-word, so I3825 is closed by it rather than built beside it"
+  - "The derive lock of lib/machine_lock.sh stays the one derive at a time (project.one-derive-at-a-time); the slot directory sits beside it, found the same way, and scripts/reap-orphans and case 1018 read the derive owner line unchanged"
+  - "A holder record lives only while its process does, reclaimed by pid and start time: a lock, not a store"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4006_machine_slot_shares_heavy_work"
 evidence_required:

@@ -15,7 +15,7 @@
 # not linked: the published site's link check decides every link offline, and a pull link cannot
 # be decided offline, while the merge commit is in the published history.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 command -v jq >/dev/null || skip "jq absent"
 
 SITECHECK="$ROOT/scripts/site-check"

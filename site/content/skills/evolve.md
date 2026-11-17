@@ -5,7 +5,7 @@ weight = 3
 [extra]
 id = "evolve"
 status = "active"
-version = 2
+version = 5
 source = ".ai/repo/skills/evolve/SKILL.md"
 +++
 {% raw %}
@@ -32,6 +32,12 @@ already derives its candidates (`session.knowledge_on_end`); this is what is don
 
 ### 1. Gather what there is to decide
 
+Read this skill, and every record it names, in the worktree the run works in, made from
+`origin/master`. The primary checkout and the server it hosts can stand behind the trunk.
+On 2026-10-31 the primary stood 160 commits behind and still held version 1 of this skill,
+without its offload derive and without step 7. `majordomus worktree` says how far a checkout
+lags.
+
 ```bash
 majordomus knowledge candidates
 majordomus knowledge check
@@ -55,7 +61,10 @@ origin/master -- .ai/repo/knowledge/curated`. Three places hold what no candidat
 A lesson written only in a private memory never reaches a rule, a skill or the next
 session's briefing; on 2026-10-28 most of a day's lessons were there and nowhere else. So
 for each one, search the layer first (`majordomus knowledge search <words>`): when a record
-already says it, cite that record rather than observing it twice; otherwise record it as
+already says it, cite that record rather than observing it twice. The search took about a
+minute per phrase on 2026-10-31, so take a first pass with a grep of the `title:` lines
+under `.ai/repo/knowledge/curated/` and of the rules, and keep the search for the phrases
+that pass does not settle; otherwise record it as
 one observation, in the ledger and nowhere else. A memory file is never copied into the
 tree, and nothing it says is done because it says so. A memory that cannot be decided in
 this run is counted in the report as `undecided: <n> memory files since <date>`.
@@ -110,6 +119,15 @@ Promotion requires the evidence on standard input: the command, test, commit or 
 that makes the statement true, not a restatement of it. A candidate that duplicates a
 curated note or a rule is rejected with the identity of what already says it. A candidate
 you cannot judge stays a candidate; say so in the report instead of guessing.
+
+The ledger cannot be edited, so an observation that says more than its evidence shows is
+not corrected in place. Observe the corrected statement, derive, and promote the corrected
+candidate. Then reject the first candidate with a reason that names the one that replaces
+it. Check each statement against the forge or the tree (`gh run view`, `git log`) before
+you observe it, and a correction too. A run's conclusion is not its jobs' verdicts: on
+2026-10-31 this procedure's own correction read validate run 41187739613 as cancelled, not red.
+Its jobs (`gh run view <id> --json jobs`) had failed coverage, structure and the suite and ui
+shards before the cancel, and the correction was wrong where the first statement had been right.
 
 A promoted record is tracked, so its provenance must resolve in a clean clone. `promote`
 keeps the candidate's `session:` and `task:` ids, which live only in this machine's
@@ -170,10 +188,27 @@ scripts/derive
 ```
 
 Run the gate of everything the change touched before the derive, so that one derive is
-enough. A lesson about a gate is proven by a case that breaks the thing and watches the
-gate refuse it. On a machine under its disk floor, `majordomus offload derive .` is the
+enough, and stage the records this run wrote first (`git add -A` under the knowledge
+section): a derive projects what git tracks and refuses a tree that holds untracked files
+(exit 10), and `MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1` only makes it run blind to them. On
+2026-11-05 an evolve run derived with its 43 new records untracked, the derive refused, and
+the commit's pages gate then refused the stale derived data. A lesson about a gate is proven
+by a case that breaks the thing and watches the gate refuse it. On a machine under its disk floor, `majordomus offload derive .` is the
 derive of record: it runs on a build host and stages what it derived, and a local build
 there takes the disk from every other worker of the machine.
+
+Nor does such a run need a local build of the executable when the installed release is of
+the tree's generation; a version string never shows that, because a version is not a build.
+Run the worktree's own `bin/majordomus`: when its crate is the release's, it says it is
+answering through the installed release, and every step of this skill goes through it
+unchanged. Set `MAJORDOMUS_BIN` by hand only in a checkout whose own executable is stale,
+and only after `git diff --quiet <the release's commit> -- apps/majordomus-cli
+rust-toolchain.toml lib bin share` holds; name the release's executable
+(`libexec/majordomus-cli` under the installed version), never a launcher, which
+`MAJORDOMUS_BIN` refuses to name, and set `MAJORDOMUS_BIN_COMMIT` to that commit. The
+derive of record under the floor stays `majordomus offload derive .`. On 2026-11-10 an
+evolve run under the floor did steps 1 to 4 this way, after the primary checkout's
+executable was found a generation behind and `worktree create` refused for it (step 1).
 
 Before step 5 the change goes to an adversarial review whose lenses differ from the
 author's: correctness of what the change claims, whether its tests fail when it is reverted,

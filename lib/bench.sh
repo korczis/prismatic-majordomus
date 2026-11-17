@@ -27,7 +27,10 @@ mj_bench_usage() {
 usage: majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>]
                         [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check]
                         [--write-baseline [--force]]
+       majordomus bench compare <run-a> <run-b>
   every public command of the registry is a target; name one or more to benchmark only those
+  compare           two persisted runs (a run id, a run file, latest or baseline) by command and
+                    mode, then the largest p95 regressions and improvements and the slowest; reads only
   --list            the targets, their scenario source and their class, and exit
   --samples <n>     warm samples per target (policy benchmark.samples)
   --warmup <n>      unsampled runs before the warm samples (policy benchmark.warmup)
@@ -275,6 +278,57 @@ mj_bench_rows_of() {
       p99 = o; sub(/.*"p99_ms":/, "", p99); sub(/[,}].*/, "", p99)
       printf "%s\t%s\t%s\t%s\t%s\n", c, m, p50, p95, p99 } }'
 }
+# ---------------------------------------------------------------- compare two runs
+# A run named on the command line: `baseline`, `latest`, the id of a run under
+# .ai/local/benchmarks/runs/, or the path of a run file. Prints the file; fails when none.
+mj_bench_run_file() {
+  local d; d="$(mj_bench_dir)"
+  case "$1" in
+    baseline) [ -f "$(mj_bench_baseline)" ] && printf '%s' "$(mj_bench_baseline)" ;;
+    latest) [ -f "$d/latest.json" ] && printf '%s' "$d/latest.json" ;;
+    *) if [ -f "$1" ]; then printf '%s' "$1"
+       elif [ -f "$d/runs/$1.json" ]; then printf '%s' "$d/runs/$1.json"
+       else return 1; fi ;;
+  esac
+}
+# bench compare <a> <b>: any two persisted runs, in the table --check prints, then the tail a
+# reader looks for first — the largest p95 regressions and improvements from a to b, and the
+# slowest targets of b. A wall of numbers hides the one that matters; the tail names it.
+# Reads two files and writes nothing. A run compared with itself reports no change.
+mj_bench_compare() {
+  [ $# -eq 2 ] || mj_die "$MJ_EX_USAGE" "usage: majordomus bench compare <run-a> <run-b>  (a run id, a run file, latest or baseline)"
+  local fa fb rows ra rb
+  fa="$(mj_bench_run_file "$1")" || mj_die "$MJ_EX_MISSING" "bench compare: no run '$1' (see $(mj_rel "$(mj_bench_dir)")/runs/)"
+  fb="$(mj_bench_run_file "$2")" || mj_die "$MJ_EX_MISSING" "bench compare: no run '$2' (see $(mj_rel "$(mj_bench_dir)")/runs/)"
+  [ -n "$fa" ] && [ -n "$fb" ] || mj_die "$MJ_EX_MISSING" "bench compare: a run named is not there"
+  # rows: command mode a(p50/p95/p99) b(p50/p95/p99) p95-delta, for every command+mode in b.
+  # Both sides go through files, as in mj_bench_compare_rows: BSD awk takes no newline in -v.
+  ra="$(mktemp "${TMPDIR:-/tmp}/mj.bcmp.XXXXXX")"; rb="$(mktemp "${TMPDIR:-/tmp}/mj.bcmp.XXXXXX")"
+  mj_bench_rows_of "$fa" > "$ra"; mj_bench_rows_of "$fb" > "$rb"
+  rows="$(awk -F'\t' '
+    NR == FNR { a[$1 SUBSEP $2] = $3 "/" $4 "/" $5; a95[$1 SUBSEP $2] = $4; next }
+    { k = $1 SUBSEP $2
+      if (k in a) printf "%s\t%s\t%s\t%s/%s/%s\t%.1f\n", $1, $2, a[k], $3, $4, $5, $4 - a95[k]
+      else printf "%s\t%s\t-\t%s/%s/%s\t-\n", $1, $2, $3, $4, $5 }' "$ra" "$rb")"
+  rm -f "$ra" "$rb"
+  if [ "${MJ_JSON:-0}" = 1 ]; then
+    printf '%s\n' "$rows" | awk -F'\t' -v a="$(mj_rel "$fa")" -v b="$(mj_rel "$fb")" '
+      NF { r = r (r == "" ? "" : ",") sprintf("{\"command\":\"%s\",\"mode\":\"%s\",\"a\":\"%s\",\"b\":\"%s\",\"p95_delta_ms\":%s}", $1, $2, $3, $4, ($5 == "-" ? "null" : $5)) }
+      END { printf "{\"a\":\"%s\",\"b\":\"%s\",\"rows\":[%s]}\n", a, b, r }'
+    return 0
+  fi
+  printf '%s -> %s, by command and mode (p50/p95/p99 ms):\n' "$(mj_rel "$fa")" "$(mj_rel "$fb")"
+  printf '%s\n' "$rows" | awk -F'\t' 'NF { printf "  %-12s %-5s %s -> %s\n", $1, $2, $3, $4 }'
+  printf '\nlargest p95 regressions:\n'
+  printf '%s\n' "$rows" | awk -F'\t' 'NF && $5 != "-" && $5 + 0 > 0 { printf "%s\t%s %s\n", $5, $1, $2 }' \
+    | LC_ALL=C sort -t "$MJ_TAB" -k1,1nr | head -n 5 | awk -F'\t' '{ printf "  +%s ms  %s\n", $1, $2 } END { if (NR == 0) print "  none" }'
+  printf 'largest p95 improvements:\n'
+  printf '%s\n' "$rows" | awk -F'\t' 'NF && $5 != "-" && $5 + 0 < 0 { printf "%s\t%s %s\n", $5, $1, $2 }' \
+    | LC_ALL=C sort -t "$MJ_TAB" -k1,1n | head -n 5 | awk -F'\t' '{ printf "  %s ms  %s\n", $1, $2 } END { if (NR == 0) print "  none" }'
+  printf 'slowest by p95 in %s:\n' "$(mj_rel "$fb")"
+  printf '%s\n' "$rows" | awk -F'\t' 'NF { split($4, x, "/"); printf "%d\t%s %s\n", x[2], $1, $2 }' \
+    | LC_ALL=C sort -t "$MJ_TAB" -k1,1nr | head -n 5 | awk -F'\t' '{ printf "  %s ms  %s\n", $1, $2 }'
+}
 mj_bench_check() {
   local b; b="$(mj_bench_baseline)"
   [ -f "$b" ] || { mj_fail bench baseline "no baseline at $(mj_rel "$b")" "majordomus bench --write-baseline"; return "$MJ_EX_MISSING"; }
@@ -321,6 +375,7 @@ mj_cmd_bench() {
   # initialised repository is help a newcomer cannot read
   for a in "$@"; do case "$a" in --help|-h) mj_bench_usage; return 0 ;; esac; done
   mj_require_installed
+  if [ "${1:-}" = compare ]; then shift; mj_bench_compare "$@"; return $?; fi
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "bench: the policy does not parse"
   samples="$(mj_pol_req benchmark.samples)"; warmup="$(mj_pol_req benchmark.warmup)"
   while [ $# -gt 0 ]; do case "$1" in

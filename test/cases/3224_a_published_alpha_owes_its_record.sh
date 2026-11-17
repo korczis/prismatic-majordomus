@@ -4,8 +4,8 @@
 # (I2829). A fixture repository in the shape of case 3029, with a stub `gh` on PATH
 # (MJ_RELEASE_CHECK_REPO names the repository, so nothing reaches the network):
 #
-#   1  v9.9.0-alpha.1 tagged and released, with no record and no record branch: the finding;
-#      v0.2.0-ai-documents tagged beside it is never mentioned
+#   1  v9.9.0-alpha.1 tagged and released, with no record and no record branch, past the
+#      grace: the finding; v0.2.0-ai-documents tagged beside it is never mentioned
 #   2  the same with its record: no finding
 #   3  the tree declares 9.9.0 and the newest record is 9.9.0-alpha.1: not behind (a plain
 #      `sort -t.` ranked the pre-release above its own final and called the tree behind)
@@ -60,10 +60,12 @@ STUB
 chmod +x "$T/bin/gh"
 # MJ_ROOT unset: the gate honours it, and a caller that exports it (majordomus finish does) would
 # otherwise have the gate measure that tree instead of this fixture
-gate() { ( cd "$P" && env -u MJ_ROOT PATH="$T/bin:$PATH" GH_STUB_LOG="$LOG" GH_STUB_FX="$FX" MJ_RELEASE_CHECK_REPO=o/r ./scripts/ci/release-check ); }
+gate() { ( cd "$P" && env -u MJ_ROOT PATH="$T/bin:$PATH" GH_STUB_LOG="$LOG" GH_STUB_FX="$FX" MJ_RELEASE_CHECK_REPO=o/r "$@" ./scripts/ci/release-check ); }
 
 # ---------------------------------------------------------------- 1. a released alpha with no record
-expect_exit 10 gate || { echo "    a published pre-release with no record was excused"; exit 1; }
+# inside the grace a fresh release without its record is pending, whatever its run concluded
+# (I4341, case 3029), so what a pre-release owes is measured where a stable release's is: past it
+expect_exit 10 gate MJ_RELEASE_RECORD_GRACE_HOURS=0 || { echo "    a published pre-release with no record was excused"; exit 1; }
 expect_grep "FAIL  v9.9.0-alpha.1 is published and the layer holds no release record for it" \
   || { echo "    the unrecorded pre-release is not named"; exit 1; }
 expect_no_grep 'v0.2.0-ai-documents' || { echo "    a tag whose suffix is not a pre-release was treated as a release"; exit 1; }

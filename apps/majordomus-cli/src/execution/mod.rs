@@ -34,11 +34,17 @@
 //! hearing from it fails it rather than showing it running for ever. With no server, the
 //! run says on stderr that nothing else can see it. A run never starts a server.
 //!
+//! An execution started for an issue holds that issue's exclusive mesh claim while it runs
+//! ([`claim`], I4004): taken when a worker picks it up, refused with the holder named when
+//! another session holds the scope, given back at the final state. With no mesh it runs
+//! unclaimed and says so.
+//!
 //! What it is not: a job system. There is no durable queue, no retry, no schedule and no
 //! execution that outlives the process that accepted it. The store says so — its limits
 //! are typed and its behaviour at each limit is defined — and [`store::Limits`] is where a
 //! durable store would be substituted, because nothing above it names a `Mutex`.
 
+pub mod claim;
 pub mod engine;
 pub mod event;
 pub mod model;
@@ -46,15 +52,16 @@ pub mod redact;
 pub mod sink;
 pub mod store;
 
-pub use engine::{ExecutionEngine, SubmitError};
+pub use engine::{ExecutionEngine, StartOptions, SubmitError, Submitted};
 pub use event::{EventPayload, ExecutionEvent, PROTOCOL_VERSION};
 pub use model::{
-    Actor, ActorKind, Execution, ExecutionDiagnostic, ExecutionError, ExecutionId, ExecutionState,
-    LogStream, ProgressView, RepositoryRef, StepState, StepView,
+    Actor, ActorKind, ClaimStanding, Execution, ExecutionDiagnostic, ExecutionError, ExecutionId,
+    ExecutionState, IdempotencyKey, IssueClaim, LogStream, ProgressView, RepositoryRef, StepState,
+    StepView, MAX_IDEMPOTENCY_KEY,
 };
 pub use redact::redact;
 pub use sink::Progress;
 pub use store::{
-    AdoptError, CancelOutcome, Delivery, EventPage, ExecutionStore, Filter, Limits, ReportOutcome,
-    Seed, REPORT_HEARTBEAT, REPORT_SILENCE,
+    Admission, AdoptError, CancelOutcome, Delivery, EventPage, ExecutionStore, Filter, Idempotency,
+    KeyConflict, Limits, ReportOutcome, Seed, REPORT_HEARTBEAT, REPORT_SILENCE,
 };
