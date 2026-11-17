@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "848d3e55b6aa20cb5a98d28cbe7adb232676457948a43956e64edd5305415b74",
+    "fingerprint": "193b8f3feca350f75da4a45e072c2ef8656552f744fb3adfb8868754ee62650a",
     "summary": {
-      "total": 4032,
+      "total": 4034,
       "builtin": 231,
-      "declarative": 3801,
+      "declarative": 3803,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3801
+        "resource": 3803
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3811
+        "implemented": 3813
       },
       "mcp_tools": 215,
-      "mcp_resources": 3858,
+      "mcp_resources": 3860,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1258,
+        "capabilities": 1259,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 702,
+        "capabilities": 703,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "93ce90036774ceba42c491ead7b58ccd675b663e9d74c248e7cc4206cba27f94",
+    "fingerprint": "dbda19d1e002ef5fb06419b2634ff1b34396e34ef58afddff45a189d1f96ca5f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1258,
+      "issue": 1259,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 702,
+      "test": 703,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 137749
+        "bytes": 137939
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123329,6 +123329,17 @@
         "bytes": 2213
       },
       {
+        "uri": "majordomus://issue/I4627",
+        "kind": "issue",
+        "identity": "I4627",
+        "title": "scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why",
+        "description": "Where the tree's crate came through a merge, scripts/derive uses a borrowed MAJORDOMUS_BIN only when mj_rust_same_generation accepts it: the commit it was built from (MAJORDOMUS_BIN_COMMIT) carries the tree's crate inputs (MJ_RUST_CRATE_INPUTS) byte for byte. Otherwise the derive drops the borrowed executable, prints which merge and which generation answer it refused, and builds this tree's own. The crate came through a merge in exactly two cases. Either MERGE_HEAD is present and the staged merge changes MJ_RUST_CRATE_INPUTS against HEAD, or HEAD is a merge whose crate inputs differ from its first parent's. A merge that leaves the crate alone borrows as before. The scratch derive of a merge in progress is handed the commit its executable is of: the merge commit when the outer derive built it, or the commit a borrowed one was vouched for by. That way it does not build a second time. The release workflow's derive names the commit its executable was built from, because the default branch's tip is usually a merge.",
+        "path": ".ai/repo/project/issues/I4627.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5514
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137358,6 +137369,14 @@
         "bytes": 15204
       },
       {
+        "uri": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "path": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "source_class": "case",
+        "bytes": 7095
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -139872,7 +139891,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1258
+      "objects": 1259
     },
     {
       "name": "knowledge",
@@ -140034,7 +140053,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 702
+      "objects": 703
     },
     {
       "name": "use-case",
