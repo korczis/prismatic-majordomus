@@ -493,6 +493,7 @@ pub struct TestEvidence {
 ///         "recorded_at": "2026-09-26T12:00:00Z", "ledger": "repo"
 ///     }))
 ///     .unwrap(),
+///     suite_coverage: None,
 /// };
 /// // the failing test is one of the three recorded, not a fourth thing that was dropped
 /// assert_eq!(report.recorded - report.passed, 1);
@@ -523,6 +524,10 @@ pub struct RecordReport {
     pub ledger: String,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
+    /// How much of the suite a suite report covered: the cases it named against the cases
+    /// the suite holds (I4600). Absent when no suite report was given.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub suite_coverage: Option<crate::evidence::SuiteCoverage>,
 }
 
 // ---------------------------------------------------------------- handlers
@@ -709,6 +714,7 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         dropped: got.dropped,
         ledger: ledger.path().to_string(),
         run_record: got.run_record,
+        suite_coverage: got.suite_coverage,
     })
 }
 
