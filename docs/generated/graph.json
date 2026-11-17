@@ -82055,6 +82055,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I4628",
+        "kind": "issue",
+        "label": "I4628",
+        "summary": "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy",
+        "route": "/cockpit/objects/issue/i4628",
+        "source": ".ai/repo/project/issues/I4628.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_finish_over_uncommitted_work_says_so"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Turning verification.completed_means_complete on, or changing what #2748 refuses",
+            "Committing on the task's behalf: finish reports, it never commits",
+            "A task whose verify command changes no tracked file and leaves HEAD's tree as it was"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/gates.sh",
+            "lib/finish.sh",
+            "test/cases",
+            ".ai/repo/project/issues/I4628.yaml"
+          ],
+          "serves": [],
+          "slug": "a-finish-over-uncommitted-work-says-so",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -151911,6 +151946,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4628",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4628",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164812,8 +164857,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4510,
-      "edges": 10167,
+      "nodes": 4511,
+      "edges": 10169,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "02fb0784803c7e510ce6bf853ff2b9041957f1b824c28e9d521a4a029385ed18",
+    "fingerprint": "bbee952fa38d847f25f8b8a3d1f9d08b7dc8ee1c4d51f0058ca2751d91caf656",
     "summary": {
-      "total": 4039,
+      "total": 4040,
       "builtin": 231,
-      "declarative": 3808,
+      "declarative": 3809,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3808
+        "resource": 3809
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3818
+        "implemented": 3819
       },
       "mcp_tools": 215,
-      "mcp_resources": 3865,
+      "mcp_resources": 3866,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97205,7 +97205,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1261,
+        "capabilities": 1262,
         "capability_ids": []
       },
       {
@@ -97911,7 +97911,7 @@
     ]
   },
   "index": {
-    "fingerprint": "157908cce1dc761781f180a33561cef413af3f65e11febc40886304ecf8ef07c",
+    "fingerprint": "10d8b04015ada8bfcd6fd80ef5fa37e66f2e3aff6e303c5819489eea168be681",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97951,7 +97951,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1261,
+      "issue": 1262,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105548,7 +105548,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138200
+        "bytes": 138463
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123395,6 +123395,17 @@
         "bytes": 5514
       },
       {
+        "uri": "majordomus://issue/I4628",
+        "kind": "issue",
+        "identity": "I4628",
+        "title": "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy",
+        "description": "finish --outcome completed compares the tree its verify command ran over (task.finished verify.tree) with HEAD's tree, and compares HEAD with the head the task started at. When the verified tree is not HEAD's tree, the change the task verified is not in a commit. The first line finish prints then says so: `finish: <task> completed, NOT COMMITTED: the verified tree <tree> is not HEAD's <tree>`, followed by the command that commits it. task.finished records `committed: false`. Where the policy says completed means complete (verification.completed_means_complete, the key open pull request #2748 wires for I4433), the same condition refuses as #2748 decides. This record changes only what the shipped policy prints and records, so a session that reads finish's last line cannot take uncommitted work for finished.",
+        "path": ".ai/repo/project/issues/I4628.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4852
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -139970,7 +139981,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1261
+      "objects": 1262
     },
     {
       "name": "knowledge",

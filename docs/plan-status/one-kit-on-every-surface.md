@@ -52,6 +52,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/kit.rs with I4594; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4606; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares site/charts.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/src/ui.css with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/ui.js with I4494; they may not run concurrently |
