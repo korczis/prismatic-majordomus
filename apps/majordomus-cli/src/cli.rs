@@ -2326,7 +2326,26 @@ pub struct MonitorArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `monitor` subcommands.
+/// What `monitor` does instead of reading the stream: a question the stream cannot answer
+/// because no source of it carries the answer, such as the steps of a job, asked of GitHub
+/// directly and without a running server.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MonitorCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "monitor", "steps", "--run", "42", "--job", "ci", "--steps", "4-12",
+/// ])
+/// .unwrap();
+/// let Command::Monitor(m) = cli.command else { panic!("expected `monitor`") };
+/// assert!(matches!(m.command, Some(MonitorCommand::Steps(ref s)) if s.run == Some(42)));
+///
+/// // without a subcommand, `monitor` reads the stream
+/// let cli = Cli::try_parse_from(["majordomus", "monitor"]).unwrap();
+/// let Command::Monitor(m) = cli.command else { panic!("expected `monitor`") };
+/// assert!(m.command.is_none());
+/// ```
 pub enum MonitorCommand {
     /// Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read
     Steps(MonitorStepsArgs),
@@ -2399,7 +2418,15 @@ pub struct MonitorStepsArgs {
     pub format: OutputFormat,
 }
 
-/// The steps of a job a caller needs, by the number the jobs API gives each step.
+/// The steps of a job a caller needs, by the number the jobs API gives each step. Both ends
+/// are inclusive, and it prints the way a person writes it, so a reason names the range the
+/// caller typed.
+///
+/// ```
+/// use majordomus_cli::cli::StepRange;
+/// assert_eq!(StepRange { first: 4, last: 12 }.to_string(), "4-12");
+/// assert_eq!(StepRange { first: 7, last: 7 }.to_string(), "7");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct StepRange {
     /// The first step of the range.

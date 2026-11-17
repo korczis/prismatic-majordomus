@@ -23,6 +23,7 @@
 //! answers goes through [`Api`] and every wait through [`Clock`], so the tests feed recorded
 //! `gh api` answers and a clock that only counts.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -401,9 +402,13 @@ fn verdict_of(run: Option<&RunReading>, jobs: &[JobReading], watch: &Watch) -> (
 
 /// Step numbers as spans: `1-4, 8, 25-28`; `none` when there are none.
 fn spans(numbers: &[u64]) -> String {
-    let mut sorted = numbers.to_vec();
-    sorted.sort_unstable();
-    sorted.dedup();
+    // a set keeps them in order and once each; no sort site beside the renderer
+    let sorted: Vec<u64> = numbers
+        .iter()
+        .copied()
+        .collect::<BTreeSet<u64>>()
+        .into_iter()
+        .collect();
     let mut out: Vec<String> = Vec::new();
     let mut i = 0;
     while i < sorted.len() {
@@ -683,16 +688,14 @@ fn pick(runs: &Value, workflow: Option<&str>) -> Result<Option<Value>, Halt> {
         .flatten()
         .filter(|r| workflow.is_none_or(|w| matches(w, r["name"].as_str().unwrap_or_default())))
         .collect();
-    let mut names: Vec<&str> = candidates
+    let names: BTreeSet<&str> = candidates
         .iter()
         .filter_map(|r| r["name"].as_str())
         .collect();
-    names.sort_unstable();
-    names.dedup();
     if names.len() > 1 {
         return Err(Halt::Unreadable(format!(
             "several workflows ran for this head ({}): name one with --workflow",
-            names.join(", ")
+            names.into_iter().collect::<Vec<_>>().join(", ")
         )));
     }
     // the API lists the newest first
