@@ -82018,6 +82018,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4627",
+        "kind": "issue",
+        "label": "I4627",
+        "summary": "scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why",
+        "route": "/cockpit/objects/issue/i4627",
+        "source": ".ai/repo/project/issues/I4627.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_merge_does_not_borrow_a_foreign_executable"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "majordomus generate's own check 3 (refuse_foreign_generation, projects_the_committed_registry): the Rust follow-up named in desired_state",
+            "A tree whose crate moved through a rebase or a cherry-pick rather than a merge",
+            "The landing seat's integration script, which is outside the repository and already fixed",
+            "lib/rust_bin.sh, which two open members of the combined top change: the condition lives in scripts/derive and uses mj_rust_same_generation as it is"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive",
+            ".github/workflows/release.yml",
+            "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+            ".ai/repo/project/issues/I4627.yaml"
+          ],
+          "serves": [],
+          "slug": "a-merge-does-not-borrow-a-foreign-executable",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 4627_a_merge_does_not_borrow_a_foreign_executable 3837_a_derive_does_not_run_mid_merge 3963_a_merge_of_master_derives_in_one_go"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109887,6 +109924,13 @@
         "label": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4618-the-resolver-borrows-a-sibling-executable-sh",
         "source": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "kind": "test",
+        "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
+        "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151857,6 +151901,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4627",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4627",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159632,6 +159686,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164753,8 +164812,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4508,
-      "edges": 10164,
+      "nodes": 4510,
+      "edges": 10167,
       "acyclic": false,
       "truncated": false
     }
