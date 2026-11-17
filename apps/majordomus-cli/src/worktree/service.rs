@@ -26,6 +26,7 @@ use super::error::{Result, WorktreeError};
 use super::git;
 use super::hooks::{self, HooksPath};
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
+use super::landed;
 use super::lock::WorktreeLock;
 use super::model::{
     BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
@@ -831,23 +832,77 @@ impl WorktreeService {
 
         let by_path: BTreeMap<String, &WorktreeState> =
             worktrees.iter().map(|w| (w.path.clone(), w)).collect();
-        let mut branch_states: Vec<BranchState> = branch_refs
+        // What git proves offline about a checked-out branch that the ancestry does not
+        // cover: its content already in the trunk (a squash merge, a train, a cherry-pick),
+        // and its uncommitted changes already in the trunk (records that landed through
+        // another branch). Read only for the full topology `worktree cleanup` asks for, only
+        // where the answer can change eligibility, and against the trunk every other
+        // checkout sees (its remote-tracking branch). 205 worktrees, about 44 GiB, were
+        // finished in exactly these two ways on 2026-11-16 and offered by nothing.
+        let trunk_ref = trunk
+            .branch
+            .as_deref()
+            .filter(|_| detail == Detail::Full)
+            .map(|t| landed::trunk_reference(primary, t));
+        let probes: Vec<Option<&Path>> = branch_refs
             .iter()
             .map(|b| {
+                trunk_ref.as_ref()?;
+                if trunk.is(&b.name) {
+                    return None;
+                }
+                let path = b.worktree.as_deref()?;
+                let h = by_path.get(&display(path))?;
+                if h.standing == Standing::Ephemeral || h.dirty.is_none() {
+                    return None;
+                }
+                let merged = merged.as_ref().is_some_and(|m| m.contains(&b.name));
+                let clean = h.dirty.as_ref().is_some_and(|d| d.clean);
+                (!merged || !clean).then_some(path)
+            })
+            .collect();
+        let readings: Vec<Option<(Option<bool>, Option<bool>)>> = match &trunk_ref {
+            Some(tr) => state::probe_all(&probes, |p| {
+                Some((
+                    landed::content_in(p, "HEAD", tr),
+                    landed::uncommitted_in(p, tr),
+                ))
+            }),
+            None => vec![None; branch_refs.len()],
+        };
+        let mut branch_states: Vec<BranchState> = branch_refs
+            .iter()
+            .zip(readings)
+            .map(|(b, reading)| {
                 let is_trunk = trunk.is(&b.name);
                 let worktree_path = b.worktree.as_deref().map(display);
                 let holder = worktree_path.as_deref().and_then(|p| by_path.get(p));
                 let merged_into_trunk = merged.as_ref().map(|m| m.contains(&b.name));
+                let (content, uncommitted) = reading.unwrap_or((None, None));
+                let landed_by_content = if merged_into_trunk == Some(true) {
+                    None
+                } else {
+                    content
+                };
+                let dirty = holder.and_then(|h| h.dirty.as_ref());
+                let uncommitted_in_trunk = dirty.filter(|d| !d.clean).and(uncommitted);
+                let landed = merged_into_trunk == Some(true) || landed_by_content == Some(true);
                 // A session's scratch checkout is never cleanup-eligible however merged and
                 // clean: the harness that made it removes it, and a listing that offered it
-                // would offer another session's floor.
+                // would offer another session's floor. A branch landed only by content has no
+                // worktree-less form here: `git branch -d` refuses it, and it is kept.
                 let cleanup_eligible = !is_trunk
-                    && merged_into_trunk == Some(true)
+                    && landed
                     && match holder {
-                        None => true,
+                        None => merged_into_trunk == Some(true),
                         Some(h) => {
                             h.standing != Standing::Ephemeral
-                                && h.dirty.as_ref().is_some_and(|d| d.clean)
+                                && dirty.is_some_and(|d| {
+                                    d.clean
+                                        || (d.in_progress.is_none()
+                                            && d.conflicted == 0
+                                            && uncommitted_in_trunk == Some(true))
+                                })
                         }
                     };
                 BranchState {
@@ -862,6 +917,8 @@ impl WorktreeService {
                     worktree: worktree_path,
                     upstream: b.upstream.clone(),
                     merged_into_trunk,
+                    landed_by_content,
+                    uncommitted_in_trunk,
                     cleanup_eligible,
                     issue: state::issue_of(&b.name, &self.issue_ids),
                 }
