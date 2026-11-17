@@ -337,6 +337,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I1997` | shares test/cases with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4605; they may not run concurrently |
@@ -510,6 +511,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I2059` | shares test/cases with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4605; they may not run concurrently |
@@ -686,6 +688,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I2114` | shares test/cases with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares lib/check.sh with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4605; they may not run concurrently |
@@ -999,6 +1002,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I2714` | shares test/cases with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4605; they may not run concurrently |
