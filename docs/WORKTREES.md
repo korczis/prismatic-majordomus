@@ -463,8 +463,10 @@ checked-out branch, when its content is there: `git merge-tree --write-tree <tru
 writes the trunk's own tree, so merging it would change nothing (`landed_by_content`). That
 covers a squash merge, a train and a cherry-pick, none of which leaves the tip an ancestor. A
 worktree whose `git status` is not empty is still spare when every path it reports holds,
-blob and mode, exactly what the trunk holds there, or is absent from both
-(`uncommitted_in_trunk`): records that landed through another branch. Both readings are taken
+blob and mode, exactly what the trunk holds there, or is absent from both, and every staged
+version among them is the trunk's too (`uncommitted_in_trunk`): records that landed through
+another branch. A symbolic link, a nested repository, an unresolved conflict or a path the
+file system will not describe is never judged equal. Both readings are taken
 against the trunk's remote-tracking branch, by `apps/majordomus-cli/src/worktree/landed.rs`,
 and both are exact: one byte the trunk lacks, committed or not, keeps the worktree. On
 2026-11-16 205 worktrees (about 44 GiB) on one machine were finished in exactly these ways and

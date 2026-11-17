@@ -1366,6 +1366,157 @@ mod tests {
         assert!(why.contains("uncommitted work"), "{why}");
     }
 
+    /// Commit `path` with `text` on the trunk of `repo` and push it.
+    fn land_on_trunk(repo: &Path, path: &str, text: &str) {
+        std::fs::write(repo.join(path), text).expect("write");
+        git(repo, &["add", "-A"]);
+        git(repo, &["commit", "-qm", path]);
+        git(repo, &["push", "-q", "origin", "master"]);
+    }
+
+    /// A branch with one file, pushed, squash-merged into the trunk and checked out in its
+    /// own worktree: landed by content, never by ancestry.
+    fn squashed(repo: &Path, svc: &WorktreeService, name: &str) -> String {
+        git(repo, &["switch", "-q", "-c", name, "master"]);
+        std::fs::write(repo.join(format!("{name}.txt")), "squashed\n").expect("write");
+        git(repo, &["add", "-A"]);
+        git(repo, &["commit", "-qm", name]);
+        git(repo, &["push", "-q", "-u", "origin", name]);
+        git(repo, &["switch", "-q", "master"]);
+        git(repo, &["merge", "-q", "--squash", name]);
+        git(repo, &["commit", "-qm", "squash"]);
+        git(repo, &["push", "-q", "origin", "master"]);
+        let at = svc.expected_path_of(name).expect("a path");
+        let at = at.to_string_lossy().to_string();
+        git(repo, &["worktree", "add", "-q", at.as_str(), name]);
+        at
+    }
+
+    #[test]
+    fn the_listing_says_how_each_finished_worktree_goes_and_the_reclaim_takes_them() {
+        let (tmp, svc, b) = nominated();
+        let repo = tmp.path().canonicalize().expect("canonical").join("repo");
+        let spare = b.worktree.clone().expect("a worktree");
+        let landed = squashed(&repo, &svc, "landed");
+        let both = squashed(&repo, &svc, "both");
+        // a record that reached the trunk through another branch, uncommitted in two of them
+        land_on_trunk(&repo, "late.txt", "late\n");
+        for at in [&spare, &both] {
+            std::fs::write(Path::new(at).join("late.txt"), "late\n").expect("write");
+        }
+        // the service reads the registered worktrees when it opens, as each command run does
+        let svc = WorktreeService::open(&repo).expect("open the service");
+
+        let text = at_every_line(|out| cleanup(&svc, OutputFormat::Text, false, out));
+        assert!(
+            text.starts_with("landed in the trunk (merged, or its content is there)"),
+            "{text}"
+        );
+        for (branch, how) in [
+            ("spare", "its uncommitted changes are already in the trunk)"),
+            ("landed", "landed by content; the branch is kept)"),
+            (
+                "both",
+                "landed by content, its uncommitted changes are in the trunk)",
+            ),
+        ] {
+            assert!(
+                text.lines().any(|l| l.trim_start().starts_with(branch)
+                    && l.contains("majordomus worktree cleanup --remove")
+                    && l.ends_with(how)),
+                "{branch}: {text}"
+            );
+        }
+        if occupied(&spare).is_none() {
+            eprintln!("no lsof: the occupancy reading refuses first, which is its own test");
+            return;
+        }
+        git(
+            &repo,
+            &[
+                "worktree",
+                "lock",
+                "--reason",
+                "held by a test",
+                both.as_str(),
+            ],
+        );
+        let svc = WorktreeService::open(&repo).expect("open the service");
+        let why = refusal(&svc, "both", &both).expect_err("a lock is refused");
+        assert!(why.contains("it is locked (held by a test)"), "{why}");
+
+        // removing is done once: a writer refused midway would leave nothing to remove after
+        let mut out: Vec<u8> = Vec::new();
+        assert_eq!(
+            cleanup(&svc, OutputFormat::Text, true, &mut out).expect("reclaimed"),
+            0
+        );
+        let text = String::from_utf8(out).expect("utf-8");
+        assert!(text.contains("removed   spare\n"), "{text}");
+        assert!(text.contains("removed   landed\n"), "{text}");
+        assert!(text.contains("refused   both"), "{text}");
+        assert!(text.contains("1 refused; no branch was deleted"), "{text}");
+        assert!(!Path::new(&spare).exists() && !Path::new(&landed).exists());
+        assert!(Path::new(&both).exists(), "the locked worktree stays");
+    }
+
+    #[test]
+    fn nothing_finished_is_said_so() {
+        let (tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        let repo = tmp.path().canonicalize().expect("canonical").join("repo");
+        git(&repo, &["worktree", "remove", path.as_str()]);
+        git(&repo, &["branch", "-q", "-D", "spare"]);
+        let text = at_every_line(|out| cleanup(&svc, OutputFormat::Text, false, out));
+        assert!(text.starts_with("nothing is cleanup-eligible"), "{text}");
+    }
+
+    #[test]
+    fn the_reclaim_refuses_what_it_cannot_read() {
+        let (tmp, svc, b) = nominated();
+        let root = tmp.path().canonicalize().expect("canonical");
+        let repo = root.join("repo");
+        let path = b.worktree.clone().expect("a worktree");
+
+        let why = refusal(&svc, "nosuch", &path).expect_err("refused");
+        assert!(why.contains("the branch no longer exists"), "{why}");
+        git(&repo, &["branch", "-q", "local"]);
+        let why = refusal(&svc, "local", &path).expect_err("refused");
+        assert!(why.contains("no upstream"), "{why}");
+        let gone = root.join("gone").to_string_lossy().to_string();
+        let why = refusal(&svc, "spare", &gone).expect_err("refused");
+        assert!(
+            why.contains("cannot tell whether anything is working inside it"),
+            "{why}"
+        );
+
+        if occupied(&path).is_some() {
+            let plain = root.join("plain");
+            std::fs::create_dir(&plain).expect("mkdir");
+            let why = refusal(&svc, "spare", &plain.to_string_lossy()).expect_err("refused");
+            assert!(why.contains("could not read its working tree"), "{why}");
+
+            let mut inside = std::process::Command::new("sleep")
+                .arg("60")
+                .current_dir(&path)
+                .spawn()
+                .expect("a process inside");
+            let why = refusal(&svc, "spare", &path);
+            inside.kill().expect("kill");
+            inside.wait().expect("wait");
+            let why = why.expect_err("refused");
+            assert!(
+                why.contains("a process has its working directory inside it"),
+                "{why}"
+            );
+        }
+
+        // the repository moved away after the listing: the branch cannot be read
+        std::fs::rename(&repo, root.join("moved")).expect("move");
+        let why = refusal(&svc, "spare", &path).expect_err("refused");
+        assert!(why.contains("could not read the branch"), "{why}");
+    }
+
     /// A writer that takes `lines` whole lines and refuses every write after them: a closed
     /// pipe, at a chosen line.
     struct Refusing {
