@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "b6da5bc9482d0c0331aabd6329054691e2eeb4b44a4734e57a723e92962cc9f2",
+    "fingerprint": "8c74c27404d40bb93df76f49fb663c37b7f802220fa94bc2f076b897af05e608",
     "summary": {
-      "total": 4039,
+      "total": 4042,
       "builtin": 231,
-      "declarative": 3808,
+      "declarative": 3811,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3808
+        "resource": 3811
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3818
+        "implemented": 3821
       },
       "mcp_tools": 215,
-      "mcp_resources": 3865,
+      "mcp_resources": 3868,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97205,7 +97205,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1262,
+        "capabilities": 1265,
         "capability_ids": []
       },
       {
@@ -97911,7 +97911,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4cf289171fd7e6e3b8e1be1b4330dae163905dbe375be621dfbb5210121654f7",
+    "fingerprint": "a78cda90db4047cb349d5a6bf99501e43ac7ccd609f76dd8528308e49b5946cb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97951,7 +97951,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1262,
+      "issue": 1265,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105548,7 +105548,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138324
+        "bytes": 139139
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122072,7 +122072,7 @@
         "path": ".ai/repo/project/issues/I4357.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6173
+        "bytes": 7708
       },
       {
         "uri": "majordomus://issue/I4358",
@@ -123047,11 +123047,11 @@
         "kind": "issue",
         "identity": "I4569",
         "title": "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick",
-        "description": "release-path.yml runs `scripts/ci/release-path resume` on the completion of every workflow of the release path (release, pages, the record branch's validate) through a workflow_run trigger, so a yielded pull-request validate starts again within minutes of the path clearing, with the 15-minute schedule kept as the backstop.",
+        "description": "Every run of the release path asks `scripts/ci/release-path resume --self \\\"$GITHUB_RUN_ID\\\"` when it ends, from a final aggregate job of its own. That job needs every other job, carries a job-level `if: always()`, and holds the permissions resume needs, as validate.yml's `ci` job already does for runs that are not a pull request's. pages.yml and release.yml gain such a job. validate.yml's resume also runs for the record pull request's own run. A yielded pull-request validate then starts again when the run that held the path ends, and the schedule stays as the backstop. A workflow_run trigger in release-path.yml is not the mechanism: release.yml dispatches the path's pages and record-validate runs with the job's GITHUB_TOKEN, and GitHub starts no workflow from events that token causes, so their completion would start nothing.",
         "path": ".ai/repo/project/issues/I4569.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2741
+        "bytes": 6855
       },
       {
         "uri": "majordomus://issue/I4570",
@@ -123296,6 +123296,17 @@
         "bytes": 7907
       },
       {
+        "uri": "majordomus://issue/I4597",
+        "kind": "issue",
+        "identity": "I4597",
+        "title": "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not",
+        "description": "A repository declares in its policy the lines its own tooling recomputes on every change: a path glob, a whole-line pattern, and the writer that produces the line for a given tree, as an executable with an argument list (never a command string). The declaration is read from master's policy only, as allocates_at already reads master's (relation.rs:226). The relation to master treats a conflict whose every conflicting hunk, on both sides, consists of lines matching the pattern as the refresh's: the executor's refresh (drain.rs refresh_branch) merges master in, runs the writer on the merged tree, stages the file it rewrote, and the derive follows. A hunk that does not match keeps the whole path authored. Each open pull request's ChangeShape records whether its change of such a path touches only matching lines, and classify::overlaps reports two pull requests that share a path only through such lines as OverlapKind::Recomputed, which the queue's contention count leaves out.",
+        "path": ".ai/repo/project/issues/I4597.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7005
+      },
+      {
         "uri": "majordomus://issue/I4598",
         "kind": "issue",
         "identity": "I4598",
@@ -123305,6 +123316,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3563
+      },
+      {
+        "uri": "majordomus://issue/I4599",
+        "kind": "issue",
+        "identity": "I4599",
+        "title": "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence",
+        "description": "proceed.step's wait carries the class of every wait it found: a dependency, another worker, a milestone gate, or the person. Waits are classified over the milestone the decision is taken for (proceed.rs:262, the asked or the active milestone), not over the whole plan. An unfinished issue of that milestone waits on the person when it is ACTIVE and its own open pull request is recorded with a disposition that only a person's act releases: WaitingForReview (a person reviews), Conflicting (a person resolves) or Unsafe (a person disarms). The pull request is matched to the issue through the assessment's issue field (model.rs:1179-1184). It also waits on the person when it is BLOCKED and every dependency chain from it ends, transitively, at such an issue. When every unfinished issue of the milestone waits on the person, the order is `wait_on_person`. It lists each such pull request with its number and disposition, and its next_due_at follows the cadence the policy declares for the person. The report it announces says so in one line, so a loop that proceeds stops polling every five minutes for an act only the person can take.",
+        "path": ".ai/repo/project/issues/I4599.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6882
       },
       {
         "uri": "majordomus://issue/I4600",
@@ -123404,6 +123426,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4061
+      },
+      {
+        "uri": "majordomus://issue/I4622",
+        "kind": "issue",
+        "identity": "I4622",
+        "title": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+        "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one as an executable and argument list (never a command string), watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
+        "path": ".ai/repo/project/issues/I4622.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7510
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -139973,7 +140006,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1262
+      "objects": 1265
     },
     {
       "name": "knowledge",
