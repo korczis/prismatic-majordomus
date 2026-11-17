@@ -287,9 +287,24 @@ each status's text with its own ground, and the primitives say the rest: a rule 
 colour and a background states a pair, a rule setting only a colour states a foreground that
 lands on every ground a container sets — so a role added tomorrow is measured tomorrow and
 no list has to be kept. The threshold is WCAG 2.1 AA, 4.5:1 for text, the same constant
-`scripts/lib/ui-contrast.mjs` holds for the generated highlighting palettes; a border is
-measured against 3:1 and reported rather than enforced, because the primitive that draws it
-always shows the word beside it.
+`scripts/lib/ui-contrast.mjs` holds; a border is measured against 3:1 and reported rather
+than enforced, because the primitive that draws it always shows the word beside it.
+
+## Highlighted code
+
+Every code block on every surface is highlighted by one engine (ADR 0166 §7): giallo, the
+highlighter Zola 0.23 embeds, which the executable embeds too at the same version. The site
+gets it through Zola; the Cockpit, the UI and the reports through `crate::highlight`, which
+configures it exactly as `site/config.toml` configures Zola, so a block carries the same spans
+and classes wherever it is drawn. The handbook reads the same stylesheet.
+
+The engine's theme (`site/highlighting/majordomus.json`, generated) decides which scope is
+which *kind* of token and nothing else: its colours are sentinels, so a class names a kind
+(`z-2` is a keyword everywhere). The colours are the `code-*` roles above, and
+`share/design/code.css`, generated from them, is imported by every Tailwind build, so one
+stylesheet colours code in both themes and `design.contrast` measures it like any other
+foreground. `scripts/ci/highlighter-check` refuses a second highlighter — highlight.js,
+Prism, Shiki or a CDN copy of any — on every surface.
 
 ## Introspection
 

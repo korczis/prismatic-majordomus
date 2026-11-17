@@ -16,7 +16,7 @@ use crate::monitor::{MonitorPage, MonitorSeverity, MonitorSignal, MonitorSourceH
 use super::html::{el, El};
 use super::nav::Area;
 use super::pages::{ask, failed, param, Page};
-use super::view::{card, card_with, pre, table, word_badge};
+use super::view::{card, card_with, code, table, word_badge};
 
 /// How many signals the first page shows.
 const FIRST_PAGE: u64 = 100;
@@ -124,7 +124,8 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
             .child(card(
                 "From a terminal",
                 // the scrolling block every listing uses: a bare <pre> is wider than a phone
-                pre(
+                code(
+                    "bash",
                     "majordomus monitor --for 1b            # this page, for one reader\nmajordomus monitor --follow             # keep printing what is new\nmajordomus monitor --follow --match '#885' --until merged --timeout 1h",
                 ),
             )),

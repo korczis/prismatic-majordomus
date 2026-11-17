@@ -172,6 +172,10 @@ documents:
       - json
       - markdown
       - yaml
+  - id: design-code
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - text
   - id: design-declaration
     source: "share/design/tokens.yaml, the one declaration of the design"
     formats:
@@ -238,6 +242,10 @@ documents:
       - json
   - id: graph-schema
     source: "the schema of the composed graph, generated from its types"
+    formats:
+      - json
+  - id: highlight-theme
+    source: "apps/majordomus-cli/src/highlight.rs, the kinds of token the highlighter tells apart"
     formats:
       - json
   - id: install-guide
@@ -1384,8 +1392,8 @@ artifacts:
     document: design-declaration
     format: yaml
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 21257
-    sha256: a18fd8892e1d1b7baf86671970530f64235b6f94a72716167535ce3d898073ea
+    bytes: 22637
+    sha256: 7ecdbee2693ebcf4db728c4e21ca3e7592a4e8af7ad484aedd8635f9a0c27837
   - path: apps/majordomus-cli/src/ui/icons.toml
     document: ui-icons
     format: text
@@ -1396,8 +1404,8 @@ artifacts:
     document: design-tokens
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 9319
-    sha256: 94a6886496c89bf1a3526f076a2917f3367e30739479c75e4747c9b2bc007141
+    bytes: 10329
+    sha256: 06f3984958683682215e4d4be02c7a277157abf2fc6ee5139768374b4e92bf6a
   - path: deploy/Dockerfile
     document: deployment
     format: text
@@ -1482,21 +1490,21 @@ artifacts:
     format: json
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 1924571
-    sha256: 23d1a2535b588621fe2ffb07c4ef0afb986f1a69f78022567d4d949e809bb649
+    bytes: 1923599
+    sha256: ad7a17f39dd0a648d78b1fcc77cfc93cb0177bda848af1edf50d25f815cb828f
   - path: docs/generated/changelog.md
     document: changelog
     format: markdown
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 365862
-    sha256: d297268b3f0a3b1be75392b0b0d08c2319f90e67be832f712d39c3b919c330c2
+    bytes: 365545
+    sha256: a4d1878e2d9c97e01bc0d072ea18f6774acb6afaa9aba41c004a4ab166a121c3
   - path: docs/generated/changelog.yaml
     document: changelog
     format: yaml
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 1513705
-    sha256: e830696c6a1459841e1dab8a4b26bb1c9ace3821b48af451f829013e8b7b8688
+    bytes: 1512851
+    sha256: a96fed1757bbe4a9bcf97b0cbd7674c5d2bea5be4c7e99080451074f3e9687e4
   - path: docs/generated/cli.json
     document: cli
     format: json
@@ -1522,21 +1530,21 @@ artifacts:
     format: json
     schema: majordomus/design-system/v1
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 155549
-    sha256: b04f03c08d6dbea1a8b4e7cafd4f6b49b663c4ad9041ccbf7520b83d9cf2d938
+    bytes: 164030
+    sha256: a24233bbc8f0faa7456df8815b04de80f0f1ddd77bc365052a778f55b84aab97
   - path: docs/generated/design.md
     document: design
     format: markdown
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 11790
-    sha256: 48a9021b6bfe3992c6a2d694c3d7b9162a285b5dd83b846f9e0a434e32a16505
+    bytes: 12648
+    sha256: 972d1c914cc40d176eb37395a62e3956cba7be7dcd0ab12fe01b017112db61c9
   - path: docs/generated/design.yaml
     document: design
     format: yaml
     schema: majordomus/design-system/v1
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 126199
-    sha256: bc620498eefe6bce8ebed26fe2072e65c7c7e8284785e41d2921079e9ef46d13
+    bytes: 133028
+    sha256: 9222b27d4304ded25a5c8a795d1e600817e77230389ec694d8d982f93a1afbe6
   - path: docs/generated/distribution-matrix.json
     document: distribution-matrix
     format: json
@@ -1568,14 +1576,14 @@ artifacts:
     format: json
     source: the composed graph under site/data/publication.toml
     bytes: 730995
-    sha256: 805cb2309fa799884d26d5b458ba5ab74cf24746fcfdd2fa7eb6ad661786644b
+    sha256: e970fcb2ff7300ce3a6565d1d9dcbb0f322b166c0320da997431fab27e200772
   - path: docs/generated/graph.json
     document: graph
     format: json
     schema: majordomus/capability-graph/v1
     source: the composed graph of the registry and the index
-    bytes: 6620918
-    sha256: 50ec7d560275a804504d02918ab5d1cd81de9951001811c14cae787fb520538c
+    bytes: 6621673
+    sha256: 5524d14382f797aed09ec19004ec821ca049a97ba8245d97d64394d95f7eb380
   - path: docs/generated/graph.schema.json
     document: graph-schema
     format: json
@@ -2206,18 +2214,24 @@ artifacts:
     source: "share/design/brand/logo-mark.svg, the canonical mark"
     bytes: 903
     sha256: c6b07e82ce6f914862c57e779a3c8d91afec76654ed5d7972ba0f5b73a7a6185
+  - path: share/design/code.css
+    document: design-code
+    format: text
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 1127
+    sha256: 8e331b8aaeff0a1a5abec228cc0dc617b414d034e1afe7f0bcc4bd779b706087
   - path: share/design/status.css
     document: design-status
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 13326
-    sha256: 603b6dbc03e9a3c4de0e5eac02cc0816b1bd2690d8cf3a902565fe887ad4bfd2
+    bytes: 13783
+    sha256: 9dc22ea336a5eee125e75cf1cabbdb32e217d5b337e67c014403d7729f508c07
   - path: share/design/surface.css
     document: design-surface
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 6061
-    sha256: b605e5cb6c7d900ca8a391bd5b6c6326d0c275deed3ac9d3e6e1c4848af83f48
+    bytes: 6753
+    sha256: 77dc0348ee90de2fadac34e49e6fc750d53c9804f0527da0db07a497aab096cc
   - path: share/design/theme.css
     document: design-theme
     format: text
@@ -2343,8 +2357,8 @@ artifacts:
     format: json
     schema: majordomus-site-design/v1
     source: "share/design/tokens.yaml, the one declaration of the design"
-    bytes: 11586
-    sha256: 74327c2460fd9c51c5071e18a7b5860682bd9ad53facbf1500c4ff192f0ceb08
+    bytes: 13289
+    sha256: 4312ab433a4c4c275b92aa4b3cbe53b21eafb4b323750e67703b05aa9f4c0880
   - path: site/data/registry/distribution.json
     document: site-distribution
     format: json
@@ -2356,8 +2370,8 @@ artifacts:
     format: json
     schema: majordomus-site-evidence-subjects/v1
     source: "the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases"
-    bytes: 879713
-    sha256: 92c9613d57c4432591712228055cfa293a6de7150cf0ca96ed0c9e3c227b49b1
+    bytes: 879747
+    sha256: f61c96a2d4a06b29e4e819a403a274cdb3fc3a29134bb504090bc68b8d226a00
   - path: site/data/registry/product-graph.json
     document: site-product-graph
     format: json
@@ -2370,14 +2384,14 @@ artifacts:
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
     bytes: 786081
-    sha256: 6cd0f1ac97dad3df764a2a0152df8e5cf06c551852952e49ddbc70151faa5cc8
+    sha256: 398234249c642f3583d17730b5109dd844a69a3454793039aec16faaac6e14a1
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 9054536
-    sha256: 4b572f577c82b23a5b7a0a4ef69e31ac209ba65aa8a5d8d860efbd2ada449077
+    bytes: 9054814
+    sha256: 19fc47ae7c3f3f867a6ccd8655dd1446662f28dbe03c454db2595548cd1c3ac5
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json
@@ -2391,6 +2405,12 @@ artifacts:
     source: "the operational moments, audiences and areas of this repository's layer"
     bytes: 349923
     sha256: 72af2ec61ce206c44b90832fe6dbb88e83731e7ec2a27f33ec4973020e21bc55
+  - path: site/highlighting/majordomus.json
+    document: highlight-theme
+    format: json
+    source: "apps/majordomus-cli/src/highlight.rs, the kinds of token the highlighter tells apart"
+    bytes: 3664
+    sha256: 17038282b417bbec07b1da30a33a0ad45edb93626368a8ffe1e33ac841d17fae
   - path: site/static/favicon.svg
     document: design-mark
     format: text

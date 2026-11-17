@@ -47,6 +47,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `cli` | `json`, `markdown`, `yaml` | `majordomus/cli/v1` | the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it |
 | `deployment` | `text` | — | .ai/repo/deployments/majordomus.yaml |
 | `design` | `json`, `markdown`, `yaml` | `majordomus/design-system/v1` | share/design/tokens.yaml, the one declaration of the design |
+| `design-code` | `text` | — | share/design/tokens.yaml, the one declaration of the design |
 | `design-declaration` | `yaml` | — | share/design/tokens.yaml, the one declaration of the design |
 | `design-logo` | `text` | — | share/design/brand/logo.svg, the canonical logo |
 | `design-mark` | `text` | — | share/design/brand/logo-mark.svg, the canonical mark |
@@ -63,6 +64,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `entities` | `json` | — | the composed graph under site/data/publication.toml |
 | `graph` | `json` | `majordomus/capability-graph/v1` | the composed graph of the registry and the index |
 | `graph-schema` | `json` | — | the schema of the composed graph, generated from its types |
+| `highlight-theme` | `json` | — | apps/majordomus-cli/src/highlight.rs, the kinds of token the highlighter tells apart |
 | `install-guide` | `markdown` | — | share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL) |
 | `installer` | `text` | — | share/distribution.yaml and the release records |
 | `modules/artifacts` | `markdown` | — | the `artifacts` module of the canonical Majordomus capability registry |
@@ -303,9 +305,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `CLAUDE.md` | `providers/claude-code` | markdown | 7998 | `835562a51a2b7bdb` |
 | `GEMINI.md` | `providers/gemini` | markdown | 8216 | `62b042961512aba6` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 903 | `c6b07e82ce6f9148` |
-| `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21257 | `a18fd8892e1d1b7b` |
+| `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 22637 | `7ecdbee2693ebcf4` |
 | `apps/majordomus-cli/src/ui/icons.toml` | `ui-icons` | text | 9026 | `bd913059eed3ce79` |
-| `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9319 | `94a6886496c89bf1` |
+| `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 10329 | `06f3984958683682` |
 | `deploy/Dockerfile` | `deployment` | text | 4608 | `b0cc326e4f5b85ae` |
 | `deploy/gigalixir/Procfile` | `deployment` | text | 522 | `5dbc7258766f2753` |
 | `deploy/gigalixir/bin/compile` | `deployment` | text | 432 | `ec41143398e3794a` |
@@ -319,21 +321,21 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 28297 | `63ead9b709a58147` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 45598 | `b51f2bff98ce9737` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 49204 | `798021624fee211d` |
-| `docs/generated/changelog.json` | `changelog` | json | 1924571 | `23d1a2535b588621` |
-| `docs/generated/changelog.md` | `changelog` | markdown | 365862 | `d297268b3f0a3b1b` |
-| `docs/generated/changelog.yaml` | `changelog` | yaml | 1513705 | `e830696c6a145984` |
+| `docs/generated/changelog.json` | `changelog` | json | 1923599 | `ad7a17f39dd0a648` |
+| `docs/generated/changelog.md` | `changelog` | markdown | 365545 | `a4d1878e2d9c97e0` |
+| `docs/generated/changelog.yaml` | `changelog` | yaml | 1512851 | `a96fed1757bbe4a9` |
 | `docs/generated/cli.json` | `cli` | json | 1395007 | `b60587ae27943db1` |
 | `docs/generated/cli.md` | `cli` | markdown | 614922 | `c14fa743c048da89` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 1094022 | `12a055970d9fdb5b` |
-| `docs/generated/design.json` | `design` | json | 155549 | `b04f03c08d6dbea1` |
-| `docs/generated/design.md` | `design` | markdown | 11790 | `48a9021b6bfe3992` |
-| `docs/generated/design.yaml` | `design` | yaml | 126199 | `bc620498eefe6bce` |
+| `docs/generated/design.json` | `design` | json | 164030 | `a24233bbc8f0faa7` |
+| `docs/generated/design.md` | `design` | markdown | 12648 | `972d1c914cc40d17` |
+| `docs/generated/design.yaml` | `design` | yaml | 133028 | `9222b27d4304ded2` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
 | `docs/generated/economics.json` | `economics` | json | 56203 | `255727fd3c174f43` |
 | `docs/generated/economics.md` | `economics` | markdown | 15763 | `bb58e1ceb0de1152` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46587 | `f5aaf18e6a0efe90` |
-| `docs/generated/entities.json` | `entities` | json | 730995 | `805cb2309fa79988` |
-| `docs/generated/graph.json` | `graph` | json | 6620918 | `50ec7d560275a804` |
+| `docs/generated/entities.json` | `entities` | json | 730995 | `e970fcb2ff7300ce` |
+| `docs/generated/graph.json` | `graph` | json | 6621673 | `5524d14382f797ae` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7616 | `04634022cb111419` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `387fd91b92199232` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2531 | `b859cb7d9c9acbc1` |
@@ -438,8 +440,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/use-case.txt` | `allow/use-case` | text | 546 | `6c88056899cc9617` |
 | `share/allow/workspace.txt` | `allow/workspace` | text | 567 | `3a8d9f5308252c1c` |
 | `share/cockpit/favicon.svg` | `design-mark` | text | 903 | `c6b07e82ce6f9148` |
-| `share/design/status.css` | `design-status` | text | 13326 | `603b6dbc03e9a3c4` |
-| `share/design/surface.css` | `design-surface` | text | 6061 | `b605e5cb6c7d900c` |
+| `share/design/code.css` | `design-code` | text | 1127 | `8e331b8aaeff0a1a` |
+| `share/design/status.css` | `design-status` | text | 13783 | `9dc22ea336a5eee1` |
+| `share/design/surface.css` | `design-surface` | text | 6753 | `77dc0348ee90de2f` |
 | `share/design/theme.css` | `design-theme` | text | 2407 | `8362191b325fdeb3` |
 | `share/schemas/majordomus/adr/adr.v1.schema.json` | `schemas/majordomus.adr/v1` | json | 6106 | `e272971b56b0d5cd` |
 | `share/schemas/majordomus/application/application.v1.schema.json` | `schemas/majordomus.application/v1` | json | 3960 | `c0689f0fe1346b14` |
@@ -460,14 +463,15 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bbda2e2e9c59cef4` |
 | `share/ui/favicon.svg` | `design-mark` | text | 903 | `c6b07e82ce6f9148` |
 | `share/version.txt` | `version` | text | 229 | `548300779919b17b` |
-| `site/data/registry/design.json` | `site-design` | json | 11586 | `74327c2460fd9c51` |
+| `site/data/registry/design.json` | `site-design` | json | 13289 | `4312ab433a4c4c27` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `d83825c6e5972b63` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 879713 | `92c9613d57c44325` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 879747 | `f61c96a2d4a06b29` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 112747 | `3195819f9bd9dba5` |
-| `site/data/registry/product.json` | `site-product` | json | 786081 | `6cd0f1ac97dad3df` |
-| `site/data/registry/registry.json` | `site-registry` | json | 9054536 | `4b572f577c82b23a` |
+| `site/data/registry/product.json` | `site-product` | json | 786081 | `398234249c642f35` |
+| `site/data/registry/registry.json` | `site-registry` | json | 9054814 | `19fc47ae7c3f3f86` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `11d5802c80358f24` |
 | `site/data/registry/why.json` | `site-why` | json | 349923 | `72af2ec61ce206c4` |
+| `site/highlighting/majordomus.json` | `highlight-theme` | json | 3664 | `17038282b417bbec` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `c6b07e82ce6f9148` |
 | `site/static/images/logo-mark.svg` | `design-mark` | text | 903 | `c6b07e82ce6f9148` |
 | `site/static/images/logo.svg` | `design-logo` | text | 1058 | `0d079a36454dff11` |

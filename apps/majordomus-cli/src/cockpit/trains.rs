@@ -14,7 +14,7 @@ use super::html::{el, El, Node};
 use super::nav::Area;
 use super::pages::{ask, disposition_status, failed, word, Page};
 use super::view::{
-    alert, badge, card, card_with, cell, details, facts, link, mono, nothing, pre, row, statistic,
+    alert, badge, card, card_with, cell, code, details, facts, link, mono, nothing, row, statistic,
     table, tag, text_cell, word_badge,
 };
 use crate::capability::Context;
@@ -53,7 +53,9 @@ fn of_view(view: TrainsView) -> Page {
             .child(el("p").class("mj-prose").text(
                 "The page reads; nothing here pushes, fetches or moves a ref. The prepared heads under refs/prep/ are the executor's, pushed at each link's turn.",
             ))
-            .child(pre(format!(
+            .child(code(
+                "bash",
+                format!(
                 "majordomus prs refresh                  # observe the forge now; the one network read\n\
                  majordomus prs trains                   # these trains, in landing order\n\
                  majordomus prs trains --format json     # the same answer this page draws\n\

@@ -29,7 +29,7 @@ const fs = require('fs'), path = require('path');
         blocks: document.querySelectorAll('#rd-body > *').length, inl: document.querySelectorAll('#rd-body a.md-in').length,
         gh: document.querySelectorAll('#rd-body a.md-gh').length, ext: document.querySelectorAll('#rd-body a.md-ext').length,
         mer: document.querySelectorAll('#rd-body .md-mermaid svg').length, merSrc: document.querySelectorAll('#rd-body pre.mermaid-src').length,
-        hl: document.querySelectorAll('#rd-body .hljs span').length, boxes: Array.from(document.querySelectorAll('.rd-box-h')).map((x) => x.textContent).join(' | '),
+        hl: document.querySelectorAll('#rd-body .giallo span[class^="z-"]').length, boxes: Array.from(document.querySelectorAll('.rd-box-h')).map((x) => x.textContent).join(' | '),
         meta: !!document.querySelector('.rd-meta'), tables: document.querySelectorAll('#rd-body .table-wrap').length }));
       console.log(theme, doc.split('/').pop(), JSON.stringify(r));
       if (doc.includes('HOW_IT') || doc.includes('0044')) await p.locator('#rd-doc').screenshot({ path: path.join(OUT, `rd-${doc.split('/').pop().slice(0, 8)}-${theme}.png`) }).catch(() => {});

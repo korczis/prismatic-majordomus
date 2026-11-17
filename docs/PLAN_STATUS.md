@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `22b59f6120a1`.
+Generated from canonical inputs `239652ad543a`.
 
 ## Milestones
 
@@ -126,7 +126,7 @@ Generated from canonical inputs `22b59f6120a1`.
 | [the-session-domain-is-written-once](https://majordomus.dev/plan/the-session-domain-is-written-once/) | ACTIVE | 1/9 | 1 | 7 | 0 | 0 | 0 | Each lifecycle transition has one implementation in the typed domain; the shell commands keep their arguments, output and exit codes and delegate; a closed record states whether it is complete. | [`plan-status/the-session-domain-is-written-once.md`](plan-status/the-session-domain-is-written-once.md) |
 | [the-ui-runs-and-explains](https://majordomus.dev/plan/the-ui-runs-and-explains/) | PLANNED | 0/7 | 3 | 4 | 0 | 0 | 0 | I3225, I3226, I3227, I3228, I3229 and I3230 close these gaps on the existing screens. | [`plan-status/the-ui-runs-and-explains.md`](plan-status/the-ui-runs-and-explains.md) |
 | [the-ui-works-on-a-phone](https://majordomus.dev/plan/the-ui-works-on-a-phone/) | PLANNED | 0/4 | 2 | 2 | 0 | 0 | 0 | The narrow-screen menu behaves as one tested component on /ui and /cockpit, the audit refuses a control a thumb cannot hit, the dense screens have a phone projection, and the IDD loop is accepted at the floor width. | [`plan-status/the-ui-works-on-a-phone.md`](plan-status/the-ui-works-on-a-phone.md) |
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/46 | 20 | 5 | 1 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. | [`plan-status/truthful-plan-surfaces.md`](plan-status/truthful-plan-surfaces.md) |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/46 | 19 | 5 | 1 | 1 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. | [`plan-status/truthful-plan-surfaces.md`](plan-status/truthful-plan-surfaces.md) |
 | [two-folder-integration](https://majordomus.dev/plan/two-folder-integration/) | ACTIVE | 3/31 | 2 | 26 | 0 | 0 | 0 | Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored. | [`plan-status/two-folder-integration.md`](plan-status/two-folder-integration.md) |
 | [web-sign-in](https://majordomus.dev/plan/web-sign-in/) | PLANNED | 0/8 | 1 | 7 | 0 | 0 | 0 | One canonical identity-provider kind under .ai/repo/identity/providers/ describes each provider as data: its issuer, its endpoints or its discovery document, the scopes requested, the claim that carries a stable subject and the environment variable names its credentials arrive in. A single OpenID-Connect-shaped flow in the executable serves every provider in that directory; Google and Facebook are two objects, not two code paths. Sessions are cookie-borne, signed, short and revocable; identity is attached to a request once, in the router, and every surface — HTTP, Cockpit, OpenAPI, MCP — reads it from the same place. The capability registry's effect classification, not a per-route list, decides what an anonymous reader may do, and the OpenAPI document and the Cockpit both state that decision because both project it from the registry. Striking a provider is deleting one file and regenerating. | [`plan-status/web-sign-in.md`](plan-status/web-sign-in.md) |
 | [what-a-workspace-decides-reaches-the-repository-with-its-source](https://majordomus.dev/plan/what-a-workspace-decides-reaches-the-repository-with-its-source/) | BLOCKED | 0/2 | 0 | 2 | 0 | 0 | 0 | The owner thinks aloud in the ChatGPT project. What the owner decides there is read into this checkout's own store, promoted by a person into intents, ADRs, milestones, issues and knowledge, and every promoted record names the conversation and message it came from, so that from the UI one click opens that message for the operator who holds the store, while the public repository and site carry only the reference. | [`plan-status/what-a-workspace-decides-reaches-the-repository-with-its-source.md`](plan-status/what-a-workspace-decides-reaches-the-repository-with-its-source.md) |
@@ -209,7 +209,6 @@ Generated from canonical inputs `22b59f6120a1`.
 - `I2717` (M004, wave 0) — A release record pull request gets a verdict that can pass
 - `I2720` (safe-self-update, wave 0) — majordomus self update re-runs the published installer, and never reimplements it
 - `I2723` (safe-self-update, wave 0) — The mesh shows each node's version and how far a release has rolled out
-- `I2747` (truthful-plan-surfaces, wave 0) — Every code block on every surface is highlighted by one engine with one palette
 - `I2750` (truthful-plan-surfaces, wave 2) — The trunk's drift gate reads the forge before it judges
 - `I2826` (safe-self-update, wave 0) — A GitHub release carries the tool's own changelog for its tag, never GitHub's generated notes
 - `I2840` (mcp-transports-are-reliable, wave 0) — A cancelled MCP call stops, and the client is told it stopped
@@ -524,13 +523,13 @@ Generated from canonical inputs `22b59f6120a1`.
 
 ## Findings
 
-10512 finding(s), each on the page of the milestone its subject is or belongs to:
+10451 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 38 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 481 |
+| [`M004`](plan-status/M004.md) | 480 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 71 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 83 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 210 |
@@ -549,7 +548,7 @@ Generated from canonical inputs `22b59f6120a1`.
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 45 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 25 |
 | [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 2 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 661 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 660 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 154 |
@@ -581,13 +580,13 @@ Generated from canonical inputs `22b59f6120a1`.
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 24 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 9 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
-| [`public-proof`](plan-status/public-proof.md) | 130 |
+| [`public-proof`](plan-status/public-proof.md) | 129 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 33 |
-| [`runtime-adapters`](plan-status/runtime-adapters.md) | 110 |
+| [`runtime-adapters`](plan-status/runtime-adapters.md) | 109 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 53 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 35 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 537 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 536 |
 | [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 381 |
 | [`test-evidence`](plan-status/test-evidence.md) | 27 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
@@ -598,6 +597,6 @@ Generated from canonical inputs `22b59f6120a1`.
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 18 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 300 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 244 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 36 |
