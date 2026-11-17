@@ -81705,6 +81705,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4600",
+        "kind": "issue",
+        "label": "I4600",
+        "summary": "evidence record says how much of the suite its report covers",
+        "route": "/cockpit/objects/issue/i4600",
+        "source": ".ai/repo/project/issues/I4600.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A suite report naming 1 of 3 cases is recorded, and the text says '1 of 3 case(s) of the suite are in this report; the other 2 keep their earlier evidence'",
+            "The JSON carries suite_coverage {in_report: 1, on_disk: 3}",
+            "A name the repository lacks is not counted as a case",
+            "A report naming every case says 'all 3 case(s) of the suite are in this report'",
+            "A recording without a suite report prints no suite line",
+            "Negative: the case fails against the recorder before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "evidence_record_names_its_suite_coverage"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Refusing a partial report: a deliberate re-run of one case must keep recording as it does",
+            "The crate runner's coverage: its binaries are listed per binary already, and dropped names what no claim can name",
+            "An adopter's own runner; sonic-playground's runner now also refuses a report whose rows differ from its cases"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence/record.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+            ".ai/repo/project/issues/I4600.yaml"
+          ],
+          "serves": [],
+          "slug": "evidence-record-names-its-suite-coverage",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4600_evidence_record_names_its_suite_coverage 391_skills_are_proven_capabilities",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --doc -- SuiteCoverage RecordReport evidence::record::record"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4602",
         "kind": "issue",
         "label": "I4602",
@@ -109780,6 +109826,13 @@
         "label": "test/cases/45_github_projection.sh",
         "route": "/cockpit/objects/test/test-cases-45-github-projection-sh",
         "source": "test/cases/45_github_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "kind": "test",
+        "label": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "route": "/cockpit/objects/test/test-cases-4600-evidence-record-names-its-suite-coverage-sh",
+        "source": "test/cases/4600_evidence_record_names_its_suite_coverage.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151670,6 +151723,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4600",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4600",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4602",
         "target": "kind:issue",
         "kind": "is_a"
@@ -159490,6 +159553,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164611,8 +164679,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4503,
-      "edges": 10157,
+      "nodes": 4505,
+      "edges": 10160,
       "acyclic": false,
       "truncated": false
     }
