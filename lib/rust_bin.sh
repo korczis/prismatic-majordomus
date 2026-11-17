@@ -606,6 +606,103 @@ mj_free_mb() {
   df -k "$mj_fm_path" 2>/dev/null | awk 'NR == 2 && $4 ~ /^[0-9]+$/ { printf "%d", $4/1024; exit }'
 }
 
+# ------------------------------------------------------------------------------ the builders
+#
+# How many cargo builds may already run on this machine when another starts (I3825): clause 7
+# of rule project.the-cooperation-model-is-the-owners-word allows at most five builders on one
+# machine, and until this count it was a number each session had to remember. On 2026-11-16
+# the 641b Mac's free space fell from 26 GiB to 6 GiB in about two hours while three cargo
+# builds of three sessions and a container ran, none of them holding a build slot.
+#
+#   MAJORDOMUS_MAX_BUILDERS  cargo builds already running at which another refuses to start
+#                            (default 5); 0 disables the count.
+#
+# A local limit: a CI runner runs one job's build at a time, and its builds are not counted
+# (mj_rust_on_ci). The order of the admission floors is I4354's: the disk floor first, then
+# this count, then the machine slot of I4006 (#2397), which this count does not replace.
+MJ_MAX_BUILDERS_DEFAULT=5
+
+# mj_rust_on_ci — true on a CI runner (GitHub Actions sets both CI=true and GITHUB_ACTIONS).
+mj_rust_on_ci() {
+  [ "${CI:-}" = true ] || [ -n "${GITHUB_ACTIONS:-}" ]
+}
+
+# mj_rust_builders
+#
+# The cargo builds running on this machine, one `pid command` line each; fails (1) when the
+# process table cannot be read. A build is a cargo process whose subcommand compiles (build,
+# check, clippy, doc, test, bench, run, install, rustc, rustdoc, llvm-cov, nextest); `cargo
+# metadata` and the like are not builds. A cargo whose parent is a counted cargo is the same
+# build (a rustup proxy, `cargo llvm-cov` driving `cargo test`), and this shell's own
+# ancestors are never another build: a build script or a test that asks this guard runs under
+# the cargo that started it.
+mj_rust_builders() {
+  mj_rb_ps="$(ps -A -ww -o pid= -o ppid= -o args= 2>/dev/null)" || return 1
+  [ -n "$mj_rb_ps" ] || return 1
+  mj_rb_self=" $$ "; mj_rb_p=$$
+  while :; do
+    mj_rb_p="$(printf '%s\n' "$mj_rb_ps" | awk -v p="$mj_rb_p" '$1 == p { print $2; exit }')"
+    case "$mj_rb_p" in ''|0|1) break ;; esac
+    case "$mj_rb_self" in *" $mj_rb_p "*) break ;; esac
+    mj_rb_self="$mj_rb_self$mj_rb_p "
+  done
+  printf '%s\n' "$mj_rb_ps" | awk -v self="$mj_rb_self" '
+    {
+      # the executable may be a path with spaces in it: its pieces run up to the one named cargo
+      e = 3
+      if ($3 ~ /^\//) while (e < NF && $e !~ /(^|\/)cargo$/ && $(e + 1) !~ /^[-+]/) e++
+      n = split($e, part, "/"); if (part[n] != "cargo") next
+      if (index(self, " " $1 " ")) next
+      # the subcommand is the first word after cargo that is neither an option nor the value
+      # of one of the global options that take a separate value
+      sub_ = ""
+      for (i = e + 1; i <= NF; i++) {
+        if ($i ~ /^(--manifest-path|--config|--color|--lockfile-path|-Z|-C)$/) { i++; continue }
+        if ($i ~ /^[-+]/) continue
+        sub_ = $i; break
+      }
+      if (sub_ !~ /^(build|b|check|c|clippy|doc|d|test|t|bench|run|r|install|rustc|rustdoc|llvm-cov|nextest)$/) next
+      k++; order[k] = $1; parent[$1] = $2; line[$1] = $0
+    }
+    END {
+      for (j = 1; j <= k; j++) {
+        p = order[j]; if (parent[p] in line) continue
+        s = line[p]; sub(/^ *[0-9]+ +[0-9]+ +/, "", s); print p " " s
+      }
+    }'
+}
+
+# mj_rust_builders_check <what>
+#
+# May one more build start beside those already running? True (0) to proceed, false (1) to
+# refuse, saying why on stderr. As with the floor, a count that cannot be made says so and
+# lets the build run.
+mj_rust_builders_check() {
+  mj_bc_what="${1:-a build}"
+  mj_rust_on_ci && return 0
+  mj_bc_max="${MAJORDOMUS_MAX_BUILDERS:-$MJ_MAX_BUILDERS_DEFAULT}"
+  case "$mj_bc_max" in ''|*[!0-9]*) mj_bc_max="$MJ_MAX_BUILDERS_DEFAULT" ;; esac
+  [ "$mj_bc_max" -gt 0 ] || return 0
+  if ! mj_bc_list="$(mj_rust_builders)"; then
+    printf 'majordomus: the cargo builds running on this machine could not be counted; %s is starting anyway\n' \
+      "$mj_bc_what" >&2
+    return 0
+  fi
+  mj_bc_n="$(printf '%s' "$mj_bc_list" | grep -c . || true)"
+  [ "$mj_bc_n" -ge "$mj_bc_max" ] || return 0
+  {
+    printf 'majordomus: refusing to start %s: %s cargo builds already run on this machine, limit %s.\n' \
+      "$mj_bc_what" "$mj_bc_n" "$mj_bc_max"
+    printf '  Running now:\n'
+    printf '%s\n' "$mj_bc_list" | cut -c1-160 | sed 's/^/    /'
+    printf '  Each build writes about 2.45GB and the volume is shared: one more beside these is how\n'
+    printf '  the disk of a machine runs out under every session at once.\n'
+    printf '  Wait for one to finish (pgrep -lf cargo), or run the derive elsewhere: majordomus offload derive\n'
+    printf '  To override:           MAJORDOMUS_MAX_BUILDERS=0\n'
+  } >&2
+  return 1
+}
+
 # mj_rust_space_check <repository-root> [what]
 #
 # May a build start here? True (0) to proceed, false (1) to refuse — and it says why on
@@ -626,7 +723,8 @@ mj_rust_space_check() {
   mj_rust_reclaim_private
   mj_sc_floor="${MAJORDOMUS_MIN_FREE_MB:-$MJ_MIN_FREE_MB_DEFAULT}"
   case "$mj_sc_floor" in ''|*[!0-9]*) mj_sc_floor="$MJ_MIN_FREE_MB_DEFAULT" ;; esac
-  [ "$mj_sc_floor" -gt 0 ] || return 0
+  # the floor's override lifts the floor alone: the count of builders still applies
+  [ "$mj_sc_floor" -gt 0 ] || { mj_rust_builders_check "$mj_sc_what"; return $?; }
 
   # the volume the build writes to, which is not necessarily the one the checkout is on
   mj_sc_target="$(mj_cargo_target_dir "$mj_sc_root/apps/majordomus-cli")"
@@ -634,12 +732,13 @@ mj_rust_space_check() {
   if [ -z "$mj_sc_free" ]; then
     printf 'majordomus: free space on %s could not be measured; %s is starting anyway\n' \
       "$mj_sc_target" "$mj_sc_what" >&2
-    return 0
+    mj_rust_builders_check "$mj_sc_what"; return $?
   fi
   # below the high-water mark the classified sweep runs first, and the floor reads what is left
   mj_rust_reclaim "$mj_sc_root" "$mj_sc_free"
   mj_sc_free="$(mj_free_mb "$mj_sc_target" || printf '%s' "$mj_sc_free")"
-  [ "$mj_sc_free" -lt "$mj_sc_floor" ] || return 0
+  # room on the disk, then room among the builders (I3825, in I4354's order)
+  [ "$mj_sc_free" -lt "$mj_sc_floor" ] || { mj_rust_builders_check "$mj_sc_what"; return $?; }
 
   {
     printf 'majordomus: refusing to start %s: %sMB free, floor %sMB.\n' \
@@ -653,6 +752,7 @@ mj_rust_space_check() {
     mj_rust_largest_build_dirs "$mj_sc_root" | sed 's/^/    /'
     printf '  Reclaim first:         scripts/reap-orphans --targets    (what is reclaimable; changes nothing)\n'
     printf '                         scripts/reap-orphans --reclaim    (build output of landed or pushed, unattended worktrees)\n'
+    printf '  Or run the derive elsewhere: majordomus offload derive   (a declared build host with room)\n'
     printf '  To override:           MAJORDOMUS_MIN_FREE_MB=0\n'
   } >&2
   return 1
