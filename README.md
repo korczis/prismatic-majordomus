@@ -17,6 +17,7 @@
 
 [Website](https://majordomus.dev) ·
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
+[The film](https://korczis.github.io/majordomus-reel/) ·
 [CLI reference](docs/CLI.md) ·
 [File schemas](docs/SCHEMAS.md) ·
 [What is guaranteed, advisory, planned, or rejected](docs/SITE_CLAIMS.md) ·
@@ -93,6 +94,7 @@ generated from this repository at every publication:
 | [How the site is derived](https://majordomus.dev/architecture/) | the website as a projection of the repository | Mermaid |
 | [Why you need this](https://majordomus.dev/why/) | the operational failure modes AI-heavy teams meet, and what Majordomus does and does not do about each | Cytoscape.js |
 | [The challenge](https://majordomus.dev/challenge/) | an agent strays, claims it is done and comes back; watch it being refused | recorded run |
+| [The film](https://korczis.github.io/majordomus-reel/) | every feature in one vertical film, narration, frames and sound rendered from code, its facts derived from the release | p5.js, Cytoscape.js, Apache ECharts |
 
 Two of them as they stand at the last publication, each a link to the live chart:
 
