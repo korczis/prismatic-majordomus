@@ -516,8 +516,14 @@ mod tests {
         assert_eq!(codes(&v), vec!["commit.control_character"]);
         let detail = &v.findings[0].message;
         assert!(detail.contains("2 control characters"), "{detail}");
-        assert!(detail.contains("line 1, column 16: U+001B ESCAPE"), "{detail}");
-        assert!(detail.contains("line 1, column 24: U+001B ESCAPE"), "{detail}");
+        assert!(
+            detail.contains("line 1, column 16: U+001B ESCAPE"),
+            "{detail}"
+        );
+        assert!(
+            detail.contains("line 1, column 24: U+001B ESCAPE"),
+            "{detail}"
+        );
     }
 
     #[test]
@@ -530,7 +536,9 @@ mod tests {
         );
         assert!(!v.passed);
         assert_eq!(codes(&v), vec!["commit.control_character"]);
-        assert!(v.findings[0].message.contains("line 1, column 1: U+001B ESCAPE"));
+        assert!(v.findings[0]
+            .message
+            .contains("line 1, column 1: U+001B ESCAPE"));
     }
 
     #[test]
@@ -548,10 +556,18 @@ mod tests {
             &CommitPolicy::default(),
         );
         assert!(body.findings.is_empty(), "{:?}", body.findings);
-        let c1 = judge(&CommitSubject::of("fix(commit): x \u{9b}y"), &CommitPolicy::default());
-        assert!(c1.findings[0].message.contains("U+009B CONTROL SEQUENCE INTRODUCER"));
+        let c1 = judge(
+            &CommitSubject::of("fix(commit): x \u{9b}y"),
+            &CommitPolicy::default(),
+        );
+        assert!(c1.findings[0]
+            .message
+            .contains("U+009B CONTROL SEQUENCE INTRODUCER"));
         // a carriage return inside a line is not a line ending
-        let cr = judge(&CommitSubject::of("fix(commit): x\ry"), &CommitPolicy::default());
+        let cr = judge(
+            &CommitSubject::of("fix(commit): x\ry"),
+            &CommitPolicy::default(),
+        );
         assert!(cr.findings[0].message.contains("U+000D CARRIAGE RETURN"));
     }
 
