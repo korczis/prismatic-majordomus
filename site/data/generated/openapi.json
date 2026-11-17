@@ -1444,7 +1444,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.2",
+  "generated_by": "majordomus-cli 1.1.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1453,7 +1453,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.2"
+    "version": "1.1.0"
   },
   "infrastructure": [
     {
@@ -6556,7 +6556,21 @@
           "type": "boolean | null"
         },
         {
-          "description": "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically.",
+          "description": "Not reachable from the trunk, and merging it into the trunk's remote-tracking branch\nwould change nothing (`git merge-tree --write-tree`): squash-merged, carried in a\ntrain or cherry-picked. Read for a checked-out branch in the full topology only.",
+          "name": "landed_by_content",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Its work tree has uncommitted changes, and every one already holds what the trunk's\nremote-tracking branch holds at that path. Absent for a clean or unmeasured tree.",
+          "name": "uncommitted_in_trunk",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Landed in the trunk (merged into it, or landed by content), not the trunk, and either\nnot checked out (merged only) or checked out in a work tree that is clean or whose every\nuncommitted change is already in the trunk. Derived state, never acted on automatically.",
           "name": "cleanup_eligible",
           "refs": [],
           "required": true,
