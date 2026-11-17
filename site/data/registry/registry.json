@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.2"
+    "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "ddd7c44d3c592c5dab7762828a700361e10596916ebe2d8cdfa36360b00514ff",
+    "fingerprint": "7f2b8c70be11c3f07d223795fd084714267fb352885018bb1a7b8d16e08f6b13",
     "summary": {
-      "total": 4037,
+      "total": 4042,
       "builtin": 231,
-      "declarative": 3806,
+      "declarative": 3811,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3806
+        "resource": 3811
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3816
+        "implemented": 3821
       },
       "mcp_tools": 215,
-      "mcp_resources": 3863,
+      "mcp_resources": 3868,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -95750,9 +95750,23 @@
                     ],
                     "description": "Reachable from the trunk. Absent when the trunk is unknown."
                   },
+                  "landed_by_content": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Not reachable from the trunk, and merging it into the trunk's remote-tracking branch\nwould change nothing (`git merge-tree --write-tree`): squash-merged, carried in a\ntrain or cherry-picked. Read for a checked-out branch in the full topology only."
+                  },
+                  "uncommitted_in_trunk": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Its work tree has uncommitted changes, and every one already holds what the trunk's\nremote-tracking branch holds at that path. Absent for a clean or unmeasured tree."
+                  },
                   "cleanup_eligible": {
                     "type": "boolean",
-                    "description": "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically."
+                    "description": "Landed in the trunk (merged into it, or landed by content), not the trunk, and either\nnot checked out (merged only) or checked out in a work tree that is clean or whose every\nuncommitted change is already in the trunk. Derived state, never acted on automatically."
                   },
                   "issue": {
                     "type": [
@@ -97205,7 +97219,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1260,
+        "capabilities": 1263,
         "capability_ids": []
       },
       {
@@ -97818,7 +97832,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 705,
+        "capabilities": 707,
         "capability_ids": []
       },
       {
@@ -97911,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f39b4439e02a466af8d8dd24acf455a34da4271a91de7cfdcae1a77164ddf09f",
+    "fingerprint": "353f3b5b0c0739512fb29a94f03611dd75c8efd33dba394df4df3df51e63d0f6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97951,7 +97965,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1260,
+      "issue": 1263,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97965,7 +97979,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 705,
+      "test": 707,
       "use-case": 49,
       "workspace": 1
     },
@@ -105548,7 +105562,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138010
+        "bytes": 138592
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105737,7 +105751,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 54360
+        "bytes": 56210
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -121720,7 +121734,7 @@
         "path": ".ai/repo/project/issues/I4324.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 9438
+        "bytes": 11148
       },
       {
         "uri": "majordomus://issue/I4325",
@@ -123382,6 +123396,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4061
+      },
+      {
+        "uri": "majordomus://issue/I4627",
+        "kind": "issue",
+        "identity": "I4627",
+        "title": "scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why",
+        "description": "Where the tree's crate came through a merge, scripts/derive uses a borrowed MAJORDOMUS_BIN only when mj_rust_same_generation accepts it: the commit it was built from (MAJORDOMUS_BIN_COMMIT) carries the tree's crate inputs (MJ_RUST_CRATE_INPUTS) byte for byte. Otherwise the derive drops the borrowed executable, prints which merge and which generation answer it refused, and builds this tree's own. The crate came through a merge in exactly two cases. Either MERGE_HEAD is present and the staged merge changes MJ_RUST_CRATE_INPUTS against HEAD, or HEAD is a merge whose crate inputs differ from its first parent's. A merge that leaves the crate alone borrows as before. The scratch derive of a merge in progress is handed the commit its executable is of: the merge commit when the outer derive built it, or the commit a borrowed one was vouched for by. That way it does not build a second time. The release job records the commit its executable was built from right after the build, because the default branch's tip is usually a merge.",
+        "path": ".ai/repo/project/issues/I4627.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5678
+      },
+      {
+        "uri": "majordomus://issue/I4628",
+        "kind": "issue",
+        "identity": "I4628",
+        "title": "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy",
+        "description": "finish --outcome completed compares the tree its verify command ran over (task.finished verify.tree) with HEAD's tree, and compares HEAD with the head the task started at. When the verified tree is not HEAD's tree, the change the task verified is not in a commit. The first line finish prints then says so: `finish: <task> completed, NOT COMMITTED: the verified tree <tree> is not HEAD's <tree>`, followed by the command that commits it. task.finished records `committed: false`. Where the policy says completed means complete (verification.completed_means_complete, the key open pull request #2748 wires for I4433), the same condition refuses as #2748 decides. This record changes only what the shipped policy prints and records, so a session that reads finish's last line cannot take uncommitted work for finished.",
+        "path": ".ai/repo/project/issues/I4628.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4899
+      },
+      {
+        "uri": "majordomus://issue/I4630",
+        "kind": "issue",
+        "identity": "I4630",
+        "title": "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
+        "description": "A plan finding never puts a path into a derived page unless the path exists or the sentence says it is planned. When an issue's scope holds a directory (test/cases) and another READY issue's scope holds a file under it that does not exist yet (test/cases/4616_a_reserved_issue_id_is_refused_locally.sh), lib/project.awk's scope_conflict finding names the directory, which is the scope as written. It does not name the other issue's planned file. plan validate also warns on a scope entry that is a directory holding more than a policy-set number of tracked files, and names the narrower path the issue's evidence implies (its own case). scripts/ci/reference-check over the derived plan pages runs in the before-push plan, so a page that names a missing file is found on the machine and not first in CI's core-check.",
+        "path": ".ai/repo/project/issues/I4630.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3995
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -137277,6 +137324,14 @@
         "bytes": 7105
       },
       {
+        "uri": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "kind": "test",
+        "identity": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "path": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "source_class": "case",
+        "bytes": 7044
+      },
+      {
         "uri": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "test",
         "identity": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
@@ -137435,6 +137490,14 @@
         "path": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
         "source_class": "case",
         "bytes": 5465
+      },
+      {
+        "uri": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "path": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "source_class": "case",
+        "bytes": 7104
       },
       {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -137946,7 +138009,7 @@
         "identity": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "source_class": "case",
-        "bytes": 8188
+        "bytes": 9075
       },
       {
         "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -139951,7 +140014,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1260
+      "objects": 1263
     },
     {
       "name": "knowledge",
@@ -140113,7 +140176,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 705
+      "objects": 707
     },
     {
       "name": "use-case",

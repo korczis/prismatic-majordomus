@@ -12,8 +12,8 @@
 #
 #   ahead of its remote   commits that exist on one disk; `merged into the trunk` is about the
 #                         branch's remote history and says nothing about a local head that ran on
-#   no upstream, or   a branch never pushed, or whose remote branch was deleted: nothing but
-#   upstream gone     this disk holds its history, whatever the trunk says about it
+#   no upstream, or   a branch never pushed, or whose remote branch was deleted while it held a
+#   upstream gone     commit the trunk lacks: nothing but this disk holds that history
 #   something inside      two worktrees looked untouched since the 12th and had live processes in
 #                         them; mtime lies and only a reading taken now is true
 #   cannot tell           no lsof, or git could not compare with the upstream: not knowing is not
@@ -70,6 +70,14 @@ git push -q origin master
   || { echo "    could not create the worktree of no-upstream"; exit 1; }
 
 # the states, each made after the worktree exists
+# A commit the trunk lacks, pushed to its branch before the forge deletes it: once the remote
+# branch is gone nothing but this disk holds it. (A gone upstream whose head the trunk holds
+# is removed instead: case 4324.)
+gone_path="$("$RB" worktree path upstream-gone)"
+( cd "$gone_path" && printf 'never merged\n' > never-merged.txt \
+  && git add -A && git -c user.email=t@t -c user.name=t commit -qm "never merged" ) \
+  && git push -q origin upstream-gone \
+  || { echo "    could not put an unmerged commit on upstream-gone"; exit 1; }
 git push -q origin --delete upstream-gone && git fetch -q --prune origin \
   || { echo "    could not delete the remote branch of upstream-gone"; exit 1; }
 # Merged into the trunk *and* ahead of its remote, which is the combination that makes this
@@ -84,6 +92,10 @@ ahead_path="$("$RB" worktree path ahead-of-remote)"
 git merge -q --no-ff -m "merge the local-only commit" ahead-of-remote \
   || { echo "    could not merge the local-only commit into the trunk"; exit 1; }
 git push -q origin master   # the trunk goes to the remote; the branch deliberately does not
+# upstream-gone's commit merged into the local trunk only, after that push: the listing nominates
+# the branch, and the remote's trunk does not hold its head, so the reclaim must refuse it
+git merge -q --no-ff -m "merge upstream-gone, locally" upstream-gone \
+  || { echo "    could not merge upstream-gone into the local trunk"; exit 1; }
 occ="$("$RB" worktree path occupied)"
 ( cd "$occ" && sleep 300 ) & INSIDE=$!
 trap 'kill "$INSIDE" 2>/dev/null; :' EXIT
