@@ -66,7 +66,7 @@ D="$T/scripts/derive"
 
 derive() { rm -f "$STUB/cargo.log" "$STUB/exe.log"; MAJORDOMUS_BIN="$STUB/majordomus" "$D"; }
 builds() { [ -f "$STUB/cargo.log" ] && grep -c . "$STUB/cargo.log" || echo 0; }
-ran() { [ -f "$STUB/exe.log" ] && sort -u "$STUB/exe.log" | tr '\n' ' ' || true; }
+ran() { [ -f "$STUB/exe.log" ] && LC_ALL=C sort -u "$STUB/exe.log" | tr '\n' ' ' || true; }
 
 # two crate changes on two branches, merged
 git checkout -q -b two
