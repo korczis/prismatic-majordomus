@@ -28438,7 +28438,14 @@
           "value_name": "FORMAT"
         }
       ],
-      "children": [],
+      "children": [
+        {
+          "about": "Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read",
+          "command": "majordomus monitor steps",
+          "name": "steps",
+          "route": "/docs/cli/monitor/steps/"
+        }
+      ],
       "command": "majordomus monitor",
       "depth": 1,
       "examples": [
@@ -28487,7 +28494,274 @@
         "monitor"
       ],
       "route": "/docs/cli/monitor/",
-      "usage": "majordomus monitor [OPTIONS]"
+      "usage": "majordomus monitor [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus monitor",
+          "name": "monitor",
+          "route": "/docs/cli/monitor/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The workflow run, by its id (the number in its URL)",
+          "long": "run",
+          "name": "run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The branch whose run to watch; needs --sha, and the newest run for that head is read",
+          "long": "branch",
+          "name": "branch",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BRANCH"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The head commit the run is for, with --branch",
+          "long": "sha",
+          "name": "sha",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SHA"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only a run of this workflow (* matches any run of characters); needed when several workflows ran for the head",
+          "long": "workflow",
+          "name": "workflow",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "WORKFLOW"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The job's name over the whole name, * matching any run of characters; every matching job is judged",
+          "long": "job",
+          "name": "job",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "JOB"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The steps that must be success: N or N-M, by the step number the jobs API reports",
+          "long": "steps",
+          "name": "steps",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "STEPS"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Count a step that concluded skipped as passing rather than as red",
+          "long": "allow-skipped",
+          "name": "allow_skipped",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALLOW_SKIPPED"
+        },
+        {
+          "defaults": [
+            "180"
+          ],
+          "global": false,
+          "help": "Seconds between two reads, at least 120; a rate-limited answer waits until the limit resets",
+          "long": "interval",
+          "name": "interval",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTERVAL"
+        },
+        {
+          "defaults": [
+            "2h"
+          ],
+          "global": false,
+          "help": "Give up after this long while pending, exiting 11: seconds, or a number with s, m, h or d",
+          "long": "timeout",
+          "name": "timeout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TIMEOUT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The GitHub repository as OWNER/NAME; default: the one gh resolves from this checkout's remotes",
+          "long": "github",
+          "name": "github",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "OWNER/NAME"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        }
+      ],
+      "children": [],
+      "command": "majordomus monitor steps",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "monitor",
+            "steps",
+            "--branch",
+            "main",
+            "--sha",
+            "0a1b2c3d4e5f",
+            "--workflow",
+            "ci",
+            "--job",
+            "test (*)",
+            "--steps",
+            "4-12",
+            "--timeout",
+            "90m"
+          ],
+          "command": "majordomus monitor steps --branch main --sha 0a1b2c3d4e5f --workflow ci --job 'test (*)' --steps 4-12 --timeout 90m",
+          "description": "Read the newest ci run for the head every three minutes: exit 0 when every step 4-12 of each job named test (…) concluded success, 10 at the first that concluded failure, cancelled, timed_out or skipped, 11 after 90 minutes still pending. A checkout with no GitHub remote cannot name a repository, so here the answer is why, with exit 12.",
+          "expectation": "exits 12",
+          "id": "monitor-steps",
+          "setup": [],
+          "title": "Wait until steps 4-12 of a head's test job are success"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "steps",
+      "parent_route": "/docs/cli/monitor/",
+      "path": [
+        "majordomus",
+        "monitor",
+        "steps"
+      ],
+      "route": "/docs/cli/monitor/steps/",
+      "usage": "majordomus monitor steps [OPTIONS]"
     },
     {
       "about": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
@@ -41961,10 +42235,10 @@
     }
   ],
   "counts": {
-    "arguments": 1819,
-    "commands": 264,
-    "examples": 263,
-    "runnable": 229
+    "arguments": 1834,
+    "commands": 265,
+    "examples": 264,
+    "runnable": 230
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.2",

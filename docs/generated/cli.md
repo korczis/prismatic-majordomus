@@ -187,6 +187,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh build-cache provision`](#majordomus-mesh-build-cache-provision) | `/docs/cli/mesh/build-cache/provision/` | Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported |
 | [`majordomus mesh who`](#majordomus-mesh-who) | `/docs/cli/mesh/who/` | Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one |
 | [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
+| [`majordomus monitor steps`](#majordomus-monitor-steps) | `/docs/cli/monitor/steps/` | Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
@@ -5378,8 +5379,10 @@ Examples:
 
 Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
 
+Subcommands: [`majordomus monitor steps`](#majordomus-monitor-steps).
+
 ```text
-majordomus monitor [OPTIONS]
+majordomus monitor [OPTIONS] [COMMAND]
 ```
 
 | argument | value | default | description |
@@ -5419,6 +5422,43 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-monitor-steps"></a>
+## `majordomus monitor steps`
+
+Wait until every step of a range of one job of a workflow run is success: exit 0 green, 10 at the first step that concluded anything else (failure, cancelled, timed_out, skipped), 11 when the timeout passes while pending, 12 when GitHub cannot be read
+
+```text
+majordomus monitor steps [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--run` | `<RUN>` | — | The workflow run, by its id (the number in its URL) |
+| `--branch` | `<BRANCH>` | — | The branch whose run to watch; needs --sha, and the newest run for that head is read |
+| `--sha` | `<SHA>` | — | The head commit the run is for, with --branch |
+| `--workflow` | `<WORKFLOW>` | — | Only a run of this workflow (* matches any run of characters); needed when several workflows ran for the head |
+| `--job` | `<JOB>` | required | The job's name over the whole name, * matching any run of characters; every matching job is judged |
+| `--steps` | `<STEPS>` | required | The steps that must be success: N or N-M, by the step number the jobs API reports |
+| `--allow-skipped` | flag | — | Count a step that concluded skipped as passing rather than as red |
+| `--interval` | `<INTERVAL>` | `180` | Seconds between two reads, at least 120; a rate-limited answer waits until the limit resets |
+| `--timeout` | `<TIMEOUT>` | `2h` | Give up after this long while pending, exiting 11: seconds, or a number with s, m, h or d |
+| `--github` | `<OWNER/NAME>` | — | The GitHub repository as OWNER/NAME; default: the one gh resolves from this checkout's remotes |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Wait until steps 4-12 of a head's test job are success** — Read the newest ci run for the head every three minutes: exit 0 when every step 4-12 of each job named test (…) concluded success, 10 at the first that concluded failure, cancelled, timed_out or skipped, 11 after 90 minutes still pending. A checkout with no GitHub remote cannot name a repository, so here the answer is why, with exit 12.
+
+  ```console
+  $ majordomus monitor steps --branch main --sha 0a1b2c3d4e5f --workflow ci --job 'test (*)' --steps 4-12 --timeout 90m
+  ```
+
+  Verified: exits 12.
 
 <a id="majordomus-models"></a>
 ## `majordomus models`

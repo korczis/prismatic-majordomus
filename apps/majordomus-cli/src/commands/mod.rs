@@ -158,6 +158,20 @@ mod tests {
             (&["majordomus", "monitor", "--follow"], |c| {
                 matches!(c, Command::Monitor(_))
             }),
+            (
+                &[
+                    "majordomus",
+                    "monitor",
+                    "steps",
+                    "--run",
+                    "1",
+                    "--job",
+                    "ci",
+                    "--steps",
+                    "4",
+                ],
+                |c| matches!(c, Command::Monitor(_)),
+            ),
             (&["majordomus", "serve"], |c| matches!(c, Command::Serve(_))),
             (&["majordomus", "serve", "status"], |c| {
                 matches!(c, Command::Serve(_))

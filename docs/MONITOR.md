@@ -163,6 +163,66 @@ majordomus monitor [--follow] [--for NAMES] [--sources mesh,executor,github] [--
 - Exit codes: 0 when answered, or when a follow ends by `--count` or `--until`; 10 when the
   input is refused (a bad cursor, an unknown source) or a follow reaches `--timeout`.
 
+## Waiting on the steps of a job
+
+`majordomus monitor steps` waits on one thing the stream does not carry: the steps of a job of
+one workflow run. A landing gated on "the hosted job's steps 4-12 are success" used to be
+watched by hand-written `gh api` loops, and those loops broke in three ways. This command reads
+the run and its jobs through `gh api` and decides each step the way those loops got wrong
+(I4624).
+
+```sh
+majordomus monitor steps --run <run-id> --job '<job name>' --steps 4-12
+majordomus monitor steps --branch <branch> --sha <sha> --workflow <name> --job '<job>' --steps <N-M>
+```
+
+How each step of the range is read:
+
+- **Pending** means the step has not concluded: its status is not `completed`, or its
+  conclusion is empty. `gh run view --json jobs` prints `""` for a running step and the REST
+  API prints `null`; both are pending. A loop that took `""` for done reported green after
+  four of nine steps.
+- **Red** means the step concluded anything but `success`: `failure`, `cancelled` (a run
+  cancelled by concurrency, or cut at its timeout), `timed_out`, and `skipped` unless
+  `--allow-skipped`. The first red step ends the wait at once, even while other steps run.
+- **Green** means every step of the range, in every job whose name matches `--job`, concluded
+  `success`. `*` in `--job` and `--workflow` matches any run of characters, over the whole name.
+
+What a finished run settles:
+
+- While the run is going on, a job not listed yet is pending, and so is a step past the job's
+  last listed step.
+- Once the run or the job has finished, both are red. The reason names the steps the job does
+  list (`it lists steps 1-7, 13-15`), because step numbers can have gaps: post steps are
+  numbered apart.
+
+Polling is gentle:
+
+- `--interval` defaults to 180 s and is refused below 120 s. On 2026-11-15 several watchers
+  polling every 60 s spent an account's core API limit.
+- Each poll costs two calls: the run (or the branch's runs for the head) and its jobs, up to
+  100 jobs.
+- A rate-limited answer (403 or 429 with no calls left, or `Retry-After`) waits until the
+  limit resets. So does a success that leaves two calls or fewer.
+- A transient failure (a 5xx, a dropped connection, a `gh` call past 30 s) doubles the wait,
+  up to 30 minutes.
+
+Other behaviour:
+
+- `--branch` needs `--sha`. The newest run for that head is read. When several workflows ran
+  for the head, `--workflow` must say which one, or the command refuses.
+- `--github OWNER/NAME` reads another repository. By default, `gh` resolves the repository
+  from the checkout's remotes.
+- Each poll that decides nothing prints one line on stderr. The end prints the run, each
+  matching job, each step's verdict and the reason, as text or, with `--format json`, as one
+  document.
+- Exit codes:
+  - 0 green;
+  - 10 red;
+  - 11 when `--timeout` (default `2h`) passes while pending;
+  - 12 when GitHub cannot be read and asking again will not help: no `gh`, no repository,
+    no such run, several workflows and none named.
+
 ## Other surfaces
 
 - MCP: `majordomus_monitor`, with the same input (`after`, `limit`, `sources`, `for`,
@@ -189,7 +249,12 @@ majordomus monitor [--follow] [--for NAMES] [--sources mesh,executor,github] [--
 - Unit tests:
   - `src/monitor` covers the cursor, the merge across sources, the fold of each source and
     for-you;
-  - `src/commands/monitor.rs` covers rendering and the request target;
+  - `src/commands/monitor.rs` covers rendering and the request target, and how `monitor
+    steps` is dispatched;
+  - `src/monitor/steps.rs` covers the step verdicts and the polling, over `gh api` answers
+    recorded from this repository's runs (`apps/majordomus-cli/tests/fixtures/gh-api-steps/`):
+    an empty-string conclusion, a cancelled step, a missing job, a range past the job's steps,
+    green, a rate-limited answer and the deadline;
   - `src/cockpit/monitor.rs` covers the row.
 - Cases:
   - `1050_the_monitor_folds_the_noise`: one server, the fold, for-you, refusals and resuming;
