@@ -53,10 +53,14 @@ use crate::release::ChangeKind;
 /// use majordomus_cli::commit::CommitRule;
 /// // every rule has a stable code, and the order is the order a person would fix them in
 /// assert_eq!(CommitRule::NotConventional.code(), "commit.not_conventional");
-/// assert_eq!(CommitRule::ALL.first(), Some(&CommitRule::NotConventional));
+/// assert_eq!(CommitRule::ALL.first(), Some(&CommitRule::ControlCharacter));
 /// assert!(CommitRule::ALL.iter().all(|r| r.code().starts_with("commit.")));
 /// ```
 pub enum CommitRule {
+    /// The message carries a control character: C0 other than a line feed or a tab, DEL, or
+    /// C1. Judged before the grammar, because a colour code in front of the type is a
+    /// control character and not a word that fails to be a type (I4605).
+    ControlCharacter,
     /// The header is not `type(scope): subject`.
     NotConventional,
     /// The subject is wider than the policy allows.
@@ -84,6 +88,7 @@ impl CommitRule {
     /// ```
     pub fn code(self) -> &'static str {
         match self {
+            CommitRule::ControlCharacter => "commit.control_character",
             CommitRule::NotConventional => "commit.not_conventional",
             CommitRule::SubjectTooLong => "commit.subject_too_long",
             CommitRule::SubjectEmpty => "commit.subject_empty",
@@ -99,6 +104,7 @@ impl CommitRule {
     /// the evidence for them appears, so a person reads findings in the order they would
     /// fix them.
     pub const ALL: &'static [CommitRule] = &[
+        CommitRule::ControlCharacter,
         CommitRule::NotConventional,
         CommitRule::SubjectEmpty,
         CommitRule::SubjectTooLong,
@@ -226,17 +232,37 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
     let message = CommitMessage::parse(&subject.text);
     let head = &message.header;
 
+    // What bytes a message may hold is judged first and for every message, git's own
+    // subjects included: their exemption is from the grammar, not from being text.
+    let mut found: Vec<(CommitRule, Severity, String)> = Vec::new();
+    if let (Some(detail), Some(severity)) = (
+        control_characters(&subject.text),
+        policy.control_character.severity(),
+    ) {
+        found.push((CommitRule::ControlCharacter, severity, detail));
+    }
+    let refused_as_text = found.iter().any(|(_, s, _)| *s == Severity::Error);
+
     if git_authored(&head.subject) || git_authored(subject.text.lines().next().unwrap_or_default())
     {
-        return CommitVerdict {
-            message,
-            passed: true,
-            exempt: Some(CommitExemption::GitAuthored),
-            findings: Vec::new(),
-        };
+        if found.is_empty() {
+            return CommitVerdict {
+                message,
+                passed: true,
+                exempt: Some(CommitExemption::GitAuthored),
+                findings: Vec::new(),
+            };
+        }
+        let mut verdict = finish(message, found);
+        verdict.exempt = Some(CommitExemption::GitAuthored);
+        return verdict;
+    }
+    if refused_as_text {
+        // The grammar below would read the control code as part of a word and report the
+        // consequence (`'\x1b[33mfix' is not a commit type`) instead of the cause.
+        return finish(message, found);
     }
 
-    let mut found: Vec<(CommitRule, Severity, String)> = Vec::new();
     let mut add = |rule: CommitRule, level: FindingLevel, message: String| {
         if let Some(severity) = level.severity() {
             found.push((rule, severity, message));
@@ -335,6 +361,72 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
     finish(message, found)
 }
 
+/// How many positions a control-character finding names before it only counts the rest.
+const CONTROL_POSITIONS_SHOWN: usize = 5;
+
+/// Whether a character is a control character a commit message may not hold: C0 other than
+/// a tab (a line feed never reaches here, it separates the lines), DEL, or C1.
+fn is_control(ch: char) -> bool {
+    ch != '\t' && (ch < ' ' || ('\u{7f}'..='\u{9f}').contains(&ch))
+}
+
+/// The code point and its name, as a person looks it up: `U+001B ESCAPE`.
+fn control_name(ch: char) -> String {
+    let name = match ch {
+        '\u{0}' => "NULL",
+        '\u{7}' => "BELL",
+        '\u{8}' => "BACKSPACE",
+        '\u{b}' => "LINE TABULATION",
+        '\u{c}' => "FORM FEED",
+        '\r' => "CARRIAGE RETURN",
+        '\u{1b}' => "ESCAPE",
+        '\u{7f}' => "DELETE",
+        '\u{9b}' => "CONTROL SEQUENCE INTRODUCER",
+        c if c < ' ' => "C0 CONTROL",
+        _ => "C1 CONTROL",
+    };
+    format!("U+{:04X} {name}", ch as u32)
+}
+
+/// Every control character the message carries, as one detail naming each one's line,
+/// column (counted in characters, from 1) and code point; `None` when the message is text.
+///
+/// A carriage return that ends a line is a line ending, not content: an editor that writes
+/// CRLF has written plain text.
+fn control_characters(text: &str) -> Option<String> {
+    let mut shown: Vec<String> = Vec::new();
+    let mut count = 0usize;
+    for (n, line) in text.split('\n').enumerate() {
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        for (column, ch) in line.chars().enumerate() {
+            if is_control(ch) {
+                count += 1;
+                if shown.len() < CONTROL_POSITIONS_SHOWN {
+                    shown.push(format!(
+                        "line {}, column {}: {}",
+                        n + 1,
+                        column + 1,
+                        control_name(ch)
+                    ));
+                }
+            }
+        }
+    }
+    if count == 0 {
+        return None;
+    }
+    let more = match count - shown.len() {
+        0 => String::new(),
+        rest => format!("; and {rest} more"),
+    };
+    let plural = if count == 1 { "" } else { "s" };
+    Some(format!(
+        "the message carries {count} control character{plural}, which every later reader shows raw \
+         (a pager's colour codes, typically); write plain text: {}{more}",
+        shown.join("; ")
+    ))
+}
+
 /// Order the findings and decide the verdict.
 fn finish(message: CommitMessage, found: Vec<(CommitRule, Severity, String)>) -> CommitVerdict {
     let mut ranked: Vec<RankedFinding> = found
@@ -411,6 +503,121 @@ mod tests {
         let v = judge(&CommitSubject::of("update stuff"), &CommitPolicy::default());
         assert!(!v.passed);
         assert_eq!(codes(&v), vec!["commit.not_conventional"]);
+    }
+
+    /// The message an adopter's GitLab titles carried: a pager's colour codes (I4605).
+    #[test]
+    fn an_escape_inside_the_subject_is_refused_and_named_by_its_position() {
+        let v = judge(
+            &CommitSubject::of("fix(commit): x \u{1b}[1mbold\u{1b}[m"),
+            &CommitPolicy::default(),
+        );
+        assert!(!v.passed);
+        assert_eq!(codes(&v), vec!["commit.control_character"]);
+        let detail = &v.findings[0].message;
+        assert!(detail.contains("2 control characters"), "{detail}");
+        assert!(
+            detail.contains("line 1, column 16: U+001B ESCAPE"),
+            "{detail}"
+        );
+        assert!(
+            detail.contains("line 1, column 24: U+001B ESCAPE"),
+            "{detail}"
+        );
+    }
+
+    #[test]
+    fn a_control_code_before_the_type_is_itself_and_not_a_wrong_type() {
+        // Before I4605 this was commit.not_conventional, "'\x1b[33mfix' is not a commit
+        // type": the consequence reported, the cause never named.
+        let v = judge(
+            &CommitSubject::of("\u{1b}[33mfix(commit): x\u{1b}[m"),
+            &CommitPolicy::default(),
+        );
+        assert!(!v.passed);
+        assert_eq!(codes(&v), vec!["commit.control_character"]);
+        assert!(v.findings[0]
+            .message
+            .contains("line 1, column 1: U+001B ESCAPE"));
+    }
+
+    #[test]
+    fn c1_and_c0_codes_are_refused_anywhere_and_tabs_line_endings_are_text() {
+        for text in [
+            "fix(commit): x \u{9b}31m y",
+            "fix(commit): x\n\nbody \u{1} here",
+            "fix(commit): x\n\nbody \u{7f} here",
+        ] {
+            let v = judge(&CommitSubject::of(text), &CommitPolicy::default());
+            assert_eq!(codes(&v), vec!["commit.control_character"], "{text:?}");
+        }
+        let body = judge(
+            &CommitSubject::of("fix(commit): x\r\n\r\nbody\twith a tab\r\n\n\nand blank lines\n"),
+            &CommitPolicy::default(),
+        );
+        assert!(body.findings.is_empty(), "{:?}", body.findings);
+        let c1 = judge(
+            &CommitSubject::of("fix(commit): x \u{9b}y"),
+            &CommitPolicy::default(),
+        );
+        assert!(c1.findings[0]
+            .message
+            .contains("U+009B CONTROL SEQUENCE INTRODUCER"));
+        // a carriage return inside a line is not a line ending
+        let cr = judge(
+            &CommitSubject::of("fix(commit): x\ry"),
+            &CommitPolicy::default(),
+        );
+        assert!(cr.findings[0].message.contains("U+000D CARRIAGE RETURN"));
+    }
+
+    #[test]
+    fn a_subject_git_composed_is_exempt_from_the_grammar_but_not_from_being_text() {
+        let coloured = judge(
+            &CommitSubject::of("Merge branch '\u{1b}[32mfeature\u{1b}[m'"),
+            &CommitPolicy::default(),
+        );
+        assert!(!coloured.passed);
+        assert_eq!(coloured.exempt, Some(CommitExemption::GitAuthored));
+        assert_eq!(codes(&coloured), vec!["commit.control_character"]);
+        let plain = judge(
+            &CommitSubject::of("Merge branch 'feature'"),
+            &CommitPolicy::default(),
+        );
+        assert!(plain.passed && plain.findings.is_empty());
+        assert_eq!(plain.exempt, Some(CommitExemption::GitAuthored));
+    }
+
+    #[test]
+    fn the_level_is_the_policy_s_like_every_other_commit_rule() {
+        let text = "\u{1b}[33mfix(commit): x";
+        let off = CommitPolicy {
+            control_character: FindingLevel::Off,
+            ..CommitPolicy::default()
+        };
+        // off: not judged, and the grammar reads the escape as part of the word, as before
+        assert_eq!(
+            codes(&judge(&CommitSubject::of(text), &off)),
+            vec!["commit.not_conventional"]
+        );
+        let warning = CommitPolicy {
+            control_character: FindingLevel::Warning,
+            ..CommitPolicy::default()
+        };
+        let v = judge(&CommitSubject::of("fix(commit): x \u{1b}[1my"), &warning);
+        assert!(v.passed);
+        assert_eq!(codes(&v), vec!["commit.control_character"]);
+        assert_eq!(v.findings[0].severity, Severity::Warning);
+    }
+
+    #[test]
+    fn many_control_characters_name_five_positions_and_count_the_rest() {
+        let text = format!("fix(commit): {}", "\u{1b}[m".repeat(8));
+        let v = judge(&CommitSubject::of(&text), &CommitPolicy::default());
+        let detail = &v.findings[0].message;
+        assert!(detail.contains("8 control characters"), "{detail}");
+        assert_eq!(detail.matches("U+001B").count(), 5, "{detail}");
+        assert!(detail.ends_with("; and 3 more"), "{detail}");
     }
 
     #[test]

@@ -62,6 +62,14 @@ what the layer holds, and one that resolves to nothing is an error. This is the 
 the resolution the changelog already does, and the two read one scan, so they cannot come to
 disagree about what an id looks like.
 
+**A message is plain text.** A control character in it — C0 other than a line feed or a
+tab, DEL, or C1, such as the colour codes a pager writes into a title — is refused, and the
+finding names each one's line, column and code point. It is judged first and for every
+message, git's own subjects included, because every later reader (the forge, the changelog,
+an adopter's page of recent work) shows it raw long after the terminal that drew it is gone,
+and because the grammar would otherwise report the consequence (`'\x1b[33mfix' is not a
+commit type`) instead of the cause (I4605).
+
 **Git's own subjects are exempt, not wrong.** `Merge …`, `Revert "…"`, `fixup!` and
 `squash!` are composed by git; a validator that refused them would be refusing git. A
 `merge:` subject a person wrote is *not* exempt — this repository writes those deliberately,
@@ -85,7 +93,7 @@ debt grows. A checkout with no trunk to compare against reports that it measured
 rather than reporting a pass.
 
 `test/cases/274_commit_policy.sh` is the behavioural half, in disposable repositories: that a
-good message passes and a bad one is refused at exit 10, that a merge subject is exempt, that
+good message passes and a bad one is refused at exit 10, that a merge subject is exempt, that a colour code is refused even before the type, that
 an invented record id is refused and a real one is not, that a fix with no test is reported
 and does not refuse, that the vocabulary comes from the history and follows it when the
 history changes, that a plan is refused once HEAD or the index moves under it, that two
