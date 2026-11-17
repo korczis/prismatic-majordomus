@@ -3,8 +3,8 @@ id: majordomus.ai-layout-integrity
 version: 1
 kind: rule
 title: AI layer integrity
-description: The repository's AI layer is real: the manifest declares a format this executable reads and every section it names exists, the checkout-local half is ignored by git and nothing under it is tracked, and no project data remains under the pre-.ai .majordomus/ path.
-statement: The repository's AI layer is real: the manifest declares a format this executable reads and names sections that exist, the local half is ignored by git with nothing under it tracked, and no project data remains under the pre-.ai path.
+description: "The repository's AI layer is real: the manifest declares a format this executable reads and every section it names exists, the checkout-local half is ignored by git and nothing under it is tracked, and no project data remains under the pre-.ai .majordomus/ path."
+statement: "The repository's AI layer is real: the manifest declares a format this executable reads and names sections that exist, the local half is ignored by git with nothing under it tracked, and no project data remains under the pre-.ai path."
 status: active
 class: blocking
 depends_on: [majordomus.sessions-are-workers@1]

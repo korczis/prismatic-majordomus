@@ -3,7 +3,7 @@ id: majordomus.rule-package-integrity
 version: 1
 kind: rule
 title: Rule package integrity
-description: The repository's effective rule set is real: the vendored baseline matches its manifest file for file, every rule resolves with its dependencies and no two claim one identity, and no project rule reuses the vendored namespace.
+description: "The repository's effective rule set is real: the vendored baseline matches its manifest file for file, every rule resolves with its dependencies and no two claim one identity, and no project rule reuses the vendored namespace."
 statement: The vendored baseline matches its manifest file for file, every effective rule resolves with its dependencies, no two rules claim one identity, and no project rule reuses the vendored namespace.
 status: active
 class: blocking

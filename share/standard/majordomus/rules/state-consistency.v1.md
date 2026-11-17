@@ -4,7 +4,7 @@ version: 1
 kind: rule
 title: State consistency
 description: The task record still describes this checkout — same branch, and HEAD at or ahead of the recorded commit.
-statement: A task record is trusted only while it still describes this checkout: same branch, HEAD at or ahead of the recorded commit.
+statement: "A task record is trusted only while it still describes this checkout: same branch, HEAD at or ahead of the recorded commit."
 status: active
 class: blocking
 depends_on: [majordomus.sessions-are-workers@1]

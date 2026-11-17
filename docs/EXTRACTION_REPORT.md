@@ -359,3 +359,24 @@ Majordomus's own records. No code, no schema and no vocabulary was carried acros
 | A retention rule that names a file pattern rather than a store | The 10 GB directory is what that costs. |
 | Bypass channels for an enforced rule | Two existed there, in a discipline whose own policy said it could not be bypassed. |
 | A second "search" whose contract quietly replaces the first | `search` stays a literal scan over durable records with no index. `knowledge search` is a different corpus with a different contract, and both say so. |
+
+## 12. Third pass — a research fork's published documentation and tooling
+
+On 2026-11-16 and 17 one session in the OpenTTD research fork (korczis/OpenTTD, public)
+shipped a feature, deployed its documentation site and wiki, and then audited every
+public-facing document, every research tool and the generated surfaces against the code.
+The audits found the patterns below. Each one is a failure a machine can catch on every
+commit, and none had been caught by a test, because every part did what it was written to
+do.
+
+### Adopted
+
+| Pattern | Problem it addresses | Evidence | Where it lives |
+|---|---|---|---|
+| A tool's help is its parser's contract | flags, usage and documents drift apart; `--help` cut off, missing or exiting 2; a typo rewrote `README.md` or started a server that ran forever | the audit's findings, all fixed; a check now fails on each kind | rule `majordomus.tool-usage-contract`; reference check `tools/surfaces/surfaces check` in the fork |
+| Shipped front matter is YAML any parser reads | five standard rules and the skeleton's `.ai/README.md` held an unquoted `: `, so every YAML-reading publisher showed their fields as text | the fork's site and wiki, and empty cells in its rule tables | `test/cases/998_shipped_front_matter_is_portable_yaml.sh` |
+| Front matter that does not parse is a finding, never silently text | the publisher swallowed the parse error and rendered the block as a paragraph | 262 of 377 wiki pages began with raw YAML; 7 records lost their table rows | the fork's `surfaces check`, finding `front` |
+| A peer's claim about a third party is verified like a worker's report | a relayed "the owner approved" and an asserted "no overlap" | the rebase conflicted in three blocks the peer called disjoint; the approval was taken from the owner directly | `majordomus.verify-outcomes`, section on peers' claims |
+| A deploy that copies files compares contents | `rsync -a` skips a file whose size and time match, so nine wiki pages stayed at older commits while the job reported the wiki current | same-size pages with old pinned commits, found by building the wiki and diffing it with the live one | the fork's `.github/workflows/surfaces.yml`, `rsync --checksum` |
+| A harness pins every choice the program persists | the game saved the base graphics set a previous run chose, so every later run started in it and looked like a default | a client config written by another session's run | the fork's `mcp-e2e` and `mcp-human-e2e`, `-I` on every start |
+| A count in prose names the command that measures it | test and check counts in five documents disagreed with each other and with the source | "18 cases", "14 checks" and "18/18" against 27 and 28 | the existing "Counts computed, never written" pattern, applied to research documents |
