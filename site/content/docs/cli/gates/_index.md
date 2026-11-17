@@ -4,7 +4,7 @@ description = "Whether each structure job of the CI model fits in half its bound
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 229
+weight = 232
 [extra]
 route = "/docs/cli/gates/"
 command = "majordomus gates"

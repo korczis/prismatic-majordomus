@@ -171,6 +171,19 @@ To force full validation of a pull request, add the label `ci:full`; the `labele
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
 `ci-plan` artifact, or run the planner on the same diff locally.
 
+Any other label starts no second verdict (I4347). `labeled` starts validate for every label,
+and only `ci:full` and `hold` change what a run does; in the seven days to 2026-11-01, 128 of
+436 pull-request validate runs were a further run of a head that had already been run, most
+of them started by the label a train or a records branch is opened with. So a run started by
+another label, on a head that already carries a verdict, gives its runners back in the plan
+job's first step, and its `ci` job writes that verdict again: success stays success and a
+red stays red. It never skips `ci`, because GitHub counts a skipped required check as
+passing. A verdict is a completed run of the same head whose `plan` succeeded and whose `ci`
+concluded success or failure; a run that yielded is none, so a head whose only runs yielded
+runs its plan, and a forge that cannot be read decides the same. The enforcer is
+`scripts/ci/carried-verdict`; `test/cases/26_ci_wiring.sh` proves the wiring, keeps its label
+set equal to the labels validate.yml reads, and replays the trains of 2026-10-28.
+
 `test/cases/94_ci_plan.sh` proves the relationships that matter: a Rust change selects the
 Rust gates and never the site, a site change the site gates and never a Rust gate, a
 document the site and the registry checks, the distribution every implementation, the
@@ -392,14 +405,27 @@ A pull request's run ends at its first red. Once one job has failed the run cann
 and the jobs still going hold runners the trunk's run and the deployments wait for: on
 2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
 step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
-cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
-still run, because they run `always()`, and report the run red. A combined top, a pull request
+cancels the run by its own id with the job's token (`actions: write`); `ci` still runs,
+because it runs `always()`, and reports the run red. The fan-ins (the suite's and the audit's
+unions, `site-probe`, `interactions`) run `!cancelled()`, and the probe shards only on the
+`site` job's success: after a cancel the shards left nothing to join and the site no artifact
+to probe, and on 2026-11-07 each cancelled run added twelve "Artifact not found" shards and a
+"no row for" union beside its one real red. They still run, and report red, after a shard or
+the site failed in a run that was not cancelled. A combined top, a pull request
 whose head is an `integration/*` branch, is never cancelled this way: it carries many heads and
 is judged once for all of them, so one run of it shows every red (on 2026-10-15 the grand top
 took three full cycles to show three reds). A push to master, the schedule
 and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
+A run that reaches its plan for a head its pull request no longer has gives its runners back:
+the plan job's first step after the held-member yield reads the pull request's head and, when
+it moved, cancels its own run before any gate asks for a runner. That is not a newer commit
+cancelling a started run — no gate of it has started, and its verdict would judge a head nobody
+can merge. On 2026-11-07 three such runs held 19 queued jobs under the account's shared hosted
+cap. A head that cannot be read lets the run proceed. Case 26 holds the step, its place before
+the checkout, and the conditions above.
 
 A cancel GitHub accepted is a request, not an end. On 2026-10-19 a cancelled run's `suite` job
 went on running and held its slot in the pool; only
@@ -431,8 +457,13 @@ release's token dispatched. While any of them is queued or running:
   verdict is one) and every fifteen minutes by `release-path.yml`'s schedule.
 
 Never cancelled by this: anything of the release path, master's validate, the schedule and a
-dispatch, a run on a record branch, and a run whose pull request GitHub does not name. A
-reading that cannot be made lets a run proceed and touches nothing. The model is
+dispatch, a run on a record branch, and a run whose pull request GitHub does not name. Nor a
+train: a pull request labelled `train` (the model's `exempt_label`), the landing seat's
+combined top, on whose one run every member waits. The owner decided that on 2026-11-01; the
+members and every other pull request still yield. A reading of the runs that cannot be made
+lets a run proceed and touches nothing; labels that cannot be read exempt nothing, so that run
+is not known to be a train and yields as before. The label is read when the run asks, so the
+composer opens a top's pull request with `gh pr create --label train`. The model is
 `.ai/repo/ci/release-path.yaml`; case 3027 holds the decisions and the wiring.
 
 The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
@@ -687,4 +718,8 @@ scripts/ci-baseline --runs 10                       # record what GitHub observe
 
 `scripts/ci/verdict --plan plan.json --needs needs.json` renders the same verdict CI
 renders, from a plan and a `needs` context; `test/cases/94_ci_plan.sh` drives it with
-fixtures.
+fixtures. A job GitHub never created reads `abandoned` in `needs`: on 2026-11-09 attempt 2
+of the approved record run 42668789214 had no `site` job and `ci` was red for it alone. The
+verdict stays red for it, as for every result but `success`, and its row says what recovers
+it: re-running the failed jobs of the run, which created the job on attempt 3
+(`test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh`).

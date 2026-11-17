@@ -155,7 +155,11 @@ jobs:
   publish:
     needs: [plan, build]
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # 40, not 20: on 2026-11-06 v1.0.0's publish (run 42298420467) spent 6.5 min in the checkout
+    # (the object store had 1,197 packs and 482k loose objects), 6 min building the executable and
+    # was cancelled by this bound 6 min into scripts/derive, with the release on GitHub and its
+    # metadata and record never published. The bound fits what the steps measurably take.
+    timeout-minutes: 40
     outputs:
       # the pull request that proposes the record; smoke names it when the record is unmerged
       record_pr: ${{ steps.record.outputs.record_pr }}
@@ -541,6 +545,41 @@ jobs:
   # The published installer, from its published URL, installing the release that was just
   # published. This is the check that catches a release whose artifacts exist and whose
   # names the installer does not expect.
+  # The published homepage, read in a real browser for the tag this run published (I4530):
+  # GitHub's newest release is this tag and the page names it; the trust strip, the navbar
+  # badge, /releases/latest.json and the newest pre-release ahead of stable agree; the footer
+  # names /build.json's commit. The smoke matrix waits for the metadata file with curl; this is
+  # the page a person sees, and its screenshot is the run's artifact. It waits up to ten
+  # minutes for the Pages build the publish asked for.
+  live:
+    needs: [plan, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 3
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-site
+      - id: browser
+        name: the homepage in a real browser names this release
+        timeout-minutes: 12
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHROME_BIN: google-chrome
+          CI: "true"
+        run: scripts/release-probe --expect '${{ needs.plan.outputs.tag }}' --wait 600 --out target/release-probe
+      - name: the browser's reading, as an artifact
+        if: always() && steps.browser.outcome != 'skipped'
+        timeout-minutes: 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-probe
+          path: target/release-probe
+          if-no-files-found: ignore
+          retention-days: 90
+
   smoke:
     needs: [plan, publish]
     runs-on: ${{ matrix.runner }}

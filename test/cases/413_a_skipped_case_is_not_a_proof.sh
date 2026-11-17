@@ -121,7 +121,7 @@ export MAJORDOMUS_SHARE="$ROOT/share"
 # real test/cases/ would mean running the whole suite to ask one question about one word.
 H="$W/harness"
 mkdir -p "$H/test/cases" "$H/lib"
-cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"; cp "$ROOT/lib/sha256.sh" "$H/lib/"
+cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"; cp "$ROOT/lib/sha256.sh" "$ROOT/lib/runnable.sh" "$H/lib/"
 cat > "$H/test/cases/01_passes.sh" <<'SH'
 . "$ROOT/test/lib.sh"
 expect_exit 0 true

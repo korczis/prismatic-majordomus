@@ -23,4 +23,15 @@ validation:
 evidence_required:
   - "case_mod_links_stay_inside"
 created_at: 2026-10-27
-updated_at: 2026-10-27
+updated_at: 2026-11-01T02:23:42Z
+started_at: 2026-11-01T02:23:13Z
+started_event: sha256:7a4e1fa0f7a979b370a42bd5448eaae1f7baf90b08edee35f590374eda6bfe46
+completed_at: 2026-11-01T02:23:42Z
+completed_event: sha256:54585fa2e799d1d128fbd5e40c957059b2e6e4f689b544f6112bec5ff15fb862
+evidence:
+  - covers: case_mod_links_stay_inside
+    type: test
+    command: "bash test/run.sh 4251_a_mod_links_nothing_outside_the_repository"
+    result: "delivered by a3ed641d92b: the brief mod's README links https://majordomus.dev/docs/brief/ rather than ../../../../docs/BRIEF.md; the case checks every relative link capture install writes, every link of every mod under share/mods, and refuses a mod copy with an escaping link; ok, 1 passed at master 54c317f11ad"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-11-01T02:23:33Z

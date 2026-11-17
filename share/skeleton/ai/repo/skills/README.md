@@ -97,6 +97,18 @@ documented and enforced is derived by the Rust executable's `skills status`, `sk
 and `skills verify`, and never written down. An active skill no test names or nothing invokes
 is an orphan, and `doctor` refuses it when the executable is built.
 
+## Skills from the fleet pack
+
+The owner's fleet pack (`MAJORDOMUS_FLEET_PACK`, else `majordomus/fleet` under the user's
+configuration directory) installs its skills here as `fleet-<id>/SKILL.md`: the same skill/v1
+contract, so the id inside the file is `fleet-<id>` too, and an install refuses a pack skill
+that fails it. The install stamps every file it writes, with its sha256, in
+`../rules/vendor/fleet/MANIFEST`. The test that names a fleet skill and the surface that
+invokes it belong to the pack, so a `fleet-` skill the stamp lists with the bytes in the tree
+is proved by the pack and is no orphan here. A `fleet-` skill the stamp does not list, or one
+edited since the install, owes its proof like any other: change the skill in the pack and
+update, never the copy.
+
 ## What is derived, and must not be edited
 
 `share/allow/skill.txt` (from the schema, by `majordomus generate allow`), the MCP

@@ -11,7 +11,7 @@
 . "$ROOT/test/lib.sh"
 
 command -v curl >/dev/null 2>&1 || skip "no curl"
-command -v python3 >/dev/null 2>&1 || skip "no python3 to serve a site that never changes"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 
 WANT=1234567890abcdef1234567890abcdef12345678   # the commit that was pushed

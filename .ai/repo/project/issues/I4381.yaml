@@ -64,4 +64,27 @@ evidence_required:
   - "rust"
   - "ci"
 created_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-01T04:54:43Z
+started_at: 2026-11-01T04:53:00Z
+started_event: sha256:3cb12284d52e857a04f5ef6a1a2d80e01cf1f1d9788e9882c95f5d37675a7cbd
+completed_at: 2026-11-01T04:54:43Z
+completed_event: sha256:b2bdf3bdfd978561c2a60e51739164d939853f191c60c7b2851a3ecdb35c4992
+evidence:
+  - covers: "test"
+    type: test
+    command: "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says && scripts/ci/shell-lint && scripts/ci/step-bound-check && actionlint .github/workflows/validate.yml && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::model"
+    result: "delivered by 686f35fdb4a on master: the four cases ok 4 passed, shell-lint and step-bound-check pass, actionlint clean, gates::model 31 passed (imac), at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:53:43Z
+  - covers: "rust"
+    type: test
+    command: "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says && scripts/ci/shell-lint && scripts/ci/step-bound-check && actionlint .github/workflows/validate.yml && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::model"
+    result: "delivered by 686f35fdb4a on master: the four cases ok 4 passed, shell-lint and step-bound-check pass, actionlint clean, gates::model 31 passed (imac), at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:54:02Z
+  - covers: "ci"
+    type: test
+    command: "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says && scripts/ci/shell-lint && scripts/ci/step-bound-check && actionlint .github/workflows/validate.yml && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::model"
+    result: "delivered by 686f35fdb4a on master: the four cases ok 4 passed, shell-lint and step-bound-check pass, actionlint clean, gates::model 31 passed (imac), at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:54:22Z

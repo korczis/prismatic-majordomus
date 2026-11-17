@@ -6,7 +6,7 @@
 # anywhere. Everything else here is the machinery that makes that claim checkable without a
 # browser, so this case never needs one.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 
 # The modules under test come from the checkout; the fixtures are built here. Nothing in this
 # case writes into the checkout, so it runs in the parallel phase.
@@ -345,3 +345,14 @@ expect_grep 'swagger' shadow.txt
 expect_grep '1 page' shadow.txt
 # and the executable still serves; a shadowing is reported, never refused
 expect_exit 0 "$BIN" web validate
+
+# ---------------------------------------------------------------- the kit's own sources are read
+# Tailwind 4 emits a class that Flowbite's components set from script only when Flowbite is one
+# of its sources (the owner's Flowbite Pro rule, S2): both compiled entries, the Cockpit's and
+# the UI's, load its plugin and name it as a source.
+for entry in share/cockpit/src/cockpit.css share/ui/src/ui.css; do
+  grep -qE '^@plugin "flowbite/plugin";' "$ROOT/$entry" \
+    || { echo "    $entry loads no Flowbite plugin"; exit 1; }
+  grep -qE '^@source "(\.\./)+node_modules/flowbite";' "$ROOT/$entry" \
+    || { echo "    $entry names no @source on flowbite"; exit 1; }
+done
