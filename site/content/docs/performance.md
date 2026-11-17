@@ -233,6 +233,7 @@ declares. No profile-dependent difference is visible here above the load noise:
 The command that measured it. It takes the worktree, a scratch fixture directory and the
 number of runs, and prints `command<TAB>profile<TAB>ms`:
 
+<!-- majordomus:unrun a timing run over every profile in a scratch fixture, minutes long and load-sensitive; the table above is its recorded output -->
 ```bash
 set -u; WT="$1"; FX="$2"; N="${3:-9}"; unset MAJORDOMUS_SHARE; MJ="$WT/bin/majordomus"
 rm -rf "$FX"; mkdir -p "$FX"; cd "$FX" || exit 1
