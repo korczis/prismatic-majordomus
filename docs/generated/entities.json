@@ -26,7 +26,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 192,
+      "count": 195,
       "dir": "rules",
       "statuses": [
         "active"
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1260
+      "count": 1261
     },
     {
       "kind": "knowledge",
@@ -248,7 +248,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 192
+      "count": 195
     },
     {
       "kind": "scope",
@@ -14929,6 +14929,63 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+      "identity": "majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+      "slug": "majordomus-a-relayed-approval-is-confirmed-with-the-owner-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-a-relayed-approval-is-confirmed-with-the-owner-1",
+      "title": "A relayed approval is confirmed with the owner before anyone acts on it",
+      "status": "active",
+      "tags": [
+        "governance",
+        "coordination",
+        "agents"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/a-relayed-approval-is-confirmed-with-the-owner.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.externalise-decisions@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-externalise-decisions-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/majordomus.a-shared-plan-lives-in-the-repository@1",
+      "identity": "majordomus.a-shared-plan-lives-in-the-repository@1",
+      "slug": "majordomus-a-shared-plan-lives-in-the-repository-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-a-shared-plan-lives-in-the-repository-1",
+      "title": "A plan that more than one session works from lives in the repository",
+      "status": "active",
+      "tags": [
+        "continuity",
+        "coordination",
+        "records"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/a-shared-plan-lives-in-the-repository.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.externalise-decisions@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-externalise-decisions-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "majordomus.handovers-carry-state@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-handovers-carry-state-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
       "slug": "majordomus-adr-integrity-1",
@@ -15088,6 +15145,30 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/majordomus.an-oracle-never-reads-the-state-under-test@1",
+      "identity": "majordomus.an-oracle-never-reads-the-state-under-test@1",
+      "slug": "majordomus-an-oracle-never-reads-the-state-under-test-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-an-oracle-never-reads-the-state-under-test-1",
+      "title": "An oracle takes its inputs from the declared controls or a closed form, never from the state under test",
+      "status": "active",
+      "tags": [
+        "testing",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/an-oracle-never-reads-the-state-under-test.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.verify-outcomes@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-verify-outcomes-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -15889,6 +15970,20 @@
       "referenced_by": [
         {
           "edge": "depends_on",
+          "label": "majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-a-relayed-approval-is-confirmed-with-the-owner-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "majordomus.a-shared-plan-lives-in-the-repository@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-a-shared-plan-lives-in-the-repository-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "majordomus.adr-integrity@1",
           "kind": "rule",
           "route": "/rules/majordomus-adr-integrity-1/",
@@ -16019,6 +16114,13 @@
       "source": ".ai/repo/rules/vendor/majordomus/rules/principle-10-handovers-carry-state.v1.md",
       "references": [],
       "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.a-shared-plan-lives-in-the-repository@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-a-shared-plan-lives-in-the-repository-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "majordomus.handover-integrity@1",
@@ -17719,6 +17821,13 @@
       "source": ".ai/repo/rules/vendor/majordomus/rules/principle-08-verify-outcomes.v1.md",
       "references": [],
       "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.an-oracle-never-reads-the-state-under-test@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-an-oracle-never-reads-the-state-under-test-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "majordomus.command-coverage@1",

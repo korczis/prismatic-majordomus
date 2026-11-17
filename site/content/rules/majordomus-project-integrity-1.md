@@ -1,7 +1,7 @@
 +++
 title = "Project model integrity"
 description = "Project model integrity"
-weight = 39
+weight = 42
 [extra]
 kind = "rule"
 slug = "majordomus-project-integrity-1"

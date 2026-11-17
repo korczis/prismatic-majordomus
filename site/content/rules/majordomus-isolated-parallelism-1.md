@@ -1,7 +1,7 @@
 +++
 title = "Parallel work requires isolation"
 description = "Parallel work requires isolation"
-weight = 24
+weight = 27
 [extra]
 kind = "rule"
 slug = "majordomus-isolated-parallelism-1"

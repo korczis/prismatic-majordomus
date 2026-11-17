@@ -82018,6 +82018,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I4631",
+        "kind": "issue",
+        "label": "I4631",
+        "summary": "Three integration lessons ship in the baseline: a relayed approval is confirmed with the owner, a shared plan lives in the repository, and an oracle never reads the state under test",
+        "route": "/cockpit/objects/issue/i4631",
+        "source": ".ai/repo/project/issues/I4631.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/rules-package check passes with the three rules listed",
+            "scripts/ci/rule-proof-check passes: each rule says in x-majordomus.reviewed_because why a reviewer, not a validator, decides it",
+            "majordomus rules vendor status reports the vendored copy current, and majordomus rules list shows the three rules active"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [],
+          "milestone": "a-claim-stands-only-on-its-evidence",
+          "non_scope": [
+            "A validator for any of the three rules: each is advisory and normative only",
+            "A depends_on edge to majordomus.an-equivalence-proof-keeps-a-failing-mutation, which is not on master; it is cited by name and can be added once I4623 lands",
+            "Changing this repository's own tests, handovers or approval flow to comply"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/standard/majordomus/rules/a-relayed-approval-is-confirmed-with-the-owner.v1.md",
+            "share/standard/majordomus/rules/a-shared-plan-lives-in-the-repository.v1.md",
+            "share/standard/majordomus/rules/an-oracle-never-reads-the-state-under-test.v1.md",
+            "share/standard/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus/rules/a-relayed-approval-is-confirmed-with-the-owner.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/a-shared-plan-lives-in-the-repository.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/an-oracle-never-reads-the-state-under-test.v1.md",
+            ".ai/repo/project/issues/I4631.yaml"
+          ],
+          "serves": [
+            "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
+          ],
+          "slug": "three-integration-lessons-are-baseline-rules",
+          "validation": [
+            "scripts/rules-package check",
+            "scripts/ci/rule-proof-check",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -95876,6 +95923,47 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+        "kind": "rule",
+        "label": "majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+        "summary": "A relayed approval is confirmed with the owner before anyone acts on it",
+        "route": "/cockpit/objects/rule/majordomus-a-relayed-approval-is-confirmed-with-the-owner-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/a-relayed-approval-is-confirmed-with-the-owner.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.externalise-decisions@1"
+          ],
+          "tags": [
+            "governance",
+            "coordination",
+            "agents"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.a-shared-plan-lives-in-the-repository@1",
+        "kind": "rule",
+        "label": "majordomus.a-shared-plan-lives-in-the-repository@1",
+        "summary": "A plan that more than one session works from lives in the repository",
+        "route": "/cockpit/objects/rule/majordomus-a-shared-plan-lives-in-the-repository-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/a-shared-plan-lives-in-the-repository.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.externalise-decisions@1",
+            "majordomus.handovers-carry-state@1"
+          ],
+          "tags": [
+            "continuity",
+            "coordination",
+            "records"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -95910,6 +95998,25 @@
           "tags": [
             "layout",
             "ai"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.an-oracle-never-reads-the-state-under-test@1",
+        "kind": "rule",
+        "label": "majordomus.an-oracle-never-reads-the-state-under-test@1",
+        "summary": "An oracle takes its inputs from the declared controls or a closed form, never from the state under test",
+        "route": "/cockpit/objects/rule/majordomus-an-oracle-never-reads-the-state-under-test-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/an-oracle-never-reads-the-state-under-test.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.verify-outcomes@1"
+          ],
+          "tags": [
+            "testing",
+            "evidence"
           ]
         }
       },
@@ -151857,6 +151964,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4631",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4631",
+        "target": "majordomus://milestone/a-claim-stands-only-on-its-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -154217,6 +154334,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-relayed-approval-is-confirmed-with-the-owner@1",
+        "target": "majordomus://rule/majordomus.externalise-decisions@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-shared-plan-lives-in-the-repository@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-shared-plan-lives-in-the-repository@1",
+        "target": "majordomus://rule/majordomus.externalise-decisions@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-shared-plan-lives-in-the-repository@1",
+        "target": "majordomus://rule/majordomus.handovers-carry-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -154234,6 +154376,16 @@
       {
         "source": "majordomus://rule/majordomus.ai-layout-integrity@1",
         "target": "majordomus://rule/majordomus.sessions-are-workers@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.an-oracle-never-reads-the-state-under-test@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.an-oracle-never-reads-the-state-under-test@1",
+        "target": "majordomus://rule/majordomus.verify-outcomes@1",
         "kind": "depends_on"
       },
       {
@@ -164753,8 +164905,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4508,
-      "edges": 10164,
+      "nodes": 4512,
+      "edges": 10173,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,38 @@
+id: I4631
+milestone: a-claim-stands-only-on-its-evidence
+title: "Three integration lessons ship in the baseline: a relayed approval is confirmed with the owner, a shared plan lives in the repository, and an oracle never reads the state under test"
+slug: three-integration-lessons-are-baseline-rules
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The standard rule package carries three advisory rules with no validator, normative for every adopter: majordomus.a-relayed-approval-is-confirmed-with-the-owner@1 (an approval, permission or decision that reaches an agent through another agent is a report; the agent confirms it with the owner directly before acting, records the question and answer verbatim, and resolves a conflict between a relayed and a direct answer by asking), majordomus.a-shared-plan-lives-in-the-repository@1 (a plan, brief or ledger that more than one agent or session works from is committed, with derived content kept derivable; scratch space is for one session's transient files) and majordomus.an-oracle-never-reads-the-state-under-test@1 (a check's expected value comes from declared inputs or an independent closed form, never from state the system under test produced, so a planted change moves the measurement and leaves the expectation fixed; it extends majordomus.an-equivalence-proof-keeps-a-failing-mutation, proposed in pull request #3053)."
+why: "The algoglyph integration session met all three failures. A peer agent reported that the owner had approved landing a stack of branches the integrator had been told to hold; the integrator asked the owner directly and recorded both answers. The multi-slice plan several agents worked from lived in one session's temporary scratchpad, which peers could not read and which was deleted mid-project; it was rebuilt from memory and its solver designs were lost. A simulator's Mach-angle claim read the source's speed from the simulated source, so a wrong speed moved the measurement and the expectation together and the claim could never fail. None of the three is specific to that repository, and the baseline is where Majordomus keeps doctrine every adopter vendors (share/standard/majordomus)."
+current_state: "On origin/master 7222b343dcb the package (share/standard/majordomus/manifest.yaml) lists 61 rules. majordomus.externalise-decisions@1 says decisions are recorded, and majordomus.verify-outcomes@1 says a recorded exit code is evidence; no rule says that a relayed approval authorises nothing, that a shared plan must be in the repository, or that a check's expectation must not read the state under test."
+desired_state: "The three rules are in share/standard/majordomus/rules/, listed in the manifest by scripts/rules-package write, vendored here by majordomus rules vendor update, and published by the derive under site/content/rules/. Each says plainly that it has no validator and is normative text, and carries x-majordomus.reviewed_because. Algoglyph is named only as the cited example."
+scope:
+  - "share/standard/majordomus/rules/a-relayed-approval-is-confirmed-with-the-owner.v1.md"
+  - "share/standard/majordomus/rules/a-shared-plan-lives-in-the-repository.v1.md"
+  - "share/standard/majordomus/rules/an-oracle-never-reads-the-state-under-test.v1.md"
+  - "share/standard/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus/rules/a-relayed-approval-is-confirmed-with-the-owner.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/a-shared-plan-lives-in-the-repository.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/an-oracle-never-reads-the-state-under-test.v1.md"
+  - ".ai/repo/project/issues/I4631.yaml"
+non_scope:
+  - "A validator for any of the three rules: each is advisory and normative only"
+  - "A depends_on edge to majordomus.an-equivalence-proof-keeps-a-failing-mutation, which is not on master; it is cited by name and can be added once I4623 lands"
+  - "Changing this repository's own tests, handovers or approval flow to comply"
+depends_on: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
+acceptance_criteria:
+  - "scripts/rules-package check passes with the three rules listed"
+  - "scripts/ci/rule-proof-check passes: each rule says in x-majordomus.reviewed_because why a reviewer, not a validator, decides it"
+  - "majordomus rules vendor status reports the vendored copy current, and majordomus rules list shows the three rules active"
+validation:
+  - "scripts/rules-package check"
+  - "scripts/ci/rule-proof-check"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+evidence_required: []
+created_at: 2026-11-17

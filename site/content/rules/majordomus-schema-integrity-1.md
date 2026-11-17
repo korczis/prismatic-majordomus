@@ -1,7 +1,7 @@
 +++
 title = "Every object has a schema, and the rules resolve in one stated order"
 description = "Every object has a schema, and the rules resolve in one stated order"
-weight = 50
+weight = 53
 [extra]
 kind = "rule"
 slug = "majordomus-schema-integrity-1"

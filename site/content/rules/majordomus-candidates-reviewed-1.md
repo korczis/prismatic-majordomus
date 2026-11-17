@@ -1,7 +1,7 @@
 +++
 title = "Candidates are reviewed"
 description = "Candidates are reviewed"
-weight = 5
+weight = 8
 [extra]
 kind = "rule"
 slug = "majordomus-candidates-reviewed-1"

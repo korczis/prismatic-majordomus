@@ -1,7 +1,7 @@
 +++
 title = "Architecture decision integrity"
 description = "Architecture decision integrity"
-weight = 1
+weight = 3
 [extra]
 kind = "rule"
 slug = "majordomus-adr-integrity-1"
