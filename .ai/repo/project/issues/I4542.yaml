@@ -1,0 +1,42 @@
+id: I4542
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-library-per-job"
+title: "ECharts draws the charts of /ui and the Cockpit through the site's chart module, and /ui/trends and /trends/ share it"
+slug: one-echarts-module
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S8 of milestone one-frame-one-kit-one-library-per-job. Move site/charts.js's ECharts 6.0.0 integration into share/design/js/chart and load it on /ui and /cockpit as on the site. /ui/trends and the site's /trends/ draw site/data/trends.json through it. The Rust SVG lines of apps/majordomus-cli/src/ui/trends.rs, the Rust SVG donut and the Tera SVG sparkline become ECharts charts or a declared static fallback drawn from the page's table. ADR 0152 (a diagram and a chart on the site are one viewer each) is proposed; the owner's order of 2026-11-07 does not name it and names chart.js among the libraries to review, so the intent's non-goal 'Chart.js is not adopted' is a proposal to the owner, not the owner's word. Before this slice starts, the owner's answer on Chart.js is recorded as a decision with the question and the answer verbatim."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Five chart renderers draw the same data differently, and /ui/trends and /trends/ already draw one file two ways."
+current_state: "Measured on master on 2026-11-07: ECharts 6.0.0 on the site only (site/charts.js, 2391 lines); Rust SVG lines in apps/majordomus-cli/src/ui/trends.rs (fn chart at line 72, reading site/data/trends.json through delivery.trends); a Rust SVG donut; a Tera SVG sparkline; a p5 time series in share/cockpit/activity.js; Chart.js absent from package.json. ADR 0152 reads status: proposed."
+desired_state: "share/design/js/chart is the one ECharts integration on three surfaces; /ui/trends and /trends/ render one chart definition; every other chart is ECharts or a declared static fallback."
+scope:
+  - "share/design/js/chart"
+  - "site/charts.js"
+  - "apps/majordomus-cli/src/ui/trends.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - ".ai/repo/project/issues/I4542.yaml"
+  - "test/cases"
+non_scope:
+  - "The p5 activity scene, which stays p5 (scenes are p5's job)"
+  - "Editing ADR 0152: its status is the owner's act"
+depends_on:
+  - "I4535"
+  - "I4536"
+acceptance_criteria:
+  - "echarts.init is called only in share/design/js/chart"
+  - "/ui/trends and /trends/ render the same series from site/data/trends.json, compared by a case"
+  - "Every chart on the three surfaces is drawn from a table on its page (the criterion of I3792) and reads without script as that table"
+  - "package.json carries no chart.js"
+  - "The owner's answer on Chart.js is recorded (majordomus decision) before the first commit of this slice, and the intent's non-goal follows it"
+  - "The gate of I2654 (a chart is held to its table, READY) is absorbed here or depends on this one, recorded in this issue's evidence"
+validation:
+  - "node scripts/ui audit"
+  - "scripts/interaction-probe"
+  - "majordomus plan validate"
+evidence_required:
+  - "one_chart_module_case"
+created_at: 2026-11-07
+updated_at: 2026-11-07

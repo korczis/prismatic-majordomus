@@ -1,0 +1,53 @@
+id: one-kit-on-every-surface
+title: "Every page of /ui, /cockpit and majordomus.dev is drawn from one component kit on the Flowbite Pro shell, with one library per job, every entity linked and every page readable by a model"
+statement: "Every page of /ui, /cockpit and majordomus.dev is drawn from one component kit on the Flowbite Pro shell, with one library per job. Every entity it names is a link to its canonical page, and every page is readable by a person and by a model. The owner's order of 2026-11-07 13:30Z, verbatim: 'cele http://127.0.0.1:8741/ui potrebuje reintegraci, review vsech rotes, components, max reuse, max flowbite pro best practices + llm, same for alpine.js, cytoscape.js, chart.js, p5.js, apache ec charts, reuse, dry with cokcpit, ui, pages, all dericed, infered, tested, deployed, dynamic, robust ... advanced tables, advanced componets, everything linked'."
+invariants:
+  - "A library a slice adopts is vendored from npm at the version package.json pins and served from the tree; no slice adds a CDN load, and the swagger page's pinned unpkg load stays the one accepted exception (apps/majordomus-cli/src/http/swagger.rs)"
+  - "No slice weakens the /ui and /cockpit Content-Security-Policy (crate::cockpit::csp): no unsafe-eval, no script-src unsafe-inline, no new inline script and no remote origin is admitted to make a library run; style-src keeps the unsafe-inline it already carries for drawing libraries and no slice widens it"
+  - "Every sentence, figure and badge is a projection of an existing capability; a component draws data and never decides it"
+  - "No Flowbite Pro source file is published verbatim; Pro markup is adapted onto the --mj-* tokens (ADR 0230)"
+non_goals:
+  - "Chart.js: it is not adopted; ECharts is the one chart library (ADR 0152)"
+  - "A new screen family or a new route: this intent makes the existing pages one kit"
+  - "A single-page application or client-side routing: pages stay server-rendered and are enhanced on the client"
+milestones:
+  - "one-frame-one-kit-one-library-per-job"
+satisfaction:
+  - id: one-page-frame
+    criterion: "One page frame (the Pro navbar, the sidebar drawer, the page header with its breadcrumb) serves /ui and /cockpit, the site wears the Pro navbar and footer, every /ui and /cockpit page carries the one frame's mark, which the ui-shard probe refuses a page without, and majordomus design kit --check reports zero S3 and S5 findings with no new ui.exempt entry (planned by I4538; design kit judges only the site's layout, so it is no evidence for the Rust frames)"
+    evidence: command
+    ref: "majordomus design kit --check"
+  - id: one-component-kit
+    criterion: "Card, kpi, table, badge, hero, meter, timeline, breadcrumbs, pagination, facts and alert each have one implementation per renderer (the Rust El kit and the Tera kit), both emit one markup contract, and a case that renders both and compares them holds it (planned proof: a test/cases case numbered by scripts/case-numbers next, to be written by I4537)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: flowbite-js-drives-behaviour
+    criterion: "Flowbite JS, vendored from npm and CSP-safe, drives collapse, dropdown, modal, drawer, tabs and tooltip on every surface, and no hand-written re-implementation of them remains: majordomus design kit --check reports zero S3 findings (planned by I4536)"
+    evidence: command
+    ref: "majordomus design kit --check"
+  - id: one-library-per-job
+    criterion: "Charts are ECharts, graphs are Cytoscape, scenes are p5 and behaviour is Alpine (the CSP build, Alpine.data components), each imported through one shared ESM module per job that all three surfaces load; Chart.js is not adopted (planned proof: a test/cases case that fails on a second import of any of the four libraries, written by I4546 once I4541, I4542 and I4543 have landed)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: one-client-core
+    criterion: "One share/design/js/core module holds the token resolver, the theme observer, reduced motion, the lazy loader, fragment fetch, bounded polling and the socket client, and no byte copy of any of them remains under share/ui, share/cockpit or site (planned proof: a test/cases case that fails on a duplicated helper, to be written by I4535)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: advanced-tables
+    criterion: "One advanced table component (search, filter, sort, pagination, column visibility, CSV and JSON export, row link) is rendered on the server and enhanced on the client, and every list screen uses it (planned proof: an interaction-probe spec over every list screen, to be written by I4539)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: every-entity-linked
+    criterion: "One link resolver maps every entity id (issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree, release) to its canonical page on each surface, and case 1091 is extended so that no id renders as plain text (planned proof: test/cases/1091_no_link_on_the_ui_is_dead.sh, extended by I4540)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: readable-by-a-model
+    criterion: "Every page carries a rel=alternate JSON link to the data it shows, and /ui and the site publish an llms.txt derived from the route registry (planned proof: a test/cases case that fetches every route's alternate and the llms.txt, to be written by I4544)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: derived-and-proven
+    criterion: "The /ui SCREENS list is derived from the registry as the Cockpit's sidebar is, the ui-shard and interaction probes cover every kit component including the three.js and p5 pages, and the deploy is verified in a browser (planned by I4538 and I4546)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+created_at: 2026-11-07
+updated_at: 2026-11-07

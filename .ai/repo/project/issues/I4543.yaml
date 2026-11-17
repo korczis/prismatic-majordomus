@@ -1,0 +1,39 @@
+id: I4543
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-library-per-job"
+title: "Alpine runs as one CSP build everywhere, the site's inline x-data become Alpine.data components in one module, and the duplicate tabs and copy controls retire"
+slug: one-alpine-csp-build
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S9 of milestone one-frame-one-kit-one-library-per-job. Serve one Alpine 3.17.1 CSP build on /ui, /cockpit and the site, imported through share/design/js/behaviour. Move every inline x-data expression of site/templates into named Alpine.data components registered by that module, so the site's markup runs under the /ui and /cockpit CSP. Retire the duplicate tabs and copy controls in favour of Flowbite tabs (I4536) and the one copy control."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Two Alpine builds mean site markup cannot run under the /ui and /cockpit CSP, so a component written for the site cannot be reused there."
+current_state: "Measured on master on 2026-11-07: share/cockpit/vendor/alpine.csp.min.js (3.17.1, the palette only); the standard alpinejs 3.17.1 build on the site (package.json), with inline x-data in 15 files under site/templates; /ui loads no Alpine."
+desired_state: "One alpine.csp build, one share/design/js/behaviour registering every component, no inline x-data expression in site/templates, and no second tabs or copy implementation."
+scope:
+  - "share/design/js/behaviour"
+  - "site/templates"
+  - "share/cockpit/vendor/alpine.csp.min.js"
+  - "share/cockpit/palette.js"
+  - "scripts/site-build"
+  - ".ai/repo/project/issues/I4543.yaml"
+non_scope:
+  - "Behaviour Flowbite JS owns (I4536)"
+depends_on:
+  - "I4535"
+  - "I4536"
+acceptance_criteria:
+  - "The site's pages run under the /ui Content-Security-Policy with no violation, read by the interaction probe"
+  - "The interaction probe drives every Alpine component on the three surfaces"
+  - "Every Alpine expression under site/templates (x-data, x-on and @, x-show, x-text, x-model, x-bind and :, x-init, x-effect) parses under the @alpinejs/csp 3.17.1 parser in a case; the parser refuses globals and has no arrow functions (node_modules/@alpinejs/csp/dist/module.esm.js:1974, 2670), which five templates use on 2026-11-07: why-section.html, contract.html, index.html, components.html and partials/terminal-run.html"
+  - "site/templates/index.html and site/templates/partials are changed only after p7's living-landing pack (LP01-LP12) has landed or released those paths on the board, or inside that pack with its owner's agreement, recorded in this issue's evidence"
+validation:
+  - "scripts/interaction-probe"
+  - "majordomus design kit --check"
+  - "majordomus plan validate"
+  - "node scripts/ui audit"
+evidence_required:
+  - "one_alpine_build_probe"
+created_at: 2026-11-07
+updated_at: 2026-11-07

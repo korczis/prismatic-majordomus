@@ -1,0 +1,166 @@
+intent: one-kit-on-every-surface
+reviewed_at: 4e757681523
+reviewed_by: "claude-code subagent (fresh context, not the plan's author) dispatched by session 0285b336 over branch plan/one-kit-on-every-surface at 4e757681523 (PR #2962), with origin/master d7fd9a36170 as the evidence: the intent, milestone one-frame-one-kit-one-library-per-job, I4534-I4546, ADRs 0012, 0031, 0036, 0135, 0152, 0160, 0166 and 0230, the rules ui-uses-flowbite-pro, the-ui-wears-the-sites-navbar, ui-conformance, ui-derived-state and design-tokens-declared-once, the two El kits, the frames, share/design/kits/flowbite-pro.yaml, the vendored flowbite 4.0.2 and @alpinejs/csp 3.17.1 bundles, majordomus design kit and design licence run on the tree, plan delivery, and the open pull requests read with gh. Disposition: accept with required changes. 13 blocking and 5 non-blocking findings, every one planned into an issue of this intent and changed in the same commit as this record; the Chart.js question is the owner's and is planned as a recorded decision before I4542 starts, not answered here."
+findings:
+  - id: frame-proof-cannot-see-the-frames
+    class: delivery_verification
+    subject: "one-kit-on-every-surface#one-page-frame"
+    finding: "The criterion's evidence, majordomus design kit --check at zero S3 and S5, cannot see /ui or /cockpit. Run on the tree, design kit judges one layout, site/templates/base.html (its answer: 'layouts: site/templates/base.html'), and its S3 findings are apps/majordomus-cli/src/ui/navbar.html:33 and the three nav.js copies; the Rust frames ui/shell.rs:83 and cockpit/view.rs:62 are not markup the profile reads (ADR 0230, consequence 'a shell assembled at run time ... will read as missing'). A tree where /ui and /cockpit keep two frames passes the criterion, and a ui.exempt entry with a reason (ADR 0230, decision 3) zeroes S5 without a navbar. Also its S5 findings today are 'no navbar' and 'no footer' on base.html, which includes the navbar through a partial, so zero S5 may be reached by changing the profile rather than the page; the plan does not say which."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4538
+      because: "The criterion now also requires that every /ui and /cockpit page carry the one frame's mark, refused by the ui-shard probe when absent, and zero S5 with no new ui.exempt entry. I4538 drops 'zero S5 for /ui, /cockpit' as an acceptance, adds the frame-mark probe, and records in its evidence whether base.html carries the markers itself or the profile changed in the distribution."
+  - id: core-module-contradicts-the-navbar-rule
+    class: regression_risk
+    subject: "I4535"
+    finding: "I4535's acceptance 'cmp finds no two identical files among share/ui/*.js, share/cockpit/*.js and site/*.js' contradicts rule project.the-ui-wears-the-sites-navbar, required behaviour 3: the bar runs on site/nav.js and site/theme.js served from share/ui and share/cockpit 'as byte copies that scripts/cockpit-assets writes and scripts/cockpit-assets --check holds' (scripts/cockpit-assets:41-44). The slice would fail that gate or break the rule. The serving model is also undesigned: assets are served per root (/cockpit/assets, /ui/assets) and relative imports are rewritten to digested URLs only within one root (cockpit/assets.rs:8-13, 275-283), so share/design/js/core is reachable from neither, and the static site has no import rewriter. nav.js and theme.js are classic scripts (cockpit/view.rs:84-88, ui/shell.rs:100-105), so 'share/ui, share/cockpit and site import it' changes how the bar's scripts load. Master is not shippable after S1 as written."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4535
+      because: "The cmp criterion is replaced by 'no hand-kept copy': a copy is allowed only when a build script writes it and its --check holds it, which keeps the navbar rule intact. I4535 adds acceptance for a digested served root with rewritten imports on /ui and /cockpit and a fingerprinted graph on the site, keeps the bar's scripts classic or moves them on all three surfaces at once with scripts/ui navbar passing, and gains apps/majordomus-cli/src/cockpit/assets.rs and test/cases in its scope."
+  - id: flowbite-reinit-double-binds-and-loses-escape
+    class: regression_risk
+    subject: "I4536"
+    finding: "The CSP is not the obstacle: flowbite 4.0.2's dist/flowbite.js has no eval and no new Function, it styles through the CSSOM and classList, and the policy already admits style-src 'unsafe-inline' (cockpit/mod.rs:333-334). The defects are elsewhere. (1) I4536 re-runs the initialisers after a fragment swap. initDropdowns (flowbite.js:7026) constructs a Dropdown for every toggle in the whole document, and the constructor calls init() and binds listeners (6804-6820, 6821-6826) before Instances.addInstance refuses the duplicate id with a console warning (8336-8345). So every toggle already on the page gets a second listener and toggles twice per click. (2) Dropdown and Collapse handle no Escape key and return no focus; only Drawer (6455), Modal (7375) and Tooltip (8173) do. site/nav.js:5-8 does both today, and the nav specs drive them, so the keyboard behaviour regresses. (3) site/nav.js:10-12 records that the 134 KB bundle was removed from the site for its budget, and the plan has no byte measurement. (4) The injected backdrop class (backdropClasses, flowbite.js:6419) is outside the tokens. (5) The navbar markup the bundle must drive, site/templates/partials/navbar.html, is not in its scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4536
+      because: "I4536's objective now scopes initialisation to the swapped fragment through the constructors. It keeps Escape and focus return by a core extension over Flowbite's instance API, never over the data attributes, which S3 refuses. Its acceptance adds: toggles fire once after a swap and no 'already exists' warning appears; Escape and focus return work on all three surfaces; site bytes stay within the probe's budget, measured before and after; the backdrop wears token classes. The navbar partial and share/design/js/core join its scope, and scripts/ui audit and scripts/ui navbar join its validation."
+  - id: the-probe-does-not-drive-ui-or-cockpit
+    class: unproven_assumption
+    subject: "I4535"
+    finding: "Six acceptance criteria rest on the interaction probe driving /ui and /cockpit: I4535:34, I4536:32, I4539:28, I4541:30, I4543:28-29 and I4546:31. It does not. scripts/interaction-probe:2 drives 'every page of the built site'. Driving the executable's pages is I3794 (milestone one-kit-on-every-surface, BLOCKED on I3793), and no slice depends on it. Each of those criteria is unmeetable until I3794 lands. I3793 (READY: one copy control and one tab control on every surface) also overlaps S2's tabs and S9's 'retire the duplicate tabs and copy controls'. Both would build the one tab control."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4535
+      because: "I4535 depends on I3794. The later slices that need the probe reach it through I4535 directly or through I4536, which now depends on I4535. I4536 delivers the tab half of I3793 as Flowbite tabs, and I3793 keeps the copy control; I4536's objective says so. I3794's own dependency on I3793 belongs to that milestone and is left to it, so S1 can wait on I3793 if I3793 is slow. That risk is stated here, not hidden."
+  - id: s1-and-s2-race-on-the-same-files
+    class: regression_risk
+    subject: "I4536"
+    finding: "I4535 and I4536 both rewrite site/nav.js, share/ui/nav.js and share/cockpit/nav.js (I4535:14-24, I4536:14-24). Both depend only on I4534, and both are parallel_safe: false, but nothing orders them. I4536's desired_state says Flowbite is 'initialised through share/design/js/core', which is I4535's deliverable."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4536
+      because: "I4536 now depends on I4535, so the order is S0, S1, S2, as the milestone's prose already says."
+  - id: kit-merge-is-too-big-and-out-of-scope
+    class: insufficient_work
+    subject: "I4537"
+    finding: "The acceptance 'grep finds no mj-ui- class under apps/majordomus-cli/src, share and site' covers 130 distinct mj-ui- classes in 68 files, with 693 uses in apps/majordomus-cli/src/ui/*.rs and 17 test and script files that name them. I4537's scope names only ui/view.rs, cockpit/view.rs, three stylesheets and site/templates/kit, so a task scope check would refuse the finish, and the change is not one pull request. Two other problems: (1) The slice makes share/design/kit.css 'the one stylesheet of the kit', while rule project.design-tokens-declared-once says the components more than one surface renders live in share/design/primitives.css. That gives two homes. (2) The /ui components are functions of a Reading or Answer that cite their source (ui/view.rs:1-21, 116-152, 203-230), which ADR 0088 and ADR 0135 require of every /ui panel, and the Cockpit's card and table do not cite (cockpit/view.rs:372-438). A naive merge drops the citation."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4537
+      because: "I4537 now requires only that the 11 kit components emit no mj-ui- class. The remaining classes go into a baseline that the contract case reads and that only shrinks, so later slices retire them screen by screen. It adds acceptance: one shared-component stylesheet, either kit.css folded into primitives.css or the rule naming kit.css; and the /ui source citation kept as a /ui wrapper over a kit that takes no Reading. primitives.css and test/cases join its scope."
+  - id: one-frame-against-adr-0135
+    class: regression_risk
+    subject: "I4538"
+    finding: "Merging the component kits honours ADR 0135: 'Shared code moves to a module both surfaces import. It is not duplicated' (0135:65-75). A single frame function needs a constraint the plan does not state. ADR 0135 gives /ui 'its own shell and its own navigation, written in delivery vocabulary', and the Cockpit 'is not restyled into the high-level screens. ... Neither copies the other's pages' (0135:50-57, 89-90). The two frames differ today in what each surface alone has. The Cockpit's body is the Alpine root x-data=cockpit with its palette (cockpit/view.rs:110-113, palette()). /ui has a CSS-only menu toggle (ui/shell.rs:134-140) and the lazy-library data attributes (shell.rs:120-126). I4538 also says to derive /ui SCREENS 'from the capability registry the way cockpit/nav.rs derives the Cockpit sidebar', but the registry declares capabilities, not screens. SCREENS is the one declaration of /ui's delivery navigation, held to the router by a test (ui/mod.rs:137-140, 517-536). The acceptance 'a test removes a screen from the registry' names no registry that has screens."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4538
+      because: "I4538's objective now defines the frame as shared mechanics. It takes each surface's navigation, title suffix and body root as input, and it reshapes neither surface's areas or pages. SCREENS is derived from the router's route table, or stays as that one declaration with its test. The acceptance now adds and removes a route in that table, not a registry entry."
+  - id: alpine-csp-breaks-more-than-x-data
+    class: insufficient_work
+    subject: "I4543"
+    finding: "I4543's acceptance checks only inline x-data objects. The site's Alpine also has expressions in x-on, x-text, :class and x-show. Five templates (why-section.html, contract.html, index.html, components.html, partials/terminal-run.html) use arrow functions and globals, for example the copy handler's Promise.resolve(...).then(() => navigator.clipboard...) with setTimeout. The @alpinejs/csp 3.17.1 parser throws 'Accessing global variables is prohibited in the CSP build' (module.esm.js:2670) and has no arrow keyword (1974). The grep would pass and the controls would break. index.html and the partials are also claimed on the board by p7's living-landing pack (LP01-LP12). I4543 had no accessibility validation."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4543
+      because: "I4543 now requires every Alpine expression under site/templates to parse under the CSP build in a case. It changes index.html and the partials only after the LP pack lands or releases them, or inside that pack by agreement, recorded in its evidence. scripts/ui audit joins its validation."
+  - id: handbook-has-no-tree-to-serve-from
+    class: unproven_assumption
+    subject: "I4545"
+    finding: "The handbook is not a page of the tree's servers. It is one HTML file built by handbook/build.py and published as a claude.ai Artifact (docs/HANDBOOK.md, ADR 0149), a host that has no served tree and allows external scripts only from cdnjs, jsdelivr and unpkg. 'Serve from the tree' cannot be done. The libraries are five, not three: markdown-it, highlight.js, dompurify, mermaid and echarts (handbook/cs/extras10.js:6-13). package.json pins only echarts 6.0.0 and mermaid 11.12.0. ADR 0166 decision 7 retires highlight.js from the handbook in favour of the one syntect highlighter (I2747, open as #1294, which edits handbook/cs/extras10.js)."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4545
+      because: "I4545 now inlines the libraries into the built file at the pinned versions, adds markdown-it and dompurify to package.json as pinned build dependencies, and lets highlight.js leave with I2747. It is judged on the built file: pinned versions, no CDN URL, within the Artifact's 16 MB, rendered in the published artifact. handbook/build.py and package.json join its scope."
+  - id: criteria-proven-by-explaining-themselves
+    class: delivery_verification
+    subject: "one-kit-on-every-surface#one-library-per-job"
+    finding: "Six of the nine criteria have evidence: command with ref 'majordomus intent explain one-kit-on-every-surface': one-component-kit, one-library-per-job, one-client-core, advanced-tables, every-entity-linked and readable-by-a-model. That is the intent proving itself, the defect the critique the-ui-runs-and-explains-the-work#criteria-proof-is-circular found and resolved. No issue says that its case becomes the criterion's ref. The one-library-per-job case is also 'to be written by I4541, I4542 and I4543', three owners and therefore none. Separately, every issue that writes a case (I4535, I4537, I4542, I4544, I4546) leaves test/cases out of its scope, which the task's scope check refuses."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4546
+      because: "I4546 now owns the one-library-per-job case, a planted second construction of ECharts, Cytoscape, p5 or Alpine outside share/design/js. The intent's criterion names I4546. I4535, I4537, I4540, I4544 and I4546 each gain the acceptance that their first case commit changes their criterion to evidence: test with the case as ref. test/cases joins the scope of every issue that writes a case."
+  - id: tables-render-everything-past-the-warm-budget
+    class: regression_risk
+    subject: "I4539"
+    finding: "I4539 has 'the server renders the complete table' and the no-script acceptance 'each list renders every row the capability returns' for lists that include capabilities (3920 on this tree) and objects (3689). The Cockpit paginates them on the server today (cockpit/view.rs:606-670, Window and pagination), and every /ui screen is held to a 100 ms warm p95 by the ui-checks step (I4200, ui/shell.rs:80-82). No acceptance measures it. The title names objects, executions and commands, which the scope does not reach. I4495 (READY: 'the issue list is read a page at a time, and the page is in the URL', milestone a-screen-is-fast-bounded-and-says-why) plans the opposite direction for the same list."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4539
+      because: "Without script, the table is now the server's page with pagination links that reach every row. The client enhances that page and asks the capability's own filters for more. A warm-budget measurement before and after is an acceptance. I4539 depends on I4495 and builds on its page-in-the-URL reading, and cockpit/view.rs and share/design/js/core join its scope."
+  - id: owner-words-and-proposed-adrs
+    class: unproven_assumption
+    subject: "I4542"
+    finding: "I4536:10 and I4542:10 say 'the owner's order of 2026-11-07 moves ADR 0230 / ADR 0152 from proposed to accepted'. The verbatim order quoted in the intent's statement names neither ADR. It names chart.js among the libraries to review ('same for alpine.js, cytoscape.js, chart.js, p5.js, apache ec charts'), and the intent's non-goal rejects Chart.js on the strength of ADR 0152, which is itself proposed (0152:6). The plan presents the planner's inference as the owner's word."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4542
+      because: "I4536 and I4542 now say that their ADRs are proposed, that the order does not name them, and that the slices build on them while asking the owner to accept them through the ADR process. I4542 requires the owner's answer on Chart.js, recorded as a decision with the question and the answer verbatim, before its first commit, and the non-goal follows that answer. The question is the owner's, so this critique does not answer it."
+  - id: link-resolver-cannot-reach-zola
+    class: unproven_assumption
+    subject: "I4540"
+    finding: "I4540 plans 'a Tera function that calls the same table'. The site is built by Zola, which runs its own Tera and cannot call a function of this executable. The criterion 'no id renders as plain text' is also not decidable for name-shaped ids: a capability, rule, skill, intent, milestone, peer or worktree name cannot be told from prose by scanning text (design.kit, plan.delivery). Only I1234, #123 and a commit sha are regex-shaped. ui/view.rs:14-17 already links every entity a /ui screen names, so the resolver replaces existing logic and must keep its technical-view rule (ADR 0135)."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4540
+      because: "I4540 now generates the table into site/data for a Tera macro, compared by generate --check. It detects entities by a data-entity mark on every rendered entity, with a text scan only for the regex-shaped ids. site/data and ui/view.rs join its scope, scripts/ui audit joins its validation, and the criterion flips to its case."
+  - id: s0-gates-everything-and-closes-early
+    class: regression_risk
+    subject: "I4534"
+    finding: "Every slice waits on I4534, directly (I4535, I4536, I4545) or through them, and I4534 is met only when none of nine pull requests is open. #966 and #933 date from October and carry more than 100 files each (gh pr view), so one unlandable PR stalls the whole intent. 'Absorbed into the slice that owns its paths, its pull request closed naming the absorbing slice' closes a PR before the slice that delivers its work exists. The owner's decision of 2026-11-01 (never auto-close; a superseded close names the delivering commit and leaves refs/rescue) and the rule to close only by delivery forbid that. The nine also miss #1294 (feature/one-highlighter, I2747), which changes cockpit/view.rs, web/report/snapshot.rs and handbook/cs/extras10.js, all inside S3, S4, S10 and S11."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4534
+      because: "I4534 is now met when every PR has a recorded verdict, so a slice starts once the PRs that touch its scope are decided. An absorbed PR stays open until its absorbing slice merges, and that slice closes it naming the delivering commit and the rescue ref. The triage extends to every open PR that scripts/collision-check finds on the milestone's scope (#1294 today) and to the LP pack's board claims. The 'none open' validation command is removed."
+  - id: in-flight-overlap-beyond-the-nine
+    class: missed_requirement
+    subject: "one-kit-on-every-surface#one-component-kit"
+    finding: "Work that is open now overlaps the slices and is not named. (1) p7's living-landing pack claims site/templates/index.html, site/data/homepage.toml and site/templates/partials, inside the scopes of I4538 (base.html and the navbar partial it includes), I4540 (site/templates/kit) and I4543 (site/templates). (2) pack-30m P09 (homepage delivery panel, #2943 merged; index.html) and P10 (both Tailwind entries read Flowbite's sources reproducibly) touch share/ui/src/ui.css and share/cockpit/src/cockpit.css, which are I4537's scope. P10's runtime classes are what S2's drawer and backdrop need. (3) READY issues elsewhere plan the same mechanisms: I2656 (one diagram viewer on the Cockpit and /ui), I2654 (a chart held to its table), I4494 (a bounded graph neighbourhood) and I4495 (paged issue list). (4) The older milestone one-kit-on-every-surface (I3790-I3797, mostly BLOCKED) shares this intent's name. intent validate warns that it 'is PLANNED and no intent names it'."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4534
+      because: "I4534's triage now covers the board claims and the collision-check hits. I4543 waits for or joins the LP pack. I4541 records how it relates to I2656 and I4494, I4542 to I2654, and I4539 depends on I4495. Naming the old milestone in this intent or in another one is left to the owner and recorded here; it is a warning, not a failure, and it was there before this plan."
+  - id: model-readable-for-composite-pages
+    class: unproven_assumption
+    subject: "I4544"
+    finding: "One rel=alternate per page cannot be 'the data it shows': a /ui screen asks up to six capabilities (ui/idd.rs), and non_scope forbids a new JSON endpoint that would combine them. The site already carries rel=alternate hreflang links (site/templates/base.html:51-57), and a JSON alternate has to sit beside them. A static /ui snapshot (web/report/snapshot.rs:10-22) rewrites anchors, not head links, so an alternate to /api would be a dead link in a publication. The acceptance covers only /ui and /cockpit, while the criterion says every page. llms.txt per language is not addressed."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4544
+      because: "I4544 now puts one alternate per source, titled by it, beside the hreflang links, and makes the snapshot rewrite or drop alternates. It adds site acceptance through link-check and a snapshot acceptance, flips its criterion, adds snapshot.rs and test/cases to its scope, and runs scripts/ui audit."
+  - id: missing-i18n-a11y-kiosk-rollback
+    class: surface_missing
+    subject: "one-kit-on-every-surface#derived-and-proven"
+    finding: "Several things are not owned by any slice. (1) i18n: the site is published in en and cs (site/i18n/languages.json), and no slice puts the Pro navbar, footer, table controls or llms.txt through the site's i18n. (2) Accessibility: the axe-backed scripts/ui audit (scripts/lib/ui-audit.mjs:262) is missing from the validation of I4536, I4540, I4543 and I4544. (3) Coverage: I4546 probes /cockpit/activity and the topology, but not the observatory kiosk's p5 scenes (share/ui/observatory-kiosk.js, ADR 0160), which are the main p5 surface. (4) Rollback: no slice states its revert unit. A broken bar after S2 or S4 reaches every published page, and nothing reads the published site after a slice before the next one starts; that is I4530's probe, ACTIVE. (5) Licence: design licence reports 'inactive: no kit declared (ui.kit is empty)', and ADR 0230's consequence makes this plan the adoption slice, yet no issue runs majordomus design kit adopt. I4546 hand-writes a validate.yml step instead of the enforcement entries adopt writes."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4546
+      because: "I4546 now adopts the kit, which sets ui.kit, writes the design-kit-on-push and design-kit enforcement entries and makes design licence active, and it probes the kiosk's scenes. Its scope gains .ai/repo/policy.yaml and the rule. I4538 renders the frame in every declared language and records the Pro block each part was adapted from, with no Pro file in the tree. scripts/ui audit is added to I4536, I4540, I4543 and I4544. Rollback is each slice's own pull request: a frame or behaviour slice (S2, S4) is followed by I4530's published-site probe before the next slice starts. That order is stated here and needs no record change."
+  - id: diagram-addresses-and-the-missing-diagram-job
+    class: regression_risk
+    subject: "I4541"
+    finding: "I4541 draws the milestone dependency graph once, which means replacing the Mermaid of /plan/ and /dag/ with Cytoscape. ADR 0166 decision 6 allows that ('Mermaid, or Cytoscape where the graph is data'). It also removes the ADR 0152 addresses #diagram-<name> and #diagram-<name>:<node>, which scripts/ci/link-check resolves (0152:73-76). The one-library-per-job criterion lists charts, graphs, scenes and behaviour and leaves out diagrams (Mermaid, kept by ADR 0152) and 3D (three.js, still to be measured), so 'one library per job' is not one list of jobs."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4541
+      because: "I4541 now keeps the diagram addresses, or link-check fails every link that used them, and its evidence says which. Mermaid stays the diagram job by ADR 0152 and the three.js verdict stays I4541's measurement. The criterion's job list is the owner's wording and is left as it is."
