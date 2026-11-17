@@ -68208,9 +68208,19 @@ capabilities:
                   - boolean
                   - "null"
                 description: Reachable from the trunk. Absent when the trunk is unknown.
+              landed_by_content:
+                type:
+                  - boolean
+                  - "null"
+                description: "Not reachable from the trunk, and merging it into the trunk's remote-tracking branch\nwould change nothing (`git merge-tree --write-tree`): squash-merged, carried in a\ntrain or cherry-picked. Read for a checked-out branch in the full topology only."
+              uncommitted_in_trunk:
+                type:
+                  - boolean
+                  - "null"
+                description: "Its work tree has uncommitted changes, and every one already holds what the trunk's\nremote-tracking branch holds at that path. Absent for a clean or unmeasured tree."
               cleanup_eligible:
                 type: boolean
-                description: "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically."
+                description: "Landed in the trunk (merged into it, or landed by content), not the trunk, and either\nnot checked out (merged only) or checked out in a work tree that is clean or whose every\nuncommitted change is already in the trunk. Derived state, never acted on automatically."
               issue:
                 type:
                   - string

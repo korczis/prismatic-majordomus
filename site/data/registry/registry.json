@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "5178c460be4432bdd9e165370b9939db56d8906e4c87d3a6b1a487d30d618c74",
+    "fingerprint": "a3455d272fb7b7349028354a4270a314e7eccf713393239f7ca0bb3366633292",
     "summary": {
-      "total": 4037,
+      "total": 4038,
       "builtin": 231,
-      "declarative": 3806,
+      "declarative": 3807,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3806
+        "resource": 3807
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3816
+        "implemented": 3817
       },
       "mcp_tools": 215,
-      "mcp_resources": 3863,
+      "mcp_resources": 3864,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -95750,9 +95750,23 @@
                     ],
                     "description": "Reachable from the trunk. Absent when the trunk is unknown."
                   },
+                  "landed_by_content": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Not reachable from the trunk, and merging it into the trunk's remote-tracking branch\nwould change nothing (`git merge-tree --write-tree`): squash-merged, carried in a\ntrain or cherry-picked. Read for a checked-out branch in the full topology only."
+                  },
+                  "uncommitted_in_trunk": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Its work tree has uncommitted changes, and every one already holds what the trunk's\nremote-tracking branch holds at that path. Absent for a clean or unmeasured tree."
+                  },
                   "cleanup_eligible": {
                     "type": "boolean",
-                    "description": "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically."
+                    "description": "Landed in the trunk (merged into it, or landed by content), not the trunk, and either\nnot checked out (merged only) or checked out in a work tree that is clean or whose every\nuncommitted change is already in the trunk. Derived state, never acted on automatically."
                   },
                   "issue": {
                     "type": [
@@ -97818,7 +97832,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 705,
+        "capabilities": 706,
         "capability_ids": []
       },
       {
@@ -97911,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8dabce28a92e482a9d351e240ec245e185a4ae9855ef2e338f0b064c1900c3b3",
+    "fingerprint": "c4035b0658d357805acbfcb52c33422c336d1db62be6a20902ea8b5566e1e0e8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97965,7 +97979,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 705,
+      "test": 706,
       "use-case": 49,
       "workspace": 1
     },
@@ -105737,7 +105751,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 54360
+        "bytes": 56210
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -121720,7 +121734,7 @@
         "path": ".ai/repo/project/issues/I4324.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 9438
+        "bytes": 10278
       },
       {
         "uri": "majordomus://issue/I4325",
@@ -137277,6 +137291,14 @@
         "bytes": 7105
       },
       {
+        "uri": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "kind": "test",
+        "identity": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "path": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "source_class": "case",
+        "bytes": 7044
+      },
+      {
         "uri": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "test",
         "identity": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
@@ -137946,7 +137968,7 @@
         "identity": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "source_class": "case",
-        "bytes": 8188
+        "bytes": 9075
       },
       {
         "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -140113,7 +140135,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 705
+      "objects": 706
     },
     {
       "name": "use-case",
