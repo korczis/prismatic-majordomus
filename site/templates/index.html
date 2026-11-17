@@ -127,9 +127,6 @@
           <li><a href="{{ get_url(path=sc.route, trailing_slash=true) }}" data-scenario="{{ sc.use_case }}" class="text-heading hover:underline">{{ sc.title }}</a></li>
           {%- endfor %}
         </ul>
-        {%- if config.extra.film_url %}
-        <p class="mt-3 text-sm"><a href="{{ config.extra.film_url }}" data-cta="film" class="font-medium text-fg-brand hover:underline">{{ m.hero.film }} &rarr;</a></p>
-        {%- endif %}
       </div>
       {#- who it works beside: the worker tools the policy is generated for, named by the
           product model and by nothing here (scripts/ci/homepage-check `providers`) -#}
