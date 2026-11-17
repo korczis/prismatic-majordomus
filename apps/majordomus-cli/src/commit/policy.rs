@@ -108,6 +108,12 @@ pub struct CommitPolicy {
     /// change with no explanation is a release note that says a thing broke.
     #[serde(default = "error")]
     pub breaking_unexplained: FindingLevel,
+    /// A control character in the message: C0 other than a line feed or a tab, DEL, or C1.
+    /// An error by default: a commit message is plain text, and a colour code a pager wrote
+    /// into a title is shown raw by every later reader (the forge, a changelog, an adopter's
+    /// page that renders recent work), long after the terminal that drew it is gone (I4605).
+    #[serde(default = "error")]
+    pub control_character: FindingLevel,
 }
 
 fn subject_max_chars() -> usize {
@@ -126,6 +132,7 @@ impl Default for CommitPolicy {
             fix_requires_test: FindingLevel::Warning,
             reference_unresolved: FindingLevel::Error,
             breaking_unexplained: FindingLevel::Error,
+            control_character: FindingLevel::Error,
         }
     }
 }
@@ -175,6 +182,7 @@ mod tests {
         assert_eq!(p.fix_requires_test, FindingLevel::Error);
         // and what it did not say keeps the default
         assert_eq!(p.reference_unresolved, FindingLevel::Error);
+        assert_eq!(p.control_character, FindingLevel::Error);
     }
 
     #[test]

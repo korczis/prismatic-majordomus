@@ -105,6 +105,16 @@ feat(alpha)!: the route moved
 It is under /api/v2 now.
 EOF
 
+echo "  a message carrying a pager's colour code is refused, even before its type (I4605)"
+expect_exit 10 "$RB" commit validate --repo . < <(printf 'fix(alpha): a \033[1mbold\033[m thing\n')
+expect_grep 'commit\.control_character'
+expect_grep 'U\+001B ESCAPE'
+expect_exit 10 "$RB" commit validate --repo . < <(printf '\033[33mfix(alpha): a thing\033[m\n')
+expect_grep 'commit\.control_character'
+expect_no_grep 'not_conventional'
+expect_exit 0 "$RB" commit validate --repo . < <(printf 'fix(alpha): a thing\n\nbody\twith a tab\n')
+expect_no_grep 'control_character'
+
 echo "  a fix with no test among its files is reported, and does not refuse"
 expect_exit 0 "$RB" commit validate --repo . --paths apps/thing/src/alpha/a.rs <<'EOF'
 fix(alpha): a thing
