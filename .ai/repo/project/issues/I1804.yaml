@@ -6,7 +6,7 @@ priority: p2
 profile: implementation
 parallel_safe: false
 objective: "Migrate the baseline-ratchet logic copied into ten scripts/ci gates to one typed Rust capability, and the gates that use it to scripted capabilities that orchestrate it."
-why: "The ratchet is the largest piece of duplicated logic in scripts/ci and the audit classified it as domain logic; one typed implementation removes ten copies and proves the migration path of ADR 0069 on real gates."
+why: "The ratchet is the largest piece of duplicated logic in scripts/ci and the audit classified it as domain logic; one typed implementation removes ten copies and proves the migration path of ADR 0069 on real gates. The owner's pack asks for the same in campaigns/majordomus-shellfall/00-audit-baseline.md; PR #1058 planned it as I2554, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "Ten scripts/ci gates each carry their own copy of the baseline comparison."
 desired_state: "One Rust capability compares a finding set with its baseline; the migrated gates are scripted capabilities; their shell is deleted and the inventory updated."
 scope:
@@ -22,9 +22,13 @@ depends_on:
 acceptance_criteria:
   - the ratchet is one typed capability with tests
   - each migrated gate produces the same verdict on the same tree as its shell predecessor
+  - "At least three gates are migrated, and their scripts and inventory records are deleted"
+  - "A missing or non-numeric measured input is an error, never a pass"
+  - "The migrated gates run with bash absent from PATH"
+  - "No workflow and no .ai/repo/ci entry names a deleted script"
 validation:
   - bash test/run.sh
 evidence_required:
   - ratchet_is_one_capability
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-30

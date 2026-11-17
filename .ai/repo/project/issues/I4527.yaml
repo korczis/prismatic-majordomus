@@ -1,0 +1,35 @@
+id: I4527
+milestone: ci-critical-path
+title: The installed launcher is checked on a layer the release wrote, never on the source checkout
+slug: the-install-check-runs-the-release-on-a-layer-it-wrote
+priority: p0
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "scripts/ci/install-check runs the installed MCP launcher's no-toolchain check (--standalone, MAJORDOMUS_NO_BUILD=1) on the repository the installed release itself initialised, so a source checkout whose layer is newer than the published release does not fail a whole archive."
+why: "Master's scheduled validate run 41192543064 (2026-10-31, on 6b30ede2d13) failed install (ubuntu-latest) and install (macos-latest) at 'FAIL install-check the installed MCP launcher needs a toolchain, or is missing what it runs', with 'majordomus: .../.ai/manifest.yaml: unknown key(s): lifecycle'. Section 5 ran the installed stable 0.30.2 with --repo \"$ROOT\", the source checkout, whose manifest carries a key added after 0.30.2. The archive was whole: the same run's next sections initialised a foreign repository and served it with the same launcher. The check reported version skew as a missing executable, and kept master red on every schedule."
+current_state: "Measured at 54c317f11ad: section 5 of scripts/ci/install-check runs `majordomus-mcp --standalone --repo \"$ROOT\"`; case 97 builds its fixture release from the checkout itself, so the two never differ there and the failure is not reproduced by any case."
+desired_state: "The gate initialises the foreign repository first (section 5) and runs the no-toolchain check on it (section 6); with no layer written the launcher check fails and says so. Case 97 runs the gate from a copy whose .ai/manifest.yaml carries a key no release knows and requires it green, with the launcher run."
+scope:
+  - ".ai/repo/project/issues/I4527.yaml"
+  - "scripts/ci/install-check"
+  - "test/cases/97_install_gate.sh"
+  - "site/content/plan/I4527.md"
+non_scope:
+  - "Whether a release reads a layer newer than itself: that is version skew, which doctor is to tell from a defect (I1980)"
+  - "The order or content of sections 1-4 and 7"
+depends_on: []
+acceptance_criteria:
+  - "Case 97: the gate run from a checkout whose manifest carries an unknown key is green and prints 'MCP launcher runs with no toolchain'; with origin/master's install-check the same section fails with 'unknown key(s): a_key_no_release_knows'"
+  - "The no-toolchain check runs on the layer section 5 wrote and fails, by name, when no layer was written"
+  - "The next scheduled validate on master passes the install jobs against the published stable release"
+validation:
+  - "bash test/run.sh 97_install_gate 1024_an_installed_release_serves_a_foreign_repository"
+  - "shellcheck -S warning scripts/ci/install-check"
+evidence_required:
+  - suite
+risk: "The launcher check no longer touches the source checkout at all; a launcher that reads only a newer layer would pass here, which is the skew I1980 owns, not this gate."
+created_at: 2026-11-01
+updated_at: 2026-11-01T02:54:21Z
+started_at: 2026-11-01T02:54:21Z
+started_event: sha256:cc9eecd15f90e75f239c2d02bd1b647435a2e1381f16427d538b057859cb357e

@@ -5,7 +5,7 @@ weight = 4
 [extra]
 id = "implement"
 status = "active"
-version = 1
+version = 2
 source = ".ai/repo/skills/implement/SKILL.md"
 +++
 {% raw %}
@@ -53,6 +53,20 @@ and do not widen them silently; if the request can be met without a new subsyste
 it without one. If the requested behaviour already exists, verify it instead of building
 it again.
 
+Four refusals came back more than once in one session on 2026-10-28. Each costs a round
+trip at its gate and nothing here, so meet them before the first edit:
+
+- A command-line change edits `apps/majordomus-cli/src/cli.rs`, the definitions and their
+  `EXAMPLES` table alike, so name that file in the scope; a scope without it is refused at
+  `check` and at `finish`.
+- A new command owes its `EXAMPLES` entry in the same change; the derive refuses a command
+  without one.
+- In a linked worktree, run the tool as `env -u MAJORDOMUS_SHARE majordomus ...`: a
+  `MAJORDOMUS_SHARE` inherited from the primary checkout's environment reads that
+  checkout's `share/`, and the commit hook then refuses the artifacts as stale.
+- A commit subject is at most 100 characters (phase 17); `commit.validate` refuses a longer
+  one in the commit-msg hook.
+
 ### 2. Load the applicable context
 
 Read what applies to the paths in scope and no more: the root instructions, the rules in
@@ -69,6 +83,17 @@ diagnostics. Read the history of the files where it changes a decision: why the
 abstraction exists, whether the code is transitional, whether an earlier fix addressed
 the same defect, whether a suspicious pattern is deliberate. Do not read history for
 ceremony; read it where it changes what you would do.
+
+Read it one path at a time (`git log -- <path>`, `git log -L`) on the branch you work
+from. What other branches hold is asked of their tips, never of all their history:
+whether one already carries a path is `scripts/collision-check --new <path>`, one pass
+over every branch tip, and whether an issue id is taken is the tip check and the
+date-bounded message search in `.ai/repo/project/issues/README.md`. A content search
+across every ref — `git log --all -S` or `-G`, `git grep` over every remote branch — has
+no bound on a repository with two thousand refs, and the machine is shared: on 2026-10-28
+three of them from one session's workflow agents held it at load 92 and the shared server
+stopped answering until they were stopped. When no bounded form answers the question,
+bound the search by `--since` and by the refs that matter before running it.
 
 ### 4. Name the canonical truth
 
@@ -203,7 +228,8 @@ abstraction, and scope that crept. Fix what is substantive before continuing.
 ### 17. Commit coherent work
 
 One commit per independently understandable, verified change, in the repository's
-message convention; neither one commit for everything nor a commit per keystroke. Before
+message convention, with a subject of at most 100 characters; neither one commit for
+everything nor a commit per keystroke. Before
 each commit the relevant tests pass, the formatter and linter pass, generated
 projections are reconciled and no unexplained file is present.
 

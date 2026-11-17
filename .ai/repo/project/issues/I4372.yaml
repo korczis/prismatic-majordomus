@@ -1,0 +1,57 @@
+id: I4372
+milestone: a-claim-stands-only-on-its-evidence
+title: "A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it"
+slug: repository-merge-settings-are-compared-with-a-declaration
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A `repository:` block declares the allowed merge methods (merge, squash, rebase), merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message, delete_branch_on_merge, allow_auto_merge and the required status checks with strict. It lives in the file I4370's decision on where the pull-request vocabulary lives names (C7), beside that vocabulary. The forge observation (ForgeObservation, integration/forge.rs:49) already reads repos/{repo} (forge.rs:1493) for the allowed merge methods (merge_methods_of, forge.rs:418-434, I2966) and delete_branch_on_merge (:1494-1496), and keeps strict as up_to_date_required (:75). This issue extends that same reading with merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message and allow_auto_merge, each an Option that is None when the answer leaves it out, and keeps the required checks the observation already takes from the classic protection (:1517) and the rulesets (:1539), the readings I3113 and I3200 build on. One comparison in Rust, read by `prs status` and doctor, sets the declaration against the observation. A difference is reported with the idempotent `gh api -X PATCH repos/{repo} -f <field>=<value>` (or the protection command I3113 names) that repairs it. A declared field absent from the repos/{repo} answer reads UNKNOWN, never a pass, as merge_methods_of already treats an answer without the allow_* fields. An observation whose required checks are unread (None: a 403 or other refusal on the classic protection or on the rulesets, :1552-1559) reads the declared required checks and strict UNKNOWN. `majordomus forge check --repo`, a mode this issue adds to the forge command of I4370, prints the same comparison, read from the executable rather than recomputed in shell, and exits 0 in agreement, 11 on drift, and 12 when any declared field reads UNKNOWN, I4370's code for an incomplete reading. It is report only: nothing is changed on the forge."
+why: "OSCILLA's owner changed the landing method by hand on 2026-10-29 so that a plan-evidence head can no longer be squash-merged (the #238 and #246 class): merge commits only, titled and described by the pull request. The owner also plans a second required check, `metadata / metadata`, after three green runs. Both are repository settings nothing reads back: a later click in the settings page, or a protection edit, would silently undo the decision that replaced a landing-method check. I2966 reads the allowed methods for the drain's landing method, and I3113 and I3200 compare the required checks with gates.yaml, but nothing compares the merge-commit settings with a declaration."
+current_state: "Measured at 5370ee63d19: apps/majordomus-cli/src/integration/forge.rs:1493 reads repos/{repo} into ForgeObservation (forge.rs:49); merge_methods_of (forge.rs:418-434, done in I2966) turns allow_merge_commit, allow_squash_merge and allow_rebase_merge into the allowed methods and answers None when the answer carries none of them (a token that may not read them), and :1494-1496 reads delete_branch_on_merge the same way; merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message and allow_auto_merge are not read; the classic protection is read at :1517 and the rulesets at :1539, and required_checks, review_policy and up_to_date_required are Some only when both were read (:1552-1559), so a refusal of either leaves the requirement unread; I3113 (open) teaches scripts/ci/github-check to read repos/{repo}/rules/branches/{base} and classic protection where the credential allows; I3200 (open) compares the observation's required checks with the verdict check gates.yaml declares and brings the finding to `prs status` and doctor; lib/doctor.sh does not read the observation; no file under .ai/repo/ci/ or share/ declares a merge method or a merge-commit setting. OSCILLA, read with gh api on 2026-10-29: allow_merge_commit true, allow_squash_merge false, allow_rebase_merge false, merge_commit_title PR_TITLE, merge_commit_message PR_BODY, squash_merge_commit_title COMMIT_OR_PR_TITLE, squash_merge_commit_message COMMIT_MESSAGES, delete_branch_on_merge true, allow_auto_merge true, classic protection required checks [gate] strict, and rules/branches/main answers [], so its required checks are carried only by classic protection, which needs administration rights."
+desired_state: "A repository that declares its merge settings is told within one observation when the forge stops matching them, with the repair command; a setting the token cannot read is UNKNOWN. Enforced by case 4372, cases 30 and 31, and library tests in integration::forge."
+scope:
+  - ".ai/repo/project/issues/I4372.yaml"
+  - ".ai/repo/ci/github.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "lib/forge.sh"
+  - "share/libexec/github-sync"
+  - "share/commands.yaml"
+  - "bin/majordomus"
+  - "lib/doctor.sh"
+  - "test/cases/4372_repository_merge_settings_are_compared_with_a_declaration.sh"
+  - "test/cases/30_command_registry.sh"
+  - "test/cases/31_command_coverage.sh"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Changing any repository setting or protection from the tool"
+  - "Requiring the comparison as a check: it is a report and a scheduled drift finding"
+  - "The protection readings themselves and scripts/ci/github-check (I3113), and the verdict-check declaration (I3200)"
+  - "The allowed-methods reading and the drain's landing method (I2966), which this reuses unchanged"
+  - "Reading the forge from doctor: doctor reads the recorded observation, as I3200 declares"
+acceptance_criteria:
+  - "Library test in integration::forge: a fixture with OSCILLA's 2026-10-29 settings against a block declaring merge only, PR_TITLE, PR_BODY, delete_branch_on_merge true, allow_auto_merge true and required [gate] strict yields no finding"
+  - "The same block against OSCILLA's settings before 2026-10-29 (all three methods allowed, merge_commit_title MERGE_MESSAGE, merge_commit_message PR_TITLE) yields one finding per drifted field (allow_squash_merge, allow_rebase_merge, merge_commit_title, merge_commit_message), each naming a gh api -X PATCH repos/korczis/oscilla command; applying the printed commands to the scripted forge and observing again yields no finding"
+  - "A block requiring [gate, metadata / metadata] against required [gate] yields a finding naming the missing check and the protection command; a block declaring strict against a protection that is not strict yields a strict finding"
+  - "A repos/{repo} answer without merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message and allow_auto_merge (a token without admin rights) reads each declared one UNKNOWN, never a pass; an observation whose classic protection read was refused with 403 reads the declared required checks and strict UNKNOWN even when the rulesets were read"
+  - "A field the block does not declare is not compared and yields no finding, whatever the forge holds"
+  - "`prs status` and doctor show the same findings as the library comparison, from the recorded observation and without reaching the network"
+  - "`majordomus forge check --repo` exits 11 on drift, 12 when a declared field reads UNKNOWN and 0 otherwise, prints the findings the library comparison yields, and writes nothing to the forge (the scripted forge's call log holds only reads); case 4372 carries evidence case_merge_settings_drift_reported"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::forge"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4372_repository_merge_settings_are_compared_with_a_declaration 30_command_registry 31_command_coverage"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata 894_github_sync_applies_only_the_trunk 45_github_projection"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+  - "case_merge_settings_drift_reported"
+depends_on:
+  - "I3113"
+  - "I3200"
+  - "I4370"
+serves:
+  - "a-claim-stands-only-on-its-evidence#bypass-observed"
+created_at: 2026-10-29
+updated_at: 2026-10-29

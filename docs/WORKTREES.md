@@ -196,6 +196,20 @@ a path — and nothing is matched by prefix or similarity. There is no `worktree
 process cannot change its parent shell's directory, so `path` prints one and the shell does
 the rest.
 
+`worktree ensure` is the command-line projection of the one typed capability that writes
+the topology, `worktree.create` (I4002): MCP `majordomus_worktree_create`, HTTP
+`POST /api/v1/worktrees/create`, input `{branch, base?}`. It is the service's `ensure` and
+nothing else, so an executor that needs an isolated worktree asks the same question a person
+types: the path is derived, the canonical worktree already holding the branch is the answer
+(`existed: true`, nothing created), a branch checked out elsewhere or a canonical path
+occupied by something else is refused with the service's reason and nothing changed, and
+`git worktree add` runs under the worktree lock with a deadline (`WORKTREE_ADD_TIMEOUT`,
+600 s) past which it is killed and refused with `git worktree prune` as the remedy. The
+answer carries the branch, the path, the `head` read back from the worktree, and where a new
+branch started. It declares the repository-mutation effect, so every surface asks before it
+runs; migrating, repairing and removing stay command-line operations. `worktree create`
+keeps its own contract and refuses a worktree that is already there.
+
 `worktree create --issue I0042` names the branch `feature/I0042-<slug>` from the issue's
 own record, and the topology reads the issue back from any branch that carries an issue id
 as a path component (`feature/I0042-live-page` → `I0042`). Nothing is inferred from
@@ -667,6 +681,14 @@ after a build, when the directory is over its bound, waits for each profile's lo
 background, bounded by `MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT` seconds (default 900; 0 waits
 for none). There is one waiter per build directory, and its log and pid are kept under
 `~/.cache/majordomus/bound-<cksum>.{log,pid}`. The build that finished does not wait.
+
+The hour is the age for a volume with room. When the volume has less free than the reclaim
+mark (`MAJORDOMUS_RECLAIM_BELOW_MB`, default 51200), a unit idle for
+`MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN` minutes (default 10; 0 keeps the hour) is stale,
+and the bound says so with the free space it measured. A free space it cannot read keeps the
+hour. On 2026-10-25 about ten worktrees built inside one hour. Every pass took the lock, evicted
+what was older than the hour and stayed over the bound, and the volume fell from 44 GiB to
+16 GiB free in half an hour (I4230).
 
 What it cannot evict it says: a bound smaller than one generation cannot hold the newest
 generations of the trees building now, and a dependency some `Cargo.lock` names is never a

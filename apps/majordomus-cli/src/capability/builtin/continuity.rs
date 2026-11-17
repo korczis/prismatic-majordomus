@@ -685,6 +685,33 @@ fn resolve(
     thresholds: Thresholds,
     now: i64,
 ) -> (Option<Record>, usize) {
+    resolve_with(root, dir, branch, thresholds, now, |theirs| {
+        divergence(root, theirs, head)
+    })
+}
+
+/// The resolver, with the ancestry question as an argument.
+///
+/// The question is asked once, of the record that wins, and never of a record that loses
+/// (I2858): the choice is by tier and by the timestamp the record asserts, which need no
+/// git, and the divergence of a record this function does not return is a value nobody
+/// reads. It is also a `git merge-base` each, and a `merge-base` is not free. On 2026-11-05
+/// a checkout with 151 records on its branch, in a repository whose git answered in half a
+/// second, asked it 151 times on every `cd`: 23 s before the prompt came back, and direnv
+/// warning that the environment was taking a while. The preflight runs this at entry
+/// (`environment::preflight`), so a question asked here is paid for every time a shell
+/// enters the repository.
+///
+/// Taking the question as an argument is what lets a test count how often it is asked
+/// without a fake git; [`resolve`] hands it [`divergence`].
+fn resolve_with(
+    root: &Path,
+    dir: &Path,
+    branch: &str,
+    thresholds: Thresholds,
+    now: i64,
+    mut ancestry: impl FnMut(&str) -> Divergence,
+) -> (Option<Record>, usize) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return (None, 0);
     };
@@ -739,7 +766,9 @@ fn resolve(
             } else {
                 Match::SameBranch
             },
-            divergence: divergence(root, rhead, head),
+            // judged once, for the record that wins, below: it asks git, and a branch as
+            // busy as a trunk carries hundreds of candidates of which one is kept (I2858)
+            divergence: Divergence::Unknown,
             freshness: Freshness::Unknown,
             age_minutes: None,
             freshness_reason: String::new(),
@@ -772,7 +801,11 @@ fn resolve(
             best = Some((tier, key, record));
         }
     }
-    (best.map(|(_, _, r)| r), skipped)
+    let best = best.map(|(_, _, mut r)| {
+        r.divergence = ancestry(&r.head);
+        r
+    });
+    (best, skipped)
 }
 
 /// How many `.md` records a directory holds.
@@ -1603,6 +1636,93 @@ mod tests {
             .0;
             assert_eq!(first, again);
         }
+    }
+
+    /// The record that wins is the one whose divergence is judged, against its own head: the
+    /// losers are not asked of git at all, which is what keeps a briefing on a trunk with
+    /// hundreds of records from waiting on hundreds of git processes (I2858).
+    #[test]
+    fn the_winning_record_carries_the_divergence_of_its_own_head() {
+        let (t, now) = unjudged();
+        let repo = Repo::new();
+        let first = repo.head();
+        repo.git(&["commit", "-q", "--allow-empty", "-m", "two"]);
+        let second = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        let unknown = "0000000000000000000000000000000000000000";
+        repo.write(
+            "h/old.md",
+            &record("2026-01-01T00:00:00Z", unknown, "main", &root, "old"),
+        );
+        repo.write(
+            "h/new.md",
+            &record("2026-01-02T00:00:00Z", &first, "main", &root, "new"),
+        );
+        let dir = repo.root().join("h");
+        let won = resolve(repo.root(), &dir, "main", Some(&second), t, now)
+            .0
+            .expect("a record");
+        assert!(won.path.ends_with("new.md"), "{}", won.path);
+        assert_eq!(won.divergence, Divergence::Advanced);
+        let won = resolve(repo.root(), &dir, "main", Some(&first), t, now)
+            .0
+            .expect("a record");
+        assert_eq!(won.divergence, Divergence::Exact);
+    }
+
+    /// The ancestry question is a `git merge-base` per record it is asked of, and its answer
+    /// is kept for one record: the one returned. So it is asked once, of that record, after
+    /// the choice is made, and of nothing when nothing is returned. The checkout that
+    /// motivated this asked it 151 times per `cd`, at half a second each.
+    #[test]
+    fn ancestry_is_asked_once_and_only_of_the_record_that_is_returned() {
+        let (t, now) = unjudged();
+        let repo = Repo::new();
+        let root = repo.root().to_string_lossy().to_string();
+        let dir = repo.root().join("h");
+        // three candidates with three heads, the newest neither first nor last on disk,
+        // and one of another branch, which is never a candidate
+        repo.write(
+            "h/a.md",
+            &record("2026-01-01T00:00:00Z", "aaa", "main", &root, "Oldest"),
+        );
+        repo.write(
+            "h/b.md",
+            &record("2026-01-03T00:00:00Z", "ccc", "main", &root, "Newest"),
+        );
+        repo.write(
+            "h/c.md",
+            &record("2026-01-02T00:00:00Z", "bbb", "main", &root, "Middle"),
+        );
+        repo.write(
+            "h/d.md",
+            &record("2026-01-04T00:00:00Z", "ddd", "topic", &root, "No"),
+        );
+
+        let mut asked: Vec<String> = Vec::new();
+        let (r, skipped) = resolve_with(repo.root(), &dir, "main", t, now, |theirs| {
+            asked.push(theirs.to_string());
+            Divergence::Advanced
+        });
+        let r = r.expect("a record");
+        assert_eq!(skipped, 0);
+        assert_eq!(r.next_action, "Newest");
+        assert_eq!(
+            r.divergence,
+            Divergence::Advanced,
+            "the answer is the record's"
+        );
+        assert_eq!(
+            asked,
+            vec!["ccc".to_string()],
+            "asked once, of the record returned"
+        );
+
+        // nothing to return, nothing to ask
+        let (none, _) = resolve_with(repo.root(), &dir, "nowhere", t, now, |theirs| {
+            panic!("asked about {theirs}, a record that is not returned")
+        });
+        assert!(none.is_none());
     }
 
     // ------------------------------------------------------------------ the active task

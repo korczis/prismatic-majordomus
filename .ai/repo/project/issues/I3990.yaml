@@ -64,4 +64,18 @@ validation:
 evidence_required:
   - "a_claim_lapses_when_its_session_stops_progressing"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-28T12:15:38Z
+started_at: 2026-10-28T12:14:32Z
+started_event: sha256:ec0748c607a918b1ce446030784f0a0fbb80c65d93bb9564066bcaec14ae03d6
+verified_at: 2026-10-28T12:14:58Z
+verified_event: sha256:5cf504337843f004082d5a578c1d7270a06921f51f3d628334918f90095fe8b7
+completed_at: 2026-10-28T12:15:38Z
+completed_event: sha256:3f32438829a0686362358a001b8bbfcb97e9c26c84da3db8600922a62d3ca06e
+evidence:
+  - covers: a_claim_lapses_when_its_session_stops_progressing
+    type: ci
+    command: "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing; cargo test --lib (mesh::state, mesh::journal, mesh::cooperation, mcp::protocol)"
+    result: "master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf (success): case 3990 ok in 59 s in suite-shard (3), every hard-exit sub-claim of criteria 8 and 9 held; in rust (2) (job 122655219231) the unit tests of criteria 1-7 are ok (a_silent_exclusive_claim_is_suspended_while_its_runtime_beats, a_beat_within_its_ttl_holds_the_claim, a_session_beat_round_trips_and_is_aged_on_the_readers_clock, a_ping_is_not_progress, a_stalled_board_session_s_exclusive_claim_is_suspended_and_holds_again_on_progress, a_phase_changing_beater_writes_at_most_one_beat_a_quarter_of_the_ttl, a_resumed_holder_releases_a_claim_another_session_was_admitted_over and siblings); landed with train 8 (9215178a53b), unchanged since"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:15:25Z

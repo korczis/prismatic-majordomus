@@ -38,4 +38,16 @@ serves:
   - "every-capability-has-one-owner-and-the-cli-never-builds#fallback-is-generation-verified"
   - "every-capability-has-one-owner-and-the-cli-never-builds#every-caller-declares-its-outcome"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-26T01:25:23Z
+started_at: 2026-10-26T01:24:18Z
+started_event: sha256:7079f4bd7112bb67d7b5fe2675b96a0bf225603650d4912525ea7850a55ecbbf
+completed_at: 2026-10-26T01:25:23Z
+completed_event: sha256:6ae9046c26483e5bdb164bb0a4690598c8c23c6fd74b2aec5a4a009452e82128
+evidence:
+  - covers: zero_cargo_case
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 3958_no_entry_path_or_gate_builds 3177_a_client_always_gets_a_server 3221_a_bare_session_start_joins_the_cluster 3831_a_hook_never_starts_a_cold_build"
+    result: "cases 3958, 3177, 3221 and 3831 passed 2026-10-26 on master 2efeacea031"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:25:04Z

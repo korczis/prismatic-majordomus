@@ -1,0 +1,41 @@
+id: I4327
+milestone: the-mesh-works-out-of-the-box
+title: "A session can declare that it takes reviews, an open review request lists who may answer it, and a repository with no eligible reviewer is a finding"
+slug: a-review-request-names-who-may-answer
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "SessionInfo (apps/majordomus-cli/src/mesh/journal.rs:365) gains an optional `reviews` mandate: the repositories, and optionally the path prefixes, the session will review. A session declares it when it opens, through the mesh.session.open capability (MCP majordomus_mesh_session_open, HTTP POST /api/v1/mesh/sessions; it has no CLI projection today), and may change it later. A session that declares nothing takes no reviews. ReviewAnswered (journal.rs:661-671) gains a fourth answer, `declined`, beside approved, changes_requested and commented, with a note, so that 'not mine' is recorded and is never read as a verdict on the change. For each open review request, mesh state derives its eligible answerers: the live sessions whose mandate covers the request's repository and scope, minus the requesting session, minus sessions of the same task (a builder's own subagents), and minus any session that declined it. mesh state, mesh peers, the brief and /ui/mesh list them, and list the declines apart. mesh doctor and the brief print `WARN review_no_eligible_reviewer <repository> <request>` when the set is empty. The link FEATURES list (mesh/link.rs:63) is unchanged: `reviews` there means that a runtime's link protocol carries review events, and request_review's FeatureUnsupported refusal (mesh/cooperation.rs:4453-4470) keeps that meaning, with wording that no longer suggests the runtime will review."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. OSCILLA's project.review-verdict needs a verdict file from a session that did not build the change, and a subagent of the builder was refused as self-approval. Two mesh review requests (majordomus_mesh_review_request, for PRs #239 and #242) and a direct message found no reviewer: the one idle peer declined in a message because the work was outside its mandate. Nothing showed which sessions review which repository, or that this repository had no eligible reviewer at all. The signal that looks like eligibility is misleading. On master 81ef931a3e1, every runtime's card advertises the `reviews` feature (mesh/link.rs:63, FEATURES = sessions, claims, handovers, reviews), so `peer.card.supports(\"reviews\")`, the only check made of a named reviewer (mesh/cooperation.rs:4453-4470), is true of every linked peer. It says that the protocol is supported, not that anyone will review. No field anywhere lets a session say what it will review, and a mandate has to be declared before eligibility can be computed. A decline has no event either: the verdicts are approved, changes_requested and commented. I3608 covers the age and lapse of a request and I2690 the unanswered count. Neither covers eligibility or the zero-reviewer case."
+current_state: "On master 81ef931a3e1, a review request is accepted while no session has said that it reviews that repository. mesh state (mesh/state.rs:426, :451) lists the request without its possible answerers, and a decline can only be a free-text message."
+desired_state: "A session can say what it reviews, and every open request lists its eligible answerers and its declines on every mesh surface. A request with no eligible answerer is a WARN naming the repository. A session that declares no mandate is never eligible, whatever its runtime's features say."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/ui"
+  - "docs/MESH.md"
+non_scope:
+  - "The link protocol's FEATURES list and its negotiation"
+  - "How old a request is and when it lapses (I3608)"
+  - "The count of unanswered requests in a session's read (I2690)"
+  - "Choosing or assigning a reviewer automatically"
+  - "OSCILLA's review-verdict rule itself"
+depends_on: []
+acceptance_criteria:
+  - "A request for repository R lists exactly the live sessions whose declared mandate covers R, minus the requester and the sessions of its task, on mesh state, the brief and /ui/mesh"
+  - "With no such session, mesh doctor and the brief print review_no_eligible_reviewer naming R and the request"
+  - "A session that answers `declined` is listed under declines and not as eligible, and the request stays open"
+  - "A session of a runtime that carries the `reviews` feature but declares no mandate is never eligible"
+  - "A journal written before the change, with no mandate and no declined answers, reads as before"
+  - "Before the change the eligibility test fails, because every linked peer passes the reviews check"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::state::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::"
+evidence_required:
+  - "review_eligibility_unit_tests"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28

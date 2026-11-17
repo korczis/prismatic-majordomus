@@ -27,4 +27,16 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-24
-updated_at: 2026-10-25
+updated_at: 2026-10-28T17:22:49Z
+started_at: 2026-10-28T17:21:51Z
+started_event: sha256:6a1aa3e2e35628cf6b7e7d67b4785121423e9d77b0c782f10637d61db784bf5b
+completed_at: 2026-10-28T17:22:49Z
+completed_event: sha256:a3fbbfddaa26f05d1a41329a36354562f28c4a77546ac0603914f4a25a941a6f
+evidence:
+  - covers: a_rerun_is_judged_by_its_own_receipts_test
+    type: ci
+    command: "bash test/run.sh 94_ci_plan (validate.yml suite-shard (2)); gh run view 40573560939 --log --job 122655183734 | grep 94_ci_plan; gh run view 40573560939 --log --job 122699786016 | grep -E 'ci-receipts-suite|verdict:'"
+    result: "Case 94 green on master: '2026-10-27T23:21:49.7479658Z ok   94_ci_plan'. A real rerun --failed (attempt 1: suite-shard (4) and ci red; attempt 2: only the failed jobs and their dependents rerun) read the stale red suite-a1 receipt beside the green suite-a2 one and concluded '2026-10-28T08:04:08.1506011Z verdict: green (80 gates ran and succeeded)'. Also green on 81ef931 run 40676150754 suite-shard (2) job 122783064885: '13:23:38.9784537Z ok   94_ci_plan'. Fails-before replay: verdict at 36b4a07716a^ returns exit 1 'verdict: red' on case 94's stale-red/fresh-green fixture, where the case expects 0. The verdict at 81ef931 returns exit 0. (commit 6c79dcf68cf329f4c21c219720b811381c3433aa) Audited per criterion on 2026-10-28 by 61e1283f; two adversarial verifiers did not refute it."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (attempt 2; suite-shard (2) job 122655183734; ci job 122699786016; artifacts ci-receipts-suite-a1 12788490363 [shell-suite failure], ci-receipts-suite-a2 12798968816 [shell-suite success])"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:22:27Z

@@ -29,4 +29,23 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-26T10:53:04Z
+started_at: 2026-10-26T10:50:52Z
+started_event: sha256:286eb3c602130c85ce9e13c0ea362e8d05df5265a6dc23c3d218c9e6330c10ed
+verified_at: 2026-10-26T10:51:11Z
+verified_event: sha256:3251955ee0d96ec379665a5a798c1a38d6251087687c89518620b75214a71ddd
+completed_at: 2026-10-26T10:53:04Z
+completed_event: sha256:b896b909f670637130cb97f545682f69a7ce4f07d8ec89c5cb8d66b64d9ed033
+evidence:
+  - covers: size_said_truthfully
+    type: test
+    command: "scripts/ci/homepage-check && scripts/ci/doc-command-check && scripts/ci/reference-check ."
+    result: "homepage-check, doc-command-check (341 commands) and reference-check passed on 0cb26dda034, which carries the README.md and CONTRIBUTING.md text; landed with train 5 (#2403)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T10:52:47Z
+  - covers: registry_figures_explained
+    type: test
+    command: "scripts/site-build && scripts/site-check"
+    result: "site-check: 0 failures; it holds the builtin and declarative figures to the dataset and checks capabilities equals builtin plus declarative; landed with train 5 (#2403)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T10:52:55Z

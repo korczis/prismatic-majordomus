@@ -25,7 +25,7 @@ relations:
 
 # A plan that lives only on an unlanded branch or a rescue ref is invisible to master-reading planners, and gets planned again
 
-The incremental-derive plan (I2521-I2533) was pushed on 2026-10-13 and never landed. An earlier delivery-packs plan (I2344-I2353) and the CI critical-path milestone survive only on rescue refs. On 10-15 and 10-17 the owner asked for the same derive work again. Meanwhile two sessions built separate stage-B skips (I2490 on 10-12, I2880 on 10-17). Before planning, grep branches and refs/rescue for the subsystem's milestone and issue files (git log --all --diff-filter=A -- .ai/repo/project), and land a records-only branch quickly or close it.
+The incremental-derive plan (I2521-I2533) was pushed on 2026-10-13 and never landed. An earlier delivery-packs plan (I2344-I2353) and the CI critical-path milestone survive only on rescue refs. On 10-15 and 10-17 the owner asked for the same derive work again. Meanwhile two sessions built separate stage-B skips (I2490 on 10-12, I2880 on 10-17). Before planning, ask the branches and refs/rescue at their tips whether they carry the subsystem's milestone and issue files (scripts/collision-check --new <paths>, which reads every branch tip once; never an unbounded git log --all over the shared machine, see s-20261028215542-dcf9-30333fac611c), and land a records-only branch quickly or close it.
 
 ## Sources
 

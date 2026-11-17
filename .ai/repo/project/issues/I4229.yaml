@@ -25,4 +25,15 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-25
-updated_at: 2026-10-25
+updated_at: 2026-10-28T12:21:51Z
+started_at: 2026-10-28T12:21:13Z
+started_event: sha256:5b94084682b89e2a8ee5e316d419ed92d0fd167ea7b54c69a934555e364f328e
+completed_at: 2026-10-28T12:21:51Z
+completed_event: sha256:696786b194b53fd1b252a9c86113ee65a360c836caee55219213f16bd2b885e7
+evidence:
+  - covers: embedded_files_reach_the_build_stage
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::"
+    result: "18 passed, 0 failed: the_build_stage_carries_every_file_the_package_embeds passes on master's sources; an_embed_the_build_stage_does_not_copy_is_named_with_its_source_and_path names src/advisors.rs: ../../../share/advisors.yaml, and fails (left: []) when the guard is mutated to report nothing"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:21:39Z

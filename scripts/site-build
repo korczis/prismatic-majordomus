@@ -14,12 +14,24 @@
 #   scripts/site-build --output-dir DIR   write the build into DIR instead of site/public
 #   scripts/site-build --pin-source-refs DIR BUILD_JSON   only the source-ref pass below, over a
 #                                 built DIR with the provenance BUILD_JSON records (for the cases)
+#   scripts/site-build --previous-commit SHA   the commit the deployment this build replaces was
+#                                 built from; the changelog page then shows what moved since it
+#   scripts/site-build --previous-deploy REF   the same, read from the deploy branch REF (default:
+#                                 $MJ_SITE_PREVIOUS_DEPLOY): the newest `source:` its commits name
+#                                 that is not the commit being built
+#   scripts/site-build --since-deploy-record FILE   adopt that record, composed beforehand by the
+#                                 pass below for the commit being built (default: $MJ_SITE_SINCE_DEPLOY_RECORD;
+#                                 the Pages workflow composes it in a step of its own)
+#   scripts/site-build --since-deploy REPO OUT   only the since-deploy composition below, for REPO's
+#                                 HEAD against the previous commit the two options above name, into OUT
 #   scripts/site-build --release  only the release this build offers, as JSON on stdout (below)
 #     [--release-record FILE]     the record's projection to read instead of
 #                                 site/data/registry/distribution.json
 #     [--release-published FILE]  a published releases/latest.json to read instead of the ref
+#     [--release-published-dir DIR]  the published pre-release documents to read instead of
+#                                 the ref: releases/v*.json as gh-pages serves them
 #     [--release-ref REF]         the published branch to read it from (default origin/gh-pages,
-#                                 or $MJ_SITE_RELEASE_REF); all three apply to a full build too
+#                                 or $MJ_SITE_RELEASE_REF); all four apply to a full build too
 #
 # THE RELEASE THIS SITE OFFERS is derived here, once, and every page reads it from
 # data/build.json (`build.release`) — the navbar badge, the homepage's hero and trust strip,
@@ -34,7 +46,9 @@
 # fetched over the network here: the build is a function of two commits, and build.json
 # names both (`published_from`). When the published release wins, its two files are copied
 # into the build, so the bytes this build publishes at /releases/latest.json are the release
-# its pages offer. The rule is project.the-site-offers-the-release-it-published.
+# its pages offer. The pre-release the pages name beside it is derived the same way, from the
+# records and from the pre-release documents the published branch serves (release_prerelease
+# below; I4531). The rule is project.the-site-offers-the-release-it-published.
 #
 # Every build, published or served, also COMPOSES the other published static surfaces into
 # its output at their mounts (ADR 0086): each surface of docs/generated/web.json of kind
@@ -45,6 +59,9 @@
 # producer, because a site that silently lost a surface is the stale deployment nobody sees.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""; OUT=""; SERVE=0
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 MJ_VERSION="site-build"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # for mj_web_composed, the one reading of which surfaces are composed into the site
 # shellcheck source=../lib/common.sh
@@ -52,6 +69,8 @@ MJ_VERSION="site-build"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export 
 # where a build for the running server goes and what it is mounted at; the same two values
 # the executable reads from web::discover (DOCS_ARTIFACT, DOCS_MOUNT)
 SERVE_OUT="target/web/docs"; SERVE_MOUNT="/docs"
+PREVIOUS=""; PREVIOUS_SET=0; PREVIOUS_DEPLOY="${MJ_SITE_PREVIOUS_DEPLOY:-}"
+SINCE_RECORD="${MJ_SITE_SINCE_DEPLOY_RECORD:-}"
 while [ $# -gt 0 ]; do case "$1" in
   --no-css) NOCSS=1; shift ;;
   --no-data) NODATA=1; shift ;;
@@ -60,10 +79,16 @@ while [ $# -gt 0 ]; do case "$1" in
   --serve) SERVE=1; shift ;;
   --pin-source-refs) [ $# -ge 3 ] || { echo "site-build: --pin-source-refs DIR BUILD_JSON" >&2; exit 2; }
     PIN_DIR="$2"; PIN_BUILD="$3"; shift 3 ;;
+  --previous-commit) PREVIOUS="$2"; PREVIOUS_SET=1; shift 2 ;;
+  --previous-deploy) PREVIOUS_DEPLOY="$2"; shift 2 ;;
+  --since-deploy-record) SINCE_RECORD="$2"; shift 2 ;;
+  --since-deploy) [ $# -ge 3 ] || { echo "site-build: --since-deploy REPO OUT" >&2; exit 2; }
+    DELTA_REPO="$2"; DELTA_OUT="$3"; shift 3 ;;
   --release) RELEASE_ONLY=1; shift ;;
   --release-record) REL_RECORD="${2:?--release-record needs a file}"; shift 2 ;;
   --release-records) REL_RECORDS="${2:?--release-records needs a directory}"; shift 2 ;;
   --release-published) REL_PUBLISHED="${2:?--release-published needs a file}"; shift 2 ;;
+  --release-published-dir) REL_PUBLISHED_DIR="${2:?--release-published-dir needs a directory}"; shift 2 ;;
   --release-ref) REL_REF="${2:?--release-ref needs a ref}"; shift 2 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
@@ -76,16 +101,19 @@ esac; done
 REL_RECORD="${REL_RECORD:-$SITE/data/registry/distribution.json}"
 REL_RECORDS="${REL_RECORDS:-$ROOT/.ai/repo/releases}"
 REL_PUBLISHED="${REL_PUBLISHED:-}"
+REL_PUBLISHED_DIR="${REL_PUBLISHED_DIR:-}"
 REL_REF="${REL_REF:-${MJ_SITE_RELEASE_REF:-origin/gh-pages}}"
 release_offered() {
   local dir="$1" from="" sha="" tag
   [ -f "$REL_RECORD" ] && jq -e . "$REL_RECORD" >/dev/null 2>&1 \
     || { echo "site-build: $REL_RECORD cannot be read; run majordomus generate" >&2; exit 12; }
   rm -f "$dir/published.json" "$dir/latest.json"
+  # the published commit, resolved once for both channels; a file given for the stable reading
+  # stands in for the whole branch
+  [ -n "$REL_PUBLISHED" ] || sha="$(git -C "$ROOT" rev-parse --verify -q "$REL_REF^{commit}" 2>/dev/null || true)"
   if [ -n "$REL_PUBLISHED" ]; then
     cp "$REL_PUBLISHED" "$dir/published.json"; from="file:${REL_PUBLISHED##*/}"
-  elif sha="$(git -C "$ROOT" rev-parse --verify -q "$REL_REF^{commit}" 2>/dev/null)" \
-       && git -C "$ROOT" cat-file -e "$sha:releases/latest.json" 2>/dev/null; then
+  elif [ -n "$sha" ] && git -C "$ROOT" cat-file -e "$sha:releases/latest.json" 2>/dev/null; then
     git -C "$ROOT" show "$sha:releases/latest.json" > "$dir/published.json"; from="$REL_REF@$sha"
   fi
   if [ -f "$dir/published.json" ]; then
@@ -120,41 +148,82 @@ release_offered() {
     cp "$dir/published.json" "$dir/latest.json"
   fi
   rm -f "$dir/published.json"
-  release_prerelease "$dir"
+  release_prerelease "$dir" "$from" "$sha"
 }
 # The newest pre-release beside the stable release (I3449, the release seat's ruling of
 # 2026-10-21): the pages a person reads name both channels, each with its own notes and its own
 # install line, while /releases/latest.json and the installer's default stay the stable one
-# (I2829; cases 3222, 3179, 3225). Read from the release records themselves, never from a ref: the
-# highest record of channel prerelease that is not yanked, and only when it is ahead of the
-# stable release (an alpha of a version already released stable is behind it). Versions order
-# by their numeric fields, then a pre-release's own dot-separated identifiers, numbers as numbers.
-release_prerelease() { # dir (holds release.json; rewritten with .prerelease)
-  local dir="$1" rows f
+# (I2829; cases 3222, 3179, 3225). Derived as the stable release is, from two readings of one
+# fact (I4531): the release records of this tree, and the pre-release documents the published
+# branch already serves — releases/v*.json of channel prerelease, which the release's publish
+# job writes beside latest.json minutes after its archives and hours before its record lands.
+# Until 2026-11-06 this read the records alone, so every deploy of master between a pre-release
+# and the landing of its record put the previous pre-release back into the homepage's hero:
+# v1.0.0-alpha.10 was published at 17:09Z and the pages named alpha.9 all evening. Each side
+# picks its highest pre-release that is not yanked and is ahead of the stable release by its
+# base version (an alpha of a version already released stable is behind it); the newer of the
+# two picks is offered, the record on a tie, and a tag the tree records is the record's whatever
+# the branch serves, so a yanked record withdraws the published document too. Versions order by
+# their numeric fields, then a pre-release's own dot-separated identifiers, numbers as numbers.
+# When the published pre-release wins, its document is kept beside release.json
+# (<dir>/prerelease.json) for the build to serve at its tag's own path.
+release_prerelease() { # <dir> <from> <sha>: dir holds release.json; rewritten with .prerelease
+  local dir="$1" sha="${3:-}" rows pfrom="" f bad tag
   rows="$dir/records.jsonl"
-  : > "$rows"
+  : > "$rows"; rm -f "$dir/prerelease.json"
   if [ -d "$REL_RECORDS" ]; then
     for f in "$REL_RECORDS"/v*.yaml; do
       [ -f "$f" ] || continue
       awk '/^(version|tag|channel|published_at|notes_url|yanked):/ {
              k = $1; sub(/:$/, "", k); v = $0; sub(/^[a-z_]+:[ ]*/, "", v); gsub(/^"|"$/, "", v)
              out = out (out == "" ? "" : ",") "\"" k "\":\"" v "\"" }
-           END { print "{" out "}" }' "$f" >> "$rows"
+           END { print "{" out (out == "" ? "" : ",") "\"source\":\"record\"}" }' "$f" >> "$rows"
     done
   fi
-  jq -s --slurpfile r "$dir/release.json" --arg install "$(jq -r '.install_command // empty' "$REL_RECORD")" '
+  # The published side: a directory of documents (the cases), or every releases/v*.json the
+  # published commit serves. A file given for the stable reading names no pre-release. Where
+  # it was read from is decided before the pipeline below, whose producer runs in a subshell.
+  if [ -n "$REL_PUBLISHED_DIR" ]; then pfrom="dir:${REL_PUBLISHED_DIR##*/}"
+  elif [ -z "$REL_PUBLISHED" ] && [ -n "$sha" ]; then pfrom="$REL_REF@$sha"; fi
+  if [ -n "$REL_PUBLISHED_DIR" ]; then
+    for f in "$REL_PUBLISHED_DIR"/v*.json; do [ -f "$f" ] && cat "$f"; done
+  elif [ -n "$pfrom" ]; then
+    git -C "$ROOT" ls-tree --name-only "$sha" releases/ 2>/dev/null | while IFS= read -r f; do
+      case "$f" in releases/v*.json) git -C "$ROOT" show "$sha:$f" ;; esac
+    done
+  fi | jq -c 'select(type == "object" and .channel == "prerelease")
+              | {schema, version, tag, channel, published_at, notes_url, yanked: (.yanked // false), source: "published"}' >> "$rows" \
+    || { echo "site-build: the pre-release documents ${pfrom:-the published branch} serves could not be read" >&2; exit 13; }
+  bad="$(jq -r 'select(.source == "published" and (.schema != "release/v1" or (.version | type) != "string" or .tag != ("v" + (.version | tostring)))) | .tag // "?"' "$rows" | head -n 1)"
+  [ -z "$bad" ] || { echo "site-build: ${pfrom} serves a pre-release document ($bad) that is not a release/v1 document naming its own tag" >&2; exit 10; }
+  jq -s --slurpfile r "$dir/release.json" --arg install "$(jq -r '.install_command // empty' "$REL_RECORD")" --arg pfrom "$pfrom" '
     def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
     def pre: (split("+")[0] | split("-")[1:] | join("-") | split("."))
              | map(if test("^[0-9]+$") then [0, tonumber] else [1, .] end);
+    def key: [(.version | base), (.version | pre)];
     ($r[0]) as $s
-    | [.[] | select(.channel == "prerelease" and (.yanked // "false") != "true" and (.version // "") != "")]
-    | (if $s == null then . else map(select((.version | base) > ($s.version | base))) end)
-    | sort_by([(.version | base), (.version | pre)]) | last
-    | (if . == null then null
-       else {version, tag, published_at, notes_url,
-             install_command: (if $install == "" then null else $install + " -s -- --version " + .tag end)} end) as $p
+    | map(select(type == "object")) as $all
+    | [$all[] | select(.source == "record")] as $rec
+    | [$rec[] | .tag] as $recorded
+    | def pick: [.[] | select(.channel == "prerelease" and ((.yanked // false) | tostring) != "true" and (.version // "") != "")]
+                | (if $s == null then . else map(select((.version | base) > ($s.version | base))) end)
+                | sort_by(key) | last;
+    ($rec | pick) as $pr
+    | ([$all[] | select(.source == "published" and (.tag as $t | any($recorded[]; . == $t) | not))] | pick) as $pp
+    | (if $pp != null and ($pr == null or ($pp | key) > ($pr | key)) then $pp
+       elif $pr != null then $pr else null end) as $w
+    | (if $w == null then null
+       else {version: $w.version, tag: $w.tag, published_at: $w.published_at, notes_url: $w.notes_url,
+             install_command: (if $install == "" then null else $install + " -s -- --version " + $w.tag end),
+             source: $w.source, record: ($pr.version // null), published: ($pp.version // null),
+             published_from: (if $pfrom == "" then null else $pfrom end)} end) as $p
     | if $s == null then null else $s + {prerelease: $p} end' "$rows" > "$dir/release.next.json" \
     || { echo "site-build: the pre-release beside the offered release could not be derived" >&2; exit 13; }
+  if [ "$(jq -r '.prerelease.source // empty' "$dir/release.next.json")" = published ]; then
+    tag="$(jq -r '.prerelease.tag' "$dir/release.next.json")"
+    if [ -n "$REL_PUBLISHED_DIR" ]; then cp "$REL_PUBLISHED_DIR/$tag.json" "$dir/prerelease.json"
+    else git -C "$ROOT" show "$sha:releases/$tag.json" > "$dir/prerelease.json"; fi
+  fi
   mv "$dir/release.next.json" "$dir/release.json"; rm -f "$rows"
 }
 if [ "${RELEASE_ONLY:-0}" = 1 ]; then
@@ -191,12 +260,169 @@ pin_source_refs() {
   printf '  %s file(s) name %s as the ref of their source links\n' \
     "$(printf '%s' "$files" | grep -c . || true)" "$ref"
 }
+# since_deploy <repository> <previous commit or ""> <out> [<why there is none>]: what moved between
+# the commit the deployment this build replaces was built from and the commit being built, as the
+# changelog page renders it (site/templates/partials/since-deploy.html). A fact of one deployment,
+# like build.json beside it: written to an ignored file and never committed, because a committed
+# file composed up to HEAD is stale at the next commit by construction (release/changelog.rs
+# `compose_published`). Nothing here differs two trees of its own:
+#   capabilities   `release analyze --since <previous>`: the executable's measurement of the public
+#                  contract against the registry committed there; and the same against each release
+#                  record inside the range, so a movement the record's tree already holds is labelled
+#                  released with its tag and one it does not hold is not yet released
+#   documentation  `release changelog`: the composed changes of kind docs whose commit is in the
+#                  range, labelled with the section the composition put them in
+#   claims         the claims projection committed at each end (site/data/generated/capabilities.json,
+#                  generated from docs/CLAIMS.yaml), compared by id; a claim that is planned at the
+#                  built commit is no movement, it stays in the homepage's planned block
+# The previous commit must be an ancestor of the built one, and the executable must describe the
+# built commit (its own analysis against it finds nothing); otherwise the delta is unknown, says
+# why, and lists nothing. The executable is bin/majordomus-cli, which honours MAJORDOMUS_BIN.
+since_unknown() {   # <out> <built> <previous> <reason>
+  jq -n --arg built "$2" --arg previous "$3" --arg reason "$4" \
+    '{schema: 1, state: "unknown", reason: $reason,
+      previous: (if $previous == "" then null else $previous end),
+      built: (if $built == "" then null else $built end), releases: [], groups: [], other_changes: 0}' \
+    > "$1" || { echo "site-build: could not write $1" >&2; exit 12; }
+  echo "  since the last deploy: unknown: $4"
+}
+since_deploy() {
+  local tmp rc=0
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-since-deploy.XXXXXX")"
+  since_deploy_in "$tmp" "$@" || rc=$?
+  rm -rf "$tmp"
+  return "$rc"
+}
+since_deploy_in() {
+  local tmp="$1" repo="$2" previous="$3" out="$4" none="${5:-no previously deployed commit was named}"
+  local cli="$ROOT/bin/majordomus-cli" built prev n i tag commit
+  built="$(git -C "$repo" rev-parse --verify --quiet HEAD)" || built=""
+  # unknown <reason>: the delta cannot be stated; the page says so and lists nothing
+  unknown() { since_unknown "$out" "$built" "$previous" "$1"; }
+  [ -n "$built" ] || { unknown "the built commit cannot be read"; return 0; }
+  [ -n "$previous" ] || { unknown "$none"; return 0; }
+  prev="$(git -C "$repo" rev-parse --verify --quiet "$previous^{commit}")" \
+    || { unknown "the previously deployed commit $previous is not in this clone"; return 0; }
+  git -C "$repo" merge-base --is-ancestor "$prev" "$built" 2>/dev/null \
+    || { unknown "the previously deployed commit ${prev:0:12} is not an ancestor of the built commit ${built:0:12}"; return 0; }
+  previous="$prev"
+  # analysis <ref> <file>: the movements of the contract since <ref>; 10 is a verdict, not a failure
+  analysis() {
+    local a=0
+    "$cli" release analyze --repo "$repo" --since "$1" --format json > "$tmp/plan.json" 2> "$tmp/err" || a=$?
+    if [ "$a" != 0 ] && [ "$a" != 10 ]; then return 1; fi
+    jq -e '.changes | arrays' "$tmp/plan.json" > "$2" 2>/dev/null
+  }
+  if ! analysis "$built" "$tmp/at-built.json"; then
+    unknown "the executable could not measure the public contract: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0
+  fi
+  n="$(jq length "$tmp/at-built.json")"
+  [ "$n" = 0 ] || { unknown "the executable is not the built commit's: it differs from the registry committed at ${built:0:12} by $n movement(s)"; return 0; }
+  analysis "$prev" "$tmp/at-prev.json" \
+    || { unknown "the public contract at ${prev:0:12} could not be measured: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0; }
+  "$cli" release changelog --repo "$repo" --format json > "$tmp/changelog.json" 2> "$tmp/err" \
+    && jq -e '.sections | arrays' "$tmp/changelog.json" >/dev/null 2>&1 \
+    || { unknown "the changelog could not be composed: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0; }
+  # the release records inside the range, oldest first: in the built commit's history and not in
+  # the previous one's
+  : > "$tmp/records.tsv"
+  jq -r '[.sections[] | select(.unreleased | not) | select(.commit != null)] | reverse | .[]
+         | [.version, (.tag // .version), .commit] | @tsv' "$tmp/changelog.json" > "$tmp/sections.tsv"
+  while IFS="$MJ_TAB" read -r i tag commit; do
+    [ -n "$commit" ] || continue
+    git -C "$repo" merge-base --is-ancestor "$commit" "$built" 2>/dev/null || continue
+    git -C "$repo" merge-base --is-ancestor "$commit" "$prev" 2>/dev/null && continue
+    printf '%s\t%s\t%s\n' "$i" "$tag" "$commit" >> "$tmp/records.tsv"
+  done < "$tmp/sections.tsv"
+  jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {version: .[0], tag: .[1], commit: .[2]})' \
+    "$tmp/records.tsv" > "$tmp/records.json"
+  # claims_at <ref> <file>: the committed claims projection there, or null when it has none
+  claims_at() {
+    git -C "$repo" show "$1:site/data/generated/capabilities.json" 2>/dev/null | jq -c '.claims | arrays' > "$2" 2>/dev/null \
+      || echo null > "$2"
+  }
+  claims_at "$prev" "$tmp/claims-prev.json"; claims_at "$built" "$tmp/claims-built.json"
+  echo '[]' > "$tmp/at-records.json"; echo '[]' > "$tmp/claims-records.json"
+  while IFS="$MJ_TAB" read -r i tag commit; do
+    [ -n "$commit" ] || continue
+    analysis "$commit" "$tmp/at-record.json" \
+      || { unknown "the public contract at $tag could not be measured: $(tail -1 "$tmp/err" 2>/dev/null)"; return 0; }
+    claims_at "$commit" "$tmp/claims-record.json"
+    jq -c --slurpfile x "$tmp/at-record.json" '. + $x' "$tmp/at-records.json" > "$tmp/next" && mv "$tmp/next" "$tmp/at-records.json"
+    jq -c --slurpfile x "$tmp/claims-record.json" '. + $x' "$tmp/claims-records.json" > "$tmp/next" && mv "$tmp/next" "$tmp/claims-records.json"
+  done < "$tmp/records.tsv"
+  git -C "$repo" rev-list --no-merges "$prev..$built" | jq -R -s 'split("\n") | map(select(length > 0))' > "$tmp/range.json"
+  jq -n --arg built "$built" --arg previous "$prev" \
+    --slurpfile records "$tmp/records.json" --slurpfile atprev "$tmp/at-prev.json" \
+    --slurpfile atrec "$tmp/at-records.json" --slurpfile cl "$tmp/changelog.json" \
+    --slurpfile range "$tmp/range.json" --slurpfile cprev "$tmp/claims-prev.json" \
+    --slurpfile cbuilt "$tmp/claims-built.json" --slurpfile crec "$tmp/claims-records.json" '
+    $records[0] as $records | $range[0] as $range
+    # the first record, oldest first, whose tree no longer owes the movement; null: none does
+    | def released($pending): ([range(0; $records | length) | select($pending[.] | not)] | .[0]) as $i
+        | if $i == null then null else $records[$i].tag end;
+    def key: "\(.direction) \(.surface) \(.id)";
+    def index: if . == null then null else map({key: .id, value: {status, claim}}) | from_entries end;
+    ($cprev[0] | index) as $cp | ($cbuilt[0] | index) as $cb | ($crec[0] | map(index)) as $cr
+    | ($atprev[0] | map(. as $c | ($c | key) as $k
+        | $c + {release: released([$atrec[0][] | any(.[]; key == $k)])})
+        | group_by(.capability)
+        | map({capability: .[0].capability,
+               movements: map({direction, surface, id, impact, detail, release})})) as $capabilities
+    | (if $cp == null or $cb == null then []
+       else [(($cp | keys) + ($cb | keys) | unique)[] as $id | $cp[$id] as $b | $cb[$id] as $a
+         | (if $b == null then "added" elif $a == null then "removed"
+            elif $a.status != $b.status then "status" elif $a.claim != $b.claim then "reworded"
+            else null end) as $m
+         | select($m != null)
+         | select((if $a == null then $b.status else $a.status end) != "planned")
+         | {id: $id, claim: ($a // $b).claim, movement: $m, from: ($b.status // null), to: ($a.status // null),
+            release: released([$cr[] | . == null or .[$id] != $a])}]
+       end) as $claims
+    | [$cl[0].sections[] | . as $s | .groups[].changes[]
+        | select(.commit as $c | any($range[]; startswith($c)))
+        | . + {release: (if $s.unreleased then null else $s.tag end)}] as $changes
+    | {schema: 1, state: "known", reason: null, previous: $previous, built: $built,
+       releases: $records,
+       groups: [
+         {id: "capabilities", heading: "Capabilities", items: $capabilities},
+         ({id: "claims", heading: "Claims", items: $claims}
+           + (if $cp == null or $cb == null
+              then {unreadable: "the claims projection is not committed at both ends"} else {} end)),
+         {id: "documentation", heading: "Documentation",
+          items: [$changes[] | select(.kind == "docs") | {subject, scope, commit, url, release}]}],
+       other_changes: ([$changes[] | select(.kind != "docs")] | length)}' > "$out" \
+    || { unknown "the movements could not be composed"; return 0; }
+  printf '  since the last deploy: %s..%s, %s capability(ies), %s claim(s), %s document change(s), %s record(s)\n' \
+    "${prev:0:12}" "${built:0:12}" \
+    "$(jq '.groups[0].items | length' "$out")" "$(jq '.groups[1].items | length' "$out")" \
+    "$(jq '.groups[2].items | length' "$out")" "$(jq '.releases | length' "$out")"
+}
+# previous_deploy <repository> <deploy ref> <built commit>: the newest source commit a deploy of
+# <ref> names (scripts/site-deploy writes `source: <sha>` into every one) that is not the commit
+# being built, so a second publication of the same commit still shows what the one before it moved
+previous_deploy() {
+  git -C "$1" log -n 500 --format=%B "$2" -- 2>/dev/null \
+    | sed -n 's/^source: \([0-9a-f]\{40\}\)$/\1/p' | grep -vx "$3" | head -1
+}
 if [ -n "${PIN_DIR:-}" ]; then pin_source_refs "$PIN_DIR" "$PIN_BUILD"; exit 0; fi
+# the previous commit the options name, for <repository> building <commit>; NONE says why there is none
+previous_of() {   # <repository> <commit>
+  NONE="no previously deployed commit was named (--previous-commit, --previous-deploy)"
+  if [ "$PREVIOUS_SET" = 0 ] && [ -n "$PREVIOUS_DEPLOY" ]; then
+    PREVIOUS="$(previous_deploy "$1" "$PREVIOUS_DEPLOY" "$2")"
+    NONE="the deploy branch $PREVIOUS_DEPLOY names no source commit other than the one being built"
+  fi
+}
+if [ -n "${DELTA_REPO:-}" ]; then
+  previous_of "$DELTA_REPO" "$(git -C "$DELTA_REPO" rev-parse --verify --quiet HEAD || true)"
+  since_deploy "$DELTA_REPO" "$PREVIOUS" "$DELTA_OUT" "$NONE"; exit 0
+fi
 if [ "$SERVE" = 1 ]; then
   [ -n "$BASE" ] || BASE="$SERVE_MOUNT"
   [ -n "$OUT" ] || OUT="$SERVE_OUT"
 fi
-command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
+mj_zola_ready "$ROOT" || { echo "site-build: $(mj_zola_why "$ROOT") (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
 # The surfaces this build composes, and whether each one's artifact exists — asked before any
 # generation or rendering is spent, because a build that cannot carry every published surface
 # is refused whatever else it would have produced.
@@ -251,7 +477,46 @@ dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/d
 SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"
 SNAPSHOTS="$(mktemp "${TMPDIR:-/tmp}/mj-site-snapshots.XXXXXX")"
 RELDIR="$(mktemp -d "${TMPDIR:-/tmp}/mj-site-release.XXXXXX")"
-trap 'rm -f "$SURFACES" "$SNAPSHOTS"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+DELIVERY="$(mktemp "${TMPDIR:-/tmp}/mj-site-delivery.XXXXXX")"
+trap 'rm -f "$SURFACES" "$SNAPSHOTS" "$DELIVERY" "$DELIVERY.err" "$DELIVERY.tmp"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+# the issues' delivery, read at this build's own commit (I3769). The committed delivery.json can
+# only observe the commit before the one it lands in (case 51: a derived file cannot name the
+# commit it lands in), so a page that read it named a commit older than the page, and a visitor
+# could not tell which reading was current. The build knows its commit and writes a provenance
+# nothing commits, so the reading is taken here, through the same tool the generator asks, and
+# a page reads it from build.json when the build carries one (index.html, roadmap.html). A dirty
+# build records it dirty, as build.json already does; a tree with no commit records none; a
+# read the tool cannot answer stops the build with 12, as generate-site-data stops its own
+# (project.a-verdict-states-its-subject).
+delivery_at_build() {   # <commit> <dirty> <out>
+  local at="$1" is_dirty="$2" out="$3" rc=0
+  if [ "$at" = unknown ]; then echo null > "$out"; return 0; fi
+  "$ROOT/bin/majordomus" --repo "$ROOT" --json plan delivery --at "$at" > "$out" 2> "$out.err" || rc=$?
+  if [ "$rc" = 0 ] && jq empty "$out" >/dev/null 2>&1; then
+    jq --argjson dirty "$is_dirty" '.observed.dirty = $dirty' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+    rm -f "$out.err"
+    if [ "$is_dirty" = true ]; then echo "== delivery read at ${at:0:12}, dirty"; else echo "== delivery read at ${at:0:12}"; fi
+    return 0
+  fi
+  # No executable of this tree's generation is not a failed reading but a build that cannot take
+  # one: the pages deploy job builds from the Pages run's artifacts and keeps no executable, and
+  # stopping there stopped every deploy of master (run 42339976144, 2026-11-07). The launcher
+  # refuses with 12 and lines it prefixes `majordomus-cli`; then the build records no reading,
+  # says so, and the pages read the committed projection as a plain `zola serve` does. Any other
+  # failure is a reading the tool could not give, and still stops the build.
+  if [ "$rc" = 12 ] && grep -q '^majordomus-cli' "$out.err" 2>/dev/null; then
+    echo null > "$out"
+    echo "site-build: no executable of this tree, so delivery is not read at ${at:0:12}; the pages read the committed projection (set MAJORDOMUS_BIN to read it here)" >&2
+    [ -z "${GITHUB_ACTIONS:-}" ] || echo "::warning title=Delivery not read at the build commit::no executable of this tree in this job; the pages read the committed delivery projection"
+    rm -f "$out.err"
+    return 0
+  fi
+  echo "site-build: the issues' delivery at $at could not be read: 'majordomus --json plan delivery --at $at' exited $rc" >&2
+  if [ -s "$out.err" ]; then sed 's/^/  /' "$out.err" >&2; fi
+  echo "  the build's provenance is not written from a reading this run could not reach" >&2
+  exit 12
+}
+delivery_at_build "$commit" "$dirty" "$DELIVERY"
 # `snapshots` is what the PUBLICATION holds beside this build and this build does not compose:
 # a served surface read once at the published commit and placed at its mount by the deploy
 # (ADR 0141), as the publication model declares it (.ai/repo/ci/pages.yaml deploy.snapshots,
@@ -270,6 +535,7 @@ EOF
 fi
 release_offered "$RELDIR"
 echo "== release $(jq -r 'if . == null then "none: no record and nothing published" else "v\(.version) (from the \(.source); record \(.record // "none"), published \(.published // "none")\(if .published_from then " at " + .published_from else "" end))" end' "$RELDIR/release.json")"
+echo "== pre-release $(jq -r '(. // {}).prerelease | if . == null then "none ahead of the stable release" else "v\(.version) (from the \(.source); record \(.record // "none"), published \(.published // "none")\(if .published_from then " at " + .published_from else "" end))" end' "$RELDIR/release.json")"
 while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
   [ -n "$c_id" ] || continue
   c_built=""
@@ -282,13 +548,27 @@ EOF
 jq -n --arg commit "$commit" --arg commit_time "$commit_time" --argjson dirty "$dirty" \
   --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
   --slurpfile surfaces "$SURFACES" --slurpfile snapshots "$SNAPSHOTS" --slurpfile release "$RELDIR/release.json" \
+  --slurpfile delivery "$DELIVERY" \
   '{schema: 1, commit: $commit, commit_time: (if $commit_time == "" then null else $commit_time end), dirty: $dirty,
     source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
     registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
     registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema,
-    surfaces: $surfaces, snapshots: $snapshots, release: $release[0]}' \
+    surfaces: $surfaces, snapshots: $snapshots, release: $release[0], delivery: $delivery[0]}' \
   > "$SITE/data/build.json"
 cp "$SITE/data/build.json" "$SITE/static/build.json"
+# what moved since the deployment this build replaces, beside build.json and ignored like it
+# — or the record a step before the build composed for this commit, adopted only when it says so
+if [ -n "$SINCE_RECORD" ]; then
+  if jq -e --arg c "$commit" '.schema == 1 and .built == $c and (.state | type == "string")' "$SINCE_RECORD" >/dev/null 2>&1; then
+    cp "$SINCE_RECORD" "$SITE/data/since-deploy.json"
+    echo "  since the last deploy: $(jq -r .state "$SINCE_RECORD"), the record composed before the build"
+  else
+    since_unknown "$SITE/data/since-deploy.json" "$commit" "" "the record $SINCE_RECORD was not composed for the built commit ${commit:0:12}"
+  fi
+else
+  previous_of "$ROOT" "$commit"
+  since_deploy "$ROOT" "$PREVIOUS" "$SITE/data/since-deploy.json" "$NONE"
+fi
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
 cp "$SITE/charts.js" "$SITE/static/js/charts.js"
@@ -357,6 +637,12 @@ if [ -f "$RELDIR/latest.json" ]; then
   mkdir -p "$PUBLIC/releases"
   cp "$RELDIR/latest.json" "$PUBLIC/releases/latest.json"
   cp "$RELDIR/latest.json" "$PUBLIC/releases/$(jq -r .tag "$RELDIR/latest.json").json"
+fi
+# The published pre-release the pages name, when it is newer than the records, is served at its
+# tag's own path for the same reason; latest.json stays the stable release (I2829).
+if [ -f "$RELDIR/prerelease.json" ]; then
+  mkdir -p "$PUBLIC/releases"
+  cp "$RELDIR/prerelease.json" "$PUBLIC/releases/$(jq -r .tag "$RELDIR/prerelease.json").json"
 fi
 # Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
 # (generated CSS, not hand-written) so class-based dark mode picks the right palette.

@@ -252,6 +252,8 @@ mj_migrate_seed() {
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/knowledge/curated/README.md" "$MJ_KNOWLEDGE_DIR/curated/README.md"
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/workflows" "$MJ_WORKFLOWS_DIR" '*.md'
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/skills" "$MJ_SKILLS_DIR" '*.md'
+  # the fleet pack after the baseline, as init installs it (nothing without a pack)
+  mj_fleet_install migrate || printf 'note: the fleet pack was not installed (see above), and nothing of it was written; doctor reports it until: majordomus rules vendor update\n' >&2
   mj_init_tree "$MJ_SKELETON_DIR/ai/repo/adrs" "$MJ_ADRS_DIR" '*.md'
   mkdir -p "$MJ_PROJECT_DIR"
   # The sessions section, by the path the skeleton's manifest names: the resolved variable

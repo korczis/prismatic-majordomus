@@ -24,6 +24,10 @@
 #   7  the wiring: validate.yml asks first thing in its plan job on a pull request alone and
 #      resumes at the end of every other run; release-path.yml preempts on the tag push and
 #      resumes on the schedule the model declares
+#   8  a train never yields (the owner, 2026-11-01): a pull request labelled with the model's
+#      exempt_label neither cancels itself nor is preempted, its members and every other pull
+#      request still are, and one whose labels cannot be read is not known to be a train and
+#      yields as before (the conservative reading: an unreadable label exempts nothing)
 . "$ROOT/test/lib.sh"
 RP="$ROOT/scripts/ci/release-path"
 [ -x "$RP" ] || { echo "    scripts/ci/release-path is missing or not executable"; exit 1; }
@@ -46,6 +50,10 @@ case "$*" in
     a="$*"; s="${a#*status=}"; s="${s%%&*}"
     if [ -f "$GH_STUB_FX/runs-$s.json" ]; then cat "$GH_STUB_FX/runs-$s.json"; else echo '{"workflow_runs":[]}'; fi ;;
   *"/issues?labels="*) if [ -f "$GH_STUB_FX/issues.json" ]; then cat "$GH_STUB_FX/issues.json"; else echo '[]'; fi ;;
+  *"/issues/"[0-9]*"/labels")
+    n="${*%/labels}"; n="${n##*/}"
+    [ ! -f "$GH_STUB_FX/labels-$n.down" ] || { echo "HTTP 502: the labels of #$n did not answer" >&2; exit 1; }
+    if [ -f "$GH_STUB_FX/labels-$n.json" ]; then cat "$GH_STUB_FX/labels-$n.json"; else echo '[]'; fi ;;
   *"/pulls/"*) cat "$GH_STUB_FX/pull-${*##*/}.json" ;;
   *"/actions/runs/"[0-9]*)
     id="${*##*/}"
@@ -235,4 +243,63 @@ grep -q 'run: scripts/ci/release-path resume' "$WF" || { echo "    release-path.
 [ "$(grep -c '/cancel"' "$RP")" = 2 ] || { echo "    release-path cancels from more places than yield and preempt"; exit 1; }
 [ "$(grep -c '/force-cancel"' "$RP")" = 1 ] || { echo "    release-path force-cancels from more places than preempt"; exit 1; }
 
-echo "    the release run, the record's verdict and the release's deploy make the path busy and nothing else does; a pull request's run yields to them by labelling, telling and cancelling itself, a tag push preempts the branch runs and force-cancels one whose cancel did not land, master, dispatches and record branches never yield, the yielded runs are re-requested once the path is clear, and an unreadable forge decides nothing"
+# ---------------------------------------------------------------- 8. a train never yields
+exempt="$(sed -n 's/^  exempt_label: *//p' "$MODEL")"
+[ "$exempt" = train ] || { echo "    the model's exempt_label is '$exempt', not train"; exit 1; }
+reset
+runs in_progress "$(run 101 release.yml push v9.9.9 in_progress)" "$(run 900 validate.yml pull_request integration/train-14-20261101 in_progress 5)"
+printf '[{"name":"type:chore"},{"name":"train"}]' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch integration/train-14-20261101 --self 900 || exit 1
+expect_grep 'labelled train, a train, and a train never yields; this run proceeds' \
+  || { echo "    a train's run did not say it proceeds"; exit 1; }
+grep -qx 'api repos/o/r/issues/5/labels' "$LOG" || { echo "    yield did not read the pull request's labels:"; cat "$LOG"; exit 1; }
+[ "$(wrote '^api -X')" = 0 ] || { echo "    a train's run labelled, told or cancelled:"; cat "$LOG"; exit 1; }
+# a member, labelled hold, still yields
+printf '[{"name":"hold"}]' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch feature/x --self 900 || exit 1
+[ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] || { echo "    a member did not yield:"; cat "$LOG"; exit 1; }
+# labels that cannot be read exempt nothing: the run yields as before, and says why
+rm -f "$FX/labels-5.json"; : > "$FX/labels-5.down"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch integration/train-14-20261101 --self 900 || exit 1
+expect_grep 'could not be read.*it is not known to be a train, so this run yields as before' \
+  || { echo "    unreadable labels were not said"; exit 1; }
+[ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] \
+  || { echo "    a run whose labels could not be read did not yield:"; cat "$LOG"; exit 1; }
+# an answer that is not a JSON list is not a reading either: the run yields, and says why
+rm -f "$FX/labels-5.down"; printf '{"message":"x"}' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch integration/train-14-20261101 --self 900 || exit 1
+expect_grep 'were not a JSON list.*it is not known to be a train, so this run yields as before' \
+  || { echo "    labels that were not a JSON list were not said"; exit 1; }
+[ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] \
+  || { echo "    a run whose labels were not a JSON list did not yield:"; cat "$LOG"; exit 1; }
+# the label decides, never the branch: labelled on another branch it is a train, and a train
+# branch without the label yields like any member
+printf '[{"name":"train"}]' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch feature/x --self 900 || exit 1
+expect_grep 'labelled train, a train, and a train never yields; this run proceeds' \
+  || { echo "    the label on another branch did not exempt the run"; exit 1; }
+[ "$(wrote '^api -X')" = 0 ] || { echo "    a labelled run on another branch labelled, told or cancelled:"; cat "$LOG"; exit 1; }
+printf '[{"name":"hold"}]' > "$FX/labels-5.json"
+expect_exit 0 rp yield --event pull_request --pr 5 --branch integration/train-14-20261101 --self 900 || exit 1
+[ "$(wrote '^api -X POST repos/o/r/actions/runs/900/cancel$')" = 1 ] \
+  || { echo "    a train branch without the label did not yield:"; cat "$LOG"; exit 1; }
+# preempt: the train's run is left, the member's is cancelled, and so is an unreadable one
+reset
+runs in_progress "$(run 101 release.yml push v9.9.9 in_progress)" \
+                 "$(run 201 validate.yml pull_request integration/train-14-20261101 in_progress 7)" \
+                 "$(run 205 validate.yml pull_request feature/b in_progress 9)" \
+                 "$(run 206 validate.yml pull_request feature/c in_progress 10)"
+printf '[{"name":"train"}]' > "$FX/labels-7.json"
+printf '[{"name":"hold"}]' > "$FX/labels-9.json"
+: > "$FX/labels-10.down"
+expect_exit 0 rp preempt --self 900 || exit 1
+cancelled="$(sed -n 's#^api -X POST repos/o/r/actions/runs/\([0-9]*\)/cancel$#\1#p' "$LOG" | tr '\n' ' ')"
+[ "$cancelled" = "205 206 " ] || { echo "    preempt cancelled '$cancelled', not the runs 205 and 206:"; cat "$LOG"; exit 1; }
+grep -q 'issues/7/comments\|issues/7/labels -f' "$LOG" && { echo "    the train was labelled or told"; cat "$LOG"; exit 1; }
+expect_grep '^left   validate run 201 of #7 on integration/train-14-20261101 \(in_progress\): labelled train, a train, which never yields$' \
+  || { echo "    the train's run was not named as left"; exit 1; }
+expect_grep 'validate run 206 of #10: the labels of pull request #10 could not be read.*it is not known to be a train, so it yields as before' \
+  || { echo "    a run whose labels could not be read was not named"; exit 1; }
+expect_grep '2 pull-request validate run\(s\) yielded' || { echo "    preempt did not count the two that yielded"; exit 1; }
+
+echo "    the release run, the record's verdict and the release's deploy make the path busy and nothing else does; a pull request's run yields to them by labelling, telling and cancelling itself, a tag push preempts the branch runs and force-cancels one whose cancel did not land, master, dispatches, record branches and trains never yield, the yielded runs are re-requested once the path is clear, an unreadable forge decides nothing, and labels that cannot be read exempt nothing"

@@ -29,4 +29,28 @@ evidence_required:
   - suite
 risk: "Per-job rust caches start cold for the new jobs; the first master run after landing pays about 8-10 min once. upload-artifact drops file modes, hence chmod; v4 refuses a duplicate artifact name in a run, hence majordomus-exe rather than lane 3's name."
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-26T12:30:39Z
+started_at: 2026-10-26T12:29:28Z
+started_event: sha256:77f7105cce751636b567b581f7362ebd9e3c7ce9fd830ae8fa3ffd40138fcf47
+completed_at: 2026-10-26T12:30:08Z
+completed_event: sha256:e963cb38ac726ed726ca9827dde22328ed3e15e00fbcba9feb7a3ca7bf794fb7
+evidence:
+  - covers: suite
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3939_the_executable_is_built_once_per_run 401_the_rust_artifact_carries_its_provenance 357_ci_records_evidence 3019_a_failed_branch_run_cancels_itself 3402_a_records_only_plan_skips_the_evidence_job 26_ci_wiring"
+    result: "6 passed, 0 failed at origin/master 6259dac47af with its 1.0.0-alpha.8 executable; case 3939 holds that outside macos the crate's cargo build is only in the build job and that every consumer's plan condition is covered by its producer's"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:29:49Z
+  - covers: suite
+    type: ci
+    command: "gh run view 40196303175 / 39762797718 --json jobs (evidence job)"
+    result: "full-plan master run 40196303175 at 2efeacea031: build and rustdoc-surface jobs green, evidence job 4m05s (16:23:29Z-16:27:34Z), against 9m05s on baseline run 39762797718 (12:02:28Z-12:11:33Z): 5m00s shorter; master run 40244812644 at 6259dac47af: evidence 4m11s"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:29:59Z
+  - covers: suite
+    type: build
+    command: "actionlint .github/workflows/validate.yml"
+    result: "exit 0, no finding, at origin/master 6259dac47af"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:30:39Z

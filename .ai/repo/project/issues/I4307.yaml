@@ -1,0 +1,38 @@
+id: I4307
+milestone: a-finding-is-tracked-to-its-issue
+title: "A proposed ADR 0228 writes the highlighter's licence boundary down: syntect in the executable, giallo only inside Zola's build"
+slug: the-highlighter-licence-boundary-is-decided
+priority: p2
+profile: deep-work
+parallel_safe: true
+objective: "Propose ADR 0228 with majordomus adr propose (number reserved on the board for this issue), as .ai/repo/adrs/0228-<slug>.md: the executable highlights with syntect (MIT), as ADR 0166 decision 7 says; giallo stays a build-time tool of Zola that never enters the executable; both emit one class vocabulary and one palette generated from the design tokens; ADR 0166 decision 7 is superseded only in naming the site's engine. Then extend I2747 rather than duplicate it: correct its objective, which calls syntect 'the engine Zola already uses for the site' while Zola 0.23 highlights the site with giallo, and its current_state, which blames share/ui/ui.js for the CDN highlighter that handbook/cs/extras10.js loads, and set its scope and acceptance to the ADR's boundary; and point the code section that open I3790 plans for docs/DESIGN_SYSTEM.md at the ADR, so the design book names the site's build-time highlighter, its palette and the boundary."
+why: "giallo 0.5.2 and every earlier version declare EUPL-1.2 on crates.io and upstream (the conclusion verified it against https://crates.io/api/v1/crates/giallo). The plan proposed giallo for every surface after the owner's decision recorded in .ai/repo/project/milestones/one-kit-on-every-surface.yaml:8, while ADR 0166 decision 7 (.ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md:130) names syntect; f3 asked for syntect in the crate with giallo build-time only, and the conclusion adopted it and rejected 'giallo inside the MIT executable'. Zola 0.23 already highlights the site with giallo through class-based themes (site/config.toml:23-28 and scripts/site-build:361-365, which scope giallo-dark.css). I2747 owns the engine work; PR #1294 carries an unlanded giallo engine at apps/majordomus-cli/src/highlight.rs and is about 809 commits behind master."
+current_state: "On 81ef931a3e1 ADR 0166 decision 7 says syntect on every surface; the milestone one-kit-on-every-surface says giallo; I2747's objective says syntect while its current_state misplaces the CDN highlighter; no ADR names a licence boundary; the newest ADR on master is 0226."
+desired_state: "ADR 0228 exists with status proposed (accepting it is the owner's act, outside any issue) and states the boundary, the shared class vocabulary and palette, and the gate that holds it (I4300's licence ban refuses an EUPL crate in the executable); I2747's objective and current_state are correct and its acceptance follows the ADR; I3790's code section names the ADR's boundary; one-kit-on-every-surface's current_state cites the ADR."
+scope:
+  - ".ai/repo/project/issues/I4307.yaml"
+  - ".ai/repo/project/issues/I2747.yaml"
+  - ".ai/repo/project/issues/I3790.yaml"
+  - ".ai/repo/project/milestones/one-kit-on-every-surface.yaml"
+  - ".ai/repo/adrs"
+non_scope:
+  - "Implementing the highlighter (I2747) or applying it to /ui and the Cockpit (I3791)"
+  - "Reviving PR #1294 beyond deciding which of it survives the boundary"
+  - "Changing the site's Zola highlighter"
+depends_on: []
+serves:
+  - "a-review-is-seen-at-its-commit#code-is-highlighted-inside-its-licence-boundary"
+acceptance_criteria:
+  - "ADR 0228 exists with status proposed and names the boundary, the class vocabulary, the palette source and the gate"
+  - "ADR 0166 records that decision 7 is superseded only in naming the site's engine"
+  - "I2747 no longer says Zola uses syntect, its current_state names handbook/cs/extras10.js as the CDN loader, and its acceptance names syntect in the executable"
+  - "I3790's code section names ADR 0228's boundary"
+  - "bin/majordomus adr check and bin/majordomus plan validate pass"
+validation:
+  - "bin/majordomus adr check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "adr_0228_records_the_highlighter_boundary"
+risk: "Medium. The owner chose giallo on 2026-10-20; the ADR stays proposed until the owner accepts the boundary, and nothing that depends on it may assume acceptance."
+created_at: 2026-10-28
+updated_at: 2026-10-28

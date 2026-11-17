@@ -1,0 +1,62 @@
+{#- What moved between the deployment this one replaced and this one: data/since-deploy.json,
+    which scripts/site-build composes for the build (`since_deploy`) from `release analyze
+    --since`, the changelog composition and the committed claims projection, and which is
+    ignored and never committed — a committed file composed up to HEAD is stale at the next
+    commit. Each movement says whether a release already carries it (the tag) or not yet. A
+    claim that is planned is never a movement here: it stays in the homepage's planned block.
+    No file (a plain `zola serve`), or a delta the build could not state, says so and lists
+    nothing. -#}
+{%- set delta = load_data(path="data/since-deploy.json", required=false) -%}
+<section id="since-deploy" class="mt-10 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"
+         data-since-deploy="{% if delta %}{{ delta.state }}{% else %}absent{% endif %}">
+  <h2 class="text-xl font-semibold tracking-tight text-heading">Since the last deploy</h2>
+  {%- if not delta %}
+  <p class="mt-2 max-w-3xl text-sm text-body">Unknown: this build carries no record of the deployment it replaces, so nothing is listed.</p>
+  {%- elif delta.state != "known" %}
+  <p class="mt-2 max-w-3xl text-sm text-body" data-since-deploy-reason>Unknown: {{ delta.reason }}. Nothing is listed, because a list without its starting point would be a guess.</p>
+  {%- else %}
+  <p class="mt-2 max-w-3xl text-sm text-body">What moved from <code class="font-mono text-heading">{{ delta.previous | truncate(length=9, end="") }}</code>, the commit the previous deployment was built from, to <code class="font-mono text-heading">{{ delta.built | truncate(length=9, end="") }}</code>, the one this page was built from{% if delta.releases | length > 0 %}, across {% for r in delta.releases %}<span class="font-mono text-heading">{{ r.tag }}</span>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}. A movement a release already carries names its tag; the rest are not yet released.</p>
+  {%- for g in delta.groups %}
+  <h3 class="mt-6 text-base font-semibold tracking-tight text-heading" id="since-deploy-{{ g.id }}">{{ g.heading }} <span class="ml-1 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">{{ g.items | length }}</span></h3>
+  {%- if g.unreadable is defined and g.unreadable %}<p class="mt-1 text-sm text-body-subtle">Unknown: {{ g.unreadable }}.</p>
+  {%- elif g.items | length == 0 %}<p class="mt-1 text-sm text-body-subtle">Nothing moved.</p>
+  {%- else %}
+  <ul class="mt-2 space-y-2 text-sm" role="list">
+    {%- if g.id == "capabilities" %}
+    {%- for c in g.items %}
+    {%- for m in c.movements %}
+    <li class="min-w-0 break-words" data-movement-group="{{ g.id }}" data-movement="{{ c.capability }}">
+      <code class="font-mono text-heading">{{ c.capability }}</code>
+      <span class="text-body">{{ m.direction }} {{ m.surface }} <code class="break-all font-mono">{{ m.id }}</code></span>
+      {%- if m.release %} <span class="font-mono text-xs text-fg-brand" data-release-label="{{ m.release }}">released in {{ m.release }}</span>
+      {%- else %} <span class="text-xs text-body-subtle" data-release-label="unreleased">not yet released</span>{% endif %}
+    </li>
+    {%- endfor %}
+    {%- endfor %}
+    {%- elif g.id == "claims" %}
+    {%- for c in g.items %}
+    <li class="min-w-0 break-words" data-movement-group="{{ g.id }}" data-movement="{{ c.id }}">
+      <code class="font-mono text-heading">{{ c.id }}</code>
+      <span class="text-body">{% if c.movement == "added" %}added as {{ c.to }}{% elif c.movement == "removed" %}removed (was {{ c.from }}){% elif c.movement == "status" %}{{ c.from }} &rarr; {{ c.to }}{% else %}reworded ({{ c.to }}){% endif %}: {{ c.claim }}</span>
+      {%- if c.release %} <span class="font-mono text-xs text-fg-brand" data-release-label="{{ c.release }}">released in {{ c.release }}</span>
+      {%- else %} <span class="text-xs text-body-subtle" data-release-label="unreleased">not yet released</span>{% endif %}
+    </li>
+    {%- endfor %}
+    {%- else %}
+    {%- for c in g.items %}
+    <li class="min-w-0 break-words" data-movement-group="{{ g.id }}" data-movement="{{ c.commit }}">
+      {%- if c.scope %}<span class="font-mono text-xs font-medium text-fg-brand">{{ c.scope }}</span> {% endif %}<span class="text-body">{{ c.subject }}</span>
+      {%- if c.url %} <a href="{{ c.url }}" class="break-all font-mono text-xs text-fg-brand hover:underline">{{ c.commit | truncate(length=9, end="") }}</a>{% else %} <code class="font-mono text-xs text-body-subtle">{{ c.commit | truncate(length=9, end="") }}</code>{% endif %}
+      {%- if c.release %} <span class="font-mono text-xs text-fg-brand" data-release-label="{{ c.release }}">released in {{ c.release }}</span>
+      {%- else %} <span class="text-xs text-body-subtle" data-release-label="unreleased">not yet released</span>{% endif %}
+    </li>
+    {%- endfor %}
+    {%- endif %}
+  </ul>
+  {%- endif %}
+  {%- endfor %}
+  {%- if delta.other_changes > 0 %}
+  <p class="mt-4 text-sm text-body-subtle">{{ delta.other_changes }} other commit(s) in the same range are neither a capability, a claim nor documentation and are not listed here; a release lists them in its section below once it carries them.</p>
+  {%- endif %}
+  {%- endif %}
+</section>

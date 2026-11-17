@@ -11,6 +11,9 @@
     colour, so it reads the same without either, and the transcript is the recorded run's own
     output replayed through the one terminal the site has. -#}
 {%- set ci = load_data(path="data/evidence.json", required=false) -%}
+{#- what the run's count may be shown as, the one word the homepage and /guarantees/ read too
+    (partials/run-figure.html, I4317): a run that does not confirm its report confirms no count -#}
+{%- set ci_figure %}{% include "partials/run-figure.html" %}{% endset -%}{%- set ci_figure = ci_figure | trim -%}
 <section class="mt-10" aria-labelledby="ci-evidence-heading">
   <h2 id="ci-evidence-heading" class="text-2xl font-semibold text-heading">Recorded by CI</h2>
   {%- if ci and ci.available %}
@@ -50,8 +53,10 @@
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">{{ ci.totals.executions }}</dd></div>
     {#- the guaranteed claims this run's own executions support, the count the homepage's proof
-        band reads from this same dataset (I3916): one run, one figure, on both pages -#}
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">guaranteed claims this run supports</dt>{% if ci.claims and ci.claims.measured %}<dd class="text-heading" data-ci-supported="{{ ci.claims.supported }}">{{ ci.claims.supported }} <span class="text-body-subtle">of {{ ci.claims.declared }}</span></dd>{% else %}<dd class="text-heading" data-ci-supported="unmeasured">not yet measured</dd>{% endif %}</div>
+        band reads from this same dataset (I3916): one run, one figure, on both pages. A run
+        that does not confirm its report (the status above) confirms no count either, so the
+        count it made is shown only beside the words "not confirmed" (I4317) -#}
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">guaranteed claims this run supports</dt>{% if ci_figure in ["current", "behind"] %}<dd class="text-heading" data-ci-supported="{{ ci.claims.supported }}" data-ci-supported-state="{{ ci.state }}">{{ ci.claims.supported }} <span class="text-body-subtle">of {{ ci.claims.declared }}{% if ci_figure == "behind" %}, at {{ short }}{% endif %}</span></dd>{% elif ci_figure == "unconfirmed" %}<dd class="text-heading" data-ci-supported="unconfirmed" data-ci-supported-state="{{ ci.state | default(value="unknown") }}">not confirmed <span class="text-body-subtle">(the run counted {{ ci.claims.supported }} of {{ ci.claims.declared }})</span></dd>{% else %}<dd class="text-heading" data-ci-supported="unmeasured" data-ci-supported-state="unmeasured">not yet measured</dd>{% endif %}</div>
     {%- for outcome, n in ci.totals.outcomes %}
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">{{ outcome }}</dt><dd class="text-heading">{{ n }}</dd></div>
     {%- endfor %}
