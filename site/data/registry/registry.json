@@ -6,23 +6,23 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "486c12140e2c0e9afc6d1eefcb8789d866550e17baf0cc5a9a0f8f28533aea2e",
+    "fingerprint": "e2bd2c9e51244099bb4b8d311ecc7931db6c57d36f8b3e93c1d477c3e81d56f7",
     "summary": {
-      "total": 4042,
+      "total": 4044,
       "builtin": 231,
-      "declarative": 3811,
+      "declarative": 3813,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3811
+        "resource": 3813
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3821
+        "implemented": 3823
       },
       "mcp_tools": 215,
-      "mcp_resources": 3868,
+      "mcp_resources": 3870,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -67063,7 +67063,7 @@
         "module": "plan",
         "kind": "query",
         "title": "How far each issue's work has travelled",
-        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. With `at` and `merge_title` or `merge_branch`, that commit is read as the merge into the trunk of a pull request with that title and branch, as the forge's merge commit will name it, and the source `anticipated_merge` says so: a pull request is judged by what its merge will prove before it lands (I4634). A merge subject of the landing seat's combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names its member's pull request and branch. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
         "input": {
           "name": "PlanDeliveryInput",
           "schema": {
@@ -67083,6 +67083,20 @@
                   "null"
                 ],
                 "description": "Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live."
+              },
+              "merge_title": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "With `at`: read that commit as the merge into the trunk of a pull request with this\ntitle (I4634), named as the forge's merge commit will name it, so a pull request is\njudged by what its merge will prove before it lands. Refused without `at`."
+              },
+              "merge_branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "With `at`: the anticipated merge's head branch, without its owner, as `merge_title`."
               }
             },
             "description": "Which issues, and as of when: the input of `plan.delivery`.\n\nBoth fields are optional, and an unknown one is refused rather than ignored, so a caller\nwho misspells `at` is not silently answered live.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanDeliveryInput;\n\nlet every: PlanDeliveryInput = serde_json::from_str(\"{}\").unwrap();\nassert!(every.issue.is_none() && every.at.is_none(), \"live, every issue\");\nlet one: PlanDeliveryInput =\n    serde_json::from_value(serde_json::json!({ \"issue\": \"I2740\", \"at\": \"HEAD\" })).unwrap();\nassert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some(\"I2740\"), Some(\"HEAD\")));\nassert!(serde_json::from_str::<PlanDeliveryInput>(r#\"{\"commit\":\"HEAD\"}\"#).is_err());\n```",
@@ -97219,7 +97233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1263,
+        "capabilities": 1264,
         "capability_ids": []
       },
       {
@@ -97832,7 +97846,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 707,
+        "capabilities": 708,
         "capability_ids": []
       },
       {
@@ -97925,7 +97939,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bb4fd29f11b46f453abd322d1bbdd6786ff5a713b855b7e871e3f45f19fdba9c",
+    "fingerprint": "395acf14b5551096cc062979aee4b6ec5e36a3913e6007eccdc0686bf6c60b04",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97965,7 +97979,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1263,
+      "issue": 1264,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97979,7 +97993,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 707,
+      "test": 708,
       "use-case": 49,
       "workspace": 1
     },
@@ -105553,7 +105567,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 47895
+        "bytes": 49545
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -105562,7 +105576,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138592
+        "bytes": 138859
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123431,6 +123445,17 @@
         "bytes": 3995
       },
       {
+        "uri": "majordomus://issue/I4634",
+        "kind": "issue",
+        "identity": "I4634",
+        "title": "A pull request does not land a merge whose delivery differs from the committed projection: plan.delivery reads an anticipated merge and a combined top's member merges, and the gate merge-delivery refuses the rest",
+        "description": "`majordomus plan delivery --at <commit> --merge-title <t> --merge-branch <b>` reads the commit as the merge into the trunk of a pull request with that title and head branch, as the forge's merge commit will name it, and its source `anticipated_merge` says so. Without `at` the inputs are refused. The merge subject the landing seat writes for a member of a combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names that pull request and branch, so a top's head proves its members before it merges. The gate merge-delivery (scripts/ci/merge-delivery-check, job structure, every plan) reads the pull request's title, head branch and base from the runner's event, asks the executable for the delivery at the checked-out test merge with and without the anticipated merge, and refuses (exit 10) when its merged or released tally differs from site/data/generated/delivery.json. It names each issue that would move, with its cause and remedy: the title or branch (retitle, then re-run, because a retitle starts no validate run) or a trunk or head that moved (merge the trunk, run scripts/derive).",
+        "path": ".ai/repo/project/issues/I4634.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6068
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137500,6 +137525,14 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "kind": "test",
+        "identity": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "path": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "source_class": "case",
+        "bytes": 6859
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -140014,7 +140047,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1263
+      "objects": 1264
     },
     {
       "name": "knowledge",
@@ -140176,7 +140209,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 707
+      "objects": 708
     },
     {
       "name": "use-case",
@@ -169980,6 +170013,30 @@
                 "defaults": []
               },
               {
+                "name": "merge_title",
+                "long": "merge-title",
+                "positional": false,
+                "help": "With --at: read that commit as the merge into the trunk of a pull request with this title, as the forge's merge commit will name it (I4634)",
+                "value_name": "TITLE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "merge_branch",
+                "long": "merge-branch",
+                "positional": false,
+                "help": "With --at: the anticipated merge's head branch, without its owner",
+                "value_name": "BRANCH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
                 "name": "repo",
                 "long": "repo",
                 "positional": false,
@@ -178858,7 +178915,7 @@
         "name": "majordomus_plan_delivery",
         "id": "plan.delivery",
         "title": "How far each issue's work has travelled",
-        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. With `at` and `merge_title` or `merge_branch`, that commit is read as the merge into the trunk of a pull request with that title and branch, as the forge's merge commit will name it, and the source `anticipated_merge` says so: a pull request is judged by what its merge will prove before it lands (I4634). A merge subject of the landing seat's combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names its member's pull request and branch. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

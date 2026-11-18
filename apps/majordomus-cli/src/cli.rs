@@ -3506,7 +3506,7 @@ pub enum DeliveryCommand {
 /// assert!(matches!(args.format, OutputFormat::Json));
 /// assert!(matches!(
 ///     args.command,
-///     PlanCommand::Delivery { issue: Some(ref i), at: Some(ref at) } if i == "I2740" && at == "HEAD"
+///     PlanCommand::Delivery { issue: Some(ref i), at: Some(ref at), .. } if i == "I2740" && at == "HEAD"
 /// ));
 /// // the group runs nothing of its own
 /// assert!(Cli::try_parse_from(["majordomus", "plan"]).is_err());
@@ -3538,14 +3538,14 @@ pub struct PlanArgs {
 ///     else { panic!("plan") };
 ///     args.command
 /// }
-/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None }));
+/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None, merge_title: None, merge_branch: None }));
 /// assert!(matches!(
 ///     parse(&["majordomus", "plan", "drift", "--gate", "trunk"]),
 ///     PlanCommand::Drift { issue: None, at: None, gate: Some(majordomus_cli::cli::DriftGateArg::Trunk) }
 /// ));
 /// assert!(matches!(
 ///     parse(&["majordomus", "plan", "delivery", "I0001"]),
-///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
+///     PlanCommand::Delivery { issue: Some(ref i), at: None, .. } if i == "I0001"
 /// ));
 /// ```
 pub enum PlanCommand {
@@ -3556,6 +3556,12 @@ pub enum PlanCommand {
         /// Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)
         #[arg(long, value_name = "REV")]
         at: Option<String>,
+        /// With --at: read that commit as the merge into the trunk of a pull request with this title, as the forge's merge commit will name it (I4634)
+        #[arg(long, value_name = "TITLE")]
+        merge_title: Option<String>,
+        /// With --at: the anticipated merge's head branch, without its owner
+        #[arg(long, value_name = "BRANCH")]
+        merge_branch: Option<String>,
     },
     /// Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
     Drift {

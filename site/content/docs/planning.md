@@ -593,7 +593,29 @@ in the deployment observation, and the live answer counts a merged pull request'
 its merge commit or head is in the history read (`via: forge_title`). That is how #1097 is
 seen to have realised I2653, which its commits name only in a body. The source is
 `merged_titles`; at a commit it is unread, so the committed data stays a function of the
-commit's history.
+commit's history. The landing seat's own merge of a member into a combined top,
+`Merge #<n> (<branch>) into the combined top on <sha>`, names that pull request and its
+branch, so a top's head proves its members before the top merges (I4634).
+
+### A merge that has not happened yet
+
+The trunk's site infers delivery at its own commit (I3769), and the committed projection is
+observed before the merge exists. A merge that proves more than its head did therefore turns
+the trunk red after it lands: on 2026-11-17 the title of #3077 named issues its head did not
+prove, its merge ae13be1bd13 counted two more, and #3084 repaired master. `--merge-title <t>`
+and `--merge-branch <b>`, with `--at`, read that commit as the merge into the trunk of a pull
+request with that title and head branch, as the forge's merge commit will name it, and the
+source `anticipated_merge` says so. At a pull request's test merge (`refs/pull/<n>/merge`),
+that is the delivery the trunk will infer.
+
+The gate `merge-delivery` (`scripts/ci/merge-delivery-check`, every plan) asks for it with
+the title, head branch and base of the runner's pull_request event and compares the
+`merged` and `released` tallies with `site/data/generated/delivery.json`, the comparison
+`homepage-check` makes on the trunk. It refuses (exit 10) and names each issue that would
+move, with its cause: the title or branch (retitle the pull request, then re-run the run,
+since a retitle starts no validate run) or a trunk or head that moved since the projection
+was observed (merge the trunk and run `scripts/derive`). A run that is not a pull request
+into the trunk, or a tree with no projection, has nothing to judge.
 
 ### Where the work is now
 
