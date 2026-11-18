@@ -877,9 +877,10 @@ mod tests {
 
 /// Every commit in `range`, as a subject and a body, newest first.
 ///
-/// The same separators the changelog reads the log with, for the same reason: a commit body
-/// may contain any arrangement of newlines, and a field separator git will not produce is
-/// the only way to tell where one ends.
+/// Records are separated by NUL (`git log -z`), the one byte git cannot store in a message,
+/// and the hash is the first line of each: a body may carry any other byte, a control
+/// character included, and a separator chosen from those would split a body into a phantom
+/// commit (I4605).
 /// ```
 /// use majordomus_cli::commit::plan::messages_in;
 /// // a range git cannot resolve is None, not an empty history
@@ -887,12 +888,10 @@ mod tests {
 /// assert!(messages_in(plain.path(), "HEAD").is_none());
 /// ```
 pub fn messages_in(root: &Path, range: &str) -> Option<Vec<(String, String)>> {
-    const FIELD: &str = "\u{1}";
-    const RECORD: &str = "\u{2}";
     let out = Command::new("git")
         .arg("-C")
         .arg(root)
-        .args(["log", &format!("--format=%H{FIELD}%B{RECORD}"), range])
+        .args(["log", "-z", "--format=%H%n%B", range])
         .output()
         .ok()?;
     if !out.status.success() {
@@ -900,17 +899,14 @@ pub fn messages_in(root: &Path, range: &str) -> Option<Vec<(String, String)>> {
     }
     Some(
         String::from_utf8_lossy(&out.stdout)
-            .split(RECORD)
+            .split('\0')
             .filter_map(|record| {
-                let mut parts = record.trim_start_matches('\n').splitn(2, FIELD);
-                let commit = parts.next()?.trim();
+                let (commit, body) = record.split_once('\n').unwrap_or((record, ""));
+                let commit = commit.trim();
                 if commit.is_empty() {
                     return None;
                 }
-                Some((
-                    commit.to_string(),
-                    parts.next().unwrap_or_default().trim_end().to_string(),
-                ))
+                Some((commit.to_string(), body.trim_end().to_string()))
             })
             .collect(),
     )
@@ -999,5 +995,45 @@ mod derived_tests {
         let v = vocabulary(&[("alpha", "apps/cli/src", 40), ("site", "site/content", 30)]);
         let paths: Vec<String> = vec!["apps/cli/src/alpha/a.rs".into(), "site/content/b.md".into()];
         assert_eq!(group(&paths, &v, &[]).len(), 2);
+    }
+
+    /// A body may carry the bytes the old separators were (U+0001, U+0002); with NUL as the
+    /// separator one commit stays one commit and its body keeps them (I4605 review).
+    #[test]
+    fn a_body_carrying_old_separator_bytes_is_one_commit() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .output()
+                .expect("git runs");
+            assert!(
+                out.status.success(),
+                "{args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+        };
+        git(&["init", "-q"]);
+        git(&[
+            "-c",
+            "user.email=t@example.org",
+            "-c",
+            "user.name=Tester",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "fix(x): a thing\n\nhead \u{2}tail of body \u{1} end",
+        ]);
+        let messages = messages_in(dir.path(), "HEAD").expect("a history");
+        assert_eq!(messages.len(), 1, "{messages:?}");
+        assert!(
+            messages[0].1.contains("\u{2}tail of body \u{1} end"),
+            "{messages:?}"
+        );
     }
 }

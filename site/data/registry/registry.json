@@ -6,7 +6,7 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "d5b30571b25fd80a148c56f8799dbd04e932f49d1c5d3742ece6ce1f24568ba9",
+    "fingerprint": "63614b0b3dd7fe84c98169f70a61c83e9b41bd8cb73c11b3b41cde6be69537a7",
     "summary": {
       "total": 4042,
       "builtin": 231,
@@ -6829,7 +6829,7 @@
             "properties": {
               "message": {
                 "type": "string",
-                "description": "The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed."
+                "description": "The commit message, as given to `git commit`. What the repository's\n`commit.cleanup` would not store (comment lines under `strip`, a `git commit -v`\ndiff) is not judged as text, so what is judged is what would be committed."
               },
               "paths": {
                 "type": [
@@ -6841,6 +6841,11 @@
                 },
                 "description": "The paths the commit would contain. Omit them and the judgements that need them —\nwhether a fix carries a test — are not made rather than guessed.",
                 "default": null
+              },
+              "committed": {
+                "type": "boolean",
+                "description": "The message is of a commit already made (`--rev`): every line of it is what git\nstored, and every line is judged as text.",
+                "default": false
               }
             },
             "required": [
@@ -97925,7 +97930,7 @@
     ]
   },
   "index": {
-    "fingerprint": "03f9252ea8c227a8b59304cc78bc562e7a5e418b3ebd737b5b52046a5f9b129e",
+    "fingerprint": "2ea92eaecfa703d765cac35f5b59df97247749eeaaacfb34b21502f0f4bf72fc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -105175,7 +105180,7 @@
         "title": "The commit",
         "path": "docs/COMMIT.md",
         "source_class": "document",
-        "bytes": 16032
+        "bytes": 16421
       },
       {
         "uri": "majordomus://document/docs/CONCEPTS.md",
@@ -130689,7 +130694,7 @@
         "path": ".ai/repo/rules/project/conventional-commits.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7511,
+        "bytes": 7893,
         "tags": [
           "git",
           "commit",
@@ -134881,7 +134886,7 @@
         "identity": "test/cases/274_commit_policy.sh",
         "path": "test/cases/274_commit_policy.sh",
         "source_class": "case",
-        "bytes": 13417
+        "bytes": 15139
       },
       {
         "uri": "majordomus://test/test/cases/275_publication_is_current.sh",

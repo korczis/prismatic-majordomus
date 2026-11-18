@@ -159,7 +159,7 @@ decision, and a decision is worth reading back.
 
 | code | severity | what it means |
 |---|---|---|
-| `commit.control_character` | policy | a C0 code other than a line feed or tab, DEL or C1, named by line, column and code point; judged first, for git's own subjects too |
+| `commit.control_character` | policy | a C0 code other than a line feed or tab, DEL or C1 named by line, column (in code points) and code point. The hook judges the lines `commit.cleanup` would store (under `strip`, its default, comment lines are dropped, and nothing below git's scissors line is read); a `-m` message is stored under `whitespace`, which a hook cannot tell from an edited one, so `commit history` and the gate, which judge every stored line, are what catch the rest. Judged for git's own subjects too, and counted failing by `commit history` |
 | `commit.not_conventional` | error | the header is not `type(scope): subject` |
 | `commit.subject_empty` | error | nothing after the colon |
 | `commit.subject_too_long` | error | wider than `subject_max_chars`, measured whole |

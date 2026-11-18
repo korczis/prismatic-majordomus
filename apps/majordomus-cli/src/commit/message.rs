@@ -102,12 +102,24 @@ impl CommitMessage {
     /// assert_eq!(m.body, "The reason: it was wrong.");
     /// ```
     pub fn parse(text: &str) -> CommitMessage {
-        // A message given to `git commit` may carry comment lines; git strips them and so
-        // does this, so that what is validated is what will be stored.
-        let lines: Vec<&str> = text
-            .lines()
-            .filter(|l| !l.starts_with('#'))
-            .map(|l| l.trim_end())
+        CommitMessage::parse_stored(text, &Stored::default())
+    }
+
+    /// Parse the lines of `text` that git stores under `stored`, so the grammar and the
+    /// control-character scan read the same lines (I4605).
+    ///
+    /// ```
+    /// use majordomus_cli::commit::message::{CommitMessage, Stored};
+    /// let m = CommitMessage::parse_stored("fix(x): a\n\n; not stored\nbody", &Stored::StripComments(";".into()));
+    /// assert_eq!(m.body, "body");
+    /// ```
+    pub fn parse_stored(text: &str, stored: &Stored) -> CommitMessage {
+        // A message given to `git commit` may carry comment lines and, under `git commit -v`,
+        // a diff below the scissors line; git strips both and so does this, so that what is
+        // validated is what will be stored.
+        let lines: Vec<&str> = stored_lines(text, stored)
+            .into_iter()
+            .map(|(_, l)| l.trim_end())
             .collect();
         let header = CommitHeader::parse(lines.first().copied().unwrap_or_default());
         let rest = lines.get(1..).unwrap_or_default();
@@ -186,6 +198,115 @@ impl CommitMessage {
         }
         out.push('\n');
         out
+    }
+}
+
+/// What of a message git will store, which decides what is judged as its text.
+///
+/// The `commit-msg` hook sees the message before git cleans it up, and what the cleanup keeps
+/// depends on `commit.cleanup`; a commit already in the history is exactly what was stored.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Stored {
+    /// About to be committed under `strip`, git's default when the message is edited:
+    /// lines opening with the comment prefix go, and nothing from the scissors line on.
+    StripComments(String),
+    /// About to be committed under `whitespace`, `verbatim` or `scissors`: comment lines
+    /// are stored, and nothing from the scissors line on (a `git commit -v` diff never is).
+    KeepComments(String),
+    /// Already committed: every line is what git stored.
+    Everything,
+}
+
+impl Default for Stored {
+    fn default() -> Self {
+        Stored::StripComments("#".into())
+    }
+}
+
+impl Stored {
+    /// What `git commit` will store in the repository at `root`, read from its
+    /// `commit.cleanup` and `core.commentChar` (or `core.commentString`). A cleanup git
+    /// decides per invocation (`default`, or no setting) is taken as `strip`, which is what
+    /// it means when the message is edited; a `--cleanup` flag is invisible to a hook.
+    pub fn configured(root: &std::path::Path) -> Stored {
+        let get = |key: &str| {
+            std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(["config", "--get", key])
+                .output()
+                .ok()
+                .filter(|o| o.status.success())
+                .map(|o| String::from_utf8_lossy(&o.stdout).trim_end().to_string())
+                .filter(|v| !v.is_empty())
+        };
+        // core.commentChar and core.commentString are one setting under two names, and the
+        // last one git reads wins; --get-regexp lists them in that order.
+        let prefix = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["config", "--get-regexp", r"^core\.comment(char|string)$"])
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .and_then(|o| {
+                String::from_utf8_lossy(&o.stdout)
+                    .lines()
+                    .filter_map(|l| l.split_once(' ').map(|(_, v)| v.to_string()))
+                    .next_back()
+            })
+            .filter(|c| !c.is_empty() && c != "auto")
+            .unwrap_or_else(|| "#".into());
+        match get("commit.cleanup").as_deref() {
+            Some("verbatim" | "whitespace" | "scissors") => Stored::KeepComments(prefix),
+            _ => Stored::StripComments(prefix),
+        }
+    }
+}
+
+/// The scissors line `git commit -v` writes above the diff, after the comment prefix and a
+/// space; git drops it and everything below.
+pub const SCISSORS: &str = "------------------------ >8 ------------------------";
+
+/// The lines of a message git stores, each with its line number in the text as given (from
+/// 1), so a finding points at the line the author sees in the editor.
+///
+/// ```
+/// use majordomus_cli::commit::message::{stored_lines, Stored};
+/// let text = "fix(x): a thing\n# a comment\nbody\n# ------------------------ >8 ------------------------\ndiff";
+/// assert_eq!(
+///     stored_lines(text, &Stored::default()),
+///     vec![(1, "fix(x): a thing"), (3, "body")]
+/// );
+/// assert_eq!(
+///     stored_lines(text, &Stored::KeepComments("#".into())),
+///     vec![(1, "fix(x): a thing"), (2, "# a comment"), (3, "body")]
+/// );
+/// assert_eq!(stored_lines(text, &Stored::Everything).len(), 5);
+/// ```
+pub fn stored_lines<'a>(text: &'a str, stored: &Stored) -> Vec<(usize, &'a str)> {
+    // One line ending is "\n" or "\r\n": exactly one carriage return before a line feed is
+    // the ending, and any other is content (`x\r\r\n` keeps one).
+    let lines = text
+        .strip_suffix('\n')
+        .unwrap_or(text)
+        .split('\n')
+        .enumerate()
+        .map(|(n, l)| (n + 1, l.strip_suffix('\r').unwrap_or(l)));
+    match stored {
+        Stored::Everything => lines.collect(),
+        Stored::StripComments(prefix) | Stored::KeepComments(prefix) => {
+            let strip = matches!(stored, Stored::StripComments(_));
+            lines
+                // git's own cut line, whole: the prefix, a space, the scissors.
+                .take_while(|(_, l)| {
+                    l.strip_prefix(prefix.as_str())
+                        .and_then(|rest| rest.strip_prefix(' '))
+                        != Some(SCISSORS)
+                })
+                .filter(|(_, l)| !(strip && l.starts_with(prefix.as_str())))
+                .collect()
+        }
     }
 }
 

@@ -114,6 +114,33 @@ expect_grep 'commit\.control_character'
 expect_no_grep 'not_conventional'
 expect_exit 0 "$RB" commit validate --repo . < <(printf 'fix(alpha): a thing\n\nbody\twith a tab\n')
 expect_no_grep 'control_character'
+echo "  a git-composed subject is exempt from the grammar, not from being text; the reason is shown"
+expect_exit 10 "$RB" commit validate --repo . < <(printf "Merge branch '\033[32mfeature\033[m'\n")
+expect_grep 'exempt'
+expect_grep 'commit\.control_character'
+echo "  and the history counts it failing, not exempt (a forge-made merge never runs a hook)"
+COLOURED="$(git commit-tree "$(git write-tree)" -p HEAD -m "$(printf "Merge branch '\033[32mfeature\033[m'")")"
+expect_exit 10 "$RB" commit history --repo . "HEAD..$COLOURED"
+expect_grep 'commit\.control_character'
+expect_grep '0 exempt, 1 failing'
+echo "  what git does not store, a comment line under strip cleanup, is not judged"
+# The case's own repository decides: a person's global commit.cleanup or comment character
+# must not change what this case measures.
+git config commit.cleanup strip
+git config core.commentChar '#'
+expect_exit 0 "$RB" commit validate --repo . < <(printf 'fix(alpha): a thing\n\n# note: \033[33mwarning\033[m\n')
+expect_no_grep 'control_character'
+echo "  under verbatim, whitespace and scissors cleanup git stores comment lines, so they are judged"
+for mode in verbatim whitespace scissors; do
+  git config commit.cleanup "$mode"
+  expect_exit 10 "$RB" commit validate --repo . < <(printf 'fix(alpha): a thing\n\n# note: \033[33mwarning\033[m\n')
+  expect_grep 'commit\.control_character'
+done
+git config --unset commit.cleanup
+git config --unset core.commentChar
+echo "  and a git commit -v diff below the scissors line is never judged"
+expect_exit 0 "$RB" commit validate --repo . < <(printf 'fix(alpha): a thing\n\n# ------------------------ >8 ------------------------\ndiff\n+\014form feed\n')
+expect_no_grep 'control_character'
 
 echo "  a fix with no test among its files is reported, and does not refuse"
 expect_exit 0 "$RB" commit validate --repo . --paths apps/thing/src/alpha/a.rs <<'EOF'

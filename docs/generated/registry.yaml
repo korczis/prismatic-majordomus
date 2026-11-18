@@ -5109,7 +5109,7 @@ capabilities:
         properties:
           message:
             type: string
-            description: "The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed."
+            description: "The commit message, as given to `git commit`. What the repository's\n`commit.cleanup` would not store (comment lines under `strip`, a `git commit -v`\ndiff) is not judged as text, so what is judged is what would be committed."
           paths:
             type:
               - array
@@ -5118,6 +5118,10 @@ capabilities:
               type: string
             description: "The paths the commit would contain. Omit them and the judgements that need them —\nwhether a fix carries a test — are not made rather than guessed."
             default: null
+          committed:
+            type: boolean
+            description: "The message is of a commit already made (`--rev`): every line of it is what git\nstored, and every line is judged as text."
+            default: false
         required:
           - message
         description: "A message to judge, and what is known about the commit it would make.\n```\nuse majordomus_cli::capability::builtin::commit::ValidateInput;\n// paths are optional: a caller that does not know them gets the judgements that need\n// none, rather than a guess\nlet v: ValidateInput = serde_json::from_str(r#\"{\"message\": \"feat(a): a thing\"}\"#).unwrap();\nassert!(v.paths.is_none());\n```"

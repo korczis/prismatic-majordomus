@@ -90,10 +90,13 @@ One message against this repository's commit policy: the grammar, the subject wi
 
 | input | type | required | description |
 |---|---|---|---|
-| `message` | string | yes | The commit message, as it would be stored. Comment lines are ignored, as git ignores
-them, so what is judged is what would be committed. |
+| `message` | string | yes | The commit message, as given to `git commit`. What the repository's
+`commit.cleanup` would not store (comment lines under `strip`, a `git commit -v`
+diff) is not judged as text, so what is judged is what would be committed. |
 | `paths` | array or null | no | The paths the commit would contain. Omit them and the judgements that need them —
 whether a fix carries a test — are not made rather than guessed. |
+| `committed` | boolean | no | The message is of a commit already made (`--rev`): every line of it is what git
+stored, and every line is judged as text. |
 
 Output: `CommitVerdict`.
 

@@ -13,6 +13,7 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{CommitArgs, CommitCommand, OutputFormat};
+use crate::commit::verdict::printable;
 use crate::error::{Error, Result};
 
 /// The exit code when `validate` finds an error, and when a plan cannot be made.
@@ -54,7 +55,7 @@ pub fn run(args: CommitArgs) -> Result<u8> {
         }
         CommitCommand::Validate { file, paths, rev } => {
             let message = read_message(&app, file.as_deref(), rev.as_deref())?;
-            let mut input = json!({ "message": message });
+            let mut input = json!({ "message": message, "committed": rev.is_some() });
             if !paths.is_empty() {
                 input["paths"] = json!(paths);
             }
@@ -191,7 +192,7 @@ fn render_plan(out: &mut impl Write, v: &Value, format: OutputFormat) -> Result<
             "\n{:<8} {} {}",
             d["severity"].as_str().unwrap_or("?"),
             d["code"].as_str().unwrap_or("?"),
-            d["message"].as_str().unwrap_or("")
+            printable(d["message"].as_str().unwrap_or(""))
         )
         .map_err(Error::Transport)?;
     }
@@ -247,7 +248,7 @@ fn render_history(out: &mut impl Write, v: &Value, format: OutputFormat) -> Resu
                 .chars()
                 .take(9)
                 .collect::<String>(),
-            c["subject"].as_str().unwrap_or("")
+            printable(c["subject"].as_str().unwrap_or(""))
         )
         .map_err(Error::Transport)?;
         for d in c["findings"].as_array().into_iter().flatten() {
@@ -256,7 +257,7 @@ fn render_history(out: &mut impl Write, v: &Value, format: OutputFormat) -> Resu
                 "           {:<8} {:<34} {}",
                 d["severity"].as_str().unwrap_or("?"),
                 d["code"].as_str().unwrap_or("?"),
-                d["message"].as_str().unwrap_or("")
+                printable(d["message"].as_str().unwrap_or(""))
             )
             .map_err(Error::Transport)?;
         }
@@ -280,15 +281,19 @@ fn render_verdict(out: &mut impl Write, v: &Value, format: OutputFormat) -> Resu
     writeln!(
         out,
         "{}",
-        header["subject"].as_str().unwrap_or("(no subject)")
+        printable(header["subject"].as_str().unwrap_or("(no subject)"))
     )
     .map_err(Error::Transport)?;
-    if let Some(exempt) = v["exempt"].as_str() {
-        return writeln!(
+    // An exemption is from the grammar, not from being text: a git-composed subject that
+    // carries a control character fails, and the reason is printed below the exemption, or
+    // the hook would abort a commit without saying why (I4605).
+    let exempt = v["exempt"].as_str();
+    if let Some(exempt) = exempt {
+        writeln!(
             out,
             "exempt   {exempt}: git composed this subject, not a person"
         )
-        .map_err(Error::Transport);
+        .map_err(Error::Transport)?;
     }
     for d in v["findings"].as_array().into_iter().flatten() {
         writeln!(
@@ -296,11 +301,13 @@ fn render_verdict(out: &mut impl Write, v: &Value, format: OutputFormat) -> Resu
             "{:<8} {:<34} {}",
             d["severity"].as_str().unwrap_or("?"),
             d["code"].as_str().unwrap_or("?"),
-            d["message"].as_str().unwrap_or("")
+            printable(d["message"].as_str().unwrap_or(""))
         )
         .map_err(Error::Transport)?;
     }
-    if v["passed"].as_bool() == Some(true) && v["findings"].as_array().is_none_or(|f| f.is_empty())
+    if exempt.is_none()
+        && v["passed"].as_bool() == Some(true)
+        && v["findings"].as_array().is_none_or(|f| f.is_empty())
     {
         writeln!(out, "ok       nothing to report").map_err(Error::Transport)?;
     }
@@ -345,6 +352,29 @@ mod tests {
         let mut buf: Vec<u8> = Vec::new();
         render_verdict(&mut buf, &v, OutputFormat::Text).expect("it renders");
         String::from_utf8(buf).expect("utf-8")
+    }
+
+    /// An exempt verdict that fails prints its reason; before, the text stopped at the
+    /// exemption and the hook aborted a commit without saying why (I4605 review).
+    #[test]
+    fn an_exempt_verdict_that_fails_prints_its_finding() {
+        let text = render(json!({
+            "message": {"header": {"subject": "Merge branch '\u{1b}[32mfeature\u{1b}[m'"}},
+            "passed": false,
+            "exempt": "git_authored",
+            "findings": [{
+                "severity": "error",
+                "code": "commit.control_character",
+                "message": "line 1, column 15: U+001B ESCAPE"
+            }]
+        }));
+        assert!(text.contains("exempt"), "{text}");
+        assert!(text.contains("commit.control_character"), "{text}");
+        assert!(
+            !text.contains('\u{1b}'),
+            "the subject is printed escaped: {text:?}"
+        );
+        assert!(!text.contains("nothing to report"), "{text}");
     }
 
     #[test]

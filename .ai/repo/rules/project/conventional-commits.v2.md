@@ -67,8 +67,13 @@ disagree about what an id looks like.
 
 **A message is plain text.** A control character in it — C0 other than a line feed or a
 tab, DEL, or C1, such as the colour codes a pager writes into a title — is refused, and the
-finding names each one's line, column and code point. It is judged first and for every
-message, git's own subjects included, because every later reader (the forge, the changelog,
+finding names each one's line, column (counted in code points) and code point. The hook
+judges the lines `commit.cleanup` would store (comment lines go under `strip`, nothing below
+git's scissors line is read); a `-m` message, which git stores under `whitespace`, cannot be
+told from an edited one there, so `commit history`, which judges every stored line, is what
+catches the rest. It is judged
+for every message, git's own subjects included (so `commit history` counts such a merge
+failing, not exempt), because every later reader (the forge, the changelog,
 an adopter's page of recent work) shows it raw long after the terminal that drew it is gone,
 and because the grammar would otherwise report the consequence (`'\x1b[33mfix' is not a
 commit type`) instead of the cause (I4605).

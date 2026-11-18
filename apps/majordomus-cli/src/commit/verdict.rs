@@ -158,6 +158,9 @@ pub struct CommitSubject {
     pub paths: Option<Vec<String>>,
     /// The record ids the layer holds, for resolving what the message names.
     pub records: Vec<String>,
+    /// What of `text` git stores, which is what is judged as text: the hook's input under
+    /// the repository's cleanup, or every line of a commit already made.
+    pub stored: super::message::Stored,
 }
 
 impl CommitSubject {
@@ -229,19 +232,24 @@ fn is_test_path(path: &str) -> bool {
 /// assert!(!judge(&invented, &p).passed);
 /// ```
 pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
-    let message = CommitMessage::parse(&subject.text);
+    let message = CommitMessage::parse_stored(&subject.text, &subject.stored);
     let head = &message.header;
 
     // What bytes a message may hold is judged first and for every message, git's own
     // subjects included: their exemption is from the grammar, not from being text.
     let mut found: Vec<(CommitRule, Severity, String)> = Vec::new();
-    if let (Some(detail), Some(severity)) = (
-        control_characters(&subject.text),
-        policy.control_character.severity(),
-    ) {
-        found.push((CommitRule::ControlCharacter, severity, detail));
+    let control = control_characters(&subject.text, &subject.stored);
+    if let (Some(control), Some(severity)) = (&control, policy.control_character.severity()) {
+        found.push((
+            CommitRule::ControlCharacter,
+            severity,
+            control.detail.clone(),
+        ));
     }
-    let refused_as_text = found.iter().any(|(_, s, _)| *s == Severity::Error);
+    // Only a control code in the header corrupts what the grammar reads; one in the body
+    // leaves every other judgement sound, and those findings are still owed.
+    let header_refused = control.as_ref().is_some_and(|c| c.in_header)
+        && found.iter().any(|(_, s, _)| *s == Severity::Error);
 
     if git_authored(&head.subject) || git_authored(subject.text.lines().next().unwrap_or_default())
     {
@@ -257,7 +265,7 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
         verdict.exempt = Some(CommitExemption::GitAuthored);
         return verdict;
     }
-    if refused_as_text {
+    if header_refused {
         // The grammar below would read the control code as part of a word and report the
         // consequence (`'\x1b[33mfix' is not a commit type`) instead of the cause.
         return finish(message, found);
@@ -388,23 +396,35 @@ fn control_name(ch: char) -> String {
     format!("U+{:04X} {name}", ch as u32)
 }
 
-/// Every control character the message carries, as one detail naming each one's line,
-/// column (counted in characters, from 1) and code point; `None` when the message is text.
+/// The control characters a message carries: one detail naming each one's line, column and
+/// code point, and whether the header line carries one.
+struct ControlCharacters {
+    detail: String,
+    in_header: bool,
+}
+
+/// Every control character in the lines git stores (under `strip` cleanup comments are not,
+/// and a `git commit -v` diff never is), or `None` when the message is text. Lines are
+/// numbered as in the text given and columns count code points, both from 1, so a finding
+/// points at what the author sees in the editor.
 ///
 /// A carriage return that ends a line is a line ending, not content: an editor that writes
 /// CRLF has written plain text.
-fn control_characters(text: &str) -> Option<String> {
+fn control_characters(text: &str, stored: &super::message::Stored) -> Option<ControlCharacters> {
     let mut shown: Vec<String> = Vec::new();
     let mut count = 0usize;
-    for (n, line) in text.split('\n').enumerate() {
-        let line = line.strip_suffix('\r').unwrap_or(line);
+    let mut in_header = false;
+    for (i, (n, line)) in super::message::stored_lines(text, stored)
+        .into_iter()
+        .enumerate()
+    {
         for (column, ch) in line.chars().enumerate() {
             if is_control(ch) {
                 count += 1;
+                in_header |= i == 0;
                 if shown.len() < CONTROL_POSITIONS_SHOWN {
                     shown.push(format!(
-                        "line {}, column {}: {}",
-                        n + 1,
+                        "line {n}, column {}: {}",
                         column + 1,
                         control_name(ch)
                     ));
@@ -420,11 +440,35 @@ fn control_characters(text: &str) -> Option<String> {
         rest => format!("; and {rest} more"),
     };
     let plural = if count == 1 { "" } else { "s" };
-    Some(format!(
-        "the message carries {count} control character{plural}, which every later reader shows raw \
-         (a pager's colour codes, typically); write plain text: {}{more}",
-        shown.join("; ")
-    ))
+    Some(ControlCharacters {
+        detail: format!(
+            "the message carries {count} control character{plural}, which every later reader \
+             shows raw (a pager's colour codes, typically); write plain text: {}{more}",
+            shown.join("; ")
+        ),
+        in_header,
+    })
+}
+
+/// A text to print at a terminal with every control character written as an escape
+/// (`\u{1b}`), so that a message under judgement cannot move the cursor or clear the screen
+/// of the person reading the verdict.
+///
+/// ```
+/// use majordomus_cli::commit::verdict::printable;
+/// assert_eq!(printable("a \u{1b}[2Kb"), "a \\u{1b}[2Kb");
+/// assert_eq!(printable("tab\tok"), "tab\tok");
+/// ```
+pub fn printable(text: &str) -> String {
+    text.chars()
+        .map(|ch| {
+            if is_control(ch) && ch != '\n' {
+                format!("\\u{{{:x}}}", ch as u32)
+            } else {
+                ch.to_string()
+            }
+        })
+        .collect()
 }
 
 /// Order the findings and decide the verdict.
@@ -563,6 +607,18 @@ mod tests {
         assert!(c1.findings[0]
             .message
             .contains("U+009B CONTROL SEQUENCE INTRODUCER"));
+        // one carriage return before a line feed is the ending; a second is content
+        let crcr = judge(
+            &CommitSubject::of("fix(commit): x\r\r\nbody"),
+            &CommitPolicy::default(),
+        );
+        assert!(
+            crcr.findings[0]
+                .message
+                .contains("line 1, column 15: U+000D"),
+            "{:?}",
+            crcr.findings
+        );
         // a carriage return inside a line is not a line ending
         let cr = judge(
             &CommitSubject::of("fix(commit): x\ry"),
@@ -608,6 +664,98 @@ mod tests {
         assert!(v.passed);
         assert_eq!(codes(&v), vec!["commit.control_character"]);
         assert_eq!(v.findings[0].severity, Severity::Warning);
+    }
+
+    /// git strips comment lines and everything from the `git commit -v` scissors on, so
+    /// neither is judged; the line numbers stay the editor's (I4605 review).
+    #[test]
+    fn what_git_does_not_store_is_not_judged() {
+        let commented = "fix(commit): x\n\nbody\n# note: \u{1b}[33mwarning\u{1b}[m";
+        let v = judge(&CommitSubject::of(commented), &CommitPolicy::default());
+        assert!(v.findings.is_empty(), "{:?}", v.findings);
+        let verbose = format!(
+            "fix(commit): x\n\n# Please enter the commit message\n# {}\n# Do not modify\ndiff --git a/f b/f\n+\u{c}form feed\n",
+            crate::commit::message::SCISSORS
+        );
+        let v = judge(&CommitSubject::of(&verbose), &CommitPolicy::default());
+        assert!(v.findings.is_empty(), "{:?}", v.findings);
+        let numbered = "fix(commit): x\n# a comment\n\nbody \u{1b} here";
+        let v = judge(&CommitSubject::of(numbered), &CommitPolicy::default());
+        assert!(
+            v.findings[0].message.contains("line 4, column 6"),
+            "{:?}",
+            v.findings
+        );
+    }
+
+    /// What is judged follows what git stores: comment lines are stored under `verbatim`,
+    /// `whitespace` and `scissors` cleanup, and a commit already made is judged whole, even
+    /// below a scissors line its author typed (I4605 review).
+    #[test]
+    fn what_is_judged_follows_the_cleanup_git_will_apply() {
+        use crate::commit::message::Stored;
+        let commented = "fix(commit): x\n\n# note: \u{1b}[33mwarning\u{1b}[m";
+        let judged = |stored: Stored| {
+            let subject = CommitSubject {
+                text: commented.into(),
+                stored,
+                ..CommitSubject::default()
+            };
+            codes(&judge(&subject, &CommitPolicy::default()))
+                .into_iter()
+                .map(str::to_string)
+                .collect::<Vec<_>>()
+        };
+        assert!(judged(Stored::StripComments("#".into())).is_empty());
+        assert_eq!(
+            judged(Stored::KeepComments("#".into())),
+            vec!["commit.control_character"]
+        );
+        assert_eq!(judged(Stored::Everything), vec!["commit.control_character"]);
+        // a comment prefix other than `#` is the repository's, and `#` is then text
+        assert_eq!(
+            judged(Stored::StripComments(";".into())),
+            vec!["commit.control_character"]
+        );
+        let verbose = format!(
+            "fix(commit): x\n# {}\n+\u{c}form feed",
+            crate::commit::message::SCISSORS
+        );
+        let kept = CommitSubject {
+            text: verbose.clone(),
+            stored: Stored::KeepComments("#".into()),
+            ..CommitSubject::default()
+        };
+        assert!(judge(&kept, &CommitPolicy::default()).findings.is_empty());
+        let made = CommitSubject {
+            text: verbose,
+            stored: Stored::Everything,
+            ..CommitSubject::default()
+        };
+        assert_eq!(
+            codes(&judge(&made, &CommitPolicy::default())),
+            vec!["commit.control_character"]
+        );
+    }
+
+    /// A control code only in the body leaves the grammar sound, so its findings are still
+    /// reported beside it (I4605 review).
+    #[test]
+    fn a_control_code_in_the_body_does_not_hide_the_grammar() {
+        let v = judge(
+            &CommitSubject::of("update stuff\n\nbody \u{1b} here"),
+            &CommitPolicy::default(),
+        );
+        assert_eq!(
+            codes(&v),
+            vec!["commit.control_character", "commit.not_conventional"]
+        );
+    }
+
+    #[test]
+    fn a_subject_printed_at_a_terminal_cannot_drive_it() {
+        assert_eq!(printable("a \u{1b}[2K\rb"), "a \\u{1b}[2K\\u{d}b");
+        assert_eq!(printable("plain\ttext"), "plain\ttext");
     }
 
     #[test]

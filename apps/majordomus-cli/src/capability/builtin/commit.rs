@@ -168,13 +168,18 @@ pub(super) fn plan(ctx: &Context, _: Empty) -> Result<CommitPlan, CapabilityErro
 /// assert!(v.paths.is_none());
 /// ```
 pub struct ValidateInput {
-    /// The commit message, as it would be stored. Comment lines are ignored, as git ignores
-    /// them, so what is judged is what would be committed.
+    /// The commit message, as given to `git commit`. What the repository's
+    /// `commit.cleanup` would not store (comment lines under `strip`, a `git commit -v`
+    /// diff) is not judged as text, so what is judged is what would be committed.
     pub message: String,
     /// The paths the commit would contain. Omit them and the judgements that need them —
     /// whether a fix carries a test — are not made rather than guessed.
     #[serde(default)]
     pub paths: Option<Vec<String>>,
+    /// The message is of a commit already made (`--rev`): every line of it is what git
+    /// stored, and every line is judged as text.
+    #[serde(default)]
+    pub committed: bool,
 }
 
 impl BenchmarkCases for ValidateInput {
@@ -185,6 +190,7 @@ impl BenchmarkCases for ValidateInput {
                 ValidateInput {
                     message: "feat(commit): the rule is decided by a command".into(),
                     paths: None,
+                    committed: false,
                 },
             ),
             NamedCase::new(
@@ -192,6 +198,7 @@ impl BenchmarkCases for ValidateInput {
                 ValidateInput {
                     message: "update stuff".into(),
                     paths: None,
+                    committed: false,
                 },
             ),
             NamedCase::new(
@@ -199,6 +206,7 @@ impl BenchmarkCases for ValidateInput {
                 ValidateInput {
                     message: "Merge pull request #249 from korczis/fix".into(),
                     paths: None,
+                    committed: false,
                 },
             ),
         ]
@@ -215,11 +223,17 @@ pub(super) fn validate(
         ));
     }
     let vocabulary = commit::scopes::derive(&root(ctx));
+    let stored = if input.committed {
+        commit::message::Stored::Everything
+    } else {
+        commit::message::Stored::configured(&root(ctx))
+    };
     let subject = commit::CommitSubject {
         text: input.message,
         scopes: (!vocabulary.scopes.is_empty()).then(|| vocabulary.words()),
         paths: input.paths,
         records: records(ctx),
+        stored,
     };
     Ok(commit::judge(&subject, &policy(ctx)))
 }
@@ -299,9 +313,13 @@ pub(super) fn history(
             // commit is still being made — is where the paths are.
             paths: None,
             records: records.clone(),
+            // A commit in the history is exactly what git stored; every line is judged.
+            stored: commit::message::Stored::Everything,
         };
         let verdict = commit::judge(&subject, &policy);
-        if verdict.exempt.is_some() {
+        // Exempt from the grammar is not exempt from being text: a git-composed subject that
+        // carries a control character is judged like any other failing commit (I4605).
+        if verdict.exempt.is_some() && verdict.passed {
             report.exempt += 1;
             continue;
         }

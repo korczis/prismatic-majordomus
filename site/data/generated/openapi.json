@@ -67072,7 +67072,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "commit validate",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/validate?message=feat%28commit%29%3A%20the%20rule%20is%20decided%20by%20a%20command\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/validate?message=feat%28commit%29%3A%20the%20rule%20is%20decided%20by%20a%20command&committed=false\"",
           "description": "One message against this repository's commit policy: the grammar, the subject width, whether the scope is one the history uses, whether every record the message names exists, whether a fix carries a test, and whether a breaking change explains itself — as typed findings with severities, or an exemption for a subject git composed. The same verdict the commit-msg hook refuses with and the gate reads the history through.",
           "home": "commit",
           "id": "commit.validate",
@@ -67082,7 +67082,7 @@
           "method": "GET",
           "parameters": [
             {
-              "description": "The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed.",
+              "description": "The commit message, as given to `git commit`. What the repository's\n`commit.cleanup` would not store (comment lines under `strip`, a `git commit -v`\ndiff) is not judged as text, so what is judged is what would be committed.",
               "examples": [
                 {
                   "case": "conventional",
@@ -67107,6 +67107,26 @@
               "name": "paths",
               "required": false,
               "type": "array of string"
+            },
+            {
+              "description": "The message is of a commit already made (`--rev`): every line of it is what git\nstored, and every line is judged as text.",
+              "examples": [
+                {
+                  "case": "conventional",
+                  "value": "false"
+                },
+                {
+                  "case": "merge",
+                  "value": "false"
+                },
+                {
+                  "case": "not-conventional",
+                  "value": "false"
+                }
+              ],
+              "name": "committed",
+              "required": false,
+              "type": "boolean"
             }
           ],
           "path": "/api/v1/commit/validate",

@@ -1109,7 +1109,7 @@ paths:
           required: true
           schema:
             type: string
-          description: "The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed."
+          description: "The commit message, as given to `git commit`. What the repository's\n`commit.cleanup` would not store (comment lines under `strip`, a `git commit -v`\ndiff) is not judged as text, so what is judged is what would be committed."
           examples:
             conventional:
               value: "feat(commit): the rule is decided by a command"
@@ -1125,6 +1125,20 @@ paths:
             items:
               type: string
           description: "The paths the commit would contain. Omit them and the judgements that need them —\nwhether a fix carries a test — are not made rather than guessed."
+        - name: committed
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "The message is of a commit already made (`--rev`): every line of it is what git\nstored, and every line is judged as text."
+          examples:
+            conventional:
+              value: false
+            merge:
+              value: false
+            not-conventional:
+              value: false
       responses:
         "200":
           description: "Judge one commit message: the result."
