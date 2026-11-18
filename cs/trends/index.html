@@ -181,13 +181,983 @@ run's own <code>coverage-summary</code> artifact; nothing here counts coverage a
 a run is what the forge recorded for its jobs: how long each waited for a runner and how long
 it ran. A run whose artifact the forge no longer keeps still shows its cost, and its coverage
 reads as not recorded, never as zero.</p>
-</article>
-<section class="mt-10" aria-labelledby="trends-none">
-  <h2 id="trends-none" class="text-xl font-semibold text-heading">No series reached this build</h2>
-  <p class="mt-3 text-body"><span class="mj-badge mj-badge--unknown relative" data-status="unknown"><span aria-hidden="true">○</span>unknown</span>
+</article><section class="mt-10" aria-labelledby="trends-read">
+  <h2 id="trends-read" class="text-xl font-semibold text-heading">What was read</h2>
+  <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Runs of master</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="60">60</data></dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">With their coverage</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="58">58</data></dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Oldest run</dt><dd class="mt-1 font-mono text-sm font-semibold text-heading"><data value="2026-11-02T21:47:42Z">2026-11-02T21:47:42Z</data></dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Newest run</dt><dd class="mt-1 font-mono text-sm font-semibold text-heading"><data value="2026-11-18T14:10:13Z">2026-11-18T14:10:13Z</data></dd></div>
+  </dl>
+</section>
 
-    The series is read from the forge when the site is published (<code>scripts/pages trends</code>), and this build has none: it was built without that step, or the forge could not be read. Nothing here stands in for it.
-  </p>
+<section class="mt-10" aria-labelledby="trends-coverage">
+  <h2 id="trends-coverage" class="text-xl font-semibold text-heading">Pokrytí</h2>
+  <figure id="chart-trends-coverage" class="not-format m-0 mt-6 min-w-0" data-chart="line" data-chart-unit="%" data-chart-label="The crate's line, function and region coverage at each run of master, oldest first">
+    <figcaption class="mb-3 text-sm text-body-subtle">The crate's coverage at each run, oldest first, test code excluded. A run that reads "not recorded" kept no coverage the forge still holds.</figcaption>
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Coverage at each run of master">
+      <table class="w-full text-left text-sm" tabindex="0">
+        <thead><tr><th scope="col" class="p-2">Run started</th><th scope="col" class="p-2" data-series="lines">Lines</th><th scope="col" class="p-2" data-series="functions">Functions</th><th scope="col" class="p-2" data-series="regions">Regions</th><th scope="col" class="p-2">Commit</th></tr></thead>
+        <tbody>
+          <tr id="chart-trends-coverage:41483268445" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41483268445">2026-11-02T21:47:42Z</a></td>
+            <td class="p-2 font-mono" data-value="92.97292469821234">92.97% <span class="text-body-subtle">(124924/134366)</span></td>
+            <td class="p-2 font-mono" data-value="92.32908888614168">92.33% <span class="text-body-subtle">(14937/16178)</span></td>
+            <td class="p-2 font-mono" data-value="92.07984204737694">92.08% <span class="text-body-subtle">(208466/226397)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/c98e5d3f81f545da8c70e43503010f88f8e665c2">c98e5d3f81f5</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41540782697" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41540782697">2026-11-02T22:51:46Z</a></td>
+            <td class="p-2 font-mono" data-value="92.96473810338925">92.96% <span class="text-body-subtle">(124913/134366)</span></td>
+            <td class="p-2 font-mono" data-value="92.32290765236742">92.32% <span class="text-body-subtle">(14936/16178)</span></td>
+            <td class="p-2 font-mono" data-value="92.07454162378477">92.07% <span class="text-body-subtle">(208454/226397)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/5bc72353c8dfad90cc73e3714bf604d07a446e6d">5bc72353c8df</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41578198783" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41578198783">2026-11-03T04:27:04Z</a></td>
+            <td class="p-2 font-mono" data-value="92.97887858535641">92.98% <span class="text-body-subtle">(124932/134366)</span></td>
+            <td class="p-2 font-mono" data-value="92.33527011991593">92.34% <span class="text-body-subtle">(14938/16178)</span></td>
+            <td class="p-2 font-mono" data-value="92.08514247096915">92.09% <span class="text-body-subtle">(208478/226397)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23">9df9061de3e5</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41631346047" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41631346047">2026-11-03T11:54:53Z</a></td>
+            <td class="p-2 font-mono" data-value="92.97292469821234">92.97% <span class="text-body-subtle">(124924/134366)</span></td>
+            <td class="p-2 font-mono" data-value="92.32908888614168">92.33% <span class="text-body-subtle">(14937/16178)</span></td>
+            <td class="p-2 font-mono" data-value="92.081167153275">92.08% <span class="text-body-subtle">(208469/226397)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23">9df9061de3e5</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41826428360" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41826428360">2026-11-04T12:06:35Z</a></td>
+            <td class="p-2 font-mono" data-value="92.9781343494634">92.98% <span class="text-body-subtle">(124931/134366)</span></td>
+            <td class="p-2 font-mono" data-value="92.33527011991593">92.34% <span class="text-body-subtle">(14938/16178)</span></td>
+            <td class="p-2 font-mono" data-value="92.08470076900312">92.08% <span class="text-body-subtle">(208477/226397)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23">9df9061de3e5</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41958144907" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41958144907">2026-11-05T02:53:57Z</a></td>
+            <td class="p-2 font-mono" data-value="93.12530187491767">93.13% <span class="text-body-subtle">(127252/136646)</span></td>
+            <td class="p-2 font-mono" data-value="92.50380285975052">92.5% <span class="text-body-subtle">(15203/16435)</span></td>
+            <td class="p-2 font-mono" data-value="92.2333431885772">92.23% <span class="text-body-subtle">(212133/229996)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9">4795a79d9545</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41984764016" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41984764016">2026-11-05T07:05:20Z</a></td>
+            <td class="p-2 font-mono" data-value="93.12530187491767">93.13% <span class="text-body-subtle">(127252/136646)</span></td>
+            <td class="p-2 font-mono" data-value="92.50380285975052">92.5% <span class="text-body-subtle">(15203/16435)</span></td>
+            <td class="p-2 font-mono" data-value="92.23290839840693">92.23% <span class="text-body-subtle">(212132/229996)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/011431781d8d1ca775036de854e6bd4ee0d72c5f">011431781d8d</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:41995603681" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41995603681">2026-11-05T08:35:07Z</a></td>
+            <td class="p-2 font-mono" data-value="93.12822914684659">93.13% <span class="text-body-subtle">(127256/136646)</span></td>
+            <td class="p-2 font-mono" data-value="92.50380285975052">92.5% <span class="text-body-subtle">(15203/16435)</span></td>
+            <td class="p-2 font-mono" data-value="92.2381258804501">92.24% <span class="text-body-subtle">(212144/229996)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5">995bd9fba1bc</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42026061158" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42026061158">2026-11-05T12:18:48Z</a></td>
+            <td class="p-2 font-mono" data-value="93.14286550649122">93.14% <span class="text-body-subtle">(127276/136646)</span></td>
+            <td class="p-2 font-mono" data-value="92.50380285975052">92.5% <span class="text-body-subtle">(15203/16435)</span></td>
+            <td class="p-2 font-mono" data-value="92.2476912641959">92.25% <span class="text-body-subtle">(212166/229996)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5">995bd9fba1bc</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42067497984" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42067497984">2026-11-05T19:34:02Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23440680168021">93.23% <span class="text-body-subtle">(129180/138554)</span></td>
+            <td class="p-2 font-mono" data-value="92.64152071253513">92.64% <span class="text-body-subtle">(15498/16729)</span></td>
+            <td class="p-2 font-mono" data-value="92.35652136642236">92.36% <span class="text-body-subtle">(215477/233310)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/64d28e2d9c5065d72412616935e78211b24c0c73">64d28e2d9c50</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42101705975" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42101705975">2026-11-05T22:12:26Z</a></td>
+            <td class="p-2 font-mono" data-value="93.22935461985941">93.23% <span class="text-body-subtle">(129173/138554)</span></td>
+            <td class="p-2 font-mono" data-value="92.64152071253513">92.64% <span class="text-body-subtle">(15498/16729)</span></td>
+            <td class="p-2 font-mono" data-value="92.35223522352236">92.35% <span class="text-body-subtle">(215467/233310)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65">aa9f816f8673</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42215053450" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42215053450">2026-11-06T16:19:53Z</a></td>
+            <td class="p-2 font-mono" data-value="93.21852851595767">93.22% <span class="text-body-subtle">(129158/138554)</span></td>
+            <td class="p-2 font-mono" data-value="92.62956542530935">92.63% <span class="text-body-subtle">(15496/16729)</span></td>
+            <td class="p-2 font-mono" data-value="92.34409155201234">92.34% <span class="text-body-subtle">(215448/233310)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65">aa9f816f8673</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42271470301" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42271470301">2026-11-06T18:31:24Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23518799162878">93.24% <span class="text-body-subtle">(129196/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.6368634950992">92.64% <span class="text-body-subtle">(15500/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35575975244936">92.36% <span class="text-body-subtle">(215490/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078">1112bace3437</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42297800471" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42297800471">2026-11-06T21:34:09Z</a></td>
+            <td class="p-2 font-mono" data-value="93.21642491159703">93.22% <span class="text-body-subtle">(129170/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.63088692326082">92.63% <span class="text-body-subtle">(15499/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.3450451299898">92.35% <span class="text-body-subtle">(215465/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e">5ca0bec8c423</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42339976162" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42339976162">2026-11-07T04:47:42Z</a></td>
+            <td class="p-2 font-mono" data-value="93.22436313776431">93.22% <span class="text-body-subtle">(129181/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.63088692326082">92.63% <span class="text-body-subtle">(15499/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.34933097897363">92.35% <span class="text-body-subtle">(215475/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/ddae9e192a4087a5fdcff982c262d69c81bf8db5">ddae9e192a40</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42366502104" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42366502104">2026-11-07T11:02:56Z</a></td>
+            <td class="p-2 font-mono" data-value="93.2286930793101">93.23% <span class="text-body-subtle">(129187/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35361682795745">92.35% <span class="text-body-subtle">(215485/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/ddae9e192a4087a5fdcff982c262d69c81bf8db5">ddae9e192a40</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42367964807" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42367964807">2026-11-07T11:23:12Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24312621779606">93.24% <span class="text-body-subtle">(129207/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.36261711082349">92.36% <span class="text-body-subtle">(215506/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e">d7fd9a361702</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42474985093" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42474985093">2026-11-08T11:16:07Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23157970700728">93.23% <span class="text-body-subtle">(129191/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35533116755099">92.36% <span class="text-body-subtle">(215489/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e">d7fd9a361702</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42482963808" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42482963808">2026-11-08T13:01:38Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23374467778018">93.23% <span class="text-body-subtle">(129194/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.3570455071445">92.36% <span class="text-body-subtle">(215493/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/67e9a2f04a727bfa8ee335f4e7544ce2394ab180">67e9a2f04a72</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42501870837" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42501870837">2026-11-08T19:06:43Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23013639315869">93.23% <span class="text-body-subtle">(129189/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35361682795745">92.35% <span class="text-body-subtle">(215485/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/8a7e9df20d8f944c62e5a3884c52d75bd355d64c">8a7e9df20d8f</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42516893636" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42516893636">2026-11-08T19:48:39Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23663130547737">93.24% <span class="text-body-subtle">(129198/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35747409204289">92.36% <span class="text-body-subtle">(215494/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/51719a448248f2ebf9417ab97e147912434f6dbd">51719a448248</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42525378591" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42525378591">2026-11-08T21:28:32Z</a></td>
+            <td class="p-2 text-body-subtle">not recorded</td>
+            <td class="p-2 text-body-subtle">not recorded</td>
+            <td class="p-2 text-body-subtle">not recorded</td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/df412480833a8285bee938a1f9d93257a766b4bd">df412480833a</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42558551450" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42558551450">2026-11-09T03:50:25Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24168290394746">93.24% <span class="text-body-subtle">(129205/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.3621885259251">92.36% <span class="text-body-subtle">(215505/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/426e98551fffde8613b77faedcd05de14f191317">426e98551fff</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42620431631" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42620431631">2026-11-09T12:51:06Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24023959009887">93.24% <span class="text-body-subtle">(129203/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.36004560143319">92.36% <span class="text-body-subtle">(215500/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/426e98551fffde8613b77faedcd05de14f191317">426e98551fff</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42687192487" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42687192487">2026-11-09T19:50:30Z</a></td>
+            <td class="p-2 font-mono" data-value="93.2286930793101">93.23% <span class="text-body-subtle">(129187/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35318824305907">92.35% <span class="text-body-subtle">(215484/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/b8d3ffc786bebd1d2b6caf280eef25f1f2194729">b8d3ffc786be</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42739151181" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42739151181">2026-11-10T01:55:22Z</a></td>
+            <td class="p-2 font-mono" data-value="93.2229198239157">93.22% <span class="text-body-subtle">(129179/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.62491035142243">92.62% <span class="text-body-subtle">(15498/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.34547371488819">92.35% <span class="text-body-subtle">(215466/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/dd377e11c350c368537b06c511af435c10465557">dd377e11c350</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42813480643" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42813480643">2026-11-10T12:10:21Z</a></td>
+            <td class="p-2 font-mono" data-value="93.22075485314282">93.22% <span class="text-body-subtle">(129176/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.63088692326082">92.63% <span class="text-body-subtle">(15499/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.34590229978656">92.35% <span class="text-body-subtle">(215467/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/25f0f3827ced0cc1bf7cd8431e3657885d5bd69f">25f0f3827ced</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42817422984" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42817422984">2026-11-10T12:38:04Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23157970700728">93.23% <span class="text-body-subtle">(129191/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.64284006693761">92.64% <span class="text-body-subtle">(15501/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.35533116755099">92.36% <span class="text-body-subtle">(215489/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/25f0f3827ced0cc1bf7cd8431e3657885d5bd69f">25f0f3827ced</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42899934286" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42899934286">2026-11-10T20:55:12Z</a></td>
+            <td class="p-2 text-body-subtle">not recorded</td>
+            <td class="p-2 text-body-subtle">not recorded</td>
+            <td class="p-2 text-body-subtle">not recorded</td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad">e0cb96020de9</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42942722557" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42942722557">2026-11-11T01:58:24Z</a></td>
+            <td class="p-2 font-mono" data-value="93.22364148084002">93.22% <span class="text-body-subtle">(129180/138570)</span></td>
+            <td class="p-2 font-mono" data-value="92.6368634950992">92.64% <span class="text-body-subtle">(15500/16732)</span></td>
+            <td class="p-2 font-mono" data-value="92.34847380917685">92.35% <span class="text-body-subtle">(215473/233326)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/3a90e425b03bf5c9ef4494a5bb3b220654ea524e">3a90e425b03b</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42964292450" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42964292450">2026-11-11T07:05:43Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23944271374178">93.24% <span class="text-body-subtle">(129297/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.6485518065094">92.65% <span class="text-body-subtle">(15514/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.36635991075673">92.37% <span class="text-body-subtle">(215693/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/dcc5a118a85ac9d730a9c3be4b69e7f4c69f86fa">dcc5a118a85a</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43015422777" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43015422777">2026-11-11T21:02:06Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24304834429445">93.24% <span class="text-body-subtle">(129302/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.64257987458943">92.64% <span class="text-body-subtle">(15513/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.36764460279463">92.37% <span class="text-body-subtle">(215696/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/d34f159439fbe7e8715408aa5dc72f3e194fe457">d34f159439fb</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:42999762183" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42999762183">2026-11-11T22:56:45Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23223145263644">93.23% <span class="text-body-subtle">(129287/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.63660794266946">92.64% <span class="text-body-subtle">(15512/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.35993645056719">92.36% <span class="text-body-subtle">(215678/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/d34f159439fbe7e8715408aa5dc72f3e194fe457">d34f159439fb</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43220230470" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43220230470">2026-11-12T12:41:34Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23727933541018">93.24% <span class="text-body-subtle">(129294/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.6485518065094">92.65% <span class="text-body-subtle">(15514/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.36464698803952">92.36% <span class="text-body-subtle">(215689/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/d34f159439fbe7e8715408aa5dc72f3e194fe457">d34f159439fb</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43255808873" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43255808873">2026-11-12T16:10:47Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23511595707858">93.24% <span class="text-body-subtle">(129291/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.64257987458943">92.64% <span class="text-body-subtle">(15513/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.3620776039637">92.36% <span class="text-body-subtle">(215683/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/03695157151d78d34fc8934db4f864d5967de4ae">03695157151d</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43295539742" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43295539742">2026-11-12T19:58:09Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23078920041536">93.23% <span class="text-body-subtle">(129285/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.63660794266946">92.64% <span class="text-body-subtle">(15512/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.35993645056719">92.36% <span class="text-body-subtle">(215678/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/67e7c6a083890dcac894c6ac5ec6f0dd85103aca">67e7c6a08389</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43338034269" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43338034269">2026-11-13T00:33:47Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23944271374178">93.24% <span class="text-body-subtle">(129297/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.6485518065094">92.65% <span class="text-body-subtle">(15514/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.36635991075673">92.37% <span class="text-body-subtle">(215693/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b">6f8e1041f54f</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43423114254" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43423114254">2026-11-13T12:11:46Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24160609207338">93.24% <span class="text-body-subtle">(129300/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.6485518065094">92.65% <span class="text-body-subtle">(15514/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.36935752551184">92.37% <span class="text-body-subtle">(215700/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b">6f8e1041f54f</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43590099692" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43590099692">2026-11-14T11:27:23Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24304834429445">93.24% <span class="text-body-subtle">(129302/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.63660794266946">92.64% <span class="text-body-subtle">(15512/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.36635991075673">92.37% <span class="text-body-subtle">(215693/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b">6f8e1041f54f</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43626240645" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43626240645">2026-11-14T18:22:27Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24593284873659">93.25% <span class="text-body-subtle">(129306/138672)</span></td>
+            <td class="p-2 font-mono" data-value="92.6485518065094">92.65% <span class="text-body-subtle">(15514/16745)</span></td>
+            <td class="p-2 font-mono" data-value="92.37192690958766">92.37% <span class="text-body-subtle">(215706/233519)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/aca34e67c56158a29d2e62703f523ce7c9379759">aca34e67c561</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43642262735" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43642262735">2026-11-14T21:20:10Z</a></td>
+            <td class="p-2 font-mono" data-value="93.25396253082769">93.25% <span class="text-body-subtle">(129319/138674)</span></td>
+            <td class="p-2 font-mono" data-value="92.64986864103176">92.65% <span class="text-body-subtle">(15517/16748)</span></td>
+            <td class="p-2 font-mono" data-value="92.37729417709377">92.38% <span class="text-body-subtle">(215725/233526)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/ac73c089ea7eb78930a55417ba66a8c0b19c2314">ac73c089ea7e</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43657141345" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43657141345">2026-11-15T00:14:00Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23377129094135">93.23% <span class="text-body-subtle">(129291/138674)</span></td>
+            <td class="p-2 font-mono" data-value="92.64389777883927">92.64% <span class="text-body-subtle">(15516/16748)</span></td>
+            <td class="p-2 font-mono" data-value="92.36187833474645">92.36% <span class="text-body-subtle">(215689/233526)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/c992617c001546889a5a1f448c6b119dc20c9638">c992617c0015</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43673907190" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43673907190">2026-11-15T03:47:17Z</a></td>
+            <td class="p-2 font-mono" data-value="93.25324141511747">93.25% <span class="text-body-subtle">(129318/138674)</span></td>
+            <td class="p-2 font-mono" data-value="92.64986864103176">92.65% <span class="text-body-subtle">(15517/16748)</span></td>
+            <td class="p-2 font-mono" data-value="92.37772239493675">92.38% <span class="text-body-subtle">(215726/233526)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/04db70382a811c689a11a9b49111caeb5401a807">04db70382a81</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43696349889" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43696349889">2026-11-15T08:50:13Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23031216423776">93.23% <span class="text-body-subtle">(129289/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.63836646963998">92.64% <span class="text-body-subtle">(15516/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.35854792713944">92.36% <span class="text-body-subtle">(215696/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/dff91f0a4802334c0d71f45d6da4495fd320dce8">dff91f0a4802</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43711309725" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43711309725">2026-11-15T11:56:14Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24473416644433">93.24% <span class="text-body-subtle">(129309/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65030748104365">92.65% <span class="text-body-subtle">(15518/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.37139358231067">92.37% <span class="text-body-subtle">(215726/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/dff91f0a4802334c0d71f45d6da4495fd320dce8">dff91f0a4802</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43712056766" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43712056766">2026-11-15T12:05:20Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23319656467908">93.23% <span class="text-body-subtle">(129293/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.64433697534182">92.64% <span class="text-body-subtle">(15517/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.36325800070223">92.36% <span class="text-body-subtle">(215707/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/defd88e5896aaacb84e08d2f578ce9f6f9d6b08e">defd88e5896a</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43734992502" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43734992502">2026-11-15T16:21:10Z</a></td>
+            <td class="p-2 font-mono" data-value="93.25050296732695">93.25% <span class="text-body-subtle">(129317/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65030748104365">92.65% <span class="text-body-subtle">(15518/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.37396271334492">92.37% <span class="text-body-subtle">(215732/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/3fcaafac355b54bf7b8e42dfa34cd1d5a05fd7d5">3fcaafac355b</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43771785083" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43771785083">2026-11-15T22:53:32Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24761856688563">93.25% <span class="text-body-subtle">(129313/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65627798674547">92.66% <span class="text-body-subtle">(15519/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.37353452483922">92.37% <span class="text-body-subtle">(215731/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/95bf064c1ef8afca879060bc6522925261a43e74">95bf064c1ef8</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43825701730" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43825701730">2026-11-16T07:42:34Z</a></td>
+            <td class="p-2 font-mono" data-value="93.23319656467908">93.23% <span class="text-body-subtle">(129293/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.64433697534182">92.64% <span class="text-body-subtle">(15517/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.36282981219652">92.36% <span class="text-body-subtle">(215706/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/f9864691c17586de8be6804d5e3db01e0ffc5b2a">f9864691c175</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43841965952" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43841965952">2026-11-16T09:41:11Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24833966699597">93.25% <span class="text-body-subtle">(129314/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65030748104365">92.65% <span class="text-body-subtle">(15518/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.3726781478278">92.37% <span class="text-body-subtle">(215729/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/0c11b36be30a315ecff6ff9b85d93ee33afedb9b">0c11b36be30a</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43869192675" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43869192675">2026-11-16T12:43:43Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24617636666498">93.25% <span class="text-body-subtle">(129311/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65030748104365">92.65% <span class="text-body-subtle">(15518/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.37224995932209">92.37% <span class="text-body-subtle">(215728/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/0c11b36be30a315ecff6ff9b85d93ee33afedb9b">0c11b36be30a</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43951360433" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43951360433">2026-11-16T20:35:27Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24545526655466">93.25% <span class="text-body-subtle">(129310/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65030748104365">92.65% <span class="text-body-subtle">(15518/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.37096539380497">92.37% <span class="text-body-subtle">(215725/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/a134a0fbc7acc7f22aa423263000ae01d418b041">a134a0fbc7ac</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:43976207701" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43976207701">2026-11-16T23:05:54Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24761856688563">93.25% <span class="text-body-subtle">(129313/138677)</span></td>
+            <td class="p-2 font-mono" data-value="92.65030748104365">92.65% <span class="text-body-subtle">(15518/16749)</span></td>
+            <td class="p-2 font-mono" data-value="92.3731063363335">92.37% <span class="text-body-subtle">(215730/233542)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/e54bbdb12a99cd3ff4572f2a1574c1e5566ae8ef">e54bbdb12a99</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44032011840" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44032011840">2026-11-17T09:33:11Z</a></td>
+            <td class="p-2 font-mono" data-value="93.24754901960785">93.25% <span class="text-body-subtle">(129353/138720)</span></td>
+            <td class="p-2 font-mono" data-value="92.65381631556961">92.65% <span class="text-body-subtle">(15526/16757)</span></td>
+            <td class="p-2 font-mono" data-value="92.37229730018963">92.37% <span class="text-body-subtle">(215790/233609)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/7222b343dcb40ac2a2843111f8bdf7a2aa099774">7222b343dcb4</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44092353987" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44092353987">2026-11-17T13:24:07Z</a></td>
+            <td class="p-2 font-mono" data-value="93.25115340253748">93.25% <span class="text-body-subtle">(129358/138720)</span></td>
+            <td class="p-2 font-mono" data-value="92.65381631556961">92.65% <span class="text-body-subtle">(15526/16757)</span></td>
+            <td class="p-2 font-mono" data-value="92.37614989148535">92.38% <span class="text-body-subtle">(215799/233609)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/7222b343dcb40ac2a2843111f8bdf7a2aa099774">7222b343dcb4</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44161316449" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44161316449">2026-11-17T19:41:38Z</a></td>
+            <td class="p-2 font-mono" data-value="93.28262074226537">93.28% <span class="text-body-subtle">(129619/138953)</span></td>
+            <td class="p-2 font-mono" data-value="92.67595569846374">92.68% <span class="text-body-subtle">(15564/16794)</span></td>
+            <td class="p-2 font-mono" data-value="92.41558153046925">92.42% <span class="text-body-subtle">(216319/234072)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/ae13be1bd138be3139b4fd9a1a11de8c6b2f7c88">ae13be1bd138</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44204721970" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44204721970">2026-11-18T00:04:10Z</a></td>
+            <td class="p-2 font-mono" data-value="93.27758306765597">93.28% <span class="text-body-subtle">(129612/138953)</span></td>
+            <td class="p-2 font-mono" data-value="92.67595569846374">92.68% <span class="text-body-subtle">(15564/16794)</span></td>
+            <td class="p-2 font-mono" data-value="92.41173655969104">92.41% <span class="text-body-subtle">(216310/234072)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/5bc2ddb10ccc5f2e5528e03c08b0af8ed4e26a9e">5bc2ddb10ccc</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44265052297" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44265052297">2026-11-18T08:12:47Z</a></td>
+            <td class="p-2 font-mono" data-value="93.2747043964506">93.27% <span class="text-body-subtle">(129608/138953)</span></td>
+            <td class="p-2 font-mono" data-value="92.66404668333928">92.66% <span class="text-body-subtle">(15562/16794)</span></td>
+            <td class="p-2 font-mono" data-value="92.40874602686353">92.41% <span class="text-body-subtle">(216303/234072)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621">68325d3cfae0</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44309505795" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44309505795">2026-11-18T13:01:20Z</a></td>
+            <td class="p-2 font-mono" data-value="93.29341575928551">93.29% <span class="text-body-subtle">(129634/138953)</span></td>
+            <td class="p-2 font-mono" data-value="92.67595569846374">92.68% <span class="text-body-subtle">(15564/16794)</span></td>
+            <td class="p-2 font-mono" data-value="92.42284425305034">92.42% <span class="text-body-subtle">(216336/234072)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621">68325d3cfae0</a></td>
+          </tr>
+          <tr id="chart-trends-coverage:44321317680" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44321317680">2026-11-18T14:10:13Z</a></td>
+            <td class="p-2 font-mono" data-value="93.28262074226537">93.28% <span class="text-body-subtle">(129619/138953)</span></td>
+            <td class="p-2 font-mono" data-value="92.6700011909015">92.67% <span class="text-body-subtle">(15563/16794)</span></td>
+            <td class="p-2 font-mono" data-value="92.41429987354319">92.41% <span class="text-body-subtle">(216316/234072)</span></td>
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/commit/d0b85677b74317be030a21d0af5a46634693b4e3">d0b85677b743</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </figure>
+</section>
+
+<section class="mt-10" aria-labelledby="trends-cost">
+  <h2 id="trends-cost" class="text-xl font-semibold text-heading">CI cost</h2>
+  <figure id="chart-trends-cost" class="not-format m-0 mt-6 min-w-0" data-chart="line" data-chart-unit="min" data-chart-label="Each run's wall time and the minutes its jobs waited for a runner, oldest first">
+    <figcaption class="mb-3 text-sm text-body-subtle">Wall time is from the run's start to its last job's end. Queued is the sum over its jobs of the time each waited for a runner, so it can exceed the wall time when jobs wait side by side.</figcaption>
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="CI cost of each run of master">
+      <table class="w-full text-left text-sm" tabindex="0">
+        <thead><tr><th scope="col" class="p-2">Run started</th><th scope="col" class="p-2" data-series="wall">Wall minutes</th><th scope="col" class="p-2" data-series="queued">Queued minutes</th><th scope="col" class="p-2">Jobs</th><th scope="col" class="p-2">Conclusion</th></tr></thead>
+        <tbody>
+          <tr id="chart-trends-cost:41483268445" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41483268445">2026-11-02T21:47:42Z</a></td>
+            <td class="p-2 font-mono" data-value="13.6">13.6</td>
+            <td class="p-2 font-mono" data-value="2.7666666666666666">2.8</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:41540782697" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41540782697">2026-11-02T22:51:46Z</a></td>
+            <td class="p-2 font-mono" data-value="143.05">143.1</td>
+            <td class="p-2 font-mono" data-value="613.1833333333333">613.2</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:41578198783" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41578198783">2026-11-03T04:27:04Z</a></td>
+            <td class="p-2 font-mono" data-value="194.36666666666667">194.4</td>
+            <td class="p-2 font-mono" data-value="1127.2333333333333">1127.2</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:41631346047" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41631346047">2026-11-03T11:54:53Z</a></td>
+            <td class="p-2 font-mono" data-value="138.9">138.9</td>
+            <td class="p-2 font-mono" data-value="2.25">2.3</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:41826428360" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41826428360">2026-11-04T12:06:35Z</a></td>
+            <td class="p-2 font-mono" data-value="133.35">133.4</td>
+            <td class="p-2 font-mono" data-value="2.25">2.3</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:41958144907" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41958144907">2026-11-05T02:53:57Z</a></td>
+            <td class="p-2 font-mono" data-value="169.0">169.0</td>
+            <td class="p-2 font-mono" data-value="760.1166666666667">760.1</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:41984764016" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41984764016">2026-11-05T07:05:20Z</a></td>
+            <td class="p-2 font-mono" data-value="164.11666666666667">164.1</td>
+            <td class="p-2 font-mono" data-value="462.1166666666667">462.1</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:41995603681" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/41995603681">2026-11-05T08:35:07Z</a></td>
+            <td class="p-2 font-mono" data-value="188.28333333333333">188.3</td>
+            <td class="p-2 font-mono" data-value="454.3333333333333">454.3</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42026061158" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42026061158">2026-11-05T12:18:48Z</a></td>
+            <td class="p-2 font-mono" data-value="156.46666666666667">156.5</td>
+            <td class="p-2 font-mono" data-value="44.38333333333333">44.4</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42067497984" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42067497984">2026-11-05T19:34:02Z</a></td>
+            <td class="p-2 font-mono" data-value="18.966666666666665">19.0</td>
+            <td class="p-2 font-mono" data-value="2.4166666666666665">2.4</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42101705975" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42101705975">2026-11-05T22:12:26Z</a></td>
+            <td class="p-2 font-mono" data-value="3.25">3.3</td>
+            <td class="p-2 font-mono" data-value="0.11666666666666667">0.1</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42215053450" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42215053450">2026-11-06T16:19:53Z</a></td>
+            <td class="p-2 font-mono" data-value="138.75">138.8</td>
+            <td class="p-2 font-mono" data-value="484.1666666666667">484.2</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42271470301" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42271470301">2026-11-06T18:31:24Z</a></td>
+            <td class="p-2 font-mono" data-value="188.9">188.9</td>
+            <td class="p-2 font-mono" data-value="992.5833333333334">992.6</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42297800471" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42297800471">2026-11-06T21:34:09Z</a></td>
+            <td class="p-2 font-mono" data-value="175.06666666666666">175.1</td>
+            <td class="p-2 font-mono" data-value="554.75">554.8</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42339976162" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42339976162">2026-11-07T04:47:42Z</a></td>
+            <td class="p-2 font-mono" data-value="143.13333333333333">143.1</td>
+            <td class="p-2 font-mono" data-value="287.85">287.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42366502104" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42366502104">2026-11-07T11:02:56Z</a></td>
+            <td class="p-2 font-mono" data-value="148.56666666666666">148.6</td>
+            <td class="p-2 font-mono" data-value="673.5166666666667">673.5</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42367964807" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42367964807">2026-11-07T11:23:12Z</a></td>
+            <td class="p-2 font-mono" data-value="171.71666666666667">171.7</td>
+            <td class="p-2 font-mono" data-value="772.0333333333333">772.0</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42474985093" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42474985093">2026-11-08T11:16:07Z</a></td>
+            <td class="p-2 font-mono" data-value="119.05">119.1</td>
+            <td class="p-2 font-mono" data-value="101.81666666666666">101.8</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42482963808" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42482963808">2026-11-08T13:01:38Z</a></td>
+            <td class="p-2 font-mono" data-value="131.16666666666666">131.2</td>
+            <td class="p-2 font-mono" data-value="94.93333333333334">94.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42501870837" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42501870837">2026-11-08T19:06:43Z</a></td>
+            <td class="p-2 font-mono" data-value="115.88333333333334">115.9</td>
+            <td class="p-2 font-mono" data-value="16.433333333333334">16.4</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42516893636" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42516893636">2026-11-08T19:48:39Z</a></td>
+            <td class="p-2 font-mono" data-value="220.08333333333334">220.1</td>
+            <td class="p-2 font-mono" data-value="194.81666666666666">194.8</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42525378591" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42525378591">2026-11-08T21:28:32Z</a></td>
+            <td class="p-2 font-mono" data-value="194.26666666666668">194.3</td>
+            <td class="p-2 font-mono" data-value="947.7833333333333">947.8</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42558551450" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42558551450">2026-11-09T03:50:25Z</a></td>
+            <td class="p-2 font-mono" data-value="112.53333333333333">112.5</td>
+            <td class="p-2 font-mono" data-value="35.81666666666667">35.8</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42620431631" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42620431631">2026-11-09T12:51:06Z</a></td>
+            <td class="p-2 font-mono" data-value="113.16666666666667">113.2</td>
+            <td class="p-2 font-mono" data-value="49.7">49.7</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42687192487" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42687192487">2026-11-09T19:50:30Z</a></td>
+            <td class="p-2 font-mono" data-value="156.08333333333334">156.1</td>
+            <td class="p-2 font-mono" data-value="303.73333333333335">303.7</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42739151181" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42739151181">2026-11-10T01:55:22Z</a></td>
+            <td class="p-2 font-mono" data-value="102.51666666666667">102.5</td>
+            <td class="p-2 font-mono" data-value="1.8333333333333333">1.8</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42813480643" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42813480643">2026-11-10T12:10:21Z</a></td>
+            <td class="p-2 font-mono" data-value="190.36666666666667">190.4</td>
+            <td class="p-2 font-mono" data-value="546.7">546.7</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42817422984" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42817422984">2026-11-10T12:38:04Z</a></td>
+            <td class="p-2 font-mono" data-value="197.9">197.9</td>
+            <td class="p-2 font-mono" data-value="1418.4">1418.4</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42899934286" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42899934286">2026-11-10T20:55:12Z</a></td>
+            <td class="p-2 font-mono" data-value="188.35">188.4</td>
+            <td class="p-2 font-mono" data-value="766.0">766.0</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:42942722557" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42942722557">2026-11-11T01:58:24Z</a></td>
+            <td class="p-2 font-mono" data-value="125.1">125.1</td>
+            <td class="p-2 font-mono" data-value="23.416666666666668">23.4</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:42964292450" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42964292450">2026-11-11T07:05:43Z</a></td>
+            <td class="p-2 font-mono" data-value="29.416666666666668">29.4</td>
+            <td class="p-2 font-mono" data-value="0.15">0.2</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43015422777" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43015422777">2026-11-11T21:02:06Z</a></td>
+            <td class="p-2 font-mono" data-value="111.06666666666666">111.1</td>
+            <td class="p-2 font-mono" data-value="0.4">0.4</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:42999762183" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/42999762183">2026-11-11T22:56:45Z</a></td>
+            <td class="p-2 font-mono" data-value="0.5166666666666667">0.5</td>
+            <td class="p-2 font-mono" data-value="0.05">0.1</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43220230470" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43220230470">2026-11-12T12:41:34Z</a></td>
+            <td class="p-2 font-mono" data-value="169.96666666666667">170.0</td>
+            <td class="p-2 font-mono" data-value="706.3333333333334">706.3</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:43255808873" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43255808873">2026-11-12T16:10:47Z</a></td>
+            <td class="p-2 font-mono" data-value="173.06666666666666">173.1</td>
+            <td class="p-2 font-mono" data-value="543.2333333333333">543.2</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43295539742" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43295539742">2026-11-12T19:58:09Z</a></td>
+            <td class="p-2 font-mono" data-value="252.1">252.1</td>
+            <td class="p-2 font-mono" data-value="932.4333333333333">932.4</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43338034269" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43338034269">2026-11-13T00:33:47Z</a></td>
+            <td class="p-2 font-mono" data-value="164.81666666666666">164.8</td>
+            <td class="p-2 font-mono" data-value="472.48333333333335">472.5</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43423114254" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43423114254">2026-11-13T12:11:46Z</a></td>
+            <td class="p-2 font-mono" data-value="141.2">141.2</td>
+            <td class="p-2 font-mono" data-value="6.7">6.7</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:43590099692" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43590099692">2026-11-14T11:27:23Z</a></td>
+            <td class="p-2 font-mono" data-value="136.33333333333334">136.3</td>
+            <td class="p-2 font-mono" data-value="1.8">1.8</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:43626240645" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43626240645">2026-11-14T18:22:27Z</a></td>
+            <td class="p-2 font-mono" data-value="111.5">111.5</td>
+            <td class="p-2 font-mono" data-value="339.68333333333334">339.7</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43642262735" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43642262735">2026-11-14T21:20:10Z</a></td>
+            <td class="p-2 font-mono" data-value="146.53333333333333">146.5</td>
+            <td class="p-2 font-mono" data-value="608.3166666666667">608.3</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43657141345" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43657141345">2026-11-15T00:14:00Z</a></td>
+            <td class="p-2 font-mono" data-value="146.55">146.6</td>
+            <td class="p-2 font-mono" data-value="552.3">552.3</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43673907190" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43673907190">2026-11-15T03:47:17Z</a></td>
+            <td class="p-2 font-mono" data-value="191.26666666666668">191.3</td>
+            <td class="p-2 font-mono" data-value="1278.45">1278.5</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43696349889" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43696349889">2026-11-15T08:50:13Z</a></td>
+            <td class="p-2 font-mono" data-value="106.0">106.0</td>
+            <td class="p-2 font-mono" data-value="267.85">267.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43711309725" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43711309725">2026-11-15T11:56:14Z</a></td>
+            <td class="p-2 font-mono" data-value="212.03333333333333">212.0</td>
+            <td class="p-2 font-mono" data-value="848.2">848.2</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:43712056766" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43712056766">2026-11-15T12:05:20Z</a></td>
+            <td class="p-2 font-mono" data-value="232.28333333333333">232.3</td>
+            <td class="p-2 font-mono" data-value="1104.1">1104.1</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43734992502" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43734992502">2026-11-15T16:21:10Z</a></td>
+            <td class="p-2 font-mono" data-value="200.45">200.5</td>
+            <td class="p-2 font-mono" data-value="1063.1666666666667">1063.2</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43771785083" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43771785083">2026-11-15T22:53:32Z</a></td>
+            <td class="p-2 font-mono" data-value="300.5">300.5</td>
+            <td class="p-2 font-mono" data-value="1183.7">1183.7</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:43825701730" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43825701730">2026-11-16T07:42:34Z</a></td>
+            <td class="p-2 font-mono" data-value="200.65">200.7</td>
+            <td class="p-2 font-mono" data-value="415.85">415.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43841965952" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43841965952">2026-11-16T09:41:11Z</a></td>
+            <td class="p-2 font-mono" data-value="131.46666666666667">131.5</td>
+            <td class="p-2 font-mono" data-value="433.8833333333333">433.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43869192675" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43869192675">2026-11-16T12:43:43Z</a></td>
+            <td class="p-2 font-mono" data-value="116.81666666666666">116.8</td>
+            <td class="p-2 font-mono" data-value="31.6">31.6</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43951360433" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43951360433">2026-11-16T20:35:27Z</a></td>
+            <td class="p-2 font-mono" data-value="253.21666666666667">253.2</td>
+            <td class="p-2 font-mono" data-value="766.2">766.2</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:43976207701" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/43976207701">2026-11-16T23:05:54Z</a></td>
+            <td class="p-2 font-mono" data-value="200.81666666666666">200.8</td>
+            <td class="p-2 font-mono" data-value="697.8833333333333">697.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:44032011840" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44032011840">2026-11-17T09:33:11Z</a></td>
+            <td class="p-2 font-mono" data-value="20.583333333333332">20.6</td>
+            <td class="p-2 font-mono" data-value="0.85">0.9</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:44092353987" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44092353987">2026-11-17T13:24:07Z</a></td>
+            <td class="p-2 font-mono" data-value="355.73333333333335">355.7</td>
+            <td class="p-2 font-mono" data-value="4112.183333333333">4112.2</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">zrušeno</td>
+          </tr>
+          <tr id="chart-trends-cost:44161316449" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44161316449">2026-11-17T19:41:38Z</a></td>
+            <td class="p-2 font-mono" data-value="169.66666666666666">169.7</td>
+            <td class="p-2 font-mono" data-value="94.65">94.7</td>
+            <td class="p-2 font-mono">33</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:44204721970" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44204721970">2026-11-18T00:04:10Z</a></td>
+            <td class="p-2 font-mono" data-value="332.5">332.5</td>
+            <td class="p-2 font-mono" data-value="2320.4">2320.4</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:44265052297" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44265052297">2026-11-18T08:12:47Z</a></td>
+            <td class="p-2 font-mono" data-value="140.85">140.9</td>
+            <td class="p-2 font-mono" data-value="316.48333333333335">316.5</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+          <tr id="chart-trends-cost:44309505795" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44309505795">2026-11-18T13:01:20Z</a></td>
+            <td class="p-2 font-mono" data-value="167.48333333333332">167.5</td>
+            <td class="p-2 font-mono" data-value="238.41666666666666">238.4</td>
+            <td class="p-2 font-mono">44</td>
+            <td class="p-2">selhání</td>
+          </tr>
+          <tr id="chart-trends-cost:44321317680" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/actions/runs/44321317680">2026-11-18T14:10:13Z</a></td>
+            <td class="p-2 font-mono" data-value="160.51666666666668">160.5</td>
+            <td class="p-2 font-mono" data-value="288.03333333333336">288.0</td>
+            <td class="p-2 font-mono">43</td>
+            <td class="p-2">success</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </figure>
+</section>
+<section class="mt-10" aria-labelledby="trends-jobs">
+  <h2 id="trends-jobs" class="text-xl font-semibold text-heading">The slowest jobs</h2>
+  <p class="mt-2 text-sm text-body">Each job's median over the runs above in which it ran, slowest first; a skipped job did not run and is not counted.</p>
+  <div class="mt-4 overflow-x-auto" tabindex="0" role="region" aria-label="Median minutes of each job">
+    <table class="w-full text-left text-sm" tabindex="0">
+      <thead><tr><th scope="col" class="p-2">Job</th><th scope="col" class="p-2">Median run minutes</th><th scope="col" class="p-2">Median queued minutes</th><th scope="col" class="p-2">Runs counted</th></tr></thead>
+      <tbody>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">macos</td>
+          <td class="p-2 font-mono">110.5</td>
+          <td class="p-2 font-mono">0.1</td>
+          <td class="p-2 font-mono">16</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">suite-shard (1)</td>
+          <td class="p-2 font-mono">89.2</td>
+          <td class="p-2 font-mono">8.3</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">suite-shard (4)</td>
+          <td class="p-2 font-mono">78.7</td>
+          <td class="p-2 font-mono">8.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">suite-shard (3)</td>
+          <td class="p-2 font-mono">76.4</td>
+          <td class="p-2 font-mono">6.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">suite-shard (2)</td>
+          <td class="p-2 font-mono">75.8</td>
+          <td class="p-2 font-mono">7.4</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">rust (1)</td>
+          <td class="p-2 font-mono">46.4</td>
+          <td class="p-2 font-mono">0.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">rust (3)</td>
+          <td class="p-2 font-mono">45.9</td>
+          <td class="p-2 font-mono">0.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">coverage</td>
+          <td class="p-2 font-mono">37.8</td>
+          <td class="p-2 font-mono">0.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">web</td>
+          <td class="p-2 font-mono">36.1</td>
+          <td class="p-2 font-mono">2.4</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">ui-shard (2)</td>
+          <td class="p-2 font-mono">32.2</td>
+          <td class="p-2 font-mono">7.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">ui-shard (1)</td>
+          <td class="p-2 font-mono">29.3</td>
+          <td class="p-2 font-mono">11.1</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">ui-shard (3)</td>
+          <td class="p-2 font-mono">28.6</td>
+          <td class="p-2 font-mono">13.7</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">ui-shard (4)</td>
+          <td class="p-2 font-mono">26.9</td>
+          <td class="p-2 font-mono">10.5</td>
+          <td class="p-2 font-mono">60</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">bench</td>
+          <td class="p-2 font-mono">25.3</td>
+          <td class="p-2 font-mono">0.1</td>
+          <td class="p-2 font-mono">16</td>
+        </tr>
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">interaction-probe-shard (6)</td>
+          <td class="p-2 font-mono">23.5</td>
+          <td class="p-2 font-mono">12.9</td>
+          <td class="p-2 font-mono">59</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 </div>
@@ -268,6 +1238,9 @@ reads as not recorded, never as zero.</p>
 <script defer src="https://majordomus.dev/js/search.js"></script>
 <script src="https://majordomus.dev/js/theme.js"></script>
 <script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+<template data-chart-legend><div class="mj-chart-keys" role="group"><button type="button" class="mj-chart-key" data-chart-action="series" aria-pressed="true"><span class="mj-chart-key-mark" aria-hidden="true"></span><span class="mj-chart-key-name">series</span><span class="mj-chart-key-value" aria-hidden="true"></span></button></div></template>
+<template data-chart-tools><div class="mj-chart-tools"><span class="mj-chart-range"></span><button type="button" class="mj-button mj-button--quiet" data-chart-action="reset" aria-label="Reset zoom: show the whole range" title="Show the whole range">Reset zoom</button></div></template>
+<script defer src="https://majordomus.dev/js/charts.js" data-echarts-src="https://majordomus.dev/js/echarts.min.js"></script>
 
 </body>
 </html>
