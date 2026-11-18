@@ -381,11 +381,15 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
         let body = f.next().unwrap_or_default();
         head.get_or_insert((commit.clone(), time));
         if parents.len() > 1 {
-            let (pull_request, branch, is_pull) = merge_subject(subject);
-            let title = is_pull
-                .then(|| body.lines().map(str::trim).find(|l| !l.is_empty()))
-                .flatten()
-                .map(str::to_string);
+            let (pull_request, branch, subject_title, is_pull) = merge_subject(subject);
+            let title = if is_pull {
+                body.lines()
+                    .map(str::trim)
+                    .find(|l| !l.is_empty())
+                    .map(str::to_string)
+            } else {
+                subject_title
+            };
             merges.push(MergeCommit {
                 commit,
                 time,
@@ -414,9 +418,10 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
     })
 }
 
-/// What a merge subject says: the pull request, the branch, and whether it is the forge's
-/// pull-request merge (whose body's first line is the title).
-fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, bool) {
+/// What a merge subject says: the pull request, the branch, the title the subject itself
+/// carries, and whether it is the forge's pull-request merge (whose body's first line is the
+/// title).
+fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, Option<String>, bool) {
     if let Some(rest) = subject.strip_prefix("Merge pull request #") {
         let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
         let number = digits.parse::<u64>().ok();
@@ -426,30 +431,46 @@ fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, bool) {
             .map(str::trim)
             // `owner/branch`: the owner is not part of the branch's name
             .and_then(|b| b.split_once('/').map(|(_, name)| name.to_string()));
-        return (number, branch, true);
+        return (number, branch, None, true);
     }
-    // `Merge #3062 (feature/I4324-x) into the combined top on 7222b343dc`: the landing seat's
-    // merge of one member into a combined top (I4634). It names the pull request and its
-    // branch, never the forge's title, so its body is not read as one. Unread, the member's
-    // branch proved nothing at the top's head, and the top's own title proved it only at the
-    // merge into the trunk: the committed projection, observed at the head, then disagreed
-    // with the trunk (#3077, ae13be1bd13, repaired by #3084).
+    // `Merge #<n> ...`: the landing seat's merge of one member into a combined top or a train
+    // (I4634). Master's history holds these forms:
+    //   Merge #3062 (feature/I4324-x) into the combined top on 7222b343dc
+    //   Merge #2970 c8009252009 into train 30c: feat(site): every surface names ... (I3449)
+    //   Merge #2904 af902493e7e (on master acd99970a6f, train 16b) into train 22
+    //   Merge #2906 #2910 into train 22c on master 9df9061de3e (no Rust)
+    // It names the pull request, the branch when the parenthesis holds one name, and the
+    // member's title after the `: ` that follows ` into `. Its body is never read as a title.
+    // A merge proves an issue only through its branch or title, never its number, so the
+    // second number of `#2906 #2910` would prove nothing: that subject carries neither, and
+    // #2910 reached the train through its own `Merge #2910 551d35202a5 into ...` as well.
+    // Unread, a member proved nothing at the top's head, and the top's own title proved it
+    // only at the merge into the trunk: the committed projection, observed at the head, then
+    // disagreed with the trunk (#3077, ae13be1bd13, repaired by #3084).
     if let Some(rest) = subject.strip_prefix("Merge #") {
         let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
-        let branch = rest[digits.len()..]
+        let Ok(number) = digits.parse::<u64>() else {
+            return (None, None, None, false);
+        };
+        let after = &rest[digits.len()..];
+        let branch = after
             .strip_prefix(" (")
             .and_then(|b| b.split_once(')'))
             .map(|(name, _)| name.trim())
-            .filter(|name| !name.is_empty() && !name.contains(char::is_whitespace));
-        if let (Ok(number), Some(branch)) = (digits.parse::<u64>(), branch) {
-            return (Some(number), Some(branch.to_string()), false);
-        }
-        return (None, None, false);
+            .filter(|name| !name.is_empty() && !name.contains(char::is_whitespace))
+            .map(str::to_string);
+        let title = after
+            .split_once(" into ")
+            .and_then(|(_, top)| top.split_once(": "))
+            .map(|(_, title)| title.trim())
+            .filter(|title| !title.is_empty())
+            .map(str::to_string);
+        return (Some(number), branch, title, false);
     }
     for prefix in ["Merge remote-tracking branch '", "Merge branch '"] {
         if let Some(rest) = subject.strip_prefix(prefix) {
             let Some((name, _)) = rest.split_once('\'') else {
-                return (None, None, false);
+                return (None, None, None, false);
             };
             let name = if prefix.contains("remote-tracking") {
                 // `origin/x`: the remote is not part of the branch's name
@@ -457,10 +478,10 @@ fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, bool) {
             } else {
                 name
             };
-            return (None, Some(name.to_string()), false);
+            return (None, Some(name.to_string()), None, false);
         }
     }
-    (None, None, false)
+    (None, None, None, false)
 }
 
 /// The issues a name, a title or both name, among `declared`, each with how: the I1405
@@ -1413,6 +1434,9 @@ mod tests {
                     top\x001700000007\x00p1 p2\x00Merge #3062 (feature/I0003-x) into the combined top on 7222b343dc\x00I0002 in prose\x1e\n\
                     to2\x001700000008\x00p1 p2\x00Merge #30 (no closing paren\x00\x1e\n\
                     to3\x001700000009\x00p1 p2\x00Merge #x (feature/y)\x00\x1e\n\
+                    tr1\x001700000010\x00p1 p2\x00Merge #2970 c8009252009 into train 30c: feat(site): every surface names its versions by role (I0004)\x00body (I0002)\x1e\n\
+                    tr2\x001700000011\x00p1 p2\x00Merge #2904 af902493e7e (on master acd99970a6f, train 16b) into train 22\x00\x1e\n\
+                    tr3\x001700000012\x00p1 p2\x00Merge #2906 #2910 into train 22c on master 9df9061de3e (no Rust)\x00\x1e\n\
                     fff\x001700000005\x00p1\x00feat(x): a thing (I0001)\x00a body naming I0002\x1e\n\
                     ggg\x00nope\x00p1\x00x\x00\x1e\n\
                     \x001\x00p1\x00y\x00\x1e\n\
@@ -1420,14 +1444,36 @@ mod tests {
         let h = parse_history(text).expect("a history");
         assert_eq!((h.commit.as_str(), h.time), ("aaa", 1_700_000_000));
         let m = &h.merges;
-        assert_eq!(m.len(), 8);
+        assert_eq!(m.len(), 11);
         assert_eq!(
             (m[5].pull_request, m[5].branch.as_deref(), &m[5].title),
             (Some(3062), Some("feature/I0003-x"), &None),
             "a member merged into a combined top names its pull request and branch, and its body is no title"
         );
-        assert_eq!((m[6].pull_request, &m[6].branch), (None, &None));
+        assert_eq!(
+            (m[6].pull_request, &m[6].branch, &m[6].title),
+            (Some(30), &None, &None),
+            "an unclosed parenthesis names the pull request and no branch"
+        );
         assert_eq!((m[7].pull_request, &m[7].branch), (None, &None));
+        assert_eq!(
+            (m[8].pull_request, &m[8].branch, m[8].title.as_deref()),
+            (
+                Some(2970),
+                &None,
+                Some("feat(site): every surface names its versions by role (I0004)")
+            ),
+            "a train member's merge carries its title after the `: `, and its body is no title"
+        );
+        assert_eq!(
+            (m[9].pull_request, &m[9].branch, &m[9].title),
+            (Some(2904), &None, &None),
+            "a parenthesis with more than one word is no branch"
+        );
+        assert_eq!(
+            (m[10].pull_request, &m[10].branch, &m[10].title),
+            (Some(2906), &None, &None)
+        );
         assert_eq!(m[0].pull_request, Some(12));
         assert_eq!(m[0].branch.as_deref(), Some("feature/I0001-x"));
         assert_eq!(m[0].title.as_deref(), Some("Do it (I0001)"));
