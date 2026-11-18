@@ -4,7 +4,7 @@ version: 1
 kind: rule
 title: Session records are shared objects with a closed field set
 description: A closed execution episode is written once, into the layer's sessions section, against a schema that admits what the repository can prove and nothing else.
-statement: A closed session is a shared object of the layer: written by the tool from git and the ledger, valid against the session record contract, carrying no conversation and no fact about the machine that ran it, and discovered like every other kind rather than registered anywhere.
+statement: "A closed session is a shared object of the layer: written by the tool from git and the ledger, valid against the session record contract, carrying no conversation and no fact about the machine that ran it, and discovered like every other kind rather than registered anywhere."
 status: active
 class: blocking
 depends_on: [majordomus.sessions-are-workers@1, majordomus.externalise-decisions@1]

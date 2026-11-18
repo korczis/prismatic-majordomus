@@ -4,7 +4,7 @@ version: 1
 kind: rule
 title: A session does not finish behind its own published site
 description: A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them.
-statement: A gate the CI model marks at-finish measures the deployment rather than the tree, so no path class can select it; finish runs it live and refuses the outcome completed while it reports the publication is not a projection of the trunk. It is measured, never recorded: evidence about a live site expires with the site and not with a file hash.
+statement: "A gate the CI model marks at-finish measures the deployment rather than the tree, so no path class can select it; finish runs it live and refuses the outcome completed while it reports the publication is not a projection of the trunk. It is measured, never recorded: evidence about a live site expires with the site and not with a file hash."
 status: active
 class: blocking
 depends_on: [majordomus.completion-gates@1]
