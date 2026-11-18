@@ -618,7 +618,7 @@ make one. With nothing judged the reading prints nothing.
 
 Under `MAJORDOMUS_DOCTOR_CONTEXT=commit` only the committing checkout is read, and an
 `INFO clone install` line says the others were left out. pnpm, yarn and cargo are not read yet.
-`test/cases/4628_doctor_names_an_install_behind_its_lockfile.sh` holds both directions, the
+`test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh` holds both directions, the
 fix, the commit context, the checkout with no lockfile and the mix reading, and that none of
 it writes.
 

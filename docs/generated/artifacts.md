@@ -333,7 +333,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.md` | `economics` | markdown | 15763 | `3b86554d19986d9c` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46587 | `9de128c8359bc939` |
 | `docs/generated/entities.json` | `entities` | json | 730995 | `82b4977be9b1a353` |
-| `docs/generated/graph.json` | `graph` | json | 6635900 | `9ab2e2fc3744de24` |
+| `docs/generated/graph.json` | `graph` | json | 6636059 | `be40ec12c05bb4c0` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7616 | `0d2a05d3d08af897` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `9f2cc348ff99c4b5` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2531 | `2b51b69b3d5a7746` |
@@ -462,10 +462,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 229 | `9be45d22e9eb82d9` |
 | `site/data/registry/design.json` | `site-design` | json | 11586 | `5d154e987eec5f2e` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `d83825c6e5972b63` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 880424 | `e79b779cec02a87d` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 880424 | `ebfcd769babe03eb` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 112747 | `dbf8261711c10b0f` |
 | `site/data/registry/product.json` | `site-product` | json | 786081 | `bc0be6867876c4b4` |
-| `site/data/registry/registry.json` | `site-registry` | json | 9064979 | `46671f59a5d67e06` |
+| `site/data/registry/registry.json` | `site-registry` | json | 9064979 | `8d4616b283842ad2` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `0ffeef11218b664e` |
 | `site/data/registry/why.json` | `site-why` | json | 349923 | `de36d3ed973b3a67` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `541b01642b955dce` |

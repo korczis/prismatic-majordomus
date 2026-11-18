@@ -81653,12 +81653,14 @@
           "scope": [
             ".ai/repo/project/issues/I4595.yaml",
             "lib/doctor.sh",
-            "docs/WORKTREES.md"
+            "docs/WORKTREES.md",
+            "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
           ],
           "serves": [],
           "slug": "doctor-reports-an-install-behind-its-lockfile",
-          "updated_at": "2026-11-17",
+          "updated_at": "2026-11-18",
           "validation": [
+            "bash test/run.sh 4595_doctor_names_an_install_behind_its_lockfile",
             "bin/majordomus doctor",
             "bin/majordomus plan validate"
           ]
@@ -109983,6 +109985,13 @@
         "source": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "kind": "test",
+        "label": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "route": "/cockpit/objects/test/test-cases-4595-doctor-names-an-install-behind-its-lockfile-sh",
+        "source": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
         "kind": "test",
         "label": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
@@ -110016,13 +110025,6 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
-      },
-      {
-        "id": "majordomus://test/test/cases/4628_doctor_names_an_install_behind_its_lockfile.sh",
-        "kind": "test",
-        "label": "test/cases/4628_doctor_names_an_install_behind_its_lockfile.sh",
-        "route": "/cockpit/objects/test/test-cases-4628-doctor-names-an-install-behind-its-lockfile-sh",
-        "source": "test/cases/4628_doctor_names_an_install_behind_its_lockfile.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -159783,6 +159785,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -159804,11 +159811,6 @@
       },
       {
         "source": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://test/test/cases/4628_doctor_names_an_install_behind_its_lockfile.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

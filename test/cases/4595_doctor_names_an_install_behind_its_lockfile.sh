@@ -28,7 +28,7 @@
 command -v jq >/dev/null 2>&1 || skip "jq not installed"
 . "$ROOT/lib/runnable.sh"
 mj_runs npm || skip "npm does not start here: $(mj_runs_why npm)"
-W="$(mktemp -d "${TMPDIR:-/tmp}/mj4628.XXXXXX")"; trap 'rm -rf "$W"' EXIT
+W="$(mktemp -d "${TMPDIR:-/tmp}/mj4595.XXXXXX")"; trap 'rm -rf "$W"' EXIT
 W="$(cd "$W" && pwd -P)"
 P="$(pwd -P)"
 NPM_FLAGS="--offline --no-audit --no-fund --ignore-scripts --loglevel=error"

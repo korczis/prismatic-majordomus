@@ -13,6 +13,7 @@ scope:
   - ".ai/repo/project/issues/I4595.yaml"
   - "lib/doctor.sh"
   - "docs/WORKTREES.md"
+  - "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
 non_scope:
   - "Installing or restoring anything (I3952's `mesh build-cache ensure` restores by key)"
   - "Reclaiming node_modules or target/ of finished worktrees (I4324)"
@@ -28,9 +29,10 @@ acceptance_criteria:
   - "Negative: the case fails against lib/doctor.sh at defd88e5896, which prints no such line"
   - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053)"
 validation:
+  - "bash test/run.sh 4595_doctor_names_an_install_behind_its_lockfile"
   - "bin/majordomus doctor"
   - "bin/majordomus plan validate"
 evidence_required:
   - "doctor_names_an_install_behind_its_lockfile_case"
 created_at: 2026-11-15
-updated_at: 2026-11-17
+updated_at: 2026-11-18
