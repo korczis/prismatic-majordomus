@@ -289,6 +289,380 @@ pub fn bootstrap_median_clustered(
     percentile_interval(medians, level_bp, resamples, seed, CLUSTER_METHOD)
 }
 
+/// Which way of a paired difference (treatment minus control) is the better one, as the
+/// methodology declares it for a metric: a higher accepted share is better, fewer tokens are.
+/// It travels as `higher` or `lower`.
+///
+/// ```
+/// use majordomus_cli::economics::stats::Better;
+/// let b: Better = serde_json::from_value(serde_json::json!("lower")).unwrap();
+/// assert_eq!(b, Better::Lower);
+/// assert_eq!(serde_json::to_value(Better::Higher).unwrap(), "higher");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Better {
+    /// A positive difference favours the treatment.
+    Higher,
+    /// A negative difference favours the treatment.
+    Lower,
+}
+
+/// The one verdict a paired comparison comes to, whether it was decided by the exact test
+/// ([`test_verdict`]) or by an interval ([`interval_verdict`]): the treatment is better, it
+/// is worse, or the sample cannot tell. A sample too small to reject anything is
+/// `Inconclusive`, never a verdict in either direction.
+///
+/// ```
+/// use majordomus_cli::economics::stats::{paired_sign_flip_test, test_verdict, Better, Verdict};
+/// // twenty tasks; five moved up, the rest did not move: p = 2/32, not below 5%
+/// let mut tasks: Vec<Vec<f64>> = vec![vec![0.0]; 15];
+/// tasks.extend(vec![vec![1.0]; 5]);
+/// let t = paired_sign_flip_test(&tasks, 1000, 7, 5).unwrap();
+/// assert_eq!(t.p_value, 0.0625);
+/// assert_eq!(test_verdict(&t, 9500, Better::Higher), Verdict::Inconclusive);
+/// // a sixth task moves up: p = 2/64 rejects, and the direction decides the verdict
+/// tasks[0] = vec![1.0];
+/// let t = paired_sign_flip_test(&tasks, 1000, 7, 5).unwrap();
+/// assert_eq!(t.p_value, 0.03125);
+/// assert_eq!(test_verdict(&t, 9500, Better::Higher), Verdict::Favourable);
+/// assert_eq!(test_verdict(&t, 9500, Better::Lower), Verdict::Unfavourable);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Verdict {
+    /// The difference is significant and points the declared better way.
+    Favourable,
+    /// The difference is significant and points the other way.
+    Unfavourable,
+    /// The sample does not reject a zero difference.
+    Inconclusive,
+}
+
+/// The verdict a difference of the given sign comes to when it is significant.
+fn directed(difference: f64, better: Better) -> Verdict {
+    match (difference > 0.0, difference < 0.0, better) {
+        (true, _, Better::Higher) | (_, true, Better::Lower) => Verdict::Favourable,
+        (true, _, Better::Lower) | (_, true, Better::Higher) => Verdict::Unfavourable,
+        _ => Verdict::Inconclusive,
+    }
+}
+
+/// The largest number of tasks that moved whose sign flips are enumerated rather than
+/// sampled: 2^20 sums, about a million, is still instant.
+pub const EXACT_MAX_TASKS: usize = 20;
+
+/// What [`paired_sign_flip_test`] writes into [`PairedTest::method`] when it enumerated.
+pub const EXACT_SIGN_FLIP_METHOD: &str = "exact two-sided sign-flip permutation test over tasks of the mean per-task paired difference: every assignment of signs to the tasks that moved is enumerated";
+
+/// What [`paired_sign_flip_test`] writes into [`PairedTest::method`] when it sampled.
+pub const SAMPLED_SIGN_FLIP_METHOD: &str = "two-sided sign-flip permutation test over tasks of the mean per-task paired difference: seeded random sign assignments, p = (1 + as extreme) / (1 + resamples)";
+
+/// What [`minimum_detectable_difference`] writes into its `method`.
+pub const MDE_METHOD: &str = "minimum detectable difference of the exact sign-flip test: the fewest tasks that, all moving one way by a whole accepted outcome with every other task unmoved, reject at the level, as a share of the tasks";
+
+/// What [`bootstrap_mean_difference_clustered`] writes into [`EconomicsInterval::method`].
+pub const CLUSTER_MEAN_DIFFERENCE_METHOD: &str = "percentile bootstrap of the mean paired difference, cluster bootstrap over tasks: each resample draws tasks with replacement and averages the drawn tasks' mean differences";
+
+/// The result of [`paired_sign_flip_test`]: the p-value of a zero mean per-task difference,
+/// with what it was computed over (how many tasks, how many of them moved, whether every
+/// sign assignment was enumerated) and the method, so a reader can tell an exact p-value
+/// from a sampled one. [`test_verdict`] turns it into a [`Verdict`].
+///
+/// ```
+/// use majordomus_cli::economics::stats::{
+///     paired_sign_flip_test, PairedTest, EXACT_SIGN_FLIP_METHOD,
+/// };
+/// let tasks = vec![vec![1.0], vec![1.0], vec![0.0], vec![0.0, 0.0]];
+/// let t: PairedTest = paired_sign_flip_test(&tasks, 100, 1, 5).unwrap();
+/// assert_eq!((t.tasks, t.moved, t.exact, t.permutations), (4, 2, true, 4));
+/// assert_eq!((t.mean_difference, t.p_value), (0.5, 0.5));
+/// assert_eq!(t.method, EXACT_SIGN_FLIP_METHOD);
+/// ```
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct PairedTest {
+    /// The tasks (clusters) that held at least one finite difference.
+    pub tasks: usize,
+    /// The tasks whose mean difference is not zero: the only ones a sign flip changes.
+    pub moved: usize,
+    /// The mean over tasks of each task's mean difference.
+    pub mean_difference: f64,
+    /// The two-sided p-value of a zero mean difference.
+    pub p_value: f64,
+    /// Whether every sign assignment was enumerated.
+    pub exact: bool,
+    /// How many sign assignments the p-value counts over.
+    pub permutations: u64,
+    /// The seed of the sampled test; unused, but recorded, by the exact one.
+    pub seed: u64,
+    /// How the p-value was computed.
+    pub method: String,
+}
+
+/// Each task's mean finite difference, tasks without one dropped, in ascending order, so
+/// that nothing downstream depends on the order the tasks or their values were listed in.
+fn task_means(clusters: &[Vec<f64>]) -> (Vec<f64>, usize) {
+    let mut n = 0;
+    let mut means: Vec<f64> = clusters
+        .iter()
+        .map(|v| sorted(v.as_slice()))
+        .filter(|v| !v.is_empty())
+        .map(|v| {
+            n += v.len();
+            v.iter().sum::<f64>() / v.len() as f64
+        })
+        .collect();
+    crate::order::numeric(&mut means);
+    (means, n)
+}
+
+/// The exact task-level test of a binary paired outcome: each cluster holds one task's
+/// paired differences (treatment minus control, `1.0`, `0.0` or `-1.0` per repetition for an
+/// accepted outcome), each task is reduced to its mean difference, and the statistic is the
+/// mean of those. Under no effect each task's difference is as likely negated, so the
+/// p-value is the share of sign assignments whose absolute sum is at least the observed one.
+///
+/// A task that did not move contributes the same under either sign, so only the tasks that
+/// moved are flipped; with at most [`EXACT_MAX_TASKS`] of them every assignment is
+/// enumerated and the test is exact, above that `resamples` seeded assignments are drawn.
+/// Unlike a percentile bootstrap over twenty mostly-zero clusters, it does not under-cover.
+///
+/// Deterministic for a seed and independent of the order of tasks and values; non-finite
+/// values are dropped; `None` below `min_n` differences in total, with fewer than two tasks,
+/// or when it would have to sample and `resamples` is zero.
+///
+/// ```
+/// use majordomus_cli::economics::stats::{paired_sign_flip_test, EXACT_SIGN_FLIP_METHOD};
+/// let tasks = vec![vec![1.0, 0.0], vec![1.0], vec![0.0, 0.0], vec![1.0, 1.0], vec![-1.0]];
+/// let t = paired_sign_flip_test(&tasks, 1000, 7, 5).unwrap();
+/// let shuffled = vec![vec![1.0, 1.0], vec![-1.0], vec![0.0, 1.0], vec![0.0, 0.0], vec![1.0]];
+/// assert_eq!(t, paired_sign_flip_test(&shuffled, 1000, 7, 5).unwrap(), "order does not matter");
+/// // moved tasks 0.5, 1, 1, -1: |sum| >= 1.5 in 10 of the 16 sign assignments
+/// assert_eq!((t.moved, t.p_value, t.exact), (4, 0.625, true));
+/// assert_eq!(t.method, EXACT_SIGN_FLIP_METHOD);
+/// let one_task = vec![vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0]];
+/// assert!(paired_sign_flip_test(&one_task, 1000, 7, 5).is_none(), "one task is no test");
+/// ```
+pub fn paired_sign_flip_test(
+    clusters: &[Vec<f64>],
+    resamples: u32,
+    seed: u64,
+    min_n: usize,
+) -> Option<PairedTest> {
+    let (means, n) = task_means(clusters);
+    let k = means.len();
+    if n < min_n.max(2) || k < 2 {
+        return None;
+    }
+    let mean_difference = means.iter().sum::<f64>() / k as f64;
+    let moved: Vec<f64> = means.iter().copied().filter(|d| *d != 0.0).collect();
+    let m = moved.len();
+    let observed = moved.iter().sum::<f64>().abs();
+    // the sums are of the same few values in another sign, so an equal sum may differ in
+    // the last bits: anything within a billionth of the total magnitude counts as equal
+    let tolerance = 1e-9 * moved.iter().map(|d| d.abs()).sum::<f64>();
+    let as_extreme = |signs: &mut dyn FnMut(usize) -> bool| {
+        let s: f64 = (0..m)
+            .map(|i| if signs(i) { -moved[i] } else { moved[i] })
+            .sum();
+        s.abs() >= observed - tolerance
+    };
+    let (p_value, exact, permutations, method) = if m <= EXACT_MAX_TASKS {
+        let total = 1u64 << m;
+        let hits = (0..total)
+            .filter(|&mask| as_extreme(&mut |i| (mask >> i) & 1 == 1))
+            .count() as u64;
+        (
+            hits as f64 / total as f64,
+            true,
+            total,
+            EXACT_SIGN_FLIP_METHOD,
+        )
+    } else {
+        if resamples == 0 {
+            return None;
+        }
+        let mut rng = SplitMix64(seed);
+        let hits = (0..resamples)
+            .filter(|_| as_extreme(&mut |_| rng.next() >> 63 == 1))
+            .count() as u64;
+        (
+            (1 + hits) as f64 / (1 + resamples as u64) as f64,
+            false,
+            resamples as u64,
+            SAMPLED_SIGN_FLIP_METHOD,
+        )
+    };
+    Some(PairedTest {
+        tasks: k,
+        moved: m,
+        mean_difference: round(mean_difference),
+        p_value,
+        exact,
+        permutations,
+        seed,
+        method: method.into(),
+    })
+}
+
+/// The verdict of a [`PairedTest`] at `level_bp`: `Inconclusive` unless the p-value is at
+/// most one minus the level, and then favourable or unfavourable by the sign of the mean
+/// difference against the declared better direction (see [`Verdict`]).
+///
+/// ```
+/// use majordomus_cli::economics::stats::{paired_sign_flip_test, test_verdict, Better, Verdict};
+/// // seven of seven tasks spent less: p = 2/128
+/// let fewer: Vec<Vec<f64>> = (0..7).map(|_| vec![-1.0]).collect();
+/// let t = paired_sign_flip_test(&fewer, 100, 1, 5).unwrap();
+/// assert_eq!(test_verdict(&t, 9500, Better::Lower), Verdict::Favourable);
+/// assert_eq!(test_verdict(&t, 9500, Better::Higher), Verdict::Unfavourable);
+/// assert_eq!(test_verdict(&t, 9900, Better::Lower), Verdict::Inconclusive, "2/128 > 1%");
+/// ```
+pub fn test_verdict(test: &PairedTest, level_bp: u32, better: Better) -> Verdict {
+    let alpha = 1.0 - level_bp as f64 / 10_000.0;
+    if test.p_value <= alpha {
+        directed(test.mean_difference, better)
+    } else {
+        Verdict::Inconclusive
+    }
+}
+
+/// The verdict of an interval of a paired difference: favourable or unfavourable by
+/// direction when it excludes zero, `Inconclusive` when it holds zero.
+///
+/// ```
+/// use majordomus_cli::economics::stats::{interval_verdict, Better, Verdict};
+/// use majordomus_cli::economics::model::EconomicsInterval;
+/// let i = EconomicsInterval {
+///     level_bp: 9500, low: 0.1, high: 0.3, method: "m".into(), resamples: 1, seed: 1,
+/// };
+/// assert_eq!(interval_verdict(&i, Better::Higher), Verdict::Favourable);
+/// assert_eq!(interval_verdict(&i, Better::Lower), Verdict::Unfavourable);
+/// let across = EconomicsInterval { low: -0.1, ..i };
+/// assert_eq!(interval_verdict(&across, Better::Higher), Verdict::Inconclusive);
+/// ```
+pub fn interval_verdict(interval: &EconomicsInterval, better: Better) -> Verdict {
+    if interval.low > 0.0 {
+        directed(interval.low, better)
+    } else if interval.high < 0.0 {
+        directed(interval.high, better)
+    } else {
+        Verdict::Inconclusive
+    }
+}
+
+/// The smallest difference the exact test can detect, and how it was derived: the result of
+/// [`minimum_detectable_difference`], which a report shows beside an inconclusive verdict so
+/// that "inconclusive" says how large a difference the sample could have called.
+///
+/// ```
+/// use majordomus_cli::economics::stats::{
+///     minimum_detectable_difference, MinimumDetectableDifference,
+/// };
+/// let m: MinimumDetectableDifference = minimum_detectable_difference(12, 9500).unwrap();
+/// assert_eq!((m.tasks, m.level_bp, m.tasks_needed, m.difference), (12, 9500, 6, 0.5));
+/// ```
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct MinimumDetectableDifference {
+    /// The tasks of the comparison.
+    pub tasks: usize,
+    /// The confidence level, in basis points.
+    pub level_bp: u32,
+    /// The fewest tasks that must move, all one way, for the test to reject.
+    pub tasks_needed: usize,
+    /// `tasks_needed / tasks`: the mean accepted-share difference that takes.
+    pub difference: f64,
+    /// How it was derived.
+    pub method: String,
+}
+
+/// The minimum detectable difference of [`paired_sign_flip_test`] for `tasks` tasks at
+/// `level_bp`: when `j` tasks move one way and the rest do not, the exact p-value is
+/// `2 / 2^j`, so the test rejects only from the smallest `j` with `2 / 2^j` at most one minus
+/// the level, and a smaller mean accepted-share difference than `j / tasks` (one accepted
+/// outcome per task) can never be called. `None` with fewer than two tasks, or when even every
+/// task moving one way would not reject: such a comparison can only be inconclusive.
+///
+/// ```
+/// use majordomus_cli::economics::stats::{minimum_detectable_difference, MDE_METHOD};
+/// // the methodology's level is 95%: 2/32 does not reject, 2/64 does
+/// let mde = minimum_detectable_difference(20, 9500).unwrap();
+/// assert_eq!((mde.tasks_needed, mde.difference), (6, 0.3));
+/// assert_eq!(mde.method, MDE_METHOD);
+/// assert!(minimum_detectable_difference(5, 9500).is_none(), "2/32 never rejects at 5%");
+/// assert!(minimum_detectable_difference(1, 9500).is_none());
+/// ```
+pub fn minimum_detectable_difference(
+    tasks: usize,
+    level_bp: u32,
+) -> Option<MinimumDetectableDifference> {
+    if tasks < 2 {
+        return None;
+    }
+    let alpha = 1.0 - level_bp as f64 / 10_000.0;
+    let needed = (1..=tasks.min(1_000)).find(|&j| 2f64.powi(1 - j as i32) <= alpha)?;
+    Some(MinimumDetectableDifference {
+        tasks,
+        level_bp,
+        tasks_needed: needed,
+        difference: round(needed as f64 / tasks as f64),
+        method: MDE_METHOD.into(),
+    })
+}
+
+/// A percentile bootstrap interval of the mean paired difference of a continuous outcome
+/// (tokens, seconds) over tasks: each task is reduced to its mean difference, each resample
+/// draws as many tasks as there are with replacement, and the statistic is the mean of the
+/// drawn tasks' means, so every task weighs the same however often it was repeated, as in
+/// [`paired_sign_flip_test`]. Read with [`interval_verdict`].
+///
+/// Deterministic for a seed and independent of the order of tasks and values; non-finite
+/// values are dropped; `None` below `min_n` differences in total, with fewer than two tasks,
+/// or with no resamples, as [`bootstrap_median_clustered`].
+///
+/// ```
+/// use majordomus_cli::economics::stats::{
+///     bootstrap_mean_difference_clustered, CLUSTER_MEAN_DIFFERENCE_METHOD,
+/// };
+/// let tasks = vec![vec![-120.0, -100.0], vec![-300.0], vec![-50.0, -70.0], vec![10.0, -30.0]];
+/// let a = bootstrap_mean_difference_clustered(&tasks, 9500, 2000, 7, 5).unwrap();
+/// let shuffled = vec![vec![-30.0, 10.0], vec![-300.0], vec![-70.0, -50.0], vec![-100.0, -120.0]];
+/// assert_eq!(a, bootstrap_mean_difference_clustered(&shuffled, 9500, 2000, 7, 5).unwrap());
+/// assert!(a.low <= -115.0 && -115.0 <= a.high, "the mean of task means is -115");
+/// assert_eq!(a.method, CLUSTER_MEAN_DIFFERENCE_METHOD);
+/// let one_task = vec![vec![-1.0, -2.0, -3.0, -4.0, -5.0, -6.0]];
+/// assert!(bootstrap_mean_difference_clustered(&one_task, 9500, 2000, 7, 5).is_none());
+/// ```
+pub fn bootstrap_mean_difference_clustered(
+    clusters: &[Vec<f64>],
+    level_bp: u32,
+    resamples: u32,
+    seed: u64,
+    min_n: usize,
+) -> Option<EconomicsInterval> {
+    let (means, n) = task_means(clusters);
+    let k = means.len();
+    if n < min_n.max(2) || k < 2 || resamples == 0 {
+        return None;
+    }
+    let mut rng = SplitMix64(seed);
+    let estimates = (0..resamples)
+        .map(|_| {
+            (0..k)
+                .map(|_| means[rng.below(k as u64) as usize])
+                .sum::<f64>()
+                / k as f64
+        })
+        .collect();
+    percentile_interval(
+        estimates,
+        level_bp,
+        resamples,
+        seed,
+        CLUSTER_MEAN_DIFFERENCE_METHOD,
+    )
+}
+
 /// A confidence level in basis points as a person reads it: `9500` is `95%`, `9750` is
 /// `97.5%`. Whole percentages carry no decimals and a fraction carries only the digits it
 /// needs, so a level is never rounded into one the methodology did not declare.
@@ -519,6 +893,211 @@ mod tests {
             c.high - c.low >= p.high - p.low,
             "cluster {c:?} against pooled {p:?}"
         );
+    }
+
+    /// The exact sign-flip test against p-values computed by hand: the sign test of tasks
+    /// that all moved one way, a mixed set, fractional task means, order independence, the
+    /// enumeration limit, the seeded sample above it, and every refusal.
+    #[test]
+    fn test_exact_paired_test() {
+        let one = |d: f64| vec![d];
+        // six of twenty tasks up, the rest unmoved: 2 of 2^6 assignments as extreme
+        let mut tasks: Vec<Vec<f64>> = (0..14).map(|_| one(0.0)).collect();
+        tasks.extend((0..6).map(|_| one(1.0)));
+        let t = paired_sign_flip_test(&tasks, 100, 1, 5).unwrap();
+        assert_eq!(
+            (t.tasks, t.moved, t.exact, t.permutations),
+            (20, 6, true, 64)
+        );
+        assert_eq!(t.p_value, 2.0 / 64.0);
+        assert_eq!(t.mean_difference, 0.3);
+        assert_eq!(t.method, EXACT_SIGN_FLIP_METHOD);
+        // five up and one down: |sum| >= 4 when 0, 1, 5 or 6 of six are up, 14 of 64
+        let mixed = vec![one(1.0), one(1.0), one(1.0), one(1.0), one(1.0), one(-1.0)];
+        assert_eq!(
+            paired_sign_flip_test(&mixed, 100, 1, 5).unwrap().p_value,
+            14.0 / 64.0
+        );
+        // task means 0.5, 1, 1: only the all-same signs reach |sum| 2.5, 2 of 8
+        let fractional = vec![vec![1.0, 0.0], one(1.0), vec![1.0, 1.0]];
+        assert_eq!(
+            paired_sign_flip_test(&fractional, 100, 1, 4)
+                .unwrap()
+                .p_value,
+            0.25
+        );
+        // nothing moved: every assignment is as extreme as zero
+        let flat: Vec<Vec<f64>> = (0..8).map(|_| one(0.0)).collect();
+        let f = paired_sign_flip_test(&flat, 100, 1, 5).unwrap();
+        assert_eq!((f.p_value, f.moved, f.mean_difference), (1.0, 0, 0.0));
+        // order of tasks and of values, and non-finite values, change nothing
+        let a = vec![
+            vec![1.0, 0.0, f64::NAN],
+            one(-1.0),
+            vec![0.0, 1.0, 1.0],
+            one(1.0),
+        ];
+        let b = vec![
+            one(1.0),
+            vec![1.0, 0.0, 1.0],
+            one(-1.0),
+            vec![f64::INFINITY, 0.0, 1.0],
+        ];
+        assert_eq!(
+            paired_sign_flip_test(&a, 100, 1, 5),
+            paired_sign_flip_test(&b, 100, 1, 5)
+        );
+        // twenty moved tasks are still enumerated; twenty-two are sampled from the seed
+        let twenty: Vec<Vec<f64>> = (0..EXACT_MAX_TASKS).map(|_| one(1.0)).collect();
+        let e = paired_sign_flip_test(&twenty, 100, 1, 5).unwrap();
+        assert_eq!((e.exact, e.p_value), (true, 2.0 / (1u64 << 20) as f64));
+        let many: Vec<Vec<f64>> = (0..22).map(|_| one(1.0)).collect();
+        let s = paired_sign_flip_test(&many, 999, 3, 5).unwrap();
+        assert_eq!((s.exact, s.permutations, s.seed), (false, 999, 3));
+        assert_eq!(s.method, SAMPLED_SIGN_FLIP_METHOD);
+        assert!(s.p_value <= 2.0 / 1000.0, "{}", s.p_value);
+        assert_eq!(Some(s), paired_sign_flip_test(&many, 999, 3, 5));
+        assert!(
+            paired_sign_flip_test(&many, 0, 3, 5).is_none(),
+            "nothing to sample"
+        );
+        // refusals: one task, too few differences, empty and non-finite tasks
+        assert!(paired_sign_flip_test(&[vec![1.0; 9]], 100, 1, 5).is_none());
+        assert!(paired_sign_flip_test(&[one(1.0), one(1.0)], 100, 1, 5).is_none());
+        let hollow = vec![vec![], vec![1.0, 1.0, 1.0, 1.0, 1.0], vec![f64::NAN]];
+        assert!(paired_sign_flip_test(&hollow, 100, 1, 2).is_none());
+        // the minimum detectable difference at the methodology's level and others
+        let mde = minimum_detectable_difference(20, 9500).unwrap();
+        assert_eq!((mde.tasks_needed, mde.difference), (6, 0.3));
+        assert_eq!(
+            minimum_detectable_difference(40, 9500).unwrap().difference,
+            0.15
+        );
+        assert_eq!(
+            minimum_detectable_difference(20, 9900)
+                .unwrap()
+                .tasks_needed,
+            8
+        );
+        assert!(minimum_detectable_difference(20, 10_000).is_none());
+        assert!(minimum_detectable_difference(5, 9500).is_none());
+        // the MDE is where the test first rejects: six tasks reject, five do not
+        let at = |j: usize| {
+            let mut t: Vec<Vec<f64>> = (0..20 - j).map(|_| one(0.0)).collect();
+            t.extend((0..j).map(|_| one(1.0)));
+            test_verdict(
+                &paired_sign_flip_test(&t, 100, 1, 5).unwrap(),
+                9500,
+                Better::Higher,
+            )
+        };
+        assert_eq!((at(5), at(6)), (Verdict::Inconclusive, Verdict::Favourable));
+    }
+
+    /// One verdict from either decision: the exact test by its p-value and direction, an
+    /// interval by whether it excludes zero, and the clustered mean-difference interval
+    /// that feeds it computed, refused and named.
+    #[test]
+    fn test_interval_verdict() {
+        let i = |low: f64, high: f64| EconomicsInterval {
+            level_bp: 9500,
+            low,
+            high,
+            method: CLUSTER_MEAN_DIFFERENCE_METHOD.into(),
+            resamples: 1,
+            seed: 1,
+        };
+        assert_eq!(
+            interval_verdict(&i(0.1, 0.2), Better::Higher),
+            Verdict::Favourable
+        );
+        assert_eq!(
+            interval_verdict(&i(0.1, 0.2), Better::Lower),
+            Verdict::Unfavourable
+        );
+        assert_eq!(
+            interval_verdict(&i(-0.2, -0.1), Better::Lower),
+            Verdict::Favourable
+        );
+        assert_eq!(
+            interval_verdict(&i(-0.2, -0.1), Better::Higher),
+            Verdict::Unfavourable
+        );
+        assert_eq!(
+            interval_verdict(&i(-0.1, 0.1), Better::Higher),
+            Verdict::Inconclusive
+        );
+        assert_eq!(
+            interval_verdict(&i(0.0, 0.1), Better::Higher),
+            Verdict::Inconclusive
+        );
+        assert_eq!(
+            interval_verdict(&i(0.0, 0.0), Better::Lower),
+            Verdict::Inconclusive
+        );
+        let t = |p_value: f64, mean_difference: f64| PairedTest {
+            tasks: 20,
+            moved: 6,
+            mean_difference,
+            p_value,
+            exact: true,
+            permutations: 64,
+            seed: 0,
+            method: EXACT_SIGN_FLIP_METHOD.into(),
+        };
+        assert_eq!(
+            test_verdict(&t(0.05, -0.3), 9500, Better::Lower),
+            Verdict::Favourable
+        );
+        assert_eq!(
+            test_verdict(&t(0.05, -0.3), 9500, Better::Higher),
+            Verdict::Unfavourable
+        );
+        assert_eq!(
+            test_verdict(&t(0.051, -0.3), 9500, Better::Lower),
+            Verdict::Inconclusive
+        );
+        assert_eq!(
+            test_verdict(&t(0.03, 0.3), 9900, Better::Higher),
+            Verdict::Inconclusive
+        );
+        assert_eq!(
+            test_verdict(&t(0.0, 0.0), 9500, Better::Higher),
+            Verdict::Inconclusive
+        );
+        // the clustered mean difference: every task weighs the same, so tasks of two
+        // identical values each make the bootstrap of the task means a known point
+        let same = vec![vec![-0.2, -0.2], vec![-0.2, -0.2, -0.2], vec![-0.2]];
+        let p = bootstrap_mean_difference_clustered(&same, 9500, 500, 3, 5).unwrap();
+        assert_eq!((p.low, p.high), (-0.2, -0.2));
+        assert_eq!(interval_verdict(&p, Better::Lower), Verdict::Favourable);
+        // a task repeated many times does not outweigh the others: means -1 and 1 give 0
+        let lopsided = vec![vec![-1.0; 9], vec![1.0]];
+        let l = bootstrap_mean_difference_clustered(&lopsided, 9500, 2000, 3, 5).unwrap();
+        assert!(l.low < 0.0 && 0.0 < l.high, "{l:?}");
+        assert_eq!(interval_verdict(&l, Better::Lower), Verdict::Inconclusive);
+        assert_eq!(l.method, CLUSTER_MEAN_DIFFERENCE_METHOD);
+        let c: Vec<Vec<f64>> = (0..8)
+            .map(|t| {
+                (0..3)
+                    .map(|r| (t as f64 * 0.37 + r as f64 * 0.01).sin())
+                    .collect()
+            })
+            .collect();
+        let a = bootstrap_mean_difference_clustered(&c, 9500, 1000, 1, 5).unwrap();
+        let mut reversed: Vec<Vec<f64>> = c
+            .iter()
+            .map(|v| v.iter().rev().copied().collect())
+            .collect();
+        reversed.reverse();
+        assert_eq!(
+            Some(a.clone()),
+            bootstrap_mean_difference_clustered(&reversed, 9500, 1000, 1, 5)
+        );
+        assert!(Some(a) != bootstrap_mean_difference_clustered(&c, 9500, 1000, 2, 5));
+        assert!(bootstrap_mean_difference_clustered(&[vec![1.0; 9]], 9500, 500, 3, 5).is_none());
+        assert!(bootstrap_mean_difference_clustered(&same, 9500, 0, 3, 5).is_none());
+        assert!(bootstrap_mean_difference_clustered(&same, 9500, 500, 3, 7).is_none());
     }
 
     #[test]
