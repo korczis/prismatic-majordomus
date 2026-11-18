@@ -273,7 +273,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4533; they may not run concurrently |
-| WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4534; they may not run concurrently |
+| WARN | `scope_conflict` | `I2901` | shares test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4566; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4567; they may not run concurrently |
@@ -3522,7 +3522,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4533; they may not run concurrently |
-| WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4534; they may not run concurrently |
+| WARN | `scope_conflict` | `I3004` | shares test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4566; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4567; they may not run concurrently |
@@ -3783,3 +3783,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I4485` | shares apps/majordomus-cli/src/ui/view.rs with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I4485` | shares apps/majordomus-cli/src/ui/view.rs with I4495; they may not run concurrently |
+| WARN | `scope_conflict` | `I4485` | shares test/cases/1080_the_issues_are_browsed.sh with I4534; they may not run concurrently |

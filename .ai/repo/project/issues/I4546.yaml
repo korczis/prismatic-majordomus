@@ -2,26 +2,30 @@ id: I4546
 milestone: one-frame-one-kit-one-library-per-job
 serves:
   - "one-kit-on-every-surface#derived-and-proven"
-title: "The probes cover the three.js topology and p5 activity pages and every kit component, and design kit --check is a gate at zero findings"
+  - "one-kit-on-every-surface#one-library-per-job"
+title: "Every route, kit component and share/design/js module is covered by a probe or a case, the published copy is probed after the deploy, and every gate of the plan is held at zero"
 slug: the-kit-is-probed-and-gated
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S12 of milestone one-frame-one-kit-one-library-per-job. Extend the ui-shard and interaction probes (scripts/lib, scripts/interaction-probe, scripts/lib/interaction-specs) to the three.js topology page, the p5 activity page and every component of the one kit on all three surfaces, and adopt the kit with majordomus design kit adopt flowbite-pro (ADR 0230, decision 4), which sets ui.kit, keeps the repository's own section of rule project.ui-uses-flowbite-pro and writes the design-kit-on-push and design-kit enforcement entries, so the gate and the licence judgement (inactive today: ui.kit is empty) come from the adoption and not from a hand-written workflow step. It also writes the one case of criterion one-library-per-job: a planted second construction of ECharts, Cytoscape, p5 or Alpine outside share/design/js fails it. The deploy is verified in a browser after it publishes."
-why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The topology page has no dedicated test, and nothing yet refuses a change that reintroduces a second frame, kit or library."
-current_state: "Measured on master on 2026-11-07: share/cockpit/topology.js (three.js 0.185.1) and share/cockpit/activity.js (p5 2.3.2) have no dedicated probe; .github/workflows/validate.yml runs four ui-shard jobs and no design kit --check step; case 4334 (test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh) proves the capability, not the gate on this tree."
-desired_state: "Every kit component and the topology and activity pages are visited by a probe; validate.yml fails on any design kit finding; the pages deploy is followed by a browser probe of the published site."
+objective: "Slice S12 of milestone one-frame-one-kit-one-library-per-job, the last one: it tightens the gates that I4534 and I4653 started as ratchets to zero, and closes the coverage the owner found missing on 2026-11-17 ('nema 100 % coveratge'). Every route of I4534's route inventory is visited by a ui-shard probe, every kit component and every share/design/js module (core, chart, graph, scene, behaviour, table, links, visual) is driven by an interaction spec or a case on every surface it appears on, and a case fails on a route, component or module none covers. The design kit --check ratchet and the baselines of I4534's ratchet case (frame mark, component class, library construction) and of I4653's two gates are empty, and the gates run without a baseline from here on; the library case fails on any import of cytoscape or chart.js anywhere in the tree and on a construction of ECharts, D3, p5 or Alpine outside share/design/js. The probes cover the mesh topology page (three.js or its D3 successor, by I4541's verdict), the activity chart and the observatory kiosk's p5 scenes. After the pages deploy, a browser probe of the published copy (the site and the /ui and /cockpit snapshot) finds every page of the route inventory served with the frame mark and its visuals drawn. It absorbs #933 (seven widths, a reduced-motion pass and a rendering budget), whose widths, reduced-motion pass and budget become this slice's site probe, as I4534's verdict proposes; #933 stays open until this slice merges and is closed naming the delivering commit."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The owner's rule of 2026-11-14 (Visuals, derivation and links) says 'Enforced, not advised', and on 2026-11-17 he found the pages not fully working and coverage short of 100 %. The gates are started early as ratchets; this slice is where they stop admitting anything."
+current_state: "Measured on master on 2026-11-07: share/cockpit/topology.js (three.js 0.185.1) and share/cockpit/activity.js (p5 2.3.2) have no dedicated probe; .github/workflows/validate.yml runs four ui-shard jobs and no design kit --check step; case 4334 (test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh) proves the capability, not the gate on this tree. Read on 2026-11-17: case 3602 holds that every route is probed by exactly one shard; no case relates kit components or client modules to the specs that drive them; no probe reads the published copy after the pages deploy."
+desired_state: "Every route, kit component and share/design/js module is covered and a case refuses one that is not; every gate of the plan runs at zero with no baseline; the pages deploy is followed by a browser probe of the published copy, recorded with the deployed commit."
 scope:
   - "scripts/lib/ui-audit.mjs"
   - "scripts/lib/interaction-specs"
+  - "scripts/lib"
   - "scripts/interaction-probe"
   - ".github/workflows/validate.yml"
+  - ".github/workflows/pages.yml"
+  - ".ai/repo/ci/gates.yaml"
   - ".ai/repo/project/issues/I4546.yaml"
   - "test/cases"
-  - ".ai/repo/policy.yaml"
-  - ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md"
+  - "test/fixtures"
 non_scope:
   - "The release probe of the published homepage (I4530)"
+  - "Adopting the kit: I4534 does it first"
 depends_on:
   - "I4538"
   - "I4539"
@@ -29,19 +33,28 @@ depends_on:
   - "I4541"
   - "I4542"
   - "I4543"
+  - "I4544"
+  - "I4545"
+  - "I4653"
 acceptance_criteria:
-  - "The ui-shard probe visits /cockpit/graphs/topology and /cockpit/activity and fails when either renders an empty canvas"
-  - "Every kit component is driven by an interaction spec on each surface it appears on"
-  - "validate.yml runs majordomus design kit --check and the job fails on a planted finding (case 26 still passes)"
-  - "majordomus design licence reports active (ui.kit: flowbite-pro), and majordomus doctor names no missing design-kit enforcement entry"
-  - "A case fails on a planted second import or construction of ECharts, Cytoscape, p5 or Alpine outside share/design/js, and passes on the tree"
-  - "The ui-shard probe visits the observatory kiosk's p5 scenes (share/ui/observatory-kiosk.js, ADR 0160) and fails on an empty stage"
-  - "The first commit that adds this issue's case also changes criterion one-library-per-job of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as its ref, so the criterion stops being proven by majordomus intent explain of itself"
+  - "The ui-shard probe visits every route of I4534's route inventory (case 3602 holds that each is visited by exactly one shard) and refuses a page without the frame mark"
+  - "A case relates every kit component and every share/design/js module to the interaction specs and cases that drive it, and fails on a planted component or module that none drives"
+  - "The Rust coverage gate (scripts/rust-coverage-threshold) holds apps/majordomus-cli/src/web/kit and apps/majordomus-cli/src/web/links at the threshold the repository declares"
+  - "validate.yml and the pre-push hook run majordomus design kit --check with no baseline, and the job fails on a planted finding (case 26 still passes)"
+  - "The baselines of I4534's ratchet case and of I4653's two gates are empty and removed, and each gate fails on one planted violation"
+  - "A case fails on a planted import of cytoscape or chart.js anywhere in the tree and on a planted construction of ECharts, D3, p5 or Alpine outside share/design/js, and passes on the tree"
+  - "The ui-shard probe visits /cockpit/graphs/topology, the activity chart and the observatory kiosk's p5 scenes (share/ui/observatory-kiosk.js, ADR 0160) and fails when any renders an empty canvas or stage"
+  - "After the pages deploy that carries this slice, a browser probe of the published site and of the published /ui and /cockpit snapshot finds every page of the route inventory served with the frame mark and its visuals drawn, and this issue's evidence (covers: published_copy_probe) records the result with the deployed commit"
+  - "The first commit that adds this issue's case also changes criteria one-library-per-job and derived-and-proven of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as their ref, so the criteria stop being proven by majordomus intent explain of itself"
 validation:
   - "majordomus design kit --check"
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 26_ci_wiring"
+  - "bash test/run.sh 3602_every_route_is_probed_by_exactly_one_shard"
+  - "bash test/run.sh <n>_every_component_and_module_is_driven (n from scripts/case-numbers next)"
+  - "scripts/interaction-probe"
   - "majordomus plan validate"
 evidence_required:
   - "kit_gate_case"
+  - "published_copy_probe"
 created_at: 2026-11-07
-updated_at: 2026-11-07
+updated_at: 2026-11-17

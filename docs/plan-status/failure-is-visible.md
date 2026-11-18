@@ -61,6 +61,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/doctor.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4323` | shares test/cases/4323_a_full_disk_is_one_finding.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/doctor.sh with I4584; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/doctor.sh with I4595; they may not run concurrently |

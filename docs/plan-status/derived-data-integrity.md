@@ -56,8 +56,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares scripts/ci/derived-attributes-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares .gitattributes with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3775` | shares test/cases/3725_a_hand_written_page_is_never_resolved_as_derived.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4513; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I4512` | shares .ai/repo/ci/gates.yaml with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4586; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4512` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |

@@ -1,0 +1,54 @@
+id: I4653
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#every-visual-is-a-simulator"
+  - "one-kit-on-every-surface#every-entity-linked"
+title: "Every chart, graph and scene is a driven model in one maximise and deep-link wrapper, and project.viz-ergonomics and project.everything-interlinked ship as blocking rules with their gates"
+slug: every-visual-is-a-simulator
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S13 of milestone one-frame-one-kit-one-library-per-job, taken after S1 and S2 (I4535, I4536) and before S7 and S8 (I4541, I4542), which mount every graph and chart through it. Add one wrapper, share/design/js/visual, that every chart, graph and scene on /ui, /cockpit and the site is mounted through. It opens the visual to the full viewport and back (a Flowbite modal driven through I4536's instance API), closes it with Escape and returns focus to the control that opened it, gives it a deep link (its fragment address, ADR 0152's #diagram-<name> form), and holds the visual's driven state (its parameters, time, filters and selection) in the URL, so a reload or a shared link restores it. It is grown from the full-viewport and Escape handling site/diagrams.js already has (toggleFullscreen, line 255), which moves into the wrapper, rather than written a second time. A visual that is not driven declares itself static with its reason in its definition, and the wrapper shows the reason. Ship the rules project.viz-ergonomics and project.everything-interlinked under .ai/repo/rules/project, class: blocking, after the owner's template rules of those names, each tested by a gate that runs in scripts/ci/run-plan (the local verify, its gates declared in .ai/repo/ci/gates.yaml), validate.yml and the pre-push hook: viz-ergonomics refuses a chart, graph or scene mounted outside the wrapper, or with neither driven state in the URL nor a static declaration with a reason; everything-interlinked refuses an entity name or a mark standing for an entity without the link I4540's resolver gives it (until I4540 lands it reads the data-entity mark). Both gates start as ratchets over a committed baseline of today's visuals and marks that only shrinks; I4541 and I4542 shrink it as they mount each visual, and I4546 holds it at zero. Add an interaction spec that, on every visual of the three surfaces, maximises it, presses Escape, changes a driven parameter, reloads the URL and finds the state restored."
+why: "The owner's rule of 2026-11-14 (Visuals, derivation and links), verbatim: 'Simulators over pictures. Every visual is a model the user drives (parameters, time, physics, filters, state in the URL) and is ergonomic and maximizable (full viewport, Escape, deep link). A static visual is declared with its reason. ... Enforced, not advised. In a supervised repository these live as blocking project rules plus gates in its verify/CI/hooks (template: project.viz-ergonomics, project.everything-interlinked).' No slice of the plan of 2026-11-07 made a visual maximisable, deep-linked or URL-stateful, and nothing enforced it; on 2026-11-17 the owner found the pages not fully working and every page looking different (review of 2026-11-17 on PR #2962, finding 2)."
+current_state: "Read on 2026-11-17 at master ae13be1: no share/design/js directory exists; site/diagrams.js alone has a full-viewport mode with Escape and a keyboard toggle (lines 163-259, 566, 704), and share/ui/observatory.js has the kiosk's own fullscreen; site/charts.js reads location.hash once (line 2267) and no chart or graph writes its state to the URL; charts are ECharts on the site, graphs Cytoscape in four integrations, scenes p5 in share/cockpit/activity.js and share/ui/observatory-kiosk.js, and three.js in share/cockpit/topology.js; .ai/repo/rules/project holds project.ui-uses-flowbite-pro and no project.viz-ergonomics or project.everything-interlinked."
+desired_state: "share/design/js/visual is the one wrapper every chart, graph and scene is mounted through; every visual on the three surfaces maximises, closes with Escape, deep-links and restores its state from the URL, or shows its static declaration and reason; project.viz-ergonomics and project.everything-interlinked are blocking rules whose gates refuse a violation in verify, CI and the pre-push hook."
+scope:
+  - "share/design/js/visual"
+  - "site/diagrams.js"
+  - ".ai/repo/rules/project/viz-ergonomics.v1.md"
+  - ".ai/repo/rules/project/everything-interlinked.v1.md"
+  - ".ai/repo/policy.yaml"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/lib/interaction-specs"
+  - "scripts/interaction-probe"
+  - ".ai/repo/project/issues/I4653.yaml"
+  - "test/cases"
+  - "test/fixtures"
+non_scope:
+  - "Mounting each chart and graph onto the wrapper: I4541 and I4542 do it as they rewrite each"
+  - "The link resolver itself (I4540)"
+  - "The handbook's visuals: a single-file claude.ai Artifact with no served tree (ADR 0149), exempt from the wrapper with that reason in the rule's exemption list"
+depends_on:
+  - "I4535"
+  - "I4536"
+acceptance_criteria:
+  - "share/design/js/visual is the one wrapper: this issue's case finds every ECharts, graph and p5 construction under share/design/js mounted through it and fails on a planted chart mounted outside it"
+  - "The interaction probe, on every chart, graph and scene page of the three surfaces, opens each visual to the full viewport, presses Escape and finds it closed with focus on its opener, changes a driven parameter, reloads the URL and finds the parameter restored, and opens the deep link in a new page and finds the visual maximised in that state"
+  - "A planted visual with neither driven state in the URL nor a static declaration with a reason fails the viz-ergonomics gate, and a static declaration shows its reason on the page"
+  - "A planted entity name or entity mark without its resolver link fails the everything-interlinked gate"
+  - "project.viz-ergonomics and project.everything-interlinked exist under .ai/repo/rules/project with status: active and class: blocking, each naming its gate under x-majordomus tests, and majordomus rules lists both as effective"
+  - "validate.yml, the pre-push hook and scripts/ci/run-plan run both gates, declared in .ai/repo/ci/gates.yaml; their baselines equal the tree's count when this slice lands and a commit that raises a baseline fails this issue's case"
+  - "site/diagrams.js keeps no full-viewport or Escape code of its own: it is mounted through the wrapper, and its interaction spec still passes"
+  - "The first commit that adds this issue's case also changes criterion every-visual-is-a-simulator of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as its ref, so the criterion stops being proven by majordomus intent explain of itself"
+validation:
+  - "scripts/interaction-probe"
+  - "node scripts/ui audit"
+  - "majordomus rules"
+  - "bash test/run.sh <n>_every_visual_is_a_driven_model_in_one_wrapper (n from scripts/case-numbers next)"
+  - "majordomus plan validate"
+evidence_required:
+  - "visual_wrapper_probe"
+  - "viz_rules_blocking_gate"
+created_at: 2026-11-17
+updated_at: 2026-11-17

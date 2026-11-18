@@ -47,12 +47,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3973` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares apps/majordomus-cli/src/commit/verdict.rs with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4264; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares .ai/repo/project/issues/I3974.yaml with I4337; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4362; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3974` | shares test/cases/99_adr.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4350` | shares apps/majordomus-cli/src/plan.rs with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4350` | shares apps/majordomus-cli/src/plan.rs with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares lib/adr.sh with I4362; they may not run concurrently |
@@ -70,8 +72,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4357` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares .github/workflows/validate.yml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares .github/workflows/validate.yml with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares .githooks/pre-push with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares lib/plan.sh with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares lib/plan.sh with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I4362` | shares lib/adr.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4362` | shares test/cases/271_adr_allocation.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4568` | shares scripts/ci/commit-policy with I4605; they may not run concurrently |

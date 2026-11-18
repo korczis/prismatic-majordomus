@@ -2,43 +2,63 @@ id: I4541
 milestone: one-frame-one-kit-one-library-per-job
 serves:
   - "one-kit-on-every-surface#one-library-per-job"
-title: "One Cytoscape module draws every graph on every surface, and the duplicated PR and milestone dependency graphs become one each"
-slug: one-cytoscape-module
+  - "one-kit-on-every-surface#every-entity-linked"
+title: "Graphs are ECharts graph series and bespoke layouts are D3, through one share/design/js/graph module, the duplicated PR and milestone dependency graphs become one each, and Cytoscape leaves"
+slug: one-graph-module
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S7 of milestone one-frame-one-kit-one-library-per-job. Add share/design/js/graph: one Cytoscape 3.33.1 integration with token styling, the core theme observer, one keyboard model and a Flowbite drawer for a node's details. share/cockpit/graph.js, share/cockpit/trains.js, the graph part of share/ui/ui.js and site/graph.js become callers of it. The PR dependency graph (/ui/prs and /cockpit/trains) and the milestone dependency graph (/ui/roadmap, /roadmap/ and the Mermaid of /plan/ and /dag/) are drawn once each. Decision recorded here by measurement: three.js stays for the topology page when its 3D view is measured to show what a Cytoscape layout cannot, otherwise the topology page moves to Cytoscape and three.js leaves package.json; the measurement and the verdict are recorded in this issue's evidence."
-why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Four Cytoscape integrations carry four stylings, four theme observers and four keyboard handlings, and two graphs are drawn twice."
-current_state: "Measured on master on 2026-11-07: Cytoscape 3.33.1 (package.json) in share/cockpit/graph.js (1310 lines), share/cockpit/trains.js (1259 lines), share/ui/ui.js (window.cytoscape at lines 572 and 838 of 1150) and site/graph.js (755 lines); PR dependencies on /ui/prs and /cockpit/trains; milestone dependencies on /ui/roadmap, Cytoscape on /roadmap/ and Mermaid on /plan/ and /dag/; mesh topology on /ui/mesh (Cytoscape) and /cockpit/graphs/topology (three.js 0.185.1, share/cockpit/topology.js)."
-desired_state: "share/design/js/graph is the one Cytoscape integration; each graph kind has one view; the three.js verdict is recorded with its measurement."
+objective: "Slice S7 of milestone one-frame-one-kit-one-library-per-job, re-scoped on 2026-11-17 by the owner's rule of 2026-11-14 (Visuals, derivation and links): 'ECharts for charts and graphs, D3 for bespoke layouts and force physics ... no Chart.js or Cytoscape'. Add share/design/js/graph: it draws a graph as an ECharts graph series, constructed through I4542's chart module (this module gives it graph data, token styling through the core, one keyboard model and a Flowbite drawer for a node's details), and draws the bespoke layouts, the trains view and the milestone dependency DAG, with D3 (d3-force for force physics), vendored from npm at the version package.json pins. Every graph is mounted through I4653's visual wrapper, and every node and edge that stands for an entity takes its href from I4540's resolver. share/cockpit/graph.js, share/cockpit/trains.js, the graph part of share/ui/ui.js and site/graph.js become callers of it; Cytoscape leaves package.json, share/cockpit/vendor and share/ui/vendor. This is a rewrite and not a deduplication: the two Cockpit Cytoscape setups are about 3 % similar (peer spike of 2026-11-17). The PR dependency graph (/ui/prs and /cockpit/trains) and the milestone dependency graph (/ui/roadmap, /roadmap/ and the Mermaid of /plan/ and /dag/) are drawn once each. three.js is measured against ECharts and D3 for the mesh topology page (/cockpit/graphs/topology): on the same data, the frame time, the node count drawn and the reading each view gives are recorded; three.js stays only when the record names a reading the D3 view cannot give, and otherwise the topology page moves to D3 and three leaves package.json. It absorbs I2656 (the diagram viewer serves the Cockpit and /ui, milestone surfaces-never-disagree): a Mermaid diagram on /ui and /cockpit is drawn through the site's one diagram viewer (site/diagrams.js, moved under share/design/js), and I2656 is closed by this slice naming its delivering commit. It builds on I4494's bounded neighbourhood, on which it depends."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The owner's rule of 2026-11-14 names ECharts for graphs, D3 for bespoke layouts and force physics, and rejects Cytoscape. Four Cytoscape integrations carry four stylings, four theme observers and four keyboard handlings, and two graphs are drawn twice."
+current_state: "Measured on master on 2026-11-07: Cytoscape 3.33.1 (package.json) in share/cockpit/graph.js (1310 lines), share/cockpit/trains.js (1259 lines), share/ui/ui.js (window.cytoscape at lines 572 and 838 of 1150) and site/graph.js (755 lines); PR dependencies on /ui/prs and /cockpit/trains; milestone dependencies on /ui/roadmap, Cytoscape on /roadmap/ and Mermaid on /plan/ and /dag/; mesh topology on /ui/mesh (Cytoscape) and /cockpit/graphs/topology (three.js 0.185.1, share/cockpit/topology.js). Read on 2026-11-17: cytoscape is vendored into both share/cockpit/vendor and share/ui/vendor; D3 is not in package.json; I2656 and I4494 read READY."
+desired_state: "share/design/js/graph is the one graph integration, on ECharts graph series and D3; each graph kind has one view; no Cytoscape remains in package.json or the tree; every graph is mounted through the visual wrapper and every entity mark links to its page; the three.js verdict is recorded with its measurement; I2656 is closed by this slice."
 scope:
   - "share/design/js/graph"
+  - "share/design/js/diagram"
   - "share/cockpit/graph.js"
   - "share/cockpit/trains.js"
   - "share/cockpit/topology.js"
+  - "share/cockpit/vendor"
   - "share/ui/ui.js"
+  - "share/ui/vendor"
   - "site/graph.js"
+  - "site/diagrams.js"
+  - "package.json"
+  - "scripts/cockpit-assets"
+  - "scripts/site-build"
   - ".ai/repo/project/issues/I4541.yaml"
+  - ".ai/repo/project/issues/I2656.yaml"
+  - "test/cases"
 non_scope:
   - "New graph kinds"
-  - "The chart module (I4542)"
+  - "Constructing ECharts: the chart module of I4542 does; this module gives it graph series"
+  - "The kiosk's p5 scenes (I4542)"
 depends_on:
   - "I4535"
   - "I4536"
+  - "I4540"
+  - "I4542"
+  - "I4653"
+  - "I4494"
 acceptance_criteria:
-  - "window.cytoscape is constructed only in share/design/js/graph; grep finds no other call"
-  - "The interaction probe drives keyboard navigation, theme switch and the details drawer on every graph page of the three surfaces"
-  - "The PR dependency graph and the milestone dependency graph each render from one module and one data source"
-  - "This issue's evidence records the topology measurement and the three.js verdict"
-  - "The one graph module draws the bounded neighbourhood of I4494 (no page hands the browser more nodes than a stated bound, READY in milestone a-screen-is-fast-bounded-and-says-why); whichever lands second builds on the other, recorded in this issue's evidence"
-  - "A milestone dependency diagram that moves from Mermaid to Cytoscape on /plan/ or /dag/ keeps its ADR 0152 addresses (#diagram-<name> and #diagram-<name>:<node>) or scripts/ci/link-check fails every link that used them; this issue's evidence says which"
-  - "The work of I2656 (the diagram viewer serves the Cockpit and /ui, READY) is absorbed here or its issue depends on this one, recorded in this issue's evidence"
+  - "No cytoscape remains: grep finds no cytoscape( call and no import or require of cytoscape in the tree, and package.json, share/cockpit/vendor and share/ui/vendor carry none"
+  - "ECharts graph series and D3 are constructed only through share/design/js: the library baseline of I4534's ratchet case holds no graph construction after this slice"
+  - "The interaction probe drives keyboard navigation, theme switch, the details drawer, maximise, Escape and the URL-state reload on every graph page of the three surfaces"
+  - "The PR dependency graph and the milestone dependency graph each render from one module and one data source, which this issue's case reads: one data source and one module call per graph kind on every page that draws it"
+  - "Every node and edge that stands for an entity carries the href I4540's resolver gives it, read by case 1091"
+  - "This issue's evidence (covers: threejs_topology_measurement) records, for /cockpit/graphs/topology on the same data, the frame time, the node count drawn and the reading of the three.js and the D3 views; package.json carries three only when that record names a reading the D3 view cannot give"
+  - "Every graph draws I4494's bounded neighbourhood: no page hands the browser more nodes than I4494's stated bound, read by I4494's validation on this slice's tree"
+  - "A milestone dependency diagram moved from Mermaid onto share/design/js on /plan/ or /dag/ keeps its ADR 0152 addresses (#diagram-<name> and #diagram-<name>:<node>): scripts/ci/link-check passes on every link that used them"
+  - "I2656's acceptance criteria hold on this slice's tree, and I2656 is closed naming this slice's delivering commit"
 validation:
   - "scripts/interaction-probe"
   - "node scripts/ui audit"
+  - "scripts/ci/link-check"
+  - "bash test/run.sh 1091_no_link_on_the_ui_is_dead"
+  - "bash test/run.sh <n>_one_graph_module_draws_every_graph (n from scripts/case-numbers next)"
   - "majordomus plan validate"
 evidence_required:
   - "one_graph_module_probe"
   - "threejs_topology_measurement"
 created_at: 2026-11-07
-updated_at: 2026-11-07
+updated_at: 2026-11-17

@@ -2,47 +2,67 @@ id: I4535
 milestone: one-frame-one-kit-one-library-per-job
 serves:
   - "one-kit-on-every-surface#one-client-core"
-title: "One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone"
+title: "One share/design/js/core module set, served from its own asset root, holds every shared client helper, and every byte copy and hand-kept near-duplicate is gone"
 slug: one-client-core-module
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S1 of milestone one-frame-one-kit-one-library-per-job. Add share/design/js/core as one ES module set: tokens (a --mj-* token resolved to a colour), theme (one observer of the light and dark switch), motion (prefers-reduced-motion), lazy (load a vendored library once, on first need), fragment (fetch and swap an HTML fragment), poll (bounded polling with backoff and a stop) and socket (the live socket client). share/ui, share/cockpit and site import it; every copy is deleted; scripts/cockpit-assets and scripts/site-build ship it; a case fails on a planted second copy of any helper."
-why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). ADR 0135 says shared code moves to a module both surfaces import and is not duplicated; the helpers are copied up to eight times."
-current_state: "Measured on master on 2026-11-07: the token-to-hex helper has 8 copies, the theme observer 6, reduced motion 6, the lazy loader 7, fragment fetch 4, polling 7. Byte copies: site/nav.js = share/ui/nav.js = share/cockpit/nav.js (cmp), share/ui/theme.js = share/cockpit/theme.js, share/ui/socket.js = share/cockpit/socket.js. No share/design/js directory exists."
-desired_state: "share/design/js/core/{tokens,theme,motion,lazy,fragment,poll,socket}.js exist once; share/ui/ui.js, share/cockpit/*.js and site/*.js import them; no helper body exists twice in the three trees; the case that guards it runs in the suite."
+objective: "Slice S1 of milestone one-frame-one-kit-one-library-per-job, landed as ordered pull requests, one step each. Step 0, the asset root: serve share/design as an asset root of its own (Assets::under(share, 'design', '/design/assets/'), routed in cockpit/mod.rs and ui/mod.rs) and extend rewrite_imports to version /design/assets specifiers, because cockpit/assets.rs resolve_relative refuses a '..' past the surface root and canonicalize refuses a symlink, so neither /ui nor /cockpit can import share/design/js/core today; the cases of this step join the ratchet gate I4534 started. Step 1, socket: socket.js moves to the core; executions, monitor, peers, live.js and SOCKET_LIB are repointed, cases 100_execution_plane, 3382, 3383, 3386 and 3409 are repathed, both copies and the socket line of scripts/cockpit-assets COPIES are deleted, which also ends one tab loading two socket.js module instances. Step 2, the bar: nav.js and theme.js move to the core and load as type=module on all three surfaces at once (BAR_SCRIPTS of ui/shell.rs and cockpit/view.rs to the /design/assets URLs; scripts/site-build, site/templates/base.html, scripts/site-check and scripts/lib/site-pages.awk follow), and the six copies and the COPIES machinery are deleted; rule project.the-ui-wears-the-sites-navbar, whose required behaviour 3 asks for those byte copies, is amended in the same pull request to name share/design/js/core as the one served source. Step 3, the near-duplicates, one consumer per pull request: tokens.js (declared, resolve, hex, token, mix, measure, motionMs, motionAllowed, palette), load.js, clipboard.js and tip.js; clipboard.js is the home of I3793's one copy control, moved and not reimplemented. It absorbs #1178 (the Observatory hears executions as they happen), whose socket client lands on the core in step 1, as I4534's verdict proposes. The two Cytoscape setups are not deduplicated here: they are about 3 % similar and are rewritten onto ECharts and D3 by I4541."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). ADR 0135 says shared code moves to a module both surfaces import and is not duplicated, and on 2026-11-17 the owner found code being duplicated instead of the existing mechanisms being reused or extended ('zacina se duplikovat kod misto toho aby byly vyuzity a/nebo rozsireny mechanismy')."
+current_state: "Read at master ae13be1 on 2026-11-17 by a read-only spike of a peer session. Byte-copy groups written by scripts/cockpit-assets COPIES (lines 41-45) and held by its --check: nav.js and theme.js (site/ to share/ui and share/cockpit, three copies each), socket.js (share/cockpit to share/ui); cytoscape and p5 are copied into share/cockpit/vendor and share/ui/vendor, so each library is served at two URLs. Near-duplicates, the real targets: token to hex through a canvas pixel, 5 copies (site/charts.js, site/graph.js, share/ui/ui.js, share/ui/observatory.js, the share/cockpit/cockpit.js palette); isDark, 3 (site/charts.js, site/diagrams.js, site/graph.js); motionMs, 2; a lazy script loader, 8 (share/cockpit/cockpit.js twice, share/ui/ui.js, site/graph.js, site/charts.js, site/diagrams.js, share/ui/observatory.js, share/ui/observatory-kiosk.js); clipboard, 3 (site/diagrams.js, site/kit.js, share/ui/ui.js); showTip and hideTip, 2 (share/cockpit/graph.js, share/ui/ui.js). apps/majordomus-cli/src/cockpit/assets.rs resolve_relative (line 348) refuses a '..' past the surface root and canonicalize refuses a symlink, so share/design is reachable from neither surface. One tab may load two socket.js module instances: live.js imports ./socket.js while /ui borrows SOCKET_LIB from /cockpit/assets. nav.js and theme.js are classic scripts (cockpit/view.rs:84-88, ui/shell.rs:100-105). No share/design/js directory exists."
+desired_state: "share/design/js/core/{socket,nav,theme,tokens,load,clipboard,tip}.js exist once and are served from /design/assets/ under a digest that covers their transitive imports, and the site build fingerprints the same graph; share/ui, share/cockpit and site import them and keep no byte copy and no hand-kept near-duplicate; scripts/cockpit-assets has no COPIES; the cases of this slice run in the suite and in the ratchet gate."
 scope:
-  - "share/design/js/core"
+  - "share/design/js"
   - "share/ui"
   - "share/cockpit"
   - "site/nav.js"
+  - "site/theme.js"
   - "site/kit.js"
   - "site/search.js"
   - "site/graph.js"
   - "site/charts.js"
+  - "site/diagrams.js"
+  - "site/templates/base.html"
   - "scripts/cockpit-assets"
   - "scripts/site-build"
-  - ".ai/repo/project/issues/I4535.yaml"
+  - "scripts/site-check"
+  - "scripts/lib/site-pages.awk"
   - "apps/majordomus-cli/src/cockpit/assets.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md"
+  - ".ai/repo/project/issues/I4535.yaml"
   - "test/cases"
 non_scope:
   - "Flowbite JS (I4536)"
-  - "The Cytoscape, ECharts and Alpine modules (I4541, I4542, I4543)"
+  - "The chart, graph, scene and Alpine modules (I4541, I4542, I4543) and the visual wrapper (I4653)"
+  - "Deduplicating the Cytoscape setups: they are rewritten by I4541"
 depends_on:
   - "I4534"
   - "I3794"
 acceptance_criteria:
-  - "A case (numbered by scripts/case-numbers next) fails when a planted copy of any core helper is added under share/ui, share/cockpit or site, and passes on the tree"
-  - "The /ui, /cockpit and site pages load share/design/js/core with no CSP violation in the browser console, read by the interaction probe"
-  - "No helper body is kept by hand in two places: a file that exists under share/ui, share/cockpit or site as a byte copy of another is written by scripts/cockpit-assets or scripts/site-build and held by its --check, as rule project.the-ui-wears-the-sites-navbar requires of nav.js and theme.js (scripts/cockpit-assets:41-44); a copy no --check holds fails the case"
-  - "share/design/js/core is served under a digested URL on /ui and /cockpit whose relative imports are rewritten as assets.rs:275-283 rewrites them within share/cockpit, and the site build fingerprints the same graph; a changed core file is a changed URL for every importer on all three surfaces"
-  - "The site's and the bar's classic scripts (nav.js, theme.js, loaded without type=module by cockpit/view.rs:84-88 and ui/shell.rs:100-105) either stay classic or move to modules on all three surfaces in the same change, and scripts/ui navbar still passes"
+  - "Step 0 lands first: /design/assets/ serves share/design on /ui and /cockpit, and rewrite_imports versions its specifiers; a case (C7) finds that a changed core file changes the digested URL of every importer across the /design, /ui and /cockpit prefixes, and that the site build fingerprints the same graph"
+  - "A case (C1) finds no two served scripts with one blob; it replaces the copy check of scripts/cockpit-assets --check, which is deleted with COPIES in step 2"
+  - "A case (C2) finds that every asset a page names exists, and a case (C3) that every static import of every served module resolves"
+  - "A case (C4) fails when a planted copy of any core helper (socket, nav, theme, tokens, load, clipboard, tip) is added under share/ui, share/cockpit or site, and passes on the tree"
+  - "The browser cases 3382, 3383, 3386 and 3409 and the nav, theme, copy, chart and graph interaction specs pass on /ui, /cockpit and the site with no CSP violation in the console (C5)"
+  - "A case (C6) finds that the /ui and /cockpit Content-Security-Policy still admits exactly one inline script"
+  - "design kit's S3 finds one nav carrier (C8), and C1, C3, C4 and C8 run inside the design kit --check ratchet I4534 started"
+  - "Step 2 moves nav.js and theme.js to modules on all three surfaces in one pull request, scripts/ui navbar still passes, and rule project.the-ui-wears-the-sites-navbar names share/design/js/core as the served source in the same pull request"
+  - "One tab loads one socket.js module instance, read by case 3382 or its successor"
   - "The first commit that adds this issue's case also changes criterion one-client-core of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as its ref, so the criterion stops being proven by majordomus intent explain of itself"
 validation:
   - "majordomus plan validate"
+  - "majordomus design kit --check"
   - "node scripts/ui audit"
+  - "scripts/ui navbar"
   - "scripts/interaction-probe"
+  - "bash test/run.sh 100_execution_plane 3382_the_monitor_is_pushed 3383_the_peers_screen_follows_the_blackboard 3386_the_cockpit_peers_page_follows_the_blackboard 3409_the_cockpit_reconnects_within_a_bound"
+  - "bash test/run.sh <n>_a_shared_client_helper_lives_once_in_the_core (C1 to C8, n from scripts/case-numbers next)"
 evidence_required:
+  - "design_asset_root"
   - "one_client_core_case"
 created_at: 2026-11-07
-updated_at: 2026-11-07
+updated_at: 2026-11-17

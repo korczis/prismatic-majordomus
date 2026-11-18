@@ -1,13 +1,14 @@
 id: one-kit-on-every-surface
 title: "Every page of /ui, /cockpit and majordomus.dev is drawn from one component kit on the Flowbite Pro shell, with one library per job, every entity linked and every page readable by a model"
-statement: "Every page of /ui, /cockpit and majordomus.dev is drawn from one component kit on the Flowbite Pro shell, with one library per job. Every entity it names is a link to its canonical page, and every page is readable by a person and by a model. The owner's order of 2026-11-07 13:30Z, verbatim: 'cele http://127.0.0.1:8741/ui potrebuje reintegraci, review vsech rotes, components, max reuse, max flowbite pro best practices + llm, same for alpine.js, cytoscape.js, chart.js, p5.js, apache ec charts, reuse, dry with cokcpit, ui, pages, all dericed, infered, tested, deployed, dynamic, robust ... advanced tables, advanced componets, everything linked'."
+statement: "Every page of /ui, /cockpit and majordomus.dev is drawn from one component kit on the Flowbite Pro shell, with one library per job. Every visual on it is a model its reader drives, every entity and every mark it names is a link to its canonical page, and every page is readable by a person and by a model. The owner's order of 2026-11-07 13:30Z, verbatim: 'cele http://127.0.0.1:8741/ui potrebuje reintegraci, review vsech rotes, components, max reuse, max flowbite pro best practices + llm, same for alpine.js, cytoscape.js, chart.js, p5.js, apache ec charts, reuse, dry with cokcpit, ui, pages, all dericed, infered, tested, deployed, dynamic, robust ... advanced tables, advanced componets, everything linked'. The owner's rule of 2026-11-14 (Visuals, derivation and links), verbatim: 'Simulators over pictures. Every visual is a model the user drives (parameters, time, physics, filters, state in the URL) and is ergonomic and maximizable (full viewport, Escape, deep link). A static visual is declared with its reason. ... Best library, one layer. ECharts for charts and graphs, D3 for bespoke layouts and force physics, p5 for generative art; no Chart.js or Cytoscape; one component layer per project. Everything derived, generic, inferred; everything interlinked. Nothing hand-typed that data can give; every mark and every name leads to its page. Enforced, not advised. In a supervised repository these live as blocking project rules plus gates in its verify/CI/hooks (template: project.viz-ergonomics, project.everything-interlinked).' The owner's words of 2026-11-17, verbatim: 'kazda stranka zrovnana jinak, zadny DRY, to je chyba ... nedodrzuje to .ai/ ... ignoruje to flowbite pro ... kazda stranka vypada jinak ... shell neni constistentni ... neni plne funkcni ... nema 100 % coveratge ... ui/ux vypada otresne ... nakupene/nahromazene ukoly v .ai/ jsou nedotazene ... hromadi se issues/mrs/prs/intents ... zacina se duplikovat kod misto toho aby byly vyuzity a/nebo rozsireny mechanismy pro -> dynamic/generic/derived/infered'."
 invariants:
   - "A library a slice adopts is vendored from npm at the version package.json pins and served from the tree; no slice adds a CDN load, and the swagger page's pinned unpkg load stays the one accepted exception (apps/majordomus-cli/src/http/swagger.rs)"
   - "No slice weakens the /ui and /cockpit Content-Security-Policy (crate::cockpit::csp): no unsafe-eval, no script-src unsafe-inline, no new inline script and no remote origin is admitted to make a library run; style-src keeps the unsafe-inline it already carries for drawing libraries and no slice widens it"
   - "Every sentence, figure and badge is a projection of an existing capability; a component draws data and never decides it"
   - "No Flowbite Pro source file is published verbatim; Pro markup is adapted onto the --mj-* tokens (ADR 0230)"
+  - "A gate lands before the work it judges, as a ratchet over a committed baseline that only shrinks, and the last slice holds it at zero"
 non_goals:
-  - "Chart.js: it is not adopted; ECharts is the one chart library (ADR 0152)"
+  - "Chart.js: rejected by the owner's rule of 2026-11-14 (Visuals, derivation and links), 'no Chart.js or Cytoscape'; ECharts is the one chart and graph library"
   - "A new screen family or a new route: this intent makes the existing pages one kit"
   - "A single-page application or client-side routing: pages stay server-rendered and are enhanced on the client"
 milestones:
@@ -26,11 +27,11 @@ satisfaction:
     evidence: command
     ref: "majordomus design kit --check"
   - id: one-library-per-job
-    criterion: "Charts are ECharts, graphs are Cytoscape, scenes are p5 and behaviour is Alpine (the CSP build, Alpine.data components), each imported through one shared ESM module per job that all three surfaces load; Chart.js is not adopted (planned proof: a test/cases case that fails on a second import of any of the four libraries, written by I4546 once I4541, I4542 and I4543 have landed)"
+    criterion: "Charts and graphs are ECharts (a graph is an ECharts graph series), bespoke layouts and force physics (the trains view, the milestone DAG, the mesh topology) are D3, generative art (the observatory kiosk's scenes) is p5, and behaviour is Alpine (the CSP build, Alpine.data components), each constructed through one shared ESM module per job under share/design/js that all three surfaces load; Cytoscape and Chart.js are absent from package.json and the tree, as the owner's rule of 2026-11-14 (Visuals, derivation and links) requires; three.js stays only where I4541's recorded measurement names a reading the D3 view cannot give (planned proof: a case that fails on a construction of ECharts, D3, p5 or Alpine outside share/design/js and on any Cytoscape or Chart.js import, started as a ratchet by I4534 and held at zero by I4546)"
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
   - id: one-client-core
-    criterion: "One share/design/js/core module holds the token resolver, the theme observer, reduced motion, the lazy loader, fragment fetch, bounded polling and the socket client, and no byte copy of any of them remains under share/ui, share/cockpit or site (planned proof: a test/cases case that fails on a duplicated helper, to be written by I4535)"
+    criterion: "One share/design/js/core module set, served from its own asset root, holds the socket client, the bar's nav and theme scripts, the token resolver (with reduced motion and the palette), the lazy loader, the copy control and the tooltip, and no byte copy or hand-kept near-duplicate of any of them remains under share/ui, share/cockpit or site (planned proof: a test/cases case that fails on a duplicated helper, to be written by I4535)"
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
   - id: advanced-tables
@@ -38,7 +39,11 @@ satisfaction:
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
   - id: every-entity-linked
-    criterion: "One link resolver maps every entity id (issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree, release) to its canonical page on each surface, and case 1091 is extended so that no id renders as plain text (planned proof: test/cases/1091_no_link_on_the_ui_is_dead.sh, extended by I4540)"
+    criterion: "One link resolver maps every entity id (issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree, release) to its canonical page on each surface, case 1091 is extended so that no id renders as plain text, and every chart and graph mark that stands for an entity (a node, an edge, a bar, a slice, a point) leads to that entity's page, as the owner's rule of 2026-11-14 requires ('every mark and every name leads to its page'); project.everything-interlinked is the blocking rule that holds it (planned proof: test/cases/1091_no_link_on_the_ui_is_dead.sh, extended by I4540, and the everything-interlinked gate of I4653)"
+    evidence: command
+    ref: "majordomus intent explain one-kit-on-every-surface"
+  - id: every-visual-is-a-simulator
+    criterion: "Every chart, graph and scene on the three surfaces is mounted through one wrapper under share/design/js: it opens to the full viewport, closes with Escape and returns focus, is reached by a deep link, and holds its driven state (parameters, time, filters, selection) in the URL so a reload restores it; a visual that is not driven is declared static with its reason; and project.viz-ergonomics and project.everything-interlinked are blocking rules whose gates run in verify, CI and the pre-push hook, as the owner's rule of 2026-11-14 (Visuals, derivation and links) requires: 'Simulators over pictures ... Enforced, not advised' (planned by I4653; proof: its probe maximises every visual, presses Escape and reloads its URL state)"
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
   - id: readable-by-a-model
@@ -46,8 +51,8 @@ satisfaction:
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
   - id: derived-and-proven
-    criterion: "The /ui SCREENS list is derived from the registry as the Cockpit's sidebar is, the ui-shard and interaction probes cover every kit component including the three.js and p5 pages, and the deploy is verified in a browser (planned by I4538 and I4546)"
+    criterion: "The /ui SCREENS list is derived from the router's route table as the Cockpit's sidebar is derived from its own, every route of the route inventory (I4534) is visited by a ui-shard probe and every kit component and share/design/js module is driven by an interaction spec or a case, with a case that fails on a route, component or module none covers, and the published copy (the site and the /ui and /cockpit snapshot) serves every page with the frame mark, read by a browser probe after the deploy (planned by I4538 and I4546)"
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
 created_at: 2026-11-07
-updated_at: 2026-11-07
+updated_at: 2026-11-17

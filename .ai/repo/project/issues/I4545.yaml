@@ -16,6 +16,7 @@ scope:
   - "handbook/build.py"
   - "package.json"
   - ".ai/repo/project/issues/I4545.yaml"
+  - "test/cases"
 non_scope:
   - "The handbook's content"
 depends_on:
@@ -23,10 +24,14 @@ depends_on:
 acceptance_criteria:
   - "The handbook pages render their charts, Mermaid diagrams and highlighted code in a browser with the network to CDNs blocked"
   - "The handbook's libraries are the versions package.json pins (ECharts 6.0.0, Mermaid 11.12.0), read by a handbook test from the built file target/handbook/cs/prirucka-majordomusu.html"
-  - "The built handbook stays within the Artifact's 16 MB page limit and renders its charts, diagrams and code in the published artifact"
+  - "The built handbook stays within the Artifact's 16 MB page limit"
+  - "A case (numbered by scripts/case-numbers next) opens the built file target/handbook/cs/prirucka-majordomusu.html in a headless browser with every request outside the file refused and finds every chart canvas, every Mermaid diagram and every highlighted code block drawn, and fails on a planted CDN load"
+  - "This issue's evidence records the sha256 of the published artifact's page, read back with the Artifact read action after publishing, equal to the sha256 of the built file the case judged"
 validation:
   - "majordomus plan validate"
+  - "bash test/run.sh 2984_a_handbook_edition_is_built_from_the_tree"
+  - "bash test/run.sh <n>_the_handbook_draws_with_no_cdn (n from scripts/case-numbers next)"
 evidence_required:
   - "handbook_no_cdn"
 created_at: 2026-11-07
-updated_at: 2026-11-07
+updated_at: 2026-11-17

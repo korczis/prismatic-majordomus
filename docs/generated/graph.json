@@ -23147,11 +23147,11 @@
             "one-frame-one-kit-one-library-per-job"
           ],
           "non_goals": [
-            "Chart.js: it is not adopted; ECharts is the one chart library (ADR 0152)",
+            "Chart.js: rejected by the owner's rule of 2026-11-14 (Visuals, derivation and links), 'no Chart.js or Cytoscape'; ECharts is the one chart and graph library",
             "A new screen family or a new route: this intent makes the existing pages one kit",
             "A single-page application or client-side routing: pages stay server-rendered and are enhanced on the client"
           ],
-          "updated_at": "2026-11-07"
+          "updated_at": "2026-11-17"
         }
       },
       {
@@ -66852,23 +66852,26 @@
         "id": "majordomus://issue/I3793",
         "kind": "issue",
         "label": "I3793",
-        "summary": "One copy control and one tab control ship to every surface",
+        "summary": "One copy control ships to every surface",
         "route": "/cockpit/objects/issue/i3793",
         "source": ".ai/repo/project/issues/I3793.yaml",
         "facts": {
           "acceptance_criteria": [
-            "The site, /ui and the Cockpit load the same copy and tab code, byte-identical, checked by cockpit-assets --check",
-            "No Alpine copy or tab component remains on the site, and one interaction spec covers each control",
-            "A second copy or tab implementation planted on any surface fails a gate that names it"
+            "The site, /ui and the Cockpit load the same copy code, byte-identical, checked by cockpit-assets --check",
+            "No Alpine copy component remains on the site, and one interaction spec covers the copy control",
+            "A second copy implementation planted on any surface fails a gate that names it"
           ],
           "created_at": "2026-10-20",
-          "current_state": "copy-button.mjs and kit-copy.mjs specs; tabs.mjs and kit-tabs.mjs specs; no copy or tabs on /ui and the Cockpit.",
+          "current_state": "copy-button.mjs and kit-copy.mjs specs; no copy control on /ui and the Cockpit. The tab specs (tabs.mjs and kit-tabs.mjs) are I4536's.",
           "depends_on": [],
-          "desired_state": "One copy and one tab implementation, one spec each, present on the site, /ui and the Cockpit; a second implementation planted fails the design check that names it.",
+          "desired_state": "One copy implementation, one spec, present on the site, /ui and the Cockpit; a second implementation planted fails the design check that names it.",
           "evidence_required": [
-            "one_copy_and_tab_control_case"
+            "one_copy_control_case"
           ],
           "milestone": "one-kit-on-every-surface",
+          "non_scope": [
+            "The tab control: moved to I4536 on 2026-11-17 (Flowbite tabs)"
+          ],
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
@@ -66883,7 +66886,7 @@
             "scripts/ci/design-check"
           ],
           "slug": "one-copy-and-one-tab-control",
-          "updated_at": "2026-10-20",
+          "updated_at": "2026-11-17",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/cockpit-assets --check",
@@ -80692,25 +80695,37 @@
         "id": "majordomus://issue/I4534",
         "kind": "issue",
         "label": "I4534",
-        "summary": "The nine open UI pull requests are each landed, absorbed or superseded with a recorded reason before the reintegration touches their paths",
+        "summary": "The open UI pull requests and the older one-kit records each get a recorded end, the routes are inventoried, and the kit's gates start as ratchets, before the reintegration touches their paths",
         "route": "/cockpit/objects/issue/i4534",
         "source": ".ai/repo/project/issues/I4534.yaml",
         "facts": {
           "created_at": "2026-11-07",
           "depends_on": [],
           "evidence_required": [
-            "pr_triage_record"
+            "kit_ratchet_gate",
+            "pr_triage_record",
+            "older_record_disposition",
+            "route_inventory"
           ],
           "milestone": "one-frame-one-kit-one-library-per-job",
           "non_scope": [
-            "Any code change of the nine branches beyond what the landing seat's repair lane makes to land one",
-            "Merging, cancelling or rerunning anything outside the landing seat's queue"
+            "Any code change of the open branches beyond what the landing seat's repair lane makes to land one",
+            "Merging, cancelling or rerunning anything outside the landing seat's queue",
+            "Reshaping a page: the inventory's verdicts are carried out by I4538"
           ],
           "parallel_safe": false,
           "priority": "p0",
           "profile": "implementation",
           "scope": [
-            ".ai/repo/project/issues/I4534.yaml"
+            ".ai/repo/project/issues/I4534.yaml",
+            ".ai/repo/project/issues/I4334.yaml",
+            ".ai/repo/project/issues/I4377.yaml",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md",
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases",
+            "test/fixtures"
           ],
           "serves": [
             "one-kit-on-every-surface#one-page-frame",
@@ -80724,9 +80739,14 @@
             "one-kit-on-every-surface#derived-and-proven"
           ],
           "slug": "the-open-ui-pull-requests-are-triaged",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
-            "majordomus plan validate"
+            "majordomus plan validate",
+            "majordomus design kit --check",
+            "majordomus design licence",
+            "majordomus plan drift I4334",
+            "majordomus plan drift I4377",
+            "bash test/run.sh <n>_the_kit_frame_and_library_gates_ratchet (n from scripts/case-numbers next)"
           ]
         }
       },
@@ -80734,7 +80754,7 @@
         "id": "majordomus://issue/I4535",
         "kind": "issue",
         "label": "I4535",
-        "summary": "One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone",
+        "summary": "One share/design/js/core module set, served from its own asset root, holds every shared client helper, and every byte copy and hand-kept near-duplicate is gone",
         "route": "/cockpit/objects/issue/i4535",
         "source": ".ai/repo/project/issues/I4535.yaml",
         "facts": {
@@ -80744,41 +80764,48 @@
             "I3794"
           ],
           "evidence_required": [
+            "design_asset_root",
             "one_client_core_case"
           ],
           "milestone": "one-frame-one-kit-one-library-per-job",
           "non_scope": [
             "Flowbite JS (I4536)",
-            "The Cytoscape, ECharts and Alpine modules (I4541, I4542, I4543)"
+            "The chart, graph, scene and Alpine modules (I4541, I4542, I4543) and the visual wrapper (I4653)",
+            "Deduplicating the Cytoscape setups: they are rewritten by I4541"
           ],
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "share/design/js/core",
+            "share/design/js",
             "share/ui",
             "share/cockpit",
             "site/nav.js",
+            "site/theme.js",
             "site/kit.js",
             "site/search.js",
             "site/graph.js",
             "site/charts.js",
+            "site/diagrams.js",
+            "site/templates/base.html",
             "scripts/cockpit-assets",
             "scripts/site-build",
-            ".ai/repo/project/issues/I4535.yaml",
+            "scripts/site-check",
+            "scripts/lib/site-pages.awk",
             "apps/majordomus-cli/src/cockpit/assets.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+            ".ai/repo/project/issues/I4535.yaml",
             "test/cases"
           ],
           "serves": [
             "one-kit-on-every-surface#one-client-core"
           ],
           "slug": "one-client-core-module",
-          "updated_at": "2026-11-07",
-          "validation": [
-            "majordomus plan validate",
-            "node scripts/ui audit",
-            "scripts/interaction-probe"
-          ]
+          "updated_at": "2026-11-17"
         }
       },
       {
@@ -80817,13 +80844,15 @@
             "share/cockpit/nav.js",
             ".ai/repo/project/issues/I4536.yaml",
             "site/templates/partials/navbar.html",
-            "share/design/js/core"
+            "share/design/js/core",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/cockpit/view.rs"
           ],
           "serves": [
             "one-kit-on-every-surface#flowbite-js-drives-behaviour"
           ],
           "slug": "flowbite-js-drives-behaviour",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "majordomus design kit --check",
             "scripts/interaction-probe",
@@ -80873,11 +80902,12 @@
             "one-kit-on-every-surface#one-component-kit"
           ],
           "slug": "one-component-kit-two-renderers",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "bash test/run.sh 790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it 791_a_screen_is_composed_of_the_kit_and_of_real_data",
             "node scripts/ui audit",
-            "majordomus plan validate"
+            "majordomus plan validate",
+            "bash test/run.sh <n>_one_markup_contract_across_the_two_renderers (n from scripts/case-numbers next)"
           ]
         }
       },
@@ -80885,7 +80915,7 @@
         "id": "majordomus://issue/I4538",
         "kind": "issue",
         "label": "I4538",
-        "summary": "One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the registry, and the site wears the Pro navbar and footer",
+        "summary": "One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the router's route table, and the site wears the Pro navbar and footer",
         "route": "/cockpit/objects/issue/i4538",
         "source": ".ai/repo/project/issues/I4538.yaml",
         "facts": {
@@ -80900,7 +80930,7 @@
           ],
           "milestone": "one-frame-one-kit-one-library-per-job",
           "non_scope": [
-            "The swagger page, which keeps its pinned unpkg assets",
+            "The swagger page, which keeps its pinned unpkg assets and its own document (the milestone's exemption, listed in I4534's route inventory)",
             "New routes"
           ],
           "parallel_safe": false,
@@ -80923,9 +80953,10 @@
             "one-kit-on-every-surface#derived-and-proven"
           ],
           "slug": "one-pro-page-frame",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "majordomus design kit --check",
+            "majordomus design licence",
             "node scripts/ui audit",
             "majordomus plan validate"
           ]
@@ -80939,16 +80970,10 @@
         "route": "/cockpit/objects/issue/i4539",
         "source": ".ai/repo/project/issues/I4539.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The interaction probe drives search, filter, sort, pagination, column visibility, CSV export, JSON export and the row link on each of the seven lists",
-            "An exported CSV and JSON hold exactly the rows and columns shown",
-            "The issue list keeps I4495's page-in-the-URL reading (milestone a-screen-is-fast-bounded-and-says-why), on which this table builds rather than replacing it",
-            "With script disabled each list renders its server page and pagination links that reach every row the capability returns",
-            "Every /ui screen that adopts the table stays within the warm budget of the ui-checks step (100 ms p95, I4200), measured by majordomus bench on the same build before and after"
-          ],
           "created_at": "2026-11-07",
           "depends_on": [
             "I4537",
+            "I4540",
             "I4495"
           ],
           "evidence_required": [
@@ -80977,7 +81002,7 @@
             "one-kit-on-every-surface#advanced-tables"
           ],
           "slug": "one-advanced-table",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "scripts/interaction-probe",
             "node scripts/ui audit",
@@ -80989,7 +81014,7 @@
         "id": "majordomus://issue/I4540",
         "kind": "issue",
         "label": "I4540",
-        "summary": "One link resolver maps every entity id to its canonical page on each surface, and case 1091 refuses an id rendered as plain text",
+        "summary": "One link resolver maps every entity id and every chart and graph mark to its canonical page on each surface, and case 1091 refuses an id or a mark without its link",
         "route": "/cockpit/objects/issue/i4540",
         "source": ".ai/repo/project/issues/I4540.yaml",
         "facts": {
@@ -80997,7 +81022,6 @@
           "depends_on": [
             "I4537"
           ],
-          "desired_state": "One resolver table decides every entity link on all three surfaces; case 1091 fails on a planted plain-text id and on a link to a page that does not exist.",
           "evidence_required": [
             "case_1091_extended"
           ],
@@ -81015,13 +81039,14 @@
             "test/cases/1091_no_link_on_the_ui_is_dead.sh",
             ".ai/repo/project/issues/I4540.yaml",
             "site/data",
-            "apps/majordomus-cli/src/ui/view.rs"
+            "apps/majordomus-cli/src/ui/view.rs",
+            "share/design/js/links"
           ],
           "serves": [
             "one-kit-on-every-surface#every-entity-linked"
           ],
           "slug": "one-link-resolver",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "bash test/run.sh 1091_no_link_on_the_ui_is_dead",
             "majordomus plan validate",
@@ -81033,16 +81058,19 @@
         "id": "majordomus://issue/I4541",
         "kind": "issue",
         "label": "I4541",
-        "summary": "One Cytoscape module draws every graph on every surface, and the duplicated PR and milestone dependency graphs become one each",
+        "summary": "Graphs are ECharts graph series and bespoke layouts are D3, through one share/design/js/graph module, the duplicated PR and milestone dependency graphs become one each, and Cytoscape leaves",
         "route": "/cockpit/objects/issue/i4541",
         "source": ".ai/repo/project/issues/I4541.yaml",
         "facts": {
           "created_at": "2026-11-07",
           "depends_on": [
             "I4535",
-            "I4536"
+            "I4536",
+            "I4540",
+            "I4542",
+            "I4653",
+            "I4494"
           ],
-          "desired_state": "share/design/js/graph is the one Cytoscape integration; each graph kind has one view; the three.js verdict is recorded with its measurement.",
           "evidence_required": [
             "one_graph_module_probe",
             "threejs_topology_measurement"
@@ -81050,28 +81078,42 @@
           "milestone": "one-frame-one-kit-one-library-per-job",
           "non_scope": [
             "New graph kinds",
-            "The chart module (I4542)"
+            "Constructing ECharts: the chart module of I4542 does; this module gives it graph series",
+            "The kiosk's p5 scenes (I4542)"
           ],
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
             "share/design/js/graph",
+            "share/design/js/diagram",
             "share/cockpit/graph.js",
             "share/cockpit/trains.js",
             "share/cockpit/topology.js",
+            "share/cockpit/vendor",
             "share/ui/ui.js",
+            "share/ui/vendor",
             "site/graph.js",
-            ".ai/repo/project/issues/I4541.yaml"
+            "site/diagrams.js",
+            "package.json",
+            "scripts/cockpit-assets",
+            "scripts/site-build",
+            ".ai/repo/project/issues/I4541.yaml",
+            ".ai/repo/project/issues/I2656.yaml",
+            "test/cases"
           ],
           "serves": [
-            "one-kit-on-every-surface#one-library-per-job"
+            "one-kit-on-every-surface#one-library-per-job",
+            "one-kit-on-every-surface#every-entity-linked"
           ],
-          "slug": "one-cytoscape-module",
-          "updated_at": "2026-11-07",
+          "slug": "one-graph-module",
+          "updated_at": "2026-11-17",
           "validation": [
             "scripts/interaction-probe",
             "node scripts/ui audit",
+            "scripts/ci/link-check",
+            "bash test/run.sh 1091_no_link_on_the_ui_is_dead",
+            "bash test/run.sh <n>_one_graph_module_draws_every_graph (n from scripts/case-numbers next)",
             "majordomus plan validate"
           ]
         }
@@ -81080,52 +81122,62 @@
         "id": "majordomus://issue/I4542",
         "kind": "issue",
         "label": "I4542",
-        "summary": "ECharts draws the charts of /ui and the Cockpit through the site's chart module, and /ui/trends and /trends/ share it",
+        "summary": "ECharts draws every chart of the three surfaces through share/design/js/chart, the activity time series leaves p5, p5 keeps the kiosk's generative scenes through share/design/js/scene, and /ui/trends and /trends/ share one definition",
         "route": "/cockpit/objects/issue/i4542",
         "source": ".ai/repo/project/issues/I4542.yaml",
         "facts": {
           "acceptance_criteria": [
-            "echarts.init is called only in share/design/js/chart",
+            "echarts.init is called only in share/design/js/chart, outside the handbook's declared exemption",
+            "new p5 is called only in share/design/js/scene, share/cockpit/activity.js constructs no p5, and p5 is served from one vendored path",
             "/ui/trends and /trends/ render the same series from site/data/trends.json, compared by a case",
             "Every chart on the three surfaces is drawn from a table on its page (the criterion of I3792) and reads without script as that table",
             "package.json carries no chart.js",
-            "The owner's answer on Chart.js is recorded (majordomus decision) before the first commit of this slice, and the intent's non-goal follows it",
-            "The gate of I2654 (a chart is held to its table, READY) is absorbed here or depends on this one, recorded in this issue's evidence"
+            "Every chart is mounted through I4653's wrapper and every mark that stands for an entity carries the href I4540's resolver gives it (case 1091)",
+            "The interaction probe drives every kiosk scene and the activity chart and fails on an empty stage or an empty canvas",
+            "I2654's and I3792's acceptance criteria hold on this slice's tree, and both are closed naming this slice's delivering commit"
           ],
           "created_at": "2026-11-07",
           "depends_on": [
             "I4535",
-            "I4536"
+            "I4536",
+            "I4540",
+            "I4653"
           ],
-          "desired_state": "share/design/js/chart is the one ECharts integration on three surfaces; /ui/trends and /trends/ render one chart definition; every other chart is ECharts or a declared static fallback.",
           "evidence_required": [
             "one_chart_module_case"
           ],
           "milestone": "one-frame-one-kit-one-library-per-job",
-          "non_scope": [
-            "The p5 activity scene, which stays p5 (scenes are p5's job)",
-            "Editing ADR 0152: its status is the owner's act"
-          ],
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
             "share/design/js/chart",
+            "share/design/js/scene",
             "site/charts.js",
+            "share/cockpit/activity.js",
+            "share/ui/observatory-kiosk.js",
+            "share/cockpit/vendor",
+            "share/ui/vendor",
+            "scripts/cockpit-assets",
             "apps/majordomus-cli/src/ui/trends.rs",
             "apps/majordomus-cli/src/ui/view.rs",
             "apps/majordomus-cli/src/ui/dashboard.rs",
+            "site/templates/kit",
             ".ai/repo/project/issues/I4542.yaml",
+            ".ai/repo/project/issues/I2654.yaml",
+            ".ai/repo/project/issues/I3792.yaml",
             "test/cases"
           ],
           "serves": [
-            "one-kit-on-every-surface#one-library-per-job"
+            "one-kit-on-every-surface#one-library-per-job",
+            "one-kit-on-every-surface#every-entity-linked"
           ],
           "slug": "one-echarts-module",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "node scripts/ui audit",
             "scripts/interaction-probe",
+            "bash test/run.sh <n>_one_chart_module_draws_every_chart (n from scripts/case-numbers next)",
             "majordomus plan validate"
           ]
         }
@@ -81166,7 +81218,7 @@
             "one-kit-on-every-surface#one-library-per-job"
           ],
           "slug": "one-alpine-csp-build",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "scripts/interaction-probe",
             "majordomus design kit --check",
@@ -81213,11 +81265,12 @@
             "one-kit-on-every-surface#readable-by-a-model"
           ],
           "slug": "every-page-is-readable-by-a-model",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "majordomus plan validate",
             "scripts/site-build",
-            "node scripts/ui audit"
+            "node scripts/ui audit",
+            "bash test/run.sh <n>_every_route_has_its_json_alternate_and_llms_txt (n from scripts/case-numbers next)"
           ]
         }
       },
@@ -81229,11 +81282,6 @@
         "route": "/cockpit/objects/issue/i4545",
         "source": ".ai/repo/project/issues/I4545.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The handbook pages render their charts, Mermaid diagrams and highlighted code in a browser with the network to CDNs blocked",
-            "The handbook's libraries are the versions package.json pins (ECharts 6.0.0, Mermaid 11.12.0), read by a handbook test from the built file target/handbook/cs/prirucka-majordomusu.html",
-            "The built handbook stays within the Artifact's 16 MB page limit and renders its charts, diagrams and code in the published artifact"
-          ],
           "created_at": "2026-11-07",
           "depends_on": [
             "I4534"
@@ -81253,15 +81301,18 @@
             "handbook/cs",
             "handbook/build.py",
             "package.json",
-            ".ai/repo/project/issues/I4545.yaml"
+            ".ai/repo/project/issues/I4545.yaml",
+            "test/cases"
           ],
           "serves": [
             "one-kit-on-every-surface#one-library-per-job"
           ],
           "slug": "the-handbook-loads-no-cdn",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
-            "majordomus plan validate"
+            "majordomus plan validate",
+            "bash test/run.sh 2984_a_handbook_edition_is_built_from_the_tree",
+            "bash test/run.sh <n>_the_handbook_draws_with_no_cdn (n from scripts/case-numbers next)"
           ]
         }
       },
@@ -81269,7 +81320,7 @@
         "id": "majordomus://issue/I4546",
         "kind": "issue",
         "label": "I4546",
-        "summary": "The probes cover the three.js topology and p5 activity pages and every kit component, and design kit --check is a gate at zero findings",
+        "summary": "Every route, kit component and share/design/js module is covered by a probe or a case, the published copy is probed after the deploy, and every gate of the plan is held at zero",
         "route": "/cockpit/objects/issue/i4546",
         "source": ".ai/repo/project/issues/I4546.yaml",
         "facts": {
@@ -81280,15 +81331,19 @@
             "I4540",
             "I4541",
             "I4542",
-            "I4543"
+            "I4543",
+            "I4544",
+            "I4545",
+            "I4653"
           ],
-          "desired_state": "Every kit component and the topology and activity pages are visited by a probe; validate.yml fails on any design kit finding; the pages deploy is followed by a browser probe of the published site.",
           "evidence_required": [
-            "kit_gate_case"
+            "kit_gate_case",
+            "published_copy_probe"
           ],
           "milestone": "one-frame-one-kit-one-library-per-job",
           "non_scope": [
-            "The release probe of the published homepage (I4530)"
+            "The release probe of the published homepage (I4530)",
+            "Adopting the kit: I4534 does it first"
           ],
           "parallel_safe": false,
           "priority": "p1",
@@ -81296,21 +81351,27 @@
           "scope": [
             "scripts/lib/ui-audit.mjs",
             "scripts/lib/interaction-specs",
+            "scripts/lib",
             "scripts/interaction-probe",
             ".github/workflows/validate.yml",
+            ".github/workflows/pages.yml",
+            ".ai/repo/ci/gates.yaml",
             ".ai/repo/project/issues/I4546.yaml",
             "test/cases",
-            ".ai/repo/policy.yaml",
-            ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md"
+            "test/fixtures"
           ],
           "serves": [
-            "one-kit-on-every-surface#derived-and-proven"
+            "one-kit-on-every-surface#derived-and-proven",
+            "one-kit-on-every-surface#one-library-per-job"
           ],
           "slug": "the-kit-is-probed-and-gated",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "majordomus design kit --check",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 26_ci_wiring",
+            "bash test/run.sh 3602_every_route_is_probed_by_exactly_one_shard",
+            "bash test/run.sh <n>_every_component_and_module_is_driven (n from scripts/case-numbers next)",
+            "scripts/interaction-probe",
             "majordomus plan validate"
           ]
         }
@@ -82788,6 +82849,61 @@
           "slug": "a-directory-scope-names-no-missing-file",
           "validation": [
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4653",
+        "kind": "issue",
+        "label": "I4653",
+        "summary": "Every chart, graph and scene is a driven model in one maximise and deep-link wrapper, and project.viz-ergonomics and project.everything-interlinked ship as blocking rules with their gates",
+        "route": "/cockpit/objects/issue/i4653",
+        "source": ".ai/repo/project/issues/I4653.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [
+            "I4535",
+            "I4536"
+          ],
+          "evidence_required": [
+            "visual_wrapper_probe",
+            "viz_rules_blocking_gate"
+          ],
+          "milestone": "one-frame-one-kit-one-library-per-job",
+          "non_scope": [
+            "Mounting each chart and graph onto the wrapper: I4541 and I4542 do it as they rewrite each",
+            "The link resolver itself (I4540)",
+            "The handbook's visuals: a single-file claude.ai Artifact with no served tree (ADR 0149), exempt from the wrapper with that reason in the rule's exemption list"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/design/js/visual",
+            "site/diagrams.js",
+            ".ai/repo/rules/project/viz-ergonomics.v1.md",
+            ".ai/repo/rules/project/everything-interlinked.v1.md",
+            ".ai/repo/policy.yaml",
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/gates.yaml",
+            "scripts/lib/interaction-specs",
+            "scripts/interaction-probe",
+            ".ai/repo/project/issues/I4653.yaml",
+            "test/cases",
+            "test/fixtures"
+          ],
+          "serves": [
+            "one-kit-on-every-surface#every-visual-is-a-simulator",
+            "one-kit-on-every-surface#every-entity-linked"
+          ],
+          "slug": "every-visual-is-a-simulator",
+          "updated_at": "2026-11-17",
+          "validation": [
+            "scripts/interaction-probe",
+            "node scripts/ui audit",
+            "majordomus rules",
+            "bash test/run.sh <n>_every_visual_is_a_driven_model_in_one_wrapper (n from scripts/case-numbers next)",
+            "majordomus plan validate"
           ]
         }
       },
@@ -90981,33 +91097,15 @@
         "id": "majordomus://milestone/one-frame-one-kit-one-library-per-job",
         "kind": "milestone",
         "label": "one-frame-one-kit-one-library-per-job",
-        "summary": "/ui, /cockpit and the site are one page frame, one component kit, one client core and one library per job, every entity linked and every page readable by a model",
+        "summary": "/ui, /cockpit and the site are one page frame, one component kit, one client core and one library per job, every visual a driven model, every entity linked and every page readable by a model",
         "route": "/cockpit/objects/milestone/one-frame-one-kit-one-library-per-job",
         "source": ".ai/repo/project/milestones/one-frame-one-kit-one-library-per-job.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "majordomus design kit --check reports zero findings for /ui, /cockpit and the site",
-            "A case renders every kit component through the Rust El kit and the Tera kit and finds one markup contract",
-            "No helper of share/design/js/core and no library integration exists twice under share/ui, share/cockpit and site, and a case fails on a planted copy",
-            "Every list screen renders the one advanced table, and every entity id on every surface is a link (case 1091)",
-            "Every page has a rel=alternate JSON link, /ui and the site serve llms.txt, and /ui SCREENS is derived from the registry",
-            "Each of the nine open UI pull requests is landed, absorbed or superseded with its reason recorded"
-          ],
           "created_at": "2026-11-07",
           "depends_on": [],
           "evidence_required": [],
-          "non_scope": [
-            "The design book sections, copy control, tab control and shell block of milestone one-kit-on-every-surface (I3790 to I3797), which this milestone builds on and does not redo",
-            "Rustdoc's own pages and themes",
-            "Chart.js, which is not adopted (ADR 0152)"
-          ],
           "order": 551,
           "priority": "p1",
-          "risks": [
-            "Flowbite JS reads data-* attributes at load: a fragment swapped in later needs its initialiser called again, or a drawer and a dropdown in it are dead",
-            "Moving the site's inline x-data to Alpine.data under the CSP build can break the 15 templates that carry it; each must be driven by the interaction probe before the slice lands",
-            "The four Cytoscape integrations carry different keyboard and theme behaviour; unifying them can regress /cockpit/trains, the busiest graph"
-          ],
           "scope": [
             "apps/majordomus-cli/src/ui",
             "apps/majordomus-cli/src/cockpit",
@@ -91017,19 +91115,29 @@
             "share/cockpit",
             "site/templates",
             "site/nav.js",
+            "site/theme.js",
             "site/kit.js",
             "site/search.js",
             "site/graph.js",
             "site/charts.js",
+            "site/diagrams.js",
             "handbook/cs",
+            "handbook/build.py",
             "package.json",
             "scripts/cockpit-assets",
             "scripts/site-build",
             "scripts/lib",
-            ".github/workflows/validate.yml"
+            "scripts/interaction-probe",
+            ".github/workflows/validate.yml",
+            ".github/workflows/pages.yml",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/project",
+            "test/cases",
+            "test/fixtures"
           ],
           "slug": "one-frame-one-kit-one-library-per-job",
-          "updated_at": "2026-11-07",
+          "updated_at": "2026-11-17",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate",
@@ -91081,7 +91189,7 @@
             "test/cases"
           ],
           "slug": "one-kit-on-every-surface",
-          "updated_at": "2026-10-20",
+          "updated_at": "2026-11-17",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/design-check",
@@ -152471,6 +152579,11 @@
       },
       {
         "source": "majordomus://issue/I4539",
+        "target": "majordomus://issue/I4540",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4539",
         "target": "majordomus://milestone/one-frame-one-kit-one-library-per-job",
         "kind": "belongs_to"
       },
@@ -152496,12 +152609,32 @@
       },
       {
         "source": "majordomus://issue/I4541",
+        "target": "majordomus://issue/I4494",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4541",
         "target": "majordomus://issue/I4535",
         "kind": "depends_on"
       },
       {
         "source": "majordomus://issue/I4541",
         "target": "majordomus://issue/I4536",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4541",
+        "target": "majordomus://issue/I4540",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4541",
+        "target": "majordomus://issue/I4542",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4541",
+        "target": "majordomus://issue/I4653",
         "kind": "depends_on"
       },
       {
@@ -152522,6 +152655,16 @@
       {
         "source": "majordomus://issue/I4542",
         "target": "majordomus://issue/I4536",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4542",
+        "target": "majordomus://issue/I4540",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4542",
+        "target": "majordomus://issue/I4653",
         "kind": "depends_on"
       },
       {
@@ -152612,6 +152755,21 @@
       {
         "source": "majordomus://issue/I4546",
         "target": "majordomus://issue/I4543",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4546",
+        "target": "majordomus://issue/I4544",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4546",
+        "target": "majordomus://issue/I4545",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4546",
+        "target": "majordomus://issue/I4653",
         "kind": "depends_on"
       },
       {
@@ -153002,6 +153160,26 @@
       {
         "source": "majordomus://issue/I4630",
         "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4653",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4653",
+        "target": "majordomus://issue/I4535",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4653",
+        "target": "majordomus://issue/I4536",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4653",
+        "target": "majordomus://milestone/one-frame-one-kit-one-library-per-job",
         "kind": "belongs_to"
       },
       {
@@ -165916,8 +166094,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4529,
-      "edges": 10227,
+      "nodes": 4530,
+      "edges": 10241,
       "acyclic": false,
       "truncated": false
     }

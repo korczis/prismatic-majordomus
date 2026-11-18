@@ -9,26 +9,52 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [one-frame-one-kit-one-library-per-job](https://majordomus.dev/plan/one-frame-one-kit-one-library-per-job/) | PLANNED | 0/13 | 1 | 12 | 0 | 0 | 0 | A reader meets one frame, one kit and one behaviour on /ui, /cockpit and majordomus.dev: the Flowbite Pro shell, one component per kind in both renderers, Flowbite JS for every interactive control, ECharts for charts, Cytoscape for graphs, p5 for scenes, Alpine CSP components for behaviour, one advanced table on every list, every id a link, and every page with a JSON alternate and an llms.txt beside it. The plan is the 13 slices I4534 to I4546, one pull request each, in order. |
+| [one-frame-one-kit-one-library-per-job](https://majordomus.dev/plan/one-frame-one-kit-one-library-per-job/) | PLANNED | 0/14 | 1 | 13 | 0 | 0 | 0 | A reader meets one frame, one kit and one behaviour on /ui, /cockpit and majordomus.dev: the Flowbite Pro shell, one component per kind in both renderers, Flowbite JS for every interactive control, ECharts for charts and graphs, D3 for bespoke layouts and force physics, p5 for the kiosk's generative scenes, Alpine CSP components for behaviour, every visual a maximisable, deep-linked model whose state is in the URL, one advanced table on every list, every id and every mark a link, and every page with a JSON alternate and an llms.txt beside it. The gates land first, as ratchets over a baseline that only shrinks (I4534, slice S0, for design kit and the frame, kit and library case; I4653 for project.viz-ergonomics and project.everything-interlinked), and I4546 holds them at zero last. The plan is the 14 slices I4534 to I4546 and I4653, taken in dependency order; each is one pull request except I4535, which lands its deletion order one step per pull request. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I4534](https://majordomus.dev/plan/i4534/) | READY | 0 | — | The nine open UI pull requests are each landed, absorbed or superseded with a recorded reason before the reintegration touches their paths |
-| [I4535](https://majordomus.dev/plan/i4535/) | BLOCKED | 2 | I4534, I3794 | One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone |
+| [I4534](https://majordomus.dev/plan/i4534/) | READY | 0 | — | The open UI pull requests and the older one-kit records each get a recorded end, the routes are inventoried, and the kit's gates start as ratchets, before the reintegration touches their paths |
+| [I4535](https://majordomus.dev/plan/i4535/) | BLOCKED | 2 | I4534, I3794 | One share/design/js/core module set, served from its own asset root, holds every shared client helper, and every byte copy and hand-kept near-duplicate is gone |
 | [I4536](https://majordomus.dev/plan/i4536/) | BLOCKED | 3 | I4534, I4535 | Flowbite JS, vendored from npm 4.0.2 and CSP-checked, drives collapse, dropdown, modal, drawer, tabs and tooltip on every surface |
 | [I4537](https://majordomus.dev/plan/i4537/) | BLOCKED | 4 | I4535, I4536 | One component kit: the /ui and Cockpit El kits merge into web/kit, the Tera kit emits the same markup contract, and a case holds the two together |
-| [I4538](https://majordomus.dev/plan/i4538/) | BLOCKED | 5 | I4535, I4536, I4537 | One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the registry, and the site wears the Pro navbar and footer |
-| [I4539](https://majordomus.dev/plan/i4539/) | BLOCKED | 5 | I4537, I4495 | One advanced table component, rendered on the server and enhanced on the client, lists issues, prs, capabilities, skills, objects, executions and commands |
-| [I4540](https://majordomus.dev/plan/i4540/) | BLOCKED | 5 | I4537 | One link resolver maps every entity id to its canonical page on each surface, and case 1091 refuses an id rendered as plain text |
-| [I4541](https://majordomus.dev/plan/i4541/) | BLOCKED | 4 | I4535, I4536 | One Cytoscape module draws every graph on every surface, and the duplicated PR and milestone dependency graphs become one each |
-| [I4542](https://majordomus.dev/plan/i4542/) | BLOCKED | 4 | I4535, I4536 | ECharts draws the charts of /ui and the Cockpit through the site's chart module, and /ui/trends and /trends/ share it |
+| [I4538](https://majordomus.dev/plan/i4538/) | BLOCKED | 5 | I4535, I4536, I4537 | One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the router's route table, and the site wears the Pro navbar and footer |
+| [I4539](https://majordomus.dev/plan/i4539/) | BLOCKED | 6 | I4537, I4540, I4495 | One advanced table component, rendered on the server and enhanced on the client, lists issues, prs, capabilities, skills, objects, executions and commands |
+| [I4540](https://majordomus.dev/plan/i4540/) | BLOCKED | 5 | I4537 | One link resolver maps every entity id and every chart and graph mark to its canonical page on each surface, and case 1091 refuses an id or a mark without its link |
+| [I4541](https://majordomus.dev/plan/i4541/) | BLOCKED | 7 | I4535, I4536, I4540, I4542, I4653, I4494 | Graphs are ECharts graph series and bespoke layouts are D3, through one share/design/js/graph module, the duplicated PR and milestone dependency graphs become one each, and Cytoscape leaves |
+| [I4542](https://majordomus.dev/plan/i4542/) | BLOCKED | 6 | I4535, I4536, I4540, I4653 | ECharts draws every chart of the three surfaces through share/design/js/chart, the activity time series leaves p5, p5 keeps the kiosk's generative scenes through share/design/js/scene, and /ui/trends and /trends/ share one definition |
 | [I4543](https://majordomus.dev/plan/i4543/) | BLOCKED | 4 | I4535, I4536 | Alpine runs as one CSP build everywhere, the site's inline x-data become Alpine.data components in one module, and the duplicate tabs and copy controls retire |
 | [I4544](https://majordomus.dev/plan/i4544/) | BLOCKED | 6 | I4538 | Every page carries rel=alternate JSON of the data it shows, and /ui and the site publish an llms.txt derived from the route registry |
 | [I4545](https://majordomus.dev/plan/i4545/) | BLOCKED | 1 | I4534 | The handbook loads ECharts, Mermaid and highlight.js vendored at the site's versions instead of from cdnjs |
-| [I4546](https://majordomus.dev/plan/i4546/) | BLOCKED | 6 | I4538, I4539, I4540, I4541, I4542, I4543 | The probes cover the three.js topology and p5 activity pages and every kit component, and design kit --check is a gate at zero findings |
+| [I4546](https://majordomus.dev/plan/i4546/) | BLOCKED | 8 | I4538, I4539, I4540, I4541, I4542, I4543, I4544, I4545, I4653 | Every route, kit component and share/design/js module is covered by a probe or a case, the published copy is probed after the deploy, and every gate of the plan is held at zero |
+| [I4653](https://majordomus.dev/plan/i4653/) | BLOCKED | 4 | I4535, I4536 | Every chart, graph and scene is a driven model in one maximise and deep-link wrapper, and project.viz-ergonomics and project.everything-interlinked ship as blocking rules with their gates |
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4573; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4577; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4578; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4581; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4582; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4583; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4584; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4585; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4586; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4587; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4588; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4591; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4598; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4600; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4606; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4615; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4616; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4618; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4627; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4628; they may not run concurrently |
+| WARN | `scope_conflict` | `I4534` | shares test/cases with I4630; they may not run concurrently |

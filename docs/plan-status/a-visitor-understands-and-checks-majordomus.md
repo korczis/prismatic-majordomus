@@ -30,4 +30,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I4530` | shares .github/workflows/pages.yml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4530` | shares .github/workflows/pages.yml with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4534; they may not run concurrently |
 | WARN | `scope_conflict` | `I4530` | shares .github/workflows/release.yml with I4627; they may not run concurrently |
