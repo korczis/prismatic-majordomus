@@ -495,6 +495,10 @@ mj_uc_cmd_validate() {
 # `session context` (#220) prints the fixture's commit as `- head: <7 hex>`, followed by
 # `(opened at <7 hex>)` when the head moved. A fixture commit's hash differs on every run, so
 # the catalogue that recorded it was never reproducible; both forms become `<head>`.
+#
+# `finish` over a tree no commit holds (I4628) names both trees, `the verified tree <12 hex>
+# is not HEAD's <12 hex>`. The challenge's scenario finishes so, and a lundra derive and the
+# site job recorded different ids for it, so #3088's site data read stale; both become `<tree>`.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -523,6 +527,7 @@ mj_uc_normalise() { # repo-path
     -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
     -e 's/(exit [0-9]+, )[0-9]+s(,|  |$)/\1<s>s\2/' \
     -e 's/, tree [0-9a-f]{12}/, tree <tree>/g' \
+    -e "s/the verified tree [0-9a-f]{12} is not HEAD's [0-9a-f]{12}/the verified tree <tree> is not HEAD's <tree>/g" \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \

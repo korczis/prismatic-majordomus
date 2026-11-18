@@ -143,9 +143,46 @@ H
   cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' -exec grep -l "^task_id: $id$" {} + \
     2>/dev/null | wc -l | tr -d ' ')"
   local fields="\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract"
-  mj_ledger_append task.finished "$fields,\"verify\":$vj,\"checkpoints\":$cps" "$sid"
+  # Whether what this finish verified is in a commit (I4628). A hook that refused the commit,
+  # or a shell slip that staged nothing, left a completed task over a tree no commit holds,
+  # and the verdict line read exactly as if it were committed: an agent reads that line and
+  # reports the work finished. So a completed finish compares the tree it verified with
+  # HEAD's and says NOT COMMITTED in the line it is read by. It reports; it never commits.
+  local committed="" vtree="" htree=""
+  if [ "$outcome" = completed ]; then
+    vtree="${MJ_FINISH_VTREE:-$(mj_worktree_tree_id)}"
+    htree="$(mj_finish_head_tree)"
+    if [ -n "$vtree" ] && [ -n "$htree" ]; then
+      if [ "$vtree" = "$htree" ]; then committed=true; else committed=false; fi
+    fi
+  fi
+  mj_ledger_append task.finished "$fields,\"verify\":$vj,\"checkpoints\":$cps${committed:+,\"committed\":$committed}" "$sid"
   mj_mesh_task_release "$id"
-  [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
+  [ "$MJ_JSON" = 1 ] && return 0
+  if [ "$committed" = false ]; then
+    local moved="HEAD has moved since start"
+    [ "$(mj_git_head)" = "$(mj_cur head)" ] && moved="no commit since the task started"
+    printf 'finish: %s %s, NOT COMMITTED: the verified tree %s is not HEAD'"'"'s %s (%s)\n' \
+      "$id" "$outcome" "${vtree:0:12}" "${htree:0:12}" "$moved"
+    mj_finish_uncommitted_paths "$htree" "$vtree" | sed 's/^/  uncommitted  /'
+    printf 'next: git status --porcelain && git add <paths> && git commit   # finish reports; it never commits\n'
+  else
+    printf 'finish: %s %s\n' "$id" "$outcome"
+  fi
+}
+
+# HEAD's tree, or the empty tree on a branch with no commit yet: a task started before the
+# first commit (case 3995) is uncommitted exactly when its tree is not empty.
+mj_finish_head_tree() {
+  git -C "$MJ_ROOT" rev-parse -q --verify 'HEAD^{tree}' 2>/dev/null \
+    || git -C "$MJ_ROOT" hash-object -t tree /dev/null 2>/dev/null
+}
+
+# The paths whose content differs between HEAD's tree and the verified one, at most ten and
+# then a count: what `git add` would have to name.
+mj_finish_uncommitted_paths() {
+  git -C "$MJ_ROOT" diff --no-renames --name-only "$1" "$2" 2>/dev/null \
+    | awk 'NR <= 10 { print; next } { n++ } END { if (n) print "... and " n " more" }'
 }
 
 # the doctrine index whose policy_key is <key>, or failure
