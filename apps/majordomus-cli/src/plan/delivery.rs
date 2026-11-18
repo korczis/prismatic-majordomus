@@ -428,6 +428,24 @@ fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, bool) {
             .and_then(|b| b.split_once('/').map(|(_, name)| name.to_string()));
         return (number, branch, true);
     }
+    // `Merge #3062 (feature/I4324-x) into the combined top on 7222b343dc`: the landing seat's
+    // merge of one member into a combined top (I4634). It names the pull request and its
+    // branch, never the forge's title, so its body is not read as one. Unread, the member's
+    // branch proved nothing at the top's head, and the top's own title proved it only at the
+    // merge into the trunk: the committed projection, observed at the head, then disagreed
+    // with the trunk (#3077, ae13be1bd13, repaired by #3084).
+    if let Some(rest) = subject.strip_prefix("Merge #") {
+        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        let branch = rest[digits.len()..]
+            .strip_prefix(" (")
+            .and_then(|b| b.split_once(')'))
+            .map(|(name, _)| name.trim())
+            .filter(|name| !name.is_empty() && !name.contains(char::is_whitespace));
+        if let (Ok(number), Some(branch)) = (digits.parse::<u64>(), branch) {
+            return (Some(number), Some(branch.to_string()), false);
+        }
+        return (None, None, false);
+    }
     for prefix in ["Merge remote-tracking branch '", "Merge branch '"] {
         if let Some(rest) = subject.strip_prefix(prefix) {
             let Some((name, _)) = rest.split_once('\'') else {
@@ -964,15 +982,63 @@ fn source(name: &str, read: Result<String, String>, observed_at: Option<&str>) -
     }
 }
 
+/// A merge into the trunk that has not happened yet, read as if the commit `at` names were
+/// it (I4634): the pull request's title and branch, as the forge's merge commit will state
+/// them. The trunk's site infers delivery at its own commit, so a committed projection
+/// observed before the merge disagrees with the trunk whenever the merge names an issue the
+/// head did not prove (#3077's title, ae13be1bd13, repaired by #3084). Reading the merge in
+/// advance lets a pull request be judged before it lands.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub(crate) struct AnticipatedMerge {
+    /// The pull request's title, as the forge's merge commit will carry it.
+    pub title: Option<String>,
+    /// The pull request's head branch, without its owner.
+    pub branch: Option<String>,
+}
+
+impl AnticipatedMerge {
+    /// The merge commit it stands for: at `commit`, at its `time`, read against its first
+    /// `parent` — for a pull request's test merge (`refs/pull/<n>/merge`), the trunk.
+    fn at(&self, commit: &str, time: u64, parent: Option<String>) -> MergeCommit {
+        MergeCommit {
+            commit: commit.to_string(),
+            time,
+            pull_request: None,
+            branch: self.branch.clone(),
+            title: self.title.clone(),
+            parent,
+        }
+    }
+
+    /// How a source line states it.
+    fn describe(&self, commit: &str) -> String {
+        let quoted = |v: &Option<String>| v.as_deref().map(|t| format!("'{t}'"));
+        format!(
+            "a merge titled {} from branch {} is anticipated at {commit}",
+            quoted(&self.title).unwrap_or_else(|| "nothing".into()),
+            quoted(&self.branch).unwrap_or_else(|| "none".into()),
+        )
+    }
+}
+
 /// Infer the delivery of every issue of `plan` (or of `only`), observed live or `at` a
-/// commit, in the repository at `root`.
+/// commit, in the repository at `root`; with `anticipated`, as if that commit were the merge
+/// it describes, which only an answer `at` a commit can be.
 pub(crate) fn infer(
     root: &Path,
     plan: &Plan,
     trunk: &Trunk,
     at: Option<&str>,
     only: Option<&str>,
+    anticipated: Option<&AnticipatedMerge>,
 ) -> Result<IssueDeliveryReport, String> {
+    if anticipated.is_some() && at.is_none() {
+        return Err(
+            "an anticipated merge is read at the commit it would be: name it with `at` \
+                    (a pull request's test merge, or its head)"
+                .to_string(),
+        );
+    }
     let ids: Vec<String> = plan.issues.iter().map(|i| i.id.clone()).collect();
     let declared: BTreeSet<String> = ids.iter().cloned().collect();
     let slugs: BTreeMap<String, String> = plan
@@ -1005,10 +1071,19 @@ pub(crate) fn infer(
         _ => (rev, crate::peers::rfc3339(SystemTime::now())),
     };
     let (all_merges, all_subjects) = (read.merges, read.subjects);
+    // the anticipated merge, at the commit read and against that commit's own first parent
+    let ahead: Option<MergeCommit> = anticipated.map(|a| {
+        let parent = all_merges
+            .iter()
+            .chain(&all_subjects)
+            .find(|c| c.commit == commit)
+            .and_then(|c| c.parent.clone());
+        a.at(&commit, read.time, parent)
+    });
 
     // the merges, newest first, attributed
     let mut merges: BTreeMap<String, Vec<(MergeCommit, &'static str)>> = BTreeMap::new();
-    for m in &all_merges {
+    for m in ahead.iter().chain(&all_merges) {
         for (id, via) in named_by(m.title.as_deref(), m.branch.as_deref(), &declared, &slugs) {
             merges.entry(id).or_default().push((m.clone(), via));
         }
@@ -1118,6 +1193,13 @@ pub(crate) fn infer(
             Some(&observed_at),
         ),
     ];
+    if let Some(a) = anticipated {
+        sources.push(source(
+            "anticipated_merge",
+            Ok(a.describe(&commit)),
+            Some(&observed_at),
+        ));
+    }
     let planning = planning.unwrap_or_default();
 
     // releases: the tree's release records, in both modes. A record names the commit it
@@ -1316,6 +1398,9 @@ mod tests {
                     ccc\x001700000002\x00p1 p2\x00Merge branch 'feature/b' of github.com:x/y into z\x00\x1e\n\
                     ddd\x001700000003\x00p1 p2 p3\x00merge: #9 into the top\x00I0002 mentioned\x1e\n\
                     eee\x001700000004\x00p1 p2\x00Merge branch 'broken\x00\x1e\n\
+                    top\x001700000007\x00p1 p2\x00Merge #3062 (feature/I0003-x) into the combined top on 7222b343dc\x00I0002 in prose\x1e\n\
+                    to2\x001700000008\x00p1 p2\x00Merge #30 (no closing paren\x00\x1e\n\
+                    to3\x001700000009\x00p1 p2\x00Merge #x (feature/y)\x00\x1e\n\
                     fff\x001700000005\x00p1\x00feat(x): a thing (I0001)\x00a body naming I0002\x1e\n\
                     ggg\x00nope\x00p1\x00x\x00\x1e\n\
                     \x001\x00p1\x00y\x00\x1e\n\
@@ -1323,7 +1408,14 @@ mod tests {
         let h = parse_history(text).expect("a history");
         assert_eq!((h.commit.as_str(), h.time), ("aaa", 1_700_000_000));
         let m = &h.merges;
-        assert_eq!(m.len(), 5);
+        assert_eq!(m.len(), 8);
+        assert_eq!(
+            (m[5].pull_request, m[5].branch.as_deref(), &m[5].title),
+            (Some(3062), Some("feature/I0003-x"), &None),
+            "a member merged into a combined top names its pull request and branch, and its body is no title"
+        );
+        assert_eq!((m[6].pull_request, &m[6].branch), (None, &None));
+        assert_eq!((m[7].pull_request, &m[7].branch), (None, &None));
         assert_eq!(m[0].pull_request, Some(12));
         assert_eq!(m[0].branch.as_deref(), Some("feature/I0001-x"));
         assert_eq!(m[0].title.as_deref(), Some("Do it (I0001)"));

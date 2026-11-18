@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# merge-delivery-check — the gate merge-delivery (I4634): a pull request into the trunk does
+# not land a merge whose delivery differs from the committed projection.
+#
+# The trunk's site infers delivery at its own commit (I3769) and scripts/ci/homepage-check
+# refuses a product view whose counts differ from it. The committed projection,
+# site/data/generated/delivery.json, is observed before the merge exists, so a merge that
+# proves more than its head did turns the trunk red after it lands. On 2026-11-17 #3077's
+# title named three issue ids, its merge ae13be1bd13 proved two issues more than its head,
+# and #3084 had to repair master; 19 commits of the kind "derive delivery observed at the merge
+# of ..." landed on master between 2026-11-01 and that day.
+#
+# The judgement of what a merge proves is the executable's: `majordomus plan delivery --at
+# HEAD --merge-title <title> --merge-branch <branch>` reads the commit this run checked out (a
+# pull request's test merge) as the merge the forge will make. What this adapter decides is
+# what the executable cannot see: the pull request's title, head branch and base, from the
+# runner's event; and it compares the merged and released tallies of that answer with the
+# committed projection's, which is the comparison homepage-check makes on the trunk.
+#
+# Each issue whose stage would differ is named with its cause:
+#   the title or branch   the answer without the anticipated merge agrees with the projection
+#                         for that issue: retitle the pull request so it names no issue its
+#                         head does not prove. A retitle starts no validate run, so the remedy
+#                         says to re-run this one.
+#   the trunk or the head the answer differs even without it: run scripts/derive at the
+#                         branch's head (merging the trunk first if it moved) and commit
+#                         the projection. A commit whose subject names an issue moves it
+#                         after a projection derived before that commit was observed.
+#
+#   scripts/ci/merge-delivery-check          judge this checkout as the runner's event says
+#   MJ_MERGE_TITLE=<t> [MJ_MERGE_BRANCH=<b>] scripts/ci/merge-delivery-check
+#                                            judge HEAD as the merge of a pull request with
+#                                            that title and branch (a person, and the case
+#                                            that proves this gate: test/cases/4634_*.sh)
+#   MJ_ROOT=<dir>                            judge another tree with this tool
+#
+# Exit: 0 the merge proves what the projection says, or there is no pull request to judge (a
+# trunk push, the schedule, a dispatch, a base that is not the trunk, a tree with no
+# projection); 10 refused; 12 the gate cannot judge (no executable answer, an unreadable
+# projection); 2 usage.
+set -eu
+set -o pipefail
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
+SELF="$(cd "$(dirname "$0")" && pwd)"
+ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
+CLI="$SELF/../../bin/majordomus-cli"
+[ $# -eq 0 ] || { echo "merge-delivery-check: takes no arguments (MJ_MERGE_TITLE and MJ_MERGE_BRANCH name the merge)" >&2; exit 2; }
+cd "$ROOT"
+PROJECTION="site/data/generated/delivery.json"
+
+title="${MJ_MERGE_TITLE:-}"
+branch="${MJ_MERGE_BRANCH:-}"
+if [ -n "$title" ]; then
+  echo "NOTE merge-delivery-check: HEAD is judged as the merge of '$title', because MJ_MERGE_TITLE says so"
+elif [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ] && [ -r "${GITHUB_EVENT_PATH:-}" ]; then
+  trunk="$(sed -n 's/^default_branch: *//p' .ai/repo/project/project.yaml 2>/dev/null | head -1 | tr -d "\"'" || true)"
+  trunk="${trunk:-master}"
+  base="$(jq -r '.pull_request.base.ref // empty' "$GITHUB_EVENT_PATH")"
+  if [ "$base" != "$trunk" ]; then
+    echo "NOTE merge-delivery-check: this pull request merges into '$base', not the trunk '$trunk'; there is no trunk merge to judge"
+    exit 0
+  fi
+  title="$(jq -r '.pull_request.title // empty' "$GITHUB_EVENT_PATH")"
+  branch="$(jq -r '.pull_request.head.ref // empty' "$GITHUB_EVENT_PATH")"
+else
+  echo "NOTE merge-delivery-check: not a pull request (event '${GITHUB_EVENT_NAME:-none}') and no MJ_MERGE_TITLE; there is no merge to judge"
+  exit 0
+fi
+if [ ! -f "$PROJECTION" ]; then
+  echo "NOTE merge-delivery-check: this tree commits no $PROJECTION; there is no projection to judge against"
+  exit 0
+fi
+
+work="$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/merge-delivery.XXXXXX")"
+trap 'rm -rf "$work"' EXIT
+ask() { # <out> <args...>: the executable's answer at HEAD, or exit 12 naming why
+  local out="$1"; shift
+  if ! "$CLI" plan delivery --repo "$ROOT" --at HEAD --format json "$@" > "$out" 2> "$out.err"; then
+    echo "merge-delivery-check: the executable could not read the delivery at HEAD ($(tail -1 "$out.err"))" >&2
+    exit 12
+  fi
+}
+merge_args=()
+[ -z "$title" ] || merge_args+=(--merge-title "$title")
+[ -z "$branch" ] || merge_args+=(--merge-branch "$branch")
+ask "$work/plain.json"
+# bash 3.2 (macOS) calls an empty array unbound under set -u
+ask "$work/merge.json" ${merge_args[@]+"${merge_args[@]}"}
+jq -e '.tallies and .issues' "$PROJECTION" > /dev/null 2>&1 || {
+  echo "merge-delivery-check: $PROJECTION has no tallies and issues to compare" >&2
+  exit 12
+}
+
+tally() { jq -r '"merged \(.tallies.merged // 0), released \(.tallies.released // 0)"' "$1"; }
+want="$(tally "$PROJECTION")"
+got="$(tally "$work/merge.json")"
+if [ "$want" = "$got" ]; then
+  echo "OK merge-delivery: the merge of '$title' proves what $PROJECTION says ($got)"
+  exit 0
+fi
+
+# every issue whose merged-or-released stage differs, with its cause
+jq -r -n --slurpfile c "$PROJECTION" --slurpfile p "$work/plain.json" --slurpfile m "$work/merge.json" '
+  def stages(r): r.issues | map({key: .issue, value: (if (.stage == "merged" or .stage == "released") then .stage else "none" end)}) | from_entries;
+  (stages($c[0])) as $c | (stages($p[0])) as $p | (stages($m[0])) as $m
+  | $m | keys[] as $id
+  | select(($c[$id] // "none") != $m[$id])
+  | "\($id)\t\($c[$id] // "none")\t\($m[$id])\t\(if ($p[$id] // "none") == ($c[$id] // "none") then "title" else "moved" end)"
+' > "$work/flips.tsv"
+
+echo "REFUSED merge-delivery: the merge of '$title' would prove [$got], and $PROJECTION says [$want]; the trunk's site would refuse its own delivery (homepage-check)"
+while IFS="$(printf '\t')" read -r id was would cause; do
+  case "$cause" in
+    title) echo "  $id: $was -> $would, because the pull request's title or branch names it" ;;
+    *) echo "  $id: $was -> $would, because the trunk or the head moved since the projection was observed" ;;
+  esac
+done < "$work/flips.tsv"
+if grep -q "$(printf '\t')title$" "$work/flips.tsv"; then
+  echo "  remedy: retitle the pull request so it names no issue its head does not prove, then re-run this run (a retitle starts no validate run)"
+fi
+if grep -q "$(printf '\t')moved$" "$work/flips.tsv"; then
+  echo "  remedy: merge the trunk into the branch and run scripts/derive at its head (if only the head moved, derive there without a merge), then commit the projection it observes (a commit whose subject names an issue moves it after a projection derived before that commit)"
+fi
+exit 10
