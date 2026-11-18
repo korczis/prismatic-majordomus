@@ -184,7 +184,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree guard [--quiet]` | may a commit proceed from here | no |
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
-| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
+| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, or (checked out) whose content is already there, whose worktree is clean, holds only changes the trunk has, or is absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
 | `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
 | `worktree trunk` | how far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against `checkout.trunk_distance`, with the commands that bring it current; fetches nothing | the checkout is stale |
@@ -453,10 +453,25 @@ topology changes outside the process.
 
 ## Reclaiming
 
-`majordomus worktree cleanup` lists what is spare: every branch merged into the trunk whose
-worktree is clean or absent. `--remove` removes those worktrees, and nothing else — branches
-are never deleted, because the disk is what runs out and a branch is the only durable name a
-piece of work has.
+`majordomus worktree cleanup` lists what is spare: every branch that has landed in the trunk
+whose worktree is clean, holds only changes the trunk already has, or is absent. `--remove`
+removes those worktrees, and nothing else — branches are never deleted, because the disk is
+what runs out and a branch is the only durable name a piece of work has.
+
+A branch has landed when it is merged into the trunk (its tip is an ancestor), or, for a
+checked-out branch, when its content is there: `git merge-tree --write-tree <trunk> <branch>`
+writes the trunk's own tree, so merging it would change nothing (`landed_by_content`). That
+covers a squash merge, a train and a cherry-pick, none of which leaves the tip an ancestor. A
+worktree whose `git status` is not empty is still spare when every path it reports holds,
+blob and mode, exactly what the trunk holds there, or is absent from both, and every staged
+version among them is the trunk's too (`uncommitted_in_trunk`): records that landed through
+another branch. A symbolic link, a nested repository, an unresolved conflict or a path the
+file system will not describe is never judged equal. Both readings are taken
+against the trunk's remote-tracking branch, by `apps/majordomus-cli/src/worktree/landed.rs`,
+and both are exact: one byte the trunk lacks, committed or not, keeps the worktree. On
+2026-11-16 205 worktrees (about 44 GiB) on one machine were finished in exactly these ways and
+offered by nothing; `test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh` is the
+fixture of that day.
 
 The listing and the removal are two moments, and everything that makes a worktree safe to
 remove can change between them, so the listing only nominates: `--remove` reads the branch's
@@ -465,9 +480,11 @@ again for each candidate immediately before it goes, and names what it refuses:
 
 | refusal | why it is not covered by "merged and clean" |
 |---|---|
-| ahead of its remote, no upstream, or upstream gone | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
+| ahead of its remote, or no upstream | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
+| upstream gone, and the trunk's remote-tracking branch neither contains its head nor holds its content | a branch merged on the forge and deleted there is removed, because every commit or every byte it holds is on the remote through the trunk; one deleted while it carried a commit the trunk lacks is refused |
 | a process has its working directory inside | mtime lies: two worktrees swept on 2026-09-15 looked untouched since the 12th and had live processes in them |
-| uncommitted work | read again at the moment of removal, not taken from the listing |
+| uncommitted work the trunk does not already hold | read again at the moment of removal, not taken from the listing; changes the trunk already holds are removed with `--force`, and only then |
+| a locked worktree | a lock is a person's word, and the `--force` above is never what passes over it |
 | `lsof` is missing, or git could not compare with the upstream | not knowing is not the same as nothing being there |
 
 `test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh` plants a fixture with its own

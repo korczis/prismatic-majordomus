@@ -98,7 +98,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/commands with I4577; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4583; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/plan.rs with I4596; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4600; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3110; they may not run concurrently |
@@ -158,6 +161,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4583; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4600; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |

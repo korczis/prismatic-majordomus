@@ -357,8 +357,18 @@ pub struct BranchState {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Reachable from the trunk. Absent when the trunk is unknown.
     pub merged_into_trunk: Option<bool>,
-    /// Merged into the trunk, not the trunk, and either not checked out or checked out in a
-    /// work tree known to be clean. Derived state, never acted on automatically.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Not reachable from the trunk, and merging it into the trunk's remote-tracking branch
+    /// would change nothing (`git merge-tree --write-tree`): squash-merged, carried in a
+    /// train or cherry-picked. Read for a checked-out branch in the full topology only.
+    pub landed_by_content: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Its work tree has uncommitted changes, and every one already holds what the trunk's
+    /// remote-tracking branch holds at that path. Absent for a clean or unmeasured tree.
+    pub uncommitted_in_trunk: Option<bool>,
+    /// Landed in the trunk (merged into it, or landed by content), not the trunk, and either
+    /// not checked out (merged only) or checked out in a work tree that is clean or whose every
+    /// uncommitted change is already in the trunk. Derived state, never acted on automatically.
     pub cleanup_eligible: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// The issue this branch provably names.
