@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Whether a worktree’s work is already in the trunk, by what git can prove offline."><title>majordomus_cli::worktree::landed - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module landed</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">1.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module landed</a></h2><h3><a href="#functions">Module Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>worktree</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">worktree</a></div><h1>Module <span>landed</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/worktree/landed.rs.html#1-584">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Whether a worktree’s work is already in the trunk, by what git can prove offline.</p>
+<p><code>git branch --merged</code> answers one question: is the branch’s tip an ancestor of the trunk.
+A branch squash-merged on the forge, carried in a train, or cherry-picked is never an
+ancestor, and a worktree whose only uncommitted changes are records that landed through
+another branch is never clean, so neither is offered by <code>worktree cleanup</code>. On 2026-11-16
+that left 205 worktrees (about 44 GiB) on this machine whose every byte was already on
+the trunk; they were found with the two readings below and removed by hand.</p>
+<p>Both readings are exact, never heuristic:</p>
+<ul>
+<li><a href="fn.content_in.html" title="fn majordomus_cli::worktree::landed::content_in"><code>content_in</code></a>: merging the branch into the trunk would change nothing. <code>git merge-tree --write-tree &lt;trunk&gt; &lt;rev&gt;</code> writes the merged tree without touching any work tree or
+ref; when that tree is the trunk’s own tree, the branch adds nothing. A branch with one
+line the trunk lacks writes a different tree, and a conflict is a “no”.</li>
+<li><a href="fn.uncommitted_in.html" title="fn majordomus_cli::worktree::landed::uncommitted_in"><code>uncommitted_in</code></a>: every path <code>git status</code> reports holds, in the work tree, exactly
+what the trunk holds at that path (the same blob and mode, or absent in both).</li>
+</ul>
+<p>Neither fetches, and neither writes: <code>merge-tree --write-tree</code> adds the merged tree’s
+objects to the object store, as any <code>git merge</code> would, and moves no ref.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::worktree::landed::{content_in, uncommitted_in};
+<span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>run = |args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    <span class="kw">let </span>ok = std::process::Command::new(<span class="string">"git"</span>)
+        .args([<span class="string">"-c"</span>, <span class="string">"user.email=t@t"</span>, <span class="string">"-c"</span>, <span class="string">"user.name=t"</span>])
+        .args(args)
+        .current_dir(dir.path())
+        .env_remove(<span class="string">"GIT_DIR"</span>)
+        .env_remove(<span class="string">"GIT_WORK_TREE"</span>)
+        .status()
+        .unwrap()
+        .success();
+    <span class="macro">assert!</span>(ok, <span class="string">"git {args:?}"</span>);
+};
+run(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>, <span class="string">"-b"</span>, <span class="string">"main"</span>]);
+run(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"--allow-empty"</span>, <span class="string">"-m"</span>, <span class="string">"base"</span>]);
+run(<span class="kw-2">&amp;</span>[<span class="string">"switch"</span>, <span class="string">"-q"</span>, <span class="string">"-c"</span>, <span class="string">"squashed"</span>]);
+std::fs::write(dir.path().join(<span class="string">"a.txt"</span>), <span class="string">"a\n"</span>).unwrap();
+run(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"a.txt"</span>]);
+run(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"-m"</span>, <span class="string">"one"</span>]);
+run(<span class="kw-2">&amp;</span>[<span class="string">"switch"</span>, <span class="string">"-q"</span>, <span class="string">"main"</span>]);
+run(<span class="kw-2">&amp;</span>[<span class="string">"merge"</span>, <span class="string">"-q"</span>, <span class="string">"--squash"</span>, <span class="string">"squashed"</span>]);
+run(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"-m"</span>, <span class="string">"squash"</span>]);
+<span class="comment">// not an ancestor of main, and still entirely in it
+</span><span class="macro">assert_eq!</span>(content_in(dir.path(), <span class="string">"squashed"</span>, <span class="string">"main"</span>), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+run(<span class="kw-2">&amp;</span>[<span class="string">"switch"</span>, <span class="string">"-q"</span>, <span class="string">"squashed"</span>]);
+std::fs::write(dir.path().join(<span class="string">"b.txt"</span>), <span class="string">"b\n"</span>).unwrap();
+<span class="macro">assert_eq!</span>(uncommitted_in(dir.path(), <span class="string">"main"</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>), <span class="string">"b.txt is not in main"</span>);
+std::fs::remove_file(dir.path().join(<span class="string">"b.txt"</span>)).unwrap();
+<span class="macro">assert_eq!</span>(uncommitted_in(dir.path(), <span class="string">"main"</span>), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="string">"nothing uncommitted is left"</span>);</code></pre></div></div></details><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.content_in.html" title="fn majordomus_cli::worktree::landed::content_in">content_<wbr>in</a></dt><dd>Would merging <code>rev</code> into <code>trunk</code> change nothing? <code>Some(true)</code> when the merge writes the
+trunk’s own tree, <code>Some(false)</code> when it writes another tree, conflicts, or cannot be
+written at all (a revision git cannot merge, a git older than 2.38 without <code>merge-tree --write-tree</code>): a “no” every time, never a “yes”. <code>None</code> when the trunk itself cannot be
+resolved or git cannot be run. <code>cwd</code> is any work tree of the repository.</dd><dt><a class="fn" href="fn.trunk_reference.html" title="fn majordomus_cli::worktree::landed::trunk_reference">trunk_<wbr>reference</a></dt><dd>The ref the trunk is judged by: its remote-tracking branch when it has one (what every
+other checkout and the forge see), the local trunk otherwise.</dd><dt><a class="fn" href="fn.uncommitted_in.html" title="fn majordomus_cli::worktree::landed::uncommitted_in">uncommitted_<wbr>in</a></dt><dd>Does every uncommitted change in this work tree already hold what <code>rev</code> holds at that
+path, in the index and in the work tree? <code>Some(true)</code> for a clean work tree too.
+<code>Some(false)</code> when any path differs (a staged version the trunk lacks included), when a
+conflict is unresolved or an operation (merge, rebase, …) is in progress, for a path
+that is a symbolic link or a directory git reports whole (a nested repository), and for a
+path the file system will not describe: none of those is ever judged equal. <code>None</code> when
+git cannot read the work tree, <code>rev</code>, the index or a file’s content.</dd></dl></section></div></main></body></html>
