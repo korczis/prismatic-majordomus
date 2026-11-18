@@ -82133,6 +82133,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4652",
+        "kind": "issue",
+        "label": "I4652",
+        "summary": "start's refusal over an active task names who opened it and how long ago, and offers a worktree of its own when that task is another session's",
+        "route": "/cockpit/objects/issue/i4652",
+        "source": ".ai/repo/project/issues/I4652.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A start refused over a task another open episode opened exits 15 and names that session, says it is open, gives the task's age and names `majordomus worktree create`",
+            "A start refused over the caller's own task exits 15 and advises finish or handover --close, without calling the task another session's",
+            "A start refused over a task whose opener is unknown exits 15 and names both ways forward"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "start_refusal_names_the_active_task_owner"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Letting start replace or adopt another session's active task",
+            "More than one active task per checkout",
+            "Creating the worktree on the caller's behalf"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+            ".ai/repo/project/issues/I4652.yaml"
+          ],
+          "serves": [],
+          "slug": "start-refusal-names-the-active-task-owner",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -110016,6 +110055,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+        "kind": "test",
+        "label": "test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+        "route": "/cockpit/objects/test/test-cases-4652-start-refusal-names-the-active-task-owner-sh",
+        "source": "test/cases/4652_start_refusal_names_the_active_task_owner.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -152016,6 +152062,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4652",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4652",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159801,6 +159857,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164922,8 +164983,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4513,
-      "edges": 10172,
+      "nodes": 4515,
+      "edges": 10175,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,30 @@
+id: I4652
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "start's refusal over an active task names who opened it and how long ago, and offers a worktree of its own when that task is another session's"
+slug: start-refusal-names-the-active-task-owner
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When `majordomus start` meets an active task in the checkout it still refuses (exit 15), and the refusal now says whose task it is: the episode that opened it (task.started's session, mj_task_opening_session), whether that episode is still open here, its worker and provider session when the open record carries them, and the task's age from started_at. When the opener is a session other than the caller's, the refusal names `majordomus worktree create <branch>` and `cd \"$(majordomus worktree path <branch>)\"` as the way forward before finish or handover --close, because closing another session's task is not the caller's to do. When the caller opened the task, the advice stays finish or handover --close."
+why: "On 2026-11-17 many Claude Code sessions shared one checkout of a supervised repository (the owner's OpenTTD research fork). A session that ran `majordomus start` there was told `task <id> is active ('<task>'); run majordomus finish (or majordomus handover --close) first`. The only advice the refusal gave was to close a task that belonged to another live session, and it named neither that session nor the task's age, so the worker could not tell a stranded task from a colleague's live one. The repository's own answer for concurrent work is a worktree per branch (project.worktree-topology), and the refusal did not mention it."
+current_state: "Measured at origin/master ae13be1bd13: lib/start.sh refuses with `task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus finish (or majordomus handover --close) first` and nothing else. task.started already records the opening session (I4292), and lib/common.sh has mj_task_opening_session, mj_open_session_id and mj_session_is_open."
+desired_state: "The refusal names the opener, its liveness and the task's age; another session's task is answered with a worktree command first; the caller's own task with finish or handover --close; an unknown opener with both."
+scope:
+  - "lib/start.sh"
+  - "test/cases/4652_start_refusal_names_the_active_task_owner.sh"
+  - ".ai/repo/project/issues/I4652.yaml"
+non_scope:
+  - "Letting start replace or adopt another session's active task"
+  - "More than one active task per checkout"
+  - "Creating the worktree on the caller's behalf"
+acceptance_criteria:
+  - "A start refused over a task another open episode opened exits 15 and names that session, says it is open, gives the task's age and names `majordomus worktree create`"
+  - "A start refused over the caller's own task exits 15 and advises finish or handover --close, without calling the task another session's"
+  - "A start refused over a task whose opener is unknown exits 15 and names both ways forward"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "start_refusal_names_the_active_task_owner"
+depends_on: []
+serves: []
+created_at: 2026-11-17

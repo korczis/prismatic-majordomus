@@ -71,7 +71,7 @@ H
       [ "$oc" = active ] && mj_info task "$(mj_cur id)" "that task is still active there; nothing here changes it" "majordomus --repo $(mj_cur worktree) check"
     else
       case "$oc" in
-        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus finish (or majordomus handover --close) first" ;;
+        active) mj_start_refuse_active ;;
         *) mkdir -p "$MJ_STATE_DIR/archive"; mv "$MJ_CUR" "$MJ_STATE_DIR/archive/$(mj_cur id).yaml" ;;
       esac
     fi
@@ -178,6 +178,47 @@ H
       "majordomus handover --resolve"
   fi
   printf 'next: majordomus context; checkpoint every %s; majordomus check before claiming anything\n' "$(mj_pro checkpoint_interval)"
+}
+
+# The refusal of a start that meets this checkout's active task (I4652). In a checkout that
+# several sessions shared it advised closing a task that was another live session's, and
+# named neither that session nor the task's age, so a stranded task and a colleague's live
+# one read alike. It names the episode task.started recorded, whether that episode is still
+# open here and how old the task is; and when the task is another session's, the way forward
+# is a worktree of the caller's own (project.worktree-topology), not closing someone's work.
+mj_start_refuse_active() {
+  local id opener me age who f w ps
+  id="$(mj_cur id)"
+  opener="$(mj_task_opening_session "$id")"
+  me="$(mj_open_session_id)"
+  age="$(mj_age_human "$(mj_age_minutes "$(mj_cur started_at)" || true)")"
+  if [ -z "$opener" ]; then
+    who="a session the ledger does not name"
+  else
+    who="session $opener"
+    if mj_session_is_open "$opener"; then who="$who (open here"; else who="$who (no longer open here"; fi
+    for f in "$(mj_session_open_dir)"/*.yaml; do
+      [ -f "$f" ] || continue
+      [ "$(sed -n 's/^session_id: //p' "$f" | head -n 1)" = "$opener" ] || continue
+      w="$(sed -n 's/^worker: "\(.*\)"$/\1/p' "$f" | head -n 1)"
+      ps="$(sed -n 's/^provider_session: "\(.*\)"$/\1/p' "$f" | head -n 1)"
+      [ -z "$w" ] || who="$who, worker $w"
+      [ -z "$ps" ] || who="$who, provider session $ps"
+      break
+    done
+    who="$who)"
+  fi
+  mj_err "task $id is active ('$(mj_cur task)'), started $age by $who on branch $(mj_cur branch)"
+  # shellcheck disable=SC2016  # the command is printed for the caller to run, not expanded
+  local wt='majordomus worktree create <branch>, then cd "$(majordomus worktree path <branch>)" and start there'
+  if [ -n "$opener" ] && [ "$opener" = "$me" ]; then
+    mj_die "$MJ_EX_REFUSED" "it is this session's task: run majordomus finish (or majordomus handover --close) first"
+  elif [ -n "$opener" ] && mj_session_is_open "$opener"; then
+    mj_err "it is another session's work, and closing it is that session's to do"
+    mj_die "$MJ_EX_REFUSED" "start yours in a worktree of its own: $wt"
+  fi
+  mj_err "if the task is yours or stranded, run majordomus finish (or majordomus handover --close) first"
+  mj_die "$MJ_EX_REFUSED" "if another session works in this checkout, start yours in a worktree of its own: $wt"
 }
 
 # report claims in other worktrees that contain or are contained by our scope

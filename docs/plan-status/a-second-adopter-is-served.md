@@ -115,6 +115,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/start.sh with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4598; they may not run concurrently |
+| WARN | `scope_conflict` | `I4260` | shares lib/start.sh with I4652; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4263; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4266; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4267; they may not run concurrently |

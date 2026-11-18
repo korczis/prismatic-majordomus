@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-bounded-task-is-carried-to-accepted-work](https://majordomus.dev/plan/a-bounded-task-is-carried-to-accepted-work/) | PLANNED | 0/14 | 13 | 1 | 0 | 0 | 0 | Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget. |
+| [a-bounded-task-is-carried-to-accepted-work](https://majordomus.dev/plan/a-bounded-task-is-carried-to-accepted-work/) | PLANNED | 0/15 | 14 | 1 | 0 | 0 | 0 | Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget. |
 
 ## Issues
 
@@ -29,6 +29,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4567](https://majordomus.dev/plan/i4567/) | READY | 0 | — | A task whose own commits were rebased has a supported finish, judged over its rebased commits |
 | [I4573](https://majordomus.dev/plan/i4573/) | READY | 0 | — | A commit or push from a worktree with no active task is told so, in a supervised repository |
 | [I4628](https://majordomus.dev/plan/i4628/) | READY | 0 | — | A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy |
+| [I4652](https://majordomus.dev/plan/i4652/) | READY | 0 | — | start's refusal over an active task names who opened it and how long ago, and offers a worktree of its own when that task is another session's |
 
 ## Findings
 
@@ -108,6 +109,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares lib with I4618; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares lib with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares lib with I4630; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares lib with I4652; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/finish.sh with I4628; they may not run concurrently |

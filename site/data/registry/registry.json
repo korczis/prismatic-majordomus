@@ -6,23 +6,23 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "486c12140e2c0e9afc6d1eefcb8789d866550e17baf0cc5a9a0f8f28533aea2e",
+    "fingerprint": "b89be8fae8b40dd075ebfa864fe85c305a3a3386c9d634ca093b71bb79d7a39f",
     "summary": {
-      "total": 4042,
+      "total": 4044,
       "builtin": 231,
-      "declarative": 3811,
+      "declarative": 3813,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3811
+        "resource": 3813
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3821
+        "implemented": 3823
       },
       "mcp_tools": 215,
-      "mcp_resources": 3868,
+      "mcp_resources": 3870,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97219,7 +97219,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1263,
+        "capabilities": 1264,
         "capability_ids": []
       },
       {
@@ -97832,7 +97832,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 707,
+        "capabilities": 708,
         "capability_ids": []
       },
       {
@@ -97925,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bb4fd29f11b46f453abd322d1bbdd6786ff5a713b855b7e871e3f45f19fdba9c",
+    "fingerprint": "2bd643b353b2fa9d09bb089470e73031e1729b3fb1037183fb9819b3a8f83b37",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97965,7 +97965,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1263,
+      "issue": 1264,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97979,7 +97979,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 707,
+      "test": 708,
       "use-case": 49,
       "workspace": 1
     },
@@ -105562,7 +105562,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138592
+        "bytes": 138809
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -109016,7 +109016,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13667
+        "bytes": 15909
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -123431,6 +123431,17 @@
         "bytes": 3995
       },
       {
+        "uri": "majordomus://issue/I4652",
+        "kind": "issue",
+        "identity": "I4652",
+        "title": "start's refusal over an active task names who opened it and how long ago, and offers a worktree of its own when that task is another session's",
+        "description": "When `majordomus start` meets an active task in the checkout it still refuses (exit 15), and the refusal now says whose task it is: the episode that opened it (task.started's session, mj_task_opening_session), whether that episode is still open here, its worker and provider session when the open record carries them, and the task's age from started_at. When the opener is a session other than the caller's, the refusal names `majordomus worktree create <branch>` and `cd \\\"$(majordomus worktree path <branch>)\\\"` as the way forward before finish or handover --close, because closing another session's task is not the caller's to do. When the caller opened the task, the advice stays finish or handover --close.",
+        "path": ".ai/repo/project/issues/I4652.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3173
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137500,6 +137511,14 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+        "kind": "test",
+        "identity": "test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+        "path": "test/cases/4652_start_refusal_names_the_active_task_owner.sh",
+        "source_class": "case",
+        "bytes": 2994
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -140014,7 +140033,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1263
+      "objects": 1264
     },
     {
       "name": "knowledge",
@@ -140176,7 +140195,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 707
+      "objects": 708
     },
     {
       "name": "use-case",
