@@ -1,5 +1,6 @@
-# The telemetry model of this repository: a completed validate run, shipped as one
-# OpenTelemetry trace to the endpoint the owner configures, and nothing at all when none is.
+# The telemetry model of this repository: a completed validate run that was not cancelled,
+# shipped as one OpenTelemetry trace to the endpoint the owner configures, and nothing at all
+# when none is.
 # .github/workflows/telemetry.yml is an adapter over this file; it carries no rule of its own.
 #
 # Why: queueing across overlapping runs cost up to 774 summed job-minutes on master run
@@ -10,6 +11,10 @@ trigger:
   workflow_run:
     workflows: [validate]
     types: [completed]
+  # the conclusions of a completed validate run that start no export job: the workflow's job
+  # `if` excludes exactly these (I4524). A cancelled run is mostly jobs that never started, and
+  # its export job took a hosted runner back from the cancel that freed one (2026-10-30)
+  skip_conclusions: [cancelled]
   # one export per validate run, never cancelled: a cancelled export is a run nobody measured
   concurrency: telemetry-<validate run id>
 
