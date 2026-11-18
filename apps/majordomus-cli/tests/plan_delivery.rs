@@ -422,6 +422,38 @@ fn a_pull_request_is_judged_by_the_merge_it_will_be() {
     f.git(&["checkout", "-q", "-b", "feature/a-later-piece"]);
     f.write("lib/later.sh", "echo later\n");
     f.commit("feat: a later piece");
+    // the head's last commit only plans: the anticipated merge is judged against where the
+    // branch leaves the trunk, never against that one commit, which would read as planning
+    f.write(
+        ".ai/repo/project/issues/I0004.yaml",
+        &format!(
+            "{}# planned with the later piece\n",
+            issue("I0004", "an-untouched-piece")
+        ),
+    );
+    f.commit("plan: note I0004");
+    let title = "feat: a later piece (I0004)";
+    let (code, h, err) = cli(
+        &f,
+        &[
+            "--at",
+            "HEAD",
+            "--merge-title",
+            title,
+            "--merge-number",
+            "12",
+        ],
+    );
+    assert_eq!(code, 0, "{err}");
+    let at_head = by_id(&h, "I0004");
+    assert_eq!(
+        at_head["stage"], "merged",
+        "a plan-only last commit hid the merge: {at_head}"
+    );
+    assert_eq!(at_head["merged"]["pull_request"], 12);
+    assert!(source(&h, "anticipated_merge")["detail"]
+        .as_str()
+        .is_some_and(|d| d.contains("a merge of #12 titled")));
     f.git(&["checkout", "-q", &trunk]);
     f.git(&[
         "merge",
@@ -443,7 +475,6 @@ fn a_pull_request_is_judged_by_the_merge_it_will_be() {
         "no anticipated merge is named when none is asked: {plain}"
     );
 
-    let title = "feat: a later piece (I0004)";
     let (code, v, err) = cli(
         &f,
         &[

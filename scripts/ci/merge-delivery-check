@@ -15,20 +15,26 @@
 # pull request's test merge) as the merge the forge will make. What this adapter decides is
 # what the executable cannot see: the pull request's title, head branch and base, from the
 # runner's event; and it compares the merged and released tallies of that answer with the
-# committed projection's, which is the comparison homepage-check makes on the trunk.
+# committed projection's, which is the comparison homepage-check makes on the trunk. Counts,
+# not issues, on purpose: two issues that move in opposite directions leave the trunk's site
+# green, and the gate refuses exactly what the trunk would.
+#
+# The title is read live from the forge (GH_TOKEN, `gh api .../pulls/<n>`), the event's copy
+# only when that read fails: a re-run replays the original event, so a retitled pull request
+# would otherwise be judged by the title it no longer has.
 #
 # Each issue whose stage would differ is named with its cause:
 #   the title or branch   the answer without the anticipated merge agrees with the projection
 #                         for that issue: retitle the pull request so it names no issue its
 #                         head does not prove. A retitle starts no validate run, so the remedy
-#                         says to re-run this one.
+#                         says to re-run this one, which reads the new title live.
 #   the trunk or the head the answer differs even without it: run scripts/derive at the
 #                         branch's head (merging the trunk first if it moved) and commit
 #                         the projection. A commit whose subject names an issue moves it
 #                         after a projection derived before that commit was observed.
 #
 #   scripts/ci/merge-delivery-check          judge this checkout as the runner's event says
-#   MJ_MERGE_TITLE=<t> [MJ_MERGE_BRANCH=<b>] scripts/ci/merge-delivery-check
+#   MJ_MERGE_TITLE=<t> [MJ_MERGE_BRANCH=<b>] [MJ_MERGE_NUMBER=<n>] scripts/ci/merge-delivery-check
 #                                            judge HEAD as the merge of a pull request with
 #                                            that title and branch (a person, and the case
 #                                            that proves this gate: test/cases/4634_*.sh)
@@ -50,18 +56,30 @@ PROJECTION="site/data/generated/delivery.json"
 
 title="${MJ_MERGE_TITLE:-}"
 branch="${MJ_MERGE_BRANCH:-}"
+number="${MJ_MERGE_NUMBER:-}"
 if [ -n "$title" ]; then
   echo "NOTE merge-delivery-check: HEAD is judged as the merge of '$title', because MJ_MERGE_TITLE says so"
 elif [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ] && [ -r "${GITHUB_EVENT_PATH:-}" ]; then
   trunk="$(sed -n 's/^default_branch: *//p' .ai/repo/project/project.yaml 2>/dev/null | head -1 | tr -d "\"'" || true)"
   trunk="${trunk:-master}"
+  number="$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")"
   base="$(jq -r '.pull_request.base.ref // empty' "$GITHUB_EVENT_PATH")"
+  title="$(jq -r '.pull_request.title // empty' "$GITHUB_EVENT_PATH")"
+  branch="$(jq -r '.pull_request.head.ref // empty' "$GITHUB_EVENT_PATH")"
+  # the live pull request, so a re-run after a retitle judges the title it has now
+  if [ -n "$number" ] && [ -n "${GITHUB_REPOSITORY:-}" ] \
+    && live="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$number" --jq '[.title, .head.ref, .base.ref] | @tsv' 2>/dev/null)" \
+    && [ -n "$live" ]; then
+    IFS="$(printf '\t')" read -r title branch base <<EOF_LIVE
+$live
+EOF_LIVE
+  else
+    echo "NOTE merge-delivery-check: the live pull request #${number:-?} could not be read; judged by the event's title, which a re-run does not refresh"
+  fi
   if [ "$base" != "$trunk" ]; then
     echo "NOTE merge-delivery-check: this pull request merges into '$base', not the trunk '$trunk'; there is no trunk merge to judge"
     exit 0
   fi
-  title="$(jq -r '.pull_request.title // empty' "$GITHUB_EVENT_PATH")"
-  branch="$(jq -r '.pull_request.head.ref // empty' "$GITHUB_EVENT_PATH")"
 else
   echo "NOTE merge-delivery-check: not a pull request (event '${GITHUB_EVENT_NAME:-none}') and no MJ_MERGE_TITLE; there is no merge to judge"
   exit 0
@@ -83,6 +101,7 @@ ask() { # <out> <args...>: the executable's answer at HEAD, or exit 12 naming wh
 merge_args=()
 [ -z "$title" ] || merge_args+=(--merge-title "$title")
 [ -z "$branch" ] || merge_args+=(--merge-branch "$branch")
+[ -z "$number" ] || merge_args+=(--merge-number "$number")
 ask "$work/plain.json"
 # bash 3.2 (macOS) calls an empty array unbound under set -u
 ask "$work/merge.json" ${merge_args[@]+"${merge_args[@]}"}
@@ -103,9 +122,9 @@ fi
 jq -r -n --slurpfile c "$PROJECTION" --slurpfile p "$work/plain.json" --slurpfile m "$work/merge.json" '
   def stages(r): r.issues | map({key: .issue, value: (if (.stage == "merged" or .stage == "released") then .stage else "none" end)}) | from_entries;
   (stages($c[0])) as $c | (stages($p[0])) as $p | (stages($m[0])) as $m
-  | $m | keys[] as $id
-  | select(($c[$id] // "none") != $m[$id])
-  | "\($id)\t\($c[$id] // "none")\t\($m[$id])\t\(if ($p[$id] // "none") == ($c[$id] // "none") then "title" else "moved" end)"
+  | ($m + $c | keys[]) as $id
+  | select(($c[$id] // "none") != ($m[$id] // "none"))
+  | "\($id)\t\($c[$id] // "none")\t\($m[$id] // "none")\t\(if ($p[$id] // "none") == ($c[$id] // "none") then "title" else "moved" end)"
 ' > "$work/flips.tsv"
 
 echo "REFUSED merge-delivery: the merge of '$title' would prove [$got], and $PROJECTION says [$want]; the trunk's site would refuse its own delivery (homepage-check)"
@@ -115,8 +134,12 @@ while IFS="$(printf '\t')" read -r id was would cause; do
     *) echo "  $id: $was -> $would, because the trunk or the head moved since the projection was observed" ;;
   esac
 done < "$work/flips.tsv"
+if [ ! -s "$work/flips.tsv" ]; then
+  echo "  no single issue changes stage, so the tallies differ by issues the plan and the projection do not share"
+  echo "  remedy: merge the trunk into the branch and run scripts/derive at its head, then commit the projection it observes"
+fi
 if grep -q "$(printf '\t')title$" "$work/flips.tsv"; then
-  echo "  remedy: retitle the pull request so it names no issue its head does not prove, then re-run this run (a retitle starts no validate run)"
+  echo "  remedy: retitle the pull request so it names no issue its head does not prove, then re-run this run (a retitle starts no validate run; the re-run reads the live title)"
 fi
 if grep -q "$(printf '\t')moved$" "$work/flips.tsv"; then
   echo "  remedy: merge the trunk into the branch and run scripts/derive at its head (if only the head moved, derive there without a merge), then commit the projection it observes (a commit whose subject names an issue moves it after a projection derived before that commit)"

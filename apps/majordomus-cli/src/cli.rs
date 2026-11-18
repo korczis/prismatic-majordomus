@@ -3538,7 +3538,7 @@ pub struct PlanArgs {
 ///     else { panic!("plan") };
 ///     args.command
 /// }
-/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None, merge_title: None, merge_branch: None }));
+/// assert!(matches!(parse(&["majordomus", "plan", "delivery"]), PlanCommand::Delivery { issue: None, at: None, merge_title: None, merge_branch: None, merge_number: None }));
 /// assert!(matches!(
 ///     parse(&["majordomus", "plan", "drift", "--gate", "trunk"]),
 ///     PlanCommand::Drift { issue: None, at: None, gate: Some(majordomus_cli::cli::DriftGateArg::Trunk) }
@@ -3562,6 +3562,9 @@ pub enum PlanCommand {
         /// With --at: the anticipated merge's head branch, without its owner
         #[arg(long, value_name = "BRANCH")]
         merge_branch: Option<String>,
+        /// With --at: the anticipated merge's pull request number
+        #[arg(long, value_name = "N")]
+        merge_number: Option<u64>,
     },
     /// Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
     Drift {

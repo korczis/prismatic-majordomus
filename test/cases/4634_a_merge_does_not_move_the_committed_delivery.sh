@@ -13,6 +13,7 @@
 #   the same merge titled with an issue its head lacks     REFUSED, the title, retitle
 #   a trunk that moved after the projection was observed   REFUSED, moved, scripts/derive
 #   the runner's event: a pull request into the trunk     judged from the event
+#   an issue only the projection has                       REFUSED, named
 #   a pull request into another branch, no event, no file  NOTE, nothing to judge
 #
 # Each MUTATION names a change to the code that this case must fail on.
@@ -91,6 +92,16 @@ grep -q "I0002: none -> merged, because the trunk or the head moved" out.txt \
   || fail "the refusal does not name I0002 as moved: $(cat out.txt)"
 grep -q "remedy: merge the trunk into the branch and run scripts/derive" out.txt \
   || fail "the moved refusal names no derive: $(cat out.txt)"
+
+# an issue only the projection has (dropped from the plan) is named too, from either side
+test_merge "$BASE"
+git show feature/a-piece:site/data/generated/delivery.json \
+  | jq '.issues += [{"issue": "I0099", "stage": "merged"}] | .tallies.merged += 1' > site/data/generated/delivery.json
+gate MJ_MERGE_TITLE="feat: a piece" MJ_MERGE_BRANCH=feature/a-piece
+# MUTATION: the issues iterated from the merge's answer only (`$m | keys[]`) -> no I0099 line.
+[ "$rc" = 10 ] && grep -q "I0099: merged -> none" out.txt \
+  || fail "an issue only the projection has was not named ($rc): $(cat out.txt)"
+git checkout -q -- site/data/generated/delivery.json
 
 # ---------------------------------------------------------------- the runner's event
 test_merge "$BASE"

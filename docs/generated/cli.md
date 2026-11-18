@@ -6555,6 +6555,7 @@ majordomus plan delivery [OPTIONS] [ISSUE]
 | `--at` | `<REV>` | — | Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock) |
 | `--merge-title` | `<TITLE>` | — | With --at: read that commit as the merge into the trunk of a pull request with this title, as the forge's merge commit will name it (I4634) |
 | `--merge-branch` | `<BRANCH>` | — | With --at: the anticipated merge's head branch, without its owner |
+| `--merge-number` | `<N>` | — | With --at: the anticipated merge's pull request number |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

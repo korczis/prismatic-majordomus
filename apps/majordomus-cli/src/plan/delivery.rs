@@ -990,6 +990,8 @@ fn source(name: &str, read: Result<String, String>, observed_at: Option<&str>) -
 /// advance lets a pull request be judged before it lands.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct AnticipatedMerge {
+    /// The pull request's number, as the forge's merge commit will name it.
+    pub pull_request: Option<u64>,
     /// The pull request's title, as the forge's merge commit will carry it.
     pub title: Option<String>,
     /// The pull request's head branch, without its owner.
@@ -997,13 +999,13 @@ pub(crate) struct AnticipatedMerge {
 }
 
 impl AnticipatedMerge {
-    /// The merge commit it stands for: at `commit`, at its `time`, read against its first
-    /// `parent` — for a pull request's test merge (`refs/pull/<n>/merge`), the trunk.
+    /// The merge commit it stands for: at `commit`, at its `time`, read against `parent` —
+    /// the trunk the merge's change is judged against.
     fn at(&self, commit: &str, time: u64, parent: Option<String>) -> MergeCommit {
         MergeCommit {
             commit: commit.to_string(),
             time,
-            pull_request: None,
+            pull_request: self.pull_request,
             branch: self.branch.clone(),
             title: self.title.clone(),
             parent,
@@ -1014,7 +1016,10 @@ impl AnticipatedMerge {
     fn describe(&self, commit: &str) -> String {
         let quoted = |v: &Option<String>| v.as_deref().map(|t| format!("'{t}'"));
         format!(
-            "a merge titled {} from branch {} is anticipated at {commit}",
+            "a merge{} titled {} from branch {} is anticipated at {commit}",
+            self.pull_request
+                .map(|n| format!(" of #{n}"))
+                .unwrap_or_default(),
             quoted(&self.title).unwrap_or_else(|| "nothing".into()),
             quoted(&self.branch).unwrap_or_else(|| "none".into()),
         )
@@ -1035,7 +1040,8 @@ pub(crate) fn infer(
     if anticipated.is_some() && at.is_none() {
         return Err(
             "an anticipated merge is read at the commit it would be: name it with `at` \
-                    (a pull request's test merge, or its head)"
+                    (a pull request's test merge, or its head, read against where it leaves \
+                    the trunk)"
                 .to_string(),
         );
     }
@@ -1071,13 +1077,19 @@ pub(crate) fn infer(
         _ => (rev, crate::peers::rfc3339(SystemTime::now())),
     };
     let (all_merges, all_subjects) = (read.merges, read.subjects);
-    // the anticipated merge, at the commit read and against that commit's own first parent
+    // The anticipated merge, at the commit read. A merge (the forge's test merge) is judged
+    // against its first parent, the trunk. Any other commit is a head, one commit of the pull
+    // request, and what that one commit changed says nothing about the rest (a last commit
+    // that only re-derives would make the whole merge read as planning): it is judged against
+    // where the branch leaves the trunk, as the forge's merge will be.
     let ahead: Option<MergeCommit> = anticipated.map(|a| {
-        let parent = all_merges
-            .iter()
-            .chain(&all_subjects)
-            .find(|c| c.commit == commit)
-            .and_then(|c| c.parent.clone());
+        let parent = match all_merges.iter().find(|c| c.commit == commit) {
+            Some(m) => m.parent.clone(),
+            None => trunk_ref(root, &trunk_name)
+                .and_then(|t| git_ok(root, &["merge-base", &t, &commit]))
+                .map(|base| base.trim().to_string())
+                .filter(|base| !base.is_empty()),
+        };
         a.at(&commit, read.time, parent)
     });
 

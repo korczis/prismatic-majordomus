@@ -25,6 +25,7 @@ pub fn run(args: PlanArgs) -> Result<u8> {
             at,
             merge_title,
             merge_branch,
+            merge_number,
         } => {
             let mut input = json!({});
             if let Some(i) = issue {
@@ -38,6 +39,9 @@ pub fn run(args: PlanArgs) -> Result<u8> {
             }
             if let Some(b) = merge_branch {
                 input["merge_branch"] = json!(b);
+            }
+            if let Some(n) = merge_number {
+                input["merge_number"] = json!(n);
             }
             execute(&app.context, &["plan", "delivery"], input)?
         }

@@ -530,21 +530,27 @@ seen to have realised I2653, which its commits name only in a body. The source i
 `merged_titles`; at a commit it is unread, so the committed data stays a function of the
 commit's history. The landing seat's own merge of a member into a combined top,
 `Merge #<n> (<branch>) into the combined top on <sha>`, names that pull request and its
-branch, so a top's head proves its members before the top merges (I4634).
+branch, so a top's head proves its members before the top merges (I4634). The merge it
+records is the member's, so its `merged_at` is when the top was built, not when the top
+reached the trunk: a lead time read from it is short by the top's dwell. Whether it is
+merged at all still follows the trunk, since only a top that landed makes it reachable.
 
 ### A merge that has not happened yet
 
 The trunk's site infers delivery at its own commit (I3769), and the committed projection is
 observed before the merge exists. A merge that proves more than its head did therefore turns
 the trunk red after it lands: on 2026-11-17 the title of #3077 named issues its head did not
-prove, its merge ae13be1bd13 counted two more, and #3084 repaired master. `--merge-title <t>`
-and `--merge-branch <b>`, with `--at`, read that commit as the merge into the trunk of a pull
-request with that title and head branch, as the forge's merge commit will name it, and the
-source `anticipated_merge` says so. At a pull request's test merge (`refs/pull/<n>/merge`),
-that is the delivery the trunk will infer.
+prove, its merge ae13be1bd13 counted two more, and #3084 repaired master. `--merge-title <t>`,
+`--merge-branch <b>` and `--merge-number <n>`, with `--at`, read that commit as the merge into
+the trunk of that pull request, as the forge's merge commit will name it, and the source
+`anticipated_merge` says so. At a pull request's test merge (`refs/pull/<n>/merge`), that is
+the delivery the trunk will infer; the merge's change is judged against its first parent, the
+trunk. At a head it is judged against where the branch leaves the trunk, never against the
+head's own last commit, which is often one that only re-derives.
 
 The gate `merge-delivery` (`scripts/ci/merge-delivery-check`, every plan) asks for it with
-the title, head branch and base of the runner's pull_request event and compares the
+the pull request's title, head branch, base and number, read live from the forge (the event
+file only when that read fails, because a re-run replays the original event), and compares the
 `merged` and `released` tallies with `site/data/generated/delivery.json`, the comparison
 `homepage-check` makes on the trunk. It refuses (exit 10) and names each issue that would
 move, with its cause: the title or branch (retitle the pull request, then re-run the run,
