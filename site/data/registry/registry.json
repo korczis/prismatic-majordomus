@@ -6,23 +6,23 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "486c12140e2c0e9afc6d1eefcb8789d866550e17baf0cc5a9a0f8f28533aea2e",
+    "fingerprint": "2bfc9df00be6db5471b008ac9ea43eb4e947547e00743bf6846c5720dd5ec8bc",
     "summary": {
-      "total": 4042,
+      "total": 4043,
       "builtin": 231,
-      "declarative": 3811,
+      "declarative": 3812,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3811
+        "resource": 3812
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3821
+        "implemented": 3822
       },
       "mcp_tools": 215,
-      "mcp_resources": 3868,
+      "mcp_resources": 3869,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97832,7 +97832,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 707,
+        "capabilities": 708,
         "capability_ids": []
       },
       {
@@ -97925,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bb4fd29f11b46f453abd322d1bbdd6786ff5a713b855b7e871e3f45f19fdba9c",
+    "fingerprint": "7688fb277d6b5bd07b2985cd13171e2a91685fb70f4549c57c1c1df894fca8f2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97979,7 +97979,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 707,
+      "test": 708,
       "use-case": 49,
       "workspace": 1
     },
@@ -105130,7 +105130,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 48012
+        "bytes": 49141
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -122929,7 +122929,7 @@
         "kind": "issue",
         "identity": "I4524",
         "title": "Telemetry does not run for a validate run that was cancelled",
-        "description": "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4524 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why.",
+        "description": "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4653 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why.",
         "path": ".ai/repo/project/issues/I4524.yaml",
         "section": "project",
         "source_class": "issue",
@@ -137500,6 +137500,14 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+        "kind": "test",
+        "identity": "test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+        "path": "test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+        "source_class": "case",
+        "bytes": 5833
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -140176,7 +140184,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 707
+      "objects": 708
     },
     {
       "name": "use-case",
