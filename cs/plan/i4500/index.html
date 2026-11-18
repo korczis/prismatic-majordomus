@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=28fc5c25466e4e6ea3cc">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=d85a5d16003ce86eef94">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -53,7 +53,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <circle cx="60" cy="32" r="3"/>
     <circle cx="60" cy="48" r="3"/>
   </g>
-</svg> </span> <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span> <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="1.1.0">v1.1.0</span>
+</svg> </span> <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span> <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="1.1.0" data-version-role="stable" title="The stable release the installer gives you">v1.1.0</span>
+      
       
     </a>
     <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -172,12 +173,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
 <span class="text-sm text-body">vlna 0 · p1 · profil hluboké práce · bezpečné paralelně</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/cs/plan/a-profile-is-resolved-once-and-enforced/" class="text-fg-brand underline">a-profile-is-resolved-once-and-enforced — A profile is resolved once, explains every field, and refuses at the executor what it does not grant</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Připraveno. Všechny závislosti jsou hotové, takže <code class="font-mono text-heading">majordomus plan start I4500</code> bude přijato.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Write the audit the rest of the milestone is built on: one table that follows a profile from its YAML file through validation, the task record, the context, check, finish and every Rust reader, marking each link; a baseline of what reading and resolving a profile costs today; and a decision record that names the owner of the resolver, what an effective profile is, how its schema changes and where a profile&#39;s word ends and enforcement begins.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 00, asks for a reality audit with exact paths, a compatibility matrix, a benchmark baseline and an ADR in the repository&#39;s convention before any resolver is written, and says a later phase drops whatever the audit shows is already there. The repository has no decision record about profiles: fourteen ADRs mention the word and none decides the model. The readers are spread over six shell files and three Rust modules, and nothing lists them.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. Shell readers: lib/common.sh mj_load_profile and mj_pro, called from lib/start.sh (existence; the name written into current.yaml and task.started), lib/context.sh (context.* toggles, checkpoint_interval, the PROFILE section, verification and knowledge), lib/check.sh (--explain prints MJ_PRO_FLAT; the checkpoint interval), lib/finish.sh (verify_command_required, mj_validate_profile_requirements), lib/doctor.sh and lib/update.sh mj_build_fragments (a PROFILE_TABLE no shipped template includes). Name carriers that copy the name and never read the file: lib/common.sh mj_record_front_matter, lib/checkpoint.sh, lib/handover.sh. Rust: policy.rs ProfilesPolicy and the hash over every profile file; gates/done.rs is_test_path, which copies finish&#39;s predicate; continuity/record.rs and mesh/handover.rs carry a name; plan.rs carries an issue&#39;s profile; providers.rs reads DEFAULT_PROFILE and CHECKPOINT_DEFAULT and refuses PROFILE_TABLE; devcontext/select.rs tiers by profile. docs/claims/profile-axes.md still says the axes are advisory. No ADR decides a resolver, no docs/PROFILES.md exists, and master issues I3123 (verification.verify_commands), I3128, I3395 and I3199 already assume an effective profile that nothing resolves.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">docs/PROFILES.md holds the trace as a table (path, what it reads, what it does with it, who consumes the result, and the link&#39;s standing: proven by a named test, advisory, duplicated, missing), and a compatibility table for the four shipped profiles, the schema, the allowlist, the task record&#39;s profile field, the ledger&#39;s task.started and the continuity record. A decision record under .ai/repo/adrs names apps/majordomus-cli/src/profile as the owner, defines the effective profile and its fingerprint, says which inputs are constraints that intersect and which are preferences that take precedence, says whether new keys keep majordomus.profile/v1 or need v2, and draws the line with runtime-adapters. The baseline records the wall time of check --explain and of start under each shipped profile, with the command that measured it.</p>
@@ -211,13 +209,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-11-07T15:37:00Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621/.ai/repo/project/issues/I4500.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I4500.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I4500</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/d0b85677b74317be030a21d0af5a46634693b4e3/.ai/repo/project/issues/I4500.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I4500.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I4500</code>.</p>
 </div>
 
 </div>
@@ -267,17 +265,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d0b85677b74317be030a21d0af5a46634693b4e3/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d0b85677b74317be030a21d0af5a46634693b4e3/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d0b85677b74317be030a21d0af5a46634693b4e3/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.1.0</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/68325d3cfae0c05a5cfa3b6cd04de38e4aec6621" class="font-mono underline">68325d3</a> · inputs <span class="font-mono">78d01d66e156</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.1.0">v1.1.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d0b85677b74317be030a21d0af5a46634693b4e3" class="font-mono underline">d0b8567</a> · inputs <span class="font-mono">ce8f9798b1e2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

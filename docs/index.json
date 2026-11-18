@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "68325d3cfae0c05a5cfa3b6cd04de38e4aec6621",
+  "commit": "d0b85677b74317be030a21d0af5a46634693b4e3",
   "source_version": "1.1.0",
-  "registry_fingerprint": "895e68394eb691964d18fe0426d92aadb778c2ba390004f6947d3bb09808c9d5"
+  "registry_fingerprint": "643aba2c1428da958892ea34ac6814b4e1e8b68cb995caf2b18069650b779627"
  },
  "counts": {
-  "pages": 6537,
-  "capabilities": 4043,
+  "pages": 6551,
+  "capabilities": 4050,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3869,
+  "mcp_resources": 3876,
   "modules": 96
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 169
+   "count": 170
   },
   {
    "kind": "application",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 361
+   "count": 362
   },
   {
    "kind": "domain",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1263
+   "count": 1268
   },
   {
    "kind": "knowledge",
@@ -1854,6 +1854,15 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0232/",
+   "title": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
+   "description": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0232",
+   "source": ".ai/repo/adrs/0232-one-resolver-in-the-profile-module-owns-the-effective-profile.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/applications/",
    "title": "Applications",
    "description": "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description.",
@@ -3177,6 +3186,12 @@
    "route": "/cs/adrs/adr-0230/",
    "title": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
    "description": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/adrs/adr-0232/",
+   "title": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
+   "description": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -5756,7 +5771,7 @@
   {
    "route": "/cs/docs/performance/",
    "title": "Pravda o výkonu",
-   "description": "kam se ztrácí čas příkazu (`MJ_TIMING=1`), co bylo pomalé a podoba každé opravy, `majordomus bench` a jeho studená a teplá rozdělení, lokální běhy proti sledovanému základu, kontrola regrese a rozpočty a jak na výkonu pracovat",
+   "description": "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, the baseline of reading a profile before the resolver, and how to work on performance",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -5787,6 +5802,12 @@
    "route": "/cs/docs/product/",
    "title": "Produkt",
    "description": "funkce produktu jako objekty vrstvy: co smí obsahovat soubor funkce, co z něj odvozuje každý povrch, hranice veřejné projekce a její seznam povolených položek, co vykreslují domovská stránka a stránky `/features/` a co se odmítá",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/profiles/",
+   "title": "Profiles: the trace from the file to finish",
+   "description": "a profile traced from its YAML file through validation, selection, the task record, the context, check and finish to every Rust reader, each link marked proven, advisory, duplicated or missing with the line and the test behind it; how the shipped profiles, the schema, the allowlist, the task record, the ledger and the continuity record stand against each other; and what ADR 0232 decides about the one resolver",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -15860,7 +15881,7 @@
   {
    "route": "/cs/plan/i4569/",
    "title": "I4569 — Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick",
-   "description": "release-path.yml runs `scripts/ci/release-path resume` on the completion of every workflow of the release path (release, pages, the record branch's validate) through a workflow_run trigger, so a yielded pull-request validate starts again within minutes of the path clearing, with the 15-minute schedule kept as the backstop.",
+   "description": "Every run of the release path asks `scripts/ci/release-path resume --self \\\"$GITHUB_RUN_ID\\\"` when it ends, from a final aggregate job of its own. That job needs every other job, carries a job-level `if: always()`, and holds the permissions resume needs, as validate.yml's `ci` job already does for runs that are not a pull request's. pages.yml and release.yml gain such a job. validate.yml's resume also runs for the record pull request's own run. A yielded pull-request validate then starts again when the run that held the path ends, and the schedule stays as the backstop. A workflow_run trigger in release-path.yml is not the mechanism: release.yml dispatches the path's pages and record-validate runs with the job's GITHUB_TOKEN, and GitHub starts no workflow from events that token causes, so their completion would start nothing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -15990,9 +16011,27 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4596/",
+   "title": "I4596 — A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it",
+   "description": "Implement the owner's decision of 2026-11-15, option (b): a dependency on a cancelled issue stays unsatisfied, so its open dependent stays BLOCKED, and plan validate warns cancelled_dependency once for each such edge, naming the dependent and the cancelled issue and suggesting the dependency be dropped from depends_on. Both plan engines emit the same finding, and docs/PLANNING.md states the meaning. Statuses, blocked_by and waves do not change.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4597/",
+   "title": "I4597 — A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not",
+   "description": "A repository declares in its policy the lines its own tooling recomputes on every change: a path glob, a whole-line pattern, and the writer that produces the line for a given tree, as an executable with an argument list (never a command string). The declaration is read from master's policy only, as allocates_at already reads master's (relation.rs:226). The relation to master treats a conflict whose every conflicting hunk, on both sides, consists of lines matching the pattern as the refresh's: the executor's refresh (drain.rs refresh_branch) merges master in, runs the writer on the merged tree, stages the file it rewrote, and the derive follows. A hunk that does not match keeps the whole path authored. Each open pull request's ChangeShape records whether its change of such a path touches only matching lines, and classify::overlaps reports two pull requests that share a path only through such lines as OverlapKind::Recomputed, which the queue's contention count leaves out.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4598/",
    "title": "I4598 — A refusal for a path outside the scope names the remedies that exist",
    "description": "When check or a completed finish refuses a path outside the task's scope, one INFO line names the two ways out: mark a generated file merge=derived in .gitattributes, which the scope admits beside the change that produced it (I2114), or close the task partial and start it again with the wider scope, noting that in-place widening is planned (I4260); the line names no command that does not exist yet.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4599/",
+   "title": "I4599 — A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence",
+   "description": "proceed.step's wait carries the class of every wait it found: a dependency, another worker, a milestone gate, or the person. Waits are classified over the milestone the decision is taken for (proceed.rs:262, the asked or the active milestone), not over the whole plan. An unfinished issue of that milestone waits on the person when it is ACTIVE and its own open pull request is recorded with a disposition that only a person's act releases: WaitingForReview (a person reviews), Conflicting (a person resolves) or Unsafe (a person disarms). The pull request is matched to the issue through the assessment's issue field (model.rs:1179-1184). It also waits on the person when it is BLOCKED and every dependency chain from it ends, transitively, at such an issue. When every unfinished issue of the milestone waits on the person, the order is `wait_on_person`. It lists each such pull request with its number and disposition, and its next_due_at follows the cadence the policy declares for the person. The report it announces says so in one line, so a loop that proceeds stops polling every five minutes for an act only the person can take.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16005,6 +16044,12 @@
    "route": "/cs/plan/i4602/",
    "title": "I4602 — A test that builds a repository under a hook never inherits the hook's repository",
    "description": "An adopter is told, before a push does the damage, when a test script it runs from a hook builds its own git repository without first dropping the variables git names as repository-local (`git rev-parse --local-env-vars`).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4604/",
+   "title": "I4604 — A declared .ai extension in a gitignored subtree is discovered, checked and reported",
+   "description": "Let an adopter keep work that must stay out of git (client cases, data rooms, scratch analyses) under an enforced layer: a subtree that declares `.ai/extension.json` is discovered by name from the policy rather than from the index, its rules (repository rule shape) are listed by `majordomus rules`, its declared checker runs in `majordomus check`, and `doctor` reports it with its last verdict, without the subtree's content ever entering a projection, a published surface or a knowledge index.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16041,6 +16086,12 @@
    "route": "/cs/plan/i4618/",
    "title": "I4618 — The executable resolver borrows a same-generation executable another worktree built, before it refuses",
    "description": "Before mj_rust_resolve refuses with exit 12, it asks the other worktrees of this checkout, and answers through an executable one of them already built when that executable is of this tree's generation. It says which worktree on stderr, builds nothing, and names every worktree it judged in the refusal when none fits.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4622/",
+   "title": "I4622 — A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+   "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one as an executable and argument list (never a command string), watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -23240,7 +23291,7 @@
   {
    "route": "/docs/performance/",
    "title": "Performance truth",
-   "description": "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance",
+   "description": "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, the baseline of reading a profile before the resolver, and how to work on performance",
    "section": "Documentation"
   },
   {
@@ -23271,6 +23322,12 @@
    "route": "/docs/product/",
    "title": "Product",
    "description": "the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/profiles/",
+   "title": "Profiles: the trace from the file to finish",
+   "description": "a profile traced from its YAML file through validation, selection, the task record, the context, check and finish to every Rust reader, each link marked proven, advisory, duplicated or missing with the line and the test behind it; how the shipped profiles, the schema, the allowlist, the task record, the ledger and the continuity record stand against each other; and what ADR 0232 decides about the one resolver",
    "section": "Documentation"
   },
   {
@@ -33344,7 +33401,7 @@
   {
    "route": "/plan/i4569/",
    "title": "I4569 — Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick",
-   "description": "release-path.yml runs `scripts/ci/release-path resume` on the completion of every workflow of the release path (release, pages, the record branch's validate) through a workflow_run trigger, so a yielded pull-request validate starts again within minutes of the path clearing, with the 15-minute schedule kept as the backstop.",
+   "description": "Every run of the release path asks `scripts/ci/release-path resume --self \\\"$GITHUB_RUN_ID\\\"` when it ends, from a final aggregate job of its own. That job needs every other job, carries a job-level `if: always()`, and holds the permissions resume needs, as validate.yml's `ci` job already does for runs that are not a pull request's. pages.yml and release.yml gain such a job. validate.yml's resume also runs for the record pull request's own run. A yielded pull-request validate then starts again when the run that held the path ends, and the schedule stays as the backstop. A workflow_run trigger in release-path.yml is not the mechanism: release.yml dispatches the path's pages and record-validate runs with the job's GITHUB_TOKEN, and GitHub starts no workflow from events that token causes, so their completion would start nothing.",
    "section": "The plan"
   },
   {
@@ -33474,9 +33531,27 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4596/",
+   "title": "I4596 — A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it",
+   "description": "Implement the owner's decision of 2026-11-15, option (b): a dependency on a cancelled issue stays unsatisfied, so its open dependent stays BLOCKED, and plan validate warns cancelled_dependency once for each such edge, naming the dependent and the cancelled issue and suggesting the dependency be dropped from depends_on. Both plan engines emit the same finding, and docs/PLANNING.md states the meaning. Statuses, blocked_by and waves do not change.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4597/",
+   "title": "I4597 — A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not",
+   "description": "A repository declares in its policy the lines its own tooling recomputes on every change: a path glob, a whole-line pattern, and the writer that produces the line for a given tree, as an executable with an argument list (never a command string). The declaration is read from master's policy only, as allocates_at already reads master's (relation.rs:226). The relation to master treats a conflict whose every conflicting hunk, on both sides, consists of lines matching the pattern as the refresh's: the executor's refresh (drain.rs refresh_branch) merges master in, runs the writer on the merged tree, stages the file it rewrote, and the derive follows. A hunk that does not match keeps the whole path authored. Each open pull request's ChangeShape records whether its change of such a path touches only matching lines, and classify::overlaps reports two pull requests that share a path only through such lines as OverlapKind::Recomputed, which the queue's contention count leaves out.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4598/",
    "title": "I4598 — A refusal for a path outside the scope names the remedies that exist",
    "description": "When check or a completed finish refuses a path outside the task's scope, one INFO line names the two ways out: mark a generated file merge=derived in .gitattributes, which the scope admits beside the change that produced it (I2114), or close the task partial and start it again with the wider scope, noting that in-place widening is planned (I4260); the line names no command that does not exist yet.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4599/",
+   "title": "I4599 — A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence",
+   "description": "proceed.step's wait carries the class of every wait it found: a dependency, another worker, a milestone gate, or the person. Waits are classified over the milestone the decision is taken for (proceed.rs:262, the asked or the active milestone), not over the whole plan. An unfinished issue of that milestone waits on the person when it is ACTIVE and its own open pull request is recorded with a disposition that only a person's act releases: WaitingForReview (a person reviews), Conflicting (a person resolves) or Unsafe (a person disarms). The pull request is matched to the issue through the assessment's issue field (model.rs:1179-1184). It also waits on the person when it is BLOCKED and every dependency chain from it ends, transitively, at such an issue. When every unfinished issue of the milestone waits on the person, the order is `wait_on_person`. It lists each such pull request with its number and disposition, and its next_due_at follows the cadence the policy declares for the person. The report it announces says so in one line, so a loop that proceeds stops polling every five minutes for an act only the person can take.",
    "section": "The plan"
   },
   {
@@ -33489,6 +33564,12 @@
    "route": "/plan/i4602/",
    "title": "I4602 — A test that builds a repository under a hook never inherits the hook's repository",
    "description": "An adopter is told, before a push does the damage, when a test script it runs from a hook builds its own git repository without first dropping the variables git names as repository-local (`git rev-parse --local-env-vars`).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4604/",
+   "title": "I4604 — A declared .ai extension in a gitignored subtree is discovered, checked and reported",
+   "description": "Let an adopter keep work that must stay out of git (client cases, data rooms, scratch analyses) under an enforced layer: a subtree that declares `.ai/extension.json` is discovered by name from the policy rather than from the index, its rules (repository rule shape) are listed by `majordomus rules`, its declared checker runs in `majordomus check`, and `doctor` reports it with its last verdict, without the subtree's content ever entering a projection, a published surface or a knowledge index.",
    "section": "The plan"
   },
   {
@@ -33525,6 +33606,12 @@
    "route": "/plan/i4618/",
    "title": "I4618 — The executable resolver borrows a same-generation executable another worktree built, before it refuses",
    "description": "Before mj_rust_resolve refuses with exit 12, it asks the other worktrees of this checkout, and answers through an executable one of them already built when that executable is of this tree's generation. It says which worktree on stderr, builds nothing, and names every worktree it judged in the refusal when none fits.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4622/",
+   "title": "I4622 — A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+   "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one as an executable and argument list (never a command string), watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
    "section": "The plan"
   },
   {
@@ -37490,7 +37577,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.1.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.1.0, built from commit 68325d3cfae0c05a5cfa3b6cd04de38e4aec6621: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.1.0, built from commit d0b85677b74317be030a21d0af5a46634693b4e3: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.1.0 — Rust API reference"
   },
   {
