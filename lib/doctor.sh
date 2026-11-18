@@ -770,7 +770,8 @@ mj_report_clone() {
 #        directory is gone is behind. Optional entries (another platform's binaries) are
 #        judged only when installed, and dev entries not at all in an install that omitted
 #        every one of them. jq reads both files; npm itself is not run, so its absence
-#        changes nothing here.
+#        changes nothing here.  A lockfileVersion 1 lock (npm 6) has no "packages" map to compare
+#        with, so it is INFO, not judged, rather than read as current.
 #   mix  mix.lock and mix.exs with deps/ beside them. When every locked dependency has a
 #        directory under deps/ written after mix.lock last changed, the install is current
 #        without asking; otherwise `mix deps.loadpaths --no-compile` decides, which checks
@@ -782,7 +783,7 @@ mj_report_clone() {
 # was never made is not behind, and most worktrees never make one. Silent when nothing is
 # judged, so a repository with no lockfile reads as it did before this reading existed.
 mj_report_install_currency() {
-  local here checkouts d judged=0 behind=0 unread=0 others_left=0 line keys n lacking first
+  local here checkouts d judged=0 behind=0 unread=0 others_left=0 line keys n lacking first lv
   here="$(cd "$MJ_ROOT" && pwd -P)"
   if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ]; then
     checkouts="$here"
@@ -791,6 +792,10 @@ mj_report_install_currency() {
     checkouts="$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')"
     [ -n "$checkouts" ] || checkouts="$here"
   fi
+  # The list of checkouts is this loop's stdin, so every child below that could read stdin
+  # runs with </dev/null: a mix with Hex missing asks "Shall I install Hex? [Yn]" (rebar3
+  # likewise), and with the loop's stdin it took the rest of the list as its answer, leaving
+  # every checkout after the mix one silently unread (#3090).
   while IFS= read -r d; do
     [ -n "$d" ] && [ -d "$d" ] || continue
     # ---- npm
@@ -798,6 +803,14 @@ mj_report_install_currency() {
       if ! mj_has jq; then
         unread=$((unread + 1))
         mj_info clone "$d" "package-lock.json has an install beside it, but jq is absent, so whether node_modules matches it is not read" "cd '$d' && npm ls --depth=0"
+      elif lv="$(jq -r 'if type == "object" and (has("packages") | not)
+          then (.lockfileVersion // "?" | tostring) else empty end' "$d/package-lock.json" 2>/dev/null </dev/null)" \
+          && [ -n "$lv" ]; then
+        # lockfileVersion 1 (npm 6) locks its tree under "dependencies", nested, with no
+        # "packages" map: there is nothing here to compare the install with, and an empty
+        # wanted set would read as current whatever node_modules holds
+        unread=$((unread + 1))
+        mj_info clone "$d" "package-lock.json is lockfileVersion $lv, with no \"packages\" map, so whether node_modules matches it is not judged; npm 7 and later rewrite it in the current format" "cd '$d' && npm install --package-lock-only"
       elif [ ! -f "$d/node_modules/.package-lock.json" ]; then
         unread=$((unread + 1))
         mj_info clone "$d" "package-lock.json: node_modules holds no .package-lock.json (npm 7 and later write one), so whether the install matches the lockfile is not read" "cd '$d' && npm ci"
@@ -820,7 +833,7 @@ mj_report_install_currency() {
           | if $have[.key] == null then (if .value.o then empty else "lacks \(.key)" end)
             elif $have[.key].v != .value.v then "lacks \(.key)"
             elif .value.o then empty
-            else "holds \(.key)" end' "$d/node_modules/.package-lock.json" 2>/dev/null)"; then
+            else "holds \(.key)" end' "$d/node_modules/.package-lock.json" 2>/dev/null </dev/null)"; then
           unread=$((unread + 1))
           mj_info clone "$d" "package-lock.json or node_modules/.package-lock.json does not parse, so whether the install matches the lockfile is not read" "cd '$d' && npm ci"
         else
@@ -858,12 +871,12 @@ EOF
       else
         # shellcheck source=runnable.sh
         . "$MJ_LIB_DIR/runnable.sh"
-        if ! (cd "$d" && mj_runs mix); then
+        if ! (cd "$d" && mj_runs mix) </dev/null; then
           unread=$((unread + 1))
-          mj_info clone "$d" "mix.lock: $(cd "$d" && mj_runs_why mix), so whether deps/ matches the lock is not read" "cd '$d' && mix deps.get"
+          mj_info clone "$d" "mix.lock: $(cd "$d" && mj_runs_why mix </dev/null), so whether deps/ matches the lock is not read" "cd '$d' && mix deps.get"
         else
           judged=$((judged + 1))
-          if ! line="$(cd "$d" && mix deps.loadpaths --no-compile 2>&1)"; then
+          if ! line="$(cd "$d" && mix deps.loadpaths --no-compile 2>&1 </dev/null)"; then
             behind=$((behind + 1))
             first="$(printf '%s\n' "$line" | sed -n 's/^\* \([^ ]*\).*/\1/p' | head -n 3 | paste -s -d, - | sed 's/,/, /g')"
             mj_warn clone "$d" "mix.lock is ahead of deps/: mix deps.loadpaths --no-compile refuses${first:+ ($first)}; a build or hook run here uses the old deps" "cd '$d' && mix deps.get"

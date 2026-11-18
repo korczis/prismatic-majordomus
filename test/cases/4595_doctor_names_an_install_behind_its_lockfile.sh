@@ -19,6 +19,11 @@
 #                                       and says so
 #   a mix project whose deps/ lacks     a mix that does not start makes it INFO, never a
 #   what mix.lock holds                 WARN; where mix starts, a WARN with `mix deps.get`
+#   a mix that prompts (Hex missing)    the checkouts read after the mix one are still read:
+#   and a checkout that sorts after it  the prompt gets no stdin, so it cannot swallow the
+#   behind its lockfile                 rest of the list and leave them silently unread
+#   a lockfileVersion 1 package-lock    INFO, not judged: it has no "packages" to compare,
+#                                       so it never reads as current
 #
 # And none of it writes: every checkout's status, every install's record and the mix
 # project's tree are the same before and after doctor.
@@ -60,6 +65,7 @@ OK_LINE="OK   clone       install — every checkout's dependency install matche
 pkg "$P" dep-a
 npm_in "$P" install
 git add package.json package-lock.json vendor && git commit -qm "dep-a"
+dep_a="$(git rev-parse HEAD)"
 git worktree add -q -b work/feature "$W/feature"
 npm_in "$W/feature" ci
 git worktree add -q -b work/bare "$W/bare" "$layer"
@@ -167,4 +173,44 @@ if (cd "$W/mixed" && env $mix_env sh -c 'command -v mix >/dev/null && mix --vers
 else
   echo "    note: mix does not start here, so the WARN half of the mix reading is not exercised"
 fi
+
+# ---------------------------------------------------------------- a mix that prompts
+# A mix with Hex missing asks "Shall I install Hex? [Yn]" and reads its answer from stdin.
+# Doctor's checkout loop reads the list of checkouts from its own stdin, so a mix run with
+# that stdin took the rest of the list as its answer and every checkout after the mix one
+# went silently unread (#3090). `zz-late` sorts after `mixed` in `git worktree list`, is
+# behind its lockfile, and must still be named; `zz-v1` sorts after both and holds a
+# lockfileVersion 1 package-lock.json, which has no "packages" to judge.
+git worktree add -q -b work/zz-late "$W/zz-late" "$dep_a"
+npm_in "$W/zz-late" ci
+git -C "$W/zz-late" merge -q --ff-only "$trunk"
+[ -e "$W/zz-late/node_modules/dep-b" ] && { echo "    the fixture is wrong: zz-late already has dep-b"; exit 1; }
+git worktree add -q -b work/zz-v1 "$W/zz-v1" "$layer"
+mkdir -p "$W/zz-v1/node_modules"
+cp "$P/node_modules/.package-lock.json" "$W/zz-v1/node_modules/.package-lock.json"
+printf '{"name":"fx","version":"0.0.0","lockfileVersion":1,"requires":true,"dependencies":{"dep-z":{"version":"file:vendor/dep-z"}}}\n' \
+  > "$W/zz-v1/package-lock.json"
+git -C "$P" worktree list --porcelain | sed -n 's/^worktree //p' | tail -n 2 | tr '\n' ' ' \
+  | grep -qF "$W/zz-late $W/zz-v1 " || { echo "    the fixture is wrong: zz-late and zz-v1 do not sort last"; git worktree list; exit 1; }
+mkdir -p "$W/prompt"
+cat > "$W/prompt/mix" <<'EOF'
+#!/bin/sh
+# Hex is missing: every run asks first, and reads the answer from stdin
+printf 'Could not find Hex, which is needed to build dependency :dep_a\nShall I install Hex? (if running non-interactively, use "mix local.hex --force") [Yn]\n' >&2
+read -r answer || answer=""
+case "$1" in
+  --version) echo "Mix 1.18.0 (compiled with Erlang/OTP 27)"; exit 0 ;;
+  deps.loadpaths) echo "* dep_a (https://example.invalid/dep_a.git - v1)"; echo "  the dependency is not available, run \"mix deps.get\""; exit 1 ;;
+esac
+exit 1
+EOF
+chmod +x "$W/prompt/mix"
+doctor_in "$P" mix-prompts PATH="$W/prompt:$PATH"
+grep -qF "WARN clone       $W/mixed — mix.lock is ahead of deps/: mix deps.loadpaths --no-compile refuses (dep_a)" "$W/mix-prompts" \
+  || bad "a mix that prompts does not read as the mix checkout behind its lock:" mix-prompts
+grep -qF "WARN clone       $W/zz-late — package-lock.json is ahead of node_modules: 2 package(s) it locks are missing or at another version (dep-b, dep-c)" "$W/mix-prompts" \
+  || bad "a checkout after the mix one went unread: the mix prompt swallowed the rest of the list:" mix-prompts
+grep -qF "INFO clone       $W/zz-v1 — package-lock.json is lockfileVersion 1" "$W/mix-prompts" \
+  || bad "a lockfileVersion 1 package-lock.json is not reported as not judged:" mix-prompts
+grep -q "WARN clone       $W/zz-v1 " "$W/mix-prompts" && bad "a lockfileVersion 1 package-lock.json was judged:" mix-prompts
 exit 0
