@@ -1,0 +1,34 @@
+id: I4653
+milestone: mcp-transports-are-reliable
+title: "An exclusive claim taken over a server with an idle life says when it would lapse, and a seat is never lost to an idle exit unannounced"
+slug: a-claim-over-an-idling-server-says-when-it-lapses
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When mesh.claim admits an exclusive claim on a server that runs with an idle life (serve --idle N > 0, the server serve ensure starts), its answer names that life: `held while this server runs; it stops after N s with no client (server.idle_seconds), and the claim ends with it; keep it with mesh beat at least once per N s or a server started with serve ensure --idle 0`. mesh.state and mesh peers --full show, for each exclusive claim, the idle bound of the server run that holds it, or that it has none. When a server leaves by its idle exit while it holds exclusive claims, its log line and the mesh event that ends them name each claim's scope, so a peer that finds a seat vacant can read why."
+why: "On 2026-11-17 session e8e9 saw a seat claim (seat/landing, seat/release) taken over a worktree's server vanish within fifteen minutes: the server's log said `idle for 900 s (bound 900 s): no peer attached, no execution queued or running, no live channel, no client request ...; stopping`, and a peer then read the seat as vacant and acted on it. The idle timer (apps/majordomus-cli/src/idle.rs, I4007) decides from attached MCP sessions, board rows, executions, live channels and client requests; a held claim is not among them, by design, since I4007 was written because idle servers kept their claims live. A claim taken from the command line over such a server therefore lives at most one idle bound after the last request, and nothing in the claim's answer says so. docs/MESH.md (Seats are claims) now says it in prose; this record makes the tool say it where the claim is made."
+current_state: "Measured at origin/master ae13be1bd13: commands/serve.rs runs the idle loop only when args.idle > 0 and stops with `{why}; stopping`; serve ensure passes `--idle` from server.idle_seconds (900 in .ai/repo/policy.yaml) unless `--idle` is given. idle::Activity has peers, executions, channels and client_request, and no field for held claims. mesh.claim answers the claim's key, event, lamport and durability, and nothing about the run's life. A `mesh beat` is a client request (idle::counts_as_use excludes only the mesh transport, probes of / and sibling board reads), so a beating holder keeps its server."
+desired_state: "No exclusive claim is admitted without its answer saying how long the run that holds it may live, and no idle exit ends an exclusive claim without naming it."
+scope:
+  - "apps/majordomus-cli/src/idle.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I4653.yaml"
+non_scope:
+  - "Counting a held claim as use: I4007 made claims of an unused server end with it on purpose, and that stays"
+  - "Changing server.idle_seconds or the default of serve ensure"
+  - "Fencing or take-over of a seat (I3174)"
+acceptance_criteria:
+  - "An exclusive claim admitted over a server started with --idle 3 answers with the bound (3 s) and the two ways to keep it; over a server started with --idle 0 it says the run has no idle life"
+  - "mesh state --full shows the idle bound of the run that holds each exclusive claim"
+  - "A server started with --idle 3 that holds an exclusive claim and receives no request exits after the bound, and its log line names the claim's scope"
+  - "The same server, beaten by mesh beat every second, does not exit, and the claim stays held"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_claim_over_an_idling_server_says_when_it_lapses"
+depends_on: []
+serves: []
+created_at: 2026-11-18

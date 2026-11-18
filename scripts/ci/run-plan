@@ -42,7 +42,10 @@
 #     it selects that gate. On 2026-11-09 #2983 and #2995 passed this step and were refused by
 #     the rust job on exactly these two, at about two hours of validate each. A failure names
 #     its fix (`cargo fmt`, `majordomus release bump`); a host with no cargo leaves the
-#     formatter to CI and says so.
+#     formatter to CI and says so;
+#   - for a change to a workflow, `actionlint .github/workflows/*.yml` (workflow-lint), the
+#     step of shell-lint that judges `run:` blocks, which the budget otherwise leaves to CI
+#     with the rest of shell-lint; a host with no actionlint says so.
 #
 # Every gate left out prints one line naming it and why. The step reports its measured time
 # against MJ_PUSH_BOUND (default 180) seconds. A plan that cannot be computed, or a durations
@@ -242,6 +245,22 @@ if [ "$before_push" = 1 ]; then
     chosen="$chosen version-surface"
     push_gate version-surface "$(jq -r '.gates[] | select(.id == "version-surface") | .runs' "$plan")" \
       'majordomus release bump'
+  fi
+  # The workflows' own lint, when the commits change a workflow. actionlint, which also runs
+  # the shell linter over each `run:` block, is one step of shell-lint, and shell-lint as a
+  # whole is far over the per-gate limit, so the budget leaves all of it to CI. On 2026-11-17 a
+  # top that changed release.yml passed this step in full mode and was refused by CI's
+  # structure job in shell-lint for SC2155 (`export X="$(git rev-parse HEAD)"` in a run block,
+  # run 44090334938). actionlint alone takes about a second, so it runs here whenever a changed
+  # path is under .github/workflows/ and shell-lint was not chosen.
+  case " $chosen " in *" shell-lint "*) linted=1 ;; *) linted=0 ;; esac
+  if [ "$linted" = 0 ] \
+    && jq -e '[.changed[]? | select(startswith(".github/workflows/"))] | length > 0' "$plan" > /dev/null; then
+    if command -v actionlint > /dev/null 2>&1; then
+      chosen="$chosen workflow-lint"
+      push_gate workflow-lint 'actionlint .github/workflows/*.yml' \
+        'the finding names the workflow, its line and, for a run block, the shellcheck code'
+    else printf '  left out workflow-lint: no actionlint on this host; CI runs it in shell-lint\n'; fi
   fi
   # the fast cases, four at a time. Fast is what CI recorded; local is what the case does. A
   # case that starts a server (serve_up, mcp_shared, serve ensure or start, the MCP launcher)

@@ -50,6 +50,53 @@ MJ_PUSH_BOUND=-1 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
 expect_grep 'over it by [0-9]+s; slowest: cheap-ok [0-9]+s; .*the push is not refused for that'
 expect_grep 'nothing CI would find here first'
 
+# ---------------------------------------------------------------- a changed workflow is linted
+# On 2026-11-17 a top that changed release.yml passed this step in full mode and CI's structure
+# job refused it in shell-lint: actionlint's shellcheck found SC2155 in a run block (run
+# 44090334938). shell-lint as a whole is over the per-gate limit, so the budget leaves it to CI;
+# its actionlint step runs here when a changed path is a workflow. A copy of run-plan beside a
+# workflow of its own runs a stub actionlint first on PATH (CI's suite job has none), then the
+# real one where this host has it, over the line CI refused.
+mkdir -p wf/scripts/ci wf/lib wf/.github/workflows wf/bin
+cp "$ROOT/scripts/ci/run-plan" wf/scripts/ci/
+cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" "$ROOT/lib/rust_bin.sh" wf/lib/
+cat > wf/.github/workflows/release.yml <<'YML'
+name: release
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          export BUILT="$(git rev-parse HEAD)"
+          echo "$BUILT"
+YML
+cat > wf/bin/actionlint <<'STUB'
+#!/bin/sh
+# a stand-in that refuses what CI's actionlint refused: an export assigned from a substitution
+if grep -q 'export [A-Z_]*="\$(' "$@"; then echo "$1: SC2155 stub finding"; exit 1; fi
+STUB
+chmod +x wf/bin/actionlint
+wfplan() {
+  printf '{"schema":1,"mode":"full","reason":"a fixture","selected":[],"changed":[%s],"gates":[%s]}' \
+    "$1" "$(gate cheap-ok true false)" > "$T/wf-plan.json"
+}
+wfplan '".github/workflows/release.yml"'
+PATH="$PWD/wf/bin:$PATH" expect_exit 1 wf/scripts/ci/run-plan --before-push --plan "$T/wf-plan.json"
+expect_grep '  FAILED workflow-lint .*: actionlint \.github/workflows/\*\.yml'
+expect_grep 'SC2155 stub finding'
+expect_grep 'failed: workflow-lint\. CI would refuse this push'
+# the same plan without a changed workflow lints none
+wfplan '"docs/README.md"'
+PATH="$PWD/wf/bin:$PATH" expect_exit 0 wf/scripts/ci/run-plan --before-push --plan "$T/wf-plan.json"
+expect_no_grep 'workflow-lint'
+# the real actionlint, where this host has one, refuses the line CI refused
+wfplan '".github/workflows/release.yml"'
+if command -v actionlint > /dev/null 2>&1 && command -v shellcheck > /dev/null 2>&1; then
+  expect_exit 1 wf/scripts/ci/run-plan --before-push --plan "$T/wf-plan.json"
+  expect_grep 'SC2155'
+fi
+
 # ---------------------------------------------------------------- a case that serves off loopback
 # Cases 1086 and 3861 serve on every interface and call this machine at its LAN address; on
 # 2026-11-03 a Mac's firewall in stealth mode dropped that call, both timed out at 30s and the

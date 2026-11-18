@@ -1,0 +1,33 @@
+id: I4654
+milestone: ci-critical-path
+title: "The pre-push hook refuses a failed gate on every top under integration/, not only on integration/train-*"
+slug: every-integration-top-is-refused-on-a-failed-gate
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A push that carries a ref under refs/heads/integration/ that receives a commit is a top, whatever follows the slash, and `scripts/ci/run-plan --before-push` exiting 1 refuses it, as rule project.a-push-runs-what-ci-would-find-first v3 already refuses integration/train-*. The rule's statement, its table and its tests, docs/INTEGRATION.md (A train top is judged before it is pushed, step 3) and the hook's comment name the one prefix, and case 3948 drives a push of integration/top-<date> through the refusal beside integration/train-<date>."
+why: "On 2026-11-17 the landing seat named four combined tops integration/top-20261117, -b, -d and -e (#3065, #3069, #3073, #3074) and one integration/train-20261117f (#3077). .githooks/pre-push collects tops with `refs/heads/integration/train-*)` alone, so every integration/top-* push had its failed gates reported and let through, the behaviour the rule keeps for a member's own branch. The rule's own text says a top pushed under a name outside integration/train-* is only reported because the name is practice; the practice moved and the refusal did not follow. A name that changes a refusal is a defect the next renaming repeats."
+current_state: "Measured at origin/master ae13be1bd13: .githooks/pre-push line 26 matches `refs/heads/integration/train-*` only; the rule a-push-runs-what-ci-would-find-first.v3.md names integration/train-* in its statement, rationale, required behaviour and enforcement table; docs/INTEGRATION.md step 3 says the same; case 3948 drives only a train-* ref. Open pull requests that also change .githooks/pre-push: the branches feature/I4619-the-adopter-pre-push-passes-the-pushed-commits, feature/I4610-pre-push-compares-the-verified-tree and fix/a-pushed-branch-is-judged-by-its-holder."
+desired_state: "Which pushes a failed gate refuses is decided by one prefix every top carries, refs/heads/integration/, held by a case for more than one name under it."
+scope:
+  - ".githooks/pre-push"
+  - ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md"
+  - "docs/INTEGRATION.md"
+  - "test/cases/3948_a_local_gate_reports_and_ci_decides.sh"
+  - ".ai/repo/project/issues/I4654.yaml"
+non_scope:
+  - "What run-plan --before-push runs (I4570, and the workflow-lint step of the evolve run of 2026-11-17)"
+  - "A member's own branch, which stays reported (I3830)"
+acceptance_criteria:
+  - "A push carrying integration/top-20261117e whose before-push exits 1 is refused, naming the top"
+  - "A push carrying integration/train-20261117f is refused as before"
+  - "A push of a member branch whose before-push exits 1 is reported and let through, as before"
+  - "The rule's version is raised and its statement names refs/heads/integration/*; ADR and knowledge references to the old file name still resolve"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3948_a_local_gate_reports_and_ci_decides"
+evidence_required:
+  - "every_integration_top_is_refused_on_a_failed_gate"
+depends_on: []
+serves: []
+created_at: 2026-11-18

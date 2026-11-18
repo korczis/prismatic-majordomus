@@ -39,7 +39,11 @@
 # - The holder's pid is the owner line's `pid=<n>` or its last word, and only when that is a
 #   number. A line with no numeric pid, written by hand or by a wrapper that named a time
 #   instead, is a live holder nobody can check. It is never reclaimed and never taken for an
-#   ancestor. It is waited for, and its line is printed.
+#   ancestor. It is waited for, and its line is printed with the remedy for the one case that
+#   never ends by waiting: a caller that took the lock by hand and then ran scripts/derive. On
+#   2026-11-17 such a caller (mkdir and an owner line without a pid, then scripts/derive)
+#   waited on itself for more than 30 minutes. A caller never takes this lock: scripts/derive
+#   takes it, and `scripts/derive --locked -- <command>` runs anything else under it.
 # - A numeric pid that is an ancestor of this process means the caller holds the lock: a
 #   wrapper took it the old way and runs this derive. Nothing is taken and nothing released.
 # - A numeric pid that is not running is a dead owner. The lock is reclaimed and the reclaim
@@ -217,6 +221,7 @@ mj_lock_acquire() {
       return 0
     elif [ -z "$pid" ] && [ -n "$owner" ]; then
       why="$MJ_LOCK_DIR is held by an owner that names no pid, so it cannot be checked: $owner"
+      why="$why. If this derive's own caller took the lock, it is waiting on itself: scripts/derive takes the lock itself, so a caller never takes it; run a command under it with scripts/derive --locked -- <command>, or end the owner line with the caller's pid"
     else
       why="$MJ_LOCK_DIR is held by ${owner:-an owner still writing its name}"
       [ -z "$MJ_Q_POS" ] || why="$why (place $MJ_Q_POS of $MJ_Q_COUNT in the queue)"

@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: evolve
-version: 5
+version: 6
 title: Evolve the repository's know-how
 description: Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.
 status: active
@@ -175,6 +175,16 @@ announced with `majordomus_announce`, naming the number and the record, before t
 written; `majordomus adr next` and `scripts/case-numbers next` survey refs and one board's
 words, not every machine's claims, so their answer is a candidate to announce and never a
 number to take on its own.
+
+The number that is reserved is the one `majordomus_plan_allocate` answers (`kind`, and
+`at_least` past a number the board names but no ref carries yet); the command line has no
+`plan allocate`, and its form is `majordomus mesh allocate <kind> --session <session>`. Both
+announcing and allocating go through an MCP session. When the provider's MCP server did not
+connect, run `majordomus serve ensure` in the worktree and speak MCP to the server it names
+over HTTP: `initialize` at `http://127.0.0.1:<port>/mcp`, then `tools/call` with the
+`Mcp-Session-Id` it returned. `POST /api/v1/peers/announce` has no caller and is refused. On
+2026-11-17 an evolve run found its MCP server unconnected and took I4653-I4655 and announced
+them this way, past I4634, which a peer had announced but not pushed.
 
 Follow `majordomus://skill/implement` for the change. Refused here: a new directory,
 registry or database for lessons; a rule with no way to be decided; a number, a list or a

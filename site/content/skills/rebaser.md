@@ -5,7 +5,7 @@ weight = 9
 [extra]
 id = "rebaser"
 status = "active"
-version = 1
+version = 2
 source = ".ai/repo/skills/rebaser/SKILL.md"
 +++
 {% raw %}
@@ -97,6 +97,27 @@ git ls-remote origin refs/heads/rescue/<branch>-<yyyymmdd>   # must print the ol
 The convention for a stale checkout brought current is `refs/rescue/` (see
 `project.worktree-topology`); either way, the ref is proven on the remote in the same
 step that is about to rewrite, as `assess-before-deleting` requires.
+
+A checkout with a merge in progress (`git rev-parse -q --verify MERGE_HEAD` prints a commit)
+holds a second parent that neither the usual rescue nor a stash keeps. `git stash create`
+records the tree on HEAD alone and drops MERGE_HEAD, and the remedy `majordomus worktree
+uncommitted` prints, `git add -A && git commit`, concludes the stale merge on the branch
+itself (I4655). Preserve it as a commit with both parents that moves no branch, prove it, and
+only then abort the merge:
+
+```
+t=$(git write-tree)          # refuses while a path is unmerged: resolve or record those first
+c=$(git commit-tree "$t" -p HEAD -p MERGE_HEAD -m "wip: the merge staged on <branch> since <date>")
+git update-ref refs/rescue/<session>/wip/<branch>-staged-<yyyymmdd> "$c"
+git push origin refs/rescue/<session>/wip/<branch>-staged-<yyyymmdd>
+git ls-remote origin refs/rescue/<session>/wip/<branch>-staged-<yyyymmdd>   # must print $c
+git merge --abort
+```
+
+Then bring the branch current as the table above decides. On 2026-11-17 a canonical worktree
+had held a merge of a release commit since 2026-10-20: 3316 staged entries, none unmerged.
+This is how it was preserved, except that the ref was left local, which this step does not
+allow.
 
 ### 5. Act, then read the queue again
 

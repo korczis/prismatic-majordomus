@@ -468,6 +468,27 @@ holder stops beating. Which seats there are and which scope each one claims is
 (ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
 the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
 
+A seat's claim lives as long as the server run that holds it. A server `serve ensure` started
+has an idle life (`server.idle_seconds`, 900 s by default, [`MCP.md`](@/docs/mcp.md)), and what keeps
+it running is a client: an attached MCP session, a live `/events` channel or a client's
+request. A held claim is not use. So a seat claimed from the command line, over a server no
+MCP client is attached to, ends with that server once nothing has used it for the bound: on
+2026-11-17 a seat claim taken over a worktree's server was gone within fifteen minutes, the
+server's log saying `idle for 900 s ... stopping`, and a peer then read the seat as vacant. A
+seat holder with no attached client keeps its server in use — `majordomus mesh beat --session
+<id> --phase <text>` at least once per bound is a client's request and the holder's progress
+at once — or starts the server with `majordomus serve ensure --idle 0` before it claims, which
+counts only when that `ensure` is the one that starts the server. I4653 makes `mesh claim` say
+when the claim it answers would lapse this way.
+
+A seat that reads vacant is not proof that its session stopped. That same evening `mesh peers
+--full` showed no live landing claim while the landing seat's session was alive and composing,
+and a session that took the vacancy for leave pushed onto that seat's top branch. Before taking
+a seat, or pushing to a branch under `integration/`, ask the sessions the board and the mesh
+name (`majordomus_peers`, `majordomus mesh peers --full`) and the top branch's last committer,
+and take the seat only when none of them answers for it. A top's branch is its composer's,
+whatever the claims say ([`INTEGRATION.md`](@/docs/integration.md)).
+
 ## Handovers
 
 `majordomus handover` writes a record under the checkout's `.ai/local/state/handovers/`.

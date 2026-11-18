@@ -769,6 +769,12 @@ The procedure:
    This is
    [`project.integration-follows-the-current-master`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/integration-follows-the-current-master.v3.md)
    applied to a top.
+7. **A top's branch is its composer's.** Nobody else pushes to a branch under `integration/`,
+   whether or not the landing seat's claim reads live: on 2026-11-17 the claim was gone while
+   the seat's session was alive and composing, and a session that read the seat as vacant
+   pushed onto its top. A fix for a top goes to its composer, or rides as a member's own commit
+   (step 4) that the composer takes. Ask before acting on a vacancy ([`MESH.md`](@/docs/mesh.md),
+   "Seats are claims").
 
 Two other throughput defects of the same days are outside this section. #2596 (I4242, with
 I4359) moves validate onto the self-hosted runners, so a member's own run no longer competes

@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [mcp-transports-are-reliable](https://majordomus.dev/plan/mcp-transports-are-reliable/) | ACTIVE | 5/14 | 8 | 1 | 0 | 0 | 0 | A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it. |
+| [mcp-transports-are-reliable](https://majordomus.dev/plan/mcp-transports-are-reliable/) | ACTIVE | 5/15 | 9 | 1 | 0 | 0 | 0 | A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it. |
 
 ## Issues
 
@@ -29,6 +29,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3994](https://majordomus.dev/plan/i3994/) | READY | 1 | I3990 | Superseded session beats are compacted, so liveness never spends a node's event quota |
 | [I4227](https://majordomus.dev/plan/i4227/) | DONE | 0 | — | A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect |
 | [I4356](https://majordomus.dev/plan/i4356/) | BLOCKED | 1 | I3810 | An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held |
+| [I4653](https://majordomus.dev/plan/i4653/) | READY | 0 | — | An exclusive claim taken over a server with an idle life says when it would lapse, and a seat is never lost to an idle exit unannounced |
 
 ## Findings
 
@@ -213,6 +214,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4630; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4654; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2902; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2903; they may not run concurrently |

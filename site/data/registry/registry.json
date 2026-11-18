@@ -6,23 +6,23 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "486c12140e2c0e9afc6d1eefcb8789d866550e17baf0cc5a9a0f8f28533aea2e",
+    "fingerprint": "64896d665d2f7f178bcae10add21818de619157a8d772c7b9c65a9acdb4d898b",
     "summary": {
-      "total": 4042,
+      "total": 4053,
       "builtin": 231,
-      "declarative": 3811,
+      "declarative": 3822,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3811
+        "resource": 3822
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3821
+        "implemented": 3832
       },
       "mcp_tools": 215,
-      "mcp_resources": 3868,
+      "mcp_resources": 3879,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97219,7 +97219,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1263,
+        "capabilities": 1266,
         "capability_ids": []
       },
       {
@@ -97227,7 +97227,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 220,
+        "capabilities": 228,
         "capability_ids": []
       },
       {
@@ -97925,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bb4fd29f11b46f453abd322d1bbdd6786ff5a713b855b7e871e3f45f19fdba9c",
+    "fingerprint": "41d91859cc02e270b96153f35b2c45996e41627137f756601cd2fbf8f2a83f56",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97965,8 +97965,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1263,
-      "knowledge": 220,
+      "issue": 1266,
+      "knowledge": 228,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -105427,7 +105427,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 88499
+        "bytes": 88988
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -105481,7 +105481,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 95838
+        "bytes": 97542
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -105562,7 +105562,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138592
+        "bytes": 139112
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108872,7 +108872,7 @@
         "identity": "lib/machine_lock.sh",
         "path": "lib/machine_lock.sh",
         "source_class": "library",
-        "bytes": 12418
+        "bytes": 13082
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -123431,6 +123431,39 @@
         "bytes": 3995
       },
       {
+        "uri": "majordomus://issue/I4653",
+        "kind": "issue",
+        "identity": "I4653",
+        "title": "An exclusive claim taken over a server with an idle life says when it would lapse, and a seat is never lost to an idle exit unannounced",
+        "description": "When mesh.claim admits an exclusive claim on a server that runs with an idle life (serve --idle N > 0, the server serve ensure starts), its answer names that life: `held while this server runs; it stops after N s with no client (server.idle_seconds), and the claim ends with it; keep it with mesh beat at least once per N s or a server started with serve ensure --idle 0`. mesh.state and mesh peers --full show, for each exclusive claim, the idle bound of the server run that holds it, or that it has none. When a server leaves by its idle exit while it holds exclusive claims, its log line and the mesh event that ends them name each claim's scope, so a peer that finds a seat vacant can read why.",
+        "path": ".ai/repo/project/issues/I4653.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3932
+      },
+      {
+        "uri": "majordomus://issue/I4654",
+        "kind": "issue",
+        "identity": "I4654",
+        "title": "The pre-push hook refuses a failed gate on every top under integration/, not only on integration/train-*",
+        "description": "A push that carries a ref under refs/heads/integration/ that receives a commit is a top, whatever follows the slash, and `scripts/ci/run-plan --before-push` exiting 1 refuses it, as rule project.a-push-runs-what-ci-would-find-first v3 already refuses integration/train-*. The rule's statement, its table and its tests, docs/INTEGRATION.md (A train top is judged before it is pushed, step 3) and the hook's comment name the one prefix, and case 3948 drives a push of integration/top-<date> through the refusal beside integration/train-<date>.",
+        "path": ".ai/repo/project/issues/I4654.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3320
+      },
+      {
+        "uri": "majordomus://issue/I4655",
+        "kind": "issue",
+        "identity": "I4655",
+        "title": "A worktree with a merge in progress is named with the merge's age, and its rescue keeps both parents and moves no branch",
+        "description": "majordomus worktree uncommitted and doctor name a linked worktree whose MERGE_HEAD exists, with the merged commit and how long the merge has been staged (MERGE_HEAD's modification time), and judge it abandoned on the same session.stranded_after threshold as other uncommitted work. For such a worktree the rescue command it suggests is the one that keeps the merge: `git write-tree` (refused while a path is unmerged, and then said), `git commit-tree <tree> -p HEAD -p MERGE_HEAD`, `git update-ref refs/rescue/...` and a push of that ref, and only then `git merge --abort`. It never suggests `git add -A && git commit`, which concludes the stale merge on the branch itself.",
+        "path": ".ai/repo/project/issues/I4655.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3752
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -126605,6 +126638,126 @@
         "section": "knowledge",
         "source_class": "candidates",
         "bytes": 2453,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-005a48175185",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-005a48175185",
+        "title": "an evolve run on 2026-11-17 was told to take numbers with majordomus plan allocate and to announce them with majordomus_announce, but the command line has no plan allocate (the form is mesh allocate <kind> --session <s>, and the MCP tool majordomus_plan_allocate), and its provider's MCP server had not connected, so both had to be spoken to the worktree's own server over MCP's HTTP transport (initialize, then tools/call with the Mcp-Session-Id), POST /api/v1/peers/announce being refused without a caller; the skill (v6, step 3) now says so",
+        "description": "Observed as friction about .ai/repo/skills/evolve/SKILL.md in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-005a48175185.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2826,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-51f392060b56",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-51f392060b56",
+        "title": "the pre-push hook refuses a failed before-push gate only on refs/heads/integration/train-*, and on 2026-11-17 four of the landing seat's five combined tops were named integration/top-* (#3065, #3069, #3073, #3074), so their failed gates were reported and let through like a member's; I4654 widens the refusal to every ref under integration/",
+        "description": "Observed as defect about .githooks/pre-push in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-51f392060b56.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2258,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-79fac2e2b543",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-79fac2e2b543",
+        "title": "on 2026-11-17 mesh peers --full showed no live seat/landing claim while the landing seat's session was alive and composing, and a session that read the vacancy as leave pushed onto that seat's top branch; a vacant claim is not proof the holder stopped (its claim had likely ended with an idle server), so docs/MESH.md now says to ask the sessions the board and the mesh name and the top's last committer before taking a seat or pushing under integration/, and docs/INTEGRATION.md step 7 says a top's branch is its composer's whatever the claims say",
+        "description": "Observed as friction about rule:project.the-cooperation-model-is-the-owners-word in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-79fac2e2b543.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2908,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-971b9b562c23",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-971b9b562c23",
+        "title": "master ae13be1bd13 (the merge of combined top #3077, titled with I4627, I4628 and I4324) failed site-check because plan delivery reads a forge merge's title (via title_or_branch): delivery at the top's head 41904d87959 counts merged 13 and at the merge 15, the two being I4324 and I4628, which the top's own member merges (subject 'Merge #N (branch) into the combined top', which merge_subject does not parse) never proved; and I4628 reads merged at the merge although its only member #3070 changed plan records only (05dd86c2403 is reported as planned), so a top's title also proves an issue its member only planned. The regeneration is pull request 3084; the inference is I4634 (dev-ff, claimed on the board 2026-11-17), neither changed here",
+        "description": "Observed as defect about apps/majordomus-cli/src/plan/delivery.rs in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-971b9b562c23.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 4030,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-a82bd87a6ec9",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-a82bd87a6ec9",
+        "title": "run-plan --before-push in full mode passed a top that changed release.yml, and CI's structure job then refused it in shell-lint for actionlint's SC2155 on an export assigned from a command substitution in a run block (run 44090334938): shell-lint is one gate whose recorded 1437 s is far over the 15 s a push spends on one gate, so the budget left all of it to CI, actionlint's one-second step included; the before-push step now runs actionlint (workflow-lint) when a changed path is under .github/workflows/, and case 1021 drives it with a stub and with the real actionlint",
+        "description": "Observed as defect about scripts/ci/run-plan in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-a82bd87a6ec9.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3269,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-bf406cce34e0",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-bf406cce34e0",
+        "title": "a seat claim taken over a worktree's server on 2026-11-17 vanished within fifteen minutes when the server idle-exited (server.log: idle for 900 s ... stopping): the idle timer counts attached MCP sessions, board rows, executions, live channels and client requests, never a held claim (by design since I4007), so a claim made from the command line lives at most one idle bound after the last request and its answer does not say so; docs/MESH.md (Seats are claims) now says how to keep it (mesh beat once per bound, or serve ensure --idle 0) and I4653 makes mesh claim say it",
+        "description": "Observed as defect about apps/majordomus-cli/src/idle.rs in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-bf406cce34e0.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3133,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-c7fdb96ef9bb",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-c7fdb96ef9bb",
+        "title": "a caller that took the derive lock by hand (mkdir and an owner line without a pid) and then ran scripts/derive waited on itself for over 30 minutes on 2026-11-17: scripts/derive takes the lock itself, an owner line without a pid can be neither checked nor recognised as an ancestor, and the wait said only that such an owner cannot be checked; the wait now names this case and its remedy (scripts/derive --locked -- <command>, or the caller's pid at the end of the owner line), and case 1018 holds the message",
+        "description": "Observed as friction about lib/machine_lock.sh in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-c7fdb96ef9bb.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2922,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261117224745-7fdd-fe19691e627a",
+        "kind": "knowledge",
+        "identity": "s-20261117224745-7fdd-fe19691e627a",
+        "title": "a canonical worktree (feature/one-highlighter) held a merge staged since 2026-10-20 (MERGE_HEAD 91c0b5d5658, 3316 staged entries, 0 unmerged) for four weeks; it was preserved by write-tree and commit-tree with -p HEAD -p MERGE_HEAD into a refs/rescue ref, then merge --abort and a fast-forward; git stash create drops MERGE_HEAD and the rescue worktree uncommitted suggests (add -A && commit) concludes the stale merge on the branch, so the rebaser skill (v2, step 4) now carries the both-parents rescue proven on the remote, and I4655 makes the tool name the merge's age and suggest that rescue",
+        "description": "Observed as workaround about .ai/repo/skills/rebaser/SKILL.md in episode s-20261117224745-7fdd.",
+        "path": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-fe19691e627a.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3309,
         "tags": [
           "derived",
           "observation"
@@ -133379,7 +133532,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 16018,
+        "bytes": 16814,
         "tags": [
           "knowledge",
           "review",
@@ -133483,7 +133636,7 @@
         "path": ".ai/repo/skills/rebaser/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 7271,
+        "bytes": 8493,
         "tags": [
           "integration",
           "merge",
@@ -133753,7 +133906,7 @@
         "identity": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
         "path": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
         "source_class": "case",
-        "bytes": 10034
+        "bytes": 10373
       },
       {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
@@ -133777,7 +133930,7 @@
         "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "source_class": "case",
-        "bytes": 11357
+        "bytes": 13657
       },
       {
         "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -140014,7 +140167,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1263
+      "objects": 1266
     },
     {
       "name": "knowledge",
@@ -140024,7 +140177,7 @@
       "identity": [
         "id"
       ],
-      "objects": 220
+      "objects": 228
     },
     {
       "name": "mesh-declaration",

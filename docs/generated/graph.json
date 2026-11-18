@@ -82133,6 +82133,128 @@
         }
       },
       {
+        "id": "majordomus://issue/I4653",
+        "kind": "issue",
+        "label": "I4653",
+        "summary": "An exclusive claim taken over a server with an idle life says when it would lapse, and a seat is never lost to an idle exit unannounced",
+        "route": "/cockpit/objects/issue/i4653",
+        "source": ".ai/repo/project/issues/I4653.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An exclusive claim admitted over a server started with --idle 3 answers with the bound (3 s) and the two ways to keep it; over a server started with --idle 0 it says the run has no idle life",
+            "mesh state --full shows the idle bound of the run that holds each exclusive claim",
+            "A server started with --idle 3 that holds an exclusive claim and receives no request exits after the bound, and its log line names the claim's scope",
+            "The same server, beaten by mesh beat every second, does not exit, and the claim stays held"
+          ],
+          "created_at": "2026-11-18",
+          "depends_on": [],
+          "desired_state": "No exclusive claim is admitted without its answer saying how long the run that holds it may live, and no idle exit ends an exclusive claim without naming it.",
+          "evidence_required": [
+            "a_claim_over_an_idling_server_says_when_it_lapses"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Counting a held claim as use: I4007 made claims of an unused server end with it on purpose, and that stays",
+            "Changing server.idle_seconds or the default of serve ensure",
+            "Fencing or take-over of a seat (I3174)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/idle.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I4653.yaml"
+          ],
+          "serves": [],
+          "slug": "a-claim-over-an-idling-server-says-when-it-lapses",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4654",
+        "kind": "issue",
+        "label": "I4654",
+        "summary": "The pre-push hook refuses a failed gate on every top under integration/, not only on integration/train-*",
+        "route": "/cockpit/objects/issue/i4654",
+        "source": ".ai/repo/project/issues/I4654.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A push carrying integration/top-20261117e whose before-push exits 1 is refused, naming the top",
+            "A push carrying integration/train-20261117f is refused as before",
+            "A push of a member branch whose before-push exits 1 is reported and let through, as before",
+            "The rule's version is raised and its statement names refs/heads/integration/*; ADR and knowledge references to the old file name still resolve"
+          ],
+          "created_at": "2026-11-18",
+          "depends_on": [],
+          "desired_state": "Which pushes a failed gate refuses is decided by one prefix every top carries, refs/heads/integration/, held by a case for more than one name under it.",
+          "evidence_required": [
+            "every_integration_top_is_refused_on_a_failed_gate"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "What run-plan --before-push runs (I4570, and the workflow-lint step of the evolve run of 2026-11-17)",
+            "A member's own branch, which stays reported (I3830)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".githooks/pre-push",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md",
+            "docs/INTEGRATION.md",
+            "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+            ".ai/repo/project/issues/I4654.yaml"
+          ],
+          "serves": [],
+          "slug": "every-integration-top-is-refused-on-a-failed-gate",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3948_a_local_gate_reports_and_ci_decides"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4655",
+        "kind": "issue",
+        "label": "I4655",
+        "summary": "A worktree with a merge in progress is named with the merge's age, and its rescue keeps both parents and moves no branch",
+        "route": "/cockpit/objects/issue/i4655",
+        "source": ".ai/repo/project/issues/I4655.yaml",
+        "facts": {
+          "created_at": "2026-11-18",
+          "depends_on": [],
+          "evidence_required": [
+            "a_merge_in_progress_is_rescued_with_both_parents"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Running the rescue: the reading writes nothing and only suggests (I1995)",
+            "Rebase, cherry-pick and revert in progress, which keep their state in other files"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree/uncommitted.rs",
+            "apps/majordomus-cli/src/worktree/state.rs",
+            "apps/majordomus-cli/src/worktree/model.rs",
+            ".ai/repo/skills/rebaser/SKILL.md",
+            ".ai/repo/project/issues/I4655.yaml"
+          ],
+          "serves": [],
+          "slug": "a-merge-in-progress-is-rescued-with-both-parents",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -86242,6 +86364,166 @@
           "about": ".github/workflows/validate.yml",
           "class": "lesson",
           "date": "2026-11-12",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-005a48175185",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-005a48175185",
+        "summary": "an evolve run on 2026-11-17 was told to take numbers with majordomus plan allocate and to announce them with majordomus_announce, but the command line has no plan allocate (the form is mesh allocate <kind> --session <s>, and the MCP tool majordomus_plan_allocate), and its provider's MCP server had not connected, so both had to be spoken to the worktree's own server over MCP's HTTP transport (initialize, then tools/call with the Mcp-Session-Id), POST /api/v1/peers/announce being refused without a caller; the skill (v6, step 3) now says so",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-005a48175185",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-005a48175185.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-51f392060b56",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-51f392060b56",
+        "summary": "the pre-push hook refuses a failed before-push gate only on refs/heads/integration/train-*, and on 2026-11-17 four of the landing seat's five combined tops were named integration/top-* (#3065, #3069, #3073, #3074), so their failed gates were reported and let through like a member's; I4654 widens the refusal to every ref under integration/",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-51f392060b56",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-51f392060b56.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/pre-push",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-79fac2e2b543",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-79fac2e2b543",
+        "summary": "on 2026-11-17 mesh peers --full showed no live seat/landing claim while the landing seat's session was alive and composing, and a session that read the vacancy as leave pushed onto that seat's top branch; a vacant claim is not proof the holder stopped (its claim had likely ended with an idle server), so docs/MESH.md now says to ask the sessions the board and the mesh name and the top's last committer before taking a seat or pushing under integration/, and docs/INTEGRATION.md step 7 says a top's branch is its composer's whatever the claims say",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-79fac2e2b543",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-79fac2e2b543.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.the-cooperation-model-is-the-owners-word",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-971b9b562c23",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-971b9b562c23",
+        "summary": "master ae13be1bd13 (the merge of combined top #3077, titled with I4627, I4628 and I4324) failed site-check because plan delivery reads a forge merge's title (via title_or_branch): delivery at the top's head 41904d87959 counts merged 13 and at the merge 15, the two being I4324 and I4628, which the top's own member merges (subject 'Merge #N (branch) into the combined top', which merge_subject does not parse) never proved; and I4628 reads merged at the merge although its only member #3070 changed plan records only (05dd86c2403 is reported as planned), so a top's title also proves an issue its member only planned. The regeneration is pull request 3084; the inference is I4634 (dev-ff, claimed on the board 2026-11-17), neither changed here",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-971b9b562c23",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-971b9b562c23.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/plan/delivery.rs",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-a82bd87a6ec9",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-a82bd87a6ec9",
+        "summary": "run-plan --before-push in full mode passed a top that changed release.yml, and CI's structure job then refused it in shell-lint for actionlint's SC2155 on an export assigned from a command substitution in a run block (run 44090334938): shell-lint is one gate whose recorded 1437 s is far over the 15 s a push spends on one gate, so the budget left all of it to CI, actionlint's one-second step included; the before-push step now runs actionlint (workflow-lint) when a changed path is under .github/workflows/, and case 1021 drives it with a stub and with the real actionlint",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-a82bd87a6ec9",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-a82bd87a6ec9.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-bf406cce34e0",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-bf406cce34e0",
+        "summary": "a seat claim taken over a worktree's server on 2026-11-17 vanished within fifteen minutes when the server idle-exited (server.log: idle for 900 s ... stopping): the idle timer counts attached MCP sessions, board rows, executions, live channels and client requests, never a held claim (by design since I4007), so a claim made from the command line lives at most one idle bound after the last request and its answer does not say so; docs/MESH.md (Seats are claims) now says how to keep it (mesh beat once per bound, or serve ensure --idle 0) and I4653 makes mesh claim say it",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-bf406cce34e0",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-bf406cce34e0.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/idle.rs",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-c7fdb96ef9bb",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-c7fdb96ef9bb",
+        "summary": "a caller that took the derive lock by hand (mkdir and an owner line without a pid) and then ran scripts/derive waited on itself for over 30 minutes on 2026-11-17: scripts/derive takes the lock itself, an owner line without a pid can be neither checked nor recognised as an ancestor, and the wait said only that such an owner cannot be checked; the wait now names this case and its remedy (scripts/derive --locked -- <command>, or the caller's pid at the end of the owner line), and case 1018 holds the message",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-c7fdb96ef9bb",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-c7fdb96ef9bb.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/machine_lock.sh",
+          "class": "lesson",
+          "date": "2026-11-17",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261117224745-7fdd-fe19691e627a",
+        "kind": "knowledge",
+        "label": "s-20261117224745-7fdd-fe19691e627a",
+        "summary": "a canonical worktree (feature/one-highlighter) held a merge staged since 2026-10-20 (MERGE_HEAD 91c0b5d5658, 3316 staged entries, 0 unmerged) for four weeks; it was preserved by write-tree and commit-tree with -p HEAD -p MERGE_HEAD into a refs/rescue ref, then merge --abort and a fast-forward; git stash create drops MERGE_HEAD and the rescue worktree uncommitted suggests (add -A && commit) concludes the stale merge on the branch, so the rebaser skill (v2, step 4) now carries the both-parents rescue proven on the remote, and I4655 makes the tool name the merge's age and suggest that rescue",
+        "route": "/cockpit/objects/knowledge/s-20261117224745-7fdd-fe19691e627a",
+        "source": ".ai/repo/knowledge/curated/s-20261117224745-7fdd-fe19691e627a.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/rebaser/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-17",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -152016,6 +152298,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4653",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4653",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4654",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4654",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4655",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4655",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -153067,6 +153379,46 @@
       },
       {
         "source": "majordomus://knowledge/s-20261112053142-0101-db0cff44b2ad",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-005a48175185",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-51f392060b56",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-79fac2e2b543",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-971b9b562c23",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-a82bd87a6ec9",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-bf406cce34e0",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-c7fdb96ef9bb",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261117224745-7fdd-fe19691e627a",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -164922,8 +165274,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4513,
-      "edges": 10172,
+      "nodes": 4524,
+      "edges": 10186,
       "acyclic": false,
       "truncated": false
     }

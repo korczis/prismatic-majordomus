@@ -1,0 +1,32 @@
+id: I4655
+milestone: development-runtime
+title: "A worktree with a merge in progress is named with the merge's age, and its rescue keeps both parents and moves no branch"
+slug: a-merge-in-progress-is-rescued-with-both-parents
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "majordomus worktree uncommitted and doctor name a linked worktree whose MERGE_HEAD exists, with the merged commit and how long the merge has been staged (MERGE_HEAD's modification time), and judge it abandoned on the same session.stranded_after threshold as other uncommitted work. For such a worktree the rescue command it suggests is the one that keeps the merge: `git write-tree` (refused while a path is unmerged, and then said), `git commit-tree <tree> -p HEAD -p MERGE_HEAD`, `git update-ref refs/rescue/...` and a push of that ref, and only then `git merge --abort`. It never suggests `git add -A && git commit`, which concludes the stale merge on the branch itself."
+why: "On 2026-11-17 session e8e9 found the canonical worktree of feature/one-highlighter holding a merge staged since 2026-10-20: MERGE_HEAD 91c0b5d5658 (chore(release): record v1.0.0-alpha.1), 3316 staged entries, 0 unmerged. It was preserved by hand as a commit with both parents (refs/rescue/e8e9/wip/one-highlighter-staged-20261020, b6777052d5b, parents 4f81f0e39c3 and 91c0b5d5658), then the merge was aborted and the branch fast-forwarded. Reproduced in a scratch repository on 2026-11-18: `git stash create` during a staged merge records parents HEAD and its index commit and drops MERGE_HEAD; the remedy uncommitted.rs::rescue_command prints, `git add -A && git commit -m 'wip: rescue uncommitted work'`, moved the branch to a merge commit with both parents; `git write-tree` refuses while a path is unmerged. The rebaser skill (version 2, step 4) now carries the manual procedure."
+current_state: "Measured at origin/master ae13be1bd13: worktree/state.rs::operation_in_progress reports `merge in progress` from MERGE_HEAD and the dirty summary prints it; worktree/uncommitted.rs judges held, recent or abandoned from the oldest changed path's modification time and suggests rescue_command for an abandoned tree, the same command whatever operation is in progress; nothing reports how long a merge has been staged."
+desired_state: "A merge left staged is named with its age wherever uncommitted work is, and the only rescue suggested for it keeps both parents, moves no branch and is proven on the remote before the merge is aborted."
+scope:
+  - "apps/majordomus-cli/src/worktree/uncommitted.rs"
+  - "apps/majordomus-cli/src/worktree/state.rs"
+  - "apps/majordomus-cli/src/worktree/model.rs"
+  - ".ai/repo/skills/rebaser/SKILL.md"
+  - ".ai/repo/project/issues/I4655.yaml"
+non_scope:
+  - "Running the rescue: the reading writes nothing and only suggests (I1995)"
+  - "Rebase, cherry-pick and revert in progress, which keep their state in other files"
+acceptance_criteria:
+  - "A linked worktree with a staged merge and no unmerged path is listed by worktree uncommitted with the merged commit and the merge's age, and abandoned past session.stranded_after"
+  - "Its suggested rescue is write-tree, commit-tree with -p HEAD -p MERGE_HEAD, update-ref under refs/rescue/, a push of that ref, then merge --abort; running it in a fixture leaves the branch head unmoved and the rescue commit with both parents"
+  - "With an unmerged path the suggestion says that write-tree refuses until it is resolved, and suggests nothing that commits"
+  - "A worktree with no operation in progress keeps today's suggestion"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_merge_in_progress_is_rescued_with_both_parents"
+depends_on: []
+serves: []
+created_at: 2026-11-18

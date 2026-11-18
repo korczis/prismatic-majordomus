@@ -44,6 +44,10 @@ for line in 'someone taken by hand' 'd1 fix/a-lanes-own-output-is-not-a-dirty-tr
   mkdir "$MAJORDOMUS_DERIVE_LOCK" && printf '%s\n' "$line" > "$MAJORDOMUS_DERIVE_LOCK/owner"
   MAJORDOMUS_DERIVE_WAIT_MAX=2 expect_exit 75 "$D" --locked -- true
   expect_grep "held by an owner that names no pid"
+  # the one wait that never ends: a caller that took the lock by hand and then ran the derive
+  # (2026-11-17, more than 30 minutes). The wait names that case and its remedy.
+  expect_grep "If this derive's own caller took the lock, it is waiting on itself"
+  expect_grep 'run a command under it with scripts/derive --locked -- <command>'
   expect_no_grep 'reclaimed'
   grep -qxF "$line" "$MAJORDOMUS_DERIVE_LOCK/owner" || fail "a lock held by \"$line\" was touched"
   rm -rf "$MAJORDOMUS_DERIVE_LOCK"
