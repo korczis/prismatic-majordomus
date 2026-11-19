@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "d0b85677b74317be030a21d0af5a46634693b4e3",
+  "commit": "8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e",
   "source_version": "1.1.0",
-  "registry_fingerprint": "643aba2c1428da958892ea34ac6814b4e1e8b68cb995caf2b18069650b779627"
+  "registry_fingerprint": "d638bab258d3c3f60b83c7db8570e1d921f1f354149cadf61b37fae2764108a4"
  },
  "counts": {
-  "pages": 6551,
-  "capabilities": 4050,
+  "pages": 6555,
+  "capabilities": 4052,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3876,
+  "mcp_resources": 3878,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1268
+   "count": 1270
   },
   {
    "kind": "knowledge",
@@ -16110,6 +16110,18 @@
    "route": "/cs/plan/i4630/",
    "title": "I4630 — A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
    "description": "A plan finding never puts a path into a derived page unless the path exists or the sentence says it is planned. When an issue's scope holds a directory (test/cases) and another READY issue's scope holds a file under it that does not exist yet (test/cases/4616_a_reserved_issue_id_is_refused_locally.sh), lib/project.awk's scope_conflict finding names the directory, which is the scope as written. It does not name the other issue's planned file. plan validate also warns on a scope entry that is a directory holding more than a policy-set number of tracked files, and names the narrower path the issue's evidence implies (its own case). scripts/ci/reference-check over the derived plan pages runs in the before-push plan, so a page that names a missing file is found on the machine and not first in CI's core-check.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4632/",
+   "title": "I4632 — A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies",
+   "description": "`majordomus evidence --withdraw <token> --because \\\"<reason>\\\"` takes one token out of the active task's `requires`. It writes a `task.obligation_withdrawn` ledger line {task, covers, because} through the same attribution `--covers` uses. It rewrites the record so that `requires` no longer lists the token and a new `withdrawn` list holds it with its reason. `check`, the `task.finished` contract and finish's verdict line then name the withdrawal. It is refused (15) for a token the task's change set implies: a token whose `inputs` cover a changed path, or `commit` once anything changed, by the same derivation `gates::implied` already makes. It is also refused for a token the task never declared, and without `--because` (2). After a withdrawal, the task that declared `verify` by mistake finishes `completed` on the evidence it really has, and no second task is needed.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4633/",
+   "title": "I4633 — A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict",
+   "description": "`majordomus monitor run` waits on one workflow run, named by id or by branch and head SHA as `monitor steps` takes it, until a verdict is reached. Every job of the run's latest attempt must conclude success (exit 0). Any job that concludes anything else makes the wait red at once (exit 10), including a job that starts after the others have passed. The exits 11 (timeout) and 12 (unreadable) are #3067's. With `--gates <tier>` the jobs judged are those of the CI model (.ai/repo/ci/gates.yaml) whose gates the tier's lanes select. On-demand gates are excluded. A modelled job absent from a finished run is red, and a job the model does not name is reported but does not gate. Without a model, `--gates` is refused (12) and names `majordomus init --extend --ci`. `monitor steps` keeps its range verdict, but its green output says that the range is green and the run is not judged. It names the run's jobs still pending and carries `run_concluded` in JSON, so the exit 0 of a range is never read as permission to land.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33633,6 +33645,18 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4632/",
+   "title": "I4632 — A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies",
+   "description": "`majordomus evidence --withdraw <token> --because \\\"<reason>\\\"` takes one token out of the active task's `requires`. It writes a `task.obligation_withdrawn` ledger line {task, covers, because} through the same attribution `--covers` uses. It rewrites the record so that `requires` no longer lists the token and a new `withdrawn` list holds it with its reason. `check`, the `task.finished` contract and finish's verdict line then name the withdrawal. It is refused (15) for a token the task's change set implies: a token whose `inputs` cover a changed path, or `commit` once anything changed, by the same derivation `gates::implied` already makes. It is also refused for a token the task never declared, and without `--because` (2). After a withdrawal, the task that declared `verify` by mistake finishes `completed` on the evidence it really has, and no second task is needed.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4633/",
+   "title": "I4633 — A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict",
+   "description": "`majordomus monitor run` waits on one workflow run, named by id or by branch and head SHA as `monitor steps` takes it, until a verdict is reached. Every job of the run's latest attempt must conclude success (exit 0). Any job that concludes anything else makes the wait red at once (exit 10), including a job that starts after the others have passed. The exits 11 (timeout) and 12 (unreadable) are #3067's. With `--gates <tier>` the jobs judged are those of the CI model (.ai/repo/ci/gates.yaml) whose gates the tier's lanes select. On-demand gates are excluded. A modelled job absent from a finished run is red, and a job the model does not name is reported but does not gate. Without a model, `--gates` is refused (12) and names `majordomus init --extend --ci`. `monitor steps` keeps its range verdict, but its green output says that the range is green and the run is not judged. It names the run's jobs still pending and carries `run_concluded` in JSON, so the exit 0 of a range is never read as permission to land.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37577,7 +37601,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.1.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.1.0, built from commit d0b85677b74317be030a21d0af5a46634693b4e3: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.1.0, built from commit 8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.1.0 — Rust API reference"
   },
   {
