@@ -1,0 +1,42 @@
+id: I4633
+milestone: a-second-adopter-is-served
+title: "A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict"
+slug: a-landing-wait-judges-the-whole-run
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus monitor run` waits on one workflow run, named by id or by branch and head SHA as `monitor steps` takes it, until a verdict is reached. Every job of the run's latest attempt must conclude success (exit 0). Any job that concludes anything else makes the wait red at once (exit 10), including a job that starts after the others have passed. The exits 11 (timeout) and 12 (unreadable) are #3067's. With `--gates <tier>` the jobs judged are those of the CI model (.ai/repo/ci/gates.yaml) whose gates the tier's lanes select. On-demand gates are excluded. A modelled job absent from a finished run is red, and a job the model does not name is reported but does not gate. Without a model, `--gates` is refused (12) and names `majordomus init --extend --ci`. `monitor steps` keeps its range verdict, but its green output says that the range is green and the run is not judged. It names the run's jobs still pending and carries `run_concluded` in JSON, so the exit 0 of a range is never read as permission to land."
+why: "In the algoglyph integration, an integrator's batch gate waited for one branch's build job, steps 4-12, to pass, and then merged the branch into the batch. The same run's browser-gate jobs started after the build and failed. The combined batch's own full run would have caught that, but runner time and a batch slot were spent, and the branch had to be pulled back out of the batch. Pull request #3067 (I4624) gives that wait a correct reading of steps: empty and null conclusions are pending, and a cancelled step is red. The wait still answers only for the range it was given. The skeleton CI model of pull request #3046 (I4611) already says which evidence gates landing: lanes, and the `tiers` map naming the lanes each moment runs. It explicitly does not model a range of steps. The generic lesson is that a readiness check judges the whole run's conclusion, every job of the attempt, unless a declared CI model says which jobs gate landing. A partial reading is an early signal, never the verdict."
+current_state: "Measured at origin/master 7222b343dcb and at #3067's head e135ca05bcd. In #3067, `judge` (apps/majordomus-cli/src/monitor/steps.rs:225-292) skips every job whose name does not match `--job` (:231-233). It reads the run's status only to settle a missing job or step as red once the run finished (:227, :249-251). `verdict_of` (:302-391) returns Green as soon as every step of the range in the matching jobs succeeded (:375-384), whatever the run's status, its conclusion or its other jobs say. `watch` (:732-760) returns on the first verdict that is not pending (:750). `MonitorStepsArgs` (apps/majordomus-cli/src/cli.rs:2385-2420 at e135ca05bcd) requires `--job` and `--steps`, so the command has no way to ask for the whole run. Jobs are read from `actions/runs/{id}/jobs` (steps.rs:647), whose default filter is the latest attempt. On master, `monitor/github.rs` reads run-level status and conclusion through `gh run list` for the stream (apps/majordomus-cli/src/monitor/github.rs:113), signals a run only once it has completed (`workflow_run`, :307-349) and waits on nothing. The integration engine judges a pull request by the base's required checks, where a running report holds a check pending (`required_check_states`, apps/majordomus-cli/src/integration/classify.rs:231). That covers the forge's declared model, not a batch gate built on `monitor`. The CI model reader carries each gate's `job` (apps/majordomus-cli/src/gates/model.rs:117-121), `on-demand` (:130-133) and `lane` (:186), plus `tiers` (:265), loads it (:274) and resolves a tier (:399-416) whose `Tier::excludes` leaves out a gate outside its lanes (:456-463). Nothing outside the planner asks the model which jobs a tier gates on. #3046's skeleton (share/skeleton/ai/repo/ci/gates.yaml:12-19 at 3272846767b) states that landing evidence is chosen by lane, not by step."
+desired_state: "A worker or integrator that waits on CI before landing has one command whose green means the whole run, or every job the declared model's tier gates on, concluded success. A job that fails after an earlier range passed turns the wait red. A range wait stays available as an early signal and says plainly that it is not a landing verdict. Which jobs gate landing is read from the CI model, never from a list in the command or the skill."
+scope:
+  - "apps/majordomus-cli/src/monitor/steps.rs"
+  - "apps/majordomus-cli/src/monitor/run.rs"
+  - "apps/majordomus-cli/src/monitor/mod.rs"
+  - "apps/majordomus-cli/src/commands/monitor.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "apps/majordomus-cli/tests/fixtures/gh-api-run"
+  - "docs/MONITOR.md"
+  - ".ai/repo/project/issues/I4633.yaml"
+non_scope:
+  - "Landing, merging or re-running anything: the wait reads and exits, as #3067's does"
+  - "The integration engine's required-check classification (integration/classify.rs). It already holds a running required check pending, and it reads the forge's model, not this one."
+  - "Modelling ranges of steps in .ai/repo/ci/gates.yaml. #3046 keeps the gate as the unit, and a step that counts on its own is declared as its own gate."
+  - "A depends_on edge to I4624 or I4611, which are not on master. Both are cited by name. The edge, and the rebase onto #3067's monitor/steps.rs, follow when they land."
+  - "Changing a repository's workflows or its tiers"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Fail-first, the batch case: recorded `gh api` answers of a run whose build job passes steps 4-12 while a later job, browser-gate, is queued and then concludes failure. `monitor steps --job build --steps 4-12` is green at the first poll. `monitor run` on the same answers stays pending while browser-gate is queued and is red (10) once it fails, and its reason names browser-gate and its failing step. The test fails today because `monitor run` does not exist."
+  - "Whole run: a run whose every job concluded success is green only once the run's status is completed. A job that concluded cancelled or timed_out is red at once while other jobs still run. Skipped is red unless `--allow-skipped`, as in #3067. Jobs are read for the run's latest attempt, so a re-run job that passed counts as its latest."
+  - "Model: under a fixture gates.yaml whose `integration` tier runs the feedback and proof lanes, `monitor run --gates integration` judges exactly the jobs of the gates in those lanes. A failing job of a release-lane gate does not turn it red. A modelled job missing from a finished run is red, and an on-demand gate's job is not waited on. `--gates pull-request` judges only the feedback lane's jobs."
+  - "Negative: `--gates` without .ai/repo/ci/gates.yaml exits 12 and names `majordomus init --extend --ci`. An undeclared tier exits 12 with `GateModel::tier`'s message, which lists the tiers that are declared."
+  - "`monitor steps` green, text and JSON: the line says the range is green and the run is not judged, names the run's pending jobs, and JSON carries `run_concluded: false` while the run is in progress. Its exit code is unchanged."
+  - "Mutation: making `monitor run` return green when the jobs it has seen are green, ignoring jobs still queued, fails the batch case. The fail-first proof is recorded with the case."
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::"
+evidence_required:
+  - "a_job_that_fails_after_the_range_passed_turns_the_run_red"
+created_at: 2026-11-17
