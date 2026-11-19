@@ -6,23 +6,23 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "99c94ee5335bfbb2d20663aa74ea801873345ef35a29092bc97295f50804df81",
+    "fingerprint": "b967f33f9e418c08f0a42bc1ff2a813a667418e79e6b1e81115f78a420357cb8",
     "summary": {
-      "total": 4052,
+      "total": 4054,
       "builtin": 231,
-      "declarative": 3821,
+      "declarative": 3823,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3821
+        "resource": 3823
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3831
+        "implemented": 3833
       },
       "mcp_tools": 215,
-      "mcp_resources": 3878,
+      "mcp_resources": 3880,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97242,7 +97242,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1269,
+        "capabilities": 1271,
         "capability_ids": []
       },
       {
@@ -97948,7 +97948,7 @@
     ]
   },
   "index": {
-    "fingerprint": "06fbbe91babd3b21c08967a4b8ae3fbfcf4485928a1e8181f0f4bb4c5980febf",
+    "fingerprint": "5858c414527dcd394d83485839a1adb53fdaadd4aaf784a51141125e9fc3f970",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97988,7 +97988,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1269,
+      "issue": 1271,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105601,7 +105601,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 139564
+        "bytes": 139993
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123534,6 +123534,28 @@
         "bytes": 3995
       },
       {
+        "uri": "majordomus://issue/I4632",
+        "kind": "issue",
+        "identity": "I4632",
+        "title": "A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies",
+        "description": "`majordomus evidence --withdraw <token> --because \\\"<reason>\\\"` takes one token out of the active task's `requires`. It writes a `task.obligation_withdrawn` ledger line {task, covers, because} through the same attribution `--covers` uses. It rewrites the record so that `requires` no longer lists the token and a new `withdrawn` list holds it with its reason. `check`, the `task.finished` contract and finish's verdict line then name the withdrawal. It is refused (15) for a token the task's change set implies: a token whose `inputs` cover a changed path, or `commit` once anything changed, by the same derivation `gates::implied` already makes. It is also refused for a token the task never declared, and without `--because` (2). After a withdrawal, the task that declared `verify` by mistake finishes `completed` on the evidence it really has, and no second task is needed.",
+        "path": ".ai/repo/project/issues/I4632.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 8002
+      },
+      {
+        "uri": "majordomus://issue/I4633",
+        "kind": "issue",
+        "identity": "I4633",
+        "title": "A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict",
+        "description": "`majordomus monitor run` waits on one workflow run, named by id or by branch and head SHA as `monitor steps` takes it, until a verdict is reached. Every job of the run's latest attempt must conclude success (exit 0). Any job that concludes anything else makes the wait red at once (exit 10), including a job that starts after the others have passed. The exits 11 (timeout) and 12 (unreadable) are #3067's. With `--gates <tier>` the jobs judged are those of the CI model (.ai/repo/ci/gates.yaml) whose gates the tier's lanes select. On-demand gates are excluded. A modelled job absent from a finished run is red, and a job the model does not name is reported but does not gate. Without a model, `--gates` is refused (12) and names `majordomus init --extend --ci`. `monitor steps` keeps its range verdict, but its green output says that the range is green and the run is not judged. It names the run's jobs still pending and carries `run_concluded` in JSON, so the exit 0 of a range is never read as permission to land.",
+        "path": ".ai/repo/project/issues/I4633.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7854
+      },
+      {
         "uri": "majordomus://issue/I4634",
         "kind": "issue",
         "identity": "I4634",
@@ -140146,7 +140168,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1269
+      "objects": 1271
     },
     {
       "name": "knowledge",

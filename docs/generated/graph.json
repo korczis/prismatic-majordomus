@@ -82477,6 +82477,85 @@
         }
       },
       {
+        "id": "majordomus://issue/I4632",
+        "kind": "issue",
+        "label": "I4632",
+        "summary": "A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies",
+        "route": "/cockpit/objects/issue/i4632",
+        "source": ".ai/repo/project/issues/I4632.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_task_withdraws_a_requirement_declared_in_error"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/evidence.sh",
+            "lib/finish.sh",
+            "share/events.yaml",
+            "share/commands.yaml",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "docs/CLI.md",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "test/cases/4632_a_task_withdraws_a_requirement_declared_in_error.sh",
+            ".ai/repo/project/issues/I4632.yaml"
+          ],
+          "serves": [],
+          "slug": "a-task-withdraws-a-requirement-declared-in-error",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4632_a_task_withdraws_a_requirement_declared_in_error 103_obligations"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4633",
+        "kind": "issue",
+        "label": "I4633",
+        "summary": "A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict",
+        "route": "/cockpit/objects/issue/i4633",
+        "source": ".ai/repo/project/issues/I4633.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_job_that_fails_after_the_range_passed_turns_the_run_red"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Landing, merging or re-running anything: the wait reads and exits, as #3067's does",
+            "The integration engine's required-check classification (integration/classify.rs). It already holds a running required check pending, and it reads the forge's model, not this one.",
+            "Modelling ranges of steps in .ai/repo/ci/gates.yaml. #3046 keeps the gate as the unit, and a step that counts on its own is declared as its own gate.",
+            "A depends_on edge to I4624 or I4611, which are not on master. Both are cited by name. The edge, and the rebase onto #3067's monitor/steps.rs, follow when they land.",
+            "Changing a repository's workflows or its tiers"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor/steps.rs",
+            "apps/majordomus-cli/src/monitor/run.rs",
+            "apps/majordomus-cli/src/monitor/mod.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/tests/fixtures/gh-api-run",
+            "docs/MONITOR.md",
+            ".ai/repo/project/issues/I4633.yaml"
+          ],
+          "serves": [],
+          "slug": "a-landing-wait-judges-the-whole-run",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4634",
         "kind": "issue",
         "label": "I4634",
@@ -152576,6 +152655,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4632",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4632",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4633",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4633",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4634",
         "target": "kind:issue",
         "kind": "is_a"
@@ -165502,8 +165601,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4530,
-      "edges": 10204,
+      "nodes": 4532,
+      "edges": 10208,
       "acyclic": false,
       "truncated": false
     }

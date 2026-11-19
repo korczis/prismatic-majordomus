@@ -1,0 +1,43 @@
+id: I4632
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies"
+slug: a-task-withdraws-a-requirement-declared-in-error
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus evidence --withdraw <token> --because \"<reason>\"` takes one token out of the active task's `requires`. It writes a `task.obligation_withdrawn` ledger line {task, covers, because} through the same attribution `--covers` uses. It rewrites the record so that `requires` no longer lists the token and a new `withdrawn` list holds it with its reason. `check`, the `task.finished` contract and finish's verdict line then name the withdrawal. It is refused (15) for a token the task's change set implies: a token whose `inputs` cover a changed path, or `commit` once anything changed, by the same derivation `gates::implied` already makes. It is also refused for a token the task never declared, and without `--because` (2). After a withdrawal, the task that declared `verify` by mistake finishes `completed` on the evidence it really has, and no second task is needed."
+why: "Pass 5 of the evolve loop (pull request #3078, filing I4631) started its task with `--requires verify`, read as a deployment check. The vocabulary defines `verify` as `The deployed result was looked at`, discharged by `scripts/pages verify`, and nothing was deployed, so `finish --outcome completed` was refused. Nothing could shed the token. The only discharge that `finish` would accept was `evidence --covers verify --command ...`, which records a recorded line as proof because `verify` is established by nothing. That would have been a false statement, the very thing the obligation machinery exists to prevent. A second task over the same scope with the right tokens was then refused on `commit`: `the tree is clean and no commit was made since the task started`, because the work was already committed under the first task. The only way to satisfy that gate was a dummy commit, so both tasks were closed `partial`, and a completed piece of work reads as unfinished twice in the ledger. The lesson is generic: a mistyped promise must be correctable on the record, with a reason, without lying and without manufacturing a commit, and only where the work itself does not owe the token."
+current_state: "Measured at origin/master 7222b343dcb. `start` validates and records `requires` once (lib/start.sh:20-21 parse, :97-111 refuse a token the vocabulary does not declare, :146 write `requires:` into .ai/local/state/current.yaml, :160 put it on `task.started`). Nothing writes the list after that. `mj_task_requires` (lib/evidence.sh:90-93) reads it from the record, and `evidence --covers` refuses a token the task did not declare (lib/evidence.sh:249-250). `mj_validate_obligations` (lib/evidence.sh:557-590) judges every declared token on every check and refuses completed through `mj_obl_verdict` (lib/evidence.sh:552-555). For a token whose `established_by` is `none`, as `verify` is (share/obligations.yaml, id `verify`), `mj_obligation_judge` (lib/evidence.sh:511-545) falls back to whatever evidence line was recorded (`mj_obligation_evidence`, lib/evidence.sh:157-174), so a fabricated line discharges it. `mj_obl_est_commit` (lib/evidence.sh:387-423) refutes `commit` when the record's start head equals HEAD (:412-416), which is why a second task over committed work cannot complete. The executable reads the same record through `read_task` (apps/majordomus-cli/src/capability/builtin/continuity.rs:1025-1050) for `obligations.closure` (apps/majordomus-cli/src/capability/builtin/obligations.rs:763-780) and `gates::implied` (apps/majordomus-cli/src/gates/mod.rs:148-205). `implied` already derives which tokens the change set makes owed: inputs that cover a changed path, or `commit` when anything changed. Otherwise a token is owed only because the task declared it. No policy key marks a token as one that may not be dropped. The lifecycle says a scope cannot be widened while its task is active (.ai/repo/workflows/task-lifecycle.md:62) and says nothing about narrowing `requires`."
+desired_state: "A token that only the declaration made owed, such as a remote fact like `verify`, `deploy`, `pages`, `push` or `target` declared by mistake, can be withdrawn on the record with a reason. The withdrawal is visible wherever the contract is read. A token the work itself owes cannot be withdrawn, so withdrawal is never a way around `commit`, `tests`, `docs` or `generated`. The decision of what the change set implies stays in one place (`gates::implied` and its shell twin, the obligations reported by `gates.completion`)."
+scope:
+  - "lib/evidence.sh"
+  - "lib/finish.sh"
+  - "share/events.yaml"
+  - "share/commands.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+  - "docs/CLI.md"
+  - ".ai/repo/workflows/task-lifecycle.md"
+  - "test/cases/4632_a_task_withdraws_a_requirement_declared_in_error.sh"
+  - ".ai/repo/project/issues/I4632.yaml"
+non_scope:
+  - "`start --continues <task-id>`, which would let a second task adopt the commits of an earlier one. It treats the symptom (the second task) rather than the cause (a promise that cannot be corrected) and widens what a task may claim as its own. Withdrawal makes the second task unnecessary."
+  - "Changing how `commit` is established (lib/evidence.sh:412-416): refusing a task that committed nothing is correct."
+  - "Adding a token mid-task (`--add`): widening a promise is safe to do with a fresh `start`, and the scope rule already accepts that cost."
+  - "A policy list of tokens a repository forbids withdrawing. The derived rule (the change set implies it) needs no list. A list can follow if an adopter asks for a stricter one."
+  - "Discharging `verify` or `deploy` differently, or changing share/obligations.yaml."
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Fail-first: in a fixture repository a task started with `--requires commit,verify` commits its change, and `finish --outcome completed` is refused naming `verify` (today's behaviour, the baseline). `evidence --withdraw verify --because \"nothing was deployed\"` then exits 0, and the same `finish --outcome completed` is accepted. Before this change the withdraw exits 2 as an unknown option, so the case fails."
+  - "The ledger carries one `task.obligation_withdrawn` line with task, covers `verify` and the reason verbatim, declared in share/events.yaml. The record lists `verify` under `withdrawn` with that reason and no longer under `requires`. `check` prints the withdrawal, and the `task.finished` contract names it."
+  - "Negative, implied by inputs: after a tracked change under docs/, `evidence --withdraw docs --because x` is refused (15) and names the changed path that implies `docs`. The same holds for `tests` after a change under lib/."
+  - "Negative, commit: with any change in the task, `evidence --withdraw commit --because x` is refused (15). Withdrawal is never a way past an uncommitted tree."
+  - "Negative, undeclared: withdrawing a token the task never declared is refused with the message `--covers` uses (lib/evidence.sh:249-250). `--withdraw` without `--because` exits 2, and with no active task it exits as `evidence` does today."
+  - "Mutation: removing the implied-token refusal makes the `docs` and `commit` negatives fail. The fail-first proof is recorded with the case."
+  - "The executable's `read_task` and `obligations.closure` report the record after a withdrawal: `verify` is absent from `requires` and present under `withdrawn`. `gates.completion` then reports `verify` as not applicable."
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4632_a_task_withdraws_a_requirement_declared_in_error 103_obligations"
+evidence_required:
+  - "a_task_withdraws_a_requirement_declared_in_error"
+created_at: 2026-11-17

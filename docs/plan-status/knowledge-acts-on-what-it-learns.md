@@ -100,6 +100,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares share/events.yaml with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |
