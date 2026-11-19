@@ -1,0 +1,34 @@
+id: I4661
+milestone: a-second-adopter-is-served
+title: "plan evidence puts the entry inside the evidence: sequence wherever the key sits"
+slug: plan-evidence-lands-inside-the-evidence-sequence
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus plan evidence <id> ...` inserts the new entry at the end of the record's `evidence:` sequence wherever that key sits in the file, with the indentation of the sequence's first item (two spaces when it has none), creates the key at the end when the record has none, and copies every other line of the record unchanged; only `updated_at:` is rewritten, in place, as before."
+why: "Observed in the OpenTTD checkout on 2026-11-19 with majordomus 1.0.2: .ai/repo/project/issues/I0084.yaml has `started_at:`, `started_event:` and `updated_at:` after its `evidence:` list, and its two evidence entries recorded that day were written after `updated_at:`, a list item without a parent key. `plan validate` then refused the record ('list item without a parent key') and the entries had to be moved back by hand (OpenTTD commit 6b9e6b4e5e shows the repaired shape). Every later `plan` command fails the same way while the record does not parse, `plan done` included; `plan done` itself writes only scalars, before `evidence:` (plan.rs set_field), and is not the cause."
+current_state: "Measured at origin/master d0b85677b74: mj_plan_evidence (lib/plan.sh:604-635) writes `cat $f`, then `evidence:` when no line starts with it, then the entry, so the entry always ends the file (lib/plan.sh:619-631). That is the end of the sequence only while `evidence:` is the last key. mj_pj_set_field (lib/project.sh:370-386) and plan.rs set_field insert a new scalar before `evidence:`, so a record written only by the tool keeps `evidence:` last; a record whose keys after it were written by hand or by another writer does not."
+desired_state: "A record of any key order takes evidence from `plan evidence` and still validates; the diff of the record is the entry's lines and the `updated_at:` line, nothing else."
+scope:
+  - ".ai/repo/project/issues/I4661.yaml"
+  - "lib/plan.sh"
+  - "test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh"
+non_scope:
+  - "plan.transition and set_field in apps/majordomus-cli/src/plan.rs: they write scalars before `evidence:` and are correct"
+  - "The --commit option of plan evidence: I4410"
+  - "A flow-style `evidence: []`, which plan validate refuses as it is today"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4659: `evidence:` followed by `created_at:` and `updated_at:`: the entry ends the sequence, immediately before `created_at:`, and the record validates"
+  - "Case 4659: a sequence whose items start in column 0 gets the entry in column 0; an `evidence:` with no item yet, followed by a key, gets the entry as its first item"
+  - "Case 4659: a record without `evidence:` gets the key and the entry at the end; a milestone whose `evidence:` is its last key gets the entry at the end, as before"
+  - "Case 4659: in every record, removing the entry's lines and `updated_at:` leaves the record before without `updated_at:` (plus the created `evidence:` line where it was absent), and `plan show` reads both the earlier and the new entry"
+  - "Before the change, case 4659 fails: plan evidence on the second record exits 10 because the first no longer parses ('list item without a parent key')"
+validation:
+  - "bash test/run.sh 4659_plan_evidence_lands_inside_the_evidence_sequence"
+  - "bash test/run.sh 43_plan_command 133_plan_transition 582_the_done_guard_holds_in_both_engines"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "plan_evidence_lands_inside_the_evidence_sequence"
+created_at: 2026-11-19

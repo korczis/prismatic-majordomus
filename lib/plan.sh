@@ -616,19 +616,48 @@ mj_plan_evidence() {
   [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue or milestone '$id'"
   mj_pj_list "$id" evidence_required | grep -qx -- "$covers" \
     || mj_die "$MJ_EX_REFUSED" "$id does not require evidence '$covers' (declared: $(mj_pj_list "$id" evidence_required | paste -sd, -))"
+  local ent
+  ent="$(mktemp "${TMPDIR:-/tmp}/mj.ent.XXXXXX")"
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ev.XXXXXX")"
+  # The entry, written without the sequence's indentation: the insertion below adds it.
   {
-    if grep -qE '^evidence:' "$f"; then cat "$f"
-    else cat "$f"; printf 'evidence:\n'; fi
     # quoted as the command and the result are: a token holding ": " is no plain YAML scalar
-    printf -- '  - covers: "%s"\n    type: %s\n' "$(printf '%s' "$covers" | sed 's/"/\\"/g')" "$etype"
-    [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
-    [ -n "$eres" ] && printf '    result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
-    [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"
-    printf '    commit: %s\n    recorded_at: %s\n' "$(mj_git_head)" "$(mj_now)"
-  } > "$tmp"
+    printf -- '- covers: "%s"\n  type: %s\n' "$(printf '%s' "$covers" | sed 's/"/\\"/g')" "$etype"
+    [ -z "$ecmd" ] || printf '  command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
+    [ -z "$eres" ] || printf '  result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
+    [ -z "$eart" ] || printf '  artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"
+    printf '  commit: %s\n  recorded_at: %s\n' "$(mj_git_head)" "$(mj_now)"
+  } > "$ent"
+  # The entry goes at the end of the `evidence:` sequence wherever the key sits (I4661). A
+  # record whose `evidence:` is followed by another key (`started_at:`, `updated_at:` written
+  # by hand or by an older writer) got the entry after that key instead, a list item with no
+  # parent, and `plan validate` refused the record. The sequence ends at the first line that
+  # starts in column 0 and is not a `- ` item; blank and comment lines before that line stay
+  # after the entry. The entry takes the indentation of the sequence's first item ("  " when
+  # it has none), and a record without the key gets it at the end. Every other line is copied
+  # as it is.
+  awk '
+    NR == FNR { e[++n] = $0; next }
+    function emit(  i) { for (i = 1; i <= n; i++) print ind e[i]; done = 1 }
+    function flush(  i) { for (i = 1; i <= h; i++) print held[i]; h = 0 }
+    blk && !done {
+      if ($0 ~ /^[ \t]*$/ || $0 ~ /^[ \t]*#/) { held[++h] = $0; next }
+      if ($0 ~ /^[ \t]/ || $0 ~ /^-([ \t]|$)/) {
+        if (!item && match($0, /^ *-([ \t]|$)/)) { ind = substr($0, 1, index($0, "-") - 1); item = 1 }
+        flush(); print; next
+      }
+      emit(); flush(); blk = 0
+    }
+    !done && !blk && /^evidence:/ {
+      print; blk = 1; ind = "  "; next
+    }
+    { print }
+    END {
+      if (!done && !blk) { print "evidence:"; ind = "  " }
+      if (!done) { emit(); flush() }
+    }' "$ent" "$f" > "$tmp"
   cat "$tmp" > "$f"
-  rm -f "$tmp"
+  rm -f "$tmp" "$ent"
   mj_pj_set_field "$id" updated_at "$(mj_now)"
   mj_ledger_append plan_evidence "\"issue\":\"$id\",\"covers\":\"$covers\",\"type\":\"$etype\""
   printf 'plan: %s evidence recorded for %s\n' "$id" "$covers"

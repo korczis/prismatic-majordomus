@@ -82477,6 +82477,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4661",
+        "kind": "issue",
+        "label": "I4661",
+        "summary": "plan evidence puts the entry inside the evidence: sequence wherever the key sits",
+        "route": "/cockpit/objects/issue/i4661",
+        "source": ".ai/repo/project/issues/I4661.yaml",
+        "facts": {
+          "created_at": "2026-11-19",
+          "depends_on": [],
+          "desired_state": "A record of any key order takes evidence from `plan evidence` and still validates; the diff of the record is the entry's lines and the `updated_at:` line, nothing else.",
+          "evidence_required": [
+            "plan_evidence_lands_inside_the_evidence_sequence"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "plan.transition and set_field in apps/majordomus-cli/src/plan.rs: they write scalars before `evidence:` and are correct",
+            "The --commit option of plan evidence: I4410",
+            "A flow-style `evidence: []`, which plan validate refuses as it is today"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4661.yaml",
+            "lib/plan.sh",
+            "test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh"
+          ],
+          "serves": [],
+          "slug": "plan-evidence-lands-inside-the-evidence-sequence",
+          "validation": [
+            "bash test/run.sh 4659_plan_evidence_lands_inside_the_evidence_sequence",
+            "bash test/run.sh 43_plan_command 133_plan_transition 582_the_done_guard_holds_in_both_engines",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -110383,6 +110420,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh",
+        "kind": "test",
+        "label": "test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh",
+        "route": "/cockpit/objects/test/test-cases-4659-plan-evidence-lands-inside-the-evidence-sequence-sh",
+        "source": "test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -152523,6 +152567,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4661",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4661",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -160313,6 +160367,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165434,8 +165493,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4528,
-      "edges": 10201,
+      "nodes": 4530,
+      "edges": 10204,
       "acyclic": false,
       "truncated": false
     }

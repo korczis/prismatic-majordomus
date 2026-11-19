@@ -6,23 +6,23 @@
     "version": "1.1.0"
   },
   "registry": {
-    "fingerprint": "643aba2c1428da958892ea34ac6814b4e1e8b68cb995caf2b18069650b779627",
+    "fingerprint": "e1eca103a4eb705bc07c4f2c96225fc8acb2594c906563d6810879f3392d6973",
     "summary": {
-      "total": 4050,
+      "total": 4052,
       "builtin": 231,
-      "declarative": 3819,
+      "declarative": 3821,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3819
+        "resource": 3821
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3829
+        "implemented": 3831
       },
       "mcp_tools": 215,
-      "mcp_resources": 3876,
+      "mcp_resources": 3878,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97219,7 +97219,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1268,
+        "capabilities": 1269,
         "capability_ids": []
       },
       {
@@ -97832,7 +97832,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 707,
+        "capabilities": 708,
         "capability_ids": []
       },
       {
@@ -97925,7 +97925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "90786d3242fdcae409c54f848866245239842968fc78f83221bcc0fbb6981bf4",
+    "fingerprint": "43c0d2b41e9a1d66485aba657b593ba5282625ff084502064006efa5e00af73c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97965,7 +97965,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1268,
+      "issue": 1269,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97979,7 +97979,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 707,
+      "test": 708,
       "use-case": 49,
       "workspace": 1
     },
@@ -105578,7 +105578,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 139297
+        "bytes": 139436
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108921,7 +108921,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 32734
+        "bytes": 34189
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -123511,6 +123511,17 @@
         "bytes": 3995
       },
       {
+        "uri": "majordomus://issue/I4661",
+        "kind": "issue",
+        "identity": "I4661",
+        "title": "plan evidence puts the entry inside the evidence: sequence wherever the key sits",
+        "description": "`majordomus plan evidence <id> ...` inserts the new entry at the end of the record's `evidence:` sequence wherever that key sits in the file, with the indentation of the sequence's first item (two spaces when it has none), creates the key at the end when the record has none, and copies every other line of the record unchanged; only `updated_at:` is rewritten, in place, as before.",
+        "path": ".ai/repo/project/issues/I4661.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3736
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137590,6 +137601,14 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh",
+        "kind": "test",
+        "identity": "test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh",
+        "path": "test/cases/4659_plan_evidence_lands_inside_the_evidence_sequence.sh",
+        "source_class": "case",
+        "bytes": 5851
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -140104,7 +140123,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1268
+      "objects": 1269
     },
     {
       "name": "knowledge",
@@ -140266,7 +140285,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 707
+      "objects": 708
     },
     {
       "name": "use-case",
