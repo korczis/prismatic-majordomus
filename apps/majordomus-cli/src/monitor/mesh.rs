@@ -387,6 +387,42 @@ impl Memory {
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {
                 return None
             }
+            // a typed coordination record (I4665): a blocker, a decision and a handoff ask
+            // for attention, the rest is news
+            EventBody::RecordWritten { record } => {
+                use crate::mesh::records::RecordKind;
+                let name = self.name_of(&stream, &record.session);
+                let severity = match record.kind {
+                    RecordKind::Blocker | RecordKind::Decision | RecordKind::Handoff => {
+                        MonitorSeverity::Attention
+                    }
+                    _ => MonitorSeverity::Info,
+                };
+                let verb = if record.revision == 1 {
+                    "wrote"
+                } else {
+                    "revised"
+                };
+                let mut s = MonitorSignal::new(
+                    event.at,
+                    MonitorSource::Mesh,
+                    "record",
+                    severity,
+                    &format!(
+                        "{name} {verb} {} {} (revision {}) on {}: {}",
+                        record.kind.as_str(),
+                        record.id,
+                        record.revision,
+                        record.task,
+                        record.title
+                    ),
+                );
+                s.for_you = ctx.reader.named_in(&record.title) || ctx.reader.named_in(&record.task);
+                s.session = Some(record.session);
+                s.actor = Some(name);
+                s.paths = record.scope;
+                s
+            }
         };
         signal.machine = Some(machine);
         Some(signal)

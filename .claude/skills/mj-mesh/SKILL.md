@@ -30,6 +30,8 @@ $ARGUMENTS
 | `mesh.nodes` | The discovered nodes | `majordomus_mesh_nodes` | — | reads |
 | `mesh.peer` | One runtime | `majordomus_mesh_peer` | — | reads |
 | `mesh.peers` | Who cooperates, machine by machine | `majordomus_mesh_peers` | — | reads |
+| `mesh.record.write` | Write a typed coordination record to the mesh | `majordomus_mesh_record_write` | — | changes |
+| `mesh.records` | The typed coordination records of the mesh | `majordomus_mesh_records` | — | reads |
 | `mesh.register` | Register with this node's mesh | `majordomus_mesh_register` | — | changes |
 | `mesh.release` | Release a claim | `majordomus_mesh_release` | — | changes |
 | `mesh.review.answer` | Answer a review request | `majordomus_mesh_review_answer` | — | changes |
