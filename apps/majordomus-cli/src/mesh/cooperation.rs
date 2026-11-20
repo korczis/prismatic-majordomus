@@ -3819,18 +3819,17 @@ impl Cooperation {
             Admission::Append(body) => {
                 let key = self.own(&body.id);
                 let (revision, evidence) = (body.revision, body.evidence());
-                let written =
-                    self.write(EventBody::RecordWritten { record: *body }, key.clone())?;
-                Ok(RecordWriteAnswer {
-                    conflicts: contended(&key, self.state().record_conflicts),
-                    key,
-                    revision,
-                    event: written.event,
-                    lamport: written.lamport,
-                    durability: written.durability,
-                    evidence,
-                    repeated: false,
-                })
+                self.write(EventBody::RecordWritten { record: *body }, key.clone())
+                    .map(|written| RecordWriteAnswer {
+                        conflicts: contended(&key, self.state().record_conflicts),
+                        key,
+                        revision,
+                        event: written.event,
+                        lamport: written.lamport,
+                        durability: written.durability,
+                        evidence,
+                        repeated: false,
+                    })
             }
         }
     }

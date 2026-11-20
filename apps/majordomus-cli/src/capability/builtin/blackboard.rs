@@ -693,28 +693,29 @@ pub(crate) fn project(
     let mut records_total = 0;
     let mut record_conflicts = Vec::new();
     if let Some(m) = mesh_state {
-        let open = m
+        let open: Vec<_> = m
             .records
             .iter()
-            .filter(|r| r.status == RecordStatus::Open && r.superseded_by.is_empty());
-        for r in open {
-            records_total += 1;
-            if records.len() < MAX_RECORDS {
-                records.push(BlackboardRecord {
-                    key: r.key.clone(),
-                    from: held
-                        .get(&r.author)
-                        .cloned()
-                        .unwrap_or_else(|| r.author.clone()),
-                    kind: r.kind,
-                    task: r.task.clone(),
-                    title: r.title.clone(),
-                    revision: r.revision,
-                    evidence: r.evidence,
-                    stale: r.stale.clone(),
-                });
-            }
-        }
+            .filter(|r| r.status == RecordStatus::Open && r.superseded_by.is_empty())
+            .collect();
+        records_total = open.len();
+        records = open
+            .into_iter()
+            .take(MAX_RECORDS)
+            .map(|r| BlackboardRecord {
+                key: r.key.clone(),
+                from: held
+                    .get(&r.author)
+                    .cloned()
+                    .unwrap_or_else(|| r.author.clone()),
+                kind: r.kind,
+                task: r.task.clone(),
+                title: r.title.clone(),
+                revision: r.revision,
+                evidence: r.evidence,
+                stale: r.stale.clone(),
+            })
+            .collect();
         record_conflicts = m
             .record_conflicts
             .iter()
