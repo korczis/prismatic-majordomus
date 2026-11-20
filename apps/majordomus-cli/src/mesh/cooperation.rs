@@ -3821,7 +3821,6 @@ impl Cooperation {
                 let (revision, evidence) = (body.revision, body.evidence());
                 let written =
                     self.write(EventBody::RecordWritten { record: *body }, key.clone())?;
-                tracing::info!(runtime_id = %self.own_key, session_id = %session, record = %key, revision, "mesh record written");
                 Ok(RecordWriteAnswer {
                     conflicts: contended(&key, self.state().record_conflicts),
                     key,

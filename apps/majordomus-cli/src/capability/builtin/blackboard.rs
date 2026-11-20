@@ -1191,6 +1191,89 @@ mod tests {
     /// A board peer is joined to the session its own server's stream projected for it; the
     /// same board session id in another process of the same runtime (a restarted or superseded
     /// server), on another machine or for another checkout is a different worker.
+    /// The open typed records of the journal are on the blackboard (I4665), each from the
+    /// worker whose session wrote it, or from the bare session key when no worker holds it; a
+    /// resolved or superseded record is not, and contending decisions are listed.
+    #[test]
+    fn the_open_records_and_their_conflicts_are_on_the_blackboard() {
+        use crate::mesh::identity::NodeIdentity;
+        use crate::mesh::journal::{EventBody, Journal, StreamLiveness};
+        use crate::mesh::records::{RecordBody, RecordKind, RecordStatus};
+        use crate::mesh::state::fold;
+        let j = Journal::open(
+            std::sync::Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000001",
+            "repo".into(),
+            None,
+        )
+        .unwrap();
+        for s in ["s1", "s2"] {
+            j.append_own(EventBody::SessionOpened {
+                info: SessionInfo::named(s, "cli"),
+            })
+            .unwrap();
+        }
+        let write = |record: RecordBody| {
+            j.append_own(EventBody::RecordWritten { record }).unwrap();
+        };
+        write(RecordBody::new(
+            "r-1",
+            "s1",
+            RecordKind::Decision,
+            "T",
+            &["docs"],
+            "a",
+        ));
+        write(RecordBody::new(
+            "r-2",
+            "s2",
+            RecordKind::Decision,
+            "T",
+            &["docs"],
+            "b",
+        ));
+        write(RecordBody::new(
+            "r-3",
+            "s9",
+            RecordKind::Blocker,
+            "T",
+            &["ci"],
+            "c",
+        ));
+        write(RecordBody {
+            status: RecordStatus::Resolved,
+            ..RecordBody::new("r-4", "s1", RecordKind::Blocker, "T", &["ci"], "done")
+        });
+        let state = fold(&j.events(), &|_| StreamLiveness::Own);
+        let b = answer(&list(vec![], "c1", None), Ok(&state));
+        assert_eq!(
+            (b.records.len(), b.records_total),
+            (3, 3),
+            "{:?}",
+            b.records
+        );
+        let from = |id: &str| {
+            b.records
+                .iter()
+                .find(|r| r.key.ends_with(&format!("/{id}")))
+                .map(|r| r.from.clone())
+                .unwrap()
+        };
+        assert_eq!(
+            from("r-1"),
+            format!("mesh:{}/s1", j.own_stream()),
+            "its worker"
+        );
+        assert_eq!(
+            from("r-3"),
+            format!("{}/s9", j.own_stream()),
+            "no worker holds s9"
+        );
+        assert_eq!(b.record_conflicts.len(), 1);
+        let wire = serde_json::to_value(&b).unwrap();
+        assert_eq!(wire["records_total"], 3);
+    }
+
     #[test]
     fn a_peer_is_joined_only_through_its_servers_stream() {
         let here = stream("1", "1", "a");

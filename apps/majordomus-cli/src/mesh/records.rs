@@ -578,12 +578,19 @@ impl RecordBody {
     /// ```
     pub fn content_digest(&self) -> String {
         use sha2::{Digest, Sha256};
-        let mut value = serde_json::to_value(self).unwrap_or_default();
-        if let Some(map) = value.as_object_mut() {
-            for volatile in ["id", "session", "revision", "idempotency", "written_at"] {
-                map.remove(volatile);
-            }
-        }
+        // what it says, and nothing of who wrote it, which revision or when
+        let value = serde_json::json!({
+            "kind": self.kind,
+            "task": self.task,
+            "scope": self.scope,
+            "status": self.status,
+            "title": self.title,
+            "body": self.body,
+            "sources": self.sources,
+            "handoff": self.handoff,
+            "supersedes": self.supersedes,
+            "expires_at": self.expires_at,
+        });
         let hash = Sha256::digest(canonical_json(&value));
         hash.iter().take(16).map(|b| format!("{b:02x}")).collect()
     }
@@ -1026,10 +1033,10 @@ impl RecordFold {
             if old == new {
                 continue;
             }
+            // each record names one predecessor, so a link is pushed once; a predecessor not
+            // heard here (yet) is a dangling link the superseding record still shows
             if let Some(view) = self.records.get_mut(&old) {
-                if !view.superseded_by.contains(&new) {
-                    view.superseded_by.push(new);
-                }
+                view.superseded_by.push(new);
             }
         }
         for view in self.records.values_mut() {
@@ -1566,7 +1573,9 @@ mod tests {
         CheckoutFacts, Cooperation, CooperationError, CooperationSetup,
     };
     use crate::mesh::identity::NodeIdentity;
-    use crate::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};
+    use crate::mesh::journal::{
+        ClaimMode, EventBody, Journal, MeshEvent, SessionInfo, StreamLiveness,
+    };
     use crate::mesh::link::HttpTransport;
     use crate::mesh::registry::MeshRegistry;
     use crate::mesh::repository::of_root_commits;
@@ -2360,6 +2369,545 @@ mod tests {
             EventBody::RecordWritten { record: good }.kind(),
             "record_written"
         );
+    }
+
+    fn journal() -> Journal {
+        Journal::open(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000001",
+            "repo".into(),
+            None,
+        )
+        .unwrap()
+    }
+
+    fn written(j: &Journal, record: RecordBody) {
+        j.append_own(EventBody::RecordWritten { record }).unwrap();
+    }
+
+    fn opened(j: &Journal, session: &str) {
+        j.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named(session, "test"),
+        })
+        .unwrap();
+    }
+
+    /// Every word of the closed vocabulary is its own, and every bound a peer could cross
+    /// names the field it crossed: a malformed record is refused, never stored.
+    #[test]
+    fn every_kind_has_its_word_and_every_bound_names_its_field() {
+        let kinds = [
+            (RecordKind::Observation, "observation"),
+            (RecordKind::Hypothesis, "hypothesis"),
+            (RecordKind::Plan, "plan"),
+            (RecordKind::Decision, "decision"),
+            (RecordKind::Blocker, "blocker"),
+            (RecordKind::Handoff, "handoff"),
+            (RecordKind::Outcome, "outcome"),
+        ];
+        for (kind, word) in kinds {
+            assert_eq!(kind.as_str(), word);
+            assert_eq!(serde_json::to_value(kind).unwrap(), word);
+        }
+
+        let refused = |source: RecordSource, word: &str| {
+            let why = source.validate().unwrap_err();
+            assert!(why.contains(word), "{why}");
+        };
+        let file = |path: &str, lines: Option<&str>| RecordSource::File {
+            path: path.into(),
+            commit: COMMIT.into(),
+            lines: lines.map(Into::into),
+        };
+        assert!(
+            file("src/a.rs", None).validate().is_ok(),
+            "lines are optional"
+        );
+        assert!(file("src/a.rs", Some("12")).validate().is_ok(), "one line");
+        refused(file("../a.rs", None), "repository-relative");
+        refused(file("a.rs", Some("x-5")), "lines");
+        refused(file("a.rs", Some("5-y")), "lines");
+        refused(file("a.rs", Some("0")), "lines");
+        let tool = |command: &str, result: &str, at: Option<&str>| RecordSource::Tool {
+            command: command.into(),
+            result: result.into(),
+            observed_at: at.map(Into::into),
+        };
+        assert!(tool("cargo test", "ok", None).validate().is_ok());
+        refused(tool(" ", "ok", None), "command and its result");
+        refused(tool("two\nlines", "ok", None), "source command");
+        refused(tool("cargo test", &"x".repeat(2049), None), "source result");
+        refused(tool("cargo test", "ok", Some("yesterday")), "observed_at");
+        let cited = |record: &str, revision| RecordSource::Record {
+            record: record.into(),
+            revision,
+        };
+        let key = format!(
+            "{}-{}-{}/r-1",
+            "a".repeat(32),
+            "b".repeat(16),
+            "c".repeat(16)
+        );
+        assert!(cited(&key, 2).validate().is_ok());
+        assert!(!cited(&key, 2).is_retrievable(), "a link, not evidence");
+        refused(cited("not-a-key", 1), "record key");
+        refused(cited(&key, 0), "starts at 1");
+
+        let parts = Handoff {
+            objective: "o".into(),
+            current_state: "c".into(),
+            evidence: vec!["e".into()],
+            blockers: Some(vec![]),
+            next_action: "n".into(),
+        };
+        let handoff = |h: Handoff| h.validate().unwrap_err();
+        assert!(handoff(Handoff {
+            objective: "x".repeat(HANDOFF_TEXT_MAX + 1),
+            ..parts.clone()
+        })
+        .contains("objective"));
+        assert!(handoff(Handoff {
+            evidence: vec!["e".into(); MAX_HANDOFF_ITEMS + 1],
+            ..parts.clone()
+        })
+        .contains("at most"));
+        assert!(handoff(Handoff {
+            blockers: Some(vec![" ".into()]),
+            ..parts.clone()
+        })
+        .contains("blockers item is empty"));
+        assert!(handoff(Handoff {
+            evidence: vec!["two\nlines".into()],
+            ..parts.clone()
+        })
+        .contains("evidence"));
+
+        let good = RecordBody::new("r-1", "s1", RecordKind::Plan, "T", &["docs"], "t");
+        assert!(good.validate().is_ok());
+        let body = |b: RecordBody| b.validate().unwrap_err();
+        assert!(body(RecordBody {
+            session: "a b".into(),
+            ..good.clone()
+        })
+        .contains("session"));
+        assert!(body(RecordBody {
+            task: "a\nb".into(),
+            ..good.clone()
+        })
+        .contains("task"));
+        assert!(body(RecordBody {
+            title: " ".into(),
+            ..good.clone()
+        })
+        .contains("title"));
+        assert!(body(RecordBody {
+            idempotency: Some("a b".into()),
+            ..good.clone()
+        })
+        .contains("idempotency"));
+        assert!(body(RecordBody {
+            written_at: Some("a\nb".into()),
+            ..good.clone()
+        })
+        .contains("written_at"));
+        let huge = RecordBody {
+            kind: RecordKind::Handoff,
+            scope: (0..64).map(|i| format!("{i:0>250}")).collect(),
+            body: Some("x".repeat(RECORD_BODY_MAX)),
+            handoff: Some(Handoff {
+                evidence: vec!["e".repeat(HANDOFF_ITEM_MAX); MAX_HANDOFF_ITEMS],
+                blockers: Some(vec!["b".repeat(HANDOFF_ITEM_MAX); MAX_HANDOFF_ITEMS]),
+                ..parts
+            }),
+            ..good
+        };
+        assert!(body(huge).contains("exceeds"));
+    }
+
+    /// What a runtime signs out of order or out of shape changes no record: a second
+    /// creation, a skipped revision, a change of kind; a record superseding itself links to
+    /// nothing, a record superseding one never heard keeps its dangling link, and a record of
+    /// a session never heard to open is flagged.
+    #[test]
+    fn the_fold_applies_only_what_follows_and_flags_what_it_cannot_place() {
+        let j = journal();
+        opened(&j, "s1");
+        let plan = RecordBody::new("r-1", "s1", RecordKind::Plan, "T", &["docs"], "plan");
+        written(&j, plan.clone());
+        written(
+            &j,
+            RecordBody {
+                title: "again".into(),
+                ..plan.clone()
+            },
+        );
+        written(
+            &j,
+            RecordBody {
+                revision: 3,
+                title: "skipped".into(),
+                ..plan.clone()
+            },
+        );
+        written(
+            &j,
+            RecordBody {
+                revision: 2,
+                kind: RecordKind::Decision,
+                ..plan.clone()
+            },
+        );
+        let own = format!("{}/r-2", j.own_stream());
+        written(
+            &j,
+            RecordBody {
+                supersedes: Some(own.clone()),
+                ..RecordBody::new("r-2", "s1", RecordKind::Observation, "T", &["docs"], "self")
+            },
+        );
+        let elsewhere = format!(
+            "{}-{}-{}/r-9",
+            "a".repeat(32),
+            "b".repeat(16),
+            "c".repeat(16)
+        );
+        written(
+            &j,
+            RecordBody {
+                supersedes: Some(elsewhere.clone()),
+                ..RecordBody::new(
+                    "r-3",
+                    "s1",
+                    RecordKind::Observation,
+                    "T",
+                    &["docs"],
+                    "later",
+                )
+            },
+        );
+        written(
+            &j,
+            RecordBody::new("r-4", "s9", RecordKind::Blocker, "T", &["docs"], "who"),
+        );
+
+        let state = fold(&j.events(), &|_| StreamLiveness::Own);
+        let view = |id: &str| {
+            state
+                .records
+                .iter()
+                .find(|r| r.key.ends_with(&format!("/{id}")))
+                .unwrap()
+        };
+        assert_eq!(
+            (view("r-1").revision, view("r-1").title.as_str()),
+            (1, "plan")
+        );
+        let reasons: Vec<&str> = state
+            .records_ignored
+            .iter()
+            .map(|i| i.reason.as_str())
+            .collect();
+        assert!(
+            reasons.iter().any(|r| r.contains("second creation")),
+            "{reasons:?}"
+        );
+        assert!(
+            reasons.iter().any(|r| r.contains("does not follow")),
+            "{reasons:?}"
+        );
+        assert!(
+            reasons.iter().any(|r| r.contains("cannot be revised into")),
+            "{reasons:?}"
+        );
+        assert!(
+            view("r-2").superseded_by.is_empty(),
+            "a record does not supersede itself"
+        );
+        assert_eq!(view("r-3").supersedes.as_deref(), Some(elsewhere.as_str()));
+        assert_eq!(view("r-4").author_state, AuthorState::Unknown);
+        assert!(view("r-4")
+            .stale
+            .iter()
+            .any(|w| w.contains("not known here")));
+    }
+
+    /// Admission refuses, before anything is signed, a write that names no kind, a revision
+    /// of a record not known here, a revision read given for a new record, and a
+    /// supersession of an unknown record or of the record being revised; a retried revision
+    /// is answered with its first write.
+    #[test]
+    fn admission_refuses_what_cannot_be_placed_and_answers_a_retried_revision() {
+        let c = testing::cooperation();
+        claim(&c, "s1", &["docs"]);
+        let plan = record(RecordKind::Plan, "T", &["docs"], "p");
+        let nameless = RecordWrite {
+            kind: None,
+            ..plan.clone()
+        };
+        assert!(
+            matches!(c.write_record("s1", nameless), Err(CooperationError::Invalid(m)) if m.contains("kind"))
+        );
+        let ghost = format!("{}/r-none", c.journal().own_stream());
+        assert!(matches!(
+            c.write_record("s1", revise(&ghost, 1, plan.clone())),
+            Err(CooperationError::NotFound(_))
+        ));
+        let unread = RecordWrite {
+            revision: Some(1),
+            ..plan.clone()
+        };
+        assert!(
+            matches!(c.write_record("s1", unread), Err(CooperationError::Invalid(m)) if m.contains("only with the record"))
+        );
+        let orphan = RecordWrite {
+            supersedes: Some(ghost),
+            ..plan.clone()
+        };
+        assert!(matches!(
+            c.write_record("s1", orphan),
+            Err(CooperationError::NotFound(_))
+        ));
+        let first = c.write_record("s1", plan.clone()).unwrap();
+        let onto_itself = RecordWrite {
+            supersedes: Some(first.key.clone()),
+            ..revise(&first.key, 1, plan.clone())
+        };
+        assert!(matches!(
+            c.write_record("s1", onto_itself),
+            Err(CooperationError::NotFound(_))
+        ));
+        let retried = RecordWrite {
+            idempotency: Some("k-rev".into()),
+            ..revise(
+                &first.key,
+                1,
+                record(RecordKind::Plan, "T", &["docs"], "p2"),
+            )
+        };
+        let once = c.write_record("s1", retried.clone()).unwrap();
+        let twice = c.write_record("s1", retried).unwrap();
+        assert!(twice.repeated && !once.repeated);
+        assert_eq!((twice.revision, twice.event), (2, once.event));
+    }
+
+    /// A lease is judged once per reading: judging again adds no second reason and reports no
+    /// change; a record without a lease is passed over. Two decisions of different tasks over
+    /// scopes that do not meet do not contend.
+    #[test]
+    fn a_lease_is_judged_once_and_unrelated_decisions_do_not_contend() {
+        let j = journal();
+        opened(&j, "s1");
+        opened(&j, "s2");
+        written(
+            &j,
+            RecordBody {
+                expires_at: Some("2000-01-01T00:00:00Z".into()),
+                ..RecordBody::new("r-1", "s1", RecordKind::Decision, "A", &["docs"], "a")
+            },
+        );
+        written(
+            &j,
+            RecordBody::new("r-2", "s2", RecordKind::Decision, "B", &["src"], "b"),
+        );
+        written(
+            &j,
+            RecordBody::new(
+                "r-3",
+                "s2",
+                RecordKind::Decision,
+                "C",
+                &["docs/x", "src"],
+                "c",
+            ),
+        );
+        let mut state = fold(&j.events(), &|_| StreamLiveness::Own);
+        assert!(judge_leases(&mut state.records, 1_788_000_000));
+        assert!(
+            !judge_leases(&mut state.records, 1_788_000_000),
+            "judged once"
+        );
+        let lapsed = state
+            .records
+            .iter()
+            .find(|r| r.key.ends_with("/r-1"))
+            .unwrap();
+        assert_eq!(
+            lapsed.stale.iter().filter(|w| w.contains("lease")).count(),
+            1
+        );
+        let live = conflicts(&state.records);
+        assert!(
+            live.is_empty(),
+            "B and C share no task and are both s2's: {live:?}"
+        );
+        let state = fold(&j.events(), &|_| StreamLiveness::Own);
+        assert_eq!(state.record_conflicts.len(), 1, "A (docs) meets C (docs/x)");
+        assert_eq!(
+            state.record_conflicts[0].reason,
+            ConflictReason::OverlappingScope
+        );
+    }
+
+    /// One record by its key, and the ignored writes of what a narrowed query lists.
+    #[test]
+    fn a_query_names_one_record_and_its_ignored_writes() {
+        let j = journal();
+        opened(&j, "s1");
+        let plan = RecordBody::new("r-1", "s1", RecordKind::Plan, "T", &["docs"], "p");
+        written(&j, plan.clone());
+        written(
+            &j,
+            RecordBody {
+                revision: 5,
+                ..plan
+            },
+        );
+        written(
+            &j,
+            RecordBody::new("r-2", "s1", RecordKind::Plan, "U", &["src"], "q"),
+        );
+        let s = fold(&j.events(), &|_| StreamLiveness::Own);
+        let key = format!("{}/r-1", j.own_stream());
+        let q = RecordQuery {
+            record: Some(key.clone()),
+            ..RecordQuery::default()
+        };
+        let one = select(
+            &s.records,
+            &s.record_conflicts,
+            &s.records_ignored,
+            &s.digest,
+            &q,
+        );
+        assert_eq!(one.records.len(), 1);
+        assert_eq!(one.ignored.len(), 1, "its skipped revision");
+        let other = RecordQuery {
+            task: Some("U".into()),
+            ..RecordQuery::default()
+        };
+        let none = select(
+            &s.records,
+            &s.record_conflicts,
+            &s.records_ignored,
+            &s.digest,
+            &other,
+        );
+        assert!(
+            none.ignored.is_empty(),
+            "the ignored write is about another record"
+        );
+        assert!(one.active && none.active);
+    }
+
+    /// The state's page narrows records like every other collection, and the summary counts
+    /// them, the live ones and the conflicts.
+    #[test]
+    fn the_page_narrows_and_counts_records() {
+        use crate::mesh::page::{narrow, summarize, Query};
+        let j = journal();
+        opened(&j, "s1");
+        opened(&j, "s2");
+        written(
+            &j,
+            RecordBody::new(
+                "r-1",
+                "s1",
+                RecordKind::Decision,
+                "T",
+                &["docs"],
+                "one kind",
+            ),
+        );
+        written(
+            &j,
+            RecordBody::new("r-2", "s2", RecordKind::Decision, "T", &["docs"], "two"),
+        );
+        let plan = RecordBody::new("r-3", "s2", RecordKind::Plan, "U", &["src"], "plan");
+        written(
+            &j,
+            RecordBody {
+                status: RecordStatus::Resolved,
+                ..plan.clone()
+            },
+        );
+        written(
+            &j,
+            RecordBody {
+                revision: 9,
+                ..plan
+            },
+        );
+        let state = fold(&j.events(), &|_| StreamLiveness::Own);
+        let q = |v: serde_json::Value| -> Query { serde_json::from_value(v).unwrap() };
+        let all = narrow(&state, &Query::default());
+        assert_eq!((all.records.len(), all.record_conflicts.len()), (3, 1));
+        assert_eq!(all.records_ignored.len(), 1);
+        let open = narrow(&state, &q(serde_json::json!({"open": true})));
+        assert_eq!(open.records.len(), 2, "the resolved plan is not open");
+        let found = narrow(&state, &q(serde_json::json!({"matching": "ONE KIND"})));
+        assert_eq!(found.records.len(), 1);
+        assert_eq!(
+            found.record_conflicts.len(),
+            1,
+            "a conflict naming it stays"
+        );
+        let theirs = narrow(&state, &q(serde_json::json!({"session": "s2", "limit": 1})));
+        assert_eq!(theirs.records.len(), 1);
+        let other = narrow(&state, &q(serde_json::json!({"kind": "claims"})));
+        assert!(other.records.is_empty() && other.record_conflicts.is_empty());
+        assert!(other.records_ignored.is_empty());
+        let summary = summarize(&state, &[]);
+        assert_eq!(
+            (
+                summary.records,
+                summary.live_records,
+                summary.record_conflicts
+            ),
+            (3, 2, 1)
+        );
+        assert_eq!(serde_json::to_value(&summary).unwrap()["records"], 3);
+    }
+
+    /// Compaction never deletes a record still in force: a dead stream holding an open record
+    /// stays, one whose record is resolved goes.
+    #[test]
+    fn compaction_keeps_a_stream_while_it_holds_an_open_record() {
+        use crate::mesh::journal::HANDOVER_RETENTION;
+        use std::time::Duration;
+        let (open, done, reader) = (
+            journal(),
+            Journal::open(
+                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                "0000000000000003",
+                "repo".into(),
+                None,
+            )
+            .unwrap(),
+            Journal::open(
+                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                "0000000000000002",
+                "repo".into(),
+                None,
+            )
+            .unwrap(),
+        );
+        written(
+            &open,
+            RecordBody::new("r-1", "s1", RecordKind::Blocker, "T", &["ci"], "red"),
+        );
+        written(
+            &done,
+            RecordBody {
+                status: RecordStatus::Resolved,
+                ..RecordBody::new("r-1", "s1", RecordKind::Blocker, "T", &["ci"], "was red")
+            },
+        );
+        let accept = |_: &MeshEvent| -> Result<(), crate::mesh::journal::Rejection> { Ok(()) };
+        reader.ingest(&open.missing_for(&reader.marks(), usize::MAX), &accept);
+        reader.ingest(&done.missing_for(&reader.marks(), usize::MAX), &accept);
+        let dropped = reader.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true);
+        assert_eq!(dropped, 1, "the resolved record's stream goes");
+        assert_eq!(&reader.events()[0].stream, open.own_stream());
     }
 
     /// `select` narrows by every filter and keeps the conflicts of what it lists.

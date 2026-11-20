@@ -1614,12 +1614,7 @@ fn mesh_records(ctx: &Context, query: RecordQuery) -> Result<RecordList, Capabil
     let Some(c) = ctx.mesh.cooperation() else {
         return Ok(RecordList {
             active: false,
-            reason: Some(
-                ctx.mesh
-                    .cooperation_status()
-                    .reason
-                    .unwrap_or_else(|| "cooperation is not running in this process".into()),
-            ),
+            reason: ctx.mesh.cooperation_status().reason,
             ..RecordList::default()
         });
     };
@@ -3177,7 +3172,7 @@ mod tests {
             "no cooperation, nothing to write"
         );
         let off = mesh_records(&ctx, RecordQuery::default()).expect("a read is answered");
-        assert!(!off.active && off.reason.is_some() && off.records.is_empty());
+        assert!(!off.active && off.records.is_empty());
         let c = cooperation();
         ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
         c.claim(
@@ -3202,6 +3197,34 @@ mod tests {
         );
         let written = write(&ctx, Some("lander"), "docs/MESH.md").expect("inside its claim");
         assert_eq!(written.revision, 1);
+        // the cooperation's refusals reach the caller with their codes
+        let again = |revision: u32, idempotency: Option<&str>, title: &str| {
+            mesh_record_write(
+                &ctx,
+                RecordWrite {
+                    session: Some("lander".into()),
+                    record: Some(written.key.clone()),
+                    revision: Some(revision),
+                    kind: Some(RecordKind::Decision),
+                    task: "I4665".into(),
+                    scope: vec!["docs".into()],
+                    title: title.into(),
+                    idempotency: idempotency.map(Into::into),
+                    ..RecordWrite::default()
+                },
+            )
+        };
+        again(1, Some("k-1"), "revised").expect("revision 1 is current");
+        let stale = again(1, None, "late").unwrap_err();
+        assert!(
+            matches!(&stale, CapabilityError::Refused(m) if m.starts_with("stale_revision:") && m.contains("is 2")),
+            "{stale}"
+        );
+        let reused = again(2, Some("k-1"), "other text").unwrap_err();
+        assert!(
+            matches!(&reused, CapabilityError::Refused(m) if m.starts_with("idempotency_conflict:")),
+            "{reused}"
+        );
 
         let board = crate::peers::PeerBoard::new();
         let peer = board.attach(crate::peers::Transport::Http);
@@ -3212,7 +3235,24 @@ mod tests {
                 if m.starts_with("not_own:") && m.contains("not as 'lander'")),
             "{forged}"
         );
-        // its own session passes the guard and meets the scope check: it claimed nothing
+        // its own session, named or not, passes the guard and meets the scope check: it
+        // claimed nothing
+        let named_own = mesh_record_write(
+            &mcp,
+            RecordWrite {
+                session: Some(format!("board-{peer}")),
+                kind: Some(RecordKind::Observation),
+                task: "I4665".into(),
+                scope: vec!["docs".into()],
+                title: "seen".into(),
+                ..RecordWrite::default()
+            },
+        )
+        .unwrap_err();
+        assert!(
+            matches!(&named_own, CapabilityError::Refused(m) if m.starts_with("out_of_scope:")),
+            "{named_own}"
+        );
         let own = mesh_record_write(
             &mcp,
             RecordWrite {
