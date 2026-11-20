@@ -122,21 +122,17 @@ jq -e '.result._meta.majordomus.error.code == "refused"' "$S/withdraw.json" >/de
 
 # ---------------------------------------------------------------- 4c. mesh.record.write, mesh.records
 # The typed coordination records of the journal (I4665): a write and a read, asked where no
-# shared server activated the mesh. Each refuses as a result that names why, with its typed
-# code, never as a transport error; the write's input is checked before that, so a record
-# naming an author is refused as input.
-for tool in majordomus_mesh_record_write majordomus_mesh_records; do
-  case "$tool" in
-    majordomus_mesh_record_write)
-      args='{"session":"case620","kind":"observation","task":"I4665","scope":["docs"],"title":"seen"}' ;;
-    *) args='{"kind":"decision","live":true}' ;;
-  esac
-  call "$tool" "$args" > "$S/$tool.json"
-  jq -e '.result.isError == true and (.error | not)' "$S/$tool.json" >/dev/null \
-    || bad "$tool does not refuse as a result where the mesh is not active:" "$S/$tool.json"
-  jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/$tool.json" >/dev/null \
-    || bad "$tool's refusal does not say the mesh is not active:" "$S/$tool.json"
-done
+# shared server activated the mesh. The write refuses as a result that names why, never as a
+# transport error; the read answers, saying the mesh is not active and why, as mesh.state
+# does; and a record naming an author is refused as input.
+call majordomus_mesh_record_write '{"session":"case620","kind":"observation","task":"I4665","scope":["docs"],"title":"seen"}' > "$S/record_write.json"
+jq -e '.result.isError == true and (.error | not)' "$S/record_write.json" >/dev/null \
+  || bad "majordomus_mesh_record_write does not refuse as a result where the mesh is not active:" "$S/record_write.json"
+jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/record_write.json" >/dev/null \
+  || bad "majordomus_mesh_record_write's refusal does not say the mesh is not active:" "$S/record_write.json"
+answer majordomus_mesh_records '{"kind":"decision","live":true}' "$S/records.json"
+jq -e '.active == false and (.reason | length) > 0 and (.records | length) == 0' "$S/records.json" >/dev/null \
+  || bad "majordomus_mesh_records does not answer that the mesh is not active, and why:" "$S/records.json"
 call majordomus_mesh_record_write '{"author":"someone-else","kind":"plan","task":"I4665","scope":["docs"],"title":"t"}' > "$S/forged.json"
 jq -e '.result.isError == true or .error' "$S/forged.json" >/dev/null \
   || bad "majordomus_mesh_record_write accepts an author in its input:" "$S/forged.json"

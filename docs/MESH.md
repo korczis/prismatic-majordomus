@@ -478,7 +478,8 @@ its fold and its admission.
 
 Writing one is `mesh.record.write` (MCP `majordomus_mesh_record_write`, `POST
 /api/v1/mesh/records`); reading them is `mesh.records` (MCP `majordomus_mesh_records`, `GET
-/api/v1/mesh/records`, narrowed by `record`, `task`, `kind`, `author`, `path`, `live`), `mesh
+/api/v1/mesh/records`, narrowed by `record`, `task`, `kind`, `author`, `path`, `live`; where
+the process runs no mesh it answers `active: false` with the reason, as `mesh.state` does), `mesh
 state --full` and `blackboard.snapshot`, which lists the open records that are not superseded
 and the conflicts. What admission refuses, before anything is signed, and with what code:
 

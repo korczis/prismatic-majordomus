@@ -1461,12 +1461,21 @@ pub struct RecordQuery {
 ///
 /// ```
 /// use majordomus_cli::mesh::records::RecordList;
-/// let empty = serde_json::to_value(RecordList::default()).unwrap();
-/// assert!(empty.get("conflicts").is_none() && empty["records"].as_array().unwrap().is_empty());
+/// let off = RecordList { reason: Some("no shared server activated the mesh".into()),
+///     ..RecordList::default() };
+/// let wire = serde_json::to_value(&off).unwrap();
+/// assert_eq!(wire["active"], false, "an inactive mesh is an answer, not an error");
+/// assert!(wire.get("conflicts").is_none() && wire["records"].as_array().unwrap().is_empty());
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordList")]
 pub struct RecordList {
+    /// Whether this process runs the mesh. `false` is an answer, not an error: the records
+    /// are then empty and `reason` says why, as `mesh.state` says it.
+    pub active: bool,
+    /// Why the mesh is not active here, when it is not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
     /// The whole fold's digest: equal digests, equal records on two runtimes.
     pub digest: String,
     /// The records, in key order.
@@ -1530,6 +1539,8 @@ pub fn select(
     let keys: std::collections::BTreeSet<&str> = admitted.iter().map(|r| r.key.as_str()).collect();
     let narrowed = *query != RecordQuery::default();
     RecordList {
+        active: true,
+        reason: None,
         digest: digest.to_string(),
         conflicts: conflicts
             .iter()

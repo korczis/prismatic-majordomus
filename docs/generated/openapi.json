@@ -12629,7 +12629,7 @@
       "get": {
         "operationId": "mesh.records",
         "summary": "The typed coordination records of the mesh",
-        "description": "Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's.",
+        "description": "Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's. Where this process runs no mesh it answers `active: false` with the reason.",
         "tags": [
           "mesh"
         ],
@@ -49372,6 +49372,17 @@
       "MeshRecordList": {
         "type": "object",
         "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Whether this process runs the mesh. `false` is an answer, not an error: the records\nare then empty and `reason` says why, as `mesh.state` says it."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the mesh is not active here, when it is not."
+          },
           "digest": {
             "type": "string",
             "description": "The whole fold's digest: equal digests, equal records on two runtimes."
@@ -49399,10 +49410,11 @@
           }
         },
         "required": [
+          "active",
           "digest",
           "records"
         ],
-        "description": "The answer of `mesh.records`, built by `select`: the records the query admits, the\nconflicts among them, the writes the fold ignored, and the whole fold's digest.\n\n```\nuse majordomus_cli::mesh::records::RecordList;\nlet empty = serde_json::to_value(RecordList::default()).unwrap();\nassert!(empty.get(\"conflicts\").is_none() && empty[\"records\"].as_array().unwrap().is_empty());\n```"
+        "description": "The answer of `mesh.records`, built by `select`: the records the query admits, the\nconflicts among them, the writes the fold ignored, and the whole fold's digest.\n\n```\nuse majordomus_cli::mesh::records::RecordList;\nlet off = RecordList { reason: Some(\"no shared server activated the mesh\".into()),\n    ..RecordList::default() };\nlet wire = serde_json::to_value(&off).unwrap();\nassert_eq!(wire[\"active\"], false, \"an inactive mesh is an answer, not an error\");\nassert!(wire.get(\"conflicts\").is_none() && wire[\"records\"].as_array().unwrap().is_empty());\n```"
       },
       "MeshRecordRevision": {
         "type": "object",

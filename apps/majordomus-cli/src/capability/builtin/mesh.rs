@@ -1607,9 +1607,23 @@ fn mesh_record_write(
     c.write_record(&session, input).map_err(map_error)
 }
 
-/// The records folded from the journal, narrowed by the query.
+/// The records folded from the journal, narrowed by the query. Where this process runs no
+/// mesh the answer says so (`active: false` and the reason), as `mesh.state` does: a read is
+/// answered, never refused, for want of a mesh.
 fn mesh_records(ctx: &Context, query: RecordQuery) -> Result<RecordList, CapabilityError> {
-    let state = cooperation(ctx)?.state();
+    let Some(c) = ctx.mesh.cooperation() else {
+        return Ok(RecordList {
+            active: false,
+            reason: Some(
+                ctx.mesh
+                    .cooperation_status()
+                    .reason
+                    .unwrap_or_else(|| "cooperation is not running in this process".into()),
+            ),
+            ..RecordList::default()
+        });
+    };
+    let state = c.state();
     Ok(select_records(
         &state.records,
         &state.record_conflicts,
@@ -2306,7 +2320,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.records",
                 title: "The typed coordination records of the mesh",
-                description: "Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's.",
+                description: "Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's. Where this process runs no mesh it answers `active: false` with the reason.",
                 input: RecordQuery,
                 output: RecordList,
                 stability: Stability::Experimental,
@@ -3162,6 +3176,8 @@ mod tests {
                 if m.starts_with("not_active:")),
             "no cooperation, nothing to write"
         );
+        let off = mesh_records(&ctx, RecordQuery::default()).expect("a read is answered");
+        assert!(!off.active && off.reason.is_some() && off.records.is_empty());
         let c = cooperation();
         ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
         c.claim(
@@ -3214,6 +3230,7 @@ mod tests {
         );
 
         let listed = mesh_records(&ctx, RecordQuery::default()).unwrap();
+        assert!(listed.active);
         assert_eq!(listed.records.len(), 1);
         assert_eq!(listed.records[0].key, written.key);
         assert!(listed.records[0].author.ends_with("/lander"));
