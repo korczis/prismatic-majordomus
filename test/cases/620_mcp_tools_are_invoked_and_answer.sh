@@ -120,6 +120,27 @@ jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/withdraw.j
 jq -e '.result._meta.majordomus.error.code == "refused"' "$S/withdraw.json" >/dev/null \
   || bad "the refusal carries no typed code:" "$S/withdraw.json"
 
+# ---------------------------------------------------------------- 4c. mesh.record.write, mesh.records
+# The typed coordination records of the journal (I4665): a write and a read, asked where no
+# shared server activated the mesh. Each refuses as a result that names why, with its typed
+# code, never as a transport error; the write's input is checked before that, so a record
+# naming an author is refused as input.
+for tool in majordomus_mesh_record_write majordomus_mesh_records; do
+  case "$tool" in
+    majordomus_mesh_record_write)
+      args='{"session":"case620","kind":"observation","task":"I4665","scope":["docs"],"title":"seen"}' ;;
+    *) args='{"kind":"decision","live":true}' ;;
+  esac
+  call "$tool" "$args" > "$S/$tool.json"
+  jq -e '.result.isError == true and (.error | not)' "$S/$tool.json" >/dev/null \
+    || bad "$tool does not refuse as a result where the mesh is not active:" "$S/$tool.json"
+  jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/$tool.json" >/dev/null \
+    || bad "$tool's refusal does not say the mesh is not active:" "$S/$tool.json"
+done
+call majordomus_mesh_record_write '{"author":"someone-else","kind":"plan","task":"I4665","scope":["docs"],"title":"t"}' > "$S/forged.json"
+jq -e '.result.isError == true or .error' "$S/forged.json" >/dev/null \
+  || bad "majordomus_mesh_record_write accepts an author in its input:" "$S/forged.json"
+
 # ---------------------------------------------------------------- 5. distribution.status
 # The version is the crate's, the stable channel resolves to a release this tree records,
 # and the required targets are that record's own.
@@ -331,6 +352,7 @@ rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 for tool in majordomus_artifacts majordomus_completion_policy majordomus_deployment \
             majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
+            majordomus_mesh_record_write majordomus_mesh_records \
             majordomus_plan_issues majordomus_product_domains majordomus_product_validate majordomus_rules \
             majordomus_skill_explain majordomus_web_surfaces; do
   if grep -qE "^[[:space:]]*${tool}[[:space:]]*$" "$ROOT/.ai/repo/mcp-tool-run-baseline.txt"; then

@@ -1312,7 +1312,7 @@ capabilities:
               - type: string
                 const: evidenced
                 description: "At least one retrievable source: a file at a commit, or a tool's observed result."
-            description: Whether a record rests on something another worker can retrieve.
+            description: "Whether a record rests on something another worker can retrieve. Derived from the\nsources by `RecordBody::evidence`; a record carries no field that says it.\n\n```\nuse majordomus_cli::mesh::records::EvidenceState;\nassert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), \"asserted\");\n```"
           MeshRecordConflict:
             type: object
             properties:
@@ -1343,7 +1343,7 @@ capabilities:
               - first
               - second
               - reason
-            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it."
+            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nuse majordomus_cli::mesh::records::ConflictReason;\nuse majordomus_cli::mesh::journal::SessionInfo;\nfor s in [\"s1\", \"s2\"] {\n    j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, \"cli\") }).unwrap();\n}\nfor (id, s) in [(\"r-1\", \"s1\"), (\"r-2\", \"s2\")] {\n    j.append_own(EventBody::RecordWritten { record:\n        RecordBody::new(id, s, RecordKind::Decision, \"I1\", &[\"docs\"], id) }).unwrap();\n}\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordConflict;\nlet conflicts: &[RecordConflict] = &state.record_conflicts;\nassert_eq!(conflicts.len(), 1);\nassert_eq!(conflicts[0].reason, ConflictReason::SameTask);\n```"
           MeshConflictReason:
             oneOf:
               - type: string
@@ -1352,7 +1352,7 @@ capabilities:
               - type: string
                 const: overlapping_scope
                 description: Their scopes meet.
-            description: Why two records contend.
+            description: "Why two live plans or decisions of different authors contend: the same task, which is\nchecked first, or scopes that meet, when the tasks differ.\n\n```\nuse majordomus_cli::mesh::records::ConflictReason;\nassert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), \"same_task\");\n```"
           BlackboardRelation:
             type: object
             properties:
@@ -41996,7 +41996,7 @@ capabilities:
               - string
               - "null"
             description: "A retry key: the same key with the same content answers the first write."
-        description: "What a session asks to write: a new record, or a revision of its own. The author is\nnever in it — the session is named apart and the stream is the runtime's own."
+        description: "What a session asks to write: a new record, or a revision of its own. The author is\nnever in it — the session is named apart and the stream is the runtime's own.\n\n```\nuse majordomus_cli::mesh::records::{RecordKind, RecordWrite};\nlet w: RecordWrite = serde_json::from_value(serde_json::json!({\n    \"kind\": \"decision\", \"task\": \"I1\", \"scope\": [\"docs\"], \"title\": \"one kind\"\n})).unwrap();\nassert_eq!(w.kind, Some(RecordKind::Decision));\nassert!(w.record.is_none(), \"a new record, not a revision\");\nassert!(serde_json::from_value::<RecordWrite>(serde_json::json!({\"author\": \"x\"})).is_err(),\n    \"an author is never an input\");\n```"
         title: MeshRecordWrite
         "$defs":
           MeshRecordKind:
@@ -42034,7 +42034,7 @@ capabilities:
               - type: string
                 const: withdrawn
                 description: Taken back by its author.
-            description: "Where a record stands, as its author says."
+            description: "Where a record stands, as its author says. Only an open record is in force: a resolved or\nwithdrawn one contends with nothing and keeps no stream from compaction.\n\n```\nuse majordomus_cli::mesh::records::RecordStatus;\nassert_eq!(RecordStatus::default(), RecordStatus::Open);\nassert_eq!(serde_json::to_value(RecordStatus::Withdrawn).unwrap(), \"withdrawn\");\n```"
           MeshRecordSource:
             oneOf:
               - type: object
@@ -42170,7 +42170,7 @@ capabilities:
           - event
           - lamport
           - evidence
-        description: "The answer of a record write: the record's key, the revision now current, the event that\nsays so, and the live records it contends with — reported, not refused."
+        description: "The answer of a record write: the record's key, the revision now current, the event that\nsays so, and the live records it contends with — reported, not refused.\n\n```\nuse majordomus_cli::mesh::records::{EvidenceState, RecordWriteAnswer};\nlet a = RecordWriteAnswer { key: \"s/r-1\".into(), revision: 1, event: \"s/7\".into(),\n    lamport: 7, durability: Default::default(), evidence: EvidenceState::Asserted,\n    repeated: false, conflicts: vec![] };\nlet wire = serde_json::to_value(&a).unwrap();\nassert!(wire.get(\"repeated\").is_none(), \"said only when it answers a retry\");\n```"
         title: MeshRecordWriteAnswer
         "$defs":
           Durability:
@@ -42196,7 +42196,7 @@ capabilities:
               - type: string
                 const: evidenced
                 description: "At least one retrievable source: a file at a commit, or a tool's observed result."
-            description: Whether a record rests on something another worker can retrieve.
+            description: "Whether a record rests on something another worker can retrieve. Derived from the\nsources by `RecordBody::evidence`; a record carries no field that says it.\n\n```\nuse majordomus_cli::mesh::records::EvidenceState;\nassert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), \"asserted\");\n```"
           MeshRecordConflict:
             type: object
             properties:
@@ -42227,7 +42227,7 @@ capabilities:
               - first
               - second
               - reason
-            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it."
+            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nuse majordomus_cli::mesh::records::ConflictReason;\nuse majordomus_cli::mesh::journal::SessionInfo;\nfor s in [\"s1\", \"s2\"] {\n    j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, \"cli\") }).unwrap();\n}\nfor (id, s) in [(\"r-1\", \"s1\"), (\"r-2\", \"s2\")] {\n    j.append_own(EventBody::RecordWritten { record:\n        RecordBody::new(id, s, RecordKind::Decision, \"I1\", &[\"docs\"], id) }).unwrap();\n}\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordConflict;\nlet conflicts: &[RecordConflict] = &state.record_conflicts;\nassert_eq!(conflicts.len(), 1);\nassert_eq!(conflicts[0].reason, ConflictReason::SameTask);\n```"
           MeshRecordKind:
             oneOf:
               - type: string
@@ -42260,7 +42260,7 @@ capabilities:
               - type: string
                 const: overlapping_scope
                 description: Their scopes meet.
-            description: Why two records contend.
+            description: "Why two live plans or decisions of different authors contend: the same task, which is\nchecked first, or scopes that meet, when the tasks differ.\n\n```\nuse majordomus_cli::mesh::records::ConflictReason;\nassert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), \"same_task\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -42328,7 +42328,7 @@ capabilities:
               - boolean
               - "null"
             description: "Only live records: open, not superseded, not stale."
-        description: What a reader asks of the records. Every filter narrows; none is required.
+        description: "What a reader asks of the records. Every filter narrows; none is required, and an input\nit does not know is refused rather than ignored.\n\n```\nuse majordomus_cli::mesh::records::RecordQuery;\nlet q: RecordQuery = serde_json::from_str(r#\"{\"kind\":\"blocker\",\"live\":true}\"#).unwrap();\nassert_eq!(q.live, Some(true));\nassert!(serde_json::from_str::<RecordQuery>(r#\"{\"kinds\":\"blocker\"}\"#).is_err());\n```"
         title: MeshRecordQuery
         "$defs":
           MeshRecordKind:
@@ -42381,7 +42381,7 @@ capabilities:
         required:
           - digest
           - records
-        description: "The answer of `mesh.records`: the records the query admits, the conflicts among them, the\nwrites the fold ignored, and the whole fold's digest."
+        description: "The answer of `mesh.records`, built by `select`: the records the query admits, the\nconflicts among them, the writes the fold ignored, and the whole fold's digest.\n\n```\nuse majordomus_cli::mesh::records::RecordList;\nlet empty = serde_json::to_value(RecordList::default()).unwrap();\nassert!(empty.get(\"conflicts\").is_none() && empty[\"records\"].as_array().unwrap().is_empty());\n```"
         title: MeshRecordList
         "$defs":
           MeshRecordView:
@@ -42481,7 +42481,7 @@ capabilities:
               - revision
               - author_state
               - history
-            description: "A record as every runtime folds it: its current revision, its author, its links, its\nstanding, and every revision before."
+            description: "A record as every runtime folds it: its current revision, its author, its links, its\nstanding, and every revision before.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\"r-1\", \"s1\", RecordKind::Decision, \"I1\", &[\"docs\"], \"d\") }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordView;\nlet view: &RecordView = &state.records[0];\nassert_eq!(view.key, format!(\"{}/r-1\", j.own_stream()));\nassert_eq!(view.author, format!(\"{}/s1\", j.own_stream()), \"the stream's, not a name\");\n```"
           MeshRecordKind:
             oneOf:
               - type: string
@@ -42517,7 +42517,7 @@ capabilities:
               - type: string
                 const: withdrawn
                 description: Taken back by its author.
-            description: "Where a record stands, as its author says."
+            description: "Where a record stands, as its author says. Only an open record is in force: a resolved or\nwithdrawn one contends with nothing and keeps no stream from compaction.\n\n```\nuse majordomus_cli::mesh::records::RecordStatus;\nassert_eq!(RecordStatus::default(), RecordStatus::Open);\nassert_eq!(serde_json::to_value(RecordStatus::Withdrawn).unwrap(), \"withdrawn\");\n```"
           MeshRecordSource:
             oneOf:
               - type: object
@@ -42619,7 +42619,7 @@ capabilities:
               - type: string
                 const: evidenced
                 description: "At least one retrievable source: a file at a commit, or a tool's observed result."
-            description: Whether a record rests on something another worker can retrieve.
+            description: "Whether a record rests on something another worker can retrieve. Derived from the\nsources by `RecordBody::evidence`; a record carries no field that says it.\n\n```\nuse majordomus_cli::mesh::records::EvidenceState;\nassert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), \"asserted\");\n```"
           MeshAuthorState:
             oneOf:
               - type: string
@@ -42634,7 +42634,7 @@ capabilities:
               - type: string
                 const: unknown
                 description: This runtime never heard the session open.
-            description: "Where a record's author stands, as this runtime reads it now."
+            description: "Where a record's author stands, as this runtime reads it now: a reading of the session's\nclose and its runtime's beat, so a record whose author is gone is flagged on every reader.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"p\") }).unwrap();\nuse majordomus_cli::mesh::records::AuthorState;\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(state.records[0].author_state, AuthorState::Unknown, \"s1 never opened here\");\nassert!(!state.records[0].stale.is_empty(), \"and the record says so\");\n```"
           MeshRecordRevision:
             type: object
             properties:
@@ -42686,7 +42686,7 @@ capabilities:
               - title
               - evidence
               - digest
-            description: "One revision in a record's history: what it said and where it was written. Every\nrevision is kept, which is the record's provenance."
+            description: "One revision in a record's history: what it said and where it was written. Every\nrevision is kept, which is the record's provenance.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet plan = RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"first\");\nj.append_own(EventBody::RecordWritten { record: plan.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { revision: 2, title: \"second\".into(), ..plan } }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordRevision;\nlet history: &[RecordRevision] = &state.records[0].history;\nlet titles: Vec<&str> = history.iter().map(|h| h.title.as_str()).collect();\nassert_eq!(titles, [\"first\", \"second\"]);\n```"
           MeshRecordConflict:
             type: object
             properties:
@@ -42717,7 +42717,7 @@ capabilities:
               - first
               - second
               - reason
-            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it."
+            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nuse majordomus_cli::mesh::records::ConflictReason;\nuse majordomus_cli::mesh::journal::SessionInfo;\nfor s in [\"s1\", \"s2\"] {\n    j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, \"cli\") }).unwrap();\n}\nfor (id, s) in [(\"r-1\", \"s1\"), (\"r-2\", \"s2\")] {\n    j.append_own(EventBody::RecordWritten { record:\n        RecordBody::new(id, s, RecordKind::Decision, \"I1\", &[\"docs\"], id) }).unwrap();\n}\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordConflict;\nlet conflicts: &[RecordConflict] = &state.record_conflicts;\nassert_eq!(conflicts.len(), 1);\nassert_eq!(conflicts[0].reason, ConflictReason::SameTask);\n```"
           MeshConflictReason:
             oneOf:
               - type: string
@@ -42726,7 +42726,7 @@ capabilities:
               - type: string
                 const: overlapping_scope
                 description: Their scopes meet.
-            description: Why two records contend.
+            description: "Why two live plans or decisions of different authors contend: the same task, which is\nchecked first, or scopes that meet, when the tasks differ.\n\n```\nuse majordomus_cli::mesh::records::ConflictReason;\nassert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), \"same_task\");\n```"
           MeshIgnoredRecordWrite:
             type: object
             properties:
@@ -42743,7 +42743,7 @@ capabilities:
               - event
               - record
               - reason
-            description: "A record write the fold did not apply, and why: a revision by a session other than the\nauthor, out of order, after the author's session closed, or of another kind. A peer can\nsign whatever its own stream says; it cannot make another session's record say it."
+            description: "A record write the fold did not apply, and why: a revision by a session other than the\nauthor, out of order, after the author's session closed, or of another kind. A peer can\nsign whatever its own stream says; it cannot make another session's record say it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet mine = RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"mine\");\nj.append_own(EventBody::RecordWritten { record: mine.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { session: \"s2\".into(), revision: 2, title: \"theirs\".into(), ..mine } })\n    .unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(state.records[0].title, \"mine\");\nuse majordomus_cli::mesh::records::IgnoredRecordWrite;\nlet ignored: &IgnoredRecordWrite = &state.records_ignored[0];\nassert!(ignored.reason.contains(\"only its author\"));\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -44545,7 +44545,7 @@ capabilities:
               - revision
               - author_state
               - history
-            description: "A record as every runtime folds it: its current revision, its author, its links, its\nstanding, and every revision before."
+            description: "A record as every runtime folds it: its current revision, its author, its links, its\nstanding, and every revision before.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\"r-1\", \"s1\", RecordKind::Decision, \"I1\", &[\"docs\"], \"d\") }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordView;\nlet view: &RecordView = &state.records[0];\nassert_eq!(view.key, format!(\"{}/r-1\", j.own_stream()));\nassert_eq!(view.author, format!(\"{}/s1\", j.own_stream()), \"the stream's, not a name\");\n```"
           MeshRecordKind:
             oneOf:
               - type: string
@@ -44581,7 +44581,7 @@ capabilities:
               - type: string
                 const: withdrawn
                 description: Taken back by its author.
-            description: "Where a record stands, as its author says."
+            description: "Where a record stands, as its author says. Only an open record is in force: a resolved or\nwithdrawn one contends with nothing and keeps no stream from compaction.\n\n```\nuse majordomus_cli::mesh::records::RecordStatus;\nassert_eq!(RecordStatus::default(), RecordStatus::Open);\nassert_eq!(serde_json::to_value(RecordStatus::Withdrawn).unwrap(), \"withdrawn\");\n```"
           MeshRecordSource:
             oneOf:
               - type: object
@@ -44683,7 +44683,7 @@ capabilities:
               - type: string
                 const: evidenced
                 description: "At least one retrievable source: a file at a commit, or a tool's observed result."
-            description: Whether a record rests on something another worker can retrieve.
+            description: "Whether a record rests on something another worker can retrieve. Derived from the\nsources by `RecordBody::evidence`; a record carries no field that says it.\n\n```\nuse majordomus_cli::mesh::records::EvidenceState;\nassert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), \"asserted\");\n```"
           MeshAuthorState:
             oneOf:
               - type: string
@@ -44698,7 +44698,7 @@ capabilities:
               - type: string
                 const: unknown
                 description: This runtime never heard the session open.
-            description: "Where a record's author stands, as this runtime reads it now."
+            description: "Where a record's author stands, as this runtime reads it now: a reading of the session's\nclose and its runtime's beat, so a record whose author is gone is flagged on every reader.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"p\") }).unwrap();\nuse majordomus_cli::mesh::records::AuthorState;\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(state.records[0].author_state, AuthorState::Unknown, \"s1 never opened here\");\nassert!(!state.records[0].stale.is_empty(), \"and the record says so\");\n```"
           MeshRecordRevision:
             type: object
             properties:
@@ -44750,7 +44750,7 @@ capabilities:
               - title
               - evidence
               - digest
-            description: "One revision in a record's history: what it said and where it was written. Every\nrevision is kept, which is the record's provenance."
+            description: "One revision in a record's history: what it said and where it was written. Every\nrevision is kept, which is the record's provenance.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet plan = RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"first\");\nj.append_own(EventBody::RecordWritten { record: plan.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { revision: 2, title: \"second\".into(), ..plan } }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordRevision;\nlet history: &[RecordRevision] = &state.records[0].history;\nlet titles: Vec<&str> = history.iter().map(|h| h.title.as_str()).collect();\nassert_eq!(titles, [\"first\", \"second\"]);\n```"
           MeshRecordConflict:
             type: object
             properties:
@@ -44781,7 +44781,7 @@ capabilities:
               - first
               - second
               - reason
-            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it."
+            description: "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nuse majordomus_cli::mesh::records::ConflictReason;\nuse majordomus_cli::mesh::journal::SessionInfo;\nfor s in [\"s1\", \"s2\"] {\n    j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, \"cli\") }).unwrap();\n}\nfor (id, s) in [(\"r-1\", \"s1\"), (\"r-2\", \"s2\")] {\n    j.append_own(EventBody::RecordWritten { record:\n        RecordBody::new(id, s, RecordKind::Decision, \"I1\", &[\"docs\"], id) }).unwrap();\n}\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordConflict;\nlet conflicts: &[RecordConflict] = &state.record_conflicts;\nassert_eq!(conflicts.len(), 1);\nassert_eq!(conflicts[0].reason, ConflictReason::SameTask);\n```"
           MeshConflictReason:
             oneOf:
               - type: string
@@ -44790,7 +44790,7 @@ capabilities:
               - type: string
                 const: overlapping_scope
                 description: Their scopes meet.
-            description: Why two records contend.
+            description: "Why two live plans or decisions of different authors contend: the same task, which is\nchecked first, or scopes that meet, when the tasks differ.\n\n```\nuse majordomus_cli::mesh::records::ConflictReason;\nassert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), \"same_task\");\n```"
           MeshIgnoredRecordWrite:
             type: object
             properties:
@@ -44807,7 +44807,7 @@ capabilities:
               - event
               - record
               - reason
-            description: "A record write the fold did not apply, and why: a revision by a session other than the\nauthor, out of order, after the author's session closed, or of another kind. A peer can\nsign whatever its own stream says; it cannot make another session's record say it."
+            description: "A record write the fold did not apply, and why: a revision by a session other than the\nauthor, out of order, after the author's session closed, or of another kind. A peer can\nsign whatever its own stream says; it cannot make another session's record say it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet mine = RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"mine\");\nj.append_own(EventBody::RecordWritten { record: mine.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { session: \"s2\".into(), revision: 2, title: \"theirs\".into(), ..mine } })\n    .unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(state.records[0].title, \"mine\");\nuse majordomus_cli::mesh::records::IgnoredRecordWrite;\nlet ignored: &IgnoredRecordWrite = &state.records_ignored[0];\nassert!(ignored.reason.contains(\"only its author\"));\n```"
           StreamView:
             type: object
             properties:

@@ -796,8 +796,9 @@ pub enum CooperationError {
     IdempotencyConflict(String),
 }
 
-impl From<RecordRefusal> for CooperationError {
-    fn from(refusal: RecordRefusal) -> Self {
+impl CooperationError {
+    /// A record write's refusal as the error every cooperation surface maps (I4665).
+    fn of_record(refusal: RecordRefusal) -> Self {
         match refusal {
             RecordRefusal::Invalid(m) => CooperationError::Invalid(m),
             RecordRefusal::OutOfScope(m) => CooperationError::OutOfScope(m),
@@ -3781,6 +3782,10 @@ impl Cooperation {
         session: &str,
         write: RecordWrite,
     ) -> Result<RecordWriteAnswer, CooperationError> {
+        // Free text is where a pasted credential arrives: it is redacted before admission,
+        // so a retry of the same text digests the same, and before anything is signed
+        // (`.ai/repo/ci/mesh-event-fields.yaml`, `EventBody.RecordWritten.record`).
+        let write = redacted_record(write);
         let _admission = self.admission.lock().expect("claim admission");
         let state = self.state();
         let fresh = format!("r-{}", &fresh_token()[..12]);
@@ -3792,7 +3797,8 @@ impl Cooperation {
             write,
             &fresh,
             rfc3339_now(),
-        )?;
+        )
+        .map_err(CooperationError::of_record)?;
         let contended = |key: &str, conflicts: Vec<RecordConflict>| -> Vec<RecordConflict> {
             conflicts
                 .into_iter()
@@ -4872,6 +4878,39 @@ impl Cooperation {
 /// The entries of `.ai/repo/ci/mesh-event-fields.yaml` that say `redacted` name these fields.
 fn redacted(text: String) -> String {
     crate::redaction::redact_secrets(&text).text
+}
+
+/// A record write with every free-text field redacted (I4665): the title, the body, a
+/// handoff's parts and a tool source's command and result pass through the one rule set, as a
+/// review's text does. Identifiers, paths, commits and the fixed vocabularies are left as
+/// they are; their bounds already refuse anything else.
+fn redacted_record(mut write: RecordWrite) -> RecordWrite {
+    use super::records::RecordSource;
+    write.title = redacted(write.title);
+    write.body = write.body.map(redacted);
+    if let Some(h) = write.handoff.as_mut() {
+        h.objective = redacted(std::mem::take(&mut h.objective));
+        h.current_state = redacted(std::mem::take(&mut h.current_state));
+        h.next_action = redacted(std::mem::take(&mut h.next_action));
+        h.evidence = std::mem::take(&mut h.evidence)
+            .into_iter()
+            .map(redacted)
+            .collect();
+        h.blockers = h
+            .blockers
+            .take()
+            .map(|b| b.into_iter().map(redacted).collect());
+    }
+    for source in &mut write.sources {
+        if let RecordSource::Tool {
+            command, result, ..
+        } = source
+        {
+            *command = redacted(std::mem::take(command));
+            *result = redacted(std::mem::take(result));
+        }
+    }
+    write
 }
 
 /// A JSON error as the text a refusal or a round error carries.

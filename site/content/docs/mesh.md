@@ -525,7 +525,9 @@ and the conflicts. What admission refuses, before anything is signed, and with w
 - `idempotency_conflict` — a retry key reused for other content. The same key with the same
   content answers the first write (`repeated: true`) and writes nothing.
 
-The fold applies a revision only from the record's author, in order, of the same kind and
+A record's free text — title, body, a handoff's parts, a tool source's command and result — is
+redacted (`redaction::redact_secrets`) before admission and signing, as a review's text is
+(`.ai/repo/ci/mesh-event-fields.yaml`). The fold applies a revision only from the record's author, in order, of the same kind and
 before the author's session closed; anything else a peer signs is listed in
 `records_ignored` with its reason and changes nothing. Two live plans or two live decisions of
 different authors for one task or over meeting scopes are `record_conflicts`, reported and not

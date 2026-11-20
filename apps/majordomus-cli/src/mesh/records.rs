@@ -27,6 +27,33 @@
 //!
 //! An older runtime relays `record_written` opaquely, as it relays every kind it does not
 //! know, so replication stays compatible; it simply does not fold the records.
+//!
+//! The lifecycle, on one journal: a record written, revised by its author, superseded by
+//! another session, and folded with its history kept.
+//!
+//! ```
+//! use std::sync::Arc;
+//! use majordomus_cli::mesh::identity::NodeIdentity;
+//! use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+//! use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+//! use majordomus_cli::mesh::state::fold;
+//!
+//! let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+//!     "repo".into(), None).unwrap();
+//! let plan = RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "write it");
+//! j.append_own(EventBody::RecordWritten { record: plan.clone() }).unwrap();
+//! let revised = RecordBody { revision: 2, title: "write it twice".into(), ..plan };
+//! j.append_own(EventBody::RecordWritten { record: revised }).unwrap();
+//! let key = format!("{}/r-1", j.own_stream());
+//! let mut other = RecordBody::new("r-2", "s2", RecordKind::Plan, "I1", &["docs"], "no");
+//! other.supersedes = Some(key.clone());
+//! j.append_own(EventBody::RecordWritten { record: other }).unwrap();
+//!
+//! let state = fold(&j.events(), &|_| StreamLiveness::Own);
+//! let first = state.records.iter().find(|r| r.key == key).unwrap();
+//! assert_eq!((first.revision, first.history.len()), (2, 2), "every revision kept");
+//! assert_eq!(first.superseded_by.len(), 1, "superseded, never overwritten");
+//! ```
 
 use std::collections::BTreeMap;
 
@@ -92,7 +119,14 @@ pub enum RecordKind {
 }
 
 impl RecordKind {
-    /// The wire word.
+    /// The kind's wire word, written out rather than derived from the variant name: it is
+    /// protocol, and renaming a variant must not change what another runtime reads.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::RecordKind;
+    /// assert_eq!(RecordKind::Handoff.as_str(), "handoff");
+    /// assert_eq!(serde_json::to_value(RecordKind::Handoff).unwrap(), "handoff");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             RecordKind::Observation => "observation",
@@ -108,12 +142,25 @@ impl RecordKind {
     /// Whether two live records of this kind by different authors contend: two plans or two
     /// decisions for one task, or over meeting scopes, are a conflict to report. Findings
     /// (observations, hypotheses) may disagree without contending; they are superseded.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::RecordKind;
+    /// assert!(RecordKind::Decision.contends());
+    /// assert!(!RecordKind::Hypothesis.contends(), "findings disagree without contending");
+    /// ```
     pub fn contends(self) -> bool {
         matches!(self, RecordKind::Plan | RecordKind::Decision)
     }
 }
 
-/// Where a record stands, as its author says.
+/// Where a record stands, as its author says. Only an open record is in force: a resolved or
+/// withdrawn one contends with nothing and keeps no stream from compaction.
+///
+/// ```
+/// use majordomus_cli::mesh::records::RecordStatus;
+/// assert_eq!(RecordStatus::default(), RecordStatus::Open);
+/// assert_eq!(serde_json::to_value(RecordStatus::Withdrawn).unwrap(), "withdrawn");
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "MeshRecordStatus")]
@@ -174,6 +221,16 @@ pub enum RecordSource {
 impl RecordSource {
     /// Whether the source can be retrieved and checked by someone else: a file at a commit,
     /// or a tool's result. A record citing only links or nothing is an assertion.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::RecordSource;
+    /// let ran = RecordSource::Tool { command: "cargo test".into(), result: "exit 0".into(),
+    ///     observed_at: None };
+    /// assert!(ran.is_retrievable());
+    /// let blank = RecordSource::Tool { command: "cargo test".into(), result: " ".into(),
+    ///     observed_at: None };
+    /// assert!(!blank.is_retrievable(), "a tool source without its result proves nothing");
+    /// ```
     pub fn is_retrievable(&self) -> bool {
         match self {
             RecordSource::File { .. } | RecordSource::Tool { .. } => self.validate().is_ok(),
@@ -181,7 +238,17 @@ impl RecordSource {
         }
     }
 
-    /// Check the source's bounds.
+    /// Check the source's bounds, on the writer and on every reader: a file names a
+    /// repository-relative path and a 7-64 hex commit, a line range is `N` or `N-M` from 1, a
+    /// tool names its command and its result, and a cited record is a key at a revision.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::RecordSource;
+    /// let file = |lines: &str| RecordSource::File { path: "src/a.rs".into(),
+    ///     commit: "8df53bc".into(), lines: Some(lines.into()) };
+    /// assert!(file("3-9").validate().is_ok());
+    /// assert!(file("9-3").validate().unwrap_err().contains("lines"));
+    /// ```
     pub fn validate(&self) -> Result<(), String> {
         match self {
             RecordSource::File {
@@ -290,7 +357,17 @@ pub struct Handoff {
 }
 
 impl Handoff {
-    /// Check that every part is present and bounded.
+    /// Check that every part is present and bounded: the three paragraphs non-empty, at
+    /// least one evidence item, and the blockers stated (`[]` for none) rather than omitted.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::Handoff;
+    /// let h = Handoff { objective: "ship".into(), current_state: "built".into(),
+    ///     evidence: vec!["cargo test: ok".into()], blockers: None,
+    ///     next_action: "open the PR".into() };
+    /// assert!(h.validate().unwrap_err().contains("blockers"), "silence is not none");
+    /// assert!(Handoff { blockers: Some(vec![]), ..h }.validate().is_ok());
+    /// ```
     pub fn validate(&self) -> Result<(), String> {
         for (name, value) in [
             ("objective", &self.objective),
@@ -328,6 +405,15 @@ impl Handoff {
 /// A record as the journal carries it: one revision of it. The author is not in it — the
 /// event's stream and the `session` within it are — and neither is its evidence state, which
 /// is derived from its sources.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::EventBody;
+/// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+/// let body = RecordBody::new("r-1", "s1", RecordKind::Blocker, "I1", &["ci"], "CI is red");
+/// let wire = serde_json::to_value(EventBody::RecordWritten { record: body }).unwrap();
+/// assert_eq!(wire["kind"], "record_written");
+/// assert_eq!(wire["record"]["kind"], "blocker", "the record's own kind, inside it");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordBody")]
 pub struct RecordBody {
@@ -373,7 +459,53 @@ pub struct RecordBody {
 }
 
 impl RecordBody {
-    /// Check every bound; run before signing and on ingest.
+    /// A first revision: open, citing nothing, superseding nothing, with no lease. The
+    /// constructor of a test or a script; admission builds what a session writes.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::{RecordBody, RecordKind, RecordStatus};
+    /// let r = RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "write it");
+    /// assert_eq!((r.revision, r.status), (1, RecordStatus::Open));
+    /// assert!(r.validate().is_ok());
+    /// ```
+    pub fn new(
+        id: &str,
+        session: &str,
+        kind: RecordKind,
+        task: &str,
+        scope: &[&str],
+        title: &str,
+    ) -> Self {
+        RecordBody {
+            id: id.into(),
+            session: session.into(),
+            revision: 1,
+            kind,
+            task: task.into(),
+            scope: scope.iter().map(|p| p.to_string()).collect(),
+            status: RecordStatus::Open,
+            title: title.into(),
+            body: None,
+            sources: Vec::new(),
+            handoff: None,
+            supersedes: None,
+            expires_at: None,
+            idempotency: None,
+            written_at: None,
+        }
+    }
+
+    /// Check every bound; run on the writer before signing and on every reader at ingest,
+    /// so that nothing a peer sends is stored unchecked and nothing signed here is refused
+    /// there. A handoff must carry its parts, and only a handoff may.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+    /// let r = RecordBody::new("r-1", "s1", RecordKind::Handoff, "I1", &["docs"], "over");
+    /// assert!(r.validate().unwrap_err().contains("handoff carries"));
+    /// let escaping = RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["../etc"], "x");
+    /// assert!(escaping.validate().is_err(), "a scope is repository-relative");
+    /// ```
     pub fn validate(&self) -> Result<(), String> {
         ident("record", &self.id)?;
         ident("session", &self.session)?;
@@ -435,6 +567,15 @@ impl RecordBody {
     /// The digest of what the record says, leaving out who wrote it, which revision and
     /// when: two writes with equal digests say the same thing. An idempotent retry is
     /// recognised by it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+    /// let a = RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "write it");
+    /// let b = RecordBody { id: "r-2".into(), session: "s2".into(), revision: 3, ..a.clone() };
+    /// assert_eq!(a.content_digest(), b.content_digest(), "who and which revision aside");
+    /// let c = RecordBody { title: "write less".into(), ..a.clone() };
+    /// assert_ne!(a.content_digest(), c.content_digest());
+    /// ```
     pub fn content_digest(&self) -> String {
         use sha2::{Digest, Sha256};
         let mut value = serde_json::to_value(self).unwrap_or_default();
@@ -447,7 +588,17 @@ impl RecordBody {
         hash.iter().take(16).map(|b| format!("{b:02x}")).collect()
     }
 
-    /// The derived evidence state of this revision.
+    /// The derived evidence state of this revision: evidenced when any source is
+    /// retrievable, an assertion otherwise. Never written by the author, so never claimed.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::records::{EvidenceState, RecordBody, RecordKind, RecordSource};
+    /// let mut r = RecordBody::new("r-1", "s1", RecordKind::Observation, "I1", &["src"], "leaks");
+    /// assert_eq!(r.evidence(), EvidenceState::Asserted);
+    /// r.sources.push(RecordSource::File { path: "src/a.rs".into(), commit: "8df53bc".into(),
+    ///     lines: Some("12".into()) });
+    /// assert_eq!(r.evidence(), EvidenceState::Evidenced);
+    /// ```
     pub fn evidence(&self) -> EvidenceState {
         if self.sources.iter().any(RecordSource::is_retrievable) {
             EvidenceState::Evidenced
@@ -457,7 +608,13 @@ impl RecordBody {
     }
 }
 
-/// Whether a record rests on something another worker can retrieve.
+/// Whether a record rests on something another worker can retrieve. Derived from the
+/// sources by [`RecordBody::evidence`]; a record carries no field that says it.
+///
+/// ```
+/// use majordomus_cli::mesh::records::EvidenceState;
+/// assert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), "asserted");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "MeshEvidenceState")]
@@ -468,7 +625,24 @@ pub enum EvidenceState {
     Evidenced,
 }
 
-/// Where a record's author stands, as this runtime reads it now.
+/// Where a record's author stands, as this runtime reads it now: a reading of the session's
+/// close and its runtime's beat, so a record whose author is gone is flagged on every reader.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+/// use majordomus_cli::mesh::state::fold;
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::RecordWritten { record:
+///     RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "p") }).unwrap();
+/// use majordomus_cli::mesh::records::AuthorState;
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// assert_eq!(state.records[0].author_state, AuthorState::Unknown, "s1 never opened here");
+/// assert!(!state.records[0].stale.is_empty(), "and the record says so");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "MeshAuthorState")]
@@ -485,6 +659,25 @@ pub enum AuthorState {
 
 /// One revision in a record's history: what it said and where it was written. Every
 /// revision is kept, which is the record's provenance.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+/// use majordomus_cli::mesh::state::fold;
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let plan = RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "first");
+/// j.append_own(EventBody::RecordWritten { record: plan.clone() }).unwrap();
+/// j.append_own(EventBody::RecordWritten { record:
+///     RecordBody { revision: 2, title: "second".into(), ..plan } }).unwrap();
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// use majordomus_cli::mesh::records::RecordRevision;
+/// let history: &[RecordRevision] = &state.records[0].history;
+/// let titles: Vec<&str> = history.iter().map(|h| h.title.as_str()).collect();
+/// assert_eq!(titles, ["first", "second"]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordRevision")]
 pub struct RecordRevision {
@@ -515,6 +708,23 @@ pub struct RecordRevision {
 
 /// A record as every runtime folds it: its current revision, its author, its links, its
 /// standing, and every revision before.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+/// use majordomus_cli::mesh::state::fold;
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::RecordWritten { record:
+///     RecordBody::new("r-1", "s1", RecordKind::Decision, "I1", &["docs"], "d") }).unwrap();
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// use majordomus_cli::mesh::records::RecordView;
+/// let view: &RecordView = &state.records[0];
+/// assert_eq!(view.key, format!("{}/r-1", j.own_stream()));
+/// assert_eq!(view.author, format!("{}/s1", j.own_stream()), "the stream's, not a name");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordView")]
 pub struct RecordView {
@@ -568,13 +778,36 @@ pub struct RecordView {
 }
 
 impl RecordView {
-    /// In force: open, not superseded, not stale. Only live records contend.
+    /// In force: open, not superseded, not stale. Only live records contend, and only they
+    /// are what a reader should act on.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};
+    /// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+    /// use majordomus_cli::mesh::state::fold;
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }).unwrap();
+    /// j.append_own(EventBody::RecordWritten { record:
+    ///     RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "p") }).unwrap();
+    /// assert!(fold(&j.events(), &|_| StreamLiveness::Own).records[0].is_live());
+    /// assert!(!fold(&j.events(), &|_| StreamLiveness::Expired).records[0].is_live(),
+    ///     "its author's runtime stopped beating");
+    /// ```
     pub fn is_live(&self) -> bool {
         self.status == RecordStatus::Open && self.superseded_by.is_empty() && self.stale.is_empty()
     }
 }
 
-/// Why two records contend.
+/// Why two live plans or decisions of different authors contend: the same task, which is
+/// checked first, or scopes that meet, when the tasks differ.
+///
+/// ```
+/// use majordomus_cli::mesh::records::ConflictReason;
+/// assert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), "same_task");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "MeshConflictReason")]
@@ -587,6 +820,30 @@ pub enum ConflictReason {
 
 /// Two live plans or two live decisions of different authors for one task or over meeting
 /// scopes: reported, not refused — a supersession settles it.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+/// use majordomus_cli::mesh::state::fold;
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// use majordomus_cli::mesh::records::ConflictReason;
+/// use majordomus_cli::mesh::journal::SessionInfo;
+/// for s in ["s1", "s2"] {
+///     j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, "cli") }).unwrap();
+/// }
+/// for (id, s) in [("r-1", "s1"), ("r-2", "s2")] {
+///     j.append_own(EventBody::RecordWritten { record:
+///         RecordBody::new(id, s, RecordKind::Decision, "I1", &["docs"], id) }).unwrap();
+/// }
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// use majordomus_cli::mesh::records::RecordConflict;
+/// let conflicts: &[RecordConflict] = &state.record_conflicts;
+/// assert_eq!(conflicts.len(), 1);
+/// assert_eq!(conflicts[0].reason, ConflictReason::SameTask);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordConflict")]
 pub struct RecordConflict {
@@ -606,6 +863,26 @@ pub struct RecordConflict {
 /// A record write the fold did not apply, and why: a revision by a session other than the
 /// author, out of order, after the author's session closed, or of another kind. A peer can
 /// sign whatever its own stream says; it cannot make another session's record say it.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::records::{RecordBody, RecordKind};
+/// use majordomus_cli::mesh::state::fold;
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let mine = RecordBody::new("r-1", "s1", RecordKind::Plan, "I1", &["docs"], "mine");
+/// j.append_own(EventBody::RecordWritten { record: mine.clone() }).unwrap();
+/// j.append_own(EventBody::RecordWritten { record:
+///     RecordBody { session: "s2".into(), revision: 2, title: "theirs".into(), ..mine } })
+///     .unwrap();
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// assert_eq!(state.records[0].title, "mine");
+/// use majordomus_cli::mesh::records::IgnoredRecordWrite;
+/// let ignored: &IgnoredRecordWrite = &state.records_ignored[0];
+/// assert!(ignored.reason.contains("only its author"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshIgnoredRecordWrite")]
 pub struct IgnoredRecordWrite {
@@ -861,6 +1138,17 @@ pub fn within(path: &str, claimed: &str) -> bool {
 
 /// What a session asks to write: a new record, or a revision of its own. The author is
 /// never in it — the session is named apart and the stream is the runtime's own.
+///
+/// ```
+/// use majordomus_cli::mesh::records::{RecordKind, RecordWrite};
+/// let w: RecordWrite = serde_json::from_value(serde_json::json!({
+///     "kind": "decision", "task": "I1", "scope": ["docs"], "title": "one kind"
+/// })).unwrap();
+/// assert_eq!(w.kind, Some(RecordKind::Decision));
+/// assert!(w.record.is_none(), "a new record, not a revision");
+/// assert!(serde_json::from_value::<RecordWrite>(serde_json::json!({"author": "x"})).is_err(),
+///     "an author is never an input");
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(rename = "MeshRecordWrite")]
@@ -914,7 +1202,7 @@ pub struct RecordWrite {
 
 /// Why a write was refused: every refusal fails closed and names what to do.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RecordRefusal {
+pub(crate) enum RecordRefusal {
     /// The record is malformed.
     Invalid(String),
     /// A path lies outside the writing session's live claims.
@@ -936,9 +1224,9 @@ pub enum RecordRefusal {
     IdempotencyConflict(String),
 }
 
-/// What admission decided.
+/// What admission decided: a body to sign and append, or the answer a retry already got.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Admission {
+pub(crate) enum Admission {
     /// Append this body.
     Append(Box<RecordBody>),
     /// A retry of a write already made: answer with that revision of that record.
@@ -1101,6 +1389,15 @@ pub(crate) fn admit(
 
 /// The answer of a record write: the record's key, the revision now current, the event that
 /// says so, and the live records it contends with — reported, not refused.
+///
+/// ```
+/// use majordomus_cli::mesh::records::{EvidenceState, RecordWriteAnswer};
+/// let a = RecordWriteAnswer { key: "s/r-1".into(), revision: 1, event: "s/7".into(),
+///     lamport: 7, durability: Default::default(), evidence: EvidenceState::Asserted,
+///     repeated: false, conflicts: vec![] };
+/// let wire = serde_json::to_value(&a).unwrap();
+/// assert!(wire.get("repeated").is_none(), "said only when it answers a retry");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordWriteAnswer")]
 pub struct RecordWriteAnswer {
@@ -1125,7 +1422,15 @@ pub struct RecordWriteAnswer {
     pub conflicts: Vec<RecordConflict>,
 }
 
-/// What a reader asks of the records. Every filter narrows; none is required.
+/// What a reader asks of the records. Every filter narrows; none is required, and an input
+/// it does not know is refused rather than ignored.
+///
+/// ```
+/// use majordomus_cli::mesh::records::RecordQuery;
+/// let q: RecordQuery = serde_json::from_str(r#"{"kind":"blocker","live":true}"#).unwrap();
+/// assert_eq!(q.live, Some(true));
+/// assert!(serde_json::from_str::<RecordQuery>(r#"{"kinds":"blocker"}"#).is_err());
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(rename = "MeshRecordQuery")]
@@ -1151,8 +1456,14 @@ pub struct RecordQuery {
     pub live: Option<bool>,
 }
 
-/// The answer of `mesh.records`: the records the query admits, the conflicts among them, the
-/// writes the fold ignored, and the whole fold's digest.
+/// The answer of `mesh.records`, built by [`select`]: the records the query admits, the
+/// conflicts among them, the writes the fold ignored, and the whole fold's digest.
+///
+/// ```
+/// use majordomus_cli::mesh::records::RecordList;
+/// let empty = serde_json::to_value(RecordList::default()).unwrap();
+/// assert!(empty.get("conflicts").is_none() && empty["records"].as_array().unwrap().is_empty());
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshRecordList")]
 pub struct RecordList {
@@ -1168,7 +1479,28 @@ pub struct RecordList {
     pub ignored: Vec<IgnoredRecordWrite>,
 }
 
-/// The records of `records` the query admits, with their conflicts and ignored writes.
+/// The records of `records` the query admits, with the conflicts that name one of them and
+/// the ignored writes about them (all of them when nothing narrows), under the whole fold's
+/// digest.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::records::{select, RecordBody, RecordKind, RecordQuery};
+/// use majordomus_cli::mesh::state::fold;
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// for (id, kind) in [("r-1", RecordKind::Plan), ("r-2", RecordKind::Blocker)] {
+///     j.append_own(EventBody::RecordWritten { record:
+///         RecordBody::new(id, "s1", kind, "I1", &["docs"], id) }).unwrap();
+/// }
+/// let s = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let q = RecordQuery { kind: Some(RecordKind::Blocker), ..RecordQuery::default() };
+/// let list = select(&s.records, &s.record_conflicts, &s.records_ignored, &s.digest, &q);
+/// assert_eq!(list.records.len(), 1);
+/// assert_eq!(list.digest, s.digest, "the whole fold's");
+/// ```
 pub fn select(
     records: &[RecordView],
     conflicts: &[RecordConflict],
