@@ -1196,55 +1196,50 @@ mod tests {
     /// resolved or superseded record is not, and contending decisions are listed.
     #[test]
     fn the_open_records_and_their_conflicts_are_on_the_blackboard() {
-        use crate::mesh::identity::NodeIdentity;
-        use crate::mesh::journal::{EventBody, Journal, StreamLiveness};
-        use crate::mesh::records::{RecordBody, RecordKind, RecordStatus};
-        use crate::mesh::state::fold;
-        let j = Journal::open(
-            std::sync::Arc::new(NodeIdentity::ephemeral().unwrap()),
-            "0000000000000001",
-            "repo".into(),
-            None,
-        )
-        .unwrap();
+        use crate::mesh::journal::EventBody;
+        use crate::mesh::records::{RecordBody, RecordKind, RecordStatus, RecordWrite};
+        let c = crate::mesh::testing::cooperation();
         for s in ["s1", "s2"] {
-            j.append_own(EventBody::SessionOpened {
-                info: SessionInfo::named(s, "cli"),
-            })
+            c.claim(
+                &SessionInfo::named(s, "cli"),
+                vec!["docs".into(), "ci".into()],
+                None,
+                ClaimMode::Advisory,
+                None,
+            )
             .unwrap();
         }
-        let write = |record: RecordBody| {
-            j.append_own(EventBody::RecordWritten { record }).unwrap();
+        let write = |session: &str, kind, scope: &str, title: &str, status| {
+            c.write_record(
+                session,
+                RecordWrite {
+                    kind: Some(kind),
+                    task: "T".into(),
+                    scope: vec![scope.into()],
+                    title: title.into(),
+                    status,
+                    ..RecordWrite::default()
+                },
+            )
+            .unwrap()
+            .key
         };
-        write(RecordBody::new(
-            "r-1",
+        let first = write("s1", RecordKind::Decision, "docs", "a", None);
+        write("s2", RecordKind::Decision, "docs", "b", None);
+        write(
             "s1",
-            RecordKind::Decision,
-            "T",
-            &["docs"],
-            "a",
-        ));
-        write(RecordBody::new(
-            "r-2",
-            "s2",
-            RecordKind::Decision,
-            "T",
-            &["docs"],
-            "b",
-        ));
-        write(RecordBody::new(
-            "r-3",
-            "s9",
             RecordKind::Blocker,
-            "T",
-            &["ci"],
-            "c",
-        ));
-        write(RecordBody {
-            status: RecordStatus::Resolved,
-            ..RecordBody::new("r-4", "s1", RecordKind::Blocker, "T", &["ci"], "done")
-        });
-        let state = fold(&j.events(), &|_| StreamLiveness::Own);
+            "ci",
+            "done",
+            Some(RecordStatus::Resolved),
+        );
+        // a record of a session this runtime never heard open, as a peer could sign it
+        c.journal()
+            .append_own(EventBody::RecordWritten {
+                record: RecordBody::new("r-9", "s9", RecordKind::Blocker, "T", &["ci"], "c"),
+            })
+            .unwrap();
+        let state = c.state();
         let b = answer(&list(vec![], "c1", None), Ok(&state));
         assert_eq!(
             (b.records.len(), b.records_total),
@@ -1252,21 +1247,21 @@ mod tests {
             "{:?}",
             b.records
         );
-        let from = |id: &str| {
+        let from = |key: &str| {
             b.records
                 .iter()
-                .find(|r| r.key.ends_with(&format!("/{id}")))
+                .find(|r| r.key == key)
                 .map(|r| r.from.clone())
-                .unwrap()
         };
+        let stream = c.journal().own_stream().to_string();
         assert_eq!(
-            from("r-1"),
-            format!("mesh:{}/s1", j.own_stream()),
+            from(&first),
+            Some(format!("mesh:{stream}/s1")),
             "its worker"
         );
         assert_eq!(
-            from("r-3"),
-            format!("{}/s9", j.own_stream()),
+            from(&format!("{stream}/r-9")),
+            Some(format!("{stream}/s9")),
             "no worker holds s9"
         );
         assert_eq!(b.record_conflicts.len(), 1);
