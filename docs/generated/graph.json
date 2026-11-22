@@ -1924,6 +1924,15 @@
         "status": "query"
       },
       {
+        "id": "capability:self.update",
+        "kind": "capability",
+        "label": "self.update",
+        "summary": "Report or apply an upgrade to the stable release",
+        "route": "/cockpit/capabilities/self.update",
+        "source": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:served.forge",
         "kind": "capability",
         "label": "served.forge",
@@ -2710,6 +2719,14 @@
         "label": "rules.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/self_update.rs",
+        "kind": "file",
+        "label": "self_update.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
         "external": true
       },
       {
@@ -3718,6 +3735,14 @@
         "label": "compat.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/release/compat.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/release/follow.rs",
+        "kind": "file",
+        "label": "follow.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/release/follow.rs",
         "external": true
       },
       {
@@ -9916,6 +9941,34 @@
             "profiles",
             "policy",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0235",
+        "kind": "adr",
+        "label": "adr-0235",
+        "summary": "A node follows the release only by consent, and hands its server over in order",
+        "route": "/cockpit/objects/adr/adr-0235",
+        "source": ".ai/repo/adrs/0235-a-node-follows-the-release-by-consent-and-hands-over-in-order.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-22",
+          "related": [
+            "file:.ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
+            "file:.ai/repo/project/milestones/safe-self-update.yaml",
+            "file:docs/DISTRIBUTION.md",
+            "file:docs/MESH.md",
+            "file:apps/majordomus-cli/src/release/follow.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/self_update.rs",
+            "test:test/cases/2720_self_update_wraps_the_installer.sh",
+            "test:test/cases/2721_a_node_follows_the_stable_release.sh"
+          ],
+          "tags": [
+            "distribution",
+            "release",
+            "mesh",
+            "runtime"
           ]
         }
       },
@@ -43913,7 +43966,7 @@
             "A downgrade, a pre-release and an unlisted version are refused with the reason"
           ],
           "created_at": "2026-10-14",
-          "current_state": "There is no self-update command; a person reruns install.sh with --version on each machine.",
+          "current_state": "self update --check and --apply exist (case 2720); --check also reports the follower of ADR 0235 and its last round.",
           "depends_on": [],
           "evidence_required": [
             "self_update_wraps_installer_test",
@@ -43936,7 +43989,7 @@
             "test/cases"
           ],
           "slug": "self-update-wraps-the-installer",
-          "updated_at": "2026-10-14",
+          "updated_at": "2026-11-22",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer <the case this issue adds>"
@@ -43957,7 +44010,6 @@
             "A mesh announcement naming a version the metadata does not list changes nothing"
           ],
           "created_at": "2026-10-14",
-          "current_state": "No process reads releases/latest.json except install.sh run by a person.",
           "depends_on": [
             "I2720"
           ],
@@ -43984,7 +44036,7 @@
             "test/cases"
           ],
           "slug": "a-node-follows-the-stable-pointer",
-          "updated_at": "2026-10-14",
+          "updated_at": "2026-11-22",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -44051,7 +44103,6 @@
             "mesh doctor names a node more than one release behind the stable pointer"
           ],
           "created_at": "2026-10-14",
-          "current_state": "serve status reports an outdated server for one checkout; the mesh carries no versions.",
           "depends_on": [],
           "desired_state": "Runtime info on the mesh carries version and follow; mesh peers and the Cockpit show them; mesh doctor and the dashboard show rollout progress per release.",
           "evidence_required": [
@@ -44069,7 +44120,7 @@
             "test/cases"
           ],
           "slug": "the-mesh-shows-the-rollout",
-          "updated_at": "2026-10-14",
+          "updated_at": "2026-11-22",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -108248,6 +108299,20 @@
         "source": "test/cases/271_adr_allocation.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2720_self_update_wraps_the_installer.sh",
+        "kind": "test",
+        "label": "test/cases/2720_self_update_wraps_the_installer.sh",
+        "route": "/cockpit/objects/test/test-cases-2720-self-update-wraps-the-installer-sh",
+        "source": "test/cases/2720_self_update_wraps_the_installer.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2721_a_node_follows_the_stable_release.sh",
+        "kind": "test",
+        "label": "test/cases/2721_a_node_follows_the_stable_release.sh",
+        "route": "/cockpit/objects/test/test-cases-2721-a-node-follows-the-stable-release-sh",
+        "source": "test/cases/2721_a_node_follows_the_stable_release.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
         "kind": "test",
         "label": "test/cases/272_diagrams_are_drawn.sh",
@@ -114466,6 +114531,11 @@
         "label": "rules"
       },
       {
+        "id": "module:self",
+        "kind": "module",
+        "label": "self"
+      },
+      {
         "id": "module:served",
         "kind": "module",
         "label": "served"
@@ -118103,6 +118173,16 @@
       {
         "source": "capability:rules.show",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:self.update",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:self.update",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -126433,6 +126513,51 @@
       {
         "source": "majordomus://adr/adr-0232",
         "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/self_update.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "file:apps/majordomus-cli/src/release/follow.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "majordomus://adr/adr-0161",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "majordomus://document/docs/DISTRIBUTION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "majordomus://test/test/cases/2720_self_update_wraps_the_installer.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0235",
+        "target": "majordomus://test/test/cases/2721_a_node_follows_the_stable_release.sh",
         "kind": "put_in_force"
       },
       {
@@ -158901,6 +159026,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2720_self_update_wraps_the_installer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2721_a_node_follows_the_stable_release.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165546,6 +165681,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:self",
+        "target": "capability:self.update",
+        "kind": "composes"
+      },
+      {
         "source": "module:served",
         "target": "capability:served.forge",
         "kind": "composes"
@@ -165682,8 +165822,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4534,
-      "edges": 10216,
+      "nodes": 4541,
+      "edges": 10230,
       "acyclic": false,
       "truncated": false
     }

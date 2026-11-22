@@ -3675,6 +3675,23 @@
     {
       "api_anchor": null,
       "claims": [],
+      "cli": "majordomus self update",
+      "id": "self.update",
+      "kind": "command",
+      "module": "self",
+      "module_route": "/registry/modules/self/",
+      "resource": null,
+      "route": "/registry/capabilities/self-update/",
+      "slug": "self-update",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/self_update.rs",
+      "tests": [],
+      "title": "Report or apply an upgrade to the stable release",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
       "cli": "majordomus served forge",
       "id": "served.forge",
       "kind": "command",
@@ -4768,9 +4785,9 @@
     ]
   },
   "counts": {
-    "capabilities": 233,
+    "capabilities": 234,
     "claims": 93,
-    "modules": 62
+    "modules": 63
   },
   "generator": "majordomus-cli 1.2.0",
   "modules": [
@@ -6418,6 +6435,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/rules.rs",
       "title": "Rules"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "self.update",
+          "route": "/registry/capabilities/self-update/",
+          "slug": "self-update"
+        }
+      ],
+      "claims": [],
+      "id": "self",
+      "route": "/registry/modules/self/",
+      "slug": "self",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/self_update.rs",
+      "title": "Self-update"
     },
     {
       "capabilities": [

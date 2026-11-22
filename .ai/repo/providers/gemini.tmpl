@@ -3,6 +3,18 @@
 Gemini / Antigravity bootstrap. The repository's provider-neutral AI context lives under
 [`.ai/`](.ai/); nothing specific to Gemini is needed here.
 
+The tool keeps itself current, and a worker never upgrades it by hand. `majordomus self
+update --check` names the running and the stable release; `--apply` re-runs the published
+installer, which verifies the archive, and is never a second implementation of it. A server
+of an enrolled node checks the stable pointer every five minutes (`self_update` in the mesh
+declaration) and applies a newer stable release only to an installed executable — never to a
+build in a checkout, and never over a checkout with uncommitted changes without the consent
+the declaration or the machine gives. The new version takes the lease from the old server in
+order and the old one hands its sessions on, so the journal's sessions, claims and handovers
+survive the change. `majordomus mesh peers` prints the version every runtime runs; read it
+before assuming a peer runs the tool you do. The decisions are ADR 0161 and ADR 0235, and the
+manual is `docs/DISTRIBUTION.md`, "Self-update".
+
 Before substantive planning, implementation, review or repository mutation:
 
 1. read [`.ai/README.md`](.ai/README.md) and follow its discovery protocol,

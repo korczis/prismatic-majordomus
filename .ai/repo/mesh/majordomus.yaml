@@ -37,6 +37,20 @@
 # commands that admit them, `sudo majordomus mesh firewall apply` admits them, and the
 # doctor's `firewall` check fails on a machine whose firewall observably drops them
 # (docs/MESH.md, "The host firewall"). Nothing here configures a firewall; it is read.
+#
+# Self-update (ADR 0161, ADR 0235): every enrolled node's server checks the stable release
+# every five minutes and applies a newer one to an installed executable, never to a build in
+# a checkout and never over uncommitted changes, then hands its sessions to the new version
+# in order. The section that configures it is deliberately not written below yet: an
+# executable older than the one that knows `self_update` refuses the key and would close
+# that node's mesh, so until every node runs it the defaults hold, which are exactly
+#
+#   self_update:
+#     follow: stable              # stable | pinned | off
+#     check_interval_seconds: 300
+#     dirty: defer                # defer | apply
+#
+# and the line is uncommented once `majordomus mesh peers` shows every runtime on it.
 schema: mesh/v1
 kind: mesh-declaration
 id: majordomus

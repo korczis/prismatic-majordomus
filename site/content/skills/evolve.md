@@ -5,7 +5,7 @@ weight = 3
 [extra]
 id = "evolve"
 status = "active"
-version = 5
+version = 6
 source = ".ai/repo/skills/evolve/SKILL.md"
 +++
 {% raw %}
@@ -226,6 +226,19 @@ the MCP resources and every provider's instruction file are projections of the f
 changed; none of them is edited, and one that did not move is a finding about its
 generator. Where a chapter of the handbook says what changed, change it in the same pull
 request.
+
+A lesson that changes the tool is delivered when the nodes run it, not when it merges. Every
+enrolled node's server follows the stable release by itself (ADR 0161, ADR 0235): it checks
+every five minutes and installs a newer release through the one installer, but only on an
+installed executable, never on a build in a checkout, and never over a checkout with
+uncommitted changes unless that is consented to. So the lesson reaches a machine only after a
+release names it and that machine's checkout is clean. Read `majordomus mesh peers`, which
+prints the version every runtime runs, before telling a peer that the behaviour has changed
+for it, and read `majordomus self update --check` on a node that has not moved: its last round
+says why it held. Equally, before deciding a candidate that describes the tool's behaviour,
+name the version that answered (`majordomus version`); a node that upgraded itself since the
+observation may answer differently now. On 2026-11-22 the follower landed after one session
+had been upgrading each node by hand since 2026-10-14.
 
 ### 6. Tell everyone who works here
 

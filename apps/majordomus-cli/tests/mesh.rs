@@ -306,6 +306,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
             ..Default::default()
         },
         cooperation: Default::default(),
+        self_update: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();
@@ -598,6 +599,7 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
         },
         trust: Default::default(),
         cooperation: Default::default(),
+        self_update: Default::default(),
     };
     // the hub lists its own key beside the trusted nodes': a machine its trust list does not
     // name keeps its mesh closed and admits nobody. The two callers are trusted too; what an

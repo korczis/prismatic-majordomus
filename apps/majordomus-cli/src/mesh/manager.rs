@@ -1016,6 +1016,7 @@ mod tests {
             },
             trust: Default::default(),
             cooperation: Default::default(),
+            self_update: Default::default(),
         }
     }
 
