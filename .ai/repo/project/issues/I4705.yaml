@@ -1,0 +1,46 @@
+id: I4705
+milestone: a-claim-stands-only-on-its-evidence
+title: "Every source reference in a tracked document resolves, checked by one capability, and a document declared live refuses a commit that leaves one of its references dangling"
+slug: a-documents-source-references-resolve
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A read-only capability refs (CLI `majordomus refs check|index|impact`, MCP majordomus_refs_check, GET /api/v1/refs) reads the source references in tracked Markdown and judges each against the tree. A reference is an inline code span whose first segment is a tracked top-level entry, in one of the forms `path`, `path/`, `path:Symbol` or `path:line[-line]`, or a pathspec in a front-matter `tracks:` list. A file must be tracked. A directory must hold tracked files. A symbol must occur as a whole word in its file. A line must exist in the file, and a line reference whose document also quotes the cited text is judged against that text. A pathspec must match at least one file. `check` names each dangling reference with its document and line and exits 10. `index` answers the reverse index from each cited file to the documents that cite it. `impact <rev-range>` names the documents citing a file the range changed. The policy key `references.live` declares the documents, such as a capability matrix or a status table, whose references must always resolve. The derive step and the pre-commit doctor refuse a change that leaves one of them dangling, while any other document is reported only. A document whose front matter says `status: superseded` or `deprecated` is history and is not judged. The resolver is the one I4583 uses for outbound drafts, not a second one."
+why: "Observed on 2026-11-22 in an adopter repository. Its owner keeps a capability matrix in which every row cites the code that implements it as path:line. The repository had to write its own reference checker and wire it into its own gate before that matrix could be trusted, and deleting a file there needs that check as well as the usual gates, because only the checker notices a record that still cites the file. The pattern of a document whose references are live is generic. Every adopter that writes status tables, matrices or runbooks citing code needs it, and each one writes it again."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. `knowledge check` resolves the `file:` and `test:` references of knowledge records, through git history for a deleted file (case 3023, I1987). I4583 (open) plans `evidence claim --verify <draft>`, which resolves the locators of an outbound draft, including a path:line that moved, in apps/majordomus-cli/src/capability/builtin/evidence.rs. No capability reads a tracked Markdown document's inline references. No policy key declares a document live, and nothing refuses a commit that leaves a document citing a file it removed. I2731 holds one specific table, the published failure table, to its citations."
+desired_state: "A document that cites code stays true as the code moves, or the change that broke it is refused when the document is declared live and named when it is not. An adopter gets this from the policy rather than writing a checker."
+scope:
+  - "apps/majordomus-cli/src/refs.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/capability/builtin/refs.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/tests/refs.rs"
+  - "lib/doctor.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/CLI.md"
+  - "docs/KNOWLEDGE.md"
+  - "test/cases/4705_a_documents_source_references_resolve.sh"
+  - ".ai/repo/project/issues/I4705.yaml"
+  - "site/content/plan/I4705.md"
+non_scope:
+  - "Judging the prose around a reference"
+  - "External URLs. Links on the published site are site-check's"
+  - "Rewriting a moved line reference automatically. The answer names the new line, and the author edits"
+  - "The outbound-draft path of I4583. This issue reuses its resolver"
+depends_on: [I4583]
+acceptance_criteria:
+  - "Case 4705: a fixture document cites a tracked file, a directory, a symbol, a line and a `tracks:` pathspec, and `refs check` exits 0. Deleting the file and renaming the symbol makes it exit 10, naming both references with their document and line"
+  - "A document listed under `references.live` with a dangling reference makes the pre-commit doctor refuse. The same document unlisted is reported and does not refuse"
+  - "`refs impact HEAD~1..HEAD` names the documents citing a file the last commit changed"
+  - "A superseded document's references are not judged"
+  - "refs and `evidence claim --verify` give the same verdict for the same locator"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test refs"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4705_a_documents_source_references_resolve"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_documents_source_references_resolve"
+serves: []
+created_at: 2026-11-22

@@ -1,0 +1,41 @@
+id: I4701
+milestone: truthful-plan-surfaces
+title: "A commit that adds an issue's record is that issue's creation, never its delivery, whatever else the commit changes"
+slug: a-commit-that-adds-an-issues-record-is-not-its-delivery
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "plan.delivery passes over, for one issue, every naming commit or merge whose change against its first parent adds that issue's record (`.ai/repo/project/issues/<id>.yaml` absent before, present after). The commit created the issue, so it cannot have delivered it. The rule is per issue: other issues the same commit names are judged as before, and a commit that only plans stays planning by I2749's path rule. The newest commit passed over this way is reported in the issue's `planned` proof with `via: created`, so a reader sees why the commit that names the issue did not make it merged."
+why: "Observed on 2026-11-22 in an adopter repository. plan drift on its trunk reported three issues merged_not_recorded, which is not advisory and turns the trunk gate red once the window passes. None of them had any work done. One merged pull request added seven issue records and a milestone and listed the new ids in its title. It also changed a hand-written README and added a small tool that served a different issue. A single commit added eight issue records and named the new range in its subject. It also changed a README whose generated region a projection command refreshes, a file `.gitattributes` does not mark `merge=derived`. In both cases one path outside the plan's records was enough for I2749's path rule to call the commit delivery. The only correct reading is that the commit created those issues, and a creation is not a delivery."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. apps/majordomus-cli/src/plan/delivery.rs decides planning per commit: planning_only (delivery.rs:668) runs one `git diff-tree --stdin` over every naming commit and its first parent, and treats as planning only a commit whose whole change stays inside PLANNING_PATHS (delivery.rs:659: `.ai/repo/project` and every path marked `merge=derived`). infer (delivery.rs:1086) collects that set, and assess (delivery.rs:509) partitions an issue's naming merges by it. A commit that adds an issue's record and changes any other path is that issue's merge proof. Nothing asks whether the issue existed before the commit. The rule and its alternatives are in ADR 0166, decision 2, and I2749."
+desired_state: "plan delivery and plan drift never name an issue merged on the strength of the commit that created its record. On an adopter's trunk, the two cases above leave their newly created issues at `none` with `planned` naming the creating commit, while every other issue those commits name is judged as before."
+scope:
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/plan/drift.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "apps/majordomus-cli/tests/plan_drift.rs"
+  - "test/cases/3100_an_issue_delivery_is_inferred.sh"
+  - "docs/PLANNING.md"
+  - ".ai/repo/project/issues/I4701.yaml"
+  - "site/content/plan/I4701.md"
+non_scope:
+  - "Reading prose in commit subjects or bodies to decide what a commit meant (I2749, non_scope)"
+  - "Widening PLANNING_PATHS with an adopter's own generated files: a projection that `.gitattributes` does not mark merge=derived is the adopter's declaration to make"
+  - "A pull request that creates an issue and delivers it in one change. It reads as planned, and its delivery is recorded by the issue's own stamps or a later merge that names it"
+  - "How a title names a range of ids (I0110-I0116); only the ids a title or branch names are judged, as before"
+depends_on: [I2749]
+acceptance_criteria:
+  - "A merge whose first-parent diff adds the record of issue A, changes a path outside PLANNING_PATHS, and names A and an existing issue B in its title leaves A at `none` with `planned.via: created`, and makes B merged"
+  - "A single-parent commit that adds the records of A and C and changes a non-derived file leaves both at `none`"
+  - "A later code commit naming A makes it merged, with the later commit as proof"
+  - "plan drift reports no merged_not_recorded for an issue whose only naming commit created it"
+  - "Negative control: on master's delivery.rs, the first fixture reports A merged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift"
+  - "bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_commit_creating_an_issue_is_not_its_delivery"
+serves: []
+created_at: 2026-11-22

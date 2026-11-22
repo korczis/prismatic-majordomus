@@ -55,6 +55,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I1007` | shares site with I3754; they may not run concurrently |
+| WARN | `scope_conflict` | `I1007` | shares site with I4701; they may not run concurrently |
 | WARN | `scope_conflict` | `I1011` | shares apps/majordomus-cli/src/capability/builtin/health.rs with I2405; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/cockpit/pages.rs with I3317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/capability/builtin/entity.rs with I3607; they may not run concurrently |

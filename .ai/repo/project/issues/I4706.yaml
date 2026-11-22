@@ -1,0 +1,45 @@
+id: I4706
+milestone: a-second-adopter-is-served
+title: "A dependency the policy declares consumed from outside changes only by a pin bump to a commit its upstream holds, and every other change to it is refused at commit and at push"
+slug: a-consumed-dependency-changes-only-by-its-pin
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A policy key `dependencies.consumed` lists the paths of dependencies that the repository consumes and must never edit. Each entry is a git submodule, or a vendored directory with a declared sync command, and names its upstream (a remote URL and optionally a branch). commit.validate, run by the commit-msg hook, and `finish --check`, run by the pre-push hook, judge each commit that touches such a path. For a submodule, the only allowed change is its gitlink, moving to a commit that is reachable from the declared upstream branch or tag at the time of the check. A gitlink that points at a commit the upstream does not hold is refused, because that commit was made by editing the dependency locally. For a vendored directory, a change is allowed only when the commit's trailer names the declared sync command and the tree equals what that command produces. doctor names a declared submodule whose checkout is dirty or detached from its pinned commit. A refusal names the path, the commit and the remedy: change the dependency upstream, then bump the pin."
+why: "Observed on 2026-11-22 in an adopter repository. It consumes two of its owner's other projects as pinned git submodules. A standing owner order says it must never edit them, and wrap any gap on its own side instead. The rule lived only in a memory note and in reviewers' attention. Nothing in the layer could refuse a session that edited the submodule's checkout and bumped the pin to its own local commit. The pattern is generic: any repository that consumes a dependency it does not own needs this boundary enforced."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. The policy schema (share/schemas/majordomus/policy/policy.v1.schema.json) has no key that declares a consumed dependency. commit.validate (apps/majordomus-cli/src/commit/) judges a message's type, scope and trailers, and not the paths a commit changes. The task scope that `check` and `finish` enforce is a per-task allow-list. It is written by the worker and says nothing permanent about a path. ADR 0230 mentions submodules only when it explains how the UI kit check counts repositories. No issue, ADR or rule names a guard for a consumed dependency."
+desired_state: "A consumed dependency's content changes only upstream. The consumer's history shows a pin bump and nothing else, and both hooks refuse the alternative with a remedy that names the upstream."
+scope:
+  - "apps/majordomus-cli/src/commit/consumed.rs"
+  - "apps/majordomus-cli/src/commit/mod.rs"
+  - "apps/majordomus-cli/src/commit/policy.rs"
+  - "apps/majordomus-cli/tests/commit_consumed.rs"
+  - "lib/finish.sh"
+  - "lib/doctor.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/CLI.md"
+  - "docs/GUIDE.md"
+  - "test/cases/4706_a_consumed_dependency_changes_only_by_its_pin.sh"
+  - ".ai/repo/project/issues/I4706.yaml"
+  - "site/content/plan/I4706.md"
+non_scope:
+  - "Fetching a dependency's upstream at commit time without a network. An unreadable upstream refuses at push and is reported, not refused, at commit, and the answer says which"
+  - "Updating a pin automatically"
+  - "Dependencies that a package manager resolves (lockfiles). Their own tools judge them"
+depends_on: []
+acceptance_criteria:
+  - "Case 4706: a fixture repository declares a submodule consumed from a local upstream. A commit that bumps the gitlink to a commit on the upstream branch passes commit validate and finish --check"
+  - "A commit whose gitlink points at a commit made inside the submodule's checkout and absent from the upstream is refused by both, naming the path and the commit"
+  - "A commit that changes a declared vendored directory without the sync trailer is refused. With the trailer and the command's output, it passes"
+  - "doctor names a declared submodule whose checkout is dirty"
+  - "A repository that declares nothing is unaffected"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test commit_consumed"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4706_a_consumed_dependency_changes_only_by_its_pin"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_consumed_dependency_changes_only_by_its_pin"
+serves: []
+created_at: 2026-11-22

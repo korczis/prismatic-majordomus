@@ -1,0 +1,42 @@
+id: I4703
+milestone: development-runtime
+title: "A task another session opened is closed only when the liveness predicate says its worktree is reclaimable; otherwise finish refuses and names the evidence of life"
+slug: a-task-another-session-opened-is-closed-only-on-liveness
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When the caller of `finish` (any outcome) or `handover` is not the episode that opened the active task, the runtime asks the one liveness predicate of I4346 (worktree.liveness) about the task's worktree before it writes anything. It proceeds only on `reclaim`. On `keep`, it refuses with exit 15 and names each piece of evidence of life: a process whose working directory is inside the worktree (other than the caller and the server), a file in the worktree's index or work tree changed since the task's last checkpoint and not in a commit, a mtime newer than the policy's session.stranded_after, or a mesh claim or board announcement that names the worktree. A predicate that cannot read its input refuses, as every destructive sweep does (project.destructive-sweeps-fail-closed). The caller's own task, judged by the ADR 0164 attribution as today, is never asked. The same check guards `recover tasks` (I4416). A refused close is a ledger event, task.close_refused, carrying the evidence."
+why: "Observed on 2026-11-22 in an adopter repository with several concurrent sessions. A merge agent ran by one session cleaned up merged branches and closed another live session's task. The task's worktree still held that session's uncommitted edits. Nothing refused the close, because the opener had no open episode record in that checkout at that moment. The owning session found its task finished under it, with its work uncommitted and no handover written."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. lib/finish.sh refuses a task whose record names another worktree (mj_task_is_foreign, lib/check.sh:87). It then calls mj_task_attribution_or_refuse (lib/evidence.sh:108), which refuses only when the episode that opened the task (mj_task_opening_session, lib/common.sh:1439) is still open in this checkout (mj_session_is_open, lib/common.sh:1450). The comment on mj_record_attribution states the policy: a task whose opener has closed, or whose opening names no episode, has no live owner, and the caller carries it on. The refusal also offers `session close --provider-session <key>` as the way past it, which needs no evidence that the opener has stopped. No path asks whether a process still works in the worktree, whether it holds uncommitted changes, or how recently it was written. I4346 (open, PR #2979) builds worktree.liveness for deleting sweeps only. I4416 plans `recover tasks`, and I4628 (open, PR #3088) reports NOT COMMITTED on a completed finish without refusing it."
+desired_state: "No worker closes another worker's live task, by finish, handover, session close or recover. Closing a dead one stays possible and is recorded with the evidence that it was dead. The refusal names what is alive, so the caller knows whom to ask."
+scope:
+  - "lib/finish.sh"
+  - "lib/handover.sh"
+  - "lib/evidence.sh"
+  - "lib/common.sh"
+  - "lib/session.sh"
+  - "lib/recover.sh"
+  - "docs/CONTINUITY.md"
+  - "docs/CLI.md"
+  - "test/cases/4703_a_task_another_session_opened_is_closed_only_on_liveness.sh"
+  - ".ai/repo/project/issues/I4703.yaml"
+  - "site/content/plan/I4703.md"
+non_scope:
+  - "The liveness predicate itself (I4346). This issue is one more caller of it"
+  - "What a merge or cleanup agent does with a branch. Deleting a worktree is already a sweep under I4346"
+  - "Closing a task across machines over the mesh (mesh handover consume keeps its own claim rules)"
+depends_on: [I4346]
+acceptance_criteria:
+  - "Case 4703: worker A starts a task in a fixture worktree, edits a file without committing and keeps a process running there. Its episode record is then removed, so the opener has no open episode. Worker B's `finish --outcome completed` in that worktree exits 15, names the uncommitted file and the process, writes task.close_refused, and leaves current.yaml unchanged"
+  - "With the process gone, the edit committed and mtimes past the threshold, B's finish is allowed and its record names the reclaim evidence"
+  - "`session close --provider-session <A's key>` followed by B's finish is refused the same way while the evidence of life holds"
+  - "A's own finish is never asked the predicate"
+  - "A predicate whose input is unreadable (no ps, an unreadable index) refuses and says which input"
+  - "Negative control: on master's lib/, the first scenario completes B's finish"
+validation:
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4703_a_task_another_session_opened_is_closed_only_on_liveness 06_finish"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_live_task_is_not_closed_by_another_session"
+serves: []
+created_at: 2026-11-22

@@ -36328,7 +36328,7 @@
             "test/cases"
           ],
           "slug": "the-peer-board-can-be-read-from-the-command-line",
-          "updated_at": "2026-10-08",
+          "updated_at": "2026-11-22",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -82623,6 +82623,298 @@
           "validation": [
             "cargo test --lib mesh::records",
             "cargo test --lib mesh::state"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4701",
+        "kind": "issue",
+        "label": "I4701",
+        "summary": "A commit that adds an issue's record is that issue's creation, never its delivery, whatever else the commit changes",
+        "route": "/cockpit/objects/issue/i4701",
+        "source": ".ai/repo/project/issues/I4701.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [
+            "I2749"
+          ],
+          "evidence_required": [
+            "a_commit_creating_an_issue_is_not_its_delivery"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Reading prose in commit subjects or bodies to decide what a commit meant (I2749, non_scope)",
+            "Widening PLANNING_PATHS with an adopter's own generated files: a projection that `.gitattributes` does not mark merge=derived is the adopter's declaration to make",
+            "A pull request that creates an issue and delivers it in one change. It reads as planned, and its delivery is recorded by the issue's own stamps or a later merge that names it",
+            "How a title names a range of ids (I0110-I0116); only the ids a title or branch names are judged, as before"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/plan/drift.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "apps/majordomus-cli/tests/plan_drift.rs",
+            "test/cases/3100_an_issue_delivery_is_inferred.sh",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4701.yaml",
+            "site/content/plan/I4701.md"
+          ],
+          "serves": [],
+          "slug": "a-commit-that-adds-an-issues-record-is-not-its-delivery",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift",
+            "bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4702",
+        "kind": "issue",
+        "label": "I4702",
+        "summary": "An issue whose work is its records declares `delivery: record`, and drift reads it as delivered by its evidence, not as done without trace",
+        "route": "/cockpit/objects/issue/i4702",
+        "source": ".ai/repo/project/issues/I4702.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A DONE issue with `delivery: record` and no naming merge is absent from plan drift's findings and reads stage `record` in plan delivery",
+            "A DONE issue without the field and no naming merge is still done_without_trace, and its remedy names `delivery: record`",
+            "plan validate (both engines) refuses `delivery: record` with a scope entry outside `.ai/repo/` and the derived projections, naming the entry",
+            "A `delivery: record` issue named by a commit that changes code is reported by drift with that commit as its proof",
+            "Negative control: on master, the first fixture is reported done_without_trace"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "a_record_only_issue_is_declared"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Backfilling `delivery: record` onto this repository's or any adopter's existing DONE issues. That is each owner's record to write",
+            "Inferring record-only from an issue's scope without the declaration",
+            "Making done_without_trace blocking"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/plan/drift.rs",
+            "apps/majordomus-cli/tests/plan_drift.rs",
+            "lib/plan.sh",
+            "lib/plan_json.awk",
+            "docs/PLANNING.md",
+            "docs/SCHEMAS.md",
+            "test/cases/4702_a_record_only_issue_is_declared.sh",
+            ".ai/repo/project/issues/I4702.yaml",
+            "site/content/plan/I4702.md"
+          ],
+          "serves": [],
+          "slug": "a-record-only-issue-is-declared",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4702_a_record_only_issue_is_declared",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4703",
+        "kind": "issue",
+        "label": "I4703",
+        "summary": "A task another session opened is closed only when the liveness predicate says its worktree is reclaimable; otherwise finish refuses and names the evidence of life",
+        "route": "/cockpit/objects/issue/i4703",
+        "source": ".ai/repo/project/issues/I4703.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [
+            "I4346"
+          ],
+          "evidence_required": [
+            "a_live_task_is_not_closed_by_another_session"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The liveness predicate itself (I4346). This issue is one more caller of it",
+            "What a merge or cleanup agent does with a branch. Deleting a worktree is already a sweep under I4346",
+            "Closing a task across machines over the mesh (mesh handover consume keeps its own claim rules)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/finish.sh",
+            "lib/handover.sh",
+            "lib/evidence.sh",
+            "lib/common.sh",
+            "lib/session.sh",
+            "lib/recover.sh",
+            "docs/CONTINUITY.md",
+            "docs/CLI.md",
+            "test/cases/4703_a_task_another_session_opened_is_closed_only_on_liveness.sh",
+            ".ai/repo/project/issues/I4703.yaml",
+            "site/content/plan/I4703.md"
+          ],
+          "serves": [],
+          "slug": "a-task-another-session-opened-is-closed-only-on-liveness",
+          "validation": [
+            "MJ_TEST_JOBS=2 bash test/run.sh 4703_a_task_another_session_opened_is_closed_only_on_liveness 06_finish",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4704",
+        "kind": "issue",
+        "label": "I4704",
+        "summary": "plan.findings derives every open finding from the layer: what is blocked, left out of scope with no follow-up, handed to another repository, not run, partial or drifting, each with its locator",
+        "route": "/cockpit/objects/issue/i4704",
+        "source": ".ai/repo/project/issues/I4704.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "open_findings_are_derived_from_the_layer"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Opening an issue for a finding. The answer names the missing follow-up and a person or the plan's own commands create it",
+            "Judging whether a finding is true. The answer reports what the records state",
+            "Reading untracked or .ai/local/ state",
+            "Changing an adopter's own generator. It may adopt the capability as a change of its own"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/findings.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/tests/plan_findings.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/PLANNING.md",
+            "docs/CLI.md",
+            "test/cases/4704_open_findings_are_derived_from_the_layer.sh",
+            ".ai/repo/project/issues/I4704.yaml",
+            "site/content/plan/I4704.md"
+          ],
+          "serves": [],
+          "slug": "open-findings-are-derived-from-the-layer",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_findings",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4704_open_findings_are_derived_from_the_layer",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4705",
+        "kind": "issue",
+        "label": "I4705",
+        "summary": "Every source reference in a tracked document resolves, checked by one capability, and a document declared live refuses a commit that leaves one of its references dangling",
+        "route": "/cockpit/objects/issue/i4705",
+        "source": ".ai/repo/project/issues/I4705.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [
+            "I4583"
+          ],
+          "evidence_required": [
+            "a_documents_source_references_resolve"
+          ],
+          "milestone": "a-claim-stands-only-on-its-evidence",
+          "non_scope": [
+            "Judging the prose around a reference",
+            "External URLs. Links on the published site are site-check's",
+            "Rewriting a moved line reference automatically. The answer names the new line, and the author edits",
+            "The outbound-draft path of I4583. This issue reuses its resolver"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/refs.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/src/capability/builtin/refs.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/tests/refs.rs",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/CLI.md",
+            "docs/KNOWLEDGE.md",
+            "test/cases/4705_a_documents_source_references_resolve.sh",
+            ".ai/repo/project/issues/I4705.yaml",
+            "site/content/plan/I4705.md"
+          ],
+          "serves": [],
+          "slug": "a-documents-source-references-resolve",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test refs",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4705_a_documents_source_references_resolve",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4706",
+        "kind": "issue",
+        "label": "I4706",
+        "summary": "A dependency the policy declares consumed from outside changes only by a pin bump to a commit its upstream holds, and every other change to it is refused at commit and at push",
+        "route": "/cockpit/objects/issue/i4706",
+        "source": ".ai/repo/project/issues/I4706.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4706: a fixture repository declares a submodule consumed from a local upstream. A commit that bumps the gitlink to a commit on the upstream branch passes commit validate and finish --check",
+            "A commit whose gitlink points at a commit made inside the submodule's checkout and absent from the upstream is refused by both, naming the path and the commit",
+            "A commit that changes a declared vendored directory without the sync trailer is refused. With the trailer and the command's output, it passes",
+            "doctor names a declared submodule whose checkout is dirty",
+            "A repository that declares nothing is unaffected"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "desired_state": "A consumed dependency's content changes only upstream. The consumer's history shows a pin bump and nothing else, and both hooks refuse the alternative with a remedy that names the upstream.",
+          "evidence_required": [
+            "a_consumed_dependency_changes_only_by_its_pin"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Fetching a dependency's upstream at commit time without a network. An unreadable upstream refuses at push and is reported, not refused, at commit, and the answer says which",
+            "Updating a pin automatically",
+            "Dependencies that a package manager resolves (lockfiles). Their own tools judge them"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commit/consumed.rs",
+            "apps/majordomus-cli/src/commit/mod.rs",
+            "apps/majordomus-cli/src/commit/policy.rs",
+            "apps/majordomus-cli/tests/commit_consumed.rs",
+            "lib/finish.sh",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/CLI.md",
+            "docs/GUIDE.md",
+            "test/cases/4706_a_consumed_dependency_changes_only_by_its_pin.sh",
+            ".ai/repo/project/issues/I4706.yaml",
+            "site/content/plan/I4706.md"
+          ],
+          "serves": [],
+          "slug": "a-consumed-dependency-changes-only-by-its-pin",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test commit_consumed",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4706_a_consumed_dependency_changes_only_by_its_pin",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -152756,6 +153048,81 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4701",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4701",
+        "target": "majordomus://issue/I2749",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4701",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4702",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4702",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4703",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4703",
+        "target": "majordomus://issue/I4346",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4703",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4704",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4704",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4705",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4705",
+        "target": "majordomus://issue/I4583",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4705",
+        "target": "majordomus://milestone/a-claim-stands-only-on-its-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4706",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4706",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165682,8 +166049,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4534,
-      "edges": 10216,
+      "nodes": 4540,
+      "edges": 10231,
       "acyclic": false,
       "truncated": false
     }
