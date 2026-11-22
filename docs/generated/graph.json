@@ -49873,7 +49873,9 @@
             ".ai/repo/project/issues/I3061.yaml"
           ],
           "slug": "a-subprocess-session-is-not-the-worker",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-11-22T22:30:27Z",
+          "started_event": "sha256:126febbf42d5d717d7c2d497e64c6959bd7534593dc952f694526aede55e73b7",
+          "updated_at": "2026-11-22T22:30:27Z",
           "validation": [
             "CI=true bash test/run.sh --no-skips 3461_a_subprocess_session_is_not_the_worker 54_session_lifecycle_hooks"
           ]
@@ -109473,6 +109475,13 @@
         "source": "test/cases/3460_a_session_end_hook_fits_its_budget.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3461_a_subprocess_session_is_not_the_worker.sh",
+        "kind": "test",
+        "label": "test/cases/3461_a_subprocess_session_is_not_the_worker.sh",
+        "route": "/cockpit/objects/test/test-cases-3461-a-subprocess-session-is-not-the-worker-sh",
+        "source": "test/cases/3461_a_subprocess_session_is_not_the_worker.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3470_the_release_follows_the_work.sh",
         "kind": "test",
         "label": "test/cases/3470_the_release_follows_the_work.sh",
@@ -159776,6 +159785,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3461_a_subprocess_session_is_not_the_worker.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3470_the_release_follows_the_work.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165682,8 +165696,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4534,
-      "edges": 10216,
+      "nodes": 4535,
+      "edges": 10217,
       "acyclic": false,
       "truncated": false
     }
