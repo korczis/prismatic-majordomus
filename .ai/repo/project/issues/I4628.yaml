@@ -1,0 +1,33 @@
+id: I4628
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy"
+slug: a-finish-over-uncommitted-work-says-so
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "finish --outcome completed compares the tree its verify command ran over (task.finished verify.tree) with HEAD's tree, and compares HEAD with the head the task started at. When the verified tree is not HEAD's tree, the change the task verified is not in a commit. The first line finish prints then says so: `finish: <task> completed, NOT COMMITTED: the verified tree <tree> is not HEAD's <tree>`, followed by the command that commits it. task.finished records `committed: false`. Where the policy says completed means complete (verification.completed_means_complete, the key open pull request #2748 wires for I4433), the same condition refuses as #2748 decides. This record changes only what the shipped policy prints and records, so a session that reads finish's last line cannot take uncommitted work for finished."
+why: "On 2026-11-17 a session working on I4627 in prismatic-majordomus (Claude Code session c4d1bd5c, worktree fix/a-merge-does-not-borrow-a-foreign-executable) staged a one-line test change and ran git commit. The pre-commit hook refused it: `pages: site/data/generated is stale — it carries input hash 9bd88eb9c013, this tree hashes to 262aaf314662`. The session then ran `majordomus finish --outcome completed --verify-command \"scripts/ci/order-check && ... test/run.sh 4627_...\"`, and finish printed `finish: t-20261117025236-1b19 completed`. Its task.finished event shows the gap: head 728afa4302c (the head the task started at, so nothing was committed); verify.tree 63a1e7f88afb, while HEAD's tree was 5a920893dc73; every contract entry pass, including majordomus.obligation-closure and majordomus.completion-gates. The session found the refused commit only because it read the hook's log, then reopened the task, derived and committed (2f35f30d717). A session that reads the last line of finish, as an agent does, would have reported finished work that was in no commit. The milestone's map already names this break as exists-unwired (owners I4433, I3259, I3381, I3986), and #2748 (open since 2026-10-30) refuses it only under verification.completed_means_complete, which the skeleton ships off. Under the shipped policy, the INFO line `obligation:commit — the change implies 'commit' and the task does not declare it` is the only trace, and it is printed before the verdict, not in it."
+current_state: "Measured on 2026-11-17 at origin/master e54bbdb12a with majordomus 1.0.2. lib/gates.sh prints `the done invariant is not yet answered: ... committed=queued ...` as a doctrine skip (INFO). The obligation `commit` is implied but not declared, so obligation-closure passes. task.finished records verify.tree and head but nothing that compares them. verify.tree is mj_worktree_tree_id (lib/common.sh): HEAD read into a scratch index plus `git add -A`, so it covers staged and unstaged changes alike (lib/finish.sh:216). The verdict line is lib/finish.sh:148, `finish: <task> <outcome>`, with no word about the commit. The archived task record carries the working tree as it was at start (lib/start.sh), not at finish."
+desired_state: "Finish never prints a bare `completed` over a verified tree that no commit holds. The first line and the record say not committed, and the policy key #2748 wires turns the same condition into a refusal."
+scope:
+  - "lib/gates.sh"
+  - "lib/finish.sh"
+  - "test/cases/4628_a_finish_over_uncommitted_work_says_so.sh"
+  - ".ai/repo/project/issues/I4628.yaml"
+non_scope:
+  - "Turning verification.completed_means_complete on, or changing what #2748 refuses"
+  - "Committing on the task's behalf: finish reports, it never commits"
+  - "A task whose verify command changes no tracked file and leaves HEAD's tree as it was"
+acceptance_criteria:
+  - "Under the shipped policy, a task that stages a change, has its commit refused by a hook, and finishes completed prints `NOT COMMITTED` in finish's first line, naming the verified tree and HEAD's tree, and exits 0"
+  - "task.finished for that finish records committed: false; for a finish whose verified tree is HEAD's tree it records committed: true"
+  - "The same task, committed before finish, prints `finish: <task> completed` with no NOT COMMITTED"
+  - "An unstaged change and a staged change are both reported, since verify.tree is computed from the working tree"
+  - "Under verification.completed_means_complete: true the case's finish is refused, which is #2748's behaviour, and this record adds nothing to it"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_finish_over_uncommitted_work_says_so"
+depends_on: []
+serves: []
+created_at: 2026-11-17
