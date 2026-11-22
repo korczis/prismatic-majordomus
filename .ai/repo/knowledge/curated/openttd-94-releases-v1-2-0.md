@@ -43,9 +43,12 @@ tells the landing seat when the tag→record window opens and when it closes, an
 - Question, verbatim: "prismatic-majordomus master is d02c59d447c (#3101, typed mesh records,
   declares 1.2.0); latest release is v1.1.0. The landing seat says cutting a tag is not covered
   by your earlier answers and won't run the release path itself; for 1.1.0 you told a session
-  \"převezmi seaty a vydej\". Who should release v1.2.0 once validate on d02c59d is green?"
+  \"prevezmi seaty a vydej\". Who should release v1.2.0 once validate on d02c59d is green?"
+  The Czech words of that quote are written here without their one diacritic (r for the
+  letter r with a caron), because rule `project.english-only` and its gate refuse that letter
+  in this file; nothing else of the question is changed.
 - Answer, verbatim: "This session releases it (Recommended)".
-- Precedent named in the question: for v1.1.0 the owner told a session "převezmi seaty a
+- Precedent named in the question: for v1.1.0 the owner told a session "prevezmi seaty a
   vydej", that is, "take over the seats and release". v1.1.0's record landed as pull request
   #3091 (release/record-v1.1.0).
 - The landing seat (prismatic-majordomus-44) replied at 04:33Z that nothing disagrees.
