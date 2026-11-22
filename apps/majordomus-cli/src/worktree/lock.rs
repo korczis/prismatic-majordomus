@@ -35,8 +35,8 @@ pub const STALE_AFTER: Duration = Duration::from_secs(900);
 /// The held lock. Dropping it releases it; a panic or an early return therefore cannot leave
 /// the repository locked. A process that dies without dropping it — a signal, `SIGKILL`, a
 /// crash — leaves the file, and the file names its owner: the next caller sees that the owner
-/// is gone ([`Owner::is_gone`]) and takes the lock at once, instead of waiting out
-/// [`STALE_AFTER`] (OpenTTD, 2026-11-22: `worktrees.lock` held by dead pid 74771 until a
+/// is gone (`Owner::is_gone`) and takes the lock at once, instead of waiting out
+/// `STALE_AFTER` (OpenTTD, 2026-11-22: `worktrees.lock` held by dead pid 74771 until a
 /// person removed it).
 #[derive(Debug)]
 pub struct WorktreeLock {
