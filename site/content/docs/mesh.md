@@ -44,6 +44,13 @@ On a machine the repository has enrolled — the trunk commits an enabled declar
    release and says so on stderr. Every other command, every mesh command that changes
    something, and `mcp` are refused as ADR 0224 says, naming `just build`.
 
+On macOS the application firewall admits incoming connections per executable: the installed
+releases are admitted once `sudo majordomus mesh firewall apply` has run, an executable built
+under a worktree's `target/` is not, and a server it runs is then dialable only outbound. A
+session whose checkout is of the release's generation runs the installed release and is
+dialable; `mesh doctor`'s `firewall` check names an executable the firewall does not admit
+([The host firewall](#the-host-firewall)).
+
 What it does not do: keep a server alive with nobody working. A session's server ends when its
 last client leaves (ADR 0003), so an enrolled machine is dialable while a session works on it;
 a machine that must be reachable with no session runs a hub (ADR 0199,

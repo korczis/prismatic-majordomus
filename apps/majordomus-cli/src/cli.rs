@@ -5086,7 +5086,7 @@ pub fn resolve_checkout_http_host(
 ///
 /// `enrolled` is this machine's node id when the trunk's committed mesh declaration is
 /// enabled and lists this machine's key
-/// ([`crate::capability::builtin::mesh::enrolled_here`]), and `None` otherwise. Only when
+/// (`capability::builtin::mesh::enrolled_here`), and `None` otherwise. Only when
 /// nothing else named an interface — no flag, no [`HTTP_HOST_ENV`] — does it move the bind,
 /// to [`MESH_NODE_HOST`], in the primary checkout and in a linked worktree alike: each is a
 /// runtime of the mesh, and a runtime on loopback advertises an address no peer can dial. A
