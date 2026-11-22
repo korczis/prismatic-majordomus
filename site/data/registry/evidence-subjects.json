@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -716,6 +716,16 @@
       "kind": "capability",
       "subject": "capability:mesh.peers",
       "path": "/evidence/capabilities/mesh-peers/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.record.write",
+      "path": "/evidence/capabilities/mesh-record-write/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.records",
+      "path": "/evidence/capabilities/mesh-records/"
     },
     {
       "kind": "capability",
@@ -5754,6 +5764,26 @@
       "kind": "capability",
       "id": "mesh.peers",
       "page": "/evidence/capabilities/mesh-peers/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.record.write": {
+      "kind": "capability",
+      "id": "mesh.record.write",
+      "page": "/evidence/capabilities/mesh-record-write/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.records": {
+      "kind": "capability",
+      "id": "mesh.records",
+      "page": "/evidence/capabilities/mesh-records/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -22372,6 +22402,30 @@
       "programs": [],
       "members": [
         "capability:mesh.peers"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_record_write": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_record_write",
+      "alias_of": "capability:mesh.record.write",
+      "programs": [],
+      "members": [
+        "capability:mesh.record.write"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_records": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_records",
+      "alias_of": "capability:mesh.records",
+      "programs": [],
+      "members": [
+        "capability:mesh.records"
       ],
       "routes": [],
       "mechanisms": [],

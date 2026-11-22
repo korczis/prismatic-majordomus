@@ -225,6 +225,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4587; they may not run concurrently |
+| WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I3119` | shares apps/majordomus-cli/src/evidence with I3122; they may not run concurrently |
 | WARN | `scope_conflict` | `I3119` | shares apps/majordomus-cli/src/evidence with I3124; they may not run concurrently |
 | WARN | `scope_conflict` | `I3119` | shares .ai/repo/project/intents with I3229; they may not run concurrently |

@@ -98,9 +98,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4634; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4634; they may not run concurrently |
+| WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4665; they may not run concurrently |
