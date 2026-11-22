@@ -135,7 +135,7 @@ grep -q "cancelled by the next push" "$T/owed.out" || {
 # `636acc8..origin/master` read nothing and said "no publication is owed" of any trunk. Here
 # the subject names a four-digit prefix of the merged commit and a blob is planted that shares
 # it, which is the same ambiguity without searching for a seven-digit collision.
-command -v python3 >/dev/null 2>&1 || skip "python3 is required to plant a colliding blob"
+mj_runs python3 || skip "$(mj_runs_why python3), which plants a colliding blob"
 fixture "$T/ambiguous" merged
 (
   cd "$T/ambiguous" || exit 1
