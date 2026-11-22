@@ -83,10 +83,7 @@ impl WorktreeLock {
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
                     if Self::is_stale(&path) {
-                        // Whoever wrote it is gone. Removing it races with another recoverer
-                        // taking the same decision; both then contend on create_new, which
-                        // only one of them wins, so the race has no bad outcome.
-                        let _ = fs::remove_file(&path);
+                        Self::reclaim(&path);
                         continue;
                     }
                     if Instant::now() >= deadline {
@@ -99,6 +96,34 @@ impl WorktreeLock {
                 }
                 Err(e) => return Err(WorktreeError::io(&path, &e)),
             }
+        }
+    }
+
+    /// Remove the lock file at `path` if it is still stale, deciding and removing as one step.
+    ///
+    /// Judging a file stale and then removing it are two steps, and between them another
+    /// recoverer can remove the same stale file and create its own lock: a second recoverer
+    /// that removed whatever was there then deleted a live lock, and both held it. That was
+    /// rare while a lock was reclaimed only after 900 s; once a dead owner's lock is taken at
+    /// once, every caller that waited behind the dead owner judges it in the same moment. So
+    /// the judgement is repeated, and the removal made, under an exclusive lock on a file
+    /// beside the lock (`worktrees.lock.reclaim`): the recoverer that comes second finds the
+    /// lock already gone or a live owner's, and leaves it. That file is never removed, and
+    /// the kernel releases its lock when its holder exits however it exits, so it cannot be
+    /// left held. A recoverer that cannot open it removes the stale file as before.
+    fn reclaim(path: &Path) {
+        let mut name = path.file_name().unwrap_or_default().to_os_string();
+        name.push(".reclaim");
+        let guard = fs::OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .write(true)
+            .open(path.with_file_name(name));
+        if let Ok(file) = &guard {
+            let _ = file.lock();
+        }
+        if Self::is_stale(path) {
+            let _ = fs::remove_file(path);
         }
     }
 
@@ -282,6 +307,51 @@ mod tests {
                 .unwrap_or_else(|e| panic!("a dead owner's lock ({content}) was not taken: {e}"));
             let now = fs::read_to_string(taken.path()).unwrap();
             assert_eq!(Owner::parse(&now).unwrap().pid, std::process::id());
+        }
+    }
+
+    /// Callers waiting behind a dead owner all judge its lock stale at once; exactly one of
+    /// them takes it at a time. Each holder counts itself in while it holds the lock, and no
+    /// holder may ever find another already counted. Before the judgement and the removal
+    /// were one step, a caller that judged the dead owner's file stale removed the lock the
+    /// first recoverer had just created, and both held it.
+    #[test]
+    fn callers_reclaiming_one_dead_owner_take_the_lock_one_at_a_time() {
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        use std::sync::{Arc, Barrier};
+        const TAKERS: usize = 8;
+        let dead = dead_pid();
+        let holders = Arc::new(AtomicUsize::new(0));
+        let shared = Arc::new(AtomicBool::new(false));
+        for _round in 0..25 {
+            let dir = tempfile::tempdir().unwrap();
+            plant(dir.path(), &format!("pid {dead} at 1"));
+            let start = Arc::new(Barrier::new(TAKERS));
+            let takers: Vec<_> = (0..TAKERS)
+                .map(|_| {
+                    let (root, start) = (dir.path().to_path_buf(), Arc::clone(&start));
+                    let (holders, shared) = (Arc::clone(&holders), Arc::clone(&shared));
+                    std::thread::spawn(move || {
+                        start.wait();
+                        let held = WorktreeLock::acquire_with(&root, Duration::from_secs(20))
+                            .expect("every taker gets the lock in turn");
+                        if holders.fetch_add(1, Ordering::SeqCst) != 0 {
+                            shared.store(true, Ordering::SeqCst);
+                        }
+                        std::thread::sleep(Duration::from_millis(2));
+                        holders.fetch_sub(1, Ordering::SeqCst);
+                        drop(held);
+                    })
+                })
+                .collect();
+            for taker in takers {
+                taker.join().expect("a taker finished");
+            }
+            assert!(
+                !shared.load(Ordering::SeqCst),
+                "two callers held the lock at once"
+            );
+            assert!(!WorktreeLock::path_for(dir.path()).exists(), "all released");
         }
     }
 
