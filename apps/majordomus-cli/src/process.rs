@@ -19,8 +19,9 @@
 //! The identity of this boot ([`boot_id`]) and whether a pid is alive
 //! ([`crate::lease::alive`]) tell a lock file whose owner is gone from one that is held.
 
-use std::io;
-use std::process::{Child, Command, ExitStatus};
+use std::io::{self, Read};
+use std::process::{Child, Command, ExitStatus, Stdio};
+use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
 /// How often a busy program is asked again, and how long apart: five seconds in all, far
@@ -97,6 +98,94 @@ pub(crate) fn wait_group(
         }
         std::thread::sleep(poll);
     }
+}
+
+/// What a run bounded by [`run_bounded`] left: its exit status, or `None` when the bound
+/// ended it, and everything it wrote on each pipe until then.
+#[derive(Debug)]
+pub(crate) struct Bounded {
+    /// The exit status, when the program exited and both its pipes reached their end within
+    /// the bound; `None` when the bound ended it, or ended a program it left holding a pipe.
+    pub status: Option<ExitStatus>,
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>,
+}
+
+/// Run `cmd` with no stdin and both outputs captured, at most `limit`, asking every `poll`
+/// whether it has exited: the one bounded run that every runner reading a program's output
+/// shares.
+///
+/// Both pipes are drained on threads of their own while the program is waited for. Reading
+/// them only once it had exited held a program that wrote more than a pipe buffer (64 KiB on
+/// macOS and Linux) blocked on its write until the bound killed it: a call that would have
+/// answered was reported as having timed out, and spent its whole budget doing so (`gh run
+/// list` in the monitor, `tailscale status --json` on a large tailnet).
+///
+/// The program leads a group of its own ([`spawn_group`]). At the bound the group is ended
+/// and the child reaped. A program that exits but leaves a member of its group holding a
+/// pipe is given what is left of the bound for that pipe to close, and then its group is
+/// ended too, so no reader outlives the bound. A wait that cannot say whether the program
+/// has exited is treated as the bound. Only a program that cannot be started is an error.
+pub(crate) fn run_bounded(
+    cmd: &mut Command,
+    limit: Duration,
+    poll: Duration,
+) -> io::Result<Bounded> {
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let (mut child, _group) = spawn_group(cmd)?;
+    let deadline = Instant::now() + limit;
+    let out = drain(child.stdout.take());
+    let err = drain(child.stderr.take());
+    let mut status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break Some(status),
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(poll),
+            // still running at the bound, or not able to say: the bound decides either way
+            _ => {
+                kill_group(&mut child);
+                break None;
+            }
+        }
+    };
+    let (stdout, out_open) = drained(out, deadline, &mut child);
+    let (stderr, err_open) = drained(err, deadline, &mut child);
+    if out_open || err_open {
+        status = None;
+    }
+    Ok(Bounded {
+        status,
+        stdout,
+        stderr,
+    })
+}
+
+/// Read `pipe` to its end on a thread of its own; what was read arrives on the receiver. Both
+/// pipes are asked for by [`run_bounded`], so both are there to take.
+fn drain(pipe: Option<impl Read + Send + 'static>) -> mpsc::Receiver<Vec<u8>> {
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        if let Some(mut pipe) = pipe {
+            let _ = pipe.read_to_end(&mut bytes);
+        }
+        let _ = tx.send(bytes);
+    });
+    rx
+}
+
+/// What a drain read, waited for until `deadline`. Past it the group `child` leads is ended,
+/// which closes the pipe its remaining members held, and the drain then reaches its end; the
+/// flag says the pipe was still open at the deadline. A pipe still open means a member of the
+/// group lives, so the group's id still names this group when it is signalled.
+fn drained(rx: mpsc::Receiver<Vec<u8>>, deadline: Instant, child: &mut Child) -> (Vec<u8>, bool) {
+    let left = deadline.saturating_duration_since(Instant::now());
+    if let Ok(bytes) = rx.recv_timeout(left) {
+        return (bytes, false);
+    }
+    kill_group(child);
+    (rx.recv().unwrap_or_default(), true)
 }
 
 /// End every group this process leads and still holds a [`Group`] for. Async-signal-safe:
@@ -432,6 +521,122 @@ mod tests {
         .unwrap()
         .expect("it finished");
         assert_eq!(status.code(), Some(3));
+    }
+
+    /// Two mebibytes: far more than a pipe holds (64 KiB on macOS and Linux).
+    const MUCH: usize = 2 * 1024 * 1024;
+
+    /// A program that writes far more than a pipe holds, on both pipes, and exits is
+    /// answered at once with its status and all of what it wrote: its writes are read while
+    /// it runs, so it is never held on a full pipe until the bound.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_reads_a_large_output_while_it_runs() {
+        let mut cmd = Command::new("sh");
+        cmd.args([
+            "-c",
+            "head -c \"$1\" /dev/zero; head -c \"$1\" /dev/zero >&2; exit 4",
+            "sh",
+            &MUCH.to_string(),
+        ]);
+        let started = Instant::now();
+        let run = run_bounded(&mut cmd, Duration::from_secs(20), Duration::from_millis(10))
+            .expect("sh runs");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the run was held on a full pipe: {:?}",
+            started.elapsed()
+        );
+        assert_eq!(run.status.and_then(|s| s.code()), Some(4));
+        assert_eq!(run.stdout.len(), MUCH, "all of stdout is read");
+        assert_eq!(run.stderr.len(), MUCH, "all of stderr is read");
+    }
+
+    /// A program that writes far more than a pipe holds and then never finishes is ended
+    /// with everything it started at its bound, and what it wrote until then is answered.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_that_never_finishes_ends_at_its_bound_with_its_output() {
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let mut cmd = Command::new("sh");
+        cmd.args([
+            "-c",
+            "head -c \"$2\" /dev/zero; sleep 30 & echo $! > \"$1\"; wait",
+            "sh",
+        ])
+        .arg(&pids)
+        .arg(MUCH.to_string());
+        let started = Instant::now();
+        let run = run_bounded(
+            &mut cmd,
+            Duration::from_millis(1500),
+            Duration::from_millis(10),
+        )
+        .expect("sh runs");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the bound did not bound the run: {:?}",
+            started.elapsed()
+        );
+        assert!(run.status.is_none(), "it did not finish within its bound");
+        assert_eq!(
+            run.stdout.len(),
+            MUCH,
+            "what it wrote before it hung is answered"
+        );
+        let sleeper = sleeper(&pids);
+        assert!(
+            gone_soon(sleeper),
+            "the program it started, {sleeper}, outlived the bound"
+        );
+    }
+
+    /// A program that exits at once but leaves a program of its own holding the pipe is not
+    /// answered as finished: the bound ends what it left, and the reader is released then
+    /// rather than held for the leftover's thirty seconds.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_ends_what_its_program_left_holding_a_pipe() {
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", "sleep 30 & echo $! > \"$1\"; echo left", "sh"])
+            .arg(&pids);
+        let started = Instant::now();
+        let run = run_bounded(
+            &mut cmd,
+            Duration::from_millis(500),
+            Duration::from_millis(10),
+        )
+        .expect("sh runs");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the reader was held by what the program left: {:?}",
+            started.elapsed()
+        );
+        assert!(
+            run.status.is_none(),
+            "a pipe still held at the bound is not an answer"
+        );
+        assert_eq!(String::from_utf8_lossy(&run.stdout), "left\n");
+        let sleeper = sleeper(&pids);
+        assert!(
+            gone_soon(sleeper),
+            "the leftover {sleeper} outlived the bound"
+        );
+    }
+
+    /// A program that cannot be started is the run's error.
+    #[test]
+    fn a_bounded_run_of_a_program_that_cannot_start_is_its_error() {
+        let e = run_bounded(
+            &mut Command::new("/nonexistent/majordomus-no-such-tool"),
+            Duration::from_secs(1),
+            Duration::from_millis(10),
+        )
+        .expect_err("an absent program does not start");
+        assert_eq!(e.kind(), io::ErrorKind::NotFound);
     }
 
     /// Killing a group ends a program that never finishes and the program it started.

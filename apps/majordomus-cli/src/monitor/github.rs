@@ -14,9 +14,8 @@
 //! Pages run fails when its publisher asks for help even after the deploy job went out:
 //! that is `deploy_needs_help`, not `deploy_failed`.
 
-use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -143,14 +142,12 @@ fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
-    // a group of its own, so that the budget ends `gh` with whatever it started
-    let (mut child, _group) = crate::process::spawn_group(
-        Command::new(program)
-            .args(args)
-            .current_dir(root)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped()),
+    // a group of its own, ended with whatever it started at the budget, and its output read
+    // while it runs: a `gh run list` longer than a pipe holds is answered, not timed out
+    let run = crate::process::run_bounded(
+        Command::new(program).args(args).current_dir(root),
+        BUDGET,
+        Duration::from_millis(25),
     )
     .map_err(|e| {
         (
@@ -158,26 +155,14 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
             format!("gh could not be started: {e}"),
         )
     })?;
-    let deadline = Instant::now() + BUDGET;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            // not finished, or not able to say: the budget decides either way
-            _ if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
-            _ => {
-                crate::process::kill_group(&mut child);
-                return Err((
-                    MonitorSourceHealth::Error,
-                    format!("gh {} took longer than {}s", args[0], BUDGET.as_secs()),
-                ));
-            }
-        }
+    let Some(status) = run.status else {
+        return Err((
+            MonitorSourceHealth::Error,
+            format!("gh {} took longer than {}s", args[0], BUDGET.as_secs()),
+        ));
     };
-    let mut out = String::new();
-    let mut err = String::new();
-    // both were piped above, so both are there to read
-    let _ = child.stdout.take().map(|mut s| s.read_to_string(&mut out));
-    let _ = child.stderr.take().map(|mut s| s.read_to_string(&mut err));
+    let out = String::from_utf8_lossy(&run.stdout);
+    let err = String::from_utf8_lossy(&run.stderr);
     if !status.success() {
         let reason = err
             .lines()
@@ -715,6 +700,33 @@ mod tests {
             "#1 has no moment, #2 only its opening, the undated run none"
         );
         assert_eq!(read.suppressed, 0);
+    }
+
+    /// A `gh` whose answer is longer than a pipe holds is read while it runs and answered
+    /// within the budget, not held on its full pipe until the budget ends it.
+    #[test]
+    #[cfg(unix)]
+    fn a_gh_answer_longer_than_a_pipe_is_read_within_the_budget() {
+        let dir = tempfile::tempdir().unwrap();
+        let program = dir.path().join("gh");
+        std::fs::write(
+            &program,
+            "#!/bin/sh\nprintf '['\ni=0\nwhile [ $i -lt 40000 ]; do printf '%s,' $i; i=$((i+1)); done\necho '0]'\n",
+        )
+        .unwrap();
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        let started = Instant::now();
+        let answer = run(program.to_str().unwrap(), dir.path(), &["run"]).expect("gh answers");
+        assert!(
+            started.elapsed() < BUDGET,
+            "the answer waited out the budget: {:?}",
+            started.elapsed()
+        );
+        let items = answer.as_array().expect("a list").len();
+        assert_eq!(items, 40_001, "every item of the long answer is read");
     }
 
     #[test]

@@ -82678,6 +82678,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4713",
+        "kind": "issue",
+        "label": "I4713",
+        "summary": "A bounded subprocess's output is read while it runs, so a long answer is answered and not timed out",
+        "route": "/cockpit/objects/issue/i4713",
+        "source": ".ai/repo/project/issues/I4713.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A program that writes more than a pipe holds on both pipes and exits is answered at once with its status and all of its output",
+            "A program that writes more than a pipe holds and then never finishes is ended with what it started at its bound, and what it wrote until then is answered",
+            "A program that exits but leaves a program of its own holding a pipe is not answered as finished, and what it left is ended at the bound",
+            "A gh answer and a tailscale status longer than a pipe holds are read within their budgets"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [
+            "I4712"
+          ],
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "worktree/git.rs and economics/runner.rs, which already drain while they wait",
+            "The process-group and lock-owner work of I4712, which this builds on"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/process.rs",
+            "apps/majordomus-cli/src/monitor/github.rs",
+            "apps/majordomus-cli/src/mesh/tailscale.rs",
+            "apps/majordomus-cli/src/environment/probe.rs",
+            ".ai/repo/project/issues/I4713.yaml"
+          ],
+          "serves": [],
+          "slug": "bounded-runs-drain-their-pipes-while-they-wait",
+          "validation": [
+            "cargo test --lib process::",
+            "cargo test --lib monitor::github",
+            "cargo test --lib mesh::tailscale",
+            "cargo test --lib environment::probe"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -152817,6 +152863,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4713",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4713",
+        "target": "majordomus://issue/I4712",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4713",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165743,8 +165804,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4535,
-      "edges": 10218,
+      "nodes": 4536,
+      "edges": 10221,
       "acyclic": false,
       "truncated": false
     }

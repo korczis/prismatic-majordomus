@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "4de0e86753d048ec8523fa14340cf6edeecfb3bd122a8c5ad8299224ec80fb65",
+    "fingerprint": "bf1f7a60b3a11a1b5204585ec58d90e62f54394015d82515b8e55abe8d28e635",
     "summary": {
-      "total": 4057,
+      "total": 4058,
       "builtin": 233,
-      "declarative": 3824,
+      "declarative": 3825,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3824
+        "resource": 3825
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3834
+        "implemented": 3835
       },
       "mcp_tools": 217,
-      "mcp_resources": 3881,
+      "mcp_resources": 3882,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1272,
+        "capabilities": 1273,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "75a8798d7cc2b462ff692a4f487304de4beaff6a839c9950e44419f8862e5f0c",
+    "fingerprint": "36b36ceed04a2f990cf9ff8f34f150bed3d4e860dda59cef1ddab4ef61a4e884",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1272,
+      "issue": 1273,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 139911
+        "bytes": 139918
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -125571,6 +125571,17 @@
         "bytes": 4017
       },
       {
+        "uri": "majordomus://issue/I4713",
+        "kind": "issue",
+        "identity": "I4713",
+        "title": "A bounded subprocess's output is read while it runs, so a long answer is answered and not timed out",
+        "description": "crate::process holds one bounded run (run_bounded) that starts the program as the leader of a process group of its own, drains its stdout and stderr on threads of their own while it waits, ends the group at the bound and reaps the child, and ends a group member the program left holding a pipe once the bound is spent. The monitor's gh call, the tailscale status read and the environment probe's bounded_output run through it.",
+        "path": ".ai/repo/project/issues/I4713.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3252
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -142174,7 +142185,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1272
+      "objects": 1273
     },
     {
       "name": "knowledge",

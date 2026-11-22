@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-runtime-supervises-itself](https://majordomus.dev/plan/the-runtime-supervises-itself/) | BLOCKED | 0/11 | 0 | 11 | 0 | 0 | 1 | One read capability classifies the runtime's work; a bounded repair loop acts only through ensure, recovery, leases and the reaper. |
+| [the-runtime-supervises-itself](https://majordomus.dev/plan/the-runtime-supervises-itself/) | BLOCKED | 0/12 | 0 | 12 | 0 | 0 | 1 | One read capability classifies the runtime's work; a bounded repair loop acts only through ensure, recovery, leases and the reaper. |
 
 ## Issues
 
@@ -27,6 +27,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4414](https://majordomus.dev/plan/i4414/) | BLOCKED | 1 | I4326 | A repository whose runs wait while another repository of the same account holds the Actions jobs is told so, and the landing seat is advised to hold new train runs while it lasts |
 | [I4480](https://majordomus.dev/plan/i4480/) | BLOCKED | 2 | I4001 | An execution accepted before a restart is answered after it as an unknown outcome, never as absent |
 | [I4712](https://majordomus.dev/plan/i4712/) | BLOCKED | 0 | — | A bounded subprocess ends with everything it started, and the worktree lock is taken at once from an owner that is gone |
+| [I4713](https://majordomus.dev/plan/i4713/) | BLOCKED | 1 | I4712 | A bounded subprocess's output is read while it runs, so a long answer is answered and not timed out |
 
 ## Findings
 
