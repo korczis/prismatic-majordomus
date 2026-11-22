@@ -133,9 +133,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     let (host, port) = match &declared {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
         None => (
-            crate::cli::checkout_http_host(
+            // an enrolled mesh node leaves loopback when nothing else names an interface
+            crate::cli::node_http_host(
                 args.host.as_deref(),
                 std::path::Path::new(&app.context.index.repository.root),
+                crate::capability::builtin::mesh::enrolled_here(&app.context).as_deref(),
             )
             .0,
             // the port this checkout asks for on every start, unless one was given (I2702)

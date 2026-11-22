@@ -1,0 +1,154 @@
+---
+schema: adr/v1
+id: adr-0234
+kind: adr
+title: An enrolled machine is a mesh node out of the box — its servers bind every interface, the tailnet asks the checkout port, and a mesh read never waits on a build
+status: proposed
+date: 2026-11-22
+tags:
+  - mesh
+  - mesh-runtime
+  - launcher
+related:
+  - file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md
+  - file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md
+  - file:.ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md
+  - file:.ai/repo/adrs/0224-no-ordinary-command-builds.md
+  - file:.ai/repo/mesh/majordomus.yaml
+  - file:docs/MESH.md
+  - file:docs/MCP.md
+  - file:apps/majordomus-cli/src/cli.rs
+  - file:apps/majordomus-cli/src/mesh/tailscale.rs
+  - file:lib/rust_bin.sh
+  - test:test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh
+  - test:test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh
+provenance:
+  origin: authored
+---
+
+# 234. An enrolled machine is a mesh node out of the box
+
+## Context
+
+On 2026-11-22 the four machines of the owner's fleet (two MacBook Pros, the iMac, lundra), all
+on 1.2.0, were fully linked — and only because a person had started, by hand on each one,
+`majordomus serve --host 0.0.0.0 --port 8791 --idle 0` in a dedicated `prismatic-majordomus-hub`
+checkout. Without that the mesh did not work at all, although the repository commits an enabled
+declaration that lists every one of those machines' keys:
+
+- The server a session gets — the one `majordomus mcp` elects and `serve ensure` starts — binds
+  loopback unless `MAJORDOMUS_HTTP_HOST` names an interface, and that variable was set on none of
+  the four machines. A runtime on loopback advertises `127.0.0.1` on multicast and registers
+  `127.0.0.1` with every hub, so nobody can dial it. Two machines whose only servers are
+  sessions' can never link, because neither listens.
+- The tailnet route asks each online peer on port 8791 only, which is where a hand-made hub
+  listens; the server of a session in a primary checkout asks for 8741.
+- In a checkout whose executable was not built, `bin/majordomus` refused `mesh status`, `mesh
+  peers` and every other mesh read, because the installed release was not of the tree's
+  generation (ADR 0224): a session there could not even see the mesh it was supposed to join.
+
+The documented rule behind the first point is in `README.md` and `docs/MCP.md` ("The machine
+names the interface"): *loopback is the default and no tracked file can move it*, because a
+tracked setting would make every clone of a public repository listen on whatever network it woke
+up in. That reason is sound and is kept. What it did not consider is that the mesh declaration
+already names machines, not clones: its `trust.allow` lists public keys, a machine whose key is
+not listed opens no mesh socket at all (I2261), and a working tree cannot widen what the trunk's
+committed copy trusts (I2135).
+
+## Decision
+
+1. **An enrolled machine's servers bind every interface when nothing else names one.** A server
+   started with no `--host`/`--http-host` and no `MAJORDOMUS_HTTP_HOST` binds `0.0.0.0` when all
+   of these hold, and loopback otherwise:
+   - the trunk holds a committed copy of the mesh declaration,
+   - the declaration in force (the working tree's, narrowed to the trunk's) is enabled,
+   - this machine's identity file already exists, and its public key is listed literally in
+     `trust.allow` (a `tofu` policy enrols nobody).
+
+   It holds for the primary checkout and for a linked worktree alike: each is a runtime of the
+   mesh, the declaration itself says "every worktree's shared server on the owner's machines",
+   and most sessions work in worktrees. The bind says so in the log, naming the node and the
+   opt-out, and the undeclared-bind warning stands. `server.status` reports the same resolution
+   as `desired.host` (`cli::resolve_node_http_host`).
+
+2. **The rule "no tracked file can move it" becomes "no tracked file alone can move it".** The
+   tracked declaration says which machines the repository enrolled; only the machine that holds
+   a listed private key answers yes, so a clone on any other machine stays on loopback. A
+   machine opts out with `MAJORDOMUS_HTTP_HOST=127.0.0.1`, and the flag and the variable still
+   win over the enrolment in every case, including the variable's rule that a linked worktree
+   does not take an interface from it.
+
+3. **The tailnet route asks two ports.** Every online tailnet peer is asked on the declared
+   `tailscale.port` (8791, a hub) and on the port a primary checkout's server asks for (8741),
+   once each when they are equal. A peer whose only server is a session's is found with no hub.
+
+4. **A read of the mesh never waits on a build.** This narrows ADR 0224 decision 2 for one
+   class of command. When neither the tree's executable, nor a release of its generation, nor a
+   sibling worktree's executable can answer, and the command is a read of the mesh — its words
+   name a capability of the `mesh` module that `docs/generated/registry.json` declares a
+   `query` (`mesh status`, `mesh peers`, `mesh state`, `mesh doctor`, `mesh identity`, ...) —
+   the installed release of another generation answers it, saying so on stderr. It asks the
+   running runtime and the network what they hold, signs nothing and writes nothing, and the
+   mesh protocol is versioned on its own; nothing it prints is a verdict about this tree's code,
+   which is what ADR 0224 guards. Every other command, `mcp` and every `mesh` command (claim,
+   release, verify, enrol, firewall apply, ...) is refused exactly as before.
+
+## What does not change
+
+- The mesh stays off by default: the skeleton `majordomus init` seeds lists no key, so a new
+  repository's servers stay on loopback until one of its machines is enrolled and committed.
+- What a caller beyond loopback may do is ADR 0126's: it reads, and runs only the signed-input
+  mesh routes; the mesh's working state is local-only (ADR 0220 decision 4).
+- A session's server still ends when its last client leaves (ADR 0003, ADR 0199). An enrolled
+  machine is therefore dialable while a session works on it; a machine that must be dialable
+  with nobody working on it still runs a hub (ADR 0199), and the hubs keep port 8791.
+- A deployment object's `listen` block is still the only thing that binds a deployment.
+
+## Consequences
+
+- A session that starts in any checkout of an enrolled machine makes that machine
+  discoverable by multicast and by every hub it registers with, and dialable on the address it
+  advertises, with no command run by hand and no variable set.
+- Every server of an enrolled machine serves the read surface to the networks the machine is
+  on, as `MAJORDOMUS_HTTP_HOST=0.0.0.0` did.
+- On macOS the application firewall admits incoming connections per executable. On 2026-11-22
+  a linked worktree's server on the owner's MacBook Pro bound `0.0.0.0:8781` by this decision,
+  and the other MacBook could not reach it over the tailnet, while the installed release's hub
+  on the same machine answered: the firewall lists the installed releases
+  (`~/.local/share/majordomus/versions/*/libexec/majordomus-cli`) and no executable built under
+  a worktree's `target/`. A session is dialable from another Mac when its server runs the
+  installed release — which `bin/majordomus-cli` uses whenever the tree is of the release's
+  generation — or once its executable is admitted (`sudo majordomus mesh firewall apply`, run
+  with that executable); `mesh doctor`'s `firewall` check names the executable it finds
+  unadmitted. Linux hosts without a per-application firewall are unaffected.
+- The test harness binds loopback for every case unless a case says otherwise, so a case run
+  on an enrolled developer machine does not put its fixture servers on the network.
+- Port 8741 is shared by every repository's primary server on a machine; when another
+  repository holds it, this repository's primary binds a free port, which multicast and the
+  hubs still carry and only the tailnet probe misses.
+
+## Alternatives rejected
+
+- **Set `MAJORDOMUS_HTTP_HOST` in every machine's shell startup.** That is what was documented
+  and what nobody did on four machines; a step a person must remember is the failure.
+- **A key in `.ai/repo/policy.yaml`.** A tracked setting alone would move every clone, which is
+  the reason the rule exists.
+- **Keep the session's server alive after its last client leaves.** That is a daemon per
+  repository on every machine, which ADR 0199 rejects; the hub is the declared exception.
+- **Bind the primary checkout only.** Most sessions work in linked worktrees, so a machine
+  whose sessions all do would stay undialable.
+- **Serve `mcp` from a release of another generation.** A client served by another crate
+  answers for a tree it was not built from, which ADR 0224 rightly refuses; reads of the mesh
+  answer for the runtime, not for the tree.
+
+## Verification
+
+- `test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh`: in a fixture whose
+  trunk commits an enabled declaration, an unlisted key binds loopback; a listed key binds
+  `0.0.0.0` for `serve`, the server `serve ensure` starts and `desired.host`, in the primary
+  and in a linked worktree; `MAJORDOMUS_HTTP_HOST=127.0.0.1` and `--host` keep loopback; a
+  disabled or uncommitted declaration keeps loopback.
+- `test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh`: with no executable and a release
+  of another generation, a mesh query is answered by the release and says so, while a mesh
+  command and an ordinary command are refused with exit 12 naming `just build`.
+- The crate's tests of `cli::resolve_node_http_host` and `mesh::tailscale::ports`.

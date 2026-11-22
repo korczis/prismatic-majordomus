@@ -58,7 +58,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `no_evidence_required` | `I3086` | requires no evidence; nothing gates its completion |
 | WARN | `no_evidence_required` | `I3088` | requires no evidence; nothing gates its completion |
 | WARN | `no_evidence_required` | `I3860` | requires no evidence; nothing gates its completion |
-| WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-deploy with I2660; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I2661; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I2662; they may not run concurrently |

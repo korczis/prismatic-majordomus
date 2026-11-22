@@ -193,7 +193,10 @@ impl Session {
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
         let root = std::path::Path::new(&app.context.index.repository.root);
-        let (http_host, _) = crate::cli::checkout_http_host(args.http_host.as_deref(), root);
+        // an enrolled mesh node leaves loopback when nothing else names an interface
+        let enrolled = crate::capability::builtin::mesh::enrolled_here(&app.context);
+        let (http_host, _) =
+            crate::cli::node_http_host(args.http_host.as_deref(), root, enrolled.as_deref());
         // the port this checkout asks for on every start, unless one was given (I2702)
         let http_port = args
             .http_port

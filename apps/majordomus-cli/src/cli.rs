@@ -4843,8 +4843,9 @@ pub struct McpArgs {
     pub standalone: bool,
 
     /// Interface the shared server binds when this process is the one that starts it;
-    /// without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback
-    /// (`127.0.0.1`) when that is unset
+    /// without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, else every
+    /// interface on a machine the committed mesh declaration enrols (ADR 0234), else
+    /// loopback (`127.0.0.1`)
     #[arg(long, value_name = "HOST")]
     pub http_host: Option<String>,
 
@@ -4944,7 +4945,17 @@ pub enum HostOrigin {
     /// [`HTTP_HOST_ENV`] named one, and the checkout is a linked worktree, which does not
     /// take it: [`LOOPBACK_HOST`] ([`checkout_http_host`]).
     LinkedWorktree,
+    /// Neither a flag nor [`HTTP_HOST_ENV`], and this machine's node key is listed by the
+    /// trunk's committed, enabled mesh declaration: [`MESH_NODE_HOST`], so that the
+    /// machine the repository enrolled can be dialed by its peers (ADR 0234,
+    /// [`resolve_node_http_host`]).
+    MeshNode,
 }
+
+/// The interface the server of an enrolled mesh node binds when nothing else names one:
+/// every interface, so that multicast, a rendezvous and the tailnet each advertise an
+/// address another machine can dial (ADR 0234).
+pub const MESH_NODE_HOST: &str = "0.0.0.0";
 
 /// The interface a local server binds: the flag when one was given, else what
 /// [`HTTP_HOST_ENV`] names, else loopback. A variable that is set and blank is unset.
@@ -5071,6 +5082,103 @@ pub fn resolve_checkout_http_host(
     }
 }
 
+/// [`resolve_checkout_http_host`] for a machine the repository may have enrolled in its mesh.
+///
+/// `enrolled` is this machine's node id when the trunk's committed mesh declaration is
+/// enabled and lists this machine's key
+/// (`capability::builtin::mesh::enrolled_here`), and `None` otherwise. Only when
+/// nothing else named an interface — no flag, no [`HTTP_HOST_ENV`] — does it move the bind,
+/// to [`MESH_NODE_HOST`], in the primary checkout and in a linked worktree alike: each is a
+/// runtime of the mesh, and a runtime on loopback advertises an address no peer can dial. A
+/// tracked file alone cannot move it, because the key it must list is this machine's own;
+/// a machine opts out with `MAJORDOMUS_HTTP_HOST=127.0.0.1` (ADR 0234).
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_node_http_host, HostOrigin};
+/// // enrolled, and nothing else names an interface: every interface
+/// assert_eq!(
+///     resolve_node_http_host(None, None, false, Some("641bdb94")),
+///     ("0.0.0.0".to_string(), HostOrigin::MeshNode)
+/// );
+/// assert_eq!(
+///     resolve_node_http_host(None, None, true, Some("641bdb94")),
+///     ("0.0.0.0".to_string(), HostOrigin::MeshNode)
+/// );
+/// // not enrolled: loopback, as before
+/// assert_eq!(
+///     resolve_node_http_host(None, None, false, None),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// // the machine's variable and a flag still win, loopback included: that is the opt-out
+/// assert_eq!(
+///     resolve_node_http_host(None, Some("127.0.0.1"), false, Some("641bdb94")),
+///     ("127.0.0.1".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_node_http_host(Some("127.0.0.1"), None, false, Some("641bdb94")),
+///     ("127.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn resolve_node_http_host(
+    flag: Option<&str>,
+    environment: Option<&str>,
+    linked: bool,
+    enrolled: Option<&str>,
+) -> (String, HostOrigin) {
+    match resolve_checkout_http_host(flag, environment, linked) {
+        (_, HostOrigin::Default) if enrolled.is_some() => {
+            (MESH_NODE_HOST.to_string(), HostOrigin::MeshNode)
+        }
+        resolved => resolved,
+    }
+}
+
+/// [`checkout_http_host`] for a machine the repository may have enrolled in its mesh: what
+/// `serve` and the server `mcp` elects bind ([`resolve_node_http_host`]). A bind the
+/// enrolment chose says so in the log, naming the node and the opt-out.
+///
+/// ```
+/// use majordomus_cli::cli::{node_http_host, HostOrigin};
+/// let plain = tempfile::tempdir().unwrap();
+/// // a flag is the answer whether or not the machine is enrolled
+/// assert_eq!(
+///     node_http_host(Some("10.0.0.1"), plain.path(), Some("641bdb94")),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// ```
+pub fn node_http_host(
+    flag: Option<&str>,
+    root: &std::path::Path,
+    enrolled: Option<&str>,
+) -> (String, HostOrigin) {
+    if enrolled.is_none() {
+        return checkout_http_host(flag, root);
+    }
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let linked = crate::repository::git_identity(root).is_some_and(|g| g.linked);
+    let (host, origin) = resolve_node_http_host(flag, environment.as_deref(), linked, enrolled);
+    match origin {
+        HostOrigin::MeshNode => tracing::info!(
+            host = %host,
+            node = enrolled.unwrap_or_default(),
+            "binding {host}: this machine's key (node {}) is listed by the committed, enabled \
+             mesh declaration, so this server is the machine's mesh runtime and its peers must \
+             be able to dial it (ADR 0234); {HTTP_HOST_ENV}=127.0.0.1 keeps it on loopback",
+            enrolled.unwrap_or_default()
+        ),
+        HostOrigin::Environment => tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        ),
+        HostOrigin::LinkedWorktree => tracing::info!(
+            "binding {LOOPBACK_HOST}: {HTTP_HOST_ENV} names the machine's interface, and a \
+             linked worktree leaves it to the primary checkout's server (--host binds one)"
+        ),
+        _ => {}
+    }
+    (host, origin)
+}
+
 #[derive(Debug, Args)]
 /// `majordomus serve`.
 pub struct ServeArgs {
@@ -5083,7 +5191,8 @@ pub struct ServeArgs {
     pub command: Option<ServeCommand>,
 
     /// Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine,
-    /// and loopback (`127.0.0.1`) when that is unset
+    /// else every interface on a machine the committed mesh declaration enrols (ADR 0234),
+    /// else loopback (`127.0.0.1`)
     #[arg(long, value_name = "HOST")]
     pub host: Option<String>,
 
