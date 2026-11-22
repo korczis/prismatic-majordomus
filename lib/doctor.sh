@@ -810,6 +810,7 @@ mj_report_install_currency() {
         # "packages" map: there is nothing here to compare the install with, and an empty
         # wanted set would read as current whatever node_modules holds
         unread=$((unread + 1))
+        # build-cache: a remedy the doctor prints for the owner to run, never runs itself
         mj_info clone "$d" "package-lock.json is lockfileVersion $lv, with no \"packages\" map, so whether node_modules matches it is not judged; npm 7 and later rewrite it in the current format" "cd '$d' && npm install --package-lock-only"
       elif [ ! -f "$d/node_modules/.package-lock.json" ]; then
         unread=$((unread + 1))
