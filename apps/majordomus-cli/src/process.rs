@@ -662,8 +662,7 @@ mod tests {
     #[test]
     fn a_program_that_cannot_start_records_no_group() {
         let e = spawn_group(&mut Command::new("/nonexistent/majordomus-no-such-tool"))
-            .err()
-            .expect("an absent program does not start");
+            .expect_err("an absent program does not start");
         assert_eq!(e.kind(), io::ErrorKind::NotFound);
     }
 
