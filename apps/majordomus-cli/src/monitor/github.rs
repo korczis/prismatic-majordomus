@@ -143,15 +143,15 @@ fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
 /// One call of `program`, bounded by [`BUDGET`], its stdout parsed as JSON; every failure is
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
-    let mut child = crate::process::retrying_busy(|| {
+    // a group of its own, so that the budget ends `gh` with whatever it started
+    let (mut child, _group) = crate::process::spawn_group(
         Command::new(program)
             .args(args)
             .current_dir(root)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-    })
+            .stderr(Stdio::piped()),
+    )
     .map_err(|e| {
         (
             MonitorSourceHealth::Absent,
@@ -165,8 +165,7 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourc
             // not finished, or not able to say: the budget decides either way
             _ if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
             _ => {
-                let _ = child.kill();
-                let _ = child.wait();
+                crate::process::kill_group(&mut child);
                 return Err((
                     MonitorSourceHealth::Error,
                     format!("gh {} took longer than {}s", args[0], BUDGET.as_secs()),

@@ -44,6 +44,9 @@ use super::model::*;
 use super::{inputs_digest, usage, Declarations, DIR, RUN_SCHEMA};
 use crate::metadata::yaml;
 use crate::policy::{Policy, ProjectionMode};
+// every harness session and every verification leads a process group of its own, so that a
+// timeout ends it and everything it started, and a signal that ends the runner ends them too
+use crate::process::spawn_group;
 
 /// How long a task's verify command may run. A test suite that hangs must end its run as a
 /// failed check, not hold the whole suite.
@@ -284,118 +287,11 @@ fn git(dir: &Path, args: &[&str]) -> Result<String, String> {
     run_quiet(dir, Path::new("git"), args, None, None)
 }
 
-/// The process groups the runner started and has not reaped yet, killed with the runner
-/// when it dies of `SIGINT`, `SIGTERM` or `SIGHUP`. Every harness session and every
-/// verification runs as the leader of a group of its own, so that a timeout can end it and
-/// everything it started; the price is that a Ctrl-C at the terminal no longer reaches them,
-/// and this is what pays it back. The handler does only what is safe inside a signal
-/// handler: `killpg` each recorded group, restore the default disposition, and raise the
-/// signal again so that the exit status still says which signal it was.
-#[cfg(unix)]
-mod groups {
-    use std::sync::atomic::{AtomicI32, Ordering};
-    use std::sync::Once;
-
-    const SLOTS: usize = 64;
-    static LIVE: [AtomicI32; SLOTS] = [const { AtomicI32::new(0) }; SLOTS];
-    static INSTALL: Once = Once::new();
-
-    /// A recorded group; dropping it forgets the group.
-    pub struct Registered(Option<usize>);
-
-    /// Record `pgid` until the returned value is dropped. More groups at once than there
-    /// are slots is not an error: the surplus is simply not killed on a signal.
-    pub fn register(pgid: u32) -> Registered {
-        INSTALL.call_once(|| {
-            let handler = on_signal as extern "C" fn(libc::c_int) as libc::sighandler_t;
-            for signal in [libc::SIGTERM, libc::SIGINT, libc::SIGHUP] {
-                // SAFETY: installing a handler that only calls async-signal-safe functions
-                unsafe { libc::signal(signal, handler) };
-            }
-        });
-        let Ok(pgid) = i32::try_from(pgid) else {
-            return Registered(None);
-        };
-        for (i, slot) in LIVE.iter().enumerate() {
-            if slot
-                .compare_exchange(0, pgid, Ordering::SeqCst, Ordering::SeqCst)
-                .is_ok()
-            {
-                return Registered(Some(i));
-            }
-        }
-        Registered(None)
-    }
-
-    impl Drop for Registered {
-        fn drop(&mut self) {
-            if let Some(i) = self.0 {
-                LIVE[i].store(0, Ordering::SeqCst);
-            }
-        }
-    }
-
-    extern "C" fn on_signal(signal: libc::c_int) {
-        for slot in &LIVE {
-            let pgid = slot.load(Ordering::SeqCst);
-            if pgid > 0 {
-                // SAFETY: killpg is async-signal-safe; the group is one this process started
-                unsafe { libc::killpg(pgid, libc::SIGKILL) };
-            }
-        }
-        // SAFETY: restoring the default disposition and re-raising are async-signal-safe
-        unsafe {
-            libc::signal(signal, libc::SIG_DFL);
-            libc::raise(signal);
-        }
-    }
-}
-
-#[cfg(not(unix))]
-mod groups {
-    pub struct Registered;
-
-    pub fn register(_: u32) -> Registered {
-        Registered
-    }
-}
-
-/// Start `cmd` as the leader of a process group of its own, recorded for [`groups`]. A
-/// program whose file is still open for writing somewhere is waited for rather than refused
-/// (see [`crate::process`]).
-fn spawn_group(cmd: &mut Command) -> std::io::Result<(Child, groups::Registered)> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        cmd.process_group(0);
-    }
-    let child = crate::process::retrying_busy(|| cmd.spawn())?;
-    let registered = groups::register(child.id());
-    Ok((child, registered))
-}
-
 /// Wait for `child`, started by [`spawn_group`], at most `limit`. On expiry its whole
 /// process group — the child and everything it started — is killed and the child reaped,
 /// and `None` says it never finished.
 fn wait_bounded(child: &mut Child, limit: Duration) -> Result<Option<ExitStatus>, String> {
-    let started = Instant::now();
-    loop {
-        if let Some(status) = child.try_wait().map_err(|e| e.to_string())? {
-            return Ok(Some(status));
-        }
-        if started.elapsed() >= limit {
-            #[cfg(unix)]
-            // SAFETY: the child leads its own group (`spawn_group`) and is not reaped yet,
-            // so the group id is still its own and names no other process's group.
-            unsafe {
-                libc::killpg(child.id() as libc::pid_t, libc::SIGKILL);
-            }
-            let _ = child.kill();
-            let _ = child.wait();
-            return Ok(None);
-        }
-        std::thread::sleep(Duration::from_millis(100));
-    }
+    crate::process::wait_group(child, limit, Duration::from_millis(100)).map_err(|e| e.to_string())
 }
 
 /// The directory one run works in: a fresh directory of the system temporary directory,

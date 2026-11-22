@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "55a4bab7d3a3890856a93aa67d0495f3597ae88fe0ef0256ab1a0d60ae378484",
+    "fingerprint": "4de0e86753d048ec8523fa14340cf6edeecfb3bd122a8c5ad8299224ec80fb65",
     "summary": {
-      "total": 4056,
+      "total": 4057,
       "builtin": 233,
-      "declarative": 3823,
+      "declarative": 3824,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3823
+        "resource": 3824
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3833
+        "implemented": 3834
       },
       "mcp_tools": 217,
-      "mcp_resources": 3880,
+      "mcp_resources": 3881,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1271,
+        "capabilities": 1272,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7abd283fa045db99c6c56f77aa59e082741ed71b26403f144d73f86a513e35bb",
+    "fingerprint": "75a8798d7cc2b462ff692a4f487304de4beaff6a839c9950e44419f8862e5f0c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1271,
+      "issue": 1272,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 139904
+        "bytes": 139911
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -125560,6 +125560,17 @@
         "bytes": 5985
       },
       {
+        "uri": "majordomus://issue/I4712",
+        "kind": "issue",
+        "identity": "I4712",
+        "title": "A bounded subprocess ends with everything it started, and the worktree lock is taken at once from an owner that is gone",
+        "description": "Every bounded subprocess the executable runs (worktree git fetch and git runs, gh for the monitor, the tailscale status read, the environment probe) leads a process group of its own, and its bound ends the group and reaps the child; the groups this process leads are ended when it dies of SIGTERM, SIGINT or SIGHUP, through one primitive in crate::process that the benchmark runner uses too. The worktree lock names its owner with its pid and this boot's identity, and a caller takes a lock whose owner is dead, or that was written in another boot, at once instead of after the 900-second staleness bound.",
+        "path": ".ai/repo/project/issues/I4712.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4017
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -142163,7 +142174,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1271
+      "objects": 1272
     },
     {
       "name": "knowledge",

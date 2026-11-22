@@ -210,15 +210,15 @@ fn cli_missing(command: &str) -> bool {
 /// The output of `<command> status --json`, or why it could not be read. Bounded by
 /// [`STATUS_TIMEOUT`]: a CLI that hangs is killed and the reading counts as failed.
 fn read_status(command: &str) -> Result<String, String> {
-    // a CLI written a moment ago can be busy while a forked child still holds it (ETXTBSY)
-    let mut child = crate::process::retrying_busy(|| {
+    // a group of its own, so that the bound ends the CLI with whatever it started; a CLI
+    // written a moment ago is waited for while a forked child still holds it (ETXTBSY)
+    let (mut child, _group) = crate::process::spawn_group(
         Command::new(command)
             .args(["status", "--json"])
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-    })
+            .stderr(Stdio::piped()),
+    )
     .map_err(|e| format!("`{command} status --json` could not run: {e}"))?;
     let started = Instant::now();
     loop {
@@ -230,8 +230,7 @@ fn read_status(command: &str) -> Result<String, String> {
             // still running at the bound, or no longer one this process can wait on: either
             // way it gave no answer in time, and it is killed
             _ => {
-                let _ = child.kill();
-                let _ = child.wait();
+                crate::process::kill_group(&mut child);
                 return Err(format!(
                     "`{command} status --json` did not answer within {}s",
                     STATUS_TIMEOUT.as_secs()
