@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-mesh-works-out-of-the-box](https://majordomus.dev/plan/the-mesh-works-out-of-the-box/) | ACTIVE | 5/14 | 9 | 0 | 0 | 0 | 0 | A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer. |
+| [the-mesh-works-out-of-the-box](https://majordomus.dev/plan/the-mesh-works-out-of-the-box/) | ACTIVE | 5/15 | 10 | 0 | 0 | 0 | 0 | A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer. |
 
 ## Issues
 
@@ -29,6 +29,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4572](https://majordomus.dev/plan/i4572/) | READY | 0 | — | mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause |
 | [I4577](https://majordomus.dev/plan/i4577/) | READY | 0 | — | `offload probe` says, per build host, which toolchains it has and whether it can judge a train top |
 | [I4581](https://majordomus.dev/plan/i4581/) | READY | 0 | — | A machine resource (a container name, a TCP port, a test database, a scratch directory) is claimed on the mesh like a path, start refuses one another session holds, and finish names one left unreleased |
+| [I4635](https://majordomus.dev/plan/i4635/) | READY | 0 | — | mesh verify names the reason of an answer that carries no check and no peer, so its \"see above\" points at something |
 
 ## Findings
 
@@ -249,6 +250,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3835` | shares apps/majordomus-cli/src/mesh with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I3835` | shares apps/majordomus-cli/src/mesh with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I3835` | shares apps/majordomus-cli/src/mesh with I4587; they may not run concurrently |
+| WARN | `scope_conflict` | `I3835` | shares apps/majordomus-cli/src/commands/mesh.rs with I4635; they may not run concurrently |
 | WARN | `scope_conflict` | `I3837` | shares test/cases with I3843; they may not run concurrently |
 | WARN | `scope_conflict` | `I3837` | shares test/cases with I3932; they may not run concurrently |
 | WARN | `scope_conflict` | `I3837` | shares test/cases with I3970; they may not run concurrently |

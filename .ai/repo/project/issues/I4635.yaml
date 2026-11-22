@@ -1,0 +1,29 @@
+id: I4635
+milestone: the-mesh-works-out-of-the-box
+title: "mesh verify names the reason of an answer that carries no check and no peer, so its \"see above\" points at something"
+slug: mesh-verify-names-the-reason-of-an-empty-answer
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When `majordomus mesh verify` receives an answer with no check and no peer, its text output prints one FAIL line above the verdict that names the answer's reason. This happens when no server runs the mesh and the answer is `{active: false, reason}`, or when a reply carries only a reason. The verdict stays a failure (exit 10), because a mesh nobody can verify is a failed verification. It no longer says \"see above\" over an empty screen."
+why: "On 2026-11-17 an adopter (FAEL) ran `majordomus mesh verify` after the launcher had moved to 1.0.2 while the checkout's shared server stayed 1.0.1. The text output was one line, `verdict    a check or a round failed (see above)`, with exit 10 and nothing above it. `--format json` showed the answer `{\"active\": false, \"reason\": \"no running server for any checkout of this repository: ...\"}`. The reason existed and the renderer dropped it, so the person had to rerun the command in JSON to learn why it failed."
+current_state: "Measured on 2026-11-17 at origin/master ae13be1bd13. apps/majordomus-cli/src/commands/mesh.rs `render_verify` prints the runtime, the checks (`render_checks`) and the peers, then the verdict from `ok`. It never reads `reason`. The test `a_verification_has_no_guard_because_a_mesh_that_is_off_is_a_failed_verification` rules out the `inactive()` guard the other mesh renderers use, on purpose: verify answers no rather than declining. An answer with neither checks nor peers therefore renders as the bare verdict."
+desired_state: "Every failed verification names at least one failing line above its verdict. An answer without checks and peers names its reason, or says that it reported no check and no peer."
+scope:
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - ".ai/repo/project/issues/I4635.yaml"
+non_scope:
+  - "Why a 1.0.2 executable reports no running server while `serve status` lists the 1.0.1 server as ready. That is a related lead, in the landing seat's intake beside the allocator's EAGAIN (`/api/v1/plan/allocate: Resource temporarily unavailable (os error 35)`), and not in this change."
+  - "The guard rule itself: verify still answers no, with the check, rather than declining to answer"
+acceptance_criteria:
+  - "`render_verify` of `{active: false, reason: R}` contains `FAIL  answer       R` above `verdict    a check or a round failed (see above)`"
+  - "An answer `{ok: false}` with no reason names `the answer reports no check and no peer`"
+  - "A verification that holds, with empty checks and peers, prints no FAIL line"
+  - "The existing no-guard test still passes: a declared-off mesh is a FAIL check, not `cooperation inactive`"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib verification"
+evidence_required:
+  - "a_verification_that_reaches_no_mesh_names_the_reason_above_its_verdict"
+depends_on: []
+serves: []
+created_at: 2026-11-17

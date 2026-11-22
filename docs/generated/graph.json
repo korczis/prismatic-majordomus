@@ -82133,6 +82133,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I4635",
+        "kind": "issue",
+        "label": "I4635",
+        "summary": "mesh verify names the reason of an answer that carries no check and no peer, so its \\\"see above\\\" points at something",
+        "route": "/cockpit/objects/issue/i4635",
+        "source": ".ai/repo/project/issues/I4635.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`render_verify` of `{active: false, reason: R}` contains `FAIL  answer       R` above `verdict    a check or a round failed (see above)`",
+            "An answer `{ok: false}` with no reason names `the answer reports no check and no peer`",
+            "A verification that holds, with empty checks and peers, prints no FAIL line",
+            "The existing no-guard test still passes: a declared-off mesh is a FAIL check, not `cooperation inactive`"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "desired_state": "Every failed verification names at least one failing line above its verdict. An answer without checks and peers names its reason, or says that it reported no check and no peer.",
+          "evidence_required": [
+            "a_verification_that_reaches_no_mesh_names_the_reason_above_its_verdict"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            ".ai/repo/project/issues/I4635.yaml"
+          ],
+          "serves": [],
+          "slug": "mesh-verify-names-the-reason-of-an-empty-answer",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib verification"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -152016,6 +152051,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4635",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4635",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164922,8 +164967,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4513,
-      "edges": 10172,
+      "nodes": 4514,
+      "edges": 10174,
       "acyclic": false,
       "truncated": false
     }

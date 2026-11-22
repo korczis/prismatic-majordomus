@@ -1506,6 +1506,18 @@ fn render_verify(v: &Value) -> String {
             s(p, "detail"),
         ));
     }
+    // An answer with no check and no peer (no server runs the mesh, or the reply carries only a
+    // reason) still fails, and the verdict's "see above" must point at that reason.
+    let empty = |key: &str| v[key].as_array().is_none_or(|a| a.is_empty());
+    if v["ok"] != json!(true) && empty("checks") && empty("peers") {
+        out.push_str(&format!(
+            "FAIL  {:<12} {}\n",
+            "answer",
+            v["reason"]
+                .as_str()
+                .unwrap_or("the answer reports no check and no peer")
+        ));
+    }
     out.push_str(&format!(
         "verdict    {}",
         if v["ok"] == json!(true) {
@@ -2422,6 +2434,27 @@ mod tests {
             text.contains("FAIL  cooperation  cooperation is disabled"),
             "{text}"
         );
+    }
+
+    #[test]
+    fn a_verification_that_reaches_no_mesh_names_the_reason_above_its_verdict() {
+        let reason = "no running server for any checkout of this repository";
+        let text = render_verify(&json!({ "active": false, "reason": reason }));
+        assert!(
+            text.contains(&format!("FAIL  answer       {reason}")),
+            "the verdict's \"see above\" must point at the reason:\n{text}"
+        );
+        assert!(
+            text.ends_with("verdict    a check or a round failed (see above)"),
+            "{text}"
+        );
+        let bare = render_verify(&json!({ "ok": false }));
+        assert!(
+            bare.contains("FAIL  answer       the answer reports no check and no peer"),
+            "{bare}"
+        );
+        let held = render_verify(&json!({ "ok": true, "checks": [], "peers": [] }));
+        assert!(!held.contains("FAIL"), "{held}");
     }
 
     #[test]
