@@ -7,23 +7,24 @@ profile: implementation
 parallel_safe: true
 objective: "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember. The order of the admission floors in lib/rust_bin.sh is stated in I4354 and this issue follows it: disk_emergency below 10 GiB (I4355) first, then this 35 GiB floor, then the builder count, then the machine slot (I4006)."
 why: "Version 2 of the rule replaced the landing seat's slot order with two machine limits, but lib/rust_bin.sh still refuses only below its own 5 GiB default and counts no concurrent builders; a limit stated in a rule and decided by nothing is the gap the repository refuses elsewhere."
-current_state: "lib/rust_bin.sh refuses a build below MAJORDOMUS_MIN_FREE_MB, default 5120 MiB, and has no count of concurrent builders. CI runners have far less than 35 GiB free, so the local floor cannot simply become the default everywhere."
-desired_state: "A local build counts the cargo builders already running on the machine and the free disk, refuses at five builders or below 35 GiB with the measured values and the override, and CI keeps its own floor; a case proves both refusals with stubbed measurements."
+current_state: "lib/rust_bin.sh refuses a local build when five cargo builds already run on the machine (mj_rust_builders_check, called on every exit of mj_rust_space_check that would let a build start, so the disk floor's own override does not lift it), naming the count, each build, `majordomus offload derive` and MAJORDOMUS_MAX_BUILDERS=0; CI is not counted. The disk floor still defaults to MAJORDOMUS_MIN_FREE_MB=5120. A 35 GiB default is the owner's call: scripts/derive asks this guard for the build every derive makes, the 641b Mac's steady headroom is 26-30 GiB (2026-10-28 and 2026-11-16), and the owner held #2397, whose slot refuses below the same floor, until the hosts are cleaned (2026-11-01, as relayed by the landing seat). Until then the seats hold 35 GiB by hand, and any session can set MAJORDOMUS_MIN_FREE_MB=35840."
+desired_state: "A local build counts the cargo builders already running on the machine and the free disk, refuses at five builders or below 35 GiB with the measured values and the override, and CI keeps its own floor; a case proves both refusals with stubbed measurements. The builder half is held; the floor half waits on the owner's answer whether 35 GiB becomes the local default."
 scope:
   - "lib/rust_bin.sh"
   - "test/cases"
   - ".ai/repo/project/issues/I3825.yaml"
+  - "test/lib/rust_bin.functions.sh"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
 acceptance_criteria:
   - "A local build with five builders running refuses, naming the count and the override"
   - "A local build below 35 GiB free refuses, naming the free space and the override"
   - "A CI build keeps the CI floor and is not refused by the local limits"
 validation:
-  - "bash test/run.sh"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3825_a_build_is_bounded_by_the_machine 276_disk_is_bounded 4381_the_structure_job_fits_in_half_its_bound 3150_the_cooperation_model_is_one_record 3824_the_bootstrap_says_what_the_cooperation_rule_says"
 evidence_required:
-  - "builder_cap_refuses"
-  - "disk_floor_refuses"
+  - "a_build_is_bounded_by_the_machine"
 depends_on:
   - "I3824"
 serves: []
 created_at: 2026-10-21
-updated_at: 2026-10-29
+updated_at: 2026-11-16

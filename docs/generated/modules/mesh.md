@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.10 -->
+     Generator: majordomus-cli 1.2.0 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 30.
+Stability: experimental. Capabilities: 33.
 
 ## `mesh.beat` — Say a session is making progress
 
@@ -27,7 +27,9 @@ Record that a session of this runtime is making progress, with the phase it is i
 | `session` | string or null | no | The session making progress; the calling MCP session's own when omitted. It must be
 a session this runtime opened (a claim opens one). |
 | `phase` | string or null | no | What the session is doing, one line: `waiting on CI run 123`, `holding the build
-lock`. Redacted before it is signed, and shown beside the session everywhere. |
+lock`. Redacted before it is signed, and shown beside the session everywhere. A phase
+opening with `blocked:` says the session waits on a person (`blocked: permission
+dialog`): it is written at once, is not progress, and the next beat that is clears it. |
 | `pid` | integer or null | no | The process the beat speaks for; refused unless it is running on this machine. |
 
 Output: `Written`.
@@ -480,6 +482,71 @@ request, a word of an intent or a subject. |
 
 Output: `PeerTree`.
 
+## `mesh.record.write` — Write a typed coordination record to the mesh
+
+Write an observation, hypothesis, plan, decision, blocker, handoff or outcome about a task and a scope into this runtime's journal, replicated to every linked runtime; or revise a record of the writing session's own by naming it and the revision read. The author is the journal's `<stream>/<session>`, never a name in the input; over MCP a session writes only as itself. Refused, and nothing written: a malformed record or a handoff without objective, current_state, evidence, blockers and next_action (`invalid_input`); a path outside the session's live claims (`out_of_scope`); a revision of another session's record (`not_own` — write a new record with `supersedes` instead); a revision read that is no longer current (`stale_revision`, naming the current one); a retry key reused for other content (`idempotency_conflict`). The same retry key with the same content answers the first write. Contending live plans or decisions of other authors are written and reported.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_record_write` |
+| HTTP | `POST /api/v1/mesh/records` |
+| cache | — |
+| benchmark | waived (transient_state) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, cooperation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `session` | string or null | no | The writing session; the calling MCP session's own when omitted. Over MCP a session
+writes for itself alone; over the command line and HTTP it must be named. |
+| `record` | string or null | no | To revise: the record's key, `<stream>/<id>`, as the first write answered it.
+Absent: a new record. |
+| `revision` | integer or null | no | To revise: the revision the writer read. A revision that is no longer current is
+refused as `stale_revision` with the current one. |
+| `kind` | object | no | `observation`, `hypothesis`, `plan`, `decision`, `blocker`, `handoff` or `outcome`. |
+| `task` | string | no | The task, intent or issue it is about. |
+| `scope` | array | no | Repository-relative paths, each inside a live claim of the writing session. |
+| `status` | object | no | `open` (the default), `resolved` or `withdrawn`. |
+| `title` | string | no | One line. |
+| `body` | string or null | no | The text. |
+| `sources` | array | no | What it cites: `{"type":"file","path","commit","lines"}`,
+`{"type":"tool","command","result","observed_at"}` or `{"type":"record","record","revision"}`. |
+| `handoff` | object | no | A handoff's parts: objective, current_state, evidence, blockers, next_action. |
+| `supersedes` | string or null | no | A new record superseding another, `<stream>/<id>`: the old one is kept and linked. |
+| `expires_at` | string or null | no | When it stops holding, RFC 3339 UTC. |
+| `idempotency` | string or null | no | A retry key: the same key with the same content answers the first write. |
+
+Output: `MeshRecordWriteAnswer`.
+
+## `mesh.records` — The typed coordination records of the mesh
+
+Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's. Where this process runs no mesh it answers `active: false` with the reason.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_records` |
+| HTTP | `GET /api/v1/mesh/records` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, cooperation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `record` | string or null | no | One record by its key, `<stream>/<id>`. |
+| `task` | string or null | no | Only records about this task, intent or issue. |
+| `kind` | object | no | Only records of this kind. |
+| `author` | string or null | no | Only records of this author, `<stream>/<session>`, or of a session of that name on
+any runtime. |
+| `path` | string or null | no | Only records whose scope meets this path. |
+| `live` | boolean or null | no | Only live records: open, not superseded, not stale. |
+
+Output: `MeshRecordList`.
+
 ## `mesh.register` — Register with this node's mesh
 
 Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node's own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process's memory only.
@@ -725,4 +792,26 @@ Run a live verification: cooperation is active, the repository identity resolves
 Input: none.
 
 Output: `MeshVerifyReport`.
+
+## `mesh.who` — Who runs this
+
+The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_who` |
+| HTTP | `GET /api/v1/mesh/who` |
+| CLI | `majordomus mesh who` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, diagnostics |
+
+| input | type | required | description |
+|---|---|---|---|
+| `subject` | string | yes | A pid, `host:pid`, a run tag, `host:tag`, an issue (`I<digits>`) or a path. |
+
+Output: `WhoReport`.
 

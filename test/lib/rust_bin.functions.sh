@@ -28,6 +28,7 @@ mj_rust_installed() { :; }
 MJ_RUST_CRATE_INPUTS=
 mj_rust_built_commit() { :; }
 mj_rust_same_generation() { :; }
+mj_rust_sibling() { :; }
 mj_rust_resolve() { :; }
 mj_rust_share() { :; }
 mj_rust_target_named_by() { :; }
@@ -41,8 +42,13 @@ MJ_RECLAIM_BELOW_MB_DEFAULT=
 MJ_RECLAIM_EVERY_S=
 mj_rust_reclaim() { :; }
 mj_free_mb() { :; }
+MJ_MAX_BUILDERS_DEFAULT=
+mj_rust_on_ci() { :; }
+mj_rust_builders() { :; }
+mj_rust_builders_check() { :; }
 mj_rust_space_check() { :; }
 MJ_INCREMENTAL_IDLE_MIN_DEFAULT=
+mj_cargo_empty_dir_vars() { :; }
 mj_cargo_metadata_dir() { :; }
 mj_cargo_build_dir() { :; }
 mj_rust_is_build_dir() { :; }
