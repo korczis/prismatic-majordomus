@@ -49,6 +49,7 @@ pub mod fingerprint;
 pub(crate) mod git;
 pub(crate) mod hooks;
 pub(crate) mod identity;
+pub mod landed;
 pub(crate) mod lock;
 pub(crate) mod migrate;
 pub(crate) mod model;

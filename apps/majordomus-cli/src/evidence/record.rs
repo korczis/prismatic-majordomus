@@ -316,6 +316,70 @@ pub struct RecordOutcome {
     pub dropped: Vec<EvidenceDropped>,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
+    /// How much of the suite a suite report covered, when one was given (I4600).
+    pub suite_coverage: Option<SuiteCoverage>,
+}
+
+/// How much of the suite a suite report covered: the cases it named that exist, against the
+/// cases the suite holds (`test/cases/*.sh`, where [`TestId::source`] puts a suite case).
+///
+/// A partial run is merged by design and keeps the evidence of what it did not run, so this
+/// refuses nothing. It is said so that a report cut short is visible: on 2026-11-15 a nested
+/// runner truncated an adopter's ten-case report to two rows, the recorder answered
+/// "recorded 2 execution(s)", and the other eight skills stayed stale with nothing saying why.
+///
+/// ```
+/// use majordomus_cli::evidence::SuiteCoverage;
+///
+/// let partial = SuiteCoverage { in_report: 2, on_disk: 10 };
+/// assert_eq!(partial.kept(), 8);
+/// assert!(!partial.whole());
+/// assert!(SuiteCoverage { in_report: 10, on_disk: 10 }.whole());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
+pub struct SuiteCoverage {
+    /// The suite cases this report named that exist in the repository.
+    pub in_report: usize,
+    /// The suite cases the repository holds.
+    pub on_disk: usize,
+}
+
+impl SuiteCoverage {
+    /// The cases this report did not run, whose earlier evidence stands as it was.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::SuiteCoverage;
+    ///
+    /// assert_eq!(SuiteCoverage { in_report: 3, on_disk: 5 }.kept(), 2);
+    /// assert_eq!(SuiteCoverage { in_report: 5, on_disk: 5 }.kept(), 0);
+    /// ```
+    pub fn kept(&self) -> usize {
+        self.on_disk.saturating_sub(self.in_report)
+    }
+
+    /// Whether the report ran every case the suite holds.
+    pub fn whole(&self) -> bool {
+        self.in_report >= self.on_disk
+    }
+}
+
+/// The suite cases of `root`: every `*.sh` directly under the directory a suite case's
+/// source lives in, counted, not parsed.
+fn suite_cases_on_disk(root: &Path) -> usize {
+    let probe = TestId {
+        runner: Runner::Suite,
+        name: String::new(),
+    }
+    .source();
+    let dir = root.join(Path::new(&probe).parent().unwrap_or(Path::new("")));
+    std::fs::read_dir(dir)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().extension().is_some_and(|x| x == "sh") && e.path().is_file())
+                .count()
+        })
+        .unwrap_or(0)
 }
 
 /// The instant, RFC 3339, UTC, to whole seconds.
@@ -851,6 +915,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     let mut results: Vec<(TestId, Outcome, u64)> = Vec::new();
     let mut unknown = Vec::new();
     let mut absent = Vec::new();
+    let mut suite_coverage = None;
 
     if let Some(p) = &req.suite {
         let bytes = read_report(P::Suite, p)?;
@@ -874,6 +939,15 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 "the report named no test this repository has",
             ));
         }
+        // Counted, never ordered: the distinct suite cases the report named.
+        let named: std::collections::HashSet<&str> = results[before..]
+            .iter()
+            .map(|(id, _, _)| id.name.as_str())
+            .collect();
+        suite_coverage = Some(SuiteCoverage {
+            in_report: named.len(),
+            on_disk: suite_cases_on_disk(root),
+        });
     } else {
         absent.push(absence(P::Suite, "no suite report was given"));
     }
@@ -1022,6 +1096,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         unknown: run_record.unknown.clone(),
         dropped: run_record.dropped.clone(),
         run_record,
+        suite_coverage,
     })
 }
 
@@ -1074,6 +1149,50 @@ fn write_run_record(out: &Path, run_record: &EvidenceRunRecord) -> std::io::Resu
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A partial report keeps the evidence of the cases it did not run and is not whole; a
+    /// report naming every case keeps nothing and is whole, and one naming more than the
+    /// suite holds (a case since removed) is whole and keeps nothing rather than underflowing.
+    #[test]
+    fn suite_coverage_says_what_a_report_kept_and_whether_it_was_whole() {
+        let partial = SuiteCoverage {
+            in_report: 2,
+            on_disk: 10,
+        };
+        assert_eq!(partial.kept(), 8);
+        assert!(!partial.whole());
+        let whole = SuiteCoverage {
+            in_report: 10,
+            on_disk: 10,
+        };
+        assert_eq!(whole.kept(), 0);
+        assert!(whole.whole());
+        let over = SuiteCoverage {
+            in_report: 11,
+            on_disk: 10,
+        };
+        assert_eq!(over.kept(), 0);
+        assert!(over.whole());
+    }
+
+    /// The suite's cases are the `*.sh` files directly in its source directory; any other file
+    /// and a directory there are not cases, and a repository without the directory has none.
+    #[test]
+    fn suite_cases_on_disk_counts_only_shell_files_in_the_suite_directory() {
+        let tmp = tempfile::tempdir().unwrap();
+        assert_eq!(suite_cases_on_disk(tmp.path()), 0);
+        let probe = TestId {
+            runner: Runner::Suite,
+            name: String::new(),
+        }
+        .source();
+        let dir = tmp.path().join(Path::new(&probe).parent().unwrap());
+        std::fs::create_dir_all(dir.join("nested.sh")).unwrap();
+        std::fs::write(dir.join("01_alpha.sh"), "").unwrap();
+        std::fs::write(dir.join("02_beta.sh"), "").unwrap();
+        std::fs::write(dir.join("README.md"), "").unwrap();
+        assert_eq!(suite_cases_on_disk(tmp.path()), 2);
+    }
 
     fn git(dir: &Path, args: &[&str]) {
         let out = std::process::Command::new("git")
