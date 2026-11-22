@@ -594,15 +594,40 @@ commit and target it came from.
 ## Self-update
 
 The owner decided on 2026-10-14 that a node of this repository's mesh follows the published
-release by itself (ADR 0161). Until I2720-I2722 land, the session that holds the release seat
-upgrades every enrolled node by hand once `releases/latest.json` names the new version, and
-reads each node's version back. What follows is the design those issues build.
+release by itself (ADR 0161), and on 2026-11-22 how often and by whose consent (ADR 0235).
+`majordomus self update` (I2720) is the command a person runs; the follower (I2721) is the
+same command run by the server of an enrolled node. What is implemented and what is still the
+design is said at the end of this section.
+
+```console
+$ majordomus self update --check
+running      v1.2.0
+stable       v1.3.0
+metadata     https://majordomus.dev/releases/latest.json
+verdict      upgrade  v1.3.0 is newer than the running v1.2.0, stable and listed
+applies      yes
+installation /home/me/.local/share/majordomus (launchers in /home/me/.local/bin)
+follower     stable every 300s, dirty checkout defers (the mesh declaration)
+last round   hold  v1.3.0 is available, and the checkout has uncommitted changes: deferred ...
+$ majordomus self update --apply
+```
 
 **One implementation of the risky part.** `majordomus self update` re-runs the published
 installer with `--version <tag>` and the installation's own prefix; it does not reimplement
 download, verification or swap. `--check` reports the running version, the version the stable
-pointer names and whether an upgrade applies; `--apply` installs it and reads the version back
-from the new launcher. Everything it resolves comes from what is already typed:
+pointer names and whether an upgrade applies, and writes nothing; `--apply` fetches `install.sh`
+from the same base and runs it as `sh install.sh --version <tag> --prefix <prefix> --install-dir
+<dir>`, the prefix and the directory being this installation's own (found from the executable's
+`<prefix>/versions/<version>/` tree and the `MAJORDOMUS_LAUNCHER` its launcher exports), then
+reads the version back from the launcher. `--version <tag>` names another target. Exit 0 when
+nothing applies, an upgrade is reported or it was installed and read back; 10 for a refusal or an
+installer that failed; 12 when the metadata could not be read or the executable is not an
+installation (a build in a checkout is updated by building it). `MAJORDOMUS_RELEASE_BASE_URL` (or `--base-url`)
+moves the base exactly as it does for `install.sh`, and plain http needs
+`MAJORDOMUS_INSECURE_BASE_URL=1`, as there. It is a command of the command line only: applied, it
+replaces the executable that answers, so no MCP client or browser is handed it. Like every
+command of the executable it runs inside a repository. The decision and the installation's
+places are `apps/majordomus-cli/src/release/self_update.rs`; what it would resolve through:
 
 ```rust
 Model::load(share)          // this installation's own model, shipped in share/
@@ -612,10 +637,33 @@ Release::artifact(target)   // the artifact, its digest and its size
 crate::TARGET               // the triple this build was made for, compiled in
 ```
 
-**Who follows.** Every machine the mesh declaration enrolls, hubs included, with `follow:
-stable` (the default for an enrolled node of the owner's mesh), `follow: pinned <version>` or
-`follow: off`. A repository that adopts Majordomus without enrolling machines in this mesh is
-not affected, and nothing fetches anything on entering a repository.
+**Who follows, and how often.** The server of every machine the mesh declaration enrolls (its
+key admitted, the mesh open) runs one follower thread. The declaration's `self_update` section
+says what it does, and every key has the safe default:
+
+```yaml
+self_update:
+  follow: stable              # stable (default) | pinned (check and report only) | off
+  check_interval_seconds: 300 # five minutes by default, at least 60, jittered by up to a tenth
+  dirty: defer                # defer (default) | apply: whether uncommitted changes hold it back
+```
+
+The section obeyed is the trunk's committed copy; a branch that changes it is narrowed back, as
+the trust list is. A machine narrows it for itself with `MAJORDOMUS_SELF_UPDATE` (`off`,
+`check`, `follow`, or `follow-dirty`, the machine's own consent to upgrade over a dirty
+checkout); `MAJORDOMUS_SELF_UPDATE_INTERVAL` overrides the interval, for a test. This
+repository's own declaration leaves the section out until every node runs an executable that
+knows the key — an older one refuses a key it does not know — so its nodes run the defaults. A
+repository that adopts Majordomus without enrolling machines in a mesh is not affected, and
+nothing fetches anything on entering a repository.
+
+**Consent, in order.** Each round holds the upgrade back, and checks again next interval,
+unless every one of these holds (`apps/majordomus-cli/src/release/follow.rs`, `gate`): the
+stable pointer names a newer, stable, listed release; the running executable is an
+installation `install.sh` laid out, never a build in a checkout; the mode is `stable`; the
+version has not already failed to install here; and the served checkout has no uncommitted
+changes, or the declaration or the machine consented to applying over them. A person who runs
+`self update --apply` has consented by running it.
 
 **What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
 only an archive whose digest and size match them. A mesh announcement of a release means
@@ -625,24 +673,34 @@ from a peer, and verifies it against metadata it can check before unpacking (I27
 **Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not
 list. A pinned node stays pinned. Going back is an operator's `install.sh --version`.
 
-**Install beside, activate in order, roll back by itself.** The new release goes into its own
-versioned tree while the old server serves. A hub restarts onto it under its service manager
-when no session is attached or after a bounded grace (I2722). A checkout's shared server
-hands its sessions on and ends (I2127, I2163), and until then is replaced at its next idle end.
-The health check is the readiness route plus a live `mesh verify` round. If it fails, the
-launcher is renamed back, the previous version keeps serving, and the board names the node,
-the version and the failed check.
+**Install beside, hand over in order.** The new release goes into its own versioned tree while
+the old server serves; one applier per installation holds `<prefix>/self-update.lock`. A server
+a client owns (an MCP session, a pipe, `--idle`) then runs the new launcher's `serve ensure`,
+which finds it older and takes its lease (I2163); the old server retires from the mesh, hands
+its sessions on and ends when the last has left (I2127). The journal is the checkout's, so its
+sessions, claims and handovers survive the change of process. A server that runs until it is
+stopped, a hub under its service manager, is restarted onto the new launcher by that manager
+or its operator; its health check and rollback are I2722.
 
-**When it checks.** At server start, every 15 minutes with jitter, and on a mesh release
-announcement: one HTTPS request for `releases/latest.json`, never in the path of a request.
+**What it records.** Each round writes `<prefix>/self-update.json` — when, the running and the
+stable version, the step and its reason, what was installed and read back, how the server was
+handed over, and the versions that failed, which are not retried until a newer one is
+published. `self update --check` prints the follower's mode and that record.
 
-**Where it shows.** Each runtime reports its version and follow setting on the mesh;
-`majordomus mesh peers` prints them and `mesh doctor` names a node more than one release
-behind (I2723). A release is rolled out when every enrolled, following node reports it.
+**Where it shows.** `majordomus mesh peers` prints the version every runtime runs, its own and
+each linked one's (I2723). Each runtime's follow setting and `mesh doctor` naming a node more
+than one release behind are still the design.
 
-`test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
-through the same records and the same stable pointer as the installer does, once it exists:
-`self update` is the design above and is not implemented yet.
+`test/cases/85_installer.sh` covers the risky part, and `test/cases/2720_self_update_wraps_the_installer.sh`
+covers `self update` against the same kind of served release: a check that writes nothing, an
+apply through the installer into the installation's own places, and the downgrade, the
+pre-release and the unlisted version each refused with nothing changed.
+`test/cases/2721_a_node_follows_the_stable_release.sh` runs an installed, enrolled server
+against a served release: over a dirty checkout it defers and installs nothing, once the
+checkout is clean it installs the stable release within an interval and hands over, and the
+record says each. Still the design: a check triggered by a mesh release announcement, a peer's
+archive for a node without a route to the site (I2724), a hub's activation, health check and
+rollback (I2722), and an update killed at any stage (I3178).
 
 ## Package managers
 

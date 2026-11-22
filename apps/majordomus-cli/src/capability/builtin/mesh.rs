@@ -679,6 +679,10 @@ pub struct RuntimeNode {
     /// This runtime's link to it, when there is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub link: Option<PeerView>,
+    /// The Majordomus version it runs: this process's own, or what its link's card says;
+    /// absent for a runtime known only from the journal (I2723).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
     /// Its newest live claim, told briefly.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub newest_claim: Option<ClaimBrief>,
@@ -769,6 +773,7 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
                 liveness,
                 last_beat_ms: age,
                 link: None,
+                version: None,
                 newest_claim: None,
                 sessions: Vec::new(),
             });
@@ -787,6 +792,14 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
     }
     for (key, node) in runtimes.iter_mut() {
         node.link = links.get(key).cloned();
+        node.version = if node.this_runtime {
+            Some(crate::VERSION.to_string())
+        } else {
+            node.link
+                .as_ref()
+                .map(|l| l.version.clone())
+                .filter(|v| !v.is_empty())
+        };
     }
     for claim in state.claims.iter().filter(|cl| cl.state.is_live()) {
         // every claim's runtime is a node: each stream of the journal was touched above
@@ -2901,6 +2914,11 @@ mod tests {
         };
 
         let summary = own(&peer_tree(&c, &Query::default()));
+        assert_eq!(
+            summary.version.as_deref(),
+            Some(crate::VERSION),
+            "mesh_reports_versions_test: this runtime names the version it runs (I2723)"
+        );
         assert_eq!(
             summary
                 .newest_claim

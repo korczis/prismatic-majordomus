@@ -39,8 +39,10 @@ pub mod changelog;
 pub mod commits;
 pub mod compat;
 pub mod currency;
+pub mod follow;
 pub mod landing;
 pub mod model;
+pub mod self_update;
 pub mod surface;
 pub mod version;
 

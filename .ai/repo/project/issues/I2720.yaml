@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Give every installation one typed command that reports and applies an upgrade to the stable release by running the published install.sh with --version and the installation's own prefix, so the download, verification and swap exist once."
 why: "ADR 0161 (owner decision of 2026-10-14) makes a mesh node follow the published release. docs/DISTRIBUTION.md left open whether a self-update reimplements the installer in Rust or re-runs it; ADR 0161 decides it re-runs it, because the installer's digest and size check and its atomic launcher rename are the tested risky part (case 85)."
-current_state: "There is no self-update command; a person reruns install.sh with --version on each machine."
+current_state: "self update --check and --apply exist (case 2720); --check also reports the follower of ADR 0235 and its last round."
 desired_state: "A capability self.update with --check (current version, the stable pointer's version, whether an upgrade applies, forward-only and stable-only verdict) and --apply (runs the installer the installation's share/distribution.yaml names, with --version <tag> and the installation's prefix, and reports the installed version read back from the new launcher). It refuses a downgrade, a pre-release and a version the metadata does not list."
 scope:
   - "apps/majordomus-cli/src/capability/builtin"
@@ -31,4 +31,4 @@ evidence_required:
   - "self_update_wraps_installer_test"
   - "self_update_refuses_downgrade_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-11-22

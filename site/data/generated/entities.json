@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 170,
+      "count": 171,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 170
+      "count": 171
     },
     {
       "kind": "application",
@@ -286,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 707
+      "count": 709
     },
     {
       "kind": "use-case",
@@ -9575,6 +9575,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0209/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0235",
+          "kind": "adr",
+          "route": "/adrs/adr-0235/",
+          "external": false
         }
       ]
     },
@@ -15048,6 +15055,81 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0235",
+      "identity": "adr-0235",
+      "slug": "adr-0235",
+      "cockpit": "/cockpit/objects/adr/adr-0235",
+      "title": "A node follows the release only by consent, and hands its server over in order",
+      "status": "proposed",
+      "tags": [
+        "distribution",
+        "release",
+        "mesh",
+        "runtime"
+      ],
+      "source": ".ai/repo/adrs/0235-a-node-follows-the-release-by-consent-and-hands-over-in-order.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/release/follow.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0161",
+          "kind": "adr",
+          "route": "/adrs/adr-0161/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/DISTRIBUTION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "safe-self-update",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2720_self_update_wraps_the_installer.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/2721_a_node_follows_the_stable_release.sh",
           "kind": "test",
           "route": null,
           "external": false

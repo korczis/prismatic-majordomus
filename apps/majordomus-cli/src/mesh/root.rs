@@ -230,6 +230,12 @@ pub fn narrow(mut working: MeshConfig, trunk: &MeshConfig) -> (MeshConfig, Vec<S
         &mut narrowed,
         |_| false,
     );
+    // whether a node upgrades itself is the trunk's word: a branch that changes it would
+    // decide what the next tool on this machine is (ADR 0235)
+    if working.self_update != trunk.self_update {
+        narrowed.push("self_update: the trunk's section is the one obeyed".to_string());
+        working.self_update = trunk.self_update.clone();
+    }
     (working, narrowed)
 }
 

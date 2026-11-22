@@ -74,6 +74,13 @@ pub struct MeshConfig {
     /// and the journal they replicate (ADR 0067).
     #[serde(default)]
     pub cooperation: CooperationConfig,
+    /// Whether this repository's enrolled nodes follow the stable release by themselves,
+    /// how often they check, and whether a dirty checkout holds an upgrade back (ADR 0161,
+    /// ADR 0235). Absent means `follow: stable`, every 300 seconds, deferring over a dirty
+    /// checkout. Left out of this repository's own declaration until every node runs an
+    /// executable that knows the key: an older executable refuses a key it does not know.
+    #[serde(default)]
+    pub self_update: crate::release::follow::FollowConfig,
 }
 
 /// Cooperation settings: whether this runtime links to the trusted runtimes of its
@@ -465,6 +472,10 @@ impl MeshConfig {
             .cooperation
             .validate()
             .map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
+        parsed
+            .self_update
+            .validate()
+            .map_err(|e| MeshError::Config(format!("{uri}: {e}")))?;
         if let Some(endpoint) = parsed
             .rendezvous
             .endpoints

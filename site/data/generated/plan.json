@@ -34537,7 +34537,7 @@
       ],
       "objective": "Give every installation one typed command that reports and applies an upgrade to the stable release by running the published install.sh with --version and the installation's own prefix, so the download, verification and swap exist once.",
       "why": "ADR 0161 (owner decision of 2026-10-14) makes a mesh node follow the published release. docs/DISTRIBUTION.md left open whether a self-update reimplements the installer in Rust or re-runs it; ADR 0161 decides it re-runs it, because the installer's digest and size check and its atomic launcher rename are the tested risky part (case 85).",
-      "current_state": "There is no self-update command; a person reruns install.sh with --version on each machine.",
+      "current_state": "self update --check and --apply exist (case 2720); --check also reports the follower of ADR 0235 and its last round.",
       "desired_state": "A capability self.update with --check (current version, the stable pointer's version, whether an upgrade applies, forward-only and stable-only verdict) and --apply (runs the installer the installation's share/distribution.yaml names, with --version <tag> and the installation's prefix, and reports the installed version read back from the new launcher). It refuses a downgrade, a pre-release and a version the metadata does not list.",
       "acceptance_criteria": [
         "self update --check names the running and the stable version and whether an upgrade applies, without a network write",
@@ -34590,9 +34590,9 @@
         "A network fetch on entering a repository",
         "Repositories that adopt Majordomus without enrolling machines in this mesh"
       ],
-      "objective": "Make every node the mesh declaration enrolls keep its installation at the version releases/latest.json names, checking at server start, every 15 minutes with jitter and when the mesh announces a release, and applying through self update.",
+      "objective": "Make every node the mesh declaration enrolls keep its installation at the version releases/latest.json names, checking shortly after server start, every five minutes by default with jitter (ADR 0235) and when the mesh announces a release, and applying through self update.",
       "why": "ADR 0161. On 2026-10-14 v0.25.0 reached the five mesh nodes only after one session upgraded each by hand, and v0.26.0 sat on the stable pointer while every node ran 0.25.0.",
-      "current_state": "No process reads releases/latest.json except install.sh run by a person.",
+      "current_state": "A checkout server of an enrolled node runs the follower (ADR 0235): it checks releases/latest.json every self_update.check_interval_seconds (300 by default), applies through self update --apply only on an installed executable over a clean checkout or with consent, records each round in <prefix>/self-update.json, and hands over through serve ensure. Open: a mesh release announcement triggering a check, and follow settings per node in mesh doctor.",
       "desired_state": "The mesh declaration carries follow: stable | pinned <version> | off per node, defaulting to stable for an enrolled node of the owner's mesh. A following node's server checks the pointer as above, never while blocking a request, and applies a forward, stable, listed version through self update --apply. A mesh release announcement only triggers a check; nothing a peer sends is trusted as a version or digest.",
       "acceptance_criteria": [
         "A following node whose installed version is behind the stable pointer is upgraded within one check interval with no person on it",
@@ -34694,7 +34694,7 @@
       "non_scope": [],
       "objective": "Make every runtime publish its version and follow setting to the mesh, mesh peers print them, and mesh doctor name a node more than one release behind the stable pointer; a release is rolled out when every enrolled following node reports it.",
       "why": "ADR 0161. On 2026-10-14 the primary checkout's server was a 0.21.0 debug build beside a 0.25.0 CLI, and nothing on the board said so.",
-      "current_state": "serve status reports an outdated server for one checkout; the mesh carries no versions.",
+      "current_state": "mesh peers prints the version every runtime runs (its own, and each linked one from its card); follow settings on the wire, the Cockpit and mesh doctor naming a node more than one release behind are open.",
       "desired_state": "Runtime info on the mesh carries version and follow; mesh peers and the Cockpit show them; mesh doctor and the dashboard show rollout progress per release.",
       "acceptance_criteria": [
         "mesh peers prints each runtime's version and follow setting",

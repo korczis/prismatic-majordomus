@@ -206,6 +206,9 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
             return;
         }
     }
+    // an enrolled node (its key admitted, the mesh open) follows the stable release, by
+    // the consent the declaration and this machine give (ADR 0161, ADR 0235); once a process
+    crate::capability::builtin::self_update::start_follower(Arc::clone(ctx), root.to_path_buf());
     if !config.cooperation.enabled {
         ctx.mesh
             .decline_cooperation("cooperation is disabled in the mesh declaration");

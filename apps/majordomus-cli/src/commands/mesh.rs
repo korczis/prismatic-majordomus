@@ -1203,9 +1203,13 @@ fn render_peers(v: &Value) -> String {
         for r in m["runtimes"].as_array().into_iter().flatten() {
             let link = &r["link"];
             out.push_str(&format!(
-                "  runtime  {} {}{}{}{}\n",
+                "  runtime  {} {}{}{}{}{}\n",
                 short(s(r, "runtime")),
                 s(r, "liveness"),
+                r["version"]
+                    .as_str()
+                    .map(|v| format!(" v{v}"))
+                    .unwrap_or_default(),
                 if link.is_object() {
                     format!(" link {}", s(link, "state"))
                 } else {

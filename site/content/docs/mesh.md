@@ -202,7 +202,8 @@ either; a machine or a hub takes effect when its line reaches the trunk. `mesh d
 its `trust-root` check naming every line this checkout ignores, and the server logs them when
 it starts. `scripts/ci/mesh-check` refuses a committed declaration that sets `tofu`.
 The trunk is the local branch the repository names as its trunk; a local trunk behind the
-remote is older trust, which is the safe direction.
+remote is older trust, which is the safe direction. The `self_update` section is taken from the trunk's copy
+whole: whether a node upgrades itself is the trunk's word, not a branch's (ADR 0235).
 
 ## The handshake
 
@@ -860,7 +861,18 @@ cooperation:
   expiry_seconds: 30          # at least three heartbeats
   seeds: [http://10.0.0.12:8741]   # dial these whether or not discovery hears them
   # repository: my-project    # required for a shallow clone; separates a fork
+self_update:                  # ADR 0235; every key optional, these are the defaults
+  follow: stable              # stable | pinned (report only) | off
+  check_interval_seconds: 300 # at least 60
+  dirty: defer                # defer | apply over uncommitted changes
 ```
+
+`self_update` is what an enrolled node's server does with the stable release: check it every
+interval, and apply a newer one through `majordomus self update --apply` only when every
+consent of ADR 0235 holds — an installed executable, never a build in a checkout; a clean
+checkout, unless consented; a version that has not failed here — then hand its sessions to the
+new version's server in order. `docs/DISTRIBUTION.md`, "Self-update", is its manual;
+`MAJORDOMUS_SELF_UPDATE` narrows it on one machine.
 
 The declaration is the one place mesh behaviour is configured; there are no environment
 variables for it. To be dialed from other machines, the server must listen beyond loopback:
@@ -987,8 +999,11 @@ it keeps its installed Majordomus at the version `releases/latest.json` names, r
 under its service manager when no session is attached or after a bounded grace, checks its
 readiness and a live `mesh verify` round, and rolls back to the previous version by itself when
 either fails, naming node, version and failed check on the board. A typed capability writes
-the systemd unit and the launchd agent (I2722). Until that lands, the release seat upgrades the
-hubs by hand after each release and reads each version back.
+the systemd unit and the launchd agent (I2722). The follower of ADR 0235 already installs the
+new release on a hub whose checkout is clean; a hub runs until it is stopped, so until I2722
+lands its operator or service manager restarts it onto the new launcher, and the release seat
+reads each hub's version back with `majordomus mesh peers`, which prints every runtime's
+version.
 
 **Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
 `mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,

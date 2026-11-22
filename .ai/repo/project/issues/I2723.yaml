@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Make every runtime publish its version and follow setting to the mesh, mesh peers print them, and mesh doctor name a node more than one release behind the stable pointer; a release is rolled out when every enrolled following node reports it."
 why: "ADR 0161. On 2026-10-14 the primary checkout's server was a 0.21.0 debug build beside a 0.25.0 CLI, and nothing on the board said so."
-current_state: "serve status reports an outdated server for one checkout; the mesh carries no versions."
+current_state: "mesh peers prints the version every runtime runs (its own, and each linked one from its card); follow settings on the wire, the Cockpit and mesh doctor naming a node more than one release behind are open."
 desired_state: "Runtime info on the mesh carries version and follow; mesh peers and the Cockpit show them; mesh doctor and the dashboard show rollout progress per release."
 scope:
   - "apps/majordomus-cli/src/mesh"
@@ -25,4 +25,4 @@ validation:
 evidence_required:
   - "mesh_reports_versions_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-11-22

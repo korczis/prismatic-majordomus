@@ -31,6 +31,13 @@ machines: a small, portable shell tool answers the task cycle, and the Rust exec
 answers everything else — the server, MCP, the Cockpit, the mesh, the plan and the integration
 queue. It never invokes a model.
 
+It keeps itself current. `majordomus self update --check` names the running and the stable
+release, and `--apply` re-runs the published installer, which verifies every archive before it
+swaps anything; a server of an enrolled machine checks the stable pointer every five minutes
+and upgrades an installed executable by itself, forward only, never over a checkout with
+uncommitted changes unless that is consented to, and hands its sessions to the new version in
+order ([Self-update](docs/DISTRIBUTION.md#self-update), ADR 0161, ADR 0235).
+
 A recorded run from [the challenge](https://majordomus.dev/challenge/), redacted and
 otherwise untouched: the scope is clean now, but the repository's own test still fails, so a
 worker's claim that it is done is refused.
