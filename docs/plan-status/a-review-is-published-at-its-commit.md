@@ -72,6 +72,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/MONITOR.md with I4633; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares scripts/ci/design-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares .ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares .ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md with I4500; they may not run concurrently |
