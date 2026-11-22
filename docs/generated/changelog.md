@@ -7,6 +7,65 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.2.0**
 
+## v1.2.0 — 2026-11-22
+
+### Decisions
+
+- **ADR-0232** One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins _(proposed)_
+
+### Added
+
+- **mesh**: typed coordination records live in the mesh journal (I4665) (`92b817cab`)
+- **site**: every surface names its versions by role; site-check refuses a wrong one (I3449) (`85e139113`)
+
+### Fixed
+
+- **mesh**: mesh.records answers where the mesh is off, as mesh.state does (I4665) (`450b81d58`)
+- **mesh**: a record's free text is redacted, invoked over MCP and exemplified (I4665) (`b127de10b`)
+
+### Changed
+
+- **mesh**: the record paths hold no branch a test cannot reach (I4665) (`51f453054`)
+
+### Documentation
+
+- **plan**: a task withdraws a mistaken requirement; a landing wait judges the run (I4632, I4633) (`904c75739`)
+- **performance**: the profile-read timing fence is marked unrun (#2968, I4500) (`ac24ab96a`)
+- **plan**: I4357's 2026-11-15 measurement names the one collision the journal shows (`2b9723d61`)
+- **plan**: the disk-guarded process is I4622, I4357 records an interleaved allocation (`2905548f5`)
+- **plan**: I4596 follows the owner's choice of (b), the dependent stays blocked and validate warns (`66612588e`)
+- **plan**: I4569 resumes from each release-path workflow's last step, measured 2026-11-15 (`935c1a7a8`)
+- **knowledge**: file I4604, declared .ai extension roots in gitignored subtrees (`2ad49c886`)
+- **plan**: I4598 stands without I4486, I4599 classifies waits within the milestone (`e17b98a56`)
+- **plan**: a recomputed line, a disk-guarded process, a wait on the person (I4597-I4599) (`b2f2f4aba`)
+- **plan**: the owner decides what a cancelled dependency means (I4596) (`7801fcdc2`)
+- **profiles**: a profile is traced from its file to finish; ADR 0232 owns the resolver (I4500) (`0f734da4f`)
+
+### Tests
+
+- **blackboard**: the record test reaches the journal through the mesh fixture (I4665) (`760210637`)
+- **mesh**: every changed line of the typed records is covered (I4665) (`295e01632`)
+
+### Housekeeping
+
+- **release**: declare 1.2.0, the minor release #3101's capabilities require (`36573caac`)
+- **derive**: refresh the delivery dataset after the master merge (`1dc0d5673`)
+- **release**: record v1.1.0 and the metadata it publishes (`f22baf14b`)
+- **derive**: train 30c's derived data observes its committed head 7500bb69fd1 (`5a91cf1bf`)
+- **release**: bump to 1.0.3 (`1c1ffe7fe`)
+- **derive**: train 30c's derived data observes its committed head ac24ab96a61 (`5b47afe8e`)
+- **plan**: I3449 is verified, its evidence case 3727 recorded (`a8b6a4852`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.2.0-aarch64-apple-darwin.tar.gz (`170fb7a8df03`)
+- `macos-x86_64` — majordomus-v1.2.0-x86_64-apple-darwin.tar.gz (`9575fcda7623`)
+- `linux-x86_64-gnu` — majordomus-v1.2.0-x86_64-unknown-linux-gnu.tar.gz (`21e660c892fe`)
+- `linux-x86_64-musl` — majordomus-v1.2.0-x86_64-unknown-linux-musl.tar.gz (`d796ed61d3b0`)
+- `linux-aarch64-gnu` — majordomus-v1.2.0-aarch64-unknown-linux-gnu.tar.gz (`093b846ee65d`)
+- `linux-aarch64-musl` — majordomus-v1.2.0-aarch64-unknown-linux-musl.tar.gz (`ea7768dfde96`)
+
+
 ## v1.1.0 — 2026-11-18
 
 ### Added

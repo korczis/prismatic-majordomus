@@ -6,6 +6,415 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release
 generator: majordomus-cli 1.2.0
 current: "1.2.0"
 sections:
+  - version: "1.2.0"
+    tag: v1.2.0
+    date: "2026-11-22T09:45:30Z"
+    commit: d02c59d447c2cc147eb5357ad4b2396ac54ffff8
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v1.2.0
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v1.1.0...v1.2.0
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v1.2.0
+    decisions:
+      - id: adr-0232
+        title: "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins"
+        status: proposed
+        date: "2026-11-07"
+        url: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0232-one-resolver-in-the-profile-module-owns-the-effective-profile.md
+        added: 0f734da4f944594901dfdb172be682aea7f59e1a
+    groups:
+      - kind: feat
+        heading: Added
+        rank: 0
+        changes:
+          - kind: feat
+            scope: mesh
+            subject: typed coordination records live in the mesh journal (I4665)
+            breaking: false
+            commit: 92b817cab
+            url: https://github.com/korczis/prismatic-majordomus/commit/92b817cab
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+          - kind: feat
+            scope: site
+            subject: every surface names its versions by role; site-check refuses a wrong one (I3449)
+            breaking: false
+            commit: "85e139113"
+            url: https://github.com/korczis/prismatic-majordomus/commit/85e139113
+            references:
+              - kind: issue
+                id: I3449
+                title: "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand"
+                route: /plan/i3449/
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: mesh
+            subject: "mesh.records answers where the mesh is off, as mesh.state does (I4665)"
+            breaking: false
+            commit: 450b81d58
+            url: https://github.com/korczis/prismatic-majordomus/commit/450b81d58
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+              - kind: issue
+                id: I2664
+                title: "A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared"
+                route: /plan/i2664/
+          - kind: fix
+            scope: mesh
+            subject: "a record's free text is redacted, invoked over MCP and exemplified (I4665)"
+            breaking: false
+            commit: b127de10b
+            url: https://github.com/korczis/prismatic-majordomus/commit/b127de10b
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+      - kind: refactor
+        heading: Changed
+        rank: 3
+        changes:
+          - kind: refactor
+            scope: mesh
+            subject: the record paths hold no branch a test cannot reach (I4665)
+            breaking: false
+            commit: 51f453054
+            url: https://github.com/korczis/prismatic-majordomus/commit/51f453054
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: plan
+            subject: "a task withdraws a mistaken requirement; a landing wait judges the run (I4632, I4633)"
+            breaking: false
+            commit: 904c75739
+            url: https://github.com/korczis/prismatic-majordomus/commit/904c75739
+            references:
+              - kind: issue
+                id: I4632
+                title: "A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies"
+                route: /plan/i4632/
+              - kind: issue
+                id: I4633
+                title: "A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict"
+                route: /plan/i4633/
+          - kind: docs
+            scope: performance
+            subject: "the profile-read timing fence is marked unrun (#2968, I4500)"
+            breaking: false
+            commit: ac24ab96a
+            url: https://github.com/korczis/prismatic-majordomus/commit/ac24ab96a
+            references:
+              - kind: issue
+                id: I4500
+                title: "A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record"
+                route: /plan/i4500/
+          - kind: docs
+            scope: plan
+            subject: "I4357's 2026-11-15 measurement names the one collision the journal shows"
+            breaking: false
+            commit: 2b9723d61
+            url: https://github.com/korczis/prismatic-majordomus/commit/2b9723d61
+            references:
+              - kind: issue
+                id: I4357
+                title: "Issue, ADR and case numbers are reserved atomically at origin and checked at landing"
+                route: /plan/i4357/
+              - kind: issue
+                id: I4597
+                title: "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not"
+                route: /plan/i4597/
+              - kind: issue
+                id: I4599
+                title: "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence"
+                route: /plan/i4599/
+          - kind: docs
+            scope: plan
+            subject: "the disk-guarded process is I4622, I4357 records an interleaved allocation"
+            breaking: false
+            commit: 2905548f5
+            url: https://github.com/korczis/prismatic-majordomus/commit/2905548f5
+            references:
+              - kind: issue
+                id: I4622
+                title: "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads"
+                route: /plan/i4622/
+              - kind: issue
+                id: I4357
+                title: "Issue, ADR and case numbers are reserved atomically at origin and checked at landing"
+                route: /plan/i4357/
+              - kind: issue
+                id: I4597
+                title: "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not"
+                route: /plan/i4597/
+              - kind: issue
+                id: I4599
+                title: "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence"
+                route: /plan/i4599/
+          - kind: docs
+            scope: plan
+            subject: "I4596 follows the owner's choice of (b), the dependent stays blocked and validate warns"
+            breaking: false
+            commit: "66612588e"
+            url: https://github.com/korczis/prismatic-majordomus/commit/66612588e
+            references:
+              - kind: issue
+                id: I4596
+                title: "A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it"
+                route: /plan/i4596/
+              - kind: issue
+                id: I3763
+                title: "A cancelled dependency that names its replacement is satisfied by that replacement, and one that names none is reported"
+                route: /plan/i3763/
+          - kind: docs
+            scope: plan
+            subject: "I4569 resumes from each release-path workflow's last step, measured 2026-11-15"
+            breaking: false
+            commit: 935c1a7a8
+            url: https://github.com/korczis/prismatic-majordomus/commit/935c1a7a8
+            references:
+              - kind: issue
+                id: I4569
+                title: "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick"
+                route: /plan/i4569/
+          - kind: docs
+            scope: knowledge
+            subject: "file I4604, declared .ai extension roots in gitignored subtrees"
+            breaking: false
+            commit: 2ad49c886
+            url: https://github.com/korczis/prismatic-majordomus/commit/2ad49c886
+            references:
+              - kind: issue
+                id: I4604
+                title: "A declared .ai extension in a gitignored subtree is discovered, checked and reported"
+                route: /plan/i4604/
+          - kind: docs
+            scope: plan
+            subject: "I4598 stands without I4486, I4599 classifies waits within the milestone"
+            breaking: false
+            commit: e17b98a56
+            url: https://github.com/korczis/prismatic-majordomus/commit/e17b98a56
+            references:
+              - kind: issue
+                id: I4598
+                title: A refusal for a path outside the scope names the remedies that exist
+                route: /plan/i4598/
+              - kind: issue
+                id: I4486
+                title: "A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string"
+                route: /plan/i4486/
+              - kind: issue
+                id: I4599
+                title: "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence"
+                route: /plan/i4599/
+          - kind: docs
+            scope: plan
+            subject: "a recomputed line, a disk-guarded process, a wait on the person (I4597-I4599)"
+            breaking: false
+            commit: b2f2f4aba
+            url: https://github.com/korczis/prismatic-majordomus/commit/b2f2f4aba
+            references:
+              - kind: issue
+                id: I4597
+                title: "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not"
+                route: /plan/i4597/
+              - kind: issue
+                id: I4599
+                title: "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence"
+                route: /plan/i4599/
+              - kind: issue
+                id: I4598
+                title: A refusal for a path outside the scope names the remedies that exist
+                route: /plan/i4598/
+              - kind: issue
+                id: I4486
+                title: "A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string"
+                route: /plan/i4486/
+              - kind: issue
+                id: I4355
+                title: A machine announces its own disk emergency on the mesh and names who holds the build lock
+                route: /plan/i4355/
+              - kind: issue
+                id: I3825
+                title: A build refuses to start beside five others or below 35 GiB free
+                route: /plan/i3825/
+              - kind: issue
+                id: I4006
+                title: Machine.slot is a counting machine-wide slot for heavy work
+                route: /plan/i4006/
+          - kind: docs
+            scope: plan
+            subject: the owner decides what a cancelled dependency means (I4596)
+            breaking: false
+            commit: 7801fcdc2
+            url: https://github.com/korczis/prismatic-majordomus/commit/7801fcdc2
+            references:
+              - kind: issue
+                id: I4596
+                title: "A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it"
+                route: /plan/i4596/
+              - kind: issue
+                id: I3763
+                title: "A cancelled dependency that names its replacement is satisfied by that replacement, and one that names none is reported"
+                route: /plan/i3763/
+          - kind: docs
+            scope: profiles
+            subject: a profile is traced from its file to finish; ADR 0232 owns the resolver (I4500)
+            breaking: false
+            commit: 0f734da4f
+            url: https://github.com/korczis/prismatic-majordomus/commit/0f734da4f
+            references:
+              - kind: issue
+                id: I4500
+                title: "A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record"
+                route: /plan/i4500/
+              - kind: issue
+                id: I0201
+                title: Declare which profile axis may become which runtime limit
+                route: /plan/i0201/
+              - kind: issue
+                id: I0206
+                title: Publish the runtime-adapters claim with the test that proves it and the limits it does not cover
+                route: /plan/i0206/
+              - kind: issue
+                id: I3123
+                title: "finish refuses a verify command the profile does not admit for the change, and keeps its output"
+                route: /plan/i3123/
+              - kind: issue
+                id: I3128
+                title: "init ends with what it found in the repository it adopted, each finding naming its file"
+                route: /plan/i3128/
+              - kind: issue
+                id: I3199
+                title: "An assignment names the execution profile it needs, and a peer whose envelope does not satisfy it is refused"
+                route: /plan/i3199/
+              - kind: issue
+                id: I3395
+                title: "An intent criterion can cite a verification the repository's profile declares, and a recorded passing run of it at the current tree makes the criterion current"
+                route: /plan/i3395/
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: blackboard
+            subject: the record test reaches the journal through the mesh fixture (I4665)
+            breaking: false
+            commit: "760210637"
+            url: https://github.com/korczis/prismatic-majordomus/commit/760210637
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+          - kind: test
+            scope: mesh
+            subject: every changed line of the typed records is covered (I4665)
+            breaking: false
+            commit: "295e01632"
+            url: https://github.com/korczis/prismatic-majordomus/commit/295e01632
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+              - kind: issue
+                id: I2664
+                title: "A run that has already failed is cancelled by itself, and a red on the trunk is fixed before anything else is prepared"
+                route: /plan/i2664/
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: "declare 1.2.0, the minor release #3101's capabilities require"
+            breaking: false
+            commit: 36573caac
+            url: https://github.com/korczis/prismatic-majordomus/commit/36573caac
+            references:
+              - kind: issue
+                id: I4665
+                title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+                route: /plan/i4665/
+              - kind: issue
+                id: I4324
+                title: "A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash"
+                route: /plan/i4324/
+          - kind: chore
+            scope: derive
+            subject: refresh the delivery dataset after the master merge
+            breaking: false
+            commit: 1dc0d5673
+            url: https://github.com/korczis/prismatic-majordomus/commit/1dc0d5673
+          - kind: chore
+            scope: release
+            subject: record v1.1.0 and the metadata it publishes
+            breaking: false
+            commit: f22baf14b
+            url: https://github.com/korczis/prismatic-majordomus/commit/f22baf14b
+          - kind: chore
+            scope: derive
+            subject: "train 30c's derived data observes its committed head 7500bb69fd1"
+            breaking: false
+            commit: 5a91cf1bf
+            url: https://github.com/korczis/prismatic-majordomus/commit/5a91cf1bf
+          - kind: chore
+            scope: release
+            subject: bump to 1.0.3
+            breaking: false
+            commit: 1c1ffe7fe
+            url: https://github.com/korczis/prismatic-majordomus/commit/1c1ffe7fe
+          - kind: chore
+            scope: derive
+            subject: "train 30c's derived data observes its committed head ac24ab96a61"
+            breaking: false
+            commit: 5b47afe8e
+            url: https://github.com/korczis/prismatic-majordomus/commit/5b47afe8e
+          - kind: chore
+            scope: plan
+            subject: "I3449 is verified, its evidence case 3727 recorded"
+            breaking: false
+            commit: a8b6a4852
+            url: https://github.com/korczis/prismatic-majordomus/commit/a8b6a4852
+            references:
+              - kind: issue
+                id: I3449
+                title: "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand"
+                route: /plan/i3449/
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v1.2.0-aarch64-apple-darwin.tar.gz
+        sha256: 170fb7a8df031419d8270c4ee372badf8a1bd7813ba3842a8b3436040ad7ef70
+      - target: macos-x86_64
+        name: majordomus-v1.2.0-x86_64-apple-darwin.tar.gz
+        sha256: 9575fcda7623bafe0c37ab3f24b506e304ad8a2f3bb90cd9131c13800e6a6a8d
+      - target: linux-x86_64-gnu
+        name: majordomus-v1.2.0-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 21e660c892fe946b1c6aeecdc2007bfdbaf140c1ce3a829428c2549bac2f70d8
+      - target: linux-x86_64-musl
+        name: majordomus-v1.2.0-x86_64-unknown-linux-musl.tar.gz
+        sha256: d796ed61d3b06e42460cd6647bab32e9f45a1dfdf0a1a6f88c2e8a7769b3b2dd
+      - target: linux-aarch64-gnu
+        name: majordomus-v1.2.0-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 093b846ee65db017ba05c72e7aad2089223f3c344550f4edd721d794a6dc21d9
+      - target: linux-aarch64-musl
+        name: majordomus-v1.2.0-aarch64-unknown-linux-musl.tar.gz
+        sha256: ea7768dfde963ea1b62e7ee4e81161b52f782f6dfed0a0164d1012442321bde1
   - version: "1.1.0"
     tag: v1.1.0
     date: "2026-11-18T06:53:32Z"
