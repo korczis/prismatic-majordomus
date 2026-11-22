@@ -106,7 +106,7 @@ impl WorktreeLock {
     /// that removed whatever was there then deleted a live lock, and both held it. That was
     /// rare while a lock was reclaimed only after 900 s; once a dead owner's lock is taken at
     /// once, every caller that waited behind the dead owner judges it in the same moment. So
-    /// the judgement is repeated, and the removal made, under an exclusive lock on a file
+    /// the judgement is repeated, and the removal made, under an exclusive `flock` on a file
     /// beside the lock (`worktrees.lock.reclaim`): the recoverer that comes second finds the
     /// lock already gone or a live owner's, and leaves it. That file is never removed, and
     /// the kernel releases its lock when its holder exits however it exits, so it cannot be
@@ -114,13 +114,18 @@ impl WorktreeLock {
     fn reclaim(path: &Path) {
         let mut name = path.file_name().unwrap_or_default().to_os_string();
         name.push(".reclaim");
-        let guard = fs::OpenOptions::new()
+        let _guard = fs::OpenOptions::new()
             .create(true)
             .truncate(false)
             .write(true)
             .open(path.with_file_name(name));
-        if let Ok(file) = &guard {
-            let _ = file.lock();
+        #[cfg(unix)]
+        if let Ok(file) = &_guard {
+            use std::os::unix::io::AsRawFd;
+            // SAFETY: flock(2) on the descriptor of `file`, which stays open until `_guard`
+            // drops at the end of this function; closing it releases the lock. A lock that
+            // cannot be taken leaves the removal unguarded, as it was before.
+            unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
         }
         if Self::is_stale(path) {
             let _ = fs::remove_file(path);

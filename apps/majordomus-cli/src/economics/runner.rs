@@ -2030,8 +2030,7 @@ mod tests {
     #[test]
     fn a_session_that_cannot_start_is_an_error_naming_why() {
         let e = spawn_group(&mut Command::new("/nonexistent/harness"))
-            .err()
-            .expect("an absent program does not start");
+            .expect_err("an absent program does not start");
         assert_eq!(e.kind(), std::io::ErrorKind::NotFound);
     }
 
