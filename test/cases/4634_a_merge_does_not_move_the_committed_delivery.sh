@@ -95,7 +95,7 @@ grep -q "remedy: merge the trunk into the branch and run scripts/derive" out.txt
 
 # an issue only the projection has (dropped from the plan) is named too, from either side
 test_merge "$BASE"
-git show feature/a-piece:site/data/generated/delivery.json \
+git --no-pager show feature/a-piece:site/data/generated/delivery.json \
   | jq '.issues += [{"issue": "I0099", "stage": "merged"}] | .tallies.merged += 1' > site/data/generated/delivery.json
 gate MJ_MERGE_TITLE="feat: a piece" MJ_MERGE_BRANCH=feature/a-piece
 # MUTATION: the issues iterated from the merge's answer only (`$m | keys[]`) -> no I0099 line.
