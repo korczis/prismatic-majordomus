@@ -60,6 +60,7 @@ pub mod multicast;
 pub mod page;
 pub mod protocol;
 pub mod provider;
+pub mod records;
 pub mod registry;
 pub mod rendezvous;
 pub mod repository;
