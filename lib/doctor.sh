@@ -749,8 +749,151 @@ mj_report_clone() {
       "ls $(mj_rel "$(mj_outbox_dir)")/*/"
   fi
   mj_report_uncommitted
+  mj_report_install_currency
   mj_report_trunk_distance
   mj_report_release_currency
+}
+
+# Whether each checkout's dependency install matches its lockfile (I4595). On 2026-11-14 an
+# adopter's linked worktree installed and committed a new esbuild; the primary checkout's
+# pre-push then died halfway through its build with ERR_MODULE_NOT_FOUND, because that
+# checkout's node_modules predated the new package-lock.json, and nothing had said so.
+#
+# Read, never installed: doctor names the checkout, the manifest and the command that brings
+# it current, and runs none of it. Every checkout of the repository is read, the primary and
+# each linked worktree; under MAJORDOMUS_DOCTOR_CONTEXT=commit only this one, and a line says
+# so, as the uncommitted-work reading does.
+#
+#   npm  package-lock.json with node_modules/ beside it. The install's own record of itself,
+#        node_modules/.package-lock.json (npm 7 and later), is compared with the lockfile: an
+#        entry the lockfile holds that the install lacks, holds at another version, or whose
+#        directory is gone is behind. Optional entries (another platform's binaries) are
+#        judged only when installed, and dev entries not at all in an install that omitted
+#        every one of them. jq reads both files; npm itself is not run, so its absence
+#        changes nothing here.  A lockfileVersion 1 lock (npm 6) has no "packages" map to compare
+#        with, so it is INFO, not judged, rather than read as current.
+#   mix  mix.lock and mix.exs with deps/ beside them. When every locked dependency has a
+#        directory under deps/ written after mix.lock last changed, the install is current
+#        without asking; otherwise `mix deps.loadpaths --no-compile` decides, which checks
+#        every dependency against the lock and compiles nothing. (`mix deps.check`, the name
+#        the issue gave, is no task of Elixir 1.16 to 1.19: Mix loads and compiles every
+#        dependency, then fails to find the task.) A mix that does not start is INFO.
+#
+# A checkout with no lockfile, or with no install beside it, is not judged: an install that
+# was never made is not behind, and most worktrees never make one. Silent when nothing is
+# judged, so a repository with no lockfile reads as it did before this reading existed.
+mj_report_install_currency() {
+  local here checkouts d judged=0 behind=0 unread=0 others_left=0 line keys n lacking first lv
+  here="$(cd "$MJ_ROOT" && pwd -P)"
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ]; then
+    checkouts="$here"
+    [ "$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | grep -c '^worktree ')" -le 1 ] || others_left=1
+  else
+    checkouts="$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')"
+    [ -n "$checkouts" ] || checkouts="$here"
+  fi
+  # The list of checkouts is this loop's stdin, so every child below that could read stdin
+  # runs with </dev/null: a mix with Hex missing asks "Shall I install Hex? [Yn]" (rebar3
+  # likewise), and with the loop's stdin it took the rest of the list as its answer, leaving
+  # every checkout after the mix one silently unread (#3090).
+  while IFS= read -r d; do
+    [ -n "$d" ] && [ -d "$d" ] || continue
+    # ---- npm
+    if [ -f "$d/package-lock.json" ] && [ -d "$d/node_modules" ]; then
+      if ! mj_has jq; then
+        unread=$((unread + 1))
+        mj_info clone "$d" "package-lock.json has an install beside it, but jq is absent, so whether node_modules matches it is not read" "cd '$d' && npm ls --depth=0"
+      elif lv="$(jq -r 'if type == "object" and (has("packages") | not)
+          then (.lockfileVersion // "?" | tostring) else empty end' "$d/package-lock.json" 2>/dev/null </dev/null)" \
+          && [ -n "$lv" ]; then
+        # lockfileVersion 1 (npm 6) locks its tree under "dependencies", nested, with no
+        # "packages" map: there is nothing here to compare the install with, and an empty
+        # wanted set would read as current whatever node_modules holds
+        unread=$((unread + 1))
+        mj_info clone "$d" "package-lock.json is lockfileVersion $lv, with no \"packages\" map, so whether node_modules matches it is not judged; npm 7 and later rewrite it in the current format" "cd '$d' && npm install --package-lock-only"
+      elif [ ! -f "$d/node_modules/.package-lock.json" ]; then
+        unread=$((unread + 1))
+        mj_info clone "$d" "package-lock.json: node_modules holds no .package-lock.json (npm 7 and later write one), so whether the install matches the lockfile is not read" "cd '$d' && npm ci"
+      else
+        # one line per entry the lockfile wants: "lacks <key>" when the install's record
+        # does not hold it at that version, "holds <key>" when it does, and then its
+        # directory must still be there — unless it is optional: the record keeps another
+        # platform's binaries that were never unpacked
+        if ! keys="$(jq -r --slurpfile lock "$d/package-lock.json" '
+          def entries: (.packages // {}) | to_entries
+            | map(select(.key | test("(^|/)node_modules/")))
+            | map({key, value: {v: (.value.version // .value.resolved // ""),
+                                 o: (.value.optional == true or .value.devOptional == true),
+                                 dev: (.value.dev == true)}})
+            | from_entries;
+          (entries) as $have | ($lock[0] | entries) as $want
+          | ([$have[] | select(.dev)] | length) as $devs
+          | $want | to_entries[]
+          | select((.value.dev and $devs == 0) | not)
+          | if $have[.key] == null then (if .value.o then empty else "lacks \(.key)" end)
+            elif $have[.key].v != .value.v then "lacks \(.key)"
+            elif .value.o then empty
+            else "holds \(.key)" end' "$d/node_modules/.package-lock.json" 2>/dev/null </dev/null)"; then
+          unread=$((unread + 1))
+          mj_info clone "$d" "package-lock.json or node_modules/.package-lock.json does not parse, so whether the install matches the lockfile is not read" "cd '$d' && npm ci"
+        else
+          judged=$((judged + 1)); n=0; lacking=""
+          while IFS= read -r line; do
+            case "$line" in
+              "lacks "*) ;;
+              "holds "*) [ -e "$d/${line#holds }" ] && continue ;;
+              *) continue ;;
+            esac
+            n=$((n + 1))
+            if [ "$n" -le 3 ]; then
+              first="${line#* }"; first="${first##*node_modules/}"
+              lacking="${lacking:+$lacking, }$first"
+            fi
+          done <<EOF
+$keys
+EOF
+          if [ "$n" -gt 0 ]; then
+            behind=$((behind + 1))
+            [ "$n" -le 3 ] || lacking="$lacking, ..."
+            mj_warn clone "$d" "package-lock.json is ahead of node_modules: $n package(s) it locks are missing or at another version ($lacking); a build or hook run here uses the old install" "cd '$d' && npm ci"
+          fi
+        fi
+      fi
+    fi
+    # ---- mix
+    if [ -f "$d/mix.lock" ] && [ -f "$d/mix.exs" ] && [ -d "$d/deps" ]; then
+      lacking="$(awk '/^  "[^"]+": / { k = $1; gsub(/[":]/, "", k); print k }' "$d/mix.lock" \
+        | while IFS= read -r line; do
+            { [ -d "$d/deps/$line" ] && [ "$d/deps/$line" -nt "$d/mix.lock" ]; } || { echo ask; break; }
+          done)"
+      if [ -z "$lacking" ]; then
+        judged=$((judged + 1))
+      else
+        # shellcheck source=runnable.sh
+        . "$MJ_LIB_DIR/runnable.sh"
+        if ! (cd "$d" && mj_runs mix) </dev/null; then
+          unread=$((unread + 1))
+          mj_info clone "$d" "mix.lock: $(cd "$d" && mj_runs_why mix </dev/null), so whether deps/ matches the lock is not read" "cd '$d' && mix deps.get"
+        else
+          judged=$((judged + 1))
+          if ! line="$(cd "$d" && mix deps.loadpaths --no-compile 2>&1 </dev/null)"; then
+            behind=$((behind + 1))
+            first="$(printf '%s\n' "$line" | sed -n 's/^\* \([^ ]*\).*/\1/p' | head -n 3 | paste -s -d, - | sed 's/,/, /g')"
+            mj_warn clone "$d" "mix.lock is ahead of deps/: mix deps.loadpaths --no-compile refuses${first:+ ($first)}; a build or hook run here uses the old deps" "cd '$d' && mix deps.get"
+          fi
+        fi
+      fi
+    fi
+  done <<EOF
+$checkouts
+EOF
+  if [ "$others_left" = 1 ]; then
+    mj_info clone "install" "other checkouts' installs are not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit), only this one's; run doctor on its own" "majordomus doctor"
+  fi
+  if [ "$judged" -gt 0 ] && [ "$behind" = 0 ] && [ "$unread" = 0 ]; then
+    mj_ok clone "install" "every checkout's dependency install matches its lockfile ($judged install(s) read)"
+  fi
+  return 0
 }
 
 # Whether the trunk's landed work is released (release.currency, I3070; the owner's order of

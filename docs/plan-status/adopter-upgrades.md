@@ -451,6 +451,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares share/skeleton with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4598; they may not run concurrently |

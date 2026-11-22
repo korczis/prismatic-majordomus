@@ -81789,12 +81789,14 @@
           "scope": [
             ".ai/repo/project/issues/I4595.yaml",
             "lib/doctor.sh",
-            "docs/WORKTREES.md"
+            "docs/WORKTREES.md",
+            "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
           ],
           "serves": [],
           "slug": "doctor-reports-an-install-behind-its-lockfile",
-          "updated_at": "2026-11-15",
+          "updated_at": "2026-11-18",
           "validation": [
+            "bash test/run.sh 4595_doctor_names_an_install_behind_its_lockfile",
             "bin/majordomus doctor",
             "bin/majordomus plan validate"
           ]
@@ -110521,6 +110523,13 @@
         "label": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
         "route": "/cockpit/objects/test/test-cases-4592-the-projection-apply-checkout-is-blobless-and-bounded-sh",
         "source": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "kind": "test",
+        "label": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "route": "/cockpit/objects/test/test-cases-4595-doctor-names-an-install-behind-its-lockfile-sh",
+        "source": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
       },
       {
         "id": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
@@ -160526,6 +160535,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165682,8 +165696,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4534,
-      "edges": 10216,
+      "nodes": 4535,
+      "edges": 10217,
       "acyclic": false,
       "truncated": false
     }
