@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.1.0",
+  "generator": "majordomus-cli 1.2.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1281,6 +1281,24 @@
         "label": "mesh.peers",
         "summary": "Who cooperates, machine by machine",
         "route": "/cockpit/capabilities/mesh.peers",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.record.write",
+        "kind": "capability",
+        "label": "mesh.record.write",
+        "summary": "Write a typed coordination record to the mesh",
+        "route": "/cockpit/capabilities/mesh.record.write",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.records",
+        "kind": "capability",
+        "label": "mesh.records",
+        "summary": "The typed coordination records of the mesh",
+        "route": "/cockpit/capabilities/mesh.records",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
       },
@@ -82556,6 +82574,59 @@
         }
       },
       {
+        "id": "majordomus://issue/I4665",
+        "kind": "issue",
+        "label": "I4665",
+        "summary": "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard",
+        "route": "/cockpit/objects/issue/i4665",
+        "source": ".ai/repo/project/issues/I4665.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two sessions writing decisions on overlapping scope for one task are both kept and reported as a conflict",
+            "A revision by a session other than the author is refused (not_own) and, written by a forging peer anyway, ignored by the fold",
+            "A revision at a stale revision is refused with the current one; a superseding record links both ways and keeps the old record and its history",
+            "A record past its expiry, or of a closed or dead session, is reported stale and not deleted",
+            "A record outside the writing session's claimed scope is refused; a handoff missing evidence is refused",
+            "A retry with the same idempotency key and content answers the first write; the same key with other content is refused",
+            "The journal reopened from its file folds to the same records"
+          ],
+          "created_at": "2026-11-20",
+          "depends_on": [],
+          "evidence_required": [
+            "records_unit_tests"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/records.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/mod.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/monitor/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "docs/MESH.md",
+            "docs/MONITOR.md",
+            "docs/BLACKBOARD.md",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
+            ".ai/repo/project/issues/I4665.yaml"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#one-projection"
+          ],
+          "slug": "typed-records-live-in-the-mesh-journal",
+          "validation": [
+            "cargo test --lib mesh::records",
+            "cargo test --lib mesh::state"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116827,6 +116898,36 @@
       },
       {
         "source": "capability:mesh.peers",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.record.write",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.record.write",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.record.write",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.records",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.records",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.records",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -152641,6 +152742,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4665",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4665",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165077,6 +165188,16 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.record.write",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.records",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.register",
         "kind": "composes"
       },
@@ -165557,8 +165678,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4531,
-      "edges": 10206,
+      "nodes": 4534,
+      "edges": 10216,
       "acyclic": false,
       "truncated": false
     }
