@@ -38,7 +38,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.1.0 -->
+     Generator: majordomus-cli 1.2.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -185,10 +185,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
-<span class="text-sm text-body">1 of 9 issues done</span></p>
+<span class="text-sm text-body">1 of 10 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">7</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -296,6 +296,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i2983/" class="text-fg-brand hover:underline">I2983</a></td>
           <td class="px-4 py-2 text-heading">The home page and the docs explain the peer blackboard: live on a runtime, a labelled snapshot on the published site</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i4665/" class="text-fg-brand hover:underline">I4665</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -304,7 +312,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">peer-blackboard dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-peer-blackboard" data-diagram="peer-blackboard" data-nodes="I2980 I2981 I2982 I2983 I2984 I2985 I2998 I2999 I3073">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-peer-blackboard" data-diagram="peer-blackboard" data-nodes="I2980 I2981 I2982 I2983 I2984 I2985 I2998 I2999 I3073 I4665">flowchart LR
     I2980[&quot;I2980&lt;br/&gt;The blackboard is one projection answered on every interface&quot;]:::done
     I2981[&quot;I2981&lt;br/&gt;A board or journal change is pushed over one WebSocket&quot;]:::ready
     I2982[&quot;I2982&lt;br/&gt;The monitor page is pushed over the live channel, and says when it polls&quot;]:::blocked
@@ -314,6 +322,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     I2998[&quot;I2998&lt;br/&gt;/cockpit/peers renders the blackboard and follows it live&quot;]:::blocked
     I2999[&quot;I2999&lt;br/&gt;From /ui/peers an operator answers a review, takes a handover or releases a claim, through its capability&quot;]:::blocked
     I3073[&quot;I3073&lt;br/&gt;The home page and the docs explain the peer blackboard: live on a runtime, a labelled snapshot on the published site&quot;]:::blocked
+    I4665[&quot;I4665&lt;br/&gt;Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard&quot;]:::ready
     I2980 --&gt; I2981
     I2981 --&gt; I2982
     I2982 --&gt; I2983
@@ -329,11 +338,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram peer-blackboard" aria-controls="diagram-peer-blackboard" data-diagram-bar="diagram-peer-blackboard" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Fit the diagram to its frame" title="Fit the diagram to its frame">Fit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Expand to full screen" title="Expand to full screen">Expand</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Download SVG" title="Download SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Link: copy the address of this diagram" title="Link: copy the address of this diagram">Link</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-peer-blackboard"><summary>Linked from this diagram (9)</summary><ul><li><a href="https://majordomus.dev/plan/i2980/" data-node="I2980" data-kind="issue">I2980 The blackboard is one projection answered on every interface</a></li><li><a href="https://majordomus.dev/plan/i2981/" data-node="I2981" data-kind="issue">I2981 A board or journal change is pushed over one WebSocket</a></li><li><a href="https://majordomus.dev/plan/i2982/" data-node="I2982" data-kind="issue">I2982 The monitor page is pushed over the live channel, and says when it polls</a></li><li><a href="https://majordomus.dev/plan/i2983/" data-node="I2983" data-kind="issue">I2983 /ui/peers shows the blackboard and is read again when it changes</a></li><li><a href="https://majordomus.dev/plan/i2984/" data-node="I2984" data-kind="issue">I2984 The published site shows a public-safe blackboard, labelled as the snapshot it is</a></li><li><a href="https://majordomus.dev/plan/i2985/" data-node="I2985" data-kind="issue">I2985 The Observatory's cooperation scene draws the blackboard, not a second join of the journal</a></li><li><a href="https://majordomus.dev/plan/i2998/" data-node="I2998" data-kind="issue">I2998 /cockpit/peers renders the blackboard and follows it live</a></li><li><a href="https://majordomus.dev/plan/i2999/" data-node="I2999" data-kind="issue">I2999 From /ui/peers an operator answers a review, takes a handover or releases a claim, through its capability</a></li><li><a href="https://majordomus.dev/plan/i3073/" data-node="I3073" data-kind="issue">I3073 The home page and the docs explain the peer blackboard: live on a runtime, a labelled snapshot on the published site</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram peer-blackboard" aria-controls="diagram-peer-blackboard" data-diagram-bar="diagram-peer-blackboard" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Fit the diagram to its frame" title="Fit the diagram to its frame">Fit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Expand to full screen" title="Expand to full screen">Expand</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Download SVG" title="Download SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Link: copy the address of this diagram" title="Link: copy the address of this diagram">Link</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-peer-blackboard"><summary>Linked from this diagram (10)</summary><ul><li><a href="https://majordomus.dev/plan/i2980/" data-node="I2980" data-kind="issue">I2980 The blackboard is one projection answered on every interface</a></li><li><a href="https://majordomus.dev/plan/i2981/" data-node="I2981" data-kind="issue">I2981 A board or journal change is pushed over one WebSocket</a></li><li><a href="https://majordomus.dev/plan/i2982/" data-node="I2982" data-kind="issue">I2982 The monitor page is pushed over the live channel, and says when it polls</a></li><li><a href="https://majordomus.dev/plan/i2983/" data-node="I2983" data-kind="issue">I2983 /ui/peers shows the blackboard and is read again when it changes</a></li><li><a href="https://majordomus.dev/plan/i2984/" data-node="I2984" data-kind="issue">I2984 The published site shows a public-safe blackboard, labelled as the snapshot it is</a></li><li><a href="https://majordomus.dev/plan/i2985/" data-node="I2985" data-kind="issue">I2985 The Observatory's cooperation scene draws the blackboard, not a second join of the journal</a></li><li><a href="https://majordomus.dev/plan/i2998/" data-node="I2998" data-kind="issue">I2998 /cockpit/peers renders the blackboard and follows it live</a></li><li><a href="https://majordomus.dev/plan/i2999/" data-node="I2999" data-kind="issue">I2999 From /ui/peers an operator answers a review, takes a handover or releases a claim, through its capability</a></li><li><a href="https://majordomus.dev/plan/i3073/" data-node="I3073" data-kind="issue">I3073 The home page and the docs explain the peer blackboard: live on a runtime, a labelled snapshot on the published site</a></li><li><a href="https://majordomus.dev/plan/i4665/" data-node="I4665" data-kind="issue">I4665 Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/.ai/repo/project/milestones/peer-blackboard.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/peer-blackboard.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show peer-blackboard</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/.ai/repo/project/milestones/peer-blackboard.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/peer-blackboard.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show peer-blackboard</code>.</p>
 </div>
 
 </div>
@@ -383,16 +392,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.1.0">v1.1.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e" class="font-mono underline">8df53bc</a> · inputs <span class="font-mono">d1c51e944668</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.2.0">v1.2.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d02c59d447c2cc147eb5357ad4b2396ac54ffff8" class="font-mono underline">d02c59d</a> · inputs <span class="font-mono">1b3f96491bb2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

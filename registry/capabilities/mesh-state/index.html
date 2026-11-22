@@ -38,7 +38,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.1.0 -->
+     Generator: majordomus-cli 1.2.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -326,6 +326,11 @@ of that machine.</td>
         {
           &quot;const&quot;: &quot;reviews&quot;,
           &quot;description&quot;: &quot;The review requests.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;records&quot;,
+          &quot;description&quot;: &quot;The typed coordination records, their conflicts and the writes the fold ignored.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
@@ -884,6 +889,27 @@ open reviews and the untaken handovers.</td>
           },
           &quot;type&quot;: &quot;array&quot;
         },
+        &quot;record_conflicts&quot;: {
+          &quot;description&quot;: &quot;Live plans or decisions of different authors for one task or over meeting scopes.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MeshRecordConflict&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;records&quot;: {
+          &quot;description&quot;: &quot;Every typed coordination record (I4665), with its history, links and standing.\nAbsent from the JSON while there are none, so a fold without records digests as it\ndid before the kind existed.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MeshRecordView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;records_ignored&quot;: {
+          &quot;description&quot;: &quot;Record writes the fold did not apply, with why: a revision not by the record&#39;s\nauthor, out of order, or after its author&#39;s session closed.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MeshIgnoredRecordWrite&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
         &quot;reviews&quot;: {
           &quot;description&quot;: &quot;Every review request.&quot;,
           &quot;items&quot;: {
@@ -1020,6 +1046,31 @@ open reviews and the untaken handovers.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;MeshAuthorState&quot;: {
+      &quot;description&quot;: &quot;Where a record&#39;s author stands, as this runtime reads it now: a reading of the session&#39;s\nclose and its runtime&#39;s beat, so a record whose author is gone is flagged on every reader.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\&quot;r-1\&quot;, \&quot;s1\&quot;, RecordKind::Plan, \&quot;I1\&quot;, &amp;[\&quot;docs\&quot;], \&quot;p\&quot;) }).unwrap();\nuse majordomus_cli::mesh::records::AuthorState;\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nassert_eq!(state.records[0].author_state, AuthorState::Unknown, \&quot;s1 never opened here\&quot;);\nassert!(!state.records[0].stale.is_empty(), \&quot;and the record says so\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;active&quot;,
+          &quot;description&quot;: &quot;Its session is open and its runtime beats.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;closed&quot;,
+          &quot;description&quot;: &quot;Its session closed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;expired&quot;,
+          &quot;description&quot;: &quot;Its runtime stopped beating.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;This runtime never heard the session open.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;MeshClaimBrief&quot;: {
       &quot;description&quot;: &quot;One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\&quot;s1\&quot;, \&quot;claude-code\&quot;) })\n    .unwrap();\nfor (claim, path) in [(\&quot;c1\&quot;, \&quot;apps/a\&quot;), (\&quot;c2\&quot;, \&quot;apps/b\&quot;)] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \&quot;s1\&quot;.into(),\n        scope: vec![path.into()], intent: Some(\&quot;work\&quot;.into()), mode: ClaimMode::Exclusive,\n        issue: Some(\&quot;#1\&quot;.into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \&quot;c1\&quot;.into(), reason: None }).unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&amp;state, &amp;[]);\nlet newest: &amp;ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\&quot;#1\&quot;), 1));\n```&quot;,
       &quot;properties&quot;: {
@@ -1114,6 +1165,77 @@ open reviews and the untaken handovers.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;MeshConflictReason&quot;: {
+      &quot;description&quot;: &quot;Why two live plans or decisions of different authors contend: the same task, which is\nchecked first, or scopes that meet, when the tasks differ.\n\n```\nuse majordomus_cli::mesh::records::ConflictReason;\nassert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), \&quot;same_task\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;same_task&quot;,
+          &quot;description&quot;: &quot;Both are about the same task.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;overlapping_scope&quot;,
+          &quot;description&quot;: &quot;Their scopes meet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshEvidenceState&quot;: {
+      &quot;description&quot;: &quot;Whether a record rests on something another worker can retrieve. Derived from the\nsources by `RecordBody::evidence`; a record carries no field that says it.\n\n```\nuse majordomus_cli::mesh::records::EvidenceState;\nassert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), \&quot;asserted\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;asserted&quot;,
+          &quot;description&quot;: &quot;No retrievable source: what its author says.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;evidenced&quot;,
+          &quot;description&quot;: &quot;At least one retrievable source: a file at a commit, or a tool&#39;s observed result.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshHandoff&quot;: {
+      &quot;description&quot;: &quot;What a handoff must carry. Every field is required: a handoff that leaves one out is\nrefused, because the next worker cannot ask the one who wrote it.\n\n```\nuse majordomus_cli::mesh::records::Handoff;\nlet mut h = Handoff { objective: \&quot;ship\&quot;.into(), current_state: \&quot;built\&quot;.into(),\n    evidence: vec![\&quot;cargo test: ok\&quot;.into()], blockers: Some(vec![]),\n    next_action: \&quot;open the PR\&quot;.into() };\nassert!(h.validate().is_ok());\nh.evidence.clear();\nassert!(h.validate().unwrap_err().contains(\&quot;evidence\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;blockers&quot;: {
+          &quot;description&quot;: &quot;What blocks it; `[]` says nothing does. Required: silence is not \&quot;no blockers\&quot;.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: [
+            &quot;array&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;current_state&quot;: {
+          &quot;description&quot;: &quot;Where it stands now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;evidence&quot;: {
+          &quot;default&quot;: [],
+          &quot;description&quot;: &quot;What shows it: commands run with their results, commits, records. At least one.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;next_action&quot;: {
+          &quot;description&quot;: &quot;What the next worker does first.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;What the work is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;objective&quot;,
+        &quot;current_state&quot;,
+        &quot;next_action&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;MeshHandoverBrief&quot;: {
       &quot;description&quot;: &quot;A handover nobody has taken, told briefly: the id `mesh.handover.consume` takes, who\npublished it and what it continues. Its body stays in the full view.\n\n```\nuse majordomus_cli::mesh::page::HandoverBrief;\n\nlet brief = HandoverBrief { id: \&quot;ab12\&quot;.into(), runtime: \&quot;n-r\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()), issue: None, published_lamport: 7 };\nassert_eq!(serde_json::to_value(&amp;brief).unwrap()[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\n```&quot;,
       &quot;properties&quot;: {
@@ -1150,6 +1272,426 @@ open reviews and the untaken handovers.</td>
         &quot;id&quot;,
         &quot;runtime&quot;,
         &quot;published_lamport&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MeshIgnoredRecordWrite&quot;: {
+      &quot;description&quot;: &quot;A record write the fold did not apply, and why: a revision by a session other than the\nauthor, out of order, after the author&#39;s session closed, or of another kind. A peer can\nsign whatever its own stream says; it cannot make another session&#39;s record say it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nlet mine = RecordBody::new(\&quot;r-1\&quot;, \&quot;s1\&quot;, RecordKind::Plan, \&quot;I1\&quot;, &amp;[\&quot;docs\&quot;], \&quot;mine\&quot;);\nj.append_own(EventBody::RecordWritten { record: mine.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { session: \&quot;s2\&quot;.into(), revision: 2, title: \&quot;theirs\&quot;.into(), ..mine } })\n    .unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nassert_eq!(state.records[0].title, \&quot;mine\&quot;);\nuse majordomus_cli::mesh::records::IgnoredRecordWrite;\nlet ignored: &amp;IgnoredRecordWrite = &amp;state.records_ignored[0];\nassert!(ignored.reason.contains(\&quot;only its author\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;event&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;seq&gt;` of the event.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it was not applied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The record it named.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;event&quot;,
+        &quot;record&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MeshRecordConflict&quot;: {
+      &quot;description&quot;: &quot;Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nuse majordomus_cli::mesh::records::ConflictReason;\nuse majordomus_cli::mesh::journal::SessionInfo;\nfor s in [\&quot;s1\&quot;, \&quot;s2\&quot;] {\n    j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, \&quot;cli\&quot;) }).unwrap();\n}\nfor (id, s) in [(\&quot;r-1\&quot;, \&quot;s1\&quot;), (\&quot;r-2\&quot;, \&quot;s2\&quot;)] {\n    j.append_own(EventBody::RecordWritten { record:\n        RecordBody::new(id, s, RecordKind::Decision, \&quot;I1\&quot;, &amp;[\&quot;docs\&quot;], id) }).unwrap();\n}\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordConflict;\nlet conflicts: &amp;[RecordConflict] = &amp;state.record_conflicts;\nassert_eq!(conflicts.len(), 1);\nassert_eq!(conflicts[0].reason, ConflictReason::SameTask);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;first&quot;: {
+          &quot;description&quot;: &quot;The earlier record&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshRecordKind&quot;,
+          &quot;description&quot;: &quot;The kind both are.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The paths that meet, the first&#39;s and the second&#39;s.&quot;,
+          &quot;items&quot;: {
+            &quot;maxItems&quot;: 2,
+            &quot;minItems&quot;: 2,
+            &quot;prefixItems&quot;: [
+              {
+                &quot;type&quot;: &quot;string&quot;
+              },
+              {
+                &quot;type&quot;: &quot;string&quot;
+              }
+            ],
+            &quot;type&quot;: &quot;array&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshConflictReason&quot;,
+          &quot;description&quot;: &quot;Why they contend.&quot;
+        },
+        &quot;second&quot;: {
+          &quot;description&quot;: &quot;The later record&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;first&quot;,
+        &quot;second&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MeshRecordKind&quot;: {
+      &quot;description&quot;: &quot;What a record is about. The set is closed: a peer that writes another word is refused\nat ingest, never guessed at.\n\n```\nuse majordomus_cli::mesh::records::RecordKind;\nassert_eq!(serde_json::to_value(RecordKind::Decision).unwrap(), \&quot;decision\&quot;);\nassert!(serde_json::from_str::&lt;RecordKind&gt;(\&quot;\\\&quot;rumour\\\&quot;\&quot;).is_err());\nassert!(RecordKind::Plan.contends() &amp;&amp; !RecordKind::Observation.contends());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;observation&quot;,
+          &quot;description&quot;: &quot;Something seen.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;hypothesis&quot;,
+          &quot;description&quot;: &quot;Something believed and not yet shown.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;plan&quot;,
+          &quot;description&quot;: &quot;What a session intends to do.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;decision&quot;,
+          &quot;description&quot;: &quot;What a session decided.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;blocker&quot;,
+          &quot;description&quot;: &quot;What stops the work.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;handoff&quot;,
+          &quot;description&quot;: &quot;The work handed on: objective, current state, evidence, blockers, next action.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;outcome&quot;,
+          &quot;description&quot;: &quot;What the work ended with.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshRecordRevision&quot;: {
+      &quot;description&quot;: &quot;One revision in a record&#39;s history: what it said and where it was written. Every\nrevision is kept, which is the record&#39;s provenance.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nlet plan = RecordBody::new(\&quot;r-1\&quot;, \&quot;s1\&quot;, RecordKind::Plan, \&quot;I1\&quot;, &amp;[\&quot;docs\&quot;], \&quot;first\&quot;);\nj.append_own(EventBody::RecordWritten { record: plan.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { revision: 2, title: \&quot;second\&quot;.into(), ..plan } }).unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordRevision;\nlet history: &amp;[RecordRevision] = &amp;state.records[0].history;\nlet titles: Vec&lt;&amp;str&gt; = history.iter().map(|h| h.title.as_str()).collect();\nassert_eq!(titles, [\&quot;first\&quot;, \&quot;second\&quot;]);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;digest&quot;: {
+          &quot;description&quot;: &quot;The digest of what it said (`RecordBody::content_digest`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;event&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;seq&gt;` of the event.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;evidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshEvidenceState&quot;,
+          &quot;description&quot;: &quot;Its evidence state.&quot;
+        },
+        &quot;idempotency&quot;: {
+          &quot;description&quot;: &quot;Its retry key.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;lamport&quot;: {
+          &quot;description&quot;: &quot;The event&#39;s Lamport stamp.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;revision&quot;: {
+          &quot;description&quot;: &quot;The revision.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;sources&quot;: {
+          &quot;description&quot;: &quot;The sources it cited.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MeshRecordSource&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshRecordStatus&quot;,
+          &quot;description&quot;: &quot;The status it set.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title it set.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;written_at&quot;: {
+          &quot;description&quot;: &quot;When its author wrote it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;revision&quot;,
+        &quot;event&quot;,
+        &quot;lamport&quot;,
+        &quot;status&quot;,
+        &quot;title&quot;,
+        &quot;evidence&quot;,
+        &quot;digest&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MeshRecordSource&quot;: {
+      &quot;description&quot;: &quot;What a record cites, with its version: a file at a commit, a tool&#39;s observed result, or\nanother record at a revision.\n\n```\nuse majordomus_cli::mesh::records::RecordSource;\nlet file = RecordSource::File { path: \&quot;src/a.rs\&quot;.into(), commit: \&quot;8df53bc26e9\&quot;.into(),\n    lines: Some(\&quot;10-20\&quot;.into()) };\nassert!(file.validate().is_ok() &amp;&amp; file.is_retrievable());\nlet link = RecordSource::Record { record: \&quot;x/r-1\&quot;.into(), revision: 2 };\nassert!(!link.is_retrievable(), \&quot;a link to a record is provenance, not evidence\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A repository file at a commit, optionally a line range (`12` or `12-40`).&quot;,
+          &quot;properties&quot;: {
+            &quot;commit&quot;: {
+              &quot;description&quot;: &quot;The commit it was read at: 7 to 64 lowercase hex.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;lines&quot;: {
+              &quot;description&quot;: &quot;The lines: `N` or `N-M`.&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;path&quot;: {
+              &quot;description&quot;: &quot;Repository-relative path.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;file&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;path&quot;,
+            &quot;commit&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A tool run and what it observed.&quot;,
+          &quot;properties&quot;: {
+            &quot;command&quot;: {
+              &quot;description&quot;: &quot;The command or tool call, one line.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;observed_at&quot;: {
+              &quot;description&quot;: &quot;When it was observed, RFC 3339 UTC.&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;result&quot;: {
+              &quot;description&quot;: &quot;What it answered: an exit code, a digest, a short excerpt.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;tool&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;command&quot;,
+            &quot;result&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Another record at a revision.&quot;,
+          &quot;properties&quot;: {
+            &quot;record&quot;: {
+              &quot;description&quot;: &quot;The record&#39;s key, `&lt;stream&gt;/&lt;id&gt;`.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;revision&quot;: {
+              &quot;description&quot;: &quot;The revision cited.&quot;,
+              &quot;format&quot;: &quot;uint32&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;type&quot;: &quot;integer&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;record&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;record&quot;,
+            &quot;revision&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
+    &quot;MeshRecordStatus&quot;: {
+      &quot;description&quot;: &quot;Where a record stands, as its author says. Only an open record is in force: a resolved or\nwithdrawn one contends with nothing and keeps no stream from compaction.\n\n```\nuse majordomus_cli::mesh::records::RecordStatus;\nassert_eq!(RecordStatus::default(), RecordStatus::Open);\nassert_eq!(serde_json::to_value(RecordStatus::Withdrawn).unwrap(), \&quot;withdrawn\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;In force.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;resolved&quot;,
+          &quot;description&quot;: &quot;Done with: answered, carried out, no longer blocking.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;withdrawn&quot;,
+          &quot;description&quot;: &quot;Taken back by its author.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshRecordView&quot;: {
+      &quot;description&quot;: &quot;A record as every runtime folds it: its current revision, its author, its links, its\nstanding, and every revision before.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\&quot;r-1\&quot;, \&quot;s1\&quot;, RecordKind::Decision, \&quot;I1\&quot;, &amp;[\&quot;docs\&quot;], \&quot;d\&quot;) }).unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordView;\nlet view: &amp;RecordView = &amp;state.records[0];\nassert_eq!(view.key, format!(\&quot;{}/r-1\&quot;, j.own_stream()));\nassert_eq!(view.author, format!(\&quot;{}/s1\&quot;, j.own_stream()), \&quot;the stream&#39;s, not a name\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;author&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;session&gt;` of the session that created it: the only one that revises it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;author_state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshAuthorState&quot;,
+          &quot;description&quot;: &quot;Where its author stands.&quot;
+        },
+        &quot;body&quot;: {
+          &quot;description&quot;: &quot;Its text.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;evidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshEvidenceState&quot;,
+          &quot;description&quot;: &quot;Derived from its sources.&quot;
+        },
+        &quot;expires_at&quot;: {
+          &quot;description&quot;: &quot;When it stops holding.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;handoff&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/MeshHandoff&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;A handoff&#39;s parts.&quot;
+        },
+        &quot;history&quot;: {
+          &quot;description&quot;: &quot;Every revision, oldest first.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MeshRecordRevision&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;id&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshRecordKind&quot;,
+          &quot;description&quot;: &quot;What it is.&quot;
+        },
+        &quot;repository&quot;: {
+          &quot;description&quot;: &quot;The repository identity the event was signed for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;revision&quot;: {
+          &quot;description&quot;: &quot;The current revision: what a revision must name to replace it.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;` of its stream.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;Its paths.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;sources&quot;: {
+          &quot;description&quot;: &quot;Its sources.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MeshRecordSource&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;stale&quot;: {
+          &quot;description&quot;: &quot;Why it is stale; empty while it holds. Stale records are flagged, never removed.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshRecordStatus&quot;,
+          &quot;description&quot;: &quot;Its status.&quot;
+        },
+        &quot;superseded_by&quot;: {
+          &quot;description&quot;: &quot;The records that supersede it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;supersedes&quot;: {
+          &quot;description&quot;: &quot;The record it supersedes.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task, intent or issue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;author&quot;,
+        &quot;runtime&quot;,
+        &quot;repository&quot;,
+        &quot;kind&quot;,
+        &quot;task&quot;,
+        &quot;scope&quot;,
+        &quot;status&quot;,
+        &quot;title&quot;,
+        &quot;evidence&quot;,
+        &quot;revision&quot;,
+        &quot;author_state&quot;,
+        &quot;history&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
@@ -1273,6 +1815,12 @@ open reviews and the untaken handovers.</td>
           &quot;description&quot;: &quot;The whole fold&#39;s digest: equal digests, equal state.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;live_records&quot;: {
+          &quot;description&quot;: &quot;Of them, the ones in force: open, not superseded, not stale.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
         &quot;open_reviews&quot;: {
           &quot;description&quot;: &quot;Review requests nobody has answered; at most `SUMMARY_LIST`.&quot;,
           &quot;items&quot;: {
@@ -1288,6 +1836,18 @@ open reviews and the untaken handovers.</td>
         },
         &quot;overlaps&quot;: {
           &quot;description&quot;: &quot;Advisory overlaps between live claims.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;record_conflicts&quot;: {
+          &quot;description&quot;: &quot;Live plans or decisions of different authors that contend.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;records&quot;: {
+          &quot;description&quot;: &quot;Typed coordination records (I4665), every one; `mesh records` lists them.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
@@ -1790,8 +2350,8 @@ open reviews and the untaken handovers.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">MeshQuery</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MeshStateAnswer</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d638bab258d3c3f60b83c7db8570e1d921f1f354149cadf61b37fae2764108a4</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.1.0</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">fa4ce6a995f4d7ccd7b04318d31ef87cf41fc85baeec7c718e52c0a06ded78e4</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.2.0</dd></div>
       </dl>
     </div>
   </aside>
@@ -1846,16 +2406,16 @@ open reviews and the untaken handovers.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.1.0">v1.1.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e" class="font-mono underline">8df53bc</a> · inputs <span class="font-mono">d1c51e944668</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.2.0">v1.2.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d02c59d447c2cc147eb5357ad4b2396ac54ffff8" class="font-mono underline">d02c59d</a> · inputs <span class="font-mono">1b3f96491bb2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

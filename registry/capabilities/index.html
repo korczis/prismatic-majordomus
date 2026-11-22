@@ -38,7 +38,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.1.0 -->
+     Generator: majordomus-cli 1.2.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -202,7 +202,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/registry/modules/blackboard/" class="font-mono hover:underline">blackboard</a> <span class="text-base font-normal text-body">The peer blackboard</span></h2>
 <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/registry/capabilities/blackboard-snapshot/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">blackboard.snapshot</code>
-    <span class="mt-1 wrap-anywhere text-sm text-body">Every worker of this repository — attached to a checkout&#39;s board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor&#39;s cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.</span>
+    <span class="mt-1 wrap-anywhere text-sm text-body">Every worker of this repository — attached to a checkout&#39;s board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; the typed coordination records still open (observations, hypotheses, plans, decisions, blockers, handoffs, outcomes), stale ones flagged, and the plans or decisions that contend; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor&#39;s cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.</span>
     <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
       <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
       <span class="rounded border border-default px-1 text-body">experimental</span>
@@ -1708,6 +1708,28 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       
       
     </span>
+  </a></li><li><a href="https://majordomus.dev/registry/capabilities/mesh-record-write/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">mesh.record.write</code>
+    <span class="mt-1 wrap-anywhere text-sm text-body">Write an observation, hypothesis, plan, decision, blocker, handoff or outcome about a task and a scope into this runtime&#39;s journal, replicated to every linked runtime; or revise a record of the writing session&#39;s own by naming it and the revision read. The author is the journal&#39;s `&lt;stream&gt;/&lt;session&gt;`, never a name in the input; over MCP a session writes only as itself. Refused, and nothing written: a malformed record or a handoff without objective, current_state, evidence, blockers and next_action (`invalid_input`); a path outside the session&#39;s live claims (`out_of_scope`); a revision of another session&#39;s record (`not_own` — write a new record with `supersedes` instead); a revision read that is no longer current (`stale_revision`, naming the current one); a retry key reused for other content (`idempotency_conflict`). The same retry key with the same content answers the first write. Contending live plans or decisions of other authors are written and reported.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">command</span>
+      <span class="rounded border border-default px-1 text-body">experimental</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
+  </a></li><li><a href="https://majordomus.dev/registry/capabilities/mesh-records/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">mesh.records</code>
+    <span class="mt-1 wrap-anywhere text-sm text-body">Every typed coordination record the journal holds, folded: its author (`&lt;stream&gt;/&lt;session&gt;`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool&#39;s observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author&#39;s standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author&#39;s session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold&#39;s. Where this process runs no mesh it answers `active: false` with the reason.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">experimental</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
   </a></li><li><a href="https://majordomus.dev/registry/capabilities/mesh-register/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">mesh.register</code>
     <span class="mt-1 wrap-anywhere text-sm text-body">Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node&#39;s own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process&#39;s memory only.</span>
@@ -2837,16 +2859,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d02c59d447c2cc147eb5357ad4b2396ac54ffff8/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.1.0">v1.1.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8df53bc26e9589492cb1bfe2b7aff7fa0d26a79e" class="font-mono underline">8df53bc</a> · inputs <span class="font-mono">d1c51e944668</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.2.0">v1.2.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d02c59d447c2cc147eb5357ad4b2396ac54ffff8" class="font-mono underline">d02c59d</a> · inputs <span class="font-mono">1b3f96491bb2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
