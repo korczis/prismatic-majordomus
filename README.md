@@ -31,6 +31,17 @@ machines: a small, portable shell tool answers the task cycle, and the Rust exec
 answers everything else — the server, MCP, the Cockpit, the mesh, the plan and the integration
 queue. It never invokes a model.
 
+**The mesh works out of the box.** When a repository commits an enabled mesh declaration
+(`.ai/repo/mesh/*.yaml`) that lists a machine's key, every server a session starts on that
+machine — the one `majordomus mcp` elects, the one `serve ensure` starts, in the primary
+checkout or a linked worktree — binds every interface instead of loopback, so the machine is
+found by multicast, by every hub and over the tailnet and can be dialed, with no command run by
+hand. A machine that is not listed stays on loopback; `MAJORDOMUS_HTTP_HOST=127.0.0.1` opts a
+listed one out. A read of the mesh (`mesh status`, `mesh peers`, `mesh doctor`, ...) never waits
+on a build: in a checkout whose executable is missing, the installed release answers it
+([`docs/MESH.md`](docs/MESH.md#out-of-the-box),
+[ADR 234](.ai/repo/adrs/0234-an-enrolled-machine-is-a-mesh-node-out-of-the-box.md)).
+
 A recorded run from [the challenge](https://majordomus.dev/challenge/), redacted and
 otherwise untouched: the scope is clean now, but the repository's own test still fails, so a
 worker's claim that it is done is refused.
@@ -721,9 +732,11 @@ page at `/`, the UI at `/ui`, the documentation at `/docs/`, the Cockpit at `/co
 `/swagger`, the OpenAPI document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
 attaches to it instead of starting another, and the server ends when its last client
 leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing under the
-tracked tree. Loopback is the default and no tracked file can move it; a machine that
-should be reachable from another exports `MAJORDOMUS_HTTP_HOST=0.0.0.0` in its own
-environment, and every server started there binds it
+tracked tree. Loopback is the default and no tracked file alone can move it: a machine whose
+key the trunk's committed, enabled mesh declaration lists binds every interface, because it is
+a mesh node its peers must dial (ADR 234), and any other machine that should be reachable
+exports `MAJORDOMUS_HTTP_HOST=0.0.0.0` in its own environment, and every server started there
+binds it; `MAJORDOMUS_HTTP_HOST=127.0.0.1` keeps a listed machine on loopback
 ([`docs/MCP.md`](docs/MCP.md#the-machine-names-the-interface)).
 
 **One web surface, discovered from its producer.** What the server serves is not a list

@@ -290,7 +290,45 @@ EOF_WT
   return "$mj_sb_found"
 }
 
-# mj_rust_resolve <tool-root> [<prefix>]
+# mj_rust_mesh_read <repository-root> <command words...>
+#
+# Is this command a read of the mesh? True (0) when its first word is `mesh` and the tree's
+# registry projection (docs/generated/registry.json) declares the capability its next words
+# name — `mesh peers` is `mesh.peers`, `mesh build-cache env` is `mesh.build_cache.env` — as a
+# `query`. The answer is read from the projection, never listed here
+# (project.commands-are-projections); a command the projection does not name, a `command`
+# capability (claim, release, verify, enrol, firewall apply, ...), or words after a global
+# option are not reads, which is the direction that refuses.
+#
+# Why a read may be answered by a release of another generation (ADR 0234): it asks the
+# running runtime and the network for what they hold, signs nothing and writes nothing, and
+# the mesh's wire protocol is versioned on its own (a reader of another protocol says so).
+# Nothing it prints is a verdict about this tree's code, which is what ADR 0224 guards.
+mj_rust_mesh_read() {
+  mj_mr_root="$1"; shift
+  [ "${1:-}" = mesh ] || return 1
+  mj_mr_reg="$mj_mr_root/docs/generated/registry.json"
+  [ -f "$mj_mr_reg" ] || return 1
+  mj_mr_id="mesh"
+  shift
+  for mj_mr_w in "${1:-}" "${2:-}"; do
+    case "$mj_mr_w" in ''|-*) break ;; *[!a-z0-9-]*) return 1 ;; esac
+    mj_mr_id="$mj_mr_id.$(printf '%s' "$mj_mr_w" | tr '-' '_')"
+    # the longest name the registry declares wins: `mesh firewall apply` is a command even
+    # though `mesh firewall` is a query
+    mj_mr_kind="$(awk -v want="$mj_mr_id" '
+      /^      "id": "/ { id = $0; sub(/^      "id": "/, "", id); sub(/",?$/, "", id); next }
+      /^      "kind": "/ && id == want { k = $0; sub(/^      "kind": "/, "", k); sub(/",?$/, "", k); print k; exit }
+    ' "$mj_mr_reg")"
+    [ -n "$mj_mr_kind" ] && mj_mr_found="$mj_mr_kind"
+  done
+  [ "${mj_mr_found:-}" = query ]
+  mj_mr_rc=$?
+  unset mj_mr_found mj_mr_kind
+  return "$mj_mr_rc"
+}
+
+# mj_rust_resolve <tool-root> [<prefix>] [<command words...>]
 #
 # The executable a command of this tree runs, never built (ADR 0224). Prints its path on
 # stdout and returns 0, or says why there is none on stderr and returns 12:
@@ -304,9 +342,15 @@ EOF_WT
 #      not used. Nothing here starts cargo, whoever asks: a gate, a hook, a provider hook,
 #      `mcp`, an entry path or a person.
 #
+#   3b. for a read of the mesh (mj_rust_mesh_read), when the command words are given and
+#      neither of the above answered: the installed release of another generation, saying so
+#      on stderr (ADR 0234). A session in a checkout with no build can still see the mesh;
+#      everything else is still refused.
+#
 # The prefix is the caller's own (`majordomus-cli: `, a test harness's four spaces).
 mj_rust_resolve() {
   mj_rv_root="$1"; mj_rv_p="${2:-majordomus-cli: }"
+  [ $# -ge 2 ] && shift 2 || shift $#
   mj_rv_bin="$(mj_rust_bin "$mj_rv_root")"
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
     [ -x "$mj_rv_bin" ] || { mj_rust_bin_missing "$mj_rv_root" "$mj_rv_bin" "$mj_rv_p"; return 12; }
@@ -338,6 +382,11 @@ mj_rust_resolve() {
     printf '%s%s is %s; answering through %s, built in the worktree %s, whose checked-out crate this tree carries unchanged\n' \
       "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state" "$mj_rv_sib" "$mj_rv_sib_wt" >&2
     printf '%s\n' "$mj_rv_sib"; return 0
+  fi
+  if [ -n "${mj_rv_inst:-}" ] && [ -n "$mj_rv_release" ] && mj_rust_mesh_read "$mj_rv_root" "$@"; then
+    printf '%s%s is %s, and %s; this is a read of the mesh, which asks the running runtime, signs nothing and writes nothing, so that release answers it (ADR 0234); every other command still needs: just build\n' \
+      "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state" "$mj_rv_release" >&2
+    printf '%s\n' "$mj_rv_inst"; return 0
   fi
   {
     printf '%s%s is %s, and no ordinary command builds it (ADR 0224)\n' "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state"

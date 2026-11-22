@@ -16,6 +16,16 @@ take the task lifecycle from `.ai/repo/workflows/task-lifecycle.md`, and expect 
 and `finish` to refuse work outside the task's scope. The default profile is
 `{{DEFAULT_PROFILE}}`; the checkpoint interval it sets is `{{CHECKPOINT_DEFAULT}}`.
 
+The mesh works out of the box. This repository commits an enabled mesh declaration
+(`.ai/repo/mesh/majordomus.yaml`); on a machine whose key it lists, the server your session
+gets — in the primary checkout or a linked worktree — binds every interface by itself, so the
+machine is found by multicast, by every hub and over the tailnet and can be dialed, with no
+`serve --host` typed and no variable set (ADR 0234). Do not start a hub or export
+`MAJORDOMUS_HTTP_HOST` to make the mesh work; `MAJORDOMUS_HTTP_HOST=127.0.0.1` is the opt-out.
+A read of the mesh (`majordomus mesh status`, `mesh peers`, `mesh doctor`) never waits on a
+build: with no executable of this tree, the installed release answers it and says so. If
+`mesh peers` shows a machine missing, `majordomus mesh doctor` there says why.
+
 Before working under a path, run `majordomus context resolve <path>` (or read the
 `README.md` chain from `.ai/` down to that directory): each document adds to its
 ancestors and the nearest one does not replace them. A provider's own nested-file

@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `f39f98caab36`.
+Generated from canonical inputs `fc52087b8ece`.
 
 ## Milestones
 
@@ -535,7 +535,7 @@ Generated from canonical inputs `f39f98caab36`.
 
 ## Findings
 
-11226 finding(s), each on the page of the milestone its subject is or belongs to:
+11108 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -592,17 +592,17 @@ Generated from canonical inputs `f39f98caab36`.
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 26 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 9 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
-| [`public-proof`](plan-status/public-proof.md) | 133 |
+| [`public-proof`](plan-status/public-proof.md) | 132 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 35 |
-| [`runtime-adapters`](plan-status/runtime-adapters.md) | 118 |
+| [`runtime-adapters`](plan-status/runtime-adapters.md) | 119 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 55 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 40 |
 | [`safe-self-update`](plan-status/safe-self-update.md) | 567 |
 | [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 414 |
 | [`test-evidence`](plan-status/test-evidence.md) | 29 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 274 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 156 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 29 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 2 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |

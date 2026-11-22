@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: evolve
-version: 5
+version: 6
 title: Evolve the repository's know-how
 description: Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.
 status: active
@@ -175,6 +175,20 @@ announced with `majordomus_announce`, naming the number and the record, before t
 written; `majordomus adr next` and `scripts/case-numbers next` survey refs and one board's
 words, not every machine's claims, so their answer is a candidate to announce and never a
 number to take on its own.
+
+A lesson whose remedy is a step a person must remember on every machine — export a
+variable, start a server by hand, build before a read — is not delivered by writing the step
+down; ask what default would make the step unnecessary, and make that the change. On
+2026-11-22 the owner's four machines were linked only because someone had started a hub by
+hand on each: the mesh documentation said to export `MAJORDOMUS_HTTP_HOST=0.0.0.0`, nobody
+had on any machine, every session's server sat on loopback, and a checkout with no build
+could not even run `mesh status`. The remedy was a default, not a fifth paragraph: a machine
+the committed declaration enrols binds every interface by itself, and a mesh read is
+answered by the installed release (ADR 0234). When such a default changes a stated rule,
+the decision that supersedes it is written in the same change and named in the pull request.
+And a lesson about the mesh is checked on the fleet, not on one machine: `majordomus mesh
+peers` and `mesh doctor` on each, because a mesh that links only while a hand-made process
+runs looks healthy from every single machine.
 
 Follow `majordomus://skill/implement` for the change. Refused here: a new directory,
 registry or database for lessons; a rule with no way to be decided; a number, a list or a

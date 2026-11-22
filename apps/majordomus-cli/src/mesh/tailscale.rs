@@ -2,7 +2,10 @@
 //! `tailscale status --json` lists online is asked as a rendezvous at
 //! `http://<tailnet address>:<port>` — the same `mesh.register` exchange the rendezvous
 //! provider makes with a declared endpoint — so a machine that joins the tailnet is found
-//! with no address written by hand. It proposes addresses and nothing else: what comes
+//! with no address written by hand. Two ports are asked on every peer: the declared one
+//! (8791, where a hub listens) and the one a primary checkout's server asks for
+//! ([`crate::cli::DEFAULT_PORT`], 8741), so a machine whose only server is a session's is
+//! found too (ADR 0234). It proposes addresses and nothing else: what comes
 //! back is a set of signed envelopes, each verified on its own signature, and what links is
 //! decided by the trust list as for every other source.
 //!
@@ -58,6 +61,8 @@ const SLICE: Duration = Duration::from_millis(500);
 /// ```
 pub struct TailscaleProvider {
     config: TailscaleConfig,
+    /// The ports asked on every online peer, the declared one first ([`ports`]).
+    ports: Vec<u16>,
     counters: Arc<Counters>,
     state: Arc<Mutex<(MeshProviderState, Option<String>)>>,
 }
@@ -75,11 +80,45 @@ impl TailscaleProvider {
     /// assert_eq!(TailscaleProvider::new(config).status().id, "tailscale");
     /// ```
     pub fn new(config: TailscaleConfig) -> Self {
+        let ports = ports(config.port, crate::cli::DEFAULT_PORT);
+        Self::asking(config, ports)
+    }
+
+    /// A provider that asks every online peer on `ports` and no other: what a test of the
+    /// exchange uses, so that no server of the machine running it is asked.
+    fn asking(config: TailscaleConfig, ports: Vec<u16>) -> Self {
         TailscaleProvider {
             config,
+            ports,
             counters: Arc::new(Counters::default()),
             state: Arc::new(Mutex::new((MeshProviderState::Stopped, None))),
         }
+    }
+}
+
+/// The ports a peer is asked on: the declared one, then the primary checkout's, once each.
+/// The declared port is where a hub answers; the checkout's is where the server of a session
+/// in a machine's primary checkout answers when it is the machine's only server (ADR 0234).
+///
+/// ```
+/// use majordomus_cli::mesh::tailscale::ports;
+/// assert_eq!(ports(8791, 8741), [8791, 8741]);
+/// assert_eq!(ports(8741, 8741), [8741]);
+/// ```
+pub fn ports(declared: u16, checkout: u16) -> Vec<u16> {
+    if declared == checkout {
+        vec![declared]
+    } else {
+        vec![declared, checkout]
+    }
+}
+
+/// How the ports asked are said in the provider's status: `port 8791` or `ports 8791, 8741`.
+fn ports_said(ports: &[u16]) -> String {
+    let list: Vec<String> = ports.iter().map(u16::to_string).collect();
+    match list.len() {
+        1 => format!("port {}", list[0]),
+        _ => format!("ports {}", list.join(", ")),
     }
 }
 
@@ -109,9 +148,10 @@ impl MeshProvider for TailscaleProvider {
         }
         *self.state.lock().expect("tailscale state") = (
             MeshProviderState::Running,
-            Some(format!("tailnet peers on port {}", self.config.port)),
+            Some(format!("tailnet peers on {}", ports_said(&self.ports))),
         );
         let config = self.config.clone();
+        let ports = self.ports.clone();
         let tx = ctx.tx.clone();
         let stop = Arc::clone(&ctx.stop);
         let beacon = Arc::clone(&ctx.beacon);
@@ -124,13 +164,17 @@ impl MeshProvider for TailscaleProvider {
                 while !stop.load(Ordering::SeqCst) {
                     match read_status(&config.command) {
                         Ok(json) => {
-                            let endpoints = endpoints(&peers_of(&json), config.port);
+                            let peers = peers_of(&json);
+                            let endpoints: Vec<String> = ports
+                                .iter()
+                                .flat_map(|port| endpoints(&peers, *port))
+                                .collect();
                             *state.lock().expect("tailscale state") = (
                                 MeshProviderState::Running,
                                 Some(format!(
-                                    "{} online tailnet peer(s) on port {}",
-                                    endpoints.len(),
-                                    config.port
+                                    "{} online tailnet peer(s) on {}",
+                                    peers.len(),
+                                    ports_said(&ports)
                                 )),
                             );
                             for endpoint in endpoints {
@@ -393,7 +437,8 @@ mod tests {
                 .status()
                 .detail
                 .as_deref()
-                .is_some_and(|d| d.contains("port 9")),
+                // the declared port, then the primary checkout's (ADR 0234)
+                .is_some_and(|d| d.contains("ports 9, 8741")),
             "{:?}",
             provider.status()
         );
@@ -564,12 +609,15 @@ mod tests {
             dir.path(),
             "echo '{\"Peer\":{\"a\":{\"Online\":true,\"TailscaleIPs\":[\"127.0.0.1\"]},\"b\":{\"Online\":true,\"TailscaleIPs\":[\"::1\"]}}}'",
         );
-        let mut provider = TailscaleProvider::new(TailscaleConfig {
-            command: cli,
-            port,
-            interval_seconds: 1,
-            ..TailscaleConfig::default()
-        });
+        let mut provider = TailscaleProvider::asking(
+            TailscaleConfig {
+                command: cli,
+                port,
+                interval_seconds: 1,
+                ..TailscaleConfig::default()
+            },
+            vec![port],
+        );
         provider
             .start(&ctx)
             .expect("a CLI that answers starts the provider");

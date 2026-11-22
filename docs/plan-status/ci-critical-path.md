@@ -75,7 +75,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/cases/95_executable_reference.sh with I2148; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases/95_executable_reference.sh with I2350; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I2374; they may not run concurrently |
-| WARN | `scope_conflict` | `I2115` | shares test/cases/95_executable_reference.sh with I2411; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/lib.sh with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares .ai/repo/ci/gates.yaml with I2662; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases/95_executable_reference.sh with I2714; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases/95_executable_reference.sh with I2717; they may not run concurrently |

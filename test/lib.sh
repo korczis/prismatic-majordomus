@@ -57,6 +57,18 @@ if [ -z "${MJ_CASE_GIT_IS_QUIET:-}" ]; then
   unset mj_case_git_n
 fi
 
+# A case's servers bind loopback unless the case says otherwise.
+#
+# On a machine the repository enrolled in its mesh, a server that nothing tells where to bind
+# binds every interface (ADR 0234), and a fixture that commits an enabled declaration listing
+# the key it made is such a machine to the executable. A case proves what it proves on
+# loopback and must not put its fixture servers on the network of the machine it runs on, so
+# the variable that names the machine's interface is set to loopback here when the caller has
+# not set it. A case that holds the enrolment's bind unsets it (case 4654), as case 992 does.
+if [ -z "${MAJORDOMUS_HTTP_HOST+set}" ]; then
+  MAJORDOMUS_HTTP_HOST=127.0.0.1; export MAJORDOMUS_HTTP_HOST
+fi
+
 LAST_OUT=""
 
 # The exit status a case uses to say it declined to run. It is not 0 and it is not 1: the

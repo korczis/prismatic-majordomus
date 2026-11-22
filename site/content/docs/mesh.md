@@ -23,6 +23,33 @@ Two sentences govern everything here:
 > A link is admitted by a handshake, and everything cooperative is a signed event of one
 > journal that every runtime folds the same way.
 
+## Out of the box
+
+On a machine the repository has enrolled — the trunk commits an enabled declaration whose
+`trust.allow` lists this machine's key — the mesh needs no command run by hand (ADR 0234):
+
+1. **The session's server is dialable.** Every server a session starts there (`majordomus mcp`,
+   `serve ensure`, in the primary checkout and in every linked worktree) binds `0.0.0.0` when
+   neither `--host` nor `MAJORDOMUS_HTTP_HOST` names an interface, so it advertises addresses a
+   peer can dial on multicast, to every hub, and over the tailnet. A machine nobody listed stays
+   on loopback; `MAJORDOMUS_HTTP_HOST=127.0.0.1` opts a listed one out
+   ([`MCP.md`](@/docs/mcp.md#an-enrolled-machine-is-a-mesh-node)).
+2. **The tailnet finds it without a hub.** The tailnet route asks every online peer on the
+   declared `tailscale.port` (8791, a hub) and on 8741, the port a primary checkout's server
+   asks for ([Discovery](#discovery)).
+3. **A read of the mesh never waits on a build.** In a checkout whose executable is missing or
+   stale and whose installed release is of another generation, `bin/majordomus` answers a mesh
+   read — any `mesh` command `docs/generated/registry.json` declares a `query`: `mesh status`,
+   `mesh peers`, `mesh state`, `mesh doctor`, `mesh identity`, ... — through the installed
+   release and says so on stderr. Every other command, every mesh command that changes
+   something, and `mcp` are refused as ADR 0224 says, naming `just build`.
+
+What it does not do: keep a server alive with nobody working. A session's server ends when its
+last client leaves (ADR 0003), so an enrolled machine is dialable while a session works on it;
+a machine that must be reachable with no session runs a hub (ADR 0199,
+[This repository's mesh](#this-repositorys-mesh)). Enrolling is `majordomus mesh enrol` on the
+machine, then committing the declaration ([Trust](#trust)).
+
 ## What it is, and what it is not
 
 **It is** how several AI coding sessions — in several terminals, worktrees and machines —
@@ -119,7 +146,9 @@ identities and version; never a secret, a path or repository content.
 A tailnet is a discovery source too. When the declaration's `tailscale.enabled` is on (the
 default), the Tailscale provider reads `tailscale status --json` every `interval_seconds`
 (60) and asks every peer listed online as a rendezvous at
-`http://<tailnet address>:<port>` (port 8791 unless declared). What comes back is the same
+`http://<tailnet address>:<port>` — on the declared port (8791 unless declared), where a hub
+listens, and on 8741, where a primary checkout's server asks to listen, once each when the two
+are equal (ADR 0234). What comes back is the same
 signed `mesh.register` answer a declared rendezvous gives, through the same verification
 path, so the provider proposes addresses and decides nothing: a machine that joins the
 tailnet is found with no address written by hand, and the trust list still decides what
@@ -863,11 +892,15 @@ cooperation:
 ```
 
 The declaration is the one place mesh behaviour is configured; there are no environment
-variables for it. To be dialed from other machines, the server must listen beyond loopback:
-`majordomus serve --host 0.0.0.0` (or a deployment object). A server on loopback can still dial
-out, and a link, once dialed, replicates both ways.
+variables for it. To be dialed from other machines, the server must listen beyond loopback. On
+a machine the declaration lists, committed on the trunk, every server does so by itself
+([Out of the box](#out-of-the-box), ADR 0234); elsewhere it takes `majordomus serve --host
+0.0.0.0`, `MAJORDOMUS_HTTP_HOST=0.0.0.0`, or a deployment object. A server on loopback can still
+dial out, and a link, once dialed, replicates both ways — but two machines whose servers are
+both on loopback never link.
 
-`--host` lasts as long as that one process. For a machine that should always be dialable,
+`--host` lasts as long as that one process. An enrolled machine needs nothing more; for a
+machine the declaration does not list that should still be dialable,
 export `MAJORDOMUS_HTTP_HOST=0.0.0.0` in the shell's startup file: it is not mesh
 configuration — it names the interface every local server of this machine binds, whoever
 starts it — and [`MCP.md`](@/docs/mcp.md#the-machine-names-the-interface) says what it
@@ -875,7 +908,9 @@ exposes.
 
 A linked worktree does not take that variable: its own server stays on loopback unless
 `--host` says otherwise, because the machine's face on the network is the primary checkout's
-server. A worktree needs no server of its own for the mesh either. `majordomus mesh` in a
+server. The enrolment is not the variable: on an enrolled machine a linked worktree's server
+binds `0.0.0.0` too, because most sessions work in worktrees and a machine whose sessions all
+do would otherwise never be dialable (ADR 0234). A worktree needs no server of its own for the mesh either. `majordomus mesh` in a
 checkout with no running server asks a ready server of the same repository — the primary's
 first — and names it on stderr (`asking the server of <checkout> at <url>`). The one command
 it refuses there is `mesh handover consume` without `--no-materialize`, because the handover
@@ -884,7 +919,9 @@ would be written into the other checkout.
 ## This repository's mesh
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
-`enabled: true`, so every server of every worktree of it announces, listens and links. That is
+`enabled: true`, so every server of every worktree of it announces, listens and links — and,
+on a machine whose key it lists, binds every interface with no variable set, so that a
+session's own server is dialable by every route (ADR 0234). That is
 this repository's reviewed decision about who is listed. The tool's default is the same shape
 with an empty trust list: `majordomus init` seeds `mesh.yaml` in `.ai/repo/mesh/`, enabled and
 `deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
@@ -950,6 +987,13 @@ the checkout a person works in already runs its own shared server and a second o
 The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
+
+**What a hub is still for.** Until 2026-11-22 the hand-started hubs were the only reason the
+fleet linked at all: `MAJORDOMUS_HTTP_HOST` was set on none of the four machines, so every
+session's server sat on loopback and advertised an address nobody could dial. Since ADR 0234 a
+session's own server on an enrolled machine binds every interface, so a machine is
+discoverable and dialable while anyone works on it; a hub is what keeps it so when nobody does,
+and what a machine outside the local segment registers with.
 
 **The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
 systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo

@@ -473,7 +473,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares lib with I2148; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2350; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I2374; they may not run concurrently |
-| WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I2411; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares lib with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I2670; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I2690; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2694; they may not run concurrently |

@@ -327,9 +327,11 @@ waits for peers to leave, so a dead peer never stays `attached` on the board.
 
 ### The machine names the interface
 
-A local server binds loopback. That default does not move: the layer, its diagnostics, its
-peers and the two tools that answer about `.ai/local/` are not for every host on the
-network a laptop happens to be on.
+A local server binds loopback. That default does not move for a machine nobody enrolled:
+the layer, its diagnostics, its peers and the two tools that answer about `.ai/local/` are
+not for every host on the network a laptop happens to be on. A machine the repository *has*
+enrolled in its mesh is the one exception, and it is a decision of the repository and of the
+machine together ([below](#an-enrolled-machine-is-a-mesh-node), ADR 0234).
 
 One machine may still want to be reached — a second machine attaching over the LAN, a mesh
 peer dialing in, a phone opening the Cockpit — and until 0.14 the only way to say so was
@@ -347,17 +349,36 @@ export MAJORDOMUS_HTTP_HOST=0.0.0.0     # every interface; or one address of thi
 
 | who starts the server | what it binds |
 |---|---|
-| `majordomus serve` | `--host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
-| `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
+| `majordomus serve` | `--host` when given; else `MAJORDOMUS_HTTP_HOST`; else `0.0.0.0` on an enrolled mesh node; else `127.0.0.1` |
+| `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `0.0.0.0` on an enrolled mesh node; else `127.0.0.1` |
 | `majordomus serve ensure` (session start, shell entry) | it passes no host; the server it starts inherits the variable |
 | `majordomus serve --deployment <id>` | the deployment object's `listen` block, and nothing else: a declared address is not overridden by a machine's environment |
 | any of the first three, in a linked worktree | `127.0.0.1` when only `MAJORDOMUS_HTTP_HOST` names an interface; a flag still binds where it says. The variable is the machine's face on its network, which is the primary checkout's server; a worktree's server serves its own sessions, and its mesh commands go through the primary's ([`MESH.md`](MESH.md#configuration)) |
 
-Four things follow from it being a variable and not a setting:
+#### An enrolled machine is a mesh node
+
+A machine is *enrolled* when the trunk holds a committed copy of the mesh declaration, the
+declaration in force is enabled, this machine's node identity already exists, and its public
+key is listed in `trust.allow`. On such a machine a server that no flag and no
+`MAJORDOMUS_HTTP_HOST` places binds `0.0.0.0` — in the primary checkout and in a linked
+worktree alike — and logs `binding 0.0.0.0: this machine's key (node …) is listed by the
+committed, enabled mesh declaration …`, naming the opt-out. A runtime on loopback advertises
+`127.0.0.1` on multicast and to every hub, which no peer can dial; on 2026-11-22 four enrolled
+machines linked only because a person had started a hub by hand on each (ADR 0234).
+
+The tracked file alone still moves nothing: it lists keys, and only the machine that holds a
+listed private key answers yes, so a clone on any other machine stays on loopback, and a branch
+or an uncommitted edit that lists a key is narrowed to the trunk's copy first
+([`MESH.md`](MESH.md#trust)). `MAJORDOMUS_HTTP_HOST=127.0.0.1` keeps an enrolled machine on
+loopback, and a flag still binds where it says. `server.status` reports the same resolution as
+`desired.host` (`cli::resolve_node_http_host`).
+
+Four things follow from the variable being a variable and not a setting:
 
 - **It is the machine's, never the repository's.** Nothing tracked can set it. A key in
   `.ai/repo/policy.yaml` would make every clone of a public repository listen on whatever
-  network it woke up in.
+  network it woke up in. The enrolment above is not such a key: it names machines by their
+  keys, not clones.
 - **The command line wins**, a blank value is no value, and a value nothing can bind
   refuses to start, naming the address.
 - **The warning stands.** A bind the variable chose still logs that every host reaching the

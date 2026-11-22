@@ -3529,6 +3529,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/tailscale.rs",
+        "kind": "file",
+        "label": "tailscale.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/tailscale.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/trust.rs",
         "kind": "file",
         "label": "trust.rs",
@@ -9916,6 +9924,37 @@
             "profiles",
             "policy",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0234",
+        "kind": "adr",
+        "label": "adr-0234",
+        "summary": "An enrolled machine is a mesh node out of the box — its servers bind every interface, the tailnet asks the checkout port, and a mesh read never waits on a build",
+        "route": "/cockpit/objects/adr/adr-0234",
+        "source": ".ai/repo/adrs/0234-an-enrolled-machine-is-a-mesh-node-out-of-the-box.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-22",
+          "related": [
+            "file:.ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+            "file:.ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
+            "file:.ai/repo/adrs/0224-no-ordinary-command-builds.md",
+            "file:.ai/repo/mesh/majordomus.yaml",
+            "file:docs/MESH.md",
+            "file:docs/MCP.md",
+            "file:apps/majordomus-cli/src/cli.rs",
+            "file:apps/majordomus-cli/src/mesh/tailscale.rs",
+            "file:lib/rust_bin.sh",
+            "test:test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+            "test:test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh"
+          ],
+          "tags": [
+            "mesh",
+            "mesh-runtime",
+            "launcher"
           ]
         }
       },
@@ -39255,32 +39294,48 @@
         "source": ".ai/repo/project/issues/I2411.yaml",
         "facts": {
           "acceptance_criteria": [
-            "A server started with the mesh enabled answers a trusted peer on its tailnet address with no --host",
+            "A server started on an enrolled machine with no --host and no MAJORDOMUS_HTTP_HOST binds 0.0.0.0, in the primary checkout and in a linked worktree, and says why",
             "The same server refuses a write from a non-loopback caller, as runtime-trust requires",
-            "A server with the mesh disabled still binds loopback only"
+            "A server with the mesh disabled, uncommitted or not listing this machine's key still binds loopback only",
+            "MAJORDOMUS_HTTP_HOST=127.0.0.1 keeps an enrolled machine on loopback",
+            "A mesh query in a checkout with no executable of its generation is answered by the installed release and says so; a mesh command is refused with exit 12"
           ],
           "created_at": "2026-10-10",
-          "current_state": "Cross-machine links exist only through hand-started hubs.",
           "depends_on": [],
           "evidence_required": [
             "mesh_server_reachable_on_tailnet_test"
           ],
           "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "Keeping a session's server alive after its last client leaves: a hub is the declared exception (ADR 0199).",
+            "Binding only the tailnet and LAN addresses rather than every interface: the bind follows the existing 0.0.0.0 path the hubs and MAJORDOMUS_HTTP_HOST use.",
+            "Self-update of an installed release (docs/DISTRIBUTION.md, plan safe-self-update)."
+          ],
           "parallel_safe": false,
           "priority": "p0",
           "profile": "implementation",
           "scope": [
             "apps/majordomus-cli/src/cli.rs",
-            "apps/majordomus-cli/src/shared.rs",
-            "apps/majordomus-cli/src/mesh/address.rs",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/mesh/tailscale.rs",
+            "lib/rust_bin.sh",
+            "bin/majordomus-cli",
+            "test/lib.sh",
+            "test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+            "test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+            ".ai/repo/adrs/0234-an-enrolled-machine-is-a-mesh-node-out-of-the-box.md",
             "docs/MESH.md",
-            "test/cases"
+            "docs/MCP.md",
+            "README.md"
           ],
           "slug": "a-mesh-server-is-reachable-by-its-peers",
-          "updated_at": "2026-10-10",
+          "updated_at": "2026-11-22",
           "validation": [
             "bin/majordomus plan validate",
-            "cargo test --test serve_lifecycle"
+            "bash test/run.sh 4654_an_enrolled_machine_binds_the_mesh_facing_interface 4655_a_mesh_read_does_not_wait_on_a_build 992_the_local_bind_is_the_machines_to_name"
           ]
         }
       },
@@ -110558,6 +110613,20 @@
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "kind": "test",
+        "label": "test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "route": "/cockpit/objects/test/test-cases-4654-an-enrolled-machine-binds-the-mesh-facing-interface-sh",
+        "source": "test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+        "kind": "test",
+        "label": "test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+        "route": "/cockpit/objects/test/test-cases-4655-a-mesh-read-does-not-wait-on-a-build-sh",
+        "source": "test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "label": "test/cases/46_cross_surface.sh",
@@ -126433,6 +126502,71 @@
       {
         "source": "majordomus://adr/adr-0232",
         "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "file:apps/majordomus-cli/src/cli.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "file:apps/majordomus-cli/src/mesh/tailscale.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://adr/adr-0059",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://adr/adr-0199",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://adr/adr-0224",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://implementation/lib/rust_bin.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://mesh-declaration/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://test/test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0234",
+        "target": "majordomus://test/test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
         "kind": "put_in_force"
       },
       {
@@ -160551,6 +160685,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165682,8 +165826,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4534,
-      "edges": 10216,
+      "nodes": 4538,
+      "edges": 10231,
       "acyclic": false,
       "truncated": false
     }

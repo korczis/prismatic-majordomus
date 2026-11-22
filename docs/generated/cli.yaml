@@ -125,7 +125,7 @@ cli:
         - name: http_host
           long: http-host
           positional: false
-          help: "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset"
+          help: "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, else every interface on a machine the committed mesh declaration enrols (ADR 0234), else loopback (`127.0.0.1`)"
           value_name: HOST
           takes_value: true
           required: false
@@ -230,7 +230,7 @@ cli:
         - name: host
           long: host
           positional: false
-          help: "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset"
+          help: "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, else every interface on a machine the committed mesh declaration enrols (ADR 0234), else loopback (`127.0.0.1`)"
           value_name: HOST
           takes_value: true
           required: false

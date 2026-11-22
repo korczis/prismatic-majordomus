@@ -534,6 +534,33 @@ pub fn declaration(ctx: &Context) -> Option<Result<MeshConfig, crate::mesh::Mesh
     resolved_declaration(ctx).declaration
 }
 
+/// This machine's node id when the repository has enrolled it in its mesh: the trunk holds a
+/// committed copy of the declaration, the declaration in force is enabled, and its
+/// `trust.allow` lists this machine's public key literally. `None` otherwise — no
+/// declaration, a disabled one, one only a working tree holds, no identity file yet (none is
+/// created here), or a key nobody listed. It is what moves a server off loopback when nothing
+/// else names an interface ([`crate::cli::resolve_node_http_host`], ADR 0234): the tracked
+/// file says which machines the repository enrolled, and only the machine holding a listed
+/// key answers yes, so a clone elsewhere stays on loopback.
+pub fn enrolled_here(ctx: &Context) -> Option<String> {
+    let resolved = resolved_declaration(ctx);
+    if !resolved.committed {
+        return None;
+    }
+    let config = resolved.declaration?.ok()?;
+    if !config.enabled {
+        return None;
+    }
+    let path = default_identity_path().filter(|p| p.is_file())?;
+    let identity = NodeIdentity::load_or_create(&path).ok()?;
+    config
+        .trust
+        .allow
+        .iter()
+        .any(|k| *k == identity.public.public_key)
+        .then(|| identity.public.node_id.as_str().to_string())
+}
+
 /// [`declaration`], with the trunk it was held against and what was narrowed.
 pub(crate) fn resolved_declaration(ctx: &Context) -> crate::mesh::root::Resolved {
     let root = std::path::Path::new(&ctx.index.repository.root);

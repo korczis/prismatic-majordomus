@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "55a4bab7d3a3890856a93aa67d0495f3597ae88fe0ef0256ab1a0d60ae378484",
+    "fingerprint": "02d586ff8b0e9f2b52e54b5ae08f40650ee1e00b4cb10fddca4472492ae416fb",
     "summary": {
-      "total": 4056,
+      "total": 4059,
       "builtin": 233,
-      "declarative": 3823,
+      "declarative": 3826,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3823
+        "resource": 3826
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3833
+        "implemented": 3836
       },
       "mcp_tools": 217,
-      "mcp_resources": 3880,
+      "mcp_resources": 3883,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -98576,7 +98576,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 170,
+        "capabilities": 171,
         "capability_ids": []
       },
       {
@@ -99848,7 +99848,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 707,
+        "capabilities": 709,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7abd283fa045db99c6c56f77aa59e082741ed71b26403f144d73f86a513e35bb",
+    "fingerprint": "d09af6491b25e578df6fb93a5c8f5cc54b1fadd7ec79cdafa7c74a40bee97e53",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99964,7 +99964,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 170,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -99995,7 +99995,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 707,
+      "test": 709,
       "use-case": 49,
       "workspace": 1
     },
@@ -102758,6 +102758,22 @@
           "profiles",
           "policy",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0234",
+        "kind": "adr",
+        "identity": "adr-0234",
+        "title": "An enrolled machine is a mesh node out of the box — its servers bind every interface, the tailnet asks the checkout port, and a mesh read never waits on a build",
+        "description": "An enrolled machine is a mesh node out of the box — its servers bind every interface, the tailnet asks the checkout port, and a mesh read never waits on a build",
+        "path": ".ai/repo/adrs/0234-an-enrolled-machine-is-a-mesh-node-out-of-the-box.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9094,
+        "tags": [
+          "mesh",
+          "mesh-runtime",
+          "launcher"
         ]
       },
       {
@@ -107027,7 +107043,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 8709
+        "bytes": 9512
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -107036,7 +107052,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 7998
+        "bytes": 8801
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -107054,7 +107070,7 @@
         "title": "GEMINI.md",
         "path": "GEMINI.md",
         "source_class": "readme",
-        "bytes": 8216
+        "bytes": 9019
       },
       {
         "uri": "majordomus://document/README.md",
@@ -107063,7 +107079,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 48697
+        "bytes": 49800
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -107504,7 +107520,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 84107
+        "bytes": 85779
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -107513,7 +107529,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 99955
+        "bytes": 103233
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -110665,7 +110681,7 @@
         "identity": "bin/majordomus-cli",
         "path": "bin/majordomus-cli",
         "source_class": "entrypoint",
-        "bytes": 3637
+        "bytes": 4317
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-env",
@@ -111009,7 +111025,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 119989
+        "bytes": 122746
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -115191,11 +115207,11 @@
         "kind": "issue",
         "identity": "I2411",
         "title": "A server whose mesh is enabled is reachable on the tailnet and the LAN, and only by a trusted peer",
-        "description": "When the mesh is enabled, the shared server listens and advertises on the machine's tailnet and LAN addresses as well as loopback, so a trusted peer can dial it, while a request from a non-loopback address stays limited to what runtime-trust allows.",
+        "description": "On a machine the repository enrolled in its mesh (the trunk commits an enabled declaration whose trust.allow lists this machine's key), every server a session starts binds every interface when no flag and no MAJORDOMUS_HTTP_HOST names one, so a trusted peer can dial it by multicast, through a hub and over the tailnet, while a request from a non-loopback address stays limited to what ADR 0126 allows; the tailnet route also asks the primary checkout's port; and a read of the mesh is answered in a checkout with no build of its generation (ADR 0234).",
         "path": ".ai/repo/project/issues/I2411.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1885
+        "bytes": 4480
       },
       {
         "uri": "majordomus://issue/I2412",
@@ -135528,7 +135544,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 16018,
+        "bytes": 17142,
         "tags": [
           "knowledge",
           "review",
@@ -139649,6 +139665,22 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "kind": "test",
+        "identity": "test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "path": "test/cases/4654_an_enrolled_machine_binds_the_mesh_facing_interface.sh",
+        "source_class": "case",
+        "bytes": 6465
+      },
+      {
+        "uri": "majordomus://test/test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+        "kind": "test",
+        "identity": "test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+        "path": "test/cases/4655_a_mesh_read_does_not_wait_on_a_build.sh",
+        "source_class": "case",
+        "bytes": 5013
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -142000,7 +142032,7 @@
       "identity": [
         "id"
       ],
-      "objects": 170
+      "objects": 171
     },
     {
       "name": "application",
@@ -142325,7 +142357,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 707
+      "objects": 709
     },
     {
       "name": "use-case",
@@ -142531,7 +142563,7 @@
             "name": "http_host",
             "long": "http-host",
             "positional": false,
-            "help": "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
+            "help": "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, else every interface on a machine the committed mesh declaration enrols (ADR 0234), else loopback (`127.0.0.1`)",
             "value_name": "HOST",
             "takes_value": true,
             "required": false,
@@ -142669,7 +142701,7 @@
             "name": "host",
             "long": "host",
             "positional": false,
-            "help": "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
+            "help": "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, else every interface on a machine the committed mesh declaration enrols (ADR 0234), else loopback (`127.0.0.1`)",
             "value_name": "HOST",
             "takes_value": true,
             "required": false,

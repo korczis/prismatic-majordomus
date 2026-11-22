@@ -36,6 +36,13 @@
 #   provider hook   fallback, else skip, with a recorded line (.claude/hooks/majordomus-edit-guard)
 #   gate            fallback, else refuse: the gate fails at exit 12 (scripts/ci/run-plan)
 #
+# One exception reaches every caller of this launcher: a read of the mesh (`mesh status`,
+# `mesh peers`, `mesh doctor`, ... — whatever docs/generated/registry.json declares a `query`)
+# that neither the tree's executable nor a release of its generation can answer is answered
+# by the installed release of another generation, said on stderr (ADR 0234). It reads what
+# the running runtime holds and writes nothing, so a session in a checkout with no build can
+# still see the mesh it is part of.
+#
 # Exit codes are the executable's; 12 when there is none to run.
 set -eu
 
@@ -54,6 +61,8 @@ fi
 prefix='majordomus-cli: '
 [ "${MAJORDOMUS_HOOK:-0}" = 1 ] && prefix='majordomus-cli (git hook): '
 [ "${1:-}" = mcp ] && prefix='majordomus-cli (mcp): '
-bin="$(mj_rust_resolve "$root" "$prefix")" || exit 12
+# the command words go with the question: a read of the mesh may be answered by the installed
+# release of another generation (ADR 0234, mj_rust_mesh_read); nothing else may
+bin="$(mj_rust_resolve "$root" "$prefix" "$@")" || exit 12
 [ -x "$bin" ] || { mj_rust_bin_missing "$root" "$bin" "$prefix"; exit 12; }
 exec "$bin" "$@"

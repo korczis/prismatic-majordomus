@@ -1182,7 +1182,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         checkout_id: repository::identity(&root),
         git,
         desired: Desired {
-            host: desired_host(linked),
+            host: desired_host(linked, crate::capability::builtin::mesh::enrolled_here(ctx)),
             // the port this checkout asks for on every start (I2702)
             port: crate::cli::checkout_port(&root),
             version: crate::VERSION.into(),
@@ -1199,10 +1199,10 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
 
 /// The interface a server started from this environment would bind — the same resolution
 /// `serve` and `mcp` make for this checkout, without a flag, so that `desired` and a bind
-/// cannot disagree.
-fn desired_host(linked: bool) -> String {
+/// cannot disagree: an enrolled mesh node's included (ADR 0234).
+fn desired_host(linked: bool, enrolled: Option<String>) -> String {
     let environment = std::env::var(crate::cli::HTTP_HOST_ENV).ok();
-    crate::cli::resolve_checkout_http_host(None, environment.as_deref(), linked).0
+    crate::cli::resolve_node_http_host(None, environment.as_deref(), linked, enrolled.as_deref()).0
 }
 
 /// The module: one capability, `server.status`, composed into the application by
