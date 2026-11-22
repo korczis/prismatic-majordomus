@@ -63126,7 +63126,7 @@ capabilities:
               - type: string
                 const: hold
                 description: "Apply nothing this round, for the reason beside it."
-            description: "Apply now, or hold and check again next interval."
+            description: "Apply now, or hold and check again next interval.\n\n```\nuse majordomus_cli::release::follow::Step;\nassert_eq!(Step::default(), Step::Hold, \"a record without a step applied nothing\");\nassert_eq!(serde_json::to_value(Step::Apply).unwrap(), \"apply\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::self_update

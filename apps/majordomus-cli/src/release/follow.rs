@@ -131,6 +131,16 @@ impl Default for FollowConfig {
 
 impl FollowConfig {
     /// Refuse an interval shorter than [`MIN_CHECK_INTERVAL`].
+    ///
+    /// ```
+    /// use majordomus_cli::release::follow::{FollowConfig, MIN_CHECK_INTERVAL};
+    /// assert!(FollowConfig::default().validate().is_ok());
+    /// let hasty = FollowConfig {
+    ///     check_interval_seconds: MIN_CHECK_INTERVAL - 1,
+    ///     ..FollowConfig::default()
+    /// };
+    /// assert!(hasty.validate().unwrap_err().contains("below the minimum"));
+    /// ```
     pub fn validate(&self) -> Result<(), String> {
         if self.check_interval_seconds < MIN_CHECK_INTERVAL {
             return Err(format!(
@@ -166,6 +176,12 @@ pub enum Override {
 
 impl Override {
     /// Read one spelling; anything else is no override (and the reader says so).
+    ///
+    /// ```
+    /// use majordomus_cli::release::follow::Override;
+    /// assert_eq!(Override::parse(" check "), Some(Override::Check));
+    /// assert_eq!(Override::parse("on"), None);
+    /// ```
     pub fn parse(word: &str) -> Option<Override> {
         match word.trim() {
             "off" => Some(Override::Off),
@@ -177,6 +193,14 @@ impl Override {
     }
 
     /// The machine's override, from the environment.
+    ///
+    /// ```
+    /// use majordomus_cli::release::follow::Override;
+    /// // whatever the environment says, it is one of the spellings or no override at all
+    /// let read = Override::from_env();
+    /// let said = std::env::var("MAJORDOMUS_SELF_UPDATE").ok();
+    /// assert_eq!(read, said.as_deref().and_then(Override::parse));
+    /// ```
     pub fn from_env() -> Option<Override> {
         std::env::var("MAJORDOMUS_SELF_UPDATE")
             .ok()
@@ -210,6 +234,13 @@ pub struct Mode {
 
 impl Mode {
     /// The declaration's section, narrowed by `machine`.
+    ///
+    /// ```
+    /// use majordomus_cli::release::follow::{Dirty, FollowConfig, Mode, Override};
+    /// let consenting = FollowConfig { dirty: Dirty::Apply, ..FollowConfig::default() };
+    /// assert!(Mode::resolve(&consenting, None).dirty_consent);
+    /// assert!(!Mode::resolve(&FollowConfig::default(), Some(Override::Follow)).dirty_consent);
+    /// ```
     pub fn resolve(declared: &FollowConfig, machine: Option<Override>) -> Mode {
         let follow = match (declared.follow, machine) {
             (Follow::Off, _) | (_, Some(Override::Off)) => Follow::Off,
@@ -243,6 +274,15 @@ impl Mode {
 }
 
 /// What one round knows when it asks whether to apply.
+///
+/// ```
+/// use majordomus_cli::release::follow::{gate, Facts, FollowConfig, Mode, Step};
+/// use majordomus_cli::release::self_update::Verdict;
+/// let unknown = Facts { verdict: Verdict::Upgrade, target: "1.3.0".into(), installed: Ok(()),
+///     dirty: None, failed_before: false };
+/// // a checkout whose state could not be told holds the upgrade back
+/// assert_eq!(gate(&Mode::resolve(&FollowConfig::default(), None), &unknown).step, Step::Hold);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Facts {
     /// The verdict of [`super::self_update::decide`] on the stable pointer.
@@ -259,6 +299,12 @@ pub struct Facts {
 }
 
 /// Apply now, or hold and check again next interval.
+///
+/// ```
+/// use majordomus_cli::release::follow::Step;
+/// assert_eq!(Step::default(), Step::Hold, "a record without a step applied nothing");
+/// assert_eq!(serde_json::to_value(Step::Apply).unwrap(), "apply");
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Step {
@@ -270,6 +316,16 @@ pub enum Step {
 }
 
 /// The step, with the sentence that says why.
+///
+/// ```
+/// use majordomus_cli::release::follow::{gate, Facts, FollowConfig, Mode, Step};
+/// use majordomus_cli::release::self_update::Verdict;
+/// let clean = Facts { verdict: Verdict::Upgrade, target: "1.3.0".into(), installed: Ok(()),
+///     dirty: Some(false), failed_before: false };
+/// let gated = gate(&Mode::resolve(&FollowConfig::default(), None), &clean);
+/// assert_eq!(gated.step, Step::Apply);
+/// assert!(!gated.reason.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Gated {
     /// Apply or hold.
@@ -390,17 +446,40 @@ pub struct FollowState {
 }
 
 /// Where an installation's follower record lives.
+///
+/// ```
+/// use majordomus_cli::release::follow::state_path;
+/// let at = state_path(std::path::Path::new("/opt/majordomus"));
+/// assert_eq!(at, std::path::Path::new("/opt/majordomus/self-update.json"));
+/// ```
 pub fn state_path(prefix: &Path) -> PathBuf {
     prefix.join("self-update.json")
 }
 
 /// Read the record; absent or unreadable is no record.
+///
+/// ```
+/// use majordomus_cli::release::follow::{read_state, state_path};
+/// let dir = tempfile::tempdir().unwrap();
+/// assert!(read_state(dir.path()).is_none(), "absent");
+/// std::fs::write(state_path(dir.path()), "not json").unwrap();
+/// assert!(read_state(dir.path()).is_none(), "unreadable");
+/// ```
 pub fn read_state(prefix: &Path) -> Option<FollowState> {
     let text = std::fs::read_to_string(state_path(prefix)).ok()?;
     serde_json::from_str(&text).ok()
 }
 
 /// Write the record atomically (a temporary file renamed over it).
+///
+/// ```
+/// use majordomus_cli::release::follow::{read_state, write_state, FollowState};
+/// let dir = tempfile::tempdir().unwrap();
+/// let state = FollowState { running: "1.2.0".into(), reason: "up to date".into(),
+///     ..FollowState::default() };
+/// write_state(dir.path(), &state).unwrap();
+/// assert_eq!(read_state(dir.path()), Some(state));
+/// ```
 pub fn write_state(prefix: &Path, state: &FollowState) -> std::io::Result<()> {
     let path = state_path(prefix);
     let tmp = path.with_extension(format!("json.{}", std::process::id()));
@@ -411,6 +490,16 @@ pub fn write_state(prefix: &Path, state: &FollowState) -> std::io::Result<()> {
 
 /// One applier per installation: a lock file holding the applying process's pid, created
 /// exclusively. A lock whose process is gone is taken over; a live one is never waited on.
+///
+/// ```
+/// use majordomus_cli::release::follow::ApplyLock;
+/// let dir = tempfile::tempdir().unwrap();
+/// {
+///     let _held = ApplyLock::take(dir.path()).unwrap();
+///     assert!(dir.path().join("self-update.lock").exists());
+/// }
+/// assert!(!dir.path().join("self-update.lock").exists(), "the lock ends with its holder");
+/// ```
 pub struct ApplyLock {
     path: PathBuf,
 }

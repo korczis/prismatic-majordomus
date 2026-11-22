@@ -6,7 +6,7 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "9825ddc7d3c56fa2fd1f82cf3183c798e8f0589f349331cb113c97d38ae4840b",
+    "fingerprint": "38206535b637f0045cd76be70cacf779f0342590e3e609891e956cac6504b50c",
     "summary": {
       "total": 4060,
       "builtin": 234,
@@ -88631,7 +88631,7 @@
                     "description": "Apply nothing this round, for the reason beside it."
                   }
                 ],
-                "description": "Apply now, or hold and check again next interval."
+                "description": "Apply now, or hold and check again next interval.\n\n```\nuse majordomus_cli::release::follow::Step;\nassert_eq!(Step::default(), Step::Hold, \"a record without a step applied nothing\");\nassert_eq!(serde_json::to_value(Step::Apply).unwrap(), \"apply\");\n```"
               }
             }
           }
@@ -100451,7 +100451,7 @@
     ]
   },
   "index": {
-    "fingerprint": "baa022603a9eb03a4aabf1734462f80973bfa6eca030c8188b508c418ad9dcb8",
+    "fingerprint": "5ce4a596336d72b034ca989a4578780e216969fccbb51f2a6e3d29075a903bff",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

@@ -185,7 +185,7 @@ fn follower_view(ctx: &Context, at: Option<&Installation>) -> FollowerView {
 /// Start the follower of a server once per process: a thread that runs [`follow_round`]
 /// after a short first wait and then every interval, jittered. It ends by itself when this
 /// executable is no installation, because a build in a checkout never becomes one.
-pub fn start_follower(ctx: std::sync::Arc<Context>, root: std::path::PathBuf) {
+pub(crate) fn start_follower(ctx: std::sync::Arc<Context>, root: std::path::PathBuf) {
     static STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
     let mode = match follower_mode(&ctx) {
         Ok(mode) => mode,
@@ -237,7 +237,7 @@ pub fn start_follower(ctx: std::sync::Arc<Context>, root: std::path::PathBuf) {
 /// One round of the follower: check, gate, and when every consent holds apply through
 /// `self.update` and hand the server over. Returns the record written, or `None` when this
 /// executable is no installation (and nothing is written).
-pub fn follow_round(
+pub(crate) fn follow_round(
     ctx: &Context,
     mode: &Mode,
     root: &std::path::Path,
