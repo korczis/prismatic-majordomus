@@ -47,7 +47,7 @@ gitq() { git -c user.email=t@example.com -c user.name=t "$@"; }
 DECL=.ai/repo/mesh/mesh.yaml
 [ -f "$DECL" ] || fail "init seeded no mesh declaration at $DECL"
 declare_mesh() {   # enabled
-  printf 'schema: mesh/v1\nkind: mesh-declaration\nid: mesh\nenabled: %s\nmulticast:\n  enabled: false\nbroadcast:\n  mode: disabled\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow: []\n' "$1" > "$DECL"
+  printf 'schema: mesh/v1\nkind: mesh-declaration\nid: mesh\nenabled: %s\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\nbroadcast:\n  mode: disabled\ntrust:\n  policy: deny_unknown\n  allow: []\n' "$1" > "$DECL"
 }
 declare_mesh true
 gitq add -A >/dev/null && gitq commit -qm "an enabled mesh that lists nobody"
