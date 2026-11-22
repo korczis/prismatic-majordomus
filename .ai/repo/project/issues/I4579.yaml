@@ -1,0 +1,35 @@
+id: I4579
+milestone: a-release-is-proven-end-to-end
+title: "An on-demand gate that times out on a scheduled run does not override the green verdict of the push run that a release reads"
+slug: an-on-demand-timeout-does-not-override-a-green-push
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The on-demand `macos` and `bench` jobs of .github/workflows/validate.yml (selected only on schedule, workflow_dispatch or the ci:full label) either fit the 698-case suite inside their bounds or report a timeout as their own verdict apart from the commit's, and scripts/ci/release-verdict decides a tag on the verdict of the gates a release requires, so a scheduled run that reaches only an on-demand timeout cannot turn a commit whose push run was green into one that may not be released."
+why: "On 2026-11-11 the push validate of the v1.0.2 release head d34f159439f, run 42999762183, was green. The scheduled validate of the same commit, run 43015422777, ran the on-demand jobs too: in its fourth attempt `bench` was cancelled at 25 min (21:02:14Z to 21:27:32Z, timeout-minutes 25) and `macos` at 110 min (21:02:16Z to 22:52:44Z, timeout-minutes 110), and its `ci` job failed. release-verdict takes the newest `ci` check-run of the tagged commit ('Older successes do not outvote it'), so the scheduled run's red stood over the push run's green, and the release was held although nothing in the commit had failed. The way out was to rerun `ci` of the push run so that it became the newest. The ci job needs every job the model names, `macos` among them (validate.yml's own comment: 'a red macos on the nightly run turns this red')."
+current_state: "At origin/master d34f159439f: macos has timeout-minutes 110 and bench 25 on macos-latest; ci needs both; release-verdict reads the newest `ci` check-run by id and refuses anything but success."
+desired_state: "A scheduled run whose only reds are on-demand jobs that ran out of time names them as such, and release-verdict, given a commit whose push run's `ci` succeeded and whose newer `ci` failed only on on-demand timeouts, answers ready with that finding named, or not ready naming the gate a release requires that failed; the macos and bench bounds are re-derived from measured runs of the current suite."
+scope:
+  - ".ai/repo/project/issues/I4579.yaml"
+  - ".github/workflows/validate.yml"
+  - "scripts/ci/release-verdict"
+  - "scripts/ci/verdict"
+  - ".ai/repo/ci/gates.yaml"
+  - "docs/CI.md"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/4579_an_on_demand_timeout_does_not_override_a_green_push.sh"
+non_scope:
+  - "Dropping the macos or bench jobs, or running them on every push"
+  - "The suite's case-time budget (pull request 3008)"
+depends_on: []
+acceptance_criteria:
+  - "A case gives release-verdict a stub forge with a green push `ci` and a newer scheduled `ci` red only on macos and bench timeouts, and reads ready naming the on-demand timeouts; with a newer red on a required gate it reads not ready naming that gate"
+  - "The macos and bench timeouts cite the measured duration of a complete run of the current suite"
+validation:
+  - "bash test/run.sh 4579_an_on_demand_timeout_does_not_override_a_green_push"
+  - "actionlint .github/workflows/validate.yml"
+evidence_required:
+  - test
+serves:
+  - finished-work-reaches-a-verified-release#a-release-is-tagged-on-a-proven-commit
+created_at: 2026-11-12

@@ -63,3 +63,10 @@ depends_on:
 serves: []
 created_at: 2026-10-29
 updated_at: 2026-10-29
+evidence:
+  - covers: adopter-workflow-that-commits
+    type: ci
+    command: "gh run view 43539822903 -R korczis/korczis.github.io --log-failed"
+    result: "The adopter's own scheduled refresh workflow (actions bot: measure, derive, git commit, git push; not a projection) failed at commit: 'pre-commit: majordomus is required (https://majordomus.dev)'. With majordomus installed (pinned v1.0.1, core.hooksPath .githooks), run 43543214408 then failed at pre-push, where finish --check plus the repo's verify called a scanner present only on the owner's Mac. After fetch-depth 0 and an explicit skip of that scanner, run 43546385382 went green and its bot commit d109dbe deployed. Candidate acceptance line: doctor reports an adopter workflow that runs git commit or git push without installing majordomus, naming the file and step, because the vendored hooks refuse every commit it makes. Fit: partial. I4371 renders projection workflows, while this criterion judges any workflow the adopter wrote. If it should not widen I4371, it needs its own id."
+    url: "https://github.com/korczis/korczis.github.io/actions/runs/43546385382"
+    recorded_at: 2026-11-14T18:24:21Z

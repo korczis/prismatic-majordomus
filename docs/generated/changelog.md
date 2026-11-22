@@ -1,11 +1,221 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.2 -->
+     Generator: majordomus-cli 1.2.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.2**
+Current version: **1.2.0**
+
+## v1.2.0 — 2026-11-22
+
+### Added
+
+- **mesh**: typed coordination records live in the mesh journal (I4665) (`92b817cab`)
+- **site**: every surface names its versions by role; site-check refuses a wrong one (I3449) (`85e139113`)
+
+### Fixed
+
+- **mesh**: mesh.records answers where the mesh is off, as mesh.state does (I4665) (`450b81d58`)
+- **mesh**: a record's free text is redacted, invoked over MCP and exemplified (I4665) (`b127de10b`)
+
+### Changed
+
+- **mesh**: the record paths hold no branch a test cannot reach (I4665) (`51f453054`)
+
+### Documentation
+
+- **plan**: a task withdraws a mistaken requirement; a landing wait judges the run (I4632, I4633) (`904c75739`)
+- **performance**: the profile-read timing fence is marked unrun (#2968, I4500) (`ac24ab96a`)
+- **plan**: I4357's 2026-11-15 measurement names the one collision the journal shows (`2b9723d61`)
+- **plan**: the disk-guarded process is I4622, I4357 records an interleaved allocation (`2905548f5`)
+- **plan**: I4596 follows the owner's choice of (b), the dependent stays blocked and validate warns (`66612588e`)
+- **plan**: I4569 resumes from each release-path workflow's last step, measured 2026-11-15 (`935c1a7a8`)
+- **knowledge**: file I4604, declared .ai extension roots in gitignored subtrees (`2ad49c886`)
+- **plan**: I4598 stands without I4486, I4599 classifies waits within the milestone (`e17b98a56`)
+- **plan**: a recomputed line, a disk-guarded process, a wait on the person (I4597-I4599) (`b2f2f4aba`)
+- **plan**: the owner decides what a cancelled dependency means (I4596) (`7801fcdc2`)
+- **profiles**: a profile is traced from its file to finish; ADR 0232 owns the resolver (I4500) (`0f734da4f`)
+
+### Tests
+
+- **blackboard**: the record test reaches the journal through the mesh fixture (I4665) (`760210637`)
+- **mesh**: every changed line of the typed records is covered (I4665) (`295e01632`)
+
+### Housekeeping
+
+- **release**: declare 1.2.0, the minor release #3101's capabilities require (`36573caac`)
+- **derive**: refresh the delivery dataset after the master merge (`1dc0d5673`)
+- **release**: record v1.1.0 and the metadata it publishes (`f22baf14b`)
+- **derive**: train 30c's derived data observes its committed head 7500bb69fd1 (`5a91cf1bf`)
+- **release**: bump to 1.0.3 (`1c1ffe7fe`)
+- **derive**: train 30c's derived data observes its committed head ac24ab96a61 (`5b47afe8e`)
+- **plan**: I3449 is verified, its evidence case 3727 recorded (`a8b6a4852`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.2.0-aarch64-apple-darwin.tar.gz (`170fb7a8df03`)
+- `macos-x86_64` — majordomus-v1.2.0-x86_64-apple-darwin.tar.gz (`9575fcda7623`)
+- `linux-x86_64-gnu` — majordomus-v1.2.0-x86_64-unknown-linux-gnu.tar.gz (`21e660c892fe`)
+- `linux-x86_64-musl` — majordomus-v1.2.0-x86_64-unknown-linux-musl.tar.gz (`d796ed61d3b0`)
+- `linux-aarch64-gnu` — majordomus-v1.2.0-aarch64-unknown-linux-gnu.tar.gz (`093b846ee65d`)
+- `linux-aarch64-musl` — majordomus-v1.2.0-aarch64-unknown-linux-musl.tar.gz (`ea7768dfde96`)
+
+
+## v1.1.0 — 2026-11-18
+
+### Added
+
+- **build**: a local build refuses beside five cargo builds (I3825) (`18c3336cc`)
+- **worktree**: cleanup offers a worktree whose work is already in the trunk (`9998ad3f5`)
+- **build**: the resolver borrows a same-generation executable another worktree built (I4618) (`ceee23bb5`)
+- **evidence**: evidence record says how much of the suite its report covers (I4600) (`8c1ccd637`)
+
+### Fixed
+
+- **release**: the release job records its executable's commit at the build (I4627) (`9cbabdd17`)
+- **derive**: a merged crate does not borrow an executable of another generation (I4627) (`728afa430`)
+- **ci**: record the renumbered plan commit as history debt (55) (`ebbdac5c5`)
+- **evidence**: count suite cases with a set and show kept() by example (`9bd0e9fe7`)
+- **check**: a refusal for a path outside the scope names its remedies (I4598) (`a00a29f3c`)
+- **lib**: mj_ms reads EPOCHREALTIME under any decimal separator (I4591) (`e51c7a3af`)
+- **plan**: narrow I4582 and I4587 scopes to named new files (`665294240`)
+- **integration**: write_record has no return no input reaches, and its padding is tested (I4576) (`125c13850`)
+- **integration**: the lease's holder record is never empty or half written for a reader (I4576) (`0b2a9cd0b`)
+- **top**: suite budget re-derived from the v1.0.2 release head's runs (`b3ab36d37`)
+- **ci**: the before-push plan runs cargo fmt and version-surface for a crate change (I4570) (`d72a999fd`)
+- **test**: the across-machines tests take the lease once its holder record reads (I4566) (`5f4fc4752`)
+- **design**: the kit licence judge starts its git through the busy retry (I4565) (`f2ac627c2`)
+
+### Documentation
+
+- **plan**: derive delivery observed at master's merge of #3077 (`b0ffb7d8b`)
+- **plan**: I4628's scope names its one case; record I4630 (`05dd86c24`)
+- **plan**: a completed finish over uncommitted work says so (I4628) (`e5a19d3b9`)
+- **plan**: derive delivery observed at the combined top on e54bbdb12a (`a5e1f4375`)
+- **plan**: derive delivery observed at the merge of a134a0f (`15f150127`)
+- **plan**: derive delivery observed at the merge of a134a0f (`1acaf648d`)
+- **plan**: derive delivery observed at the merge of a134a0f (`f7b96e7c3`)
+- **plan**: derive delivery observed at the merge of a134a0f (`b2e60aadd`)
+- **plan**: derive delivery observed at the I4605 record (`f088c7f15`)
+- **plan**: record I4605, commit validate refuses a control character (`443bec07a`)
+- **plan**: derive delivery observed at the merge of 0c11b36 (`a5e4a3b9e`)
+- **plan**: derive delivery observed at the merge of 0c11b36 (`f6d11f40f`)
+- **plan**: derive delivery observed at the merge of 0c11b36 (`dd5091db8`)
+- **plan**: derive delivery observed at the merge of f986469 (`de3b1dbb1`)
+- **plan**: derive delivery observed at the merge of f986469 (`7cc47e506`)
+- **plan**: derive delivery observed at the merge of 95bf064 (`cdeb19cf3`)
+- **plan**: derive delivery observed at the merge of 95bf064 (`d040b4642`)
+- **plan**: renumber to the allocator's ids, and plan I4616 (`5297647ab`)
+- **plan**: I4602, a test repository built under a hook never inherits the hook's git (`e87a5bd9b`)
+- **plan**: three adopter lessons from a public site (I4600-I4602) (`7b99967e8`)
+- **plan**: derive delivery observed at the batch 2 commit (`671470f6e`)
+- **plan**: english-only I4594 and OSCILLA evidence on seven issues (`4f36a8ab9`)
+- **plan**: derive delivery observed at the merge of 3fcaafa (`176404ebf`)
+- **plan**: derive delivery observed at the records commit (`e15f31fc6`)
+- **plan**: record dev-87 adopter evidence and plan I4594, I4595 (`1ae340905`)
+- **rules**: verify-outcomes says a delegated worker's done is observed, not relayed (`86f8102c4`)
+- **knowledge**: evolve 2026-11-11 third run, I4577-I4588 and fifteen records (`ab5d411dd`)
+
+### Tests
+
+- **worktree**: cover every changed region of the landed readings and the reclaim (`0ff5bf34f`)
+- **derive**: the I4627 case pins its shell sort (I4627) (`2f35f30d7`)
+- **evidence**: a refused write of the suite line ends the recording there (`33ae4a929`)
+- **evidence**: cover suite coverage's methods, count and text line (`a9fd61ca4`)
+
+### Pipeline
+
+- **github**: the projection's apply checkout is blobless, bounded at 10 minutes (I4592) (`d634aa253`)
+
+### Housekeeping
+
+- **release**: declare 1.1.0, the minor release #3062's output requires (`0807fc1b4`)
+- **derive**: delivery.json observes the I4592 commit (`015473dab`)
+- **derive**: derive #3013 on master dff91f0 (`fc9633b64`)
+- **derive**: derive #3010 on master 04db703 (`0d5247574`)
+- **derive**: derive #3009 on master c992617 (`cfb2be842`)
+- **derive**: derive #2989 on master ac73c08 (`1e4161e0f`)
+- **derive**: derive #2988 on master aca34e6 (`d56e3378e`)
+- **derive**: derive #3012 on master 6f8e104 (`bfd102270`)
+- **derive**: derive #3015 on master 67e7c6a (`32eb2749b`)
+- **derive**: derive #3012 on master 67e7c6a (`52e259159`)
+- **derive**: delivery.json observes the I4591 fix commit (`e33ec2f58`)
+- **derive**: the generated surfaces read the merge of master (`897f33058`)
+- **derive**: the generated surfaces read the merge of master (`5c3d67060`)
+- **derive**: derive the I4582 scope fix (`a29400fc5`)
+- **derive**: derive the committed evolve records (I4577-I4588) (`790f8eff0`)
+- **release**: record v1.0.2 and the metadata it publishes (`32445dcf3`)
+- **derive**: derive the write_record coverage fix (I4576) (`eaa849ded`)
+- **derive**: derive the I4576 branch on its committed state (I4576) (`92d9fd914`)
+- **plan**: I4576 is done, with its 50-run counts as test evidence (I4576) (`99aa6b60b`)
+- **derive**: derive the I4570 done record (I4570) (`9c377c888`)
+- **plan**: I4570 is done, with case 4570 as its test evidence (I4570) (`75dd0c230`)
+- **derive**: derive the before-push fmt and version-surface change (I4570) (`ead17d8ae`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.1.0-aarch64-apple-darwin.tar.gz (`698a3cb6cbec`)
+- `macos-x86_64` — majordomus-v1.1.0-x86_64-apple-darwin.tar.gz (`58706e655431`)
+- `linux-x86_64-gnu` — majordomus-v1.1.0-x86_64-unknown-linux-gnu.tar.gz (`6db50b2ac457`)
+- `linux-x86_64-musl` — majordomus-v1.1.0-x86_64-unknown-linux-musl.tar.gz (`48707d58a721`)
+- `linux-aarch64-gnu` — majordomus-v1.1.0-aarch64-unknown-linux-gnu.tar.gz (`56a10c4db494`)
+- `linux-aarch64-musl` — majordomus-v1.1.0-aarch64-unknown-linux-musl.tar.gz (`bd0c22badc36`)
+
+
+## v1.0.2 — 2026-11-11
+
+### Fixed
+
+- **mesh**: closed_key has no early return that can never be taken (I4572) (`3b9256887`)
+- **mesh**: a running server opens or closes its mesh as the trunk trusts its key (I4571) (`2ef7275e7`)
+- **mesh**: the doctor fails a runtime still closed to a key the declaration trusts (I4572) (`8407657c9`)
+- **release**: a tag is excused until its grace ends (I4341) (`1992933d3`)
+
+### Documentation
+
+- **knowledge**: the offload derive and allocate after a restart are recorded (I4573) (`6fa235022`)
+- **knowledge**: evolve 2026-11-10 second run, integrator v7 and I4573 from the mesh (`60fc3aae7`)
+- **plan**: I4567-I4572 name their case files, not the whole test/cases directory (`cb86f6825`)
+- **plan**: I4568 serves every-commit-names-its-issue, the criterion of the milestone it moved to (`9b19ab445`)
+- **knowledge**: the continuity-resolve candidate is left to #2963, which promoted it first (I4567) (`b282d1976`)
+- **knowledge**: evolve 2026-11-10, candidates decided and I4567-I4572 filed from the mesh (`d8acd7aef`)
+
+### Tests
+
+- **mesh**: unit tests reach every branch of the own-key retrust and of close (I4571) (`38dd59a7b`)
+- **mesh**: a unit test covers how closed_key reads a closed runtime's key (I4572) (`29298a4ca`)
+- **release**: cases 3029 and 3021 measure their fixture under MJ_ROOT (I4341) (`5577682d3`)
+
+### Pipeline
+
+- **validate**: the record's dispatch approves the record pull request's own run (I2717) (`f857cc508`)
+
+### Housekeeping
+
+- **release**: 1.0.2 (`16e9b8257`)
+- **derive**: derive the merge of origin/master into the I4571 branch (I4571) (`4fb66e554`)
+- **derive**: derive the committed merge of master into the evolve branch (I4573) (`49c234ae0`)
+- **derive**: derive the merge of the I4572 closed_key fix into the I4571 branch (I4571) (`722be9160`)
+- **derive**: derive the closed_key fix on the I4572 branch (I4572) (`f892c3845`)
+- **derive**: derive the merge of the I4572 test head into the I4571 branch (I4571) (`794bb8e2f`)
+- **derive**: derive the closed_key unit test on the I4572 branch (I4572) (`77797a807`)
+- **derive**: derive the merge of the I4572 head into the I4571 branch (I4571) (`dadca79dd`)
+- **derive**: derive the committed merge of master into the I2717 branch (I2717) (`527e8c5d9`)
+- **derive**: derive the merge of origin/master into the I4572 branch (I4572) (`ef1157190`)
+- **derive**: derive the merge of origin/master into the I2717 branch (I2717) (`4002bd277`)
+- **derive**: derive the merge of origin/master into the I4341 branch (I4341) (`edce8d2e7`)
+- **release**: record v1.0.1 and the metadata it publishes (`62959ebc1`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.2-aarch64-apple-darwin.tar.gz (`4d08be44a585`)
+- `macos-x86_64` — majordomus-v1.0.2-x86_64-apple-darwin.tar.gz (`e359a27dac15`)
+- `linux-x86_64-gnu` — majordomus-v1.0.2-x86_64-unknown-linux-gnu.tar.gz (`3db0ed5a03a2`)
+- `linux-x86_64-musl` — majordomus-v1.0.2-x86_64-unknown-linux-musl.tar.gz (`af88b731a712`)
+- `linux-aarch64-gnu` — majordomus-v1.0.2-aarch64-unknown-linux-gnu.tar.gz (`6fd4a33f5efd`)
+- `linux-aarch64-musl` — majordomus-v1.0.2-aarch64-unknown-linux-musl.tar.gz (`2d7248fc78e0`)
+
 
 ## v1.0.1 — 2026-11-09
 
