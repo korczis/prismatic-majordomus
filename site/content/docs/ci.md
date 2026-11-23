@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 80
+weight = 81
 [extra]
 source = "docs/CI.md"
 +++
@@ -742,5 +742,9 @@ scripts/ci-baseline --runs 10                       # record what GitHub observe
 
 `scripts/ci/verdict --plan plan.json --needs needs.json` renders the same verdict CI
 renders, from a plan and a `needs` context; `test/cases/94_ci_plan.sh` drives it with
-fixtures.
+fixtures. A job GitHub never created reads `abandoned` in `needs`: on 2026-11-09 attempt 2
+of the approved record run 42668789214 had no `site` job and `ci` was red for it alone. The
+verdict stays red for it, as for every result but `success`, and its row says what recovers
+it: re-running the failed jobs of the run, which created the job on attempt 3
+(`test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh`).
 {% endraw %}

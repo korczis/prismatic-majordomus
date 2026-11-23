@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.1"
+    "version": "1.2.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -716,6 +716,16 @@
       "kind": "capability",
       "subject": "capability:mesh.peers",
       "path": "/evidence/capabilities/mesh-peers/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.record.write",
+      "path": "/evidence/capabilities/mesh-record-write/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.records",
+      "path": "/evidence/capabilities/mesh-records/"
     },
     {
       "kind": "capability",
@@ -5759,6 +5769,26 @@
       "kind": "capability",
       "id": "mesh.peers",
       "page": "/evidence/capabilities/mesh-peers/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.record.write": {
+      "kind": "capability",
+      "id": "mesh.record.write",
+      "page": "/evidence/capabilities/mesh-record-write/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.records": {
+      "kind": "capability",
+      "id": "mesh.records",
+      "page": "/evidence/capabilities/mesh-records/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -13282,6 +13312,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4598_the_scope_refusal_names_its_remedies",
+          "path": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:578_an_unknown_gate_refuses_completed",
           "path": "test/cases/578_an_unknown_gate_refuses_completed.sh",
           "category": "e2e"
@@ -15275,6 +15311,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:4600_evidence_record_names_its_suite_coverage",
+          "path": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:103_obligations",
           "path": "test/cases/103_obligations.sh",
@@ -15614,6 +15656,12 @@
           "via": "behaviour",
           "test": "suite:3995_a_task_started_before_the_first_commit_finishes",
           "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4598_the_scope_refusal_names_its_remedies",
+          "path": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
           "category": "e2e"
         },
         {
@@ -22380,6 +22428,30 @@
       "programs": [],
       "members": [
         "capability:mesh.peers"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_record_write": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_record_write",
+      "alias_of": "capability:mesh.record.write",
+      "programs": [],
+      "members": [
+        "capability:mesh.record.write"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_records": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_records",
+      "alias_of": "capability:mesh.records",
+      "programs": [],
+      "members": [
+        "capability:mesh.records"
       ],
       "routes": [],
       "mechanisms": [],
@@ -30510,6 +30582,7 @@
     "suite:3749_a_full_history_checkout_is_bounded",
     "suite:374_delivery_unknown_is_not_delivered",
     "suite:37_responsibility_surface",
+    "suite:3825_a_build_is_bounded_by_the_machine",
     "suite:3831_a_hook_never_starts_a_cold_build",
     "suite:3834_a_case_run_removes_its_own_dir",
     "suite:3837_a_derive_does_not_run_mid_merge",
@@ -30548,6 +30621,7 @@
     "suite:4224_a_licensed_source_never_reaches_a_public_tree",
     "suite:4232_a_core_build_keeps_its_own_rlib",
     "suite:4318_the_homepage_rule_figure_agrees_with_its_link",
+    "suite:4324_a_worktree_whose_work_is_in_trunk_is_finished",
     "suite:4334_the_ui_kit_is_checked_by_one_capability",
     "suite:4380_an_optional_step_is_bounded_inside_its_own_bound",
     "suite:4381_the_structure_job_fits_in_half_its_bound",
@@ -30555,6 +30629,12 @@
     "suite:4512_no_derived_page_outgrows_the_index",
     "suite:4561_an_empty_cargo_dir_variable_is_read_as_unset",
     "suite:4563_the_live_site_is_probed_in_a_real_browser",
+    "suite:4570_a_push_owes_the_crates_formatter_and_version_gate",
+    "suite:4574_the_record_dispatch_approves_the_record_pull_request_run",
+    "suite:4577_mj_ms_reads_any_decimal_separator",
+    "suite:4592_the_projection_apply_checkout_is_blobless_and_bounded",
+    "suite:4618_the_resolver_borrows_a_sibling_executable",
+    "suite:4627_a_merge_does_not_borrow_a_foreign_executable",
     "suite:46_cross_surface",
     "suite:47_mutation",
     "suite:48_roadmap_graph",

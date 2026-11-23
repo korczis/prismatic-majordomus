@@ -1,0 +1,41 @@
+id: I4605
+milestone: a-second-adopter-is-served
+title: "commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)"
+slug: commit-validate-refuses-a-control-character
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "commit.validate gains the rule commit.control_character, with a policy level in .ai/repo/policy.yaml's commit block (control_character: error). Every character of the message is checked: C0 (U+0000 to U+001F) other than a line feed or a tab, DEL (U+007F) and C1 (U+0080 to U+009F). A message carrying one is refused. The finding names the line, the column and the code point (for example `line 1, column 1: U+001B ESCAPE`). The check runs before the conventional parse, so a control code in front of the type is reported as itself and not as a word that is not a type. It also covers git-generated subjects, because the exemption of I3976 is about naming an issue, not about what bytes a message may hold. The commit-msg hook and scripts/ci/commit-policy refuse through the same verdict. The history on trunk is judged against the existing count baseline, so commits that are already published are not rewritten."
+why: "An adopter's published pages carried terminal colour codes that came from commit titles. korczis/korczis.github.io renders recent work from the commit titles of the owner's GitLab projects. A title written through a coloured pager stored the ANSI escapes (ESC [ 33 m ... ESC [ m) in the commit, and 14 generated work pages showed them as raw text. The adopter fixed its side in PR #16 (commits e66c792 and 6ecac31, merged as 0250992 and deployed with d9c2885). scripts/lib/plain.mjs strips the escapes when the data is fetched, a check-data gate refuses a control character in every data file, and the browser strips them from live commit messages. After the deploy, 0 of the 14 pages carried an escape. That repairs one reader. The commit itself stays defective in every other reader, such as the forge, a changelog or plan delivery, which reads subjects. The place that can stop it is the writer, and commit validate already reads every message the hook and CI see."
+current_state: "Measured on 2026-11-16 with majordomus 1.0.1 at origin/master 95bf064c1ef. `fix(plan): x ESC[1mbold ESC[m (I4591)` is accepted ('ok nothing to report', exit 0). `fix(plan): x U+009B 31m y U+0001 (I4591)` with a body holding a tab is also accepted (exit 0). `ESC[33m fix(commit): x (I4605) ESC[m` is refused with the wrong finding, commit.not_conventional, which reads the escape as part of the type word ('ESC[33mfix' is not a commit type); no rule names the escape itself. A message that is not valid UTF-8 already stops before judging (exit 13, 'stream did not contain valid UTF-8'), so this rule only needs to read characters. In the code, commit/verdict.rs judge() starts with the git_authored exemption and then CommitMessage::parse; CommitRule has no rule about the characters of a message, and policy.yaml's commit block (policy.yaml:374-379) has no level for one. The nearest record is I3976, which made every commit name its issue: it added rules to the same verdict, the same policy block and the same CI baseline, and this record follows its shape."
+desired_state: "A commit message is plain text: lines of printable characters, separated by line feeds, with tabs allowed. One that carries a control code is refused at commit time and in CI with a finding that points at the character, and the subject a reader sees is the subject that was typed."
+scope:
+  - "apps/majordomus-cli/src/commit/verdict.rs"
+  - "apps/majordomus-cli/src/commit/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "scripts/ci/commit-policy"
+  - ".ai/repo/commit-policy-baseline.txt"
+  - ".ai/repo/rules/project/conventional-commits.v2.md"
+  - "test/cases/274_commit_policy.sh"
+  - ".ai/repo/project/issues/I4605.yaml"
+non_scope:
+  - "Rewriting published commits or the trunk history that carries a control code"
+  - "Stripping or repairing a message: the hook refuses, it never changes what the author wrote"
+  - "Characters outside C0, DEL and C1, such as other Unicode format characters"
+  - "Readers of commit text (an adopter's fetchers and pages), which keep their own guards"
+acceptance_criteria:
+  - "commit validate refuses `fix(plan): x ESC[1mbold ESC[m (I4591)` with code commit.control_character, and the finding names line 1, the column of the escape and U+001B"
+  - "The defect as seen: a control code before the type (`ESC[33mfix(plan): x (I4591)`) reports commit.control_character and not commit.not_conventional"
+  - "A C1 code (U+009B) and a C0 code other than a line feed or a tab (U+0001) anywhere in the subject or the body are each refused. A body with tabs and blank lines is accepted"
+  - "A git-generated subject (Merge ...) that carries a control code is refused; the same subject without one stays exempt as I3976 defines"
+  - "policy.yaml's commit block sets control_character: error, and a level of warning or off changes the verdict as the other commit rules do"
+  - "commit-policy over the repository reports the count baseline unchanged and refuses a new branch commit that carries a control code"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- commit::"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 274_commit_policy"
+evidence_required:
+  - "commit_validate_refuses_a_control_character"
+depends_on: []
+serves: []
+created_at: 2026-11-16

@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.1",
+  "generator": "majordomus-cli 1.2.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 231,
-      "covered": 186,
+      "required": 233,
+      "covered": 187,
       "missing": 0,
-      "waived": 45,
+      "waived": 46,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 219,
-      "covered": 184,
+      "required": 221,
+      "covered": 185,
       "missing": 0,
-      "waived": 35,
+      "waived": 36,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 215,
-      "covered": 181,
+      "required": 217,
+      "covered": 182,
       "missing": 0,
-      "waived": 34,
+      "waived": 35,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 679,
-      "covered": 565,
+      "required": 685,
+      "covered": 568,
       "missing": 0,
-      "waived": 114,
+      "waived": 117,
       "inapplicable": 0
     }
   ],
@@ -1643,6 +1643,29 @@
       "cases": [
         "summary",
         "full"
+      ]
+    },
+    {
+      "id": "mesh.record.write",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.records",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-record",
+        "live-decisions"
       ]
     },
     {
