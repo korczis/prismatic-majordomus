@@ -57,7 +57,8 @@ Kinds, by source:
 
 - **mesh**: `session_joined`, `session_changed`, `session_left`, `claimed`, `released`,
   `handover`, `handover_taken`, `review_requested`, `review_answered`, `review_declined`,
-  `review_withdrawn`.
+  `review_withdrawn`, `record` (a typed coordination record written or revised, I4665; a
+  blocker, decision or handoff asks for attention).
 - **executor**: `merged`, `merge_failed`, `verification_failed`, `refreshed`,
   `refresh_failed`, `closed`, `close_failed`, `repaired`, `repair_refused`, `lane_taken`,
   `lane_released`, `observe_failed`.

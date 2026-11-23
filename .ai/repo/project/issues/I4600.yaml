@@ -1,0 +1,37 @@
+id: I4600
+milestone: adopter-upgrades
+title: "evidence record says how much of the suite its report covers"
+slug: evidence-record-names-its-suite-coverage
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When `evidence record` is given a suite report, it says how many of the suite's cases the report named against how many the suite holds, and that the rest keep their earlier evidence. It still records a partial run as before, because a merged partial run is by design."
+why: "On 2026-11-15 an adopter (sonic-playground, v1.0.1) re-recorded its skill cases. A case that runs the case runner itself inherited MJ_TEST_REPORT, truncated the report and left 2 rows for a 10-case run. `evidence record` answered 'recorded 2 execution(s), 2 passing', and `skills status` kept four skills stale or not_run with nothing pointing at the report. The adopter found it only by counting the report's lines (sonic-playground a2989e5a fixed its runner). The recorder merges a partial run on purpose (record.rs: 'a later partial run updates only what it ran'), so a truncated report and a deliberate re-run of one case look the same to it. Only the coverage tells them apart, and the recorder knew both numbers. Related: I2601 (evidence record, stamp and show) and I4325 (the runners)."
+current_state: "Measured at origin/master 3fcaafac355: RecordOutcome and the capability's RecordReport carry recorded, passed, commit, working_tree, unknown, dropped and run_record. The text output prints 'recorded N execution(s), P passing' and says nothing about the cases the report did not name."
+desired_state: "RecordOutcome and RecordReport carry suite_coverage {in_report, on_disk} when a suite report was given. in_report counts the distinct suite cases the report named that exist; on_disk counts the *.sh files in the directory a suite case's source lives in (test/cases). The text prints 'suite  N of M case(s) of the suite are in this report; the other K keep their earlier evidence', or 'suite  all M case(s) of the suite are in this report'. Without a suite report the field is absent and no suite line is printed. Nothing is refused."
+scope:
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+  - "apps/majordomus-cli/src/commands/evidence.rs"
+  - "test/cases/4600_evidence_record_names_its_suite_coverage.sh"
+  - ".ai/repo/project/issues/I4600.yaml"
+non_scope:
+  - "Refusing a partial report: a deliberate re-run of one case must keep recording as it does"
+  - "The crate runner's coverage: its binaries are listed per binary already, and dropped names what no claim can name"
+  - "An adopter's own runner; sonic-playground's runner now also refuses a report whose rows differ from its cases"
+acceptance_criteria:
+  - "A suite report naming 1 of 3 cases is recorded, and the text says '1 of 3 case(s) of the suite are in this report; the other 2 keep their earlier evidence'"
+  - "The JSON carries suite_coverage {in_report: 1, on_disk: 3}"
+  - "A name the repository lacks is not counted as a case"
+  - "A report naming every case says 'all 3 case(s) of the suite are in this report'"
+  - "A recording without a suite report prints no suite line"
+  - "Negative: the case fails against the recorder before this change"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4600_evidence_record_names_its_suite_coverage 391_skills_are_proven_capabilities"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --doc -- SuiteCoverage RecordReport evidence::record::record"
+evidence_required:
+  - "evidence_record_names_its_suite_coverage"
+depends_on: []
+serves: []
+created_at: 2026-11-15

@@ -125,6 +125,8 @@
     "op-mesh-nodes": "docs/api/mesh/",
     "op-mesh-peer": "docs/api/mesh/",
     "op-mesh-peers": "docs/api/mesh/",
+    "op-mesh-record-write": "docs/api/mesh/",
+    "op-mesh-records": "docs/api/mesh/",
     "op-mesh-register": "docs/api/mesh/",
     "op-mesh-release": "docs/api/mesh/",
     "op-mesh-review-answer": "docs/api/mesh/",
@@ -280,6 +282,7 @@
     "schema-BlackboardHandover": "docs/api/blackboard/",
     "schema-BlackboardOrigin": "docs/api/blackboard/",
     "schema-BlackboardPresence": "docs/api/blackboard/",
+    "schema-BlackboardRecord": "docs/api/blackboard/",
     "schema-BlackboardRelation": "docs/api/blackboard/",
     "schema-BlackboardRelationKind": "docs/api/blackboard/",
     "schema-BlackboardReview": "docs/api/blackboard/",
@@ -816,17 +819,31 @@
     "schema-McpToolEntry": "docs/api/mcp/",
     "schema-McpTransportEntry": "docs/api/mcp/",
     "schema-Measured": "docs/api/design/",
+    "schema-MeshAuthorState": "docs/api/mesh/",
     "schema-MeshClaimBrief": "docs/api/mesh/",
     "schema-MeshClaimCounts": "docs/api/mesh/",
     "schema-MeshClaimFilter": "docs/api/mesh/",
+    "schema-MeshConflictReason": "docs/api/shared/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
     "schema-MeshEnrolment": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
+    "schema-MeshEvidenceState": "docs/api/shared/",
+    "schema-MeshHandoff": "docs/api/mesh/",
     "schema-MeshHandoverBrief": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
+    "schema-MeshIgnoredRecordWrite": "docs/api/mesh/",
     "schema-MeshKind": "docs/api/mesh/",
     "schema-MeshProviderState": "docs/api/mesh/",
     "schema-MeshReadiness": "docs/api/health/",
+    "schema-MeshRecordConflict": "docs/api/shared/",
+    "schema-MeshRecordKind": "docs/api/shared/",
+    "schema-MeshRecordList": "docs/api/mesh/",
+    "schema-MeshRecordRevision": "docs/api/mesh/",
+    "schema-MeshRecordSource": "docs/api/mesh/",
+    "schema-MeshRecordStatus": "docs/api/mesh/",
+    "schema-MeshRecordView": "docs/api/mesh/",
+    "schema-MeshRecordWrite": "docs/api/mesh/",
+    "schema-MeshRecordWriteAnswer": "docs/api/mesh/",
     "schema-MeshRepositoryBasis": "docs/api/mesh/",
     "schema-MeshRepositoryIdentity": "docs/api/mesh/",
     "schema-MeshReviewBrief": "docs/api/mesh/",
@@ -1409,8 +1426,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 219,
-    "schemas": 1125,
+    "operations": 221,
+    "schemas": 1140,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1445,7 +1462,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.0",
+  "generated_by": "majordomus-cli 1.2.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1454,7 +1471,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.0"
+    "version": "1.2.0"
   },
   "infrastructure": [
     {
@@ -1632,6 +1649,8 @@
     "mesh.nodes": "mesh",
     "mesh.peer": "mesh",
     "mesh.peers": "mesh",
+    "mesh.record.write": "mesh",
+    "mesh.records": "mesh",
     "mesh.register": "mesh",
     "mesh.release": "mesh",
     "mesh.review.answer": "mesh",
@@ -1791,6 +1810,7 @@
     "BlackboardHandover": "blackboard",
     "BlackboardOrigin": "blackboard",
     "BlackboardPresence": "blackboard",
+    "BlackboardRecord": "blackboard",
     "BlackboardRelation": "blackboard",
     "BlackboardRelationKind": "blackboard",
     "BlackboardReview": "blackboard",
@@ -2327,17 +2347,31 @@
     "McpToolEntry": "mcp",
     "McpTransportEntry": "mcp",
     "Measured": "design",
+    "MeshAuthorState": "mesh",
     "MeshClaimBrief": "mesh",
     "MeshClaimCounts": "mesh",
     "MeshClaimFilter": "mesh",
+    "MeshConflictReason": "shared",
     "MeshDoctorReport": "mesh",
     "MeshEnrolment": "mesh",
     "MeshEvent": "mesh",
+    "MeshEvidenceState": "shared",
+    "MeshHandoff": "mesh",
     "MeshHandoverBrief": "mesh",
     "MeshIdentityReport": "mesh",
+    "MeshIgnoredRecordWrite": "mesh",
     "MeshKind": "mesh",
     "MeshProviderState": "mesh",
     "MeshReadiness": "health",
+    "MeshRecordConflict": "shared",
+    "MeshRecordKind": "shared",
+    "MeshRecordList": "mesh",
+    "MeshRecordRevision": "mesh",
+    "MeshRecordSource": "mesh",
+    "MeshRecordStatus": "mesh",
+    "MeshRecordView": "mesh",
+    "MeshRecordWrite": "mesh",
+    "MeshRecordWriteAnswer": "mesh",
     "MeshRepositoryBasis": "mesh",
     "MeshRepositoryIdentity": "mesh",
     "MeshReviewBrief": "mesh",
@@ -5565,6 +5599,31 @@
           "type": "array of BlackboardHandover"
         },
         {
+          "description": "The typed coordination records still open and not superseded, at most fifty, stale\nones flagged (I4665).",
+          "name": "records",
+          "refs": [
+            "BlackboardRecord"
+          ],
+          "required": false,
+          "type": "array of BlackboardRecord"
+        },
+        {
+          "description": "How many such records there are in all.",
+          "name": "records_total",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Live plans or decisions of different authors that contend, for one task or over\nmeeting scopes.",
+          "name": "record_conflicts",
+          "refs": [
+            "MeshRecordConflict"
+          ],
+          "required": false,
+          "type": "array of MeshRecordConflict"
+        },
+        {
           "description": "The typed relations between workers.",
           "name": "relations",
           "refs": [
@@ -5916,6 +5975,81 @@
           "value": "active"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "A typed coordination record of the mesh journal that is still open and not superseded\n(I4665), told briefly: its body, sources and history stay in `mesh.records`.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardRecord",
+      "properties": [
+        {
+          "description": "The record's key, `<stream>/<id>`: what a revision or a supersession names.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The authoring worker's key, or its session key when no worker holds it.",
+          "name": "from",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Observation, hypothesis, plan, decision, blocker, handoff or outcome.",
+          "name": "kind",
+          "refs": [
+            "MeshRecordKind"
+          ],
+          "required": true,
+          "type": "MeshRecordKind"
+        },
+        {
+          "description": "The task, intent or issue it is about.",
+          "name": "task",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The current revision.",
+          "name": "revision",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Asserted, or evidenced by a retrievable source.",
+          "name": "evidence",
+          "refs": [
+            "MeshEvidenceState"
+          ],
+          "required": true,
+          "type": "MeshEvidenceState"
+        },
+        {
+          "description": "Why it is stale; empty while it holds. A stale record is flagged, not removed.",
+          "name": "stale",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -6558,7 +6692,21 @@
           "type": "boolean | null"
         },
         {
-          "description": "Merged into the trunk, not the trunk, and either not checked out or checked out in a\nwork tree known to be clean. Derived state, never acted on automatically.",
+          "description": "Not reachable from the trunk, and merging it into the trunk's remote-tracking branch\nwould change nothing (`git merge-tree --write-tree`): squash-merged, carried in a\ntrain or cherry-picked. Read for a checked-out branch in the full topology only.",
+          "name": "landed_by_content",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Its work tree has uncommitted changes, and every one already holds what the trunk's\nremote-tracking branch holds at that path. Absent for a clean or unmeasured tree.",
+          "name": "uncommitted_in_trunk",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Landed in the trunk (merged into it, or landed by content), not the trunk, and either\nnot checked out (merged only) or checked out in a work tree that is clean or whose every\nuncommitted change is already in the trunk. Derived state, never acted on automatically.",
           "name": "cleanup_eligible",
           "refs": [],
           "required": true,
@@ -13550,6 +13698,33 @@
           "type": "integer (uint)"
         },
         {
+          "description": "Every typed coordination record (I4665), with its history, links and standing.\nAbsent from the JSON while there are none, so a fold without records digests as it\ndid before the kind existed.",
+          "name": "records",
+          "refs": [
+            "MeshRecordView"
+          ],
+          "required": false,
+          "type": "array of MeshRecordView"
+        },
+        {
+          "description": "Live plans or decisions of different authors for one task or over meeting scopes.",
+          "name": "record_conflicts",
+          "refs": [
+            "MeshRecordConflict"
+          ],
+          "required": false,
+          "type": "array of MeshRecordConflict"
+        },
+        {
+          "description": "Record writes the fold did not apply, with why: a revision not by the record's\nauthor, out of order, or after its author's session closed.",
+          "name": "records_ignored",
+          "refs": [
+            "MeshIgnoredRecordWrite"
+          ],
+          "required": false,
+          "type": "array of MeshIgnoredRecordWrite"
+        },
+        {
           "description": "32 hex of the SHA-256 of the canonical JSON of everything above.",
           "name": "digest",
           "refs": [],
@@ -18700,6 +18875,7 @@
       "type": "\"synced\" | \"memory\" | \"not_durable\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "MeshRecordWriteAnswer",
         "Written"
       ],
       "values": [
@@ -22351,6 +22527,8 @@
         "mesh.nodes",
         "mesh.peer",
         "mesh.peers",
+        "mesh.records",
+        "mesh.record.write",
         "mesh.register",
         "mesh.review.request",
         "mesh.review.answer",
@@ -36112,6 +36290,37 @@
       "variants": []
     },
     {
+      "description": "Where a record's author stands, as this runtime reads it now: a reading of the session's\nclose and its runtime's beat, so a record whose author is gone is flagged on every reader.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"p\") }).unwrap();\nuse majordomus_cli::mesh::records::AuthorState;\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(state.records[0].author_state, AuthorState::Unknown, \"s1 never opened here\");\nassert!(!state.records[0].stale.is_empty(), \"and the record says so\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "MeshAuthorState",
+      "properties": [],
+      "type": "\"active\" | \"closed\" | \"expired\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRecordView"
+      ],
+      "values": [
+        {
+          "description": "Its session is open and its runtime beats.",
+          "value": "active"
+        },
+        {
+          "description": "Its session closed.",
+          "value": "closed"
+        },
+        {
+          "description": "Its runtime stopped beating.",
+          "value": "expired"
+        },
+        {
+          "description": "This runtime never heard the session open.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```",
       "home": "mesh",
       "is_enum": false,
@@ -36249,6 +36458,29 @@
         {
           "description": "Only claims that are still live: held, or conflicted and still held.",
           "value": "live"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Why two live plans or decisions of different authors contend: the same task, which is\nchecked first, or scopes that meet, when the tasks differ.\n\n```\nuse majordomus_cli::mesh::records::ConflictReason;\nassert_eq!(serde_json::to_value(ConflictReason::SameTask).unwrap(), \"same_task\");\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "MeshConflictReason",
+      "properties": [],
+      "type": "\"same_task\" | \"overlapping_scope\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRecordConflict"
+      ],
+      "values": [
+        {
+          "description": "Both are about the same task.",
+          "value": "same_task"
+        },
+        {
+          "description": "Their scopes meet.",
+          "value": "overlapping_scope"
         }
       ],
       "variants": []
@@ -36408,6 +36640,83 @@
       "variants": []
     },
     {
+      "description": "Whether a record rests on something another worker can retrieve. Derived from the\nsources by `RecordBody::evidence`; a record carries no field that says it.\n\n```\nuse majordomus_cli::mesh::records::EvidenceState;\nassert_eq!(serde_json::to_value(EvidenceState::Asserted).unwrap(), \"asserted\");\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "MeshEvidenceState",
+      "properties": [],
+      "type": "\"asserted\" | \"evidenced\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardRecord",
+        "MeshRecordRevision",
+        "MeshRecordView",
+        "MeshRecordWriteAnswer"
+      ],
+      "values": [
+        {
+          "description": "No retrievable source: what its author says.",
+          "value": "asserted"
+        },
+        {
+          "description": "At least one retrievable source: a file at a commit, or a tool's observed result.",
+          "value": "evidenced"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What a handoff must carry. Every field is required: a handoff that leaves one out is\nrefused, because the next worker cannot ask the one who wrote it.\n\n```\nuse majordomus_cli::mesh::records::Handoff;\nlet mut h = Handoff { objective: \"ship\".into(), current_state: \"built\".into(),\n    evidence: vec![\"cargo test: ok\".into()], blockers: Some(vec![]),\n    next_action: \"open the PR\".into() };\nassert!(h.validate().is_ok());\nh.evidence.clear();\nassert!(h.validate().unwrap_err().contains(\"evidence\"));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshHandoff",
+      "properties": [
+        {
+          "description": "What the work is for.",
+          "name": "objective",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands now.",
+          "name": "current_state",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What shows it: commands run with their results, commits, records. At least one.",
+          "name": "evidence",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "What blocks it; `[]` says nothing does. Required: silence is not \"no blockers\".",
+          "name": "blockers",
+          "refs": [],
+          "required": false,
+          "type": "array | null"
+        },
+        {
+          "description": "What the next worker does first.",
+          "name": "next_action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRecordView",
+        "MeshRecordWrite"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A handover nobody has taken, told briefly: the id `mesh.handover.consume` takes, who\npublished it and what it continues. Its body stays in the full view.\n\n```\nuse majordomus_cli::mesh::page::HandoverBrief;\n\nlet brief = HandoverBrief { id: \"ab12\".into(), runtime: \"n-r\".into(),\n    branch: Some(\"feature/x\".into()), issue: None, published_lamport: 7 };\nassert_eq!(serde_json::to_value(&brief).unwrap()[\"branch\"], \"feature/x\");\n```",
       "home": "mesh",
       "is_enum": false,
@@ -36503,12 +36812,49 @@
       "variants": []
     },
     {
+      "description": "A record write the fold did not apply, and why: a revision by a session other than the\nauthor, out of order, after the author's session closed, or of another kind. A peer can\nsign whatever its own stream says; it cannot make another session's record say it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet mine = RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"mine\");\nj.append_own(EventBody::RecordWritten { record: mine.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { session: \"s2\".into(), revision: 2, title: \"theirs\".into(), ..mine } })\n    .unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(state.records[0].title, \"mine\");\nuse majordomus_cli::mesh::records::IgnoredRecordWrite;\nlet ignored: &IgnoredRecordWrite = &state.records_ignored[0];\nassert!(ignored.reason.contains(\"only its author\"));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshIgnoredRecordWrite",
+      "properties": [
+        {
+          "description": "`<stream>/<seq>` of the event.",
+          "name": "event",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record it named.",
+          "name": "record",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it was not applied.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationState",
+        "MeshRecordList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One collection of the folded state, as `kind` names it: a reader that wants only the\nreviews is not sent the claims.\n\n```\nuse majordomus_cli::mesh::page::Kind;\n\nassert_eq!(serde_json::from_str::<Kind>(r#\"\"reviews\"\"#).unwrap(), Kind::Reviews);\nassert!(serde_json::from_str::<Kind>(r#\"\"everything\"\"#).is_err());\n```",
       "home": "mesh",
       "is_enum": true,
       "name": "MeshKind",
       "properties": [],
-      "type": "\"sessions\" | \"claims\" | \"overlaps\" | \"handovers\" | \"reviews\"",
+      "type": "\"sessions\" | \"claims\" | \"overlaps\" | \"handovers\" | \"reviews\" | \"records\"",
       "used_by": [
         "mesh.peers",
         "mesh.state"
@@ -36534,6 +36880,10 @@
         {
           "description": "The review requests.",
           "value": "reviews"
+        },
+        {
+          "description": "The typed coordination records, their conflicts and the writes the fold ignored.",
+          "value": "records"
         }
       ],
       "variants": []
@@ -36605,6 +36955,774 @@
       "used_by_schemas": [
         "Readiness"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Two live plans or two live decisions of different authors for one task or over meeting\nscopes: reported, not refused — a supersession settles it.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nuse majordomus_cli::mesh::records::ConflictReason;\nuse majordomus_cli::mesh::journal::SessionInfo;\nfor s in [\"s1\", \"s2\"] {\n    j.append_own(EventBody::SessionOpened { info: SessionInfo::named(s, \"cli\") }).unwrap();\n}\nfor (id, s) in [(\"r-1\", \"s1\"), (\"r-2\", \"s2\")] {\n    j.append_own(EventBody::RecordWritten { record:\n        RecordBody::new(id, s, RecordKind::Decision, \"I1\", &[\"docs\"], id) }).unwrap();\n}\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordConflict;\nlet conflicts: &[RecordConflict] = &state.record_conflicts;\nassert_eq!(conflicts.len(), 1);\nassert_eq!(conflicts[0].reason, ConflictReason::SameTask);\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "MeshRecordConflict",
+      "properties": [
+        {
+          "description": "The kind both are.",
+          "name": "kind",
+          "refs": [
+            "MeshRecordKind"
+          ],
+          "required": true,
+          "type": "MeshRecordKind"
+        },
+        {
+          "description": "The earlier record's key.",
+          "name": "first",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The later record's key.",
+          "name": "second",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why they contend.",
+          "name": "reason",
+          "refs": [
+            "MeshConflictReason"
+          ],
+          "required": true,
+          "type": "MeshConflictReason"
+        },
+        {
+          "description": "The paths that meet, the first's and the second's.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of array of any"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard",
+        "CooperationState",
+        "MeshRecordList",
+        "MeshRecordWriteAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a record is about. The set is closed: a peer that writes another word is refused\nat ingest, never guessed at.\n\n```\nuse majordomus_cli::mesh::records::RecordKind;\nassert_eq!(serde_json::to_value(RecordKind::Decision).unwrap(), \"decision\");\nassert!(serde_json::from_str::<RecordKind>(\"\\\"rumour\\\"\").is_err());\nassert!(RecordKind::Plan.contends() && !RecordKind::Observation.contends());\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "MeshRecordKind",
+      "properties": [],
+      "type": "\"observation\" | \"hypothesis\" | \"plan\" | \"decision\" | \"blocker\" | \"handoff\" | \"outcome\"",
+      "used_by": [
+        "mesh.records"
+      ],
+      "used_by_schemas": [
+        "BlackboardRecord",
+        "MeshRecordConflict",
+        "MeshRecordView",
+        "MeshRecordWrite"
+      ],
+      "values": [
+        {
+          "description": "Something seen.",
+          "value": "observation"
+        },
+        {
+          "description": "Something believed and not yet shown.",
+          "value": "hypothesis"
+        },
+        {
+          "description": "What a session intends to do.",
+          "value": "plan"
+        },
+        {
+          "description": "What a session decided.",
+          "value": "decision"
+        },
+        {
+          "description": "What stops the work.",
+          "value": "blocker"
+        },
+        {
+          "description": "The work handed on: objective, current state, evidence, blockers, next action.",
+          "value": "handoff"
+        },
+        {
+          "description": "What the work ended with.",
+          "value": "outcome"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.records`, built by `select`: the records the query admits, the\nconflicts among them, the writes the fold ignored, and the whole fold's digest.\n\n```\nuse majordomus_cli::mesh::records::RecordList;\nlet off = RecordList { reason: Some(\"no shared server activated the mesh\".into()),\n    ..RecordList::default() };\nlet wire = serde_json::to_value(&off).unwrap();\nassert_eq!(wire[\"active\"], false, \"an inactive mesh is an answer, not an error\");\nassert!(wire.get(\"conflicts\").is_none() && wire[\"records\"].as_array().unwrap().is_empty());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRecordList",
+      "properties": [
+        {
+          "description": "Whether this process runs the mesh. `false` is an answer, not an error: the records\nare then empty and `reason` says why, as `mesh.state` says it.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why the mesh is not active here, when it is not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The whole fold's digest: equal digests, equal records on two runtimes.",
+          "name": "digest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The records, in key order.",
+          "name": "records",
+          "refs": [
+            "MeshRecordView"
+          ],
+          "required": true,
+          "type": "array of MeshRecordView"
+        },
+        {
+          "description": "The conflicts that name a listed record.",
+          "name": "conflicts",
+          "refs": [
+            "MeshRecordConflict"
+          ],
+          "required": false,
+          "type": "array of MeshRecordConflict"
+        },
+        {
+          "description": "The ignored writes that name a listed record, or every one when nothing narrows.",
+          "name": "ignored",
+          "refs": [
+            "MeshIgnoredRecordWrite"
+          ],
+          "required": false,
+          "type": "array of MeshIgnoredRecordWrite"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.records"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One revision in a record's history: what it said and where it was written. Every\nrevision is kept, which is the record's provenance.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet plan = RecordBody::new(\"r-1\", \"s1\", RecordKind::Plan, \"I1\", &[\"docs\"], \"first\");\nj.append_own(EventBody::RecordWritten { record: plan.clone() }).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody { revision: 2, title: \"second\".into(), ..plan } }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordRevision;\nlet history: &[RecordRevision] = &state.records[0].history;\nlet titles: Vec<&str> = history.iter().map(|h| h.title.as_str()).collect();\nassert_eq!(titles, [\"first\", \"second\"]);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRecordRevision",
+      "properties": [
+        {
+          "description": "The revision.",
+          "name": "revision",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "`<stream>/<seq>` of the event.",
+          "name": "event",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The event's Lamport stamp.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The status it set.",
+          "name": "status",
+          "refs": [
+            "MeshRecordStatus"
+          ],
+          "required": true,
+          "type": "MeshRecordStatus"
+        },
+        {
+          "description": "The title it set.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The sources it cited.",
+          "name": "sources",
+          "refs": [
+            "MeshRecordSource"
+          ],
+          "required": false,
+          "type": "array of MeshRecordSource"
+        },
+        {
+          "description": "Its evidence state.",
+          "name": "evidence",
+          "refs": [
+            "MeshEvidenceState"
+          ],
+          "required": true,
+          "type": "MeshEvidenceState"
+        },
+        {
+          "description": "The digest of what it said (`RecordBody::content_digest`).",
+          "name": "digest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its retry key.",
+          "name": "idempotency",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When its author wrote it.",
+          "name": "written_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRecordView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a record cites, with its version: a file at a commit, a tool's observed result, or\nanother record at a revision.\n\n```\nuse majordomus_cli::mesh::records::RecordSource;\nlet file = RecordSource::File { path: \"src/a.rs\".into(), commit: \"8df53bc26e9\".into(),\n    lines: Some(\"10-20\".into()) };\nassert!(file.validate().is_ok() && file.is_retrievable());\nlet link = RecordSource::Record { record: \"x/r-1\".into(), revision: 2 };\nassert!(!link.is_retrievable(), \"a link to a record is provenance, not evidence\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRecordSource",
+      "properties": [],
+      "type": "one of 3 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRecordRevision",
+        "MeshRecordView",
+        "MeshRecordWrite"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "A repository file at a commit, optionally a line range (`12` or `12-40`).",
+          "properties": [
+            {
+              "description": "Repository-relative path.",
+              "name": "path",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The commit it was read at: 7 to 64 lowercase hex.",
+              "name": "commit",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The lines: `N` or `N-M`.",
+              "name": "lines",
+              "refs": [],
+              "required": false,
+              "type": "string | null"
+            },
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"file\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A tool run and what it observed.",
+          "properties": [
+            {
+              "description": "The command or tool call, one line.",
+              "name": "command",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "What it answered: an exit code, a digest, a short excerpt.",
+              "name": "result",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "When it was observed, RFC 3339 UTC.",
+              "name": "observed_at",
+              "refs": [],
+              "required": false,
+              "type": "string | null"
+            },
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"tool\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Another record at a revision.",
+          "properties": [
+            {
+              "description": "The record's key, `<stream>/<id>`.",
+              "name": "record",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The revision cited.",
+              "name": "revision",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint32)"
+            },
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"record\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "Where a record stands, as its author says. Only an open record is in force: a resolved or\nwithdrawn one contends with nothing and keeps no stream from compaction.\n\n```\nuse majordomus_cli::mesh::records::RecordStatus;\nassert_eq!(RecordStatus::default(), RecordStatus::Open);\nassert_eq!(serde_json::to_value(RecordStatus::Withdrawn).unwrap(), \"withdrawn\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "MeshRecordStatus",
+      "properties": [],
+      "type": "\"open\" | \"resolved\" | \"withdrawn\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRecordRevision",
+        "MeshRecordView",
+        "MeshRecordWrite"
+      ],
+      "values": [
+        {
+          "description": "In force.",
+          "value": "open"
+        },
+        {
+          "description": "Done with: answered, carried out, no longer blocking.",
+          "value": "resolved"
+        },
+        {
+          "description": "Taken back by its author.",
+          "value": "withdrawn"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A record as every runtime folds it: its current revision, its author, its links, its\nstanding, and every revision before.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::records::{RecordBody, RecordKind};\nuse majordomus_cli::mesh::state::fold;\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::RecordWritten { record:\n    RecordBody::new(\"r-1\", \"s1\", RecordKind::Decision, \"I1\", &[\"docs\"], \"d\") }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::records::RecordView;\nlet view: &RecordView = &state.records[0];\nassert_eq!(view.key, format!(\"{}/r-1\", j.own_stream()));\nassert_eq!(view.author, format!(\"{}/s1\", j.own_stream()), \"the stream's, not a name\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRecordView",
+      "properties": [
+        {
+          "description": "`<stream>/<id>`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`<stream>/<session>` of the session that created it: the only one that revises it.",
+          "name": "author",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`<node>-<runtime>` of its stream.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository identity the event was signed for.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is.",
+          "name": "kind",
+          "refs": [
+            "MeshRecordKind"
+          ],
+          "required": true,
+          "type": "MeshRecordKind"
+        },
+        {
+          "description": "The task, intent or issue.",
+          "name": "task",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its paths.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Its status.",
+          "name": "status",
+          "refs": [
+            "MeshRecordStatus"
+          ],
+          "required": true,
+          "type": "MeshRecordStatus"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its text.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its sources.",
+          "name": "sources",
+          "refs": [
+            "MeshRecordSource"
+          ],
+          "required": false,
+          "type": "array of MeshRecordSource"
+        },
+        {
+          "description": "A handoff's parts.",
+          "name": "handoff",
+          "refs": [
+            "MeshHandoff"
+          ],
+          "required": false,
+          "type": "MeshHandoff | null"
+        },
+        {
+          "description": "Derived from its sources.",
+          "name": "evidence",
+          "refs": [
+            "MeshEvidenceState"
+          ],
+          "required": true,
+          "type": "MeshEvidenceState"
+        },
+        {
+          "description": "The current revision: what a revision must name to replace it.",
+          "name": "revision",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "When it stops holding.",
+          "name": "expires_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The record it supersedes.",
+          "name": "supersedes",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The records that supersede it.",
+          "name": "superseded_by",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Where its author stands.",
+          "name": "author_state",
+          "refs": [
+            "MeshAuthorState"
+          ],
+          "required": true,
+          "type": "MeshAuthorState"
+        },
+        {
+          "description": "Why it is stale; empty while it holds. Stale records are flagged, never removed.",
+          "name": "stale",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Every revision, oldest first.",
+          "name": "history",
+          "refs": [
+            "MeshRecordRevision"
+          ],
+          "required": true,
+          "type": "array of MeshRecordRevision"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationState",
+        "MeshRecordList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a session asks to write: a new record, or a revision of its own. The author is\nnever in it — the session is named apart and the stream is the runtime's own.\n\n```\nuse majordomus_cli::mesh::records::{RecordKind, RecordWrite};\nlet w: RecordWrite = serde_json::from_value(serde_json::json!({\n    \"kind\": \"decision\", \"task\": \"I1\", \"scope\": [\"docs\"], \"title\": \"one kind\"\n})).unwrap();\nassert_eq!(w.kind, Some(RecordKind::Decision));\nassert!(w.record.is_none(), \"a new record, not a revision\");\nassert!(serde_json::from_value::<RecordWrite>(serde_json::json!({\"author\": \"x\"})).is_err(),\n    \"an author is never an input\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRecordWrite",
+      "properties": [
+        {
+          "description": "The writing session; the calling MCP session's own when omitted. Over MCP a session\nwrites for itself alone; over the command line and HTTP it must be named.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "To revise: the record's key, `<stream>/<id>`, as the first write answered it.\nAbsent: a new record.",
+          "name": "record",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "To revise: the revision the writer read. A revision that is no longer current is\nrefused as `stale_revision` with the current one.",
+          "name": "revision",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "`observation`, `hypothesis`, `plan`, `decision`, `blocker`, `handoff` or `outcome`.",
+          "name": "kind",
+          "refs": [
+            "MeshRecordKind"
+          ],
+          "required": false,
+          "type": "MeshRecordKind | null"
+        },
+        {
+          "description": "The task, intent or issue it is about.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative paths, each inside a live claim of the writing session.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "`open` (the default), `resolved` or `withdrawn`.",
+          "name": "status",
+          "refs": [
+            "MeshRecordStatus"
+          ],
+          "required": false,
+          "type": "MeshRecordStatus | null"
+        },
+        {
+          "description": "One line.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The text.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it cites: `{\"type\":\"file\",\"path\",\"commit\",\"lines\"}`,\n`{\"type\":\"tool\",\"command\",\"result\",\"observed_at\"}` or `{\"type\":\"record\",\"record\",\"revision\"}`.",
+          "name": "sources",
+          "refs": [
+            "MeshRecordSource"
+          ],
+          "required": false,
+          "type": "array of MeshRecordSource"
+        },
+        {
+          "description": "A handoff's parts: objective, current_state, evidence, blockers, next_action.",
+          "name": "handoff",
+          "refs": [
+            "MeshHandoff"
+          ],
+          "required": false,
+          "type": "MeshHandoff | null"
+        },
+        {
+          "description": "A new record superseding another, `<stream>/<id>`: the old one is kept and linked.",
+          "name": "supersedes",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it stops holding, RFC 3339 UTC.",
+          "name": "expires_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "A retry key: the same key with the same content answers the first write.",
+          "name": "idempotency",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.record.write"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of a record write: the record's key, the revision now current, the event that\nsays so, and the live records it contends with — reported, not refused.\n\n```\nuse majordomus_cli::mesh::records::{EvidenceState, RecordWriteAnswer};\nlet a = RecordWriteAnswer { key: \"s/r-1\".into(), revision: 1, event: \"s/7\".into(),\n    lamport: 7, durability: Default::default(), evidence: EvidenceState::Asserted,\n    repeated: false, conflicts: vec![] };\nlet wire = serde_json::to_value(&a).unwrap();\nassert!(wire.get(\"repeated\").is_none(), \"said only when it answers a retry\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRecordWriteAnswer",
+      "properties": [
+        {
+          "description": "`<stream>/<id>`: how the record is addressed from here on.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The revision this write made; the next revision names it.",
+          "name": "revision",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "`<stream>/<seq>` of the event.",
+          "name": "event",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The event's Lamport stamp.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the event reached this machine's disk; `unknown` for a repeated answer.",
+          "name": "durability",
+          "refs": [
+            "Durability"
+          ],
+          "required": false,
+          "type": "Durability"
+        },
+        {
+          "description": "Derived from its sources.",
+          "name": "evidence",
+          "refs": [
+            "MeshEvidenceState"
+          ],
+          "required": true,
+          "type": "MeshEvidenceState"
+        },
+        {
+          "description": "True when this answers a retry with the first write, and nothing was written now.",
+          "name": "repeated",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The live plans or decisions of other authors it contends with.",
+          "name": "conflicts",
+          "refs": [
+            "MeshRecordConflict"
+          ],
+          "required": false,
+          "type": "array of MeshRecordConflict"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.record.write"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -37107,6 +38225,27 @@
           "name": "untaken_handovers_not_listed",
           "refs": [],
           "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Typed coordination records (I4665), every one; `mesh records` lists them.",
+          "name": "records",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of them, the ones in force: open, not superseded, not stale.",
+          "name": "live_records",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Live plans or decisions of different authors that contend.",
+          "name": "record_conflicts",
+          "refs": [],
+          "required": false,
           "type": "integer (uint)"
         }
       ],
@@ -66232,7 +67371,7 @@
           "cache_detail": "",
           "cli": "blackboard",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/blackboard?checkouts=this&for=1b&signals=10&sources=mesh\"",
-          "description": "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
+          "description": "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; the typed coordination records still open (observations, hypotheses, plans, decisions, blockers, handoffs, outcomes), stale ones flagged, and the plans or decisions that contend; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
           "home": "blackboard",
           "id": "blackboard.snapshot",
           "kind": "query",
@@ -75042,6 +76181,182 @@
           "result_schema": "PeerTree",
           "stability": "experimental",
           "summary": "Who cooperates, machine by machine"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/records?kind=decision&live=true\"",
+          "description": "Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's. Where this process runs no mesh it answers `active: false` with the reason.",
+          "home": "mesh",
+          "id": "mesh.records",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_records",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One record by its key, `<stream>/<id>`.",
+              "examples": [],
+              "name": "record",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only records about this task, intent or issue.",
+              "examples": [],
+              "name": "task",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only records of this kind.",
+              "examples": [
+                {
+                  "case": "live-decisions",
+                  "value": "\"decision\""
+                }
+              ],
+              "name": "kind",
+              "required": false,
+              "type": "MeshRecordKind | null"
+            },
+            {
+              "description": "Only records of this author, `<stream>/<session>`, or of a session of that name on\nany runtime.",
+              "examples": [],
+              "name": "author",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only records whose scope meets this path.",
+              "examples": [],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only live records: open, not superseded, not stale.",
+              "examples": [
+                {
+                  "case": "live-decisions",
+                  "value": "true"
+                }
+              ],
+              "name": "live",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/mesh/records",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The typed coordination records of the mesh: the result.",
+              "schema": "MeshRecordList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshRecordList",
+          "stability": "experimental",
+          "summary": "The typed coordination records of the mesh"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "observation",
+              "json": "{\"session\":\"bench\",\"kind\":\"observation\",\"task\":\"bench\",\"scope\":[\"docs\"],\"title\":\"a benchmark observation\"}"
+            }
+          ],
+          "body_schema": "MeshRecordWrite",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/records\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"kind\":\"observation\",\"task\":\"bench\",\"scope\":[\"docs\"],\"title\":\"a benchmark observation\"}'",
+          "description": "Write an observation, hypothesis, plan, decision, blocker, handoff or outcome about a task and a scope into this runtime's journal, replicated to every linked runtime; or revise a record of the writing session's own by naming it and the revision read. The author is the journal's `<stream>/<session>`, never a name in the input; over MCP a session writes only as itself. Refused, and nothing written: a malformed record or a handoff without objective, current_state, evidence, blockers and next_action (`invalid_input`); a path outside the session's live claims (`out_of_scope`); a revision of another session's record (`not_own` — write a new record with `supersedes` instead); a revision read that is no longer current (`stale_revision`, naming the current one); a retry key reused for other content (`idempotency_conflict`). The same retry key with the same content answers the first write. Contending live plans or decisions of other authors are written and reported.",
+          "home": "mesh",
+          "id": "mesh.record.write",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_record_write",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/records",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Write a typed coordination record to the mesh: the result.",
+              "schema": "MeshRecordWriteAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshRecordWriteAnswer",
+          "stability": "experimental",
+          "summary": "Write a typed coordination record to the mesh"
         },
         {
           "benchmark": "required",

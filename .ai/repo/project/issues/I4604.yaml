@@ -1,0 +1,32 @@
+id: I4604
+milestone: a-second-adopter-is-served
+title: "A declared .ai extension in a gitignored subtree is discovered, checked and reported"
+slug: a-declared-extension-in-an-ignored-subtree-is-discovered
+priority: p2
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "Let an adopter keep work that must stay out of git (client cases, data rooms, scratch analyses) under an enforced layer: a subtree that declares `.ai/extension.json` is discovered by name from the policy rather than from the index, its rules (repository rule shape) are listed by `majordomus rules`, its declared checker runs in `majordomus check`, and `doctor` reports it with its last verdict, without the subtree's content ever entering a projection, a published surface or a knowledge index."
+why: "Observed in an adopter repository on 2026-11-13/15: an evidence case lives in a gitignored directory on purpose (it holds named people and client material). Discovery reads the git index, so Majordomus saw none of its rules. The case grew its own layer by hand: `.ai/extension.json` (rules, inputs, outputs, schemas, pipeline), 17 rule files in the repository's rule shape, three schemas (information architecture, a graph side panel, an entity profile) and a lessons file, enforced by its own checker as the last step of its only pipeline. Over six iterations that checker and its runtime checks caught defects no repository gate could see: a static check of a UI rule had passed 736 panels that violated it; names leaked into anonymised outputs through page code, not data, twice; a derived slug folded diacritics into a surname match; a fetched logo carried a file:// reference. All of it works, but the adopter maintains a second rule engine, `majordomus context` never mentions the layer, and a session that does not read the case README does not know the layer exists."
+current_state: "Measured at 3fcaafac355: knowledge, rules and context discovery read through the git index (`.ai/repo/knowledge/README.md`: 'Discovery reads the Git index, never the filesystem'); an ignored directory contributes nothing to `majordomus context`, `rules list`, `check` or `doctor`, and nothing declares that such a directory is expected to carry its own layer."
+desired_state: "The policy names extension roots explicitly (a list of paths or globs, never a filesystem walk), so discovery stays deterministic and an undeclared ignored directory is still invisible. For each declared root that exists, Majordomus reads `.ai/extension.json` and the rule files it lists, validates them against the rule schema, lists them in `majordomus rules` marked as extension rules with their root, runs the declared `enforced_by` command in `majordomus check` (its exit code is the verdict) and shows root, rule count and last verdict in `doctor`. Nothing under an extension root is indexed into knowledge, projections, the site or any MCP resource body; only the root path, rule ids, titles and verdicts are reported. A missing root is reported as absent, not as an error."
+scope:
+  - ".ai/repo/project/issues/I4604.yaml"
+non_scope:
+  - "Tracking ignored content in git, or copying it into the repository layer"
+  - "Indexing extension content into knowledge, search or any projection"
+  - "Walking the filesystem for undeclared .ai directories"
+depends_on: []
+acceptance_criteria:
+  - "A policy key declares extension roots; an undeclared ignored directory with `.ai/extension.json` stays invisible to every command"
+  - "`majordomus rules` lists a declared root's rules with their root and marks them as extension rules; a rule file that fails the rule schema is reported by name"
+  - "`majordomus check` runs the root's declared checker and refuses on its non-zero exit, naming the root and the command"
+  - "`doctor` reports each declared root with its rule count and the last verdict, and reports a missing root as absent"
+  - "A case seeds an ignored fixture subtree with a declared extension and proves: discovery by declaration, invisibility without it, the refusal on a failing checker, and that no file content under the root appears in context, knowledge or an MCP resource"
+validation:
+  - "bash test/run.sh I4604_declared_extension_in_ignored_subtree"
+evidence_required:
+  - suite
+risk: "An extension root is a place that holds material the owner keeps out of git on purpose. Any projection that prints its content, or a doctor line that quotes a rule body, publishes what the ignore rule protects; the reporting surface is ids, titles, paths and verdicts only."
+created_at: 2026-11-15
+updated_at: 2026-11-15

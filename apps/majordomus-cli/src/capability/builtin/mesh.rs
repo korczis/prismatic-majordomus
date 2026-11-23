@@ -35,6 +35,9 @@ use crate::mesh::journal::{
 };
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
+use crate::mesh::records::{
+    select as select_records, RecordKind, RecordList, RecordQuery, RecordWrite, RecordWriteAnswer,
+};
 use crate::mesh::rendezvous::REGISTER_PATH;
 use crate::mesh::state::{ClaimView, CooperationState, HandoverView, SessionState};
 use crate::mesh::{
@@ -475,6 +478,57 @@ pub(crate) fn retrust(ctx: &Context) -> Vec<String> {
     cooperation.retrust(config.trust)
 }
 
+/// What a new generation of the repository did to this machine's own place in the mesh.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum OwnTrust {
+    /// Nothing: the trust list says what it said, or this runtime is not the server's.
+    Unchanged,
+    /// The declaration in force now trusts the key a closed runtime was closed to: it opened.
+    Opened,
+    /// The declaration in force no longer trusts this runtime's own key: it closed.
+    Closed,
+}
+
+/// Put the declaration's trust in force on this machine's own key (I4571), the half of
+/// [`retrust`] that is about this node rather than its peers. The server calls it with each
+/// new generation of the repository it reads, so a machine whose key is enrolled on the
+/// trunk joins the mesh, and one whose key is withdrawn leaves it, without a restart. A
+/// closed runtime opens through the server's own activation
+/// ([`crate::mesh::manager::Reopen`]); an open one closes with [`closed_to`]'s reason. Only a
+/// runtime a server activated and has not stopped moves, only under an enabled declaration
+/// that parses, and nothing is logged here.
+pub(crate) fn retrust_own_key(ctx: &std::sync::Arc<Context>) -> OwnTrust {
+    use crate::mesh::manager::closed_to;
+    if !ctx.mesh.reopens() {
+        return OwnTrust::Unchanged;
+    }
+    let Some(Ok(config)) = declaration(ctx) else {
+        return OwnTrust::Unchanged;
+    };
+    if !config.enabled {
+        return OwnTrust::Unchanged;
+    }
+    if let (Some(key), Some(reopen)) = (ctx.mesh.closed_key(), ctx.mesh.reopener()) {
+        if closed_to(&config, &key).is_some() {
+            return OwnTrust::Unchanged;
+        }
+        reopen(ctx);
+        return if ctx.mesh.status().active {
+            OwnTrust::Opened
+        } else {
+            OwnTrust::Unchanged
+        };
+    }
+    let status = ctx.mesh.status();
+    let Some(own) = status.identity.filter(|_| status.active) else {
+        return OwnTrust::Unchanged;
+    };
+    match closed_to(&config, &own.public_key) {
+        Some(why) if ctx.mesh.close(&why) => OwnTrust::Closed,
+        _ => OwnTrust::Unchanged,
+    }
+}
+
 /// The repository's mesh declaration in force: `None` when no object of the kind exists,
 /// the parse verdict when one does — the working tree's copy with every widening of the
 /// trunk's copy removed ([`crate::mesh::root`]). Every reader of the declaration asks this,
@@ -545,6 +599,13 @@ pub(super) fn map_error(e: CooperationError) -> CapabilityError {
             CapabilityError::Refused(format!("{}: {m}", RefusalCode::FeatureUnsupported.as_str()))
         }
         CooperationError::Invalid(m) => CapabilityError::InvalidInput(m),
+        CooperationError::StaleRevision { .. } => {
+            CapabilityError::Refused(format!("stale_revision: {e}"))
+        }
+        CooperationError::OutOfScope(m) => CapabilityError::Refused(format!("out_of_scope: {m}")),
+        CooperationError::IdempotencyConflict(m) => {
+            CapabilityError::Refused(format!("idempotency_conflict: {m}"))
+        }
     }
 }
 
@@ -1502,6 +1563,82 @@ fn mesh_beat(ctx: &Context, input: BeatInput) -> Result<Written, CapabilityError
     c.beat(&session, input.phase, input.pid).map_err(map_error)
 }
 
+// ---------------------------------------------------------------- mesh.record.write / mesh.records
+
+impl BenchmarkCases for RecordWrite {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "observation",
+            RecordWrite {
+                session: Some("bench".into()),
+                kind: Some(RecordKind::Observation),
+                task: "bench".into(),
+                scope: vec!["docs".into()],
+                title: "a benchmark observation".into(),
+                ..RecordWrite::default()
+            },
+        )]
+    }
+}
+
+impl BenchmarkCases for RecordQuery {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("every-record", RecordQuery::default()),
+            NamedCase::new(
+                "live-decisions",
+                RecordQuery {
+                    kind: Some(RecordKind::Decision),
+                    live: Some(true),
+                    ..RecordQuery::default()
+                },
+            ),
+        ]
+    }
+}
+
+/// A session writes a typed coordination record or revises its own (I4665). Over MCP a
+/// session writes for itself alone, as it beats for itself alone: naming another session is
+/// refused, so one client never writes, revises or supersedes in another client's name. The
+/// command line and plain HTTP name the session they write for.
+fn mesh_record_write(
+    ctx: &Context,
+    mut input: RecordWrite,
+) -> Result<RecordWriteAnswer, CapabilityError> {
+    let c = cooperation(ctx)?;
+    if let (Some(peer), Some(named)) = (ctx.caller.as_ref(), input.session.as_deref()) {
+        let own = format!("board-{}", peer.as_str());
+        if !named.trim().is_empty() && named != own {
+            return Err(CapabilityError::Refused(format!(
+                "not_own: over MCP a session writes records only as itself ({own}), not as '{named}'"
+            )));
+        }
+    }
+    let session = session_of(ctx, input.session.take())?;
+    c.write_record(&session, input).map_err(map_error)
+}
+
+/// The records folded from the journal, narrowed by the query. Where this process runs no
+/// mesh the answer says so (`active: false` and the reason), as `mesh.state` does: a read is
+/// answered, never refused, for want of a mesh.
+fn mesh_records(ctx: &Context, query: RecordQuery) -> Result<RecordList, CapabilityError> {
+    let Some(c) = ctx.mesh.cooperation() else {
+        return Ok(RecordList {
+            active: false,
+            reason: ctx.mesh.cooperation_status().reason,
+            ..RecordList::default()
+        });
+    };
+    let state = c.state();
+    Ok(select_records(
+        &state.records,
+        &state.record_conflicts,
+        &state.records_ignored,
+        &state.digest,
+        &query,
+    ))
+}
+
 // ---------------------------------------------------------------- mesh.handover.*
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -2181,6 +2318,32 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_release,
             },
             capability! {
+                id: "mesh.record.write",
+                kind: CapabilityKind::Command,
+                title: "Write a typed coordination record to the mesh",
+                description: "Write an observation, hypothesis, plan, decision, blocker, handoff or outcome about a task and a scope into this runtime's journal, replicated to every linked runtime; or revise a record of the writing session's own by naming it and the revision read. The author is the journal's `<stream>/<session>`, never a name in the input; over MCP a session writes only as itself. Refused, and nothing written: a malformed record or a handoff without objective, current_state, evidence, blockers and next_action (`invalid_input`); a path outside the session's live claims (`out_of_scope`); a revision of another session's record (`not_own` — write a new record with `supersedes` instead); a revision read that is no longer current (`stale_revision`, naming the current one); a retry key reused for other content (`idempotency_conflict`). The same retry key with the same content answers the first write. Contending live plans or decisions of other authors are written and reported.",
+                input: RecordWrite,
+                output: RecordWriteAnswer,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_record_write"), http: post("/api/v1/mesh/records"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: mesh_record_write,
+            },
+            capability! {
+                id: "mesh.records",
+                title: "The typed coordination records of the mesh",
+                description: "Every typed coordination record the journal holds, folded: its author (`<stream>/<session>`), kind, task, scope, status, sources, derived evidence state (asserted unless a source is a file at a commit or a tool's observed result), current revision and every earlier one, the record it supersedes and the ones superseding it, its author's standing and why it is stale (an expired lease, a closed or silent author) — stale records are flagged, never removed. Also the conflicts between live plans or decisions of different authors for one task or over meeting scopes, and the writes the fold ignored (a revision not by the author, out of order, or after its author's session closed). `record`, `task`, `kind`, `author`, `path` and `live` narrow it; the digest is the whole fold's. Where this process runs no mesh it answers `active: false` with the reason.",
+                input: RecordQuery,
+                output: RecordList,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_records"), http: get("/api/v1/mesh/records"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                handler: mesh_records,
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
+            capability! {
                 id: "mesh.beat",
                 kind: CapabilityKind::Command,
                 title: "Say a session is making progress",
@@ -2399,6 +2562,16 @@ mod tests {
                 "/api/v1/mesh/claims/release",
             ),
             (
+                "mesh.record.write",
+                Some("majordomus_mesh_record_write"),
+                "/api/v1/mesh/records",
+            ),
+            (
+                "mesh.records",
+                Some("majordomus_mesh_records"),
+                "/api/v1/mesh/records",
+            ),
+            (
                 "mesh.beat",
                 Some("majordomus_mesh_beat"),
                 "/api/v1/mesh/beats",
@@ -2475,6 +2648,7 @@ mod tests {
             "mesh.peer",
             "mesh.state",
             "mesh.events",
+            "mesh.records",
         ];
         for e in module().capabilities {
             let c = &e.capability;
@@ -2988,6 +3162,145 @@ mod tests {
                 "{session:?}"
             );
         }
+    }
+
+    /// Over MCP a session writes records as itself alone (I4665): naming another session is
+    /// refused before anything is admitted, so one client never writes, revises or
+    /// supersedes in another's name; the command line names its session, and a record's
+    /// scope must lie in that session's live claims. `mesh.records` reads what was written.
+    #[test]
+    fn a_record_over_mcp_is_written_by_its_own_session_alone() {
+        let (_repo, ctx) = context(false);
+        let write = |ctx: &Context, session: Option<&str>, scope: &str| {
+            mesh_record_write(
+                ctx,
+                RecordWrite {
+                    session: session.map(Into::into),
+                    kind: Some(RecordKind::Decision),
+                    task: "I4665".into(),
+                    scope: vec![scope.into()],
+                    title: "records live in the journal".into(),
+                    ..RecordWrite::default()
+                },
+            )
+        };
+        assert!(
+            matches!(write(&ctx, Some("lander"), "docs"), Err(CapabilityError::Refused(m))
+                if m.starts_with("not_active:")),
+            "no cooperation, nothing to write"
+        );
+        let off = mesh_records(&ctx, RecordQuery::default()).expect("a read is answered");
+        assert!(!off.active && off.records.is_empty());
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        c.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["docs".into()],
+            None,
+            ClaimMode::Advisory,
+            None,
+        )
+        .unwrap();
+        assert!(
+            matches!(
+                write(&ctx, None, "docs"),
+                Err(CapabilityError::InvalidInput(_))
+            ),
+            "the command line names the session it writes for"
+        );
+        let refused = write(&ctx, Some("lander"), "apps").unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::Refused(m) if m.starts_with("out_of_scope:")),
+            "{refused}"
+        );
+        let written = write(&ctx, Some("lander"), "docs/MESH.md").expect("inside its claim");
+        assert_eq!(written.revision, 1);
+        // the cooperation's refusals reach the caller with their codes
+        let again = |revision: u32, idempotency: Option<&str>, title: &str| {
+            mesh_record_write(
+                &ctx,
+                RecordWrite {
+                    session: Some("lander".into()),
+                    record: Some(written.key.clone()),
+                    revision: Some(revision),
+                    kind: Some(RecordKind::Decision),
+                    task: "I4665".into(),
+                    scope: vec!["docs".into()],
+                    title: title.into(),
+                    idempotency: idempotency.map(Into::into),
+                    ..RecordWrite::default()
+                },
+            )
+        };
+        again(1, Some("k-1"), "revised").expect("revision 1 is current");
+        let stale = again(1, None, "late").unwrap_err();
+        assert!(
+            matches!(&stale, CapabilityError::Refused(m) if m.starts_with("stale_revision:") && m.contains("is 2")),
+            "{stale}"
+        );
+        let reused = again(2, Some("k-1"), "other text").unwrap_err();
+        assert!(
+            matches!(&reused, CapabilityError::Refused(m) if m.starts_with("idempotency_conflict:")),
+            "{reused}"
+        );
+
+        let board = crate::peers::PeerBoard::new();
+        let peer = board.attach(crate::peers::Transport::Http);
+        let mcp = ctx.for_caller(peer.clone());
+        let forged = write(&mcp, Some("lander"), "docs").unwrap_err();
+        assert!(
+            matches!(&forged, CapabilityError::Refused(m)
+                if m.starts_with("not_own:") && m.contains("not as 'lander'")),
+            "{forged}"
+        );
+        // its own session, named or not, passes the guard and meets the scope check: it
+        // claimed nothing
+        let named_own = mesh_record_write(
+            &mcp,
+            RecordWrite {
+                session: Some(format!("board-{peer}")),
+                kind: Some(RecordKind::Observation),
+                task: "I4665".into(),
+                scope: vec!["docs".into()],
+                title: "seen".into(),
+                ..RecordWrite::default()
+            },
+        )
+        .unwrap_err();
+        assert!(
+            matches!(&named_own, CapabilityError::Refused(m) if m.starts_with("out_of_scope:")),
+            "{named_own}"
+        );
+        let own = mesh_record_write(
+            &mcp,
+            RecordWrite {
+                kind: Some(RecordKind::Observation),
+                task: "I4665".into(),
+                scope: vec!["docs".into()],
+                title: "seen".into(),
+                ..RecordWrite::default()
+            },
+        )
+        .unwrap_err();
+        assert!(
+            matches!(&own, CapabilityError::Refused(m) if m.starts_with("out_of_scope:")),
+            "{own}"
+        );
+
+        let listed = mesh_records(&ctx, RecordQuery::default()).unwrap();
+        assert!(listed.active);
+        assert_eq!(listed.records.len(), 1);
+        assert_eq!(listed.records[0].key, written.key);
+        assert!(listed.records[0].author.ends_with("/lander"));
+        let none = mesh_records(
+            &ctx,
+            RecordQuery {
+                kind: Some(RecordKind::Plan),
+                ..RecordQuery::default()
+            },
+        )
+        .unwrap();
+        assert!(none.records.is_empty());
     }
 
     /// Every walk of `mesh.events` leaves the session beats out unless asked for them, and

@@ -122,6 +122,8 @@ pub enum Kind {
     Handovers,
     /// The review requests.
     Reviews,
+    /// The typed coordination records, their conflicts and the writes the fold ignored.
+    Records,
 }
 
 /// What a reader asks of the folded state. Every filter narrows; none changes a shape, and
@@ -378,7 +380,41 @@ pub fn narrow(state: &CooperationState, query: &Query) -> CooperationState {
         })
         .cloned()
         .collect();
+    let records: Vec<_> = state
+        .records
+        .iter()
+        .filter(|r| query.admits_session(&r.author) && query.admits_runtime(&r.runtime))
+        .filter(|r| query.admits_lamport(r.history.last().map_or(0, |h| h.lamport)))
+        .filter(|r| !query.open_only() || r.is_live())
+        .filter(|r| {
+            query.admits_text(
+                r.scope
+                    .iter()
+                    .map(|p| Some(p.as_str()))
+                    .chain([Some(r.task.as_str()), Some(r.title.as_str())]),
+            )
+        })
+        .cloned()
+        .collect();
     let only = |kind: Kind| query.admits_kind(kind);
+    let records = newest(records, query.limit, |r| {
+        r.history.last().map_or(0, |h| h.lamport)
+    });
+    let listed: std::collections::BTreeSet<&str> = records.iter().map(|r| r.key.as_str()).collect();
+    let record_conflicts: Vec<_> = state
+        .record_conflicts
+        .iter()
+        .filter(|c| listed.contains(c.first.as_str()) || listed.contains(c.second.as_str()))
+        .filter(|_| only(Kind::Records))
+        .cloned()
+        .collect();
+    let records_ignored: Vec<_> = state
+        .records_ignored
+        .iter()
+        .filter(|i| listed.contains(i.record.as_str()))
+        .filter(|_| only(Kind::Records))
+        .cloned()
+        .collect();
     CooperationState {
         sessions: newest(sessions, query.limit, |s| s.updated_lamport)
             .into_iter()
@@ -401,6 +437,12 @@ pub fn narrow(state: &CooperationState, query: &Query) -> CooperationState {
             .filter(|_| only(Kind::Reviews))
             .collect(),
         opaque_events: state.opaque_events,
+        records: records
+            .into_iter()
+            .filter(|_| only(Kind::Records))
+            .collect(),
+        record_conflicts,
+        records_ignored,
         digest: state.digest.clone(),
     }
 }
@@ -689,6 +731,19 @@ pub struct Summary {
     pub untaken_handovers: Vec<HandoverBrief>,
     /// Untaken handovers past the list, counted.
     pub untaken_handovers_not_listed: usize,
+    /// Typed coordination records (I4665), every one; `mesh records` lists them.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub records: usize,
+    /// Of them, the ones in force: open, not superseded, not stale.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub live_records: usize,
+    /// Live plans or decisions of different authors that contend.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub record_conflicts: usize,
+}
+
+fn is_zero(n: &usize) -> bool {
+    *n == 0
 }
 
 fn rank(liveness: StreamLiveness) -> u8 {
@@ -756,6 +811,9 @@ pub fn summarize(
     let mut summary = Summary {
         digest: state.digest.clone(),
         overlaps: state.overlaps.len(),
+        records: state.records.len(),
+        live_records: state.records.iter().filter(|r| r.is_live()).count(),
+        record_conflicts: state.record_conflicts.len(),
         ..Summary::default()
     };
     for session in &state.sessions {

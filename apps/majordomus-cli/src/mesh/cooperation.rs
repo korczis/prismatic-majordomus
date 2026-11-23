@@ -109,6 +109,7 @@ use super::link::{
     HELLO_PATH, LINK_PROTOCOL_MAX, LINK_PROTOCOL_MIN, MAX_LINK_MESSAGE, MAX_LINK_SKEW_SECONDS,
     SYNC_EVENT_BUDGET, SYNC_PATH,
 };
+use super::records::{Admission, RecordConflict, RecordRefusal, RecordWrite, RecordWriteAnswer};
 use super::registry::{MeshRegistry, NodeRecord, Presence};
 use super::repository::MeshRepositoryIdentity;
 use super::state::{
@@ -777,6 +778,44 @@ pub enum CooperationError {
     /// Out of bounds.
     #[error("{0}")]
     Invalid(String),
+    /// A record revision named a revision that is no longer current (I4665).
+    #[error("{why}; the current revision of {record} is {current}")]
+    StaleRevision {
+        /// The record's key.
+        record: String,
+        /// Its current revision: what the next revision names.
+        current: u32,
+        /// Why the read revision is stale.
+        why: String,
+    },
+    /// A record's scope lies outside the writing session's live claims (I4665).
+    #[error("{0}")]
+    OutOfScope(String),
+    /// A retry key that already wrote other content (I4665).
+    #[error("{0}")]
+    IdempotencyConflict(String),
+}
+
+impl CooperationError {
+    /// A record write's refusal as the error every cooperation surface maps (I4665).
+    fn of_record(refusal: RecordRefusal) -> Self {
+        match refusal {
+            RecordRefusal::Invalid(m) => CooperationError::Invalid(m),
+            RecordRefusal::OutOfScope(m) => CooperationError::OutOfScope(m),
+            RecordRefusal::NotOwn(m) => CooperationError::NotOwn(m),
+            RecordRefusal::Stale {
+                record,
+                current,
+                why,
+            } => CooperationError::StaleRevision {
+                record,
+                current,
+                why,
+            },
+            RecordRefusal::NotFound(m) => CooperationError::NotFound(m),
+            RecordRefusal::IdempotencyConflict(m) => CooperationError::IdempotencyConflict(m),
+        }
+    }
 }
 
 /// One verification check: what was checked, whether it holds, the evidence, and — when
@@ -3683,7 +3722,7 @@ impl Cooperation {
         // A session's progress is judged by the ttl its own beat carries, plus the stream
         // expiry for another runtime's: the beat reached this one up to a round late (I3990).
         let grace = self.expiry();
-        fold_with(
+        let mut state = fold_with(
             &self.journal.events(),
             &|s| {
                 live.get(s)
@@ -3691,7 +3730,118 @@ impl Cooperation {
                     .unwrap_or(StreamLiveness::Expired)
             },
             &|session| self.journal.session_progress_at(session, grace, now),
+        );
+        // A record's lease is read on this machine's clock, as a stream's beat is (I4665).
+        let unix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs());
+        super::state::judge_record_leases(&mut state, unix);
+        state
+    }
+
+    /// Write a typed coordination record, or a revision of one of this session's own
+    /// (I4665), into this runtime's journal.
+    ///
+    /// Admission and the append happen under the claim admission lock, against the state
+    /// folded now, and every refusal fails closed: a malformed record (`Invalid`), a path
+    /// outside the session's live claims (`OutOfScope`), a revision of another session's
+    /// record (`NotOwn` — supersede it instead), a revision that is not the current one
+    /// (`StaleRevision`, naming the current one), an unknown record (`NotFound`), and a
+    /// retry key reused for other content (`IdempotencyConflict`). A retry with the same key
+    /// and content answers the first write and writes nothing. Conflicting plans and
+    /// decisions of other authors are written and reported in the answer.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    /// use majordomus_cli::mesh::records::{RecordKind, RecordWrite};
+    ///
+    /// let s1 = SessionInfo::named("s1", "cli");
+    /// cooperation.claim(&s1, vec!["docs".into()], None, ClaimMode::Advisory, None).unwrap();
+    /// let plan = RecordWrite { kind: Some(RecordKind::Plan), task: "I1".into(),
+    ///     scope: vec!["docs/MESH.md".into()], title: "document records".into(),
+    ///     ..RecordWrite::default() };
+    /// let first = cooperation.write_record("s1", plan.clone()).unwrap();
+    /// assert_eq!(first.revision, 1);
+    ///
+    /// // a revision names the revision it read
+    /// let revised = RecordWrite { record: Some(first.key.clone()), revision: Some(1),
+    ///     title: "document records and leases".into(), ..plan.clone() };
+    /// assert_eq!(cooperation.write_record("s1", revised.clone()).unwrap().revision, 2);
+    /// cooperation.write_record("s1", revised).expect_err("revision 1 is stale now");
+    ///
+    /// // and a scope nobody claimed is refused
+    /// let outside = RecordWrite { scope: vec!["apps".into()], ..plan };
+    /// cooperation.write_record("s1", outside).expect_err("apps is not claimed by s1");
+    /// ```
+    pub fn write_record(
+        &self,
+        session: &str,
+        write: RecordWrite,
+    ) -> Result<RecordWriteAnswer, CooperationError> {
+        // Free text is where a pasted credential arrives: it is redacted before admission,
+        // so a retry of the same text digests the same, and before anything is signed
+        // (`.ai/repo/ci/mesh-event-fields.yaml`, `EventBody.RecordWritten.record`).
+        let write = redacted_record(write);
+        let _admission = self.admission.lock().expect("claim admission");
+        let state = self.state();
+        let fresh = format!("r-{}", &fresh_token()[..12]);
+        let admitted = super::records::admit(
+            &state.records,
+            &state.claims,
+            self.journal.own_stream(),
+            session,
+            write,
+            &fresh,
+            rfc3339_now(),
         )
+        .map_err(CooperationError::of_record)?;
+        let contended = |key: &str, conflicts: Vec<RecordConflict>| -> Vec<RecordConflict> {
+            conflicts
+                .into_iter()
+                .filter(|c| c.first == key || c.second == key)
+                .collect()
+        };
+        match admitted {
+            Admission::Repeat { key, revision } => Ok(RecordWriteAnswer {
+                conflicts: contended(&key, state.record_conflicts),
+                key,
+                revision: revision.revision,
+                event: revision.event,
+                lamport: revision.lamport,
+                durability: Durability::Unknown,
+                evidence: revision.evidence,
+                repeated: true,
+            }),
+            Admission::Append(body) => {
+                let key = self.own(&body.id);
+                let (revision, evidence) = (body.revision, body.evidence());
+                self.write(EventBody::RecordWritten { record: *body }, key.clone())
+                    .map(|written| RecordWriteAnswer {
+                        conflicts: contended(&key, self.state().record_conflicts),
+                        key,
+                        revision,
+                        event: written.event,
+                        lamport: written.lamport,
+                        durability: written.durability,
+                        evidence,
+                        repeated: false,
+                    })
+            }
+        }
     }
 
     /// Every stream's liveness and the milliseconds since its beat rose — the layer claims
@@ -4813,6 +4963,39 @@ impl Cooperation {
 /// The entries of `.ai/repo/ci/mesh-event-fields.yaml` that say `redacted` name these fields.
 fn redacted(text: String) -> String {
     crate::redaction::redact_secrets(&text).text
+}
+
+/// A record write with every free-text field redacted (I4665): the title, the body, a
+/// handoff's parts and a tool source's command and result pass through the one rule set, as a
+/// review's text does. Identifiers, paths, commits and the fixed vocabularies are left as
+/// they are; their bounds already refuse anything else.
+fn redacted_record(mut write: RecordWrite) -> RecordWrite {
+    use super::records::RecordSource;
+    write.title = redacted(write.title);
+    write.body = write.body.map(redacted);
+    if let Some(h) = write.handoff.as_mut() {
+        h.objective = redacted(std::mem::take(&mut h.objective));
+        h.current_state = redacted(std::mem::take(&mut h.current_state));
+        h.next_action = redacted(std::mem::take(&mut h.next_action));
+        h.evidence = std::mem::take(&mut h.evidence)
+            .into_iter()
+            .map(redacted)
+            .collect();
+        h.blockers = h
+            .blockers
+            .take()
+            .map(|b| b.into_iter().map(redacted).collect());
+    }
+    for source in &mut write.sources {
+        if let RecordSource::Tool {
+            command, result, ..
+        } = source
+        {
+            *command = redacted(std::mem::take(command));
+            *result = redacted(std::mem::take(result));
+        }
+    }
+    write
 }
 
 /// A JSON error as the text a refusal or a round error carries.

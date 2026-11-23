@@ -25,6 +25,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::mesh::journal::{ClaimMode, StreamLiveness};
+use crate::mesh::records::{EvidenceState, RecordConflict, RecordKind, RecordStatus};
 use crate::mesh::state::{ClaimState, CooperationState, ReviewState, SessionState, SessionView};
 use crate::monitor::{MonitorPage, MonitorSignal, MonitorSourceHealth, MonitorSourceState};
 use crate::peers::{claims_meet, rfc3339, OverlapPath, Peer};
@@ -296,6 +297,29 @@ pub struct BlackboardHandover {
     pub created_at: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// A typed coordination record of the mesh journal that is still open and not superseded
+/// (I4665), told briefly: its body, sources and history stay in `mesh.records`.
+pub struct BlackboardRecord {
+    /// The record's key, `<stream>/<id>`: what a revision or a supersession names.
+    pub key: String,
+    /// The authoring worker's key, or its session key when no worker holds it.
+    pub from: String,
+    /// Observation, hypothesis, plan, decision, blocker, handoff or outcome.
+    pub kind: RecordKind,
+    /// The task, intent or issue it is about.
+    pub task: String,
+    /// Its title.
+    pub title: String,
+    /// The current revision.
+    pub revision: u32,
+    /// Asserted, or evidenced by a retrievable source.
+    pub evidence: EvidenceState,
+    /// Why it is stale; empty while it holds. A stale record is flagged, not removed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub stale: Vec<String>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 /// What a relation between two workers is.
@@ -397,6 +421,17 @@ pub struct Blackboard {
     pub reviews: Vec<BlackboardReview>,
     /// The handovers nobody has taken, at most fifty.
     pub handovers: Vec<BlackboardHandover>,
+    /// The typed coordination records still open and not superseded, at most fifty, stale
+    /// ones flagged (I4665).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub records: Vec<BlackboardRecord>,
+    /// How many such records there are in all.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub records_total: usize,
+    /// Live plans or decisions of different authors that contend, for one task or over
+    /// meeting scopes.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub record_conflicts: Vec<RecordConflict>,
     /// The typed relations between workers.
     pub relations: Vec<BlackboardRelation>,
     /// The newest signals of the last hour, oldest first.
@@ -654,7 +689,39 @@ pub(crate) fn project(
 
     let mut reviews = Vec::new();
     let mut handovers = Vec::new();
+    let mut records = Vec::new();
+    let mut records_total = 0;
+    let mut record_conflicts = Vec::new();
     if let Some(m) = mesh_state {
+        let open: Vec<_> = m
+            .records
+            .iter()
+            .filter(|r| r.status == RecordStatus::Open && r.superseded_by.is_empty())
+            .collect();
+        records_total = open.len();
+        records = open
+            .into_iter()
+            .take(MAX_RECORDS)
+            .map(|r| BlackboardRecord {
+                key: r.key.clone(),
+                from: held
+                    .get(&r.author)
+                    .cloned()
+                    .unwrap_or_else(|| r.author.clone()),
+                kind: r.kind,
+                task: r.task.clone(),
+                title: r.title.clone(),
+                revision: r.revision,
+                evidence: r.evidence,
+                stale: r.stale.clone(),
+            })
+            .collect();
+        record_conflicts = m
+            .record_conflicts
+            .iter()
+            .take(MAX_CONFLICTS)
+            .cloned()
+            .collect();
         for r in m.reviews.iter().filter(|r| r.state == ReviewState::Open) {
             let from = held
                 .get(&r.session)
@@ -721,11 +788,18 @@ pub(crate) fn project(
         conflicts_total,
         reviews,
         handovers,
+        records,
+        records_total,
+        record_conflicts,
         relations,
         signals: reads.monitor.signals.clone(),
         for_you: reads.monitor.for_you,
         cursor: reads.monitor.cursor.clone(),
     }
+}
+
+fn is_zero(n: &usize) -> bool {
+    *n == 0
 }
 
 /// A board peer's claims: its announcements, and the live claims its joined session holds
@@ -979,7 +1053,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "blackboard.snapshot",
                 title: "Who works on what, now",
-                description: "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
+                description: "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; the typed coordination records still open (observations, hypotheses, plans, decisions, blockers, handoffs, outcomes), stale ones flagged, and the plans or decisions that contend; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
                 input: BlackboardInput,
                 output: Blackboard,
                 stability: Stability::Experimental,
@@ -1118,6 +1192,84 @@ mod tests {
     /// A board peer is joined to the session its own server's stream projected for it; the
     /// same board session id in another process of the same runtime (a restarted or superseded
     /// server), on another machine or for another checkout is a different worker.
+    /// The open typed records of the journal are on the blackboard (I4665), each from the
+    /// worker whose session wrote it, or from the bare session key when no worker holds it; a
+    /// resolved or superseded record is not, and contending decisions are listed.
+    #[test]
+    fn the_open_records_and_their_conflicts_are_on_the_blackboard() {
+        use crate::mesh::journal::EventBody;
+        use crate::mesh::records::{RecordBody, RecordKind, RecordStatus, RecordWrite};
+        let c = crate::mesh::testing::cooperation();
+        for s in ["s1", "s2"] {
+            c.claim(
+                &SessionInfo::named(s, "cli"),
+                vec!["docs".into(), "ci".into()],
+                None,
+                ClaimMode::Advisory,
+                None,
+            )
+            .unwrap();
+        }
+        let write = |session: &str, kind, scope: &str, title: &str, status| {
+            c.write_record(
+                session,
+                RecordWrite {
+                    kind: Some(kind),
+                    task: "T".into(),
+                    scope: vec![scope.into()],
+                    title: title.into(),
+                    status,
+                    ..RecordWrite::default()
+                },
+            )
+            .unwrap()
+            .key
+        };
+        let first = write("s1", RecordKind::Decision, "docs", "a", None);
+        write("s2", RecordKind::Decision, "docs", "b", None);
+        write(
+            "s1",
+            RecordKind::Blocker,
+            "ci",
+            "done",
+            Some(RecordStatus::Resolved),
+        );
+        // a record of a session this runtime never heard open, as a peer could sign it
+        c.journal()
+            .append_own(EventBody::RecordWritten {
+                record: RecordBody::new("r-9", "s9", RecordKind::Blocker, "T", &["ci"], "c"),
+            })
+            .unwrap();
+        let state = c.state();
+        let b = answer(&list(vec![], "c1", None), Ok(&state));
+        assert_eq!(
+            (b.records.len(), b.records_total),
+            (3, 3),
+            "{:?}",
+            b.records
+        );
+        let from = |key: &str| {
+            b.records
+                .iter()
+                .find(|r| r.key == key)
+                .map(|r| r.from.clone())
+        };
+        let stream = c.journal().own_stream().to_string();
+        assert_eq!(
+            from(&first),
+            Some(format!("mesh:{stream}/s1")),
+            "its worker"
+        );
+        assert_eq!(
+            from(&format!("{stream}/r-9")),
+            Some(format!("{stream}/s9")),
+            "no worker holds s9"
+        );
+        assert_eq!(b.record_conflicts.len(), 1);
+        let wire = serde_json::to_value(&b).unwrap();
+        assert_eq!(wire["records_total"], 3);
+    }
+
     #[test]
     fn a_peer_is_joined_only_through_its_servers_stream() {
         let here = stream("1", "1", "a");

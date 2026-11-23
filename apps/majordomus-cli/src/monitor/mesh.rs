@@ -425,6 +425,42 @@ impl Memory {
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {
                 return None
             }
+            // a typed coordination record (I4665): a blocker, a decision and a handoff ask
+            // for attention, the rest is news
+            EventBody::RecordWritten { record } => {
+                use crate::mesh::records::RecordKind;
+                let name = self.name_of(&stream, &record.session);
+                let severity = match record.kind {
+                    RecordKind::Blocker | RecordKind::Decision | RecordKind::Handoff => {
+                        MonitorSeverity::Attention
+                    }
+                    _ => MonitorSeverity::Info,
+                };
+                let verb = if record.revision == 1 {
+                    "wrote"
+                } else {
+                    "revised"
+                };
+                let mut s = MonitorSignal::new(
+                    event.at,
+                    MonitorSource::Mesh,
+                    "record",
+                    severity,
+                    &format!(
+                        "{name} {verb} {} {} (revision {}) on {}: {}",
+                        record.kind.as_str(),
+                        record.id,
+                        record.revision,
+                        record.task,
+                        record.title
+                    ),
+                );
+                s.for_you = ctx.reader.named_in(&record.title) || ctx.reader.named_in(&record.task);
+                s.session = Some(record.session);
+                s.actor = Some(name);
+                s.paths = record.scope;
+                s
+            }
         };
         signal.machine = Some(machine);
         Some(signal)
@@ -601,6 +637,48 @@ mod tests {
             "the session was already known before the cursor"
         );
         assert_eq!(read.suppressed, 1);
+    }
+
+    /// A typed record written is news, and a blocker, a decision or a handoff asks for
+    /// attention; a revision says it revised, and a record naming the reader is for it
+    /// (I4665).
+    #[test]
+    fn a_record_is_a_signal_and_a_blocker_asks_for_attention() {
+        let record = |lamport: u64, kind: &str, revision: u32, title: &str| {
+            event(
+                lamport,
+                lamport,
+                json!({"kind": "record_written", "record": {
+                    "id": "r-1", "session": "board-p3", "revision": revision, "kind": kind,
+                    "task": "I4665", "scope": ["docs"], "status": "open", "title": title }}),
+            )
+        };
+        let events = vec![
+            record(1, "blocker", 1, "CI is red for 1b"),
+            record(2, "observation", 1, "seen"),
+            record(3, "observation", 2, "seen twice"),
+        ];
+        let reader = Reader::named(Some("1b"));
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        assert_eq!(read.signals.len(), 3);
+        let blocker = &read.signals[0].1;
+        assert_eq!(blocker.kind, "record");
+        assert_eq!(blocker.severity, MonitorSeverity::Attention);
+        assert!(blocker.for_you, "the title names the reader");
+        assert!(
+            blocker.summary.contains("wrote blocker r-1"),
+            "{}",
+            blocker.summary
+        );
+        assert_eq!(blocker.paths, vec!["docs".to_string()]);
+        let seen = &read.signals[1].1;
+        assert_eq!(seen.severity, MonitorSeverity::Info);
+        assert!(!seen.for_you);
+        assert!(read.signals[2]
+            .1
+            .summary
+            .contains("revised observation r-1 (revision 2)"));
     }
 
     #[test]
