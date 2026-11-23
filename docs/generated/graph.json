@@ -82627,6 +82627,39 @@
         }
       },
       {
+        "id": "majordomus://issue/I4685",
+        "kind": "issue",
+        "label": "I4685",
+        "summary": "The published-site gate resolves the deploy subject's abbreviated commit once, so an abbreviation that is ambiguous in the reading clone is still the commit it names",
+        "route": "/cockpit/objects/issue/i4685",
+        "source": ".ai/repo/project/issues/I4685.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A deploy subject whose abbreviation also names a blob, published from master, is accepted with 'is on master'",
+            "The same fixture with master moved past it and --owed-after 0 is refused with 'owes a publication'",
+            "test/cases/104_published_site.sh fails against scripts/ci/pages-check as it was at 636acc8c845"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "case_104"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/pages-check",
+            "test/cases/104_published_site.sh",
+            ".ai/repo/project/issues/I4685.yaml"
+          ],
+          "slug": "pages-check-resolves-an-ambiguous-short-sha",
+          "validation": [
+            "bash test/run.sh 104_published_site"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -152756,6 +152789,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4685",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4685",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165682,8 +165725,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4534,
-      "edges": 10216,
+      "nodes": 4535,
+      "edges": 10218,
       "acyclic": false,
       "truncated": false
     }
