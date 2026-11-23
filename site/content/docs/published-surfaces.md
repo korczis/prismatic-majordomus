@@ -1,7 +1,7 @@
 +++
 title = "Published surfaces for any repository: site, wiki and Markdown regions"
 description = "the site, wiki and Markdown regions any supervised repository publishes from its own documents with `share/surfaces`, why they are derived, and how a repository adopts and enforces them"
-weight = 76
+weight = 77
 [extra]
 source = "docs/PUBLISHED_SURFACES.md"
 +++

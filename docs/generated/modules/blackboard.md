@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `blackboard` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.2 -->
+     Generator: majordomus-cli 1.2.0 -->
 # Module `blackboard` — The peer blackboard
 
 Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why.
@@ -9,7 +9,7 @@ Stability: experimental. Capabilities: 1.
 
 ## `blackboard.snapshot` — Who works on what, now
 
-Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.
+Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; the typed coordination records still open (observations, hypotheses, plans, decisions, blockers, handoffs, outcomes), stale ones flagged, and the plans or decisions that contend; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.
 
 | | |
 |---|---|
