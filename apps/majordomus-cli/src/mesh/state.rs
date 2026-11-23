@@ -41,6 +41,7 @@ use super::journal::{
     canonical_json, causal_key, ClaimMode, EventBody, HandoverBody, MeshEvent, SessionInfo,
     SessionProgress, StreamId, StreamLiveness,
 };
+use super::records::{IgnoredRecordWrite, RecordConflict, RecordFold, RecordView};
 
 /// A session's standing, as every runtime of the mesh reads it. The distinction that
 /// matters is between `Closed` and `Expired`: the first is a session that said it was
@@ -519,6 +520,18 @@ pub struct CooperationState {
     pub reviews: Vec<ReviewView>,
     /// Events of kinds this executable does not interpret.
     pub opaque_events: usize,
+    /// Every typed coordination record (I4665), with its history, links and standing.
+    /// Absent from the JSON while there are none, so a fold without records digests as it
+    /// did before the kind existed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub records: Vec<RecordView>,
+    /// Live plans or decisions of different authors for one task or over meeting scopes.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub record_conflicts: Vec<RecordConflict>,
+    /// Record writes the fold did not apply, with why: a revision not by the record's
+    /// author, out of order, or after its author's session closed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub records_ignored: Vec<IgnoredRecordWrite>,
     /// 32 hex of the SHA-256 of the canonical JSON of everything above.
     pub digest: String,
 }
@@ -607,6 +620,7 @@ pub fn fold_with(
     let mut asked_at: BTreeMap<String, StreamId> = BTreeMap::new();
     let mut opaque = 0usize;
     let mut closed_at: BTreeMap<String, u64> = BTreeMap::new();
+    let mut records = RecordFold::default();
 
     for event in ordered {
         let Some(body) = event.body() else {
@@ -764,6 +778,7 @@ pub fn fold_with(
             // not a verdict every runtime shares, so it stays out of the state two runtimes
             // compare: mesh::build_cache::offer reads it.
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {}
+            EventBody::RecordWritten { record } => records.apply(event, record, &closed_at),
         }
     }
 
@@ -878,6 +893,7 @@ pub fn fold_with(
         }
     }
 
+    let (records, record_conflicts, records_ignored) = records.finish(&sessions);
     let mut state = CooperationState {
         sessions: sessions.into_values().collect(),
         claims: claims.into_values().collect(),
@@ -885,10 +901,32 @@ pub fn fold_with(
         handovers: handovers.into_values().collect(),
         reviews: reviews.into_values().collect(),
         opaque_events: opaque,
+        records,
+        record_conflicts,
+        records_ignored,
         digest: String::new(),
     };
     state.digest = digest(&state);
     state
+}
+
+/// Judge the records' leases at `now` (seconds since the epoch, the reader's clock): a
+/// record past its `expires_at` is stale, its contention ends, and the digest is taken
+/// again. Like a stream's liveness this is a reading of time and not of the events, so it
+/// is applied to a fold rather than inside it; nothing is removed.
+///
+/// ```
+/// use majordomus_cli::mesh::state::{judge_record_leases, CooperationState};
+/// let mut state = CooperationState::default();
+/// judge_record_leases(&mut state, 1_788_000_000);
+/// assert!(state.records.is_empty());
+/// ```
+pub fn judge_record_leases(state: &mut CooperationState, now: u64) {
+    if crate::mesh::records::judge_leases(&mut state.records, now) {
+        state.record_conflicts = crate::mesh::records::conflicts(&state.records);
+        state.digest = String::new();
+        state.digest = digest(state);
+    }
 }
 
 fn digest(state: &CooperationState) -> String {

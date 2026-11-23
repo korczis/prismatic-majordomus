@@ -586,16 +586,28 @@ fn cleanup(
         OutputFormat::Json => json(out, &eligible)?,
         OutputFormat::Text => {
             if eligible.is_empty() {
-                w(out, "nothing is cleanup-eligible: no branch is both merged into the trunk and clean or unchecked-out")?;
+                w(out, "nothing is cleanup-eligible: no branch has both landed in the trunk and a clean, trunk-held or absent worktree")?;
             } else {
-                w(out, "merged into the trunk, and clean or not checked out — nothing is deleted here:")?;
+                w(out, "landed in the trunk (merged, or its content is there), and clean, trunk-held or not checked out — nothing is deleted here:")?;
                 for b in &eligible {
+                    let by_content = b.landed_by_content == Some(true);
+                    let held = b.uncommitted_in_trunk == Some(true);
                     w(
                         out,
                         format!(
                             "  {:<44} {}",
                             b.name,
                             match &b.worktree {
+                                // `git branch -d` refuses a branch landed only by content, and a
+                                // plain remove refuses uncommitted files: the reclaim reads both
+                                Some(p) if by_content || held => format!(
+                                    "majordomus worktree cleanup --remove   ({p}; {})",
+                                    match (by_content, held) {
+                                        (true, true) => "landed by content, its uncommitted changes are in the trunk",
+                                        (true, false) => "landed by content; the branch is kept",
+                                        _ => "its uncommitted changes are already in the trunk",
+                                    }
+                                ),
                                 Some(p) => format!(
                                     "majordomus worktree remove {}; then git branch -d {}   ({p})",
                                     b.name, b.name
@@ -702,11 +714,16 @@ fn reclaim(
         let Some(path) = b.worktree.clone() else {
             continue; // no worktree to reclaim; the branch alone costs nothing
         };
-        if let Some(why) = refusal(svc, &b.name, &path) {
-            refused.push((b.name.clone(), why));
-            continue;
-        }
-        match svc.remove(&b.name, false) {
+        let force = match refusal(svc, &b.name, &path) {
+            Ok(force) => force,
+            Err(why) => {
+                refused.push((b.name.clone(), why));
+                continue;
+            }
+        };
+        // `force` only when every uncommitted change was just read as already in the trunk;
+        // a lock was refused above, so it is never what `force` passes over
+        match svc.remove(&b.name, force) {
             Ok(_) => removed.push(b.name.clone()),
             Err(e) => refused.push((b.name.clone(), format!("{e}"))),
         }
@@ -743,27 +760,51 @@ fn reclaim(
     Ok(0)
 }
 
-/// Why this worktree must not be removed now, or `None` when every reading says it is spare.
+/// Why this worktree must not be removed now (`Err`), or whether it is spare (`Ok`): `Ok(false)`
+/// for a clean work tree, `Ok(true)` when its every uncommitted change already holds what the
+/// trunk's remote-tracking branch holds, so the removal may pass `--force` over files the
+/// trunk already has.
 ///
 /// Each reading is taken here, at the moment of removal, and none comes from the listing that
 /// nominated the branch: a commit made, a push deleted or a file written after the listing is
 /// seen.
-fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
+fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> std::result::Result<bool, String> {
     let primary = &svc.identity().primary_worktree().path;
+    let worktree = std::path::Path::new(path);
+    let trunk_ref = svc
+        .identity()
+        .trunk()
+        .branch
+        .as_deref()
+        .map(|t| crate::worktree::landed::trunk_reference(primary, t));
     // Commits that exist on one disk. `merged into the trunk` is about the branch's remote
     // history and says nothing about a local head that ran ahead of it.
     let now = match crate::worktree::state::branch(primary, branch) {
         Ok(Some(now)) => now,
-        Ok(None) => return Some("the branch no longer exists".into()),
-        Err(e) => return Some(format!("could not read the branch: {e}")),
+        Ok(None) => return Err("the branch no longer exists".into()),
+        Err(e) => return Err(format!("could not read the branch: {e}")),
     };
     match &now.upstream {
-        None => return Some("no upstream: its commits are on this disk only".into()),
-        Some(u) if u.gone => return Some(format!("its upstream {} is gone", u.name)),
+        None => return Err("no upstream: its commits are on this disk only".into()),
+        // A branch merged on the forge and deleted there: every commit it holds is on the
+        // remote when the trunk's remote-tracking branch contains its head, or holds all of
+        // its content (a squash merge). The branch itself is kept either way.
+        Some(u) if u.gone => {
+            let held = trunk_ref.as_deref().is_some_and(|tr| {
+                ancestor(primary, &now.head, tr)
+                    || crate::worktree::landed::content_in(worktree, "HEAD", tr) == Some(true)
+            });
+            if !held {
+                return Err(format!(
+                    "its upstream {} is gone, and the trunk's remote does not hold its head",
+                    u.name
+                ));
+            }
+        }
         // `ahead` is unknown rather than zero when git could not compare the two, and an
         // unknown count is not a reason to remove anything: it is refused with the others.
         Some(u) if u.ahead.unwrap_or(1) > 0 => {
-            return Some(match u.ahead {
+            return Err(match u.ahead {
                 Some(n) => format!("{n} commit(s) ahead of {}: they reach no remote", u.name),
                 None => format!("cannot tell how far it is ahead of {}", u.name),
             })
@@ -771,15 +812,42 @@ fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
         Some(_) => {}
     }
     match occupied(path) {
-        None => return Some("cannot tell whether anything is working inside it (no lsof)".into()),
-        Some(true) => return Some("a process has its working directory inside it".into()),
+        None => return Err("cannot tell whether anything is working inside it (no lsof)".into()),
+        Some(true) => return Err("a process has its working directory inside it".into()),
         Some(false) => {}
     }
-    match crate::worktree::state::dirty_state(std::path::Path::new(path)) {
-        Ok(d) if d.clean => None,
-        Ok(d) => Some(format!("uncommitted work: {}", d.summary())),
-        Err(e) => Some(format!("could not read its working tree: {e}")),
+    if let Some(r) = svc
+        .identity()
+        .registered_worktrees()
+        .iter()
+        .find(|r| r.path == worktree)
+    {
+        if let Some(reason) = &r.locked {
+            return Err(format!("it is locked ({reason})"));
+        }
     }
+    match crate::worktree::state::dirty_state(worktree) {
+        Ok(d) if d.clean => Ok(false),
+        Ok(d) => {
+            let in_trunk = d.in_progress.is_none()
+                && trunk_ref
+                    .as_deref()
+                    .and_then(|tr| crate::worktree::landed::uncommitted_in(worktree, tr))
+                    == Some(true);
+            if in_trunk {
+                Ok(true)
+            } else {
+                Err(format!("uncommitted work: {}", d.summary()))
+            }
+        }
+        Err(e) => Err(format!("could not read its working tree: {e}")),
+    }
+}
+
+/// Is `commit` an ancestor of `of`? A git that cannot say is a "no".
+fn ancestor(cwd: &std::path::Path, commit: &str, of: &str) -> bool {
+    crate::worktree::git::try_run(cwd, &["merge-base", "--is-ancestor", commit, of])
+        .is_ok_and(|o| o.status == Some(0))
 }
 
 fn branches(svc: &WorktreeService, without_worktree: bool, out: &mut Out<'_>) -> Result<u8> {
@@ -1210,7 +1278,7 @@ mod tests {
         );
         // the listing still says zero ahead; the reading taken now does not
         assert_eq!(b.upstream.as_ref().and_then(|u| u.ahead), Some(0));
-        let why = refusal(&svc, &b.name, &path).expect("refused");
+        let why = refusal(&svc, &b.name, &path).expect_err("refused");
         assert!(why.contains("1 commit(s) ahead"), "{why}");
     }
 
@@ -1218,13 +1286,62 @@ mod tests {
     fn an_upstream_deleted_after_the_listing_is_seen_by_the_reclaim() {
         let (_tmp, svc, b) = nominated();
         let path = b.worktree.clone().expect("a worktree");
+        // a commit the trunk lacks, pushed before the upstream is deleted: nothing but this
+        // disk holds it once the remote branch is gone. It carries content, because an empty
+        // commit holds nothing the trunk lacks and is rightly read as landed by content.
+        std::fs::write(Path::new(&path).join("never-merged.txt"), "never merged\n").expect("write");
+        git(Path::new(&path), &["add", "-A"]);
+        git(Path::new(&path), &["commit", "-q", "-m", "never merged"]);
+        git(Path::new(&path), &["push", "-q", "origin", "spare"]);
         git(
             Path::new(&path),
             &["push", "-q", "origin", "--delete", "spare"],
         );
         git(Path::new(&path), &["fetch", "-q", "--prune", "origin"]);
-        let why = refusal(&svc, &b.name, &path).expect("refused");
+        let why = refusal(&svc, &b.name, &path).expect_err("refused");
         assert!(why.contains("is gone"), "{why}");
+    }
+
+    #[test]
+    fn a_gone_upstream_whose_head_the_trunk_holds_is_not_refused() {
+        let (_tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        if occupied(&path).is_none() {
+            eprintln!("no lsof: the occupancy reading refuses first, which is its own test");
+            return;
+        }
+        // merged on the forge, then deleted there: every commit is on the remote's trunk
+        git(
+            Path::new(&path),
+            &["push", "-q", "origin", "--delete", "spare"],
+        );
+        git(Path::new(&path), &["fetch", "-q", "--prune", "origin"]);
+        assert_eq!(refusal(&svc, &b.name, &path), Ok(false));
+    }
+
+    #[test]
+    fn uncommitted_changes_the_trunk_already_holds_are_removed_with_force() {
+        let (tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        if occupied(&path).is_none() {
+            eprintln!("no lsof: the occupancy reading refuses first, which is its own test");
+            return;
+        }
+        let repo = tmp.path().canonicalize().expect("canonical").join("repo");
+        // the same record lands on the trunk through another branch
+        std::fs::write(repo.join("late.txt"), "late\n").expect("write");
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-qm", "late"]);
+        git(&repo, &["push", "-q", "origin", "master"]);
+        std::fs::write(Path::new(&path).join("late.txt"), "late\n").expect("write");
+        assert_eq!(
+            refusal(&svc, &b.name, &path),
+            Ok(true),
+            "everything uncommitted is already on the trunk"
+        );
+        std::fs::write(Path::new(&path).join("late.txt"), "late, and edited\n").expect("write");
+        let why = refusal(&svc, &b.name, &path).expect_err("refused");
+        assert!(why.contains("uncommitted work"), "{why}");
     }
 
     #[test]
@@ -1237,7 +1354,7 @@ mod tests {
         }
         assert_eq!(
             refusal(&svc, &b.name, &path),
-            None,
+            Ok(false),
             "nothing refuses a spare worktree"
         );
         std::fs::write(
@@ -1245,8 +1362,159 @@ mod tests {
             "written after the listing\n",
         )
         .expect("write");
-        let why = refusal(&svc, &b.name, &path).expect("refused");
+        let why = refusal(&svc, &b.name, &path).expect_err("refused");
         assert!(why.contains("uncommitted work"), "{why}");
+    }
+
+    /// Commit `path` with `text` on the trunk of `repo` and push it.
+    fn land_on_trunk(repo: &Path, path: &str, text: &str) {
+        std::fs::write(repo.join(path), text).expect("write");
+        git(repo, &["add", "-A"]);
+        git(repo, &["commit", "-qm", path]);
+        git(repo, &["push", "-q", "origin", "master"]);
+    }
+
+    /// A branch with one file, pushed, squash-merged into the trunk and checked out in its
+    /// own worktree: landed by content, never by ancestry.
+    fn squashed(repo: &Path, svc: &WorktreeService, name: &str) -> String {
+        git(repo, &["switch", "-q", "-c", name, "master"]);
+        std::fs::write(repo.join(format!("{name}.txt")), "squashed\n").expect("write");
+        git(repo, &["add", "-A"]);
+        git(repo, &["commit", "-qm", name]);
+        git(repo, &["push", "-q", "-u", "origin", name]);
+        git(repo, &["switch", "-q", "master"]);
+        git(repo, &["merge", "-q", "--squash", name]);
+        git(repo, &["commit", "-qm", "squash"]);
+        git(repo, &["push", "-q", "origin", "master"]);
+        let at = svc.expected_path_of(name).expect("a path");
+        let at = at.to_string_lossy().to_string();
+        git(repo, &["worktree", "add", "-q", at.as_str(), name]);
+        at
+    }
+
+    #[test]
+    fn the_listing_says_how_each_finished_worktree_goes_and_the_reclaim_takes_them() {
+        let (tmp, svc, b) = nominated();
+        let repo = tmp.path().canonicalize().expect("canonical").join("repo");
+        let spare = b.worktree.clone().expect("a worktree");
+        let landed = squashed(&repo, &svc, "landed");
+        let both = squashed(&repo, &svc, "both");
+        // a record that reached the trunk through another branch, uncommitted in two of them
+        land_on_trunk(&repo, "late.txt", "late\n");
+        for at in [&spare, &both] {
+            std::fs::write(Path::new(at).join("late.txt"), "late\n").expect("write");
+        }
+        // the service reads the registered worktrees when it opens, as each command run does
+        let svc = WorktreeService::open(&repo).expect("open the service");
+
+        let text = at_every_line(|out| cleanup(&svc, OutputFormat::Text, false, out));
+        assert!(
+            text.starts_with("landed in the trunk (merged, or its content is there)"),
+            "{text}"
+        );
+        for (branch, how) in [
+            ("spare", "its uncommitted changes are already in the trunk)"),
+            ("landed", "landed by content; the branch is kept)"),
+            (
+                "both",
+                "landed by content, its uncommitted changes are in the trunk)",
+            ),
+        ] {
+            assert!(
+                text.lines().any(|l| l.trim_start().starts_with(branch)
+                    && l.contains("majordomus worktree cleanup --remove")
+                    && l.ends_with(how)),
+                "{branch}: {text}"
+            );
+        }
+        if occupied(&spare).is_none() {
+            eprintln!("no lsof: the occupancy reading refuses first, which is its own test");
+            return;
+        }
+        git(
+            &repo,
+            &[
+                "worktree",
+                "lock",
+                "--reason",
+                "held by a test",
+                both.as_str(),
+            ],
+        );
+        let svc = WorktreeService::open(&repo).expect("open the service");
+        let why = refusal(&svc, "both", &both).expect_err("a lock is refused");
+        assert!(why.contains("it is locked (held by a test)"), "{why}");
+
+        // removing is done once: a writer refused midway would leave nothing to remove after
+        let mut out: Vec<u8> = Vec::new();
+        assert_eq!(
+            cleanup(&svc, OutputFormat::Text, true, &mut out).expect("reclaimed"),
+            0
+        );
+        let text = String::from_utf8(out).expect("utf-8");
+        assert!(text.contains("removed   spare\n"), "{text}");
+        assert!(text.contains("removed   landed\n"), "{text}");
+        assert!(text.contains("refused   both"), "{text}");
+        assert!(text.contains("1 refused; no branch was deleted"), "{text}");
+        assert!(!Path::new(&spare).exists() && !Path::new(&landed).exists());
+        assert!(Path::new(&both).exists(), "the locked worktree stays");
+    }
+
+    #[test]
+    fn nothing_finished_is_said_so() {
+        let (tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        let repo = tmp.path().canonicalize().expect("canonical").join("repo");
+        git(&repo, &["worktree", "remove", path.as_str()]);
+        git(&repo, &["branch", "-q", "-D", "spare"]);
+        let text = at_every_line(|out| cleanup(&svc, OutputFormat::Text, false, out));
+        assert!(text.starts_with("nothing is cleanup-eligible"), "{text}");
+    }
+
+    #[test]
+    fn the_reclaim_refuses_what_it_cannot_read() {
+        let (tmp, svc, b) = nominated();
+        let root = tmp.path().canonicalize().expect("canonical");
+        let repo = root.join("repo");
+        let path = b.worktree.clone().expect("a worktree");
+
+        let why = refusal(&svc, "nosuch", &path).expect_err("refused");
+        assert!(why.contains("the branch no longer exists"), "{why}");
+        git(&repo, &["branch", "-q", "local"]);
+        let why = refusal(&svc, "local", &path).expect_err("refused");
+        assert!(why.contains("no upstream"), "{why}");
+        let gone = root.join("gone").to_string_lossy().to_string();
+        let why = refusal(&svc, "spare", &gone).expect_err("refused");
+        assert!(
+            why.contains("cannot tell whether anything is working inside it"),
+            "{why}"
+        );
+
+        if occupied(&path).is_some() {
+            let plain = root.join("plain");
+            std::fs::create_dir(&plain).expect("mkdir");
+            let why = refusal(&svc, "spare", &plain.to_string_lossy()).expect_err("refused");
+            assert!(why.contains("could not read its working tree"), "{why}");
+
+            let mut inside = std::process::Command::new("sleep")
+                .arg("60")
+                .current_dir(&path)
+                .spawn()
+                .expect("a process inside");
+            let why = refusal(&svc, "spare", &path);
+            inside.kill().expect("kill");
+            inside.wait().expect("wait");
+            let why = why.expect_err("refused");
+            assert!(
+                why.contains("a process has its working directory inside it"),
+                "{why}"
+            );
+        }
+
+        // the repository moved away after the listing: the branch cannot be read
+        std::fs::rename(&repo, root.join("moved")).expect("move");
+        let why = refusal(&svc, "spare", &path).expect_err("refused");
+        assert!(why.contains("could not read the branch"), "{why}");
     }
 
     /// A writer that takes `lines` whole lines and refuses every write after them: a closed

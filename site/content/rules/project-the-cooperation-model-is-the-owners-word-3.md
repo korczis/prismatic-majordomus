@@ -187,9 +187,10 @@ never expedited, and every decision leaves its evidence.
 Clauses 2, 3 and 6 are also acts of a session, and are decided by the record: the landing claim
 on the mesh, the members and the judged head named in the top's pull request, the queued pull
 request and the head the lander pinned, and the rescue refs left before a move. Clause 7's two
-limits are, today, the seats' operating numbers read from this record; the build guard in
-`lib/rust_bin.sh` still refuses only below its own 5 GiB default, and holding a build to 35 GiB
-and five builders in code is owed (I3825).
+limits are, today, the seats' operating numbers read from this record. The build guard in
+`lib/rust_bin.sh` holds the five builders (`mj_rust_builders_check`, I3825) but still refuses
+only below its own 5 GiB default: holding a build to 35 GiB in code waits on the owner's answer
+whether it becomes the default on hosts whose steady headroom is below it (I3825).
 
 ## Verification
 
