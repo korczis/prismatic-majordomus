@@ -1,3 +1,4 @@
+# claims: a-closed-session-is-a-node-that-references-what-it-touched
 # A closed session is a knowledge node whose edges point at what it touched (I0813): the
 # graph answers which sessions touched an issue, without ever reading a session's body.
 #

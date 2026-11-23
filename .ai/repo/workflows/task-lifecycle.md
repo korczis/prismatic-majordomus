@@ -13,6 +13,16 @@ majordomus handover < note.md # to continue in another session, or
 majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify-command "<cmd>"
 ```
 
+A task runs inside a session, and the session is not yours to open or close. The provider's
+own start and end events draw it (`capture session`). The start briefs you with what the last
+episode left. The end closes the episode into a record derived from the ledger, and from git,
+never from the conversation. Ask what is already known by retrieval: `majordomus context`
+carries a bounded slice of pointers when the profile sets `context.knowledge`;
+`majordomus knowledge search <words>`, `knowledge show <id>` and `knowledge related <id>`
+answer the rest, including which sessions touched an issue. Do not read the whole knowledge
+base (`docs/KNOWLEDGE.md`). A session that a worker spawned, such as a headless review run,
+is a guest. It never hands the worker's task over and never writes a tracked record.
+
 When nothing names the work, run `/proceed`, the skill generated from `proceed.step`:
 `majordomus proceed step` answers one work order (what to run, what may run beside it, what
 to announce and when to step again, and `done` once the intent is met), `majordomus proceed

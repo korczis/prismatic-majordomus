@@ -1,5 +1,5 @@
 # majordomus-covers: context
-# claims: context-assembly, context-selection-budget
+# claims: context-assembly, context-selection-budget, a-worker-is-handed-a-bounded-knowledge-slice
 # The knowledge pointers of `majordomus context` (I0814): a bounded slice of the knowledge
 # graph, not the graph. The section lists id, kind, source and title for the task's issue,
 # the issues it depends on, its milestone, the claims that milestone declares and the nodes

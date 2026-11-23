@@ -2046,6 +2046,24 @@ claims:
     responsibility: layer
     note: An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary.
 
+  - id: a-closed-session-is-a-node-that-references-what-it-touched
+    claim: A closed session is a knowledge node of operational scope whose edges reference the tasks, issues, checkpoints, handovers, decisions and questions its record names, each with the record and field it was observed in, so the graph answers which sessions touched an issue without any session body reaching a node, an edge or a shared projection
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.awk
+    test: test/cases/4407_a_closed_session_is_a_node_that_references_what_it_touched.sh
+    status: guaranteed
+    responsibility: layer
+    note: The closed-session class is declared in share/knowledge-sources.yaml with discovery vcs, so its scope is operational though the record file is tracked (ADR 0014). Checkpoints and handovers are referenced by the id their own extraction would use rather than becoming one node each, so a high-volume record kind does not dominate the graph. The case plants a marker word in a session body and proves it reaches no node and no edge (I0813).
+
+  - id: a-worker-is-handed-a-bounded-knowledge-slice
+    claim: When the profile sets context.knowledge, majordomus context carries pointers to the task's issue, its dependencies, its milestone, the claims that milestone declares and the nodes its scope names, and nothing selected by similarity; the item limit cuts it with a count, a tight budget drops it before git, the task, the profile and open questions with the drop named, and a stale graph is reported rather than the section vanishing
+    source: docs/KNOWLEDGE.md
+    implementation: lib/context.sh
+    test: test/cases/3073_context_knowledge_slice.sh
+    status: guaranteed
+    responsibility: profiles
+    note: The toggle and context.knowledge_max_items are in the profile allow-list; a profile that does not set the toggle gets the section named under EXCLUDED with the reason. The case proves a document whose words are close to the issue's but that nothing references is not selected (I0814).
+
   - id: a-session-records-what-it-observed
     claim: knowledge observe records one observation.recorded ledger line with its kind, subject, statement and typed evidence references, inside an open episode, inside a task or outside one, and refuses any other shape, or the absence of an episode, without writing
     source: docs/KNOWLEDGE.md

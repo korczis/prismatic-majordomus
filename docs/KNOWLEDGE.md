@@ -265,6 +265,37 @@ written, from the ledger. A candidate whose episode this checkout cannot resolve
 a distinct line as unattributed rather than hidden, because a record the briefing cannot
 place is still a record somebody has to review. Absence is printed rather than omitted.
 
+## The graph a worker retrieves from
+
+The records above are what an episode learned. The knowledge graph is how a worker finds
+what already exists: `majordomus knowledge nodes`, `edges`, `search`, `show` and `related`
+compile it on every call from the source classes `knowledge sources` lists, which are the
+files git tracks (`.ai/repo/knowledge/sources.yaml`) and the state directories the tool owns
+(`share/knowledge-sources.yaml`). Nothing is stored beside the files. A node carries its id,
+kind, source path and content hash. An edge carries the relationship and the file and field
+it was observed in. An edge is recorded only when a file states it; nothing is inferred
+(`knowledge validate` refuses an edge with no provenance or a missing end).
+
+**A closed session is a node that points at its episode (I0813).** Its edges reference the
+tasks, issues, checkpoints, handovers, decisions and questions the session record names,
+each with the record and the field it came from, so `knowledge related <issue>` answers which
+sessions touched an issue without anyone reading a session's body. The node holds no body
+text. Checkpoints and handovers are numerous and individually low-value, so they are
+references from the session, named by the id their own extraction would use, rather than one
+node each: a high-volume record kind does not dominate the graph. The `closed-session` class
+is operational scope even though the record file is tracked (ADR 0014), so a session node
+never reaches a shared projection (`test/cases/4407_a_closed_session_is_a_node_that_references_what_it_touched.sh`).
+
+**A worker is handed a slice, not the base (I0814).** When the profile sets
+`context.knowledge`, `majordomus context` adds a pointer section: id, kind, source and title
+for the task's issue, the issues it depends on, its milestone, the claims that milestone
+declares and the nodes its scope names. It holds those pointers and nothing similar to
+them. `context.knowledge_max_items` cuts it, and the cut is counted. Under a tight budget it
+is dropped before git, the task, the profile and the open questions, and the drop is named.
+When the issue is missing from the graph, the section says the graph is stale instead of
+vanishing (`test/cases/3073_context_knowledge_slice.sh`). Retrieve what the slice points at
+with `knowledge show` and `knowledge related`. Do not read the whole base.
+
 ## The commands
 
 `majordomus knowledge` is no longer read-only; `share/commands.yaml` says so and `CLI.md` has

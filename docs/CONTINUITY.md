@@ -666,9 +666,16 @@ it in one command — where the alternatives fail silently. See `M001` in
 It does not measure tokens, context savings, or cost. The budget is lines, because lines
 are what it can count. See [`ECONOMICS.md`](ECONOMICS.md).
 
-It does not rank search results, embed anything, or maintain an index. `search` is a
-literal grep across the record kinds in authority order. The corpus is a handful of files;
-an index would be a second source of truth that has to be kept in step with the first.
+Record search ranks nothing, embeds nothing and maintains no index. `search` is a literal
+grep across the record kinds in authority order. That corpus is a handful of files, and an
+index of it would be a second source of truth that has to be kept in step with the first.
+`knowledge search` is a different corpus with a different contract: the nodes of the
+knowledge graph, derived on every call from what git tracks and from the state directories
+the tool owns, and ordered by a ladder that names the field each answer matched on (id,
+title, title prefix, path, body). Neither outranks git or the canonical file: a node names
+its source path and content hash, and the file is what is true. A closed session is a node
+of operational scope that references what it touched and carries no body text, so it never
+reaches a shared projection ([`KNOWLEDGE.md`](KNOWLEDGE.md#the-graph-a-worker-retrieves-from)).
 
 It does not resolve across worktrees or branches, and it never will silently. A handover
 from another machine reaches this checkout only through `continuity resume`, after a plan.

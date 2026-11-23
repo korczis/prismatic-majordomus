@@ -2049,6 +2049,24 @@
       "note": "An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary."
     },
     {
+      "id": "claim:a-closed-session-is-a-node-that-references-what-it-touched",
+      "kind": "claim",
+      "label": "A closed session is a knowledge node of operational scope whose edges reference the tasks, issues, checkpoints, handovers, decisions and questions its record names, each with the record and field it was observed in, so the graph answers which sessions touched an issue without any session body reaching a node, an edge or a shared projection",
+      "status": "guaranteed",
+      "route": "/guarantees/a-closed-session-is-a-node-that-references-what-it-touched/",
+      "external": false,
+      "note": "The closed-session class is declared in share/knowledge-sources.yaml with discovery vcs, so its scope is operational though the record file is tracked (ADR 0014). Checkpoints and handovers are referenced by the id their own extraction would use rather than becoming one node each, so a high-volume record kind does not dominate the graph. The case plants a marker word in a session body and proves it reaches no node and no edge (I0813)."
+    },
+    {
+      "id": "claim:a-worker-is-handed-a-bounded-knowledge-slice",
+      "kind": "claim",
+      "label": "When the profile sets context.knowledge, majordomus context carries pointers to the task's issue, its dependencies, its milestone, the claims that milestone declares and the nodes its scope names, and nothing selected by similarity; the item limit cuts it with a count, a tight budget drops it before git, the task, the profile and open questions with the drop named, and a stale graph is reported rather than the section vanishing",
+      "status": "guaranteed",
+      "route": "/guarantees/a-worker-is-handed-a-bounded-knowledge-slice/",
+      "external": false,
+      "note": "The toggle and context.knowledge_max_items are in the profile allow-list; a profile that does not set the toggle gets the section named under EXCLUDED with the reason. The case proves a document whose words are close to the issue's but that nothing references is not selected (I0814)."
+    },
+    {
       "id": "claim:a-session-records-what-it-observed",
       "kind": "claim",
       "label": "knowledge observe records one observation.recorded ledger line with its kind, subject, statement and typed evidence references, inside an open episode, inside a task or outside one, and refuses any other shape, or the absence of an episode, without writing",
@@ -2891,6 +2909,13 @@
       "id": "impl:lib/intent_binding.sh",
       "kind": "implementation",
       "label": "lib/intent_binding.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/knowledge.awk",
+      "kind": "implementation",
+      "label": "lib/knowledge.awk",
       "route": null,
       "external": false
     },
@@ -3973,6 +3998,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
     },
     {
+      "id": "test:test/cases/3073_context_knowledge_slice.sh",
+      "kind": "test",
+      "label": "test/cases/3073_context_knowledge_slice.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/3073_context_knowledge_slice.sh"
+    },
+    {
       "id": "test:test/cases/30_command_registry.sh",
       "kind": "test",
       "label": "test/cases/30_command_registry.sh",
@@ -4118,6 +4150,13 @@
       "label": "test/cases/431_economics_claims_gated.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/431_economics_claims_gated.sh"
+    },
+    {
+      "id": "test:test/cases/4407_a_closed_session_is_a_node_that_references_what_it_touched.sh",
+      "kind": "test",
+      "label": "test/cases/4407_a_closed_session_is_a_node_that_references_what_it_touched.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/4407_a_closed_session_is_a_node_that_references_what_it_touched.sh"
     },
     {
       "id": "test:test/cases/45_github_projection.sh",
@@ -5749,6 +5788,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:a-closed-session-is-a-node-that-references-what-it-touched",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-worker-is-handed-a-bounded-knowledge-slice",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:a-session-records-what-it-observed",
       "target": "source:docs/KNOWLEDGE.md",
       "kind": "specified_by"
@@ -6939,6 +6988,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:a-closed-session-is-a-node-that-references-what-it-touched",
+      "target": "impl:lib/knowledge.awk",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-worker-is-handed-a-bounded-knowledge-slice",
+      "target": "impl:lib/context.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:a-session-records-what-it-observed",
       "target": "impl:lib/knowledge.sh",
       "kind": "implemented_by"
@@ -8126,6 +8185,16 @@
     {
       "source": "claim:knowledge-promotion-is-an-act",
       "target": "test:test/cases/709_knowledge_promotion_is_an_act.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-closed-session-is-a-node-that-references-what-it-touched",
+      "target": "test:test/cases/4407_a_closed_session_is_a_node_that_references_what_it_touched.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-worker-is-handed-a-bounded-knowledge-slice",
+      "target": "test:test/cases/3073_context_knowledge_slice.sh",
       "kind": "proved_by"
     },
     {
