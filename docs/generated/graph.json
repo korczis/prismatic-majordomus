@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.2",
+  "generator": "majordomus-cli 1.2.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1281,6 +1281,24 @@
         "label": "mesh.peers",
         "summary": "Who cooperates, machine by machine",
         "route": "/cockpit/capabilities/mesh.peers",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.record.write",
+        "kind": "capability",
+        "label": "mesh.record.write",
+        "summary": "Write a typed coordination record to the mesh",
+        "route": "/cockpit/capabilities/mesh.record.write",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.records",
+        "kind": "capability",
+        "label": "mesh.records",
+        "summary": "The typed coordination records of the mesh",
+        "route": "/cockpit/capabilities/mesh.records",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
       },
@@ -2655,6 +2673,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+        "kind": "file",
+        "label": "step.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -3159,6 +3185,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "file",
+        "label": "done.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/gates/done.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/generate.rs",
         "kind": "file",
         "label": "generate.rs",
@@ -3559,6 +3593,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/policy.rs",
+        "kind": "file",
+        "label": "policy.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/policy.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -3628,6 +3670,14 @@
         "label": "check.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/reasoning/check.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/mod.rs",
         "external": true
       },
       {
@@ -4044,6 +4094,14 @@
         "label": "README.md",
         "summary": "named by the layer; not an object of this index",
         "source": "campaigns/README.md",
+        "external": true
+      },
+      {
+        "id": "file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+        "kind": "file",
+        "label": "MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
         "external": true
       },
       {
@@ -4631,6 +4689,14 @@
         "external": true
       },
       {
+        "id": "file:share/profile-limits.yaml",
+        "kind": "file",
+        "label": "profile-limits.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/profile-limits.yaml",
+        "external": true
+      },
+      {
         "id": "file:share/providers.yaml",
         "kind": "file",
         "label": "providers.yaml",
@@ -4700,6 +4766,14 @@
         "label": "mesh-declaration.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/profile/profile.v1.schema.json",
+        "kind": "file",
+        "label": "profile.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/profile/profile.v1.schema.json",
         "external": true
       },
       {
@@ -9806,6 +9880,41 @@
           "tags": [
             "design",
             "ui",
+            "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0232",
+        "kind": "adr",
+        "label": "adr-0232",
+        "summary": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
+        "route": "/cockpit/objects/adr/adr-0232",
+        "source": ".ai/repo/adrs/0232-one-resolver-in-the-profile-module-owns-the-effective-profile.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-07",
+          "related": [
+            "file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+            "file:docs/PROFILES.md",
+            "file:.ai/repo/profiles/README.md",
+            "file:.ai/repo/project/milestones/a-profile-is-resolved-once-and-enforced.yaml",
+            "file:.ai/repo/project/issues/I4500.yaml",
+            "file:share/schemas/majordomus/profile/profile.v1.schema.json",
+            "file:share/allow/profile.txt",
+            "file:share/profile-limits.yaml",
+            "file:lib/common.sh",
+            "file:apps/majordomus-cli/src/policy.rs",
+            "file:apps/majordomus-cli/src/reasoning/mod.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+            "file:apps/majordomus-cli/src/gates/done.rs",
+            "test:test/cases/16_profiles.sh",
+            "test:test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+            "rule:majordomus.profile-requirements"
+          ],
+          "tags": [
+            "profiles",
+            "policy",
             "enforcement"
           ]
         }
@@ -17669,6 +17778,14 @@
         "summary": "Product — the features, and the landing page as a projection of them",
         "route": "/cockpit/objects/document/docs-product-md",
         "source": "docs/PRODUCT.md"
+      },
+      {
+        "id": "majordomus://document/docs/PROFILES.md",
+        "kind": "document",
+        "label": "docs/PROFILES.md",
+        "summary": "Profiles: the trace from the file to finish",
+        "route": "/cockpit/objects/document/docs-profiles-md",
+        "source": "docs/PROFILES.md"
       },
       {
         "id": "majordomus://document/docs/QUALITY.md",
@@ -64880,15 +64997,22 @@
             "site/templates/partials/footer.html",
             "scripts/site-build",
             "scripts/site-check",
-            "apps/majordomus-cli/src/ui/view.rs",
+            "scripts/lib/ui-navbar.mjs",
+            "apps/majordomus-cli/src/ui/navbar.rs",
+            "apps/majordomus-cli/src/ui/navbar.html",
             "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh"
           ],
           "slug": "every-surface-names-its-versions-from-one-model",
+          "started_at": "2026-11-07T19:07:20Z",
+          "started_event": "sha256:a42733d07cada73f0a96f52d5afb036ad2ea0f2fb6c97a1dbb3098544ee0a9f8",
+          "updated_at": "2026-11-07T19:07:59Z",
           "validation": [
             "scripts/site-build && scripts/site-check",
             "bash test/run.sh 3727_the_pages_name_the_pre_release_beside_the_stable_one",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-11-07T19:07:59Z",
+          "verified_event": "sha256:60f4c3f5fd1a05ae2c84d998a938116fc592a147da80097a0207a0d9586cbf94"
         }
       },
       {
@@ -76433,13 +76557,14 @@
             ".ai/repo/project/issues/I3974.yaml",
             ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
             "lib/plan.sh",
-            "docs/CLI.md"
+            "docs/CLI.md",
+            ".githooks/pre-commit"
           ],
           "serves": [
             "merging-and-referencing-are-enforced#one-allocator"
           ],
           "slug": "numbers-are-reserved-atomically-at-origin",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-16",
           "validation": [
             "bash test/run.sh 4357_a_number_is_reserved_at_origin 560_a_case_number_names_one_case 566_the_collision_guard_has_a_caller",
             "actionlint .github/workflows/validate.yml",
@@ -79532,7 +79657,9 @@
             ".ai/repo/project/issues/I4500.yaml"
           ],
           "slug": "a-profile-is-traced-from-its-file-to-finish",
-          "updated_at": "2026-10-30",
+          "started_at": "2026-11-07T15:37:00Z",
+          "started_event": "sha256:091ffd6cbd060a8f960e166b92527068f6135b42f153654ac1991d51e786b788",
+          "updated_at": "2026-11-07T15:37:00Z",
           "validation": [
             "bin/majordomus plan validate",
             "bin/majordomus generate --check",
@@ -80816,19 +80943,26 @@
         "facts": {
           "created_at": "2026-11-10",
           "depends_on": [],
-          "desired_state": "The end of any release-path run resumes the yielded runs at once; the schedule stays as a backstop; resume stays a no-op while the path is busy.",
           "evidence_required": [
             "test"
           ],
           "milestone": "ci-critical-path",
           "non_scope": [
-            "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)"
+            "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)",
+            "Which runs yield, and preemption on a tag push: I2710",
+            "A train's top going first, and resume never re-running a held member: I4353",
+            "Stopping stuck or superseded runs: I3903",
+            "A workflow_run trigger: it does not fire for runs started by GITHUB_TOKEN",
+            "release-path.yml beyond its header comment: its schedule stays as the backstop"
           ],
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
             ".ai/repo/project/issues/I4569.yaml",
+            ".github/workflows/pages.yml",
+            ".github/workflows/release.yml",
+            ".github/workflows/validate.yml",
             ".github/workflows/release-path.yml",
             ".ai/repo/ci/release-path.yaml",
             "docs/CI.md",
@@ -80836,9 +80970,11 @@
           ],
           "serves": [],
           "slug": "a-yielded-run-resumes-when-the-path-clears",
+          "updated_at": "2026-11-15",
           "validation": [
-            "actionlint .github/workflows/release-path.yml",
-            "bash test/run.sh 3027_the_release_path_goes_first"
+            "actionlint .github/workflows/pages.yml .github/workflows/release.yml .github/workflows/validate.yml .github/workflows/release-path.yml",
+            "bash test/run.sh 3027_the_release_path_goes_first",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -81665,6 +81801,94 @@
         }
       },
       {
+        "id": "majordomus://issue/I4596",
+        "kind": "issue",
+        "label": "I4596",
+        "summary": "A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it",
+        "route": "/cockpit/objects/issue/i4596",
+        "source": ".ai/repo/project/issues/I4596.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "cancelled_dependency_is_warned_per_dependent",
+            "cancelled_dependency_has_one_meaning_in_both_engines"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4596.yaml",
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/4596_a_cancelled_dependency_has_one_meaning.sh",
+            "docs/PLANNING.md",
+            "site/content/plan/I4596.md"
+          ],
+          "serves": [],
+          "slug": "the-owner-decides-what-a-cancelled-dependency-means",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4596_a_cancelled_dependency_has_one_meaning 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4597",
+        "kind": "issue",
+        "label": "I4597",
+        "summary": "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not",
+        "route": "/cockpit/objects/issue/i4597",
+        "source": ".ai/repo/project/issues/I4597.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Whole files the repository regenerates: already merge=derived (relation.rs:217)",
+            "allocate::version_only_conflict and the version allocation itself: unchanged, only composed with",
+            "Choosing a writer for an adopter: the writer is the repository's own, never inferred",
+            "Resolving prose conflicts in the same file: they stay a person's",
+            "Running a program from a typed specification in general: I4486"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4597.yaml",
+            "apps/majordomus-cli/src/integration/relation.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/INTEGRATION.md",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4597_a_recomputed_line_is_the_landings_to_write.sh",
+            "site/content/plan/I4597.md"
+          ],
+          "serves": [],
+          "slug": "a-recomputed-line-is-the-landings-to-write",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4597_a_recomputed_line_is_the_landings_to_write",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::relation integration::classify integration::drain policy",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4598",
         "kind": "issue",
         "label": "I4598",
@@ -81700,6 +81924,56 @@
           ],
           "serves": [],
           "slug": "the-scope-refusal-names-its-remedies"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4599",
+        "kind": "issue",
+        "label": "I4599",
+        "summary": "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence",
+        "route": "/cockpit/objects/issue/i4599",
+        "source": ".ai/repo/project/issues/I4599.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Notifying the person: the order says whose turn it is, a client chooses whether to notify",
+            "Marking a session blocked on the mesh from client hooks: I3992",
+            "Open questions (`majordomus question`): they are task-local state under .ai/local and block a task's finish, not an issue, so they are no lever here",
+            "Merging, approving or answering on the person's behalf",
+            "The ranking of READY issues: proceed.plan's, unchanged"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "A wait misclassified as the person's would slow a loop that could proceed. Only the three dispositions that name a person's act are class person, and any other wait keeps the work cadence.",
+          "scope": [
+            ".ai/repo/project/issues/I4599.yaml",
+            "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+            "apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4599_a_wait_on_the_person_names_the_levers.sh",
+            "site/content/plan/I4599.md"
+          ],
+          "serves": [],
+          "slug": "a-wait-on-the-person-names-the-levers",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4599_a_wait_on_the_person_names_the_levers",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::proceed integration::model policy",
+            "bin/majordomus plan validate"
+          ]
         }
       },
       {
@@ -81781,6 +82055,39 @@
           "slug": "a-test-repository-never-inherits-the-hooks-git",
           "validation": [
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4604",
+        "kind": "issue",
+        "label": "I4604",
+        "summary": "A declared .ai extension in a gitignored subtree is discovered, checked and reported",
+        "route": "/cockpit/objects/issue/i4604",
+        "source": ".ai/repo/project/issues/I4604.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Tracking ignored content in git, or copying it into the repository layer",
+            "Indexing extension content into knowledge, search or any projection",
+            "Walking the filesystem for undeclared .ai directories"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4604.yaml"
+          ],
+          "serves": [],
+          "slug": "a-declared-extension-in-an-ignored-subtree-is-discovered",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh I4604_declared_extension_in_ignored_subtree"
           ]
         }
       },
@@ -82018,6 +82325,176 @@
         }
       },
       {
+        "id": "majordomus://issue/I4622",
+        "kind": "issue",
+        "label": "I4622",
+        "summary": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+        "route": "/cockpit/objects/issue/i4622",
+        "source": ".ai/repo/project/issues/I4622.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Reclaiming disk: the service only stops and resumes; what to delete stays the person's",
+            "Builds entering the machine: I3825 and I4006",
+            "Announcing a disk emergency on the mesh: I4355",
+            "A bounded run of a program with a deadline: I4486, whose process-group handling this may share once it exists, but does not wait for",
+            "Restarting a process that exited on its own with a failure: reported, never retried in a loop",
+            "Remote hosts: the volume measured is the local one the service writes to"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4622.yaml",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/mesh/build_cache/ensure.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4622_a_long_running_process_is_guarded_by_the_disk_floor.sh",
+            "site/content/plan/I4622.md"
+          ],
+          "serves": [],
+          "slug": "a-long-running-process-is-guarded-by-the-disk-floor",
+          "updated_at": "2026-11-16",
+          "validation": [
+            "bash test/run.sh 4622_a_long_running_process_is_guarded_by_the_disk_floor",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- policy mesh::build_cache execution service",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4627",
+        "kind": "issue",
+        "label": "I4627",
+        "summary": "scripts/derive borrows MAJORDOMUS_BIN over a merged crate only when it is of the tree's generation, and otherwise builds its own and says why",
+        "route": "/cockpit/objects/issue/i4627",
+        "source": ".ai/repo/project/issues/I4627.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_merge_does_not_borrow_a_foreign_executable"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "majordomus generate's own check 3 (refuse_foreign_generation, projects_the_committed_registry): the Rust follow-up named in desired_state",
+            "A tree whose crate moved through a rebase or a cherry-pick rather than a merge",
+            "The landing seat's integration script, which is outside the repository and already fixed",
+            "lib/rust_bin.sh, which two open members of the combined top change: the condition lives in scripts/derive and uses mj_rust_same_generation as it is"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive",
+            ".github/workflows/release.yml",
+            "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+            ".ai/repo/project/issues/I4627.yaml"
+          ],
+          "serves": [],
+          "slug": "a-merge-does-not-borrow-a-foreign-executable",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 4627_a_merge_does_not_borrow_a_foreign_executable 3837_a_derive_does_not_run_mid_merge 3963_a_merge_of_master_derives_in_one_go 87_release_pipeline"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4628",
+        "kind": "issue",
+        "label": "I4628",
+        "summary": "A completed finish whose verified tree is not in a commit reads as not committed in its first line, under the shipped policy",
+        "route": "/cockpit/objects/issue/i4628",
+        "source": ".ai/repo/project/issues/I4628.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_finish_over_uncommitted_work_says_so"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Turning verification.completed_means_complete on, or changing what #2748 refuses",
+            "Committing on the task's behalf: finish reports, it never commits",
+            "A task whose verify command changes no tracked file and leaves HEAD's tree as it was"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/gates.sh",
+            "lib/finish.sh",
+            "test/cases/4628_a_finish_over_uncommitted_work_says_so.sh",
+            ".ai/repo/project/issues/I4628.yaml"
+          ],
+          "serves": [],
+          "slug": "a-finish-over-uncommitted-work-says-so",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4630",
+        "kind": "issue",
+        "label": "I4630",
+        "summary": "A directory in an issue's scope never makes a derived page name a file that does not exist, and the before-push plan finds it when it does",
+        "route": "/cockpit/objects/issue/i4630",
+        "source": ".ai/repo/project/issues/I4630.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two READY issues, one scoped to test/cases and one to test/cases/9999_missing.sh: the scope_conflict finding names test/cases, and the derived plan-status page names no test/cases/9999_missing.sh",
+            "plan validate warns on a scope entry that is a directory holding more tracked files than the policy's threshold, and the warning names the issue's own case path",
+            "The before-push plan includes the reference check over the derived plan pages, and a page that names a missing file fails it before the push",
+            "Negative control: against master's lib/project.awk the case finds the missing path named in the page"
+          ],
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "desired_state": "A record whose scope is too wide is told so by plan validate, a conflict line names what both issues declared, and no derived page reaches CI naming a file the tree does not hold.",
+          "evidence_required": [
+            "a_directory_scope_names_no_missing_file"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "Forbidding a directory in a scope: a directory is a legitimate scope for work that touches it",
+            "reference-check's rules for hand-written documents",
+            "Re-deriving or re-landing pages already on master"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/project.awk",
+            "lib/plan.sh",
+            "scripts/ci/run-plan",
+            "test/cases/4630_a_directory_scope_names_no_missing_file.sh",
+            ".ai/repo/project/issues/I4630.yaml"
+          ],
+          "serves": [],
+          "slug": "a-directory-scope-names-no-missing-file",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4631",
         "kind": "issue",
         "label": "I4631",
@@ -82061,6 +82538,138 @@
             "scripts/rules-package check",
             "scripts/ci/rule-proof-check",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4632",
+        "kind": "issue",
+        "label": "I4632",
+        "summary": "A task withdraws a requirement token it declared in error, with a reason the ledger keeps, and never one its change set implies",
+        "route": "/cockpit/objects/issue/i4632",
+        "source": ".ai/repo/project/issues/I4632.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_task_withdraws_a_requirement_declared_in_error"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/evidence.sh",
+            "lib/finish.sh",
+            "share/events.yaml",
+            "share/commands.yaml",
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            "docs/CLI.md",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "test/cases/4632_a_task_withdraws_a_requirement_declared_in_error.sh",
+            ".ai/repo/project/issues/I4632.yaml"
+          ],
+          "serves": [],
+          "slug": "a-task-withdraws-a-requirement-declared-in-error",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4632_a_task_withdraws_a_requirement_declared_in_error 103_obligations"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4633",
+        "kind": "issue",
+        "label": "I4633",
+        "summary": "A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict",
+        "route": "/cockpit/objects/issue/i4633",
+        "source": ".ai/repo/project/issues/I4633.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_job_that_fails_after_the_range_passed_turns_the_run_red"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Landing, merging or re-running anything: the wait reads and exits, as #3067's does",
+            "The integration engine's required-check classification (integration/classify.rs). It already holds a running required check pending, and it reads the forge's model, not this one.",
+            "Modelling ranges of steps in .ai/repo/ci/gates.yaml. #3046 keeps the gate as the unit, and a step that counts on its own is declared as its own gate.",
+            "A depends_on edge to I4624 or I4611, which are not on master. Both are cited by name. The edge, and the rebase onto #3067's monitor/steps.rs, follow when they land.",
+            "Changing a repository's workflows or its tiers"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor/steps.rs",
+            "apps/majordomus-cli/src/monitor/run.rs",
+            "apps/majordomus-cli/src/monitor/mod.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/tests/fixtures/gh-api-run",
+            "docs/MONITOR.md",
+            ".ai/repo/project/issues/I4633.yaml"
+          ],
+          "serves": [],
+          "slug": "a-landing-wait-judges-the-whole-run",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4665",
+        "kind": "issue",
+        "label": "I4665",
+        "summary": "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard",
+        "route": "/cockpit/objects/issue/i4665",
+        "source": ".ai/repo/project/issues/I4665.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two sessions writing decisions on overlapping scope for one task are both kept and reported as a conflict",
+            "A revision by a session other than the author is refused (not_own) and, written by a forging peer anyway, ignored by the fold",
+            "A revision at a stale revision is refused with the current one; a superseding record links both ways and keeps the old record and its history",
+            "A record past its expiry, or of a closed or dead session, is reported stale and not deleted",
+            "A record outside the writing session's claimed scope is refused; a handoff missing evidence is refused",
+            "A retry with the same idempotency key and content answers the first write; the same key with other content is refused",
+            "The journal reopened from its file folds to the same records"
+          ],
+          "created_at": "2026-11-20",
+          "depends_on": [],
+          "evidence_required": [
+            "records_unit_tests"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/records.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/mod.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/monitor/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "docs/MESH.md",
+            "docs/MONITOR.md",
+            "docs/BLACKBOARD.md",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
+            ".ai/repo/project/issues/I4665.yaml"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#one-projection"
+          ],
+          "slug": "typed-records-live-in-the-mesh-journal",
+          "validation": [
+            "cargo test --lib mesh::records",
+            "cargo test --lib mesh::state"
           ]
         }
       },
@@ -95920,6 +96529,52 @@
             "linux-aarch64-musl"
           ],
           "tag": "v1.0.2"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v1.1.0",
+        "kind": "release-record",
+        "label": "v1.1.0",
+        "summary": "v1.1.0",
+        "route": "/cockpit/objects/release-record/v1-1-0",
+        "source": ".ai/repo/releases/v1.1.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "5bc2ddb10ccc5f2e5528e03c08b0af8ed4e26a9e",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.1.0",
+          "published_at": "2026-11-18T06:53:32Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v1.1.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v1.2.0",
+        "kind": "release-record",
+        "label": "v1.2.0",
+        "summary": "v1.2.0",
+        "route": "/cockpit/objects/release-record/v1-2-0",
+        "source": ".ai/repo/releases/v1.2.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "d02c59d447c2cc147eb5357ad4b2396ac54ffff8",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.2.0",
+          "published_at": "2026-11-22T09:45:30Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v1.2.0"
         }
       },
       {
@@ -109856,6 +110511,13 @@
         "source": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "kind": "test",
+        "label": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "route": "/cockpit/objects/test/test-cases-4324-a-worktree-whose-work-is-in-trunk-is-finished-sh",
+        "source": "test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "kind": "test",
         "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
@@ -109994,6 +110656,13 @@
         "label": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4618-the-resolver-borrows-a-sibling-executable-sh",
         "source": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "kind": "test",
+        "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
+        "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -116340,6 +117009,36 @@
       },
       {
         "source": "capability:mesh.peers",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.record.write",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.record.write",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.record.write",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.records",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.records",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.records",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -125759,6 +126458,91 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/policy.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/reasoning/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:share/allow/profile.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:share/profile-limits.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:share/schemas/majordomus/profile/profile.v1.schema.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://context/ai.repo.profiles",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://document/docs/PROFILES.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://issue/I4500",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://milestone/a-profile-is-resolved-once-and-enforced",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://rule/majordomus.profile-requirements@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://test/test/cases/16_profiles.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -132135,6 +132919,11 @@
       },
       {
         "source": "majordomus://document/docs/PRODUCT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/PROFILES.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -151874,6 +152663,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4596",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4596",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4597",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4597",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4598",
         "target": "kind:issue",
         "kind": "is_a"
@@ -151881,6 +152690,16 @@
       {
         "source": "majordomus://issue/I4598",
         "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4599",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4599",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
       {
@@ -151901,6 +152720,16 @@
       {
         "source": "majordomus://issue/I4602",
         "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4604",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4604",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
       {
@@ -151961,6 +152790,46 @@
       {
         "source": "majordomus://issue/I4618",
         "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4622",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4622",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4627",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4627",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4628",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4628",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4630",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4630",
+        "target": "majordomus://milestone/derived-data-integrity",
         "kind": "belongs_to"
       },
       {
@@ -151971,6 +152840,36 @@
       {
         "source": "majordomus://issue/I4631",
         "target": "majordomus://milestone/a-claim-stands-only-on-its-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4632",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4632",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4633",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4633",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4665",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4665",
+        "target": "majordomus://milestone/peer-blackboard",
         "kind": "belongs_to"
       },
       {
@@ -154330,6 +155229,16 @@
       },
       {
         "source": "majordomus://release-record/v1.0.2",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v1.1.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v1.2.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -159684,6 +160593,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -159780,6 +160694,11 @@
       },
       {
         "source": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -164425,6 +165344,16 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.record.write",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.records",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.register",
         "kind": "composes"
       },
@@ -164905,8 +165834,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4512,
-      "edges": 10173,
+      "nodes": 4538,
+      "edges": 10225,
       "acyclic": false,
       "truncated": false
     }
