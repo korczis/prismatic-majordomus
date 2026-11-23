@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "636acc8c8456036be915db1391bc3526d727557b",
+  "commit": "93739746f8d9f488bbd3e999fc9ed27818ac81a9",
   "source_version": "1.2.0",
-  "registry_fingerprint": "55a4bab7d3a3890856a93aa67d0495f3597ae88fe0ef0256ab1a0d60ae378484"
+  "registry_fingerprint": "c8560bf946204d8ff4faeb3c639c58849b90b06edef65d055cfb8839e00d3700"
  },
  "counts": {
-  "pages": 6562,
-  "capabilities": 4056,
+  "pages": 6564,
+  "capabilities": 4057,
   "cli_commands": 128,
   "http_routes": 221,
   "mcp_tools": 217,
-  "mcp_resources": 3880,
+  "mcp_resources": 3881,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1271
+   "count": 1272
   },
   {
    "kind": "knowledge",
@@ -16128,6 +16128,12 @@
    "route": "/cs/plan/i4665/",
    "title": "I4665 — Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard",
    "description": "A session writes a typed coordination record (observation, hypothesis, plan, decision, blocker, handoff, outcome) into the mesh journal as a new event kind, record_written. The record carries a task, a scope, a status, sources with their versions, an optional expiry, a revision and links to the record it supersedes. Its author is the journal's own `<stream>/<session>` key, never a name the caller supplies. Only the author's session revises a record, and only at the current revision (compare-and-swap); another session supersedes it with a new record and never overwrites it. A record's scope must lie inside a live claim of the writing session. A handoff without objective, current state, evidence, blockers and next action is refused. A retry with the same idempotency key and content is answered with the first write. The fold carries every record with its history, its derived evidence state (asserted unless a source is retrievable), its staleness (expired lease, dead or closed author) and the conflicts between live decisions and plans on overlapping scope; mesh.state, the new mesh.records and blackboard.snapshot read it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4685/",
+   "title": "I4685 — The published-site gate resolves the deploy subject's abbreviated commit once, so an abbreviation that is ambiguous in the reading clone is still the commit it names",
+   "description": "scripts/ci/pages-check resolves the abbreviated commit named by the deploy subject once, as a commit (`git rev-parse --verify <abbrev>^{commit}`). It then asks every git question with that full id: the ancestry test against the trunk, the distance behind it, the published tree's web.json and pages.yaml, and the owed-publication range. The abbreviation stays what the served identity is compared against.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33681,6 +33687,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4685/",
+   "title": "I4685 — The published-site gate resolves the deploy subject's abbreviated commit once, so an abbreviation that is ambiguous in the reading clone is still the commit it names",
+   "description": "scripts/ci/pages-check resolves the abbreviated commit named by the deploy subject once, as a commit (`git rev-parse --verify <abbrev>^{commit}`). It then asks every git question with that full id: the ancestry test against the trunk, the distance behind it, the published tree's web.json and pages.yaml, and the owed-publication range. The abbreviation stays what the served identity is compared against.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37637,7 +37649,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.2.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.2.0, built from commit 636acc8c8456036be915db1391bc3526d727557b: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.2.0, built from commit 93739746f8d9f488bbd3e999fc9ed27818ac81a9: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.2.0 — Rust API reference"
   },
   {
