@@ -1,0 +1,224 @@
+---
+schema: adr/v1
+id: adr-0232
+kind: adr
+title: One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins
+status: proposed
+date: 2026-11-07
+tags:
+  - profiles
+  - policy
+  - enforcement
+related:
+  - file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md
+  - file:docs/PROFILES.md
+  - file:.ai/repo/profiles/README.md
+  - file:.ai/repo/project/milestones/a-profile-is-resolved-once-and-enforced.yaml
+  - file:.ai/repo/project/issues/I4500.yaml
+  - file:share/schemas/majordomus/profile/profile.v1.schema.json
+  - file:share/allow/profile.txt
+  - file:share/profile-limits.yaml
+  - file:lib/common.sh
+  - file:apps/majordomus-cli/src/policy.rs
+  - file:apps/majordomus-cli/src/reasoning/mod.rs
+  - file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs
+  - file:apps/majordomus-cli/src/gates/done.rs
+  - test:test/cases/16_profiles.sh
+  - test:test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh
+  - rule:majordomus.profile-requirements
+provenance:
+  origin: authored
+---
+
+# 232. One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins
+
+## Context
+
+The owner's brief of 2026-10-12,
+`campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md`,
+asks in its PROMPT 00 for a reality audit and a decision record in this repository's
+convention before any resolver is written. The audit is `docs/PROFILES.md`, measured at
+d7fd9a36170. Its findings that this record answers:
+
+1. **Nothing resolves a profile.** Every reader opens the file itself. The shell lifecycle
+   flattens it with `mj_load_profile` and reads keys with `mj_pro` (`lib/common.sh:1529`).
+   It does so separately in `start`, `check`, `context`, `finish`, `watch`, `doctor` and
+   `update`. Three Rust modules read profile values by routes of their own:
+   `reasoning/mod.rs:114` opens `.ai/repo/profiles/<name>.yaml` at a hard-coded path and
+   takes `reasoning:` with a line match, `proceed/step.rs:543` takes `effort` from the
+   object index, and `gates/done.rs:219` asks the regression question of every task, under
+   any profile, while its evidence cites `verification.regression_test_required`.
+2. **Inputs that should take part do not.** An issue's `profile:` is read by the plan
+   (`plan.rs:242`), shown by `plan next` and the Cockpit, and handed to `proceed.step` as a
+   work item's `profile`. Even so, `start --issue <id>` without `--profile` takes the
+   policy's `profiles.default` (`lib/start.sh:61`). The issue's profile reaches the task
+   only when a person types it again.
+3. **Two declarations of one value.** The policy's `profiles.checkpoint_interval_default`
+   is projected into the provider bootstraps. The default profile's `checkpoint_interval`
+   is what `check` enforces. Nothing compares the two (`lib/update.sh:206`,
+   `lib/check.sh:278`).
+4. **A copied predicate that has drifted.** `gates/done.rs:506` says it is finish's
+   test-path predicate, and it is not. Finish's (`lib/finish.sh:252`) is case-insensitive
+   and treats `src/test_helpers.py`, `src/tests.rs` and `Tests/a.rs` as test paths. The
+   copy treats none of them as one.
+5. **Some of the plan already exists.** I0201 is on master (519e783abcb):
+   `share/profile-limits.yaml` declares the three axes that are limits, and `doctor`
+   reconciles them with their adapters in both directions (case 4400). The issue record
+   still carries no completion stamp.
+6. **Issues already wait on a resolver.** I3123 (`verification.verify_commands`), I3128,
+   I3199 and I3395 each assume an effective profile, and nothing produces one.
+
+None of the earlier ADRs that mention profiles decides the model.
+
+## Decision
+
+### Owner
+
+The typed definition of a profile, and the one resolver that turns inputs into an
+effective profile, live in a module named `profile` under `apps/majordomus-cli/src/`. That
+module does not exist yet: the milestone `a-profile-is-resolved-once-and-enforced` creates
+it. It is the only code that reads a profile file's keys. Every other reader becomes a
+consumer of its answer. That covers the shell lifecycle (`start`, `check --explain`,
+`context`, `finish`, `doctor`, `watch`, `update`), `reasoning`, `proceed.step`,
+`gates/done.rs`, the plan surfaces and the UI. The operations are `profile.list`,
+`profile.show`, `profile.validate`, `profile.resolve` and `profile.explain`, declared once
+with `capability!` and generated onto every transport (ADR 0004). `mj_load_profile` and
+`mj_pro` stay only until the shell reads the resolver's answer. Until then a parity case
+holds the two equal for every shipped profile, and it lands in the same change as the
+resolver.
+
+### What an effective profile is
+
+An effective profile is the resolver's answer for one question: a repository state plus a
+task, or an issue, or neither. It holds:
+
+- `schema`: `majordomus.effective-profile/v1`, the answer's own wire schema. The file
+  schema `majordomus.profile/v1` is a different thing.
+- `definition`: the name of the profile selected, and the SHA-256 of the definition's
+  normal form (`policy::normal_form`, the form the policy hash already uses).
+- Every axis of `majordomus.profile/v1` as a field, each with `value`, `source` and
+  `reason`. `source` is one of `task`, `issue`, `definition`, `policy`, `default`.
+  `reason` is a code from a closed set (`selected`, `inherited`, `clamped`, `required_by`,
+  `unset`), never prose alone.
+- `limits`: the values `share/profile-limits.yaml` derives from the axes. Each one carries
+  the limit's id, the axis it came from, and its adapter.
+- `diagnostics`: findings that do not stop resolution. One example is a policy
+  `checkpoint_interval_default` that disagrees with the default profile's
+  `checkpoint_interval`.
+- `fingerprint`: SHA-256 over the canonical JSON (sorted keys, no whitespace) of the
+  answer without the fingerprint itself. That covers the resolver schema, the definition's
+  digest, the normal form of the policy keys the resolution read, and the task and issue
+  inputs (`--profile` given or not, the issue's `profile:`). It never covers a clock, an
+  absolute path, a host or an environment variable. The same inputs give the same
+  fingerprint on every transport and in any order of discovery.
+
+The task record (`current.yaml`) and `task.started` carry the fingerprint beside the name.
+`check` reports a fingerprint that has moved since start and applies nothing silently.
+
+### Constraints intersect; preferences take precedence
+
+Each axis is one of two classes, and the resolver handles them differently.
+
+- **Constraints** may only be narrowed, never loosened, by any layer: no task, issue or
+  definition can make something legal that a stricter input forbids.
+  - `verification.*` requirements combine as a logical OR. A requirement any input sets is
+    required, and `if_files_changed` sits between `false` and `true`.
+  - Each limit takes the minimum of its derived value and any cap the policy declares.
+    `context.knowledge_max_items` under `context.max_list_items` already works this way
+    (`lib/context.sh:453`), and the rule generalises it.
+  - Effects a profile withholds (the milestone's repository-mutation refusal) combine as a
+    union.
+- **Preferences** take the highest-precedence input that sets them, in the order task,
+  issue, definition, policy default. The name of the profile selected is one:
+  `start --profile` beats the issue's `profile:`, which beats `profiles.default`. The
+  others are `capability`, `effort`, `effort_escalation`, `verbosity`, `presentation`,
+  `reasoning`, the `context.*` toggles, `checkpoint_interval` and `output_contract`.
+  Taking the issue's `profile:` when `--profile` is absent changes behaviour. It is part of
+  the resolver's change, so it is not decided by this audit's.
+
+`MAJORDOMUS_REASONING_MODE` and a CI runner still outrank a profile's `reasoning`
+(`reasoning/availability.rs:174`). They are runtime inputs to that axis's own resolution.
+The profile's word on the axis now comes from the resolver, not from a line match on the
+file.
+
+### How the schema changes
+
+`majordomus.profile/v1` stays v1 for any new key that is optional and additive: every
+existing file must still validate, and every existing reader must be unaffected by its
+absence. Under that rule `verification.verify_commands` (I3123) is a v1 key. It is added
+to the JSON schema, and `share/allow/profile.txt` regenerates from the schema
+(`generate.rs:2213`). Renaming or removing a key, making one required, or changing what a
+value means requires `majordomus.profile/v2`. The resolver must then read both versions
+and migrate v1 explicitly, and `doctor` must name every file still at v1. A key enters the
+schema only with the consumer that reads it, in the same change. A key nothing reads is
+refused, which is the allowlist's existing contract.
+
+### Where a profile's word ends
+
+A profile declares, and the resolver resolves. Enforcement begins only at a named adapter
+or gate: a `lib` function marked `# majordomus-limit: <id>`, a `finish` or `check` doctrine,
+or the executor's refusal. Every axis has a declared standing (`enforced`, `observed`,
+`requested`, `unobservable`), and an `enforced` axis names the test that fails without the
+enforcement. `capability`, `effort` and `verbosity` are `requested`: a worker is told them,
+and nothing outside the worker can observe whether it honoured them. They never appear in
+`share/profile-limits.yaml`.
+
+### How the planned work consumes the resolver
+
+- **runtime-adapters (I0201 to I0206).** I0201 is delivered as
+  `share/profile-limits.yaml` and its reconciliation, and that file stays the one
+  declaration of which axis becomes which limit. I0202's "resolve a task's effective
+  limits" is the resolver's `limits` field read through `profile.resolve`. It is not a
+  second resolver in shell. I0203 to I0206 (opt-in, applying a limit, the clamp doctrine,
+  the claim) stay runtime-adapters' work and take the resolver's answer as their input.
+  This record leaves their issue records to their owner.
+- **I3123.** It adds `verification.verify_commands` as a v1 key whose value the resolver
+  owns, combined as a constraint (the admitted set is narrowed by each input that sets
+  one). `finish` reads the effective set from the resolver.
+- **I3395.** A `verify:<name>` evidence reference resolves against the effective
+  profile's `verification.verify_commands`, read through `profile.resolve`. It never reads
+  a profile file.
+- **I3128.** `init`'s found lines report whether the effective default profile declares
+  `verification.verify_commands`, as the resolver answers it.
+- **I3199.** An assignment carries the effective profile's fingerprint and its `limits`.
+  Comparing them with a peer's envelope is the mesh's job, but the limits are the
+  resolver's and are never recomputed by the mesh.
+
+No limit and no verification key has a second owner.
+
+## Alternatives rejected
+
+- **A resolver in shell.** I0202 was written for one. The Rust executable serves the API,
+  MCP and the UI, and the brief forbids a second resolution. A shell resolver would leave
+  every non-shell surface re-reading files, which is the defect this record removes.
+- **Seven named profiles for the brief's seven work modes.** The axes are independent,
+  and naming every combination multiplies files without adding a consumer. The milestone's
+  non-scope already excludes it.
+- **Precedence for everything.** If a task's `--profile` could lower a verification
+  requirement the issue's profile sets, a forbidden outcome would be legal by choosing a
+  name. Requirements and limits therefore intersect.
+- **A v2 schema now.** No change this record decides renames, removes or requires a key,
+  so v2 would be a migration with nothing to migrate.
+
+## Consequences
+
+- `docs/PROFILES.md` is the trace that the milestone's later issues update as each reader
+  moves onto the resolver. A row moves from `duplicated` or `missing` to `proven` when the
+  test that holds it lands.
+- `docs/claims/profile-axes.md` says every axis is advisory. That is stale for the
+  `context.*` toggles and the `verification.*` requirements, which `context` and `finish`
+  act on (cases 23 and 16). The claim is corrected when the axis-standing table lands, not
+  in this record.
+- The policy's `profiles.checkpoint_interval_default` becomes a diagnostic of the
+  resolver, with removal to follow, because the default profile's `checkpoint_interval`
+  is the value `check` enforces.
+- `gates/done.rs` stops keeping its own copy of finish's predicate and asks the resolver
+  whether the effective profile requires a regression test at all.
+
+## Verification
+
+- The trace's every row names its proof or says there is none: `docs/PROFILES.md`.
+- `MJ_TEST_JOBS=2 bash test/run.sh 16_profiles` passes unchanged at the commit this record
+  lands in, so the four shipped profiles behave as they did.
+- The baseline this record's resolver must not regress is in `docs/PERFORMANCE.md`
+  (section "Profile reads").
