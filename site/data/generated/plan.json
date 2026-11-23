@@ -13774,7 +13774,7 @@
       "non_scope": [],
       "objective": "For every read-only command in the registry, run it with the cache cold, warm, and disabled, on this repository and on a synthetic one, and assert byte-identical output and exit code; then mutate one file and assert the changed output is served.",
       "why": "A cache that changes a result is worse than no cache; the proof has to cover every reader, not the one that was tested.",
-      "current_state": "No cache exists yet.",
+      "current_state": "The flatten cache exists (I0821); case 3090 compares a hand-picked list of six commands cold and warm. Nothing iterates the registry, nothing compares a run with no cache, and no case proves a changed file is a miss through a command.",
       "desired_state": "One case iterating the registry's read-only commands, so a command added later is covered by existing.",
       "acceptance_criteria": [
         "The case reads the registry for the command list and fails if it is empty",
@@ -13782,7 +13782,7 @@
         "A mutated file changes the output and the counters show a miss"
       ],
       "validation": [
-        "bash test/run.sh 86_cache_equivalence"
+        "bash test/run.sh 4661_a_cache_never_changes_a_read_only_answer"
       ],
       "evidence_required": [
         "flatten_cache"
