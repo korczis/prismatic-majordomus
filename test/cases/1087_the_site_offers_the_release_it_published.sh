@@ -113,7 +113,7 @@ grep -q 'set offered = build.release if build and build.release else false' "$TP
   || { echo "    base.html does not derive \`offered\` from build.json's release"; exit 1; }
 left="$(grep -rnE 'project\.release|dist\.latest' "$TPL" || true)"
 [ -z "$left" ] || { echo "    a template still reads another source for the latest release:"; echo "$left"; exit 1; }
-grep -q 'data-release="{{ offered.version }}">v{{ offered.version }}' "$TPL/partials/navbar.html" \
+grep -q 'data-release="{{ offered.version }}" data-version-role="stable" title="[^"]*">v{{ offered.version }}' "$TPL/partials/navbar.html" \
   || { echo "    the navbar badge does not read offered, or does not state it as data-release"; exit 1; }
 grep -q 'hover:underline" data-release="{{ offered.version }}">{{ offered.version }}</a><span aria-hidden' "$TPL/index.html" \
   || { echo "    the hero badge does not state the offer as data-release"; exit 1; }
