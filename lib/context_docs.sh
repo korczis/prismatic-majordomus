@@ -39,6 +39,16 @@ mj_ctxd_problem()   { printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "${4:-}" >> "$MJ_
 # the documents are loaded into variables once (mj_yload); a field read is an expansion
 mj_ctxd()           { mj_yv ctxd "docs.$1.$2"; }
 mj_ctxd_list()      { mj_yvlist ctxd "docs.$1.$2"; }
+# the same reads without a process, for the loops that visit every document: MJ_V is the
+# value (mj_ctxd_v), or the list's values one per line (mj_ctxd_words), empty when absent
+mj_ctxd_v()         { local n="ctxd__docs__${1}__${2//-/___}"; n="${n//./__}"; MJ_V="${!n:-}"; }
+mj_ctxd_words() {
+  local k="ctxd__docs__${1}__${2//-/___}" i=0 n acc="" nl='
+'
+  k="${k//./__}"
+  while n="${k}__$i"; [ -n "${!n:-}" ]; do acc="$acc${acc:+$nl}${!n}"; i=$((i + 1)); done
+  MJ_V="$acc"
+}
 mj_ctxd_problems()  { [ -s "$MJ_CTXD_PROBLEMS" ]; }
 
 # the file conventions the manifest declares: names that must carry the contract
@@ -99,40 +109,40 @@ EOF
   return 1
 }
 
+# The files of the list on stdin that could be context documents, in the order given: a
+# file the manifest names as a convention ($1, space-separated) always, any other only when
+# its first line opens front matter and a line of that front matter, within its first two
+# hundred, declares `kind: context` or a `context/` schema. Most files under the tree are
+# not context documents, and establishing that cost a shell loop over each one's lines, two
+# thirds of `context validate`; one awk reads them all (I0820). A file that cannot be read
+# is no candidate, as it was when the loop's redirect failed.
+mj_ctxd_candidates() {
+  awk -v root="$MJ_ROOT" -v conv=" $1 " '
+    {
+      rel = $0; base = rel; sub(/.*\//, "", base)
+      if (index(conv, " " base " ")) { print rel; next }
+      f = root "/" rel; n = 0; opened = 0; declares = 0
+      while ((getline l < f) > 0) {
+        n++
+        if (n == 1) { if (l != "---") break; opened = 1; continue }
+        if (l == "---") break
+        if (l == "kind: context" || substr(l, 1, 14) == "kind: context " || substr(l, 1, 16) == "schema: context/") { declares = 1; break }
+        if (n > 200) break
+      }
+      close(f)
+      if (opened && declares) print rel
+    }'
+}
+
 # ---------------------------------------------------------------- one file
-# mj_ctxd_scan REL N -> 0 with docs.N.* appended to the flat record, 2 when the file is not
-# a context document (no front matter, or another kind), 1 with a problem recorded.
+# mj_ctxd_scan REL N CONV PROVIDERS -> 0 with docs.N.* appended to the flat record, 2 when
+# the file is not a context document (no front matter, or another kind), 1 with a problem
+# recorded. REL is one mj_ctxd_candidates passed.
 mj_ctxd_scan() {
   local rel="$1" n="$2" f="$MJ_ROOT/$1" conv="$3" providers="$4" base dir depth st tmp
   base="${rel##*/}"
-  # Most files under the tree are not context documents, and reading each one cost four
-  # processes to establish that: a mktemp, the front-matter split, the flattener and the
-  # validator. The front matter is small and this shell can read it, so the question "could
-  # this file be a context document at all" is answered here, without a process, and only a
-  # file that could be goes on to the stages below.
-  #
-  # The test is the one the stages themselves apply: a file whose first line is not `---`
-  # has no front matter, and one whose front matter declares neither `kind: context` nor a
-  # `context/` schema is another kind. In both cases the stages return 2 without recording
-  # anything — unless the manifest names the file as a context document, which is the case
-  # that must still be reported, so those are never skipped.
-  case " $conv " in
-    *" $base "*) ;;
-    *)
-      local l lines=0 declares=0 opened=0
-      while IFS= read -r l || [ -n "$l" ]; do
-        lines=$((lines + 1))
-        if [ "$lines" = 1 ]; then
-          [ "$l" = "---" ] || break
-          opened=1; continue
-        fi
-        [ "$l" = "---" ] && break
-        case "$l" in kind:\ context|"kind: context "*|schema:\ context/*) declares=1; break ;; esac
-        [ "$lines" -gt 200 ] && break
-      done < "$f"
-      [ "$opened" = 1 ] && [ "$declares" = 1 ] || return 2
-      ;;
-  esac
+  # Only a file mj_ctxd_candidates passed reaches this: one that could be a context document,
+  # or one the manifest names as a convention, which must still be reported when it is not.
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.XXXXXX")"
   # stage 1: the front matter, or exit 2 (none) / 4 (never closes)
   awk 'NR == 1 && $0 != "---" { exit 2 }
@@ -256,7 +266,7 @@ mj_ctxd_load() {
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     if mj_ctxd_scan "$f" "$MJ_CTXD_COUNT" "$conv" "$providers"; then MJ_CTXD_COUNT=$((MJ_CTXD_COUNT + 1)); fi
-  done < <(mj_ctxd_files)
+  done < <(mj_ctxd_files | mj_ctxd_candidates "$conv")
   mj_phase_end ctxd:scan "$t0"; t0="$(mj_phase_begin ctxd:load)"
   # every field of every document becomes a variable once; the cross checks and every
   # later reader expand them instead of running one awk per field
@@ -267,10 +277,58 @@ mj_ctxd_load() {
   return 0
 }
 
+# Which `tracks` pathspecs match no tracked file, asked of git once for every document
+# rather than once per pathspec (I0820): `ls-files --error-unmatch` names each pathspec the
+# index does not match, which is the question, and the index is all it reads, so an
+# untracked file still matches nothing. MJ_CTXD_UNMATCHED holds those pathspecs, one per
+# line between newlines, and MJ_CTXD_TRACKS_BATCH says the answer is that list; when git's
+# answer is not one this can read, it is 0 and every pathspec is asked on its own, as it
+# always was. A magic pathspec (`:(...)`) is always asked on its own: an exclusion matches
+# by leaving files out, which is not what --error-unmatch reports.
+MJ_CTXD_UNMATCHED=""; MJ_CTXD_TRACKS_BATCH=0
+mj_ctxd_tracks_batch() {
+  local i=0 p err rc line nl='
+' specs=()
+  MJ_CTXD_UNMATCHED="$nl"; MJ_CTXD_TRACKS_BATCH=0
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    mj_ctxd_words "$i" tracks
+    # split as the loop below splits it, under set -f
+    for p in $MJ_V; do case "$p" in :*) ;; *) specs+=("$p") ;; esac; done
+    i=$((i + 1))
+  done
+  [ "${#specs[@]}" -gt 0 ] || { MJ_CTXD_TRACKS_BATCH=1; return 0; }
+  rc=0; err="$(mj_git ls-files --error-unmatch -- "${specs[@]}" 2>&1 >/dev/null)" || rc=$?
+  [ "$rc" = 0 ] && { MJ_CTXD_TRACKS_BATCH=1; return 0; }
+  while IFS= read -r line; do
+    case "$line" in
+      "error: pathspec '"*"' did not match any file(s) known to git")
+        line="${line#"error: pathspec '"}"; MJ_CTXD_UNMATCHED="$MJ_CTXD_UNMATCHED${line%"' did not match any file(s) known to git"}$nl" ;;
+    esac
+  done <<EOF
+$err
+EOF
+  # a failure that named no pathspec is not an answer about them
+  [ "$MJ_CTXD_UNMATCHED" != "$nl" ] && MJ_CTXD_TRACKS_BATCH=1
+  return 0
+}
+# does tracked pathspec $1 match no file the index knows?
+mj_ctxd_track_unmatched() {
+  local nl='
+'
+  case "$1" in :*) ;; *)
+    if [ "$MJ_CTXD_TRACKS_BATCH" = 1 ]; then
+      case "$MJ_CTXD_UNMATCHED" in *"$nl$1$nl"*) return 0 ;; esac
+      return 1
+    fi ;;
+  esac
+  [ -z "$(mj_git ls-files -- "$1" 2>/dev/null | head -n 1)" ]
+}
+
 mj_ctxd_cross_check() {
   local noglob=0; case "$-" in *f*) noglob=1 ;; esac; set -f   # list values such as "*" are words, not globs
-  local i j id other p rel tree
+  local i j id other p rel tree MJ_V
   tree="$(mj_ctxd_tree)"
+  mj_ctxd_tracks_batch
   # one id, one file
   awk -F= '/^docs\.[0-9]+\.id=/ { print $2 }' "$MJ_CTXD_FLAT" | LC_ALL=C sort | uniq -d | while IFS= read -r id; do
     p="$(awk -F= -v id="$id" '/^docs\.[0-9]+\.id=/ && $2 == id { split($1, a, "."); n = a[2]; print n }' "$MJ_CTXD_FLAT" \
@@ -279,7 +337,7 @@ mj_ctxd_cross_check() {
   done
   i=0
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
-    rel="$(mj_ctxd "$i" path)"
+    mj_ctxd_v "$i" path; rel="$MJ_V"
     # explicit paths exist, are directories, and lie inside the tree
     for p in $(mj_ctxd_list "$i" paths); do
       if ! other="$(mj_norm_path "$p")"; then mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
@@ -296,9 +354,10 @@ mj_ctxd_cross_check() {
       [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a directory in this repository" "ls -d '$p'"
     done
     # every tracked pathspec covers at least one file the index knows
-    for p in $(mj_ctxd_list "$i" tracks); do
-      [ -n "$(mj_git ls-files -- "$p" 2>/dev/null | head -n 1)" ] \
-        || mj_ctxd_problem broken-reference "$rel" "tracks '$p', which matches no tracked file" "git ls-files -- '$p'"
+    mj_ctxd_words "$i" tracks
+    for p in $MJ_V; do
+      mj_ctxd_track_unmatched "$p" \
+        && mj_ctxd_problem broken-reference "$rel" "tracks '$p', which matches no tracked file" "git ls-files -- '$p'"
     done
     # supersedes: the target exists, is a proper ancestor-scope document, and is not final
     for id in $(mj_ctxd_list "$i" supersedes); do
@@ -329,13 +388,13 @@ mj_ctxd_index_for_dir() {
 # above it ($2 = strict skips a declaration in the directory itself), as "<value><TAB><path>".
 # Empty when nothing declares it, which the caller reads as the default: a contract is owed.
 mj_ctxd_require_at() {
-  local dir="$1" strict="${2:-0}" i=0 val ddir d best_depth=-1 best_val="" best_path=""
+  local dir="$1" strict="${2:-0}" i=0 val ddir d best_depth=-1 best_val="" best_path="" MJ_V
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
-    val="$(mj_ctxd "$i" children_require_contract)"
-    ddir="$(mj_ctxd "$i" dir)"
+    mj_ctxd_v "$i" children_require_contract; val="$MJ_V"
+    mj_ctxd_v "$i" dir; ddir="$MJ_V"
     if [ -n "$val" ] && mj_path_contains "$ddir" "$dir" && { [ "$strict" = 0 ] || [ "$ddir" != "$dir" ]; }; then
-      d="$(mj_ctxd "$i" depth)"
-      if [ "$d" -gt "$best_depth" ]; then best_depth="$d"; best_val="$val"; best_path="$(mj_ctxd "$i" path)"; fi
+      mj_ctxd_v "$i" depth; d="$MJ_V"
+      if [ "$d" -gt "$best_depth" ]; then best_depth="$d"; best_val="$val"; mj_ctxd_v "$i" path; best_path="$MJ_V"; fi
     fi
     i=$((i + 1))
   done
@@ -391,12 +450,13 @@ mj_ctxd_directories() {
 # contract that governs the subtree (children.require_contract: false), never by a list at
 # the root: it moves with the tree it describes. ADR 0011.
 mj_ctxd_coverage() {
-  local tree local_rel d gov val path i
+  local tree local_rel d gov val path i MJ_V
   tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   # narrowing only: false may become true below, true may not become false
   i=0
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
-    if [ "$(mj_ctxd "$i" children_require_contract)" = false ]; then
+    mj_ctxd_v "$i" children_require_contract
+    if [ "$MJ_V" = false ]; then
       gov="$(mj_ctxd_require_at "$(mj_ctxd "$i" dir)" 1)"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
       [ "$val" = true ] && mj_ctxd_problem illegal-override "$(mj_ctxd "$i" path)" \
         "declares children.require_contract: false under $path, which requires one; a descendant may narrow an inherited constraint, never weaken it" \
