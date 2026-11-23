@@ -14,7 +14,9 @@ scope:
   - "site/templates/partials/footer.html"
   - "scripts/site-build"
   - "scripts/site-check"
-  - "apps/majordomus-cli/src/ui/view.rs"
+  - "scripts/lib/ui-navbar.mjs"
+  - "apps/majordomus-cli/src/ui/navbar.rs"
+  - "apps/majordomus-cli/src/ui/navbar.html"
   - "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh"
 non_scope:
   - "Which release is offered as stable, which stays the newest stable release (I2829)"
@@ -31,3 +33,14 @@ validation:
 evidence_required:
   - "test_every_surface_names_its_versions_from_one_model"
 depends_on: []
+updated_at: 2026-11-07T19:07:59Z
+started_at: 2026-11-07T19:07:20Z
+started_event: sha256:a42733d07cada73f0a96f52d5afb036ad2ea0f2fb6c97a1dbb3098544ee0a9f8
+verified_at: 2026-11-07T19:07:59Z
+verified_event: sha256:60f4c3f5fd1a05ae2c84d998a938116fc592a147da80097a0207a0d9586cbf94
+evidence:
+  - covers: "test_every_surface_names_its_versions_from_one_model"
+    type: test
+    command: "bash test/run.sh 3727_the_pages_name_the_pre_release_beside_the_stable_one"
+    commit: 85e139113cb7a1761a2dcedaa09ec6944d79cd59
+    recorded_at: 2026-11-07T19:06:37Z
