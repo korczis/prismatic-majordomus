@@ -239,6 +239,50 @@ The flatten row came from sourcing `lib/common.sh` in that fixture and timing
 `$EPOCHREALTIME`. Repeat the whole run on an idle host before comparing a resolver against
 it. A load average near 45 on 18 cores spreads one sample by a factor of two.
 
+## What the runtime costs: `scripts/fabric-baseline`
+
+Majordomus Fabric would move connectivity to one user-scoped host agent. Before any such claim
+(its gate G1), `scripts/fabric-baseline` measures today's model. That model is one shared server
+per checkout (ADR 0003, ADR 0044), started by the first client or by `env enter` (ADR 0043),
+with every later client a bridge. The script builds disposable repositories, brings that model
+up and records what it costs:
+
+<!-- majordomus:unrun it builds the executable and runs L3 (ten servers, twenty clients) for minutes; case 4663 runs the script at L1 and L2 against a built executable -->
+```bash
+just build
+scripts/fabric-baseline --level L3 --runs 5 --bin apps/majordomus-cli/target/debug/majordomus --out /tmp/l3.json
+```
+
+| Level | Repositories | Checkouts | Concurrent MCP sessions |
+|---|---|---|---|
+| L1 | 1 | 1 | 1 |
+| L2 | 1 | 2 (a linked worktree) | 4 |
+| L3 | 2 | 10 | 20 |
+
+Every run does the following for every checkout, in an order that alternates between runs:
+
+1. a cold `env enter`, the wait until its server is ready, and a warm `env enter`;
+2. every client at once: MCP initialize, one canonical read (`tools/call majordomus_peers`),
+   held for `--hold` seconds and then detached;
+3. while the clients are attached, a sample of the fixture's own processes: servers and clients,
+   their TCP listeners, UDP sockets and Unix-domain sockets, aggregate and peak RSS, and file
+   descriptors;
+4. every server is stopped through its own lease.
+
+The document (`majordomus-fabric-baseline/v1`) holds every run's raw samples, the p50/p95/p99
+of each latency, failures beside the attempts they came from, the machine, and the entry budgets
+of `.ai/repo/policy.yaml`. The budgets are printed and never changed by a measurement.
+
+Two rules keep it honest:
+
+- A failure is counted, never dropped. With `--kill-one-server`, a server dies just before its
+  clients attach, and samples plus failures still equal attempts.
+- It runs only in a fixture it made. A directory that is not empty and not marked, or one inside
+  a git work tree, is refused (exit 3) before anything starts.
+
+Case 4663 proves both, and the L1 positive. The numbers depend on the machine and are attached
+to the change that uses them. They are not committed as a budget.
+
 ## Working on performance
 
 1. Measure first: `MJ_TIMING=1 bin/majordomus <command>` and read the ranking.

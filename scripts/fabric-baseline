@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+# fabric-baseline — what today's runtime costs, measured before Majordomus Fabric changes it.
+#
+# Majordomus Fabric S01 (gate G1): no efficiency claim about a host agent may be made until the
+# legacy model is measured. The legacy model is one shared server per checkout, elected through
+# its lease (ADR 0003, ADR 0044), started by the first `majordomus mcp` or by `env enter`
+# (ADR 0043), with every later client a bridge. This script builds disposable repositories,
+# brings that model up under a controlled workload, and records what it costs. It changes no
+# production behaviour.
+#
+#   scripts/fabric-baseline --level L1|L2|L3 [--runs N] [--hold S] [--out FILE]
+#                           [--bin PATH] [--fixture DIR] [--kill-one-server]
+#
+#   L1   one repository, one checkout, one MCP client
+#   L2   one repository, two checkouts (a linked worktree), four clients
+#   L3   two unrelated repositories, ten checkouts in all, twenty concurrent MCP sessions
+#
+# Each run, for every checkout: a cold `env enter` (no server), the wait until its server is
+# ready, a warm `env enter`, then every client at once: MCP initialize, one canonical read
+# (tools/call majordomus_peers), held open for --hold seconds and then detached. While the
+# clients are attached, the processes of the fixture are sampled. Each run then stops every
+# server through its own lease, never by pattern.
+#
+# Measured per run: processes (servers, clients) of the fixture only, found by their --repo
+# argument under the fixture root; TCP listeners, UDP sockets and Unix-domain sockets of those
+# processes; aggregate and peak RSS; open file descriptors; cold and warm entry, readiness and
+# attach latencies in milliseconds; failures with the attempts they came from. A failure is
+# counted, never dropped: --kill-one-server kills one server just before its clients attach,
+# and every client is then either a sample or a failure (samples + failures = attempts).
+#
+# Output: one JSON document (schema majordomus-fabric-baseline/v1) with every run's raw
+# samples, their p50/p95/p99, the machine it ran on and the entry budgets the policy holds
+# (.ai/repo/policy.yaml), printed beside the measurements and never changed by them.
+#
+# Safety: the fixture root is a directory this script made under the temporary directory and
+# marked; given with --fixture, it must be empty or carry that mark. A directory inside a git
+# work tree, or one that is not empty and not marked, is refused before anything runs. Real
+# checkouts and their .ai/local are never touched.
+#
+# Exit: 0 measured · 2 usage · 3 refused (not a disposable fixture, or a tool is missing) ·
+# 4 the runtime could not be brought up at all.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
+MARK=".fabric-baseline-fixture"
+SCHEMA="majordomus-fabric-baseline/v1"
+
+die()  { echo "fabric-baseline: $*" >&2; exit 2; }
+refuse() { echo "fabric-baseline: refused: $*" >&2; exit 3; }
+
+LEVEL="" RUNS=3 HOLD=4 OUT="" BIN="${MAJORDOMUS_BIN:-}" FIXTURE="" KILL=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --level) LEVEL="${2:-}"; shift 2 ;;
+    --runs) RUNS="${2:-}"; shift 2 ;;
+    --hold) HOLD="${2:-}"; shift 2 ;;
+    --out) OUT="${2:-}"; shift 2 ;;
+    --bin) BIN="${2:-}"; shift 2 ;;
+    --fixture) FIXTURE="${2:-}"; shift 2 ;;
+    --kill-one-server) KILL=1; shift ;;
+    -h|--help) sed -n '2,40p' "$0"; exit 0 ;;
+    *) die "unknown argument: $1 (see --help)" ;;
+  esac
+done
+case "$LEVEL" in
+  L1) REPOS=1; PER_REPO=1; CLIENTS=1 ;;   # clients per checkout
+  L2) REPOS=1; PER_REPO=2; CLIENTS=2 ;;
+  L3) REPOS=2; PER_REPO=5; CLIENTS=2 ;;
+  *) die "--level L1|L2|L3 is required" ;;
+esac
+[[ "$RUNS" =~ ^[1-9][0-9]*$ ]] || die "--runs takes a positive integer"
+[[ "$HOLD" =~ ^[1-9][0-9]*$ ]] || die "--hold takes a positive integer of seconds"
+for t in jq lsof git ps; do command -v "$t" >/dev/null 2>&1 || refuse "$t is not installed"; done
+[ -n "$BIN" ] && [ -x "$BIN" ] || refuse "no majordomus executable: pass --bin or set MAJORDOMUS_BIN (an ordinary command never builds, ADR 0224)"
+MJ="$ROOT/bin/majordomus"
+[ -x "$MJ" ] || refuse "$MJ is missing"
+
+# ------------------------------------------------------------------ the disposable fixture
+tmp="${TMPDIR:-/tmp}"; tmp="$(cd "$tmp" && pwd -P)"
+if [ -z "$FIXTURE" ]; then
+  FIXTURE="$(mktemp -d "$tmp/mj-fabric-baseline.XXXXXX")"
+  : > "$FIXTURE/$MARK"
+else
+  [ -d "$FIXTURE" ] || refuse "--fixture $FIXTURE is not a directory"
+  FIXTURE="$(cd "$FIXTURE" && pwd -P)"
+  if git -C "$FIXTURE" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    refuse "$FIXTURE is inside a git work tree; a baseline runs only in a fixture it made"
+  fi
+  if [ ! -f "$FIXTURE/$MARK" ]; then
+    [ -z "$(ls -A "$FIXTURE")" ] || refuse "$FIXTURE is not empty and does not carry $MARK"
+    : > "$FIXTURE/$MARK"
+  fi
+fi
+export MAJORDOMUS_SHARE="$ROOT/share" MAJORDOMUS_BIN="$BIN" MAJORDOMUS_LOG=error
+
+# Milliseconds from bash's own clock (EPOCHREALTIME, seconds with six decimals): no process.
+now_ms() { local t="${EPOCHREALTIME/[.,]/}"; echo $(( 10#$t / 1000 )); }
+[ -n "${EPOCHREALTIME:-}" ] || refuse "bash 5 or later is required (EPOCHREALTIME)"
+
+CHECKOUTS=()
+stop_all() { for c in "${CHECKOUTS[@]:-}"; do [ -n "$c" ] && "$BIN" serve stop --repo "$c" >/dev/null 2>&1 || true; done; }
+trap 'stop_all' EXIT
+
+# The repositories: each nested one level down so that its worktree container is a sibling
+# inside the fixture (test/cases/192 explains why), with the layer installed and committed.
+for r in $(seq 1 "$REPOS"); do
+  base="$FIXTURE/r$r"; mkdir -p "$base"; R="$base/repo"; mkdir -p "$R"
+  git -C "$R" init -q .
+  git -C "$R" config user.email t@example.com; git -C "$R" config user.name t
+  ( cd "$R" && "$MJ" init >/dev/null && "$MJ" update >/dev/null ) || { echo "fabric-baseline: init failed in a fixture" >&2; exit 4; }
+  git -C "$R" add -A >/dev/null && git -C "$R" commit -qm base >/dev/null
+  trunk="$(git -C "$R" symbolic-ref --short HEAD)"
+  CHECKOUTS+=("$R")
+  for (( w=2; w<=PER_REPO; w++ )); do   # never seq: BSD seq counts down from 2 to 1
+    ( cd "$R" && "$BIN" worktree create "feature/w$w" --base "$trunk" >/dev/null 2>&1 ) \
+      || { echo "fabric-baseline: worktree create failed in a fixture" >&2; exit 4; }
+    CHECKOUTS+=("$R-wt/feature/w$w")
+  done
+done
+
+ready() {   # bounded: true once the checkout's server stands ready
+  local i=0
+  while [ "$i" -lt 300 ]; do
+    "$BIN" serve status --repo "$1" --checkouts this 2>/dev/null | grep -q '^standing   ready' && return 0
+    i=$((i+1)); sleep 0.1
+  done
+  return 1
+}
+
+# The processes of this fixture: a Majordomus executable whose second word is serve or mcp and
+# whose --repo is a checkout under the fixture root. Its own shells and tools are not counted.
+fixture_procs() {
+  ps -axo pid=,rss=,command= | awk -v root="$FIXTURE/" '
+    { exe = $3; n = split(exe, parts, "/"); base = parts[n]
+      if ((base == "majordomus" || base == "majordomus-cli") && ($4 == "serve" || $4 == "mcp")) {
+        for (i = 5; i < NF; i++) if ($i == "--repo" && index($(i+1), root) == 1) { print $1, $2, $4; break } } }'
+}
+
+sample() {   # one JSON object for the fixture's processes now
+  local pids pid rss peak=0 total=0 servers=0 clients=0 fds=0 tcp=0 udp=0 uds=0 role
+  pids=""
+  while read -r pid rss role; do
+    [ -n "$pid" ] || continue
+    pids="$pids $pid"
+    if [ "$role" = serve ]; then servers=$((servers+1)); else clients=$((clients+1)); fi
+    total=$((total+rss)); [ "$rss" -gt "$peak" ] && peak="$rss"
+    fds=$((fds + $(lsof -n -p "$pid" 2>/dev/null | awk 'NR>1' | wc -l)))
+  done < <(fixture_procs)
+  pids="${pids# }"
+  if [ -n "$pids" ]; then
+    local list; list="$(echo $pids | tr ' ' ',')"
+    tcp="$(lsof -nP -a -p "$list" -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1' | wc -l)"
+    udp="$(lsof -nP -a -p "$list" -iUDP 2>/dev/null | awk 'NR>1' | wc -l)"
+    uds="$(lsof -n -a -p "$list" -U 2>/dev/null | awk 'NR>1' | wc -l)"
+  fi
+  jq -nc --argjson s "$servers" --argjson c "$clients" --argjson t "$total" --argjson p "$peak" \
+    --argjson f "$fds" --argjson tcp "$tcp" --argjson udp "$udp" --argjson uds "$uds" \
+    '{processes: {servers: $s, clients: $c, total: ($s + $c)}, rss_kb: {total: $t, peak_process: $p},
+      fds: $f, sockets: {tcp_listen: $tcp, udp: $udp, unix: $uds}}'
+}
+
+client_input() {
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"fabric-baseline","version":"0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_peers","arguments":{}}}'
+  sleep "$HOLD"
+}
+
+RUNS_JSON="[]"
+for run in $(seq 1 "$RUNS"); do
+  stop_all
+  d="$FIXTURE/run$run"; mkdir -p "$d"
+  cold=() warm=() readyms=() fail_enter=0 fail_ready=0
+  # Alternate the order between runs, so that a checkout is not always first.
+  order=("${CHECKOUTS[@]}")
+  if [ $((run % 2)) -eq 0 ]; then
+    order=(); for (( i=${#CHECKOUTS[@]}-1; i>=0; i-- )); do order+=("${CHECKOUTS[$i]}"); done
+  fi
+  for c in "${order[@]}"; do
+    t0="$(now_ms)"
+    if "$BIN" env enter --repo "$c" --shell direnv --no-banner --no-bridge >/dev/null 2>&1; then cold+=($(( $(now_ms) - t0 ))); else fail_enter=$((fail_enter+1)); fi
+  done
+  for c in "${order[@]}"; do
+    t0="$(now_ms)"
+    if ready "$c"; then readyms+=($(( $(now_ms) - t0 ))); else fail_ready=$((fail_ready+1)); fi
+  done
+  for c in "${order[@]}"; do
+    t0="$(now_ms)"
+    if "$BIN" env enter --repo "$c" --shell direnv --no-banner --no-bridge >/dev/null 2>&1; then warm+=($(( $(now_ms) - t0 ))); else fail_enter=$((fail_enter+1)); fi
+  done
+  # --kill-one-server: the first checkout's server dies before its clients arrive. They must
+  # elect a new one (ADR 0003) or fail, and either way every one of them is counted.
+  killed=0
+  if [ "$KILL" = 1 ]; then
+    # Exactly this checkout's server: its --repo is the checkout, not a worktree beside it.
+    victim="$(ps -axo pid=,command= | awk -v root="${CHECKOUTS[0]}" '/ serve / { for (i = 2; i < NF; i++) if ($i == "--repo" && $(i+1) == root) { print $1; exit } }' || true)"   # awk's early exit closes the pipe on ps
+    [ -n "$victim" ] && kill -9 "$victim" 2>/dev/null && killed=1
+  fi
+  # Every client at once.
+  n=0; starts=(); cpids=()
+  for c in "${CHECKOUTS[@]}"; do
+    for _ in $(seq 1 "$CLIENTS"); do
+      n=$((n+1)); starts[$n]="$(now_ms)"
+      ( client_input | "$BIN" mcp --repo "$c" > "$d/c$n.out" 2> "$d/c$n.err" ) &
+      cpids+=("$!")
+    done
+  done
+  attach=() pending=$n
+  deadline=$(( $(now_ms) + 30000 ))
+  seen=()
+  while [ "$pending" -gt 0 ] && [ "$(now_ms)" -lt "$deadline" ]; do
+    for i in $(seq 1 "$n"); do
+      [ -n "${seen[$i]:-}" ] && continue
+      if [ -f "$d/c$i.out" ] && grep -q '"id":2' "$d/c$i.out"; then
+        seen[$i]=1; attach+=($(( $(now_ms) - starts[$i] ))); pending=$((pending-1))
+      fi
+    done
+    sleep 0.05
+  done
+  sleep $(( HOLD / 2 > 0 ? HOLD / 2 : 1 ))
+  s="$(sample)"
+  ps -axo pid=,ppid=,rss=,command= | awk -v root="$FIXTURE" 'index($0, root)' > "$d/processes.txt"   # kept in the fixture, for a reader
+  # Each client ends when its input does (--hold); one still running 30 s later is ended.
+  limit=$(( $(now_ms) + HOLD * 1000 + 30000 ))
+  for p in "${cpids[@]}"; do
+    while kill -0 "$p" 2>/dev/null && [ "$(now_ms)" -lt "$limit" ]; do sleep 0.1; done
+    kill "$p" 2>/dev/null || true
+    wait "$p" 2>/dev/null || true
+  done
+  # Every client is either a sample or a failure: one that never answered id 2 in time.
+  fail_attach=$(( n - ${#attach[@]} ))
+  unset seen
+  arr() { if [ $# -eq 0 ]; then echo '[]'; else printf '%s\n' "$@" | jq -s -c .; fi; }
+  RUN="$(jq -nc --argjson run "$run" --argjson cold "$(arr "${cold[@]:-}")" --argjson warm "$(arr "${warm[@]:-}")" \
+    --argjson ready "$(arr "${readyms[@]:-}")" --argjson attach "$(arr "${attach[@]:-}")" --argjson sample "$s" \
+    --argjson fe "$fail_enter" --argjson fr "$fail_ready" --argjson fa "$fail_attach" --argjson clients "$n" \
+    --argjson checkouts "${#CHECKOUTS[@]}" --argjson killed "$killed" \
+    '{run: $run, enter_cold_ms: ($cold | map(select(. != null))), enter_warm_ms: ($warm | map(select(. != null))),
+      ready_ms: ($ready | map(select(. != null))), attach_ms: ($attach | map(select(. != null))),
+      attempts: {enter: ($checkouts * 2), ready: $checkouts, attach: $clients},
+      failures: {enter: $fe, ready: $fr, attach: $fa}, killed_servers: $killed, sample: $sample}')"
+  RUNS_JSON="$(jq -c --argjson r "$RUN" '. + [$r]' <<<"$RUNS_JSON")"
+  stop_all
+done
+
+policy="$ROOT/.ai/repo/policy.yaml"
+budget() { sed -n "s/^ *$1: *\([0-9][0-9]*\).*/\1/p" "$policy" | head -n 1; }
+version="$("$BIN" --version 2>/dev/null | head -n 1 || true)"
+DOC="$(jq -n --arg schema "$SCHEMA" --arg level "$LEVEL" --argjson runs "$RUNS_JSON" \
+  --argjson repos "$REPOS" --argjson checkouts "${#CHECKOUTS[@]}" --argjson clients_per "$CLIENTS" --argjson hold "$HOLD" \
+  --arg os "$(uname -sm)" --arg version "$version" --arg sha "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)" \
+  --arg enter_ms "$(budget enter_ms)" --arg enter_cold_ms "$(budget enter_cold_ms)" '
+  def pct(p): if length == 0 then null else (sort | .[((length - 1) * p | floor)]) end;
+  def dist(f): [ $runs[] | f[] ] | {n: length, p50: pct(0.5), p95: pct(0.95), p99: pct(0.99)};
+  {schema: $schema, level: $level,
+   shape: {repositories: $repos, checkouts: $checkouts, clients_per_checkout: $clients_per, hold_s: $hold},
+   machine: {os: $os, majordomus: $version, source_sha: $sha},
+   policy_budgets: {enter_ms: ($enter_ms | tonumber? // null), enter_cold_ms: ($enter_cold_ms | tonumber? // null),
+                    note: "the policy as it stands, printed beside the measurement and never changed by it"},
+   summary: {enter_cold_ms: dist(.enter_cold_ms), enter_warm_ms: dist(.enter_warm_ms), ready_ms: dist(.ready_ms),
+             attach_ms: dist(.attach_ms),
+             failures: ([ $runs[] | .failures ] | {enter: (map(.enter) | add), ready: (map(.ready) | add), attach: (map(.attach) | add)}),
+             attempts: ([ $runs[] | .attempts ] | {enter: (map(.enter) | add), ready: (map(.ready) | add), attach: (map(.attach) | add)}),
+             processes_max: ([ $runs[] | .sample.processes.total ] | max),
+             rss_kb_total_max: ([ $runs[] | .sample.rss_kb.total ] | max),
+             tcp_listen_max: ([ $runs[] | .sample.sockets.tcp_listen ] | max),
+             udp_max: ([ $runs[] | .sample.sockets.udp ] | max),
+             unix_max: ([ $runs[] | .sample.sockets.unix ] | max)},
+   runs: $runs}')"
+if [ -n "$OUT" ]; then printf '%s\n' "$DOC" > "$OUT"; else printf '%s\n' "$DOC"; fi
