@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-stranger-adopts-it-unaided](https://majordomus.dev/plan/a-stranger-adopts-it-unaided/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | The stranger's first ten minutes are one measured gate, init tells an adopter something true about their own repository, and each real outside run is recorded unedited and turned into cases. |
+| [a-stranger-adopts-it-unaided](https://majordomus.dev/plan/a-stranger-adopts-it-unaided/) | BLOCKED | 0/6 | 0 | 6 | 0 | 0 | 0 | The stranger's first ten minutes are one measured gate, init tells an adopter something true about their own repository, and each real outside run is recorded unedited and turned into cases. |
 
 ## Issues
 
@@ -20,6 +20,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3129](https://majordomus.dev/plan/i3129/) | BLOCKED | 2 | I3127, I3128 | An outside developer's first run is recorded as it happened, and each friction it met becomes an issue with a failing case |
 | [I3321](https://majordomus.dev/plan/i3321/) | BLOCKED | 2 | I3127 | In a foreign repository, the wired pre-push hook of the claude-code projection refuses what finish would refuse, through the installed release |
 | [I3995](https://majordomus.dev/plan/i3995/) | BLOCKED | 0 | — | A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit |
+| [I4717](https://majordomus.dev/plan/i4717/) | BLOCKED | 0 | — | A generated bootstrap tells a worker to read README.md only in a repository that has one |
 
 ## Findings
 
