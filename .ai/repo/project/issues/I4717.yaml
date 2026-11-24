@@ -1,0 +1,36 @@
+id: I4717
+milestone: a-stranger-adopts-it-unaided
+title: "A generated bootstrap tells a worker to read README.md only in a repository that has one"
+slug: a-bootstrap-cites-only-a-readme-that-exists
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "majordomus update writes the sentence that sends a worker to README.md into CLAUDE.md, GEMINI.md, AGENTS.md and the other provider bootstraps only when the repository's root holds a README.md, and otherwise sends the worker straight to .ai/README.md. The Rust renderer (apps/majordomus-cli/src/providers.rs render) and the shell one (lib/update.sh mj_render_tokens) decide this alike, and a case proves that an adopter without README.md gets no reference to a file that does not exist."
+why: "On 2026-11-24 a peer session (dev-7c) working on the ~/dev workspace layer, a supervised repository with no root README.md, found that its generated CLAUDE.md and GEMINI.md began with 'Read `README.md`, then .ai/README.md'. The ~/dev layer got a README.md to work around it. The sentence is written into share/providers/claude-code.tmpl, gemini.tmpl and generic.tmpl at line 6, bb.tmpl at line 8, and agents.tmpl and codex.tmpl at line 3 ('Read `README.md` for what this repository is'), unconditionally. The renderer fills only DEFAULT_PROFILE, CHECKPOINT_DEFAULT and POLICY_SHA, so no policy value can turn the sentence off. A stranger whose repository has no README.md is told, in the first lines every agent reads, to read a file that does not exist."
+current_state: "share/providers/{claude-code,gemini,generic}.tmpl line 6, bb.tmpl line 8, and agents.tmpl and codex.tmpl line 3 name README.md unconditionally; providers.rs render and lib/update.sh mj_render_tokens fill three policy tokens and nothing about the repository."
+desired_state: "A repository without a root README.md gets bootstraps that name only .ai/README.md, and one with a README.md gets the sentence as today; update reports the bootstraps current in both, and adding or removing README.md makes them stale until update runs."
+scope:
+  - "share/providers"
+  - ".ai/repo/providers"
+  - "apps/majordomus-cli/src/providers.rs"
+  - "lib/update.sh"
+  - "test/cases/4663_a_bootstrap_cites_only_a_readme_that_exists.sh"
+  - ".ai/repo/project/issues/I4717.yaml"
+non_scope:
+  - "The README.md chain of context resolve (each directory's README.md from .ai/ down), which already reads only the files that exist"
+  - "Writing a README.md for an adopter; init does not author the repository's own description"
+depends_on: []
+serves:
+  - a-stranger-adopts-it-unaided#friction-becomes-a-case
+acceptance_criteria:
+  - "In a fresh repository without README.md, init then update writes CLAUDE.md, GEMINI.md and AGENTS.md whose text names no README.md at the root, and doctor reports them current"
+  - "Adding a README.md makes the bootstraps stale; update writes the sentence back, and both renderers produce the same bytes"
+  - "With the condition removed from the renderer, the case fails on the dangling reference"
+  - "Case 4663 was reserved through plan.allocate (id:case/4663) on 2026-11-24; a number written here that the board does not hold is provisional (ADR 0053)"
+validation:
+  - "bash test/run.sh 4663_a_bootstrap_cites_only_a_readme_that_exists"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_bootstrap_cites_only_a_readme_that_exists"
+created_at: 2026-11-24
+updated_at: 2026-11-24

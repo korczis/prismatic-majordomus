@@ -82660,6 +82660,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4717",
+        "kind": "issue",
+        "label": "I4717",
+        "summary": "A generated bootstrap tells a worker to read README.md only in a repository that has one",
+        "route": "/cockpit/objects/issue/i4717",
+        "source": ".ai/repo/project/issues/I4717.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fresh repository without README.md, init then update writes CLAUDE.md, GEMINI.md and AGENTS.md whose text names no README.md at the root, and doctor reports them current",
+            "Adding a README.md makes the bootstraps stale; update writes the sentence back, and both renderers produce the same bytes",
+            "With the condition removed from the renderer, the case fails on the dangling reference",
+            "Case 4663 was reserved through plan.allocate (id:case/4663) on 2026-11-24; a number written here that the board does not hold is provisional (ADR 0053)"
+          ],
+          "created_at": "2026-11-24",
+          "depends_on": [],
+          "evidence_required": [
+            "a_bootstrap_cites_only_a_readme_that_exists"
+          ],
+          "milestone": "a-stranger-adopts-it-unaided",
+          "non_scope": [
+            "The README.md chain of context resolve (each directory's README.md from .ai/ down), which already reads only the files that exist",
+            "Writing a README.md for an adopter; init does not author the repository's own description"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/providers",
+            ".ai/repo/providers",
+            "apps/majordomus-cli/src/providers.rs",
+            "lib/update.sh",
+            "test/cases/4663_a_bootstrap_cites_only_a_readme_that_exists.sh",
+            ".ai/repo/project/issues/I4717.yaml"
+          ],
+          "serves": [
+            "a-stranger-adopts-it-unaided#friction-becomes-a-case"
+          ],
+          "slug": "a-bootstrap-cites-only-a-readme-that-exists",
+          "updated_at": "2026-11-24",
+          "validation": [
+            "bash test/run.sh 4663_a_bootstrap_cites_only_a_readme_that_exists",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -152799,6 +152845,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4717",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4717",
+        "target": "majordomus://milestone/a-stranger-adopts-it-unaided",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165725,8 +165781,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4535,
-      "edges": 10218,
+      "nodes": 4536,
+      "edges": 10220,
       "acyclic": false,
       "truncated": false
     }
