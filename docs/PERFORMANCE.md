@@ -247,6 +247,7 @@ per checkout (ADR 0003, ADR 0044), started by the first client or by `env enter`
 with every later client a bridge. The script builds disposable repositories, brings that model
 up and records what it costs:
 
+<!-- majordomus:unrun it builds the executable and runs L3 (ten servers, twenty clients) for minutes; case 4663 runs the script at L1 and L2 against a built executable -->
 ```bash
 just build
 scripts/fabric-baseline --level L3 --runs 5 --bin apps/majordomus-cli/target/debug/majordomus --out /tmp/l3.json

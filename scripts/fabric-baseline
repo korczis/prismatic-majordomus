@@ -70,7 +70,7 @@ case "$LEVEL" in
 esac
 [[ "$RUNS" =~ ^[1-9][0-9]*$ ]] || die "--runs takes a positive integer"
 [[ "$HOLD" =~ ^[1-9][0-9]*$ ]] || die "--hold takes a positive integer of seconds"
-for t in jq perl lsof git ps; do command -v "$t" >/dev/null 2>&1 || refuse "$t is not installed"; done
+for t in jq lsof git ps; do command -v "$t" >/dev/null 2>&1 || refuse "$t is not installed"; done
 [ -n "$BIN" ] && [ -x "$BIN" ] || refuse "no majordomus executable: pass --bin or set MAJORDOMUS_BIN (an ordinary command never builds, ADR 0224)"
 MJ="$ROOT/bin/majordomus"
 [ -x "$MJ" ] || refuse "$MJ is missing"
@@ -93,7 +93,9 @@ else
 fi
 export MAJORDOMUS_SHARE="$ROOT/share" MAJORDOMUS_BIN="$BIN" MAJORDOMUS_LOG=error
 
-now_ms() { perl -MTime::HiRes=time -e 'printf "%d\n", time*1000'; }
+# Milliseconds from bash's own clock (EPOCHREALTIME, seconds with six decimals): no process.
+now_ms() { local t="${EPOCHREALTIME/[.,]/}"; echo $(( 10#$t / 1000 )); }
+[ -n "${EPOCHREALTIME:-}" ] || refuse "bash 5 or later is required (EPOCHREALTIME)"
 
 CHECKOUTS=()
 stop_all() { for c in "${CHECKOUTS[@]:-}"; do [ -n "$c" ] && "$BIN" serve stop --repo "$c" >/dev/null 2>&1 || true; done; }
@@ -195,11 +197,12 @@ for run in $(seq 1 "$RUNS"); do
     [ -n "$victim" ] && kill -9 "$victim" 2>/dev/null && killed=1
   fi
   # Every client at once.
-  n=0; starts=()
+  n=0; starts=(); cpids=()
   for c in "${CHECKOUTS[@]}"; do
     for _ in $(seq 1 "$CLIENTS"); do
       n=$((n+1)); starts[$n]="$(now_ms)"
       ( client_input | "$BIN" mcp --repo "$c" > "$d/c$n.out" 2> "$d/c$n.err" ) &
+      cpids+=("$!")
     done
   done
   attach=() pending=$n
@@ -217,7 +220,13 @@ for run in $(seq 1 "$RUNS"); do
   sleep $(( HOLD / 2 > 0 ? HOLD / 2 : 1 ))
   s="$(sample)"
   ps -axo pid=,ppid=,rss=,command= | awk -v root="$FIXTURE" 'index($0, root)' > "$d/processes.txt"   # kept in the fixture, for a reader
-  wait || true
+  # Each client ends when its input does (--hold); one still running 30 s later is ended.
+  limit=$(( $(now_ms) + HOLD * 1000 + 30000 ))
+  for p in "${cpids[@]}"; do
+    while kill -0 "$p" 2>/dev/null && [ "$(now_ms)" -lt "$limit" ]; do sleep 0.1; done
+    kill "$p" 2>/dev/null || true
+    wait "$p" 2>/dev/null || true
+  done
   # Every client is either a sample or a failure: one that never answered id 2 in time.
   fail_attach=$(( n - ${#attach[@]} ))
   unset seen
