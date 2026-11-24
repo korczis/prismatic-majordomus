@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "c8560bf946204d8ff4faeb3c639c58849b90b06edef65d055cfb8839e00d3700",
+    "fingerprint": "7b0a16bbbd1a7ee294d29d24144dfb47b888e02d8d4bb996b53ebd5961b6c9eb",
     "summary": {
-      "total": 4057,
+      "total": 4063,
       "builtin": 233,
-      "declarative": 3824,
+      "declarative": 3830,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3824
+        "resource": 3830
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3834
+        "implemented": 3840
       },
       "mcp_tools": 217,
-      "mcp_resources": 3881,
+      "mcp_resources": 3887,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -98576,7 +98576,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 170,
+        "capabilities": 171,
         "capability_ids": []
       },
       {
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1272,
+        "capabilities": 1275,
         "capability_ids": []
       },
       {
@@ -99704,7 +99704,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 192,
+        "capabilities": 193,
         "capability_ids": []
       },
       {
@@ -99848,7 +99848,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 707,
+        "capabilities": 708,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "25073c0c04f48f4044f3c9890ab2db0b86790377703a345202b0c74cd424bed2",
+    "fingerprint": "4d00d5453d95f5ac324109a82271ff733a554d37928b3f3dda52188837dc3abb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99964,7 +99964,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 170,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1272,
+      "issue": 1275,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -99990,12 +99990,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 44,
-      "rule": 192,
+      "rule": 193,
       "scope": 1,
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 707,
+      "test": 708,
       "use-case": 49,
       "workspace": 1
     },
@@ -102758,6 +102758,22 @@
           "profiles",
           "policy",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0236",
+        "kind": "adr",
+        "identity": "adr-0236",
+        "title": "A prompt pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and is kept under campaigns before any record cites it",
+        "description": "A prompt pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and is kept under campaigns before any record cites it",
+        "path": ".ai/repo/adrs/0236-a-pack-is-staged-in-tmp-owner-packs-and-kept-before-it-is-cited.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 10315,
+        "tags": [
+          "provenance",
+          "campaigns",
+          "intake"
         ]
       },
       {
@@ -107549,7 +107565,7 @@
         "title": "Working from the owner's packs",
         "path": "docs/OWNER_PACKS.md",
         "source_class": "document",
-        "bytes": 14839
+        "bytes": 16794
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -107594,7 +107610,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140125
+        "bytes": 140427
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -118693,7 +118709,7 @@
         "path": ".ai/repo/project/issues/I3169.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2110
+        "bytes": 2385
       },
       {
         "uri": "majordomus://issue/I3170",
@@ -125571,6 +125587,39 @@
         "bytes": 3298
       },
       {
+        "uri": "majordomus://issue/I4714",
+        "kind": "issue",
+        "identity": "I4714",
+        "title": "A pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and no record or ADR cites it there",
+        "description": "Declare the staging place of a prompt pack in progress (tmp/owner-packs/<pack>/ of the primary checkout, legacy tmp/prompt-packs/<pack>/) in ADR 0236, and refuse a record under .ai/repo/project/ or an ADR that cites a file there: scripts/ci/campaigns-check step 5 fails each such citation unless .ai/repo/ci/campaigns-staged-citations.txt names it with its reason, fails a line of that list whose citation is gone, and the campaigns class of .ai/repo/ci/gates.yaml selects the gate when a record or an ADR changes. Rule project.a-brief-is-cited-where-it-is-kept states it; docs/OWNER_PACKS.md and campaigns/README.md describe the staging place and when a pack moves from it.",
+        "path": ".ai/repo/project/issues/I4714.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4072
+      },
+      {
+        "uri": "majordomus://issue/I4715",
+        "kind": "issue",
+        "identity": "I4715",
+        "title": "Every pack in the staging place is listed with its derived state from any worktree, and a pack left staged too long is reported at session start",
+        "description": "Declare a read-only capability (campaign staged, under apps/majordomus-cli/src/capability/builtin/, projected by majordomus generate to the CLI, MCP, HTTP, the generated skill and the capability documentation) that lists every pack in the staging places ADR 0236 declares, resolved to the primary checkout through the git common directory from any linked worktree, each with a derived state (staged, kept, diverged, planned, unplanned), its file count, first heading, newest modification time and the records that cite it. majordomus context and doctor report a pack that has stayed staged longer than a bound the policy declares.",
+        "path": ".ai/repo/project/issues/I4715.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2858
+      },
+      {
+        "uri": "majordomus://issue/I4716",
+        "kind": "issue",
+        "identity": "I4716",
+        "title": "A /ui screen shows every pack from staged to kept to planned, each linked to its records and back",
+        "description": "Add a read-only screen to the loopback /ui that renders the capability of I4715: each pack with its derived state, file count, first heading and age, each linked to the records that cite it, and each record's page linked back to its pack. Built on Flowbite Pro with the --mj-* tokens, its filters and selected pack in the URL, held by a Playwright test in a real browser that drives the filters and follows a pack to a record and back.",
+        "path": ".ai/repo/project/issues/I4716.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1987
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -129378,7 +129427,7 @@
         "path": ".ai/repo/project/milestones/campaigns-are-read-as-provenance.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2154
+        "bytes": 2469
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -132292,6 +132341,23 @@
         "bytes": 2146,
         "tags": [
           "principle"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-brief-is-cited-where-it-is-kept@1",
+        "kind": "rule",
+        "identity": "project.a-brief-is-cited-where-it-is-kept@1",
+        "title": "A record cites a campaign brief where the repository keeps it, never where it was staged",
+        "description": "A prompt pack is staged, while it is still being written or handed over, in the primary checkout's ignored tmp/owner-packs/ (older packs in tmp/prompt-packs/), and kept, once work is planned from it, byte for byte under campaigns/. A plan record or an ADR that cites a file in the staging place cites bytes only one disk holds; a clone, a linked worktree and CI cannot open them, and the record reads as sourced when it is not. Every such citation fails unless .ai/repo/ci/campaigns-staged-citations.txt names it with its reason, and that list only shrinks.",
+        "path": ".ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3133,
+        "tags": [
+          "provenance",
+          "campaigns",
+          "evidence",
+          "records"
         ]
       },
       {
@@ -139660,6 +139726,14 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+        "kind": "test",
+        "identity": "test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+        "path": "test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+        "source_class": "case",
+        "bytes": 5999
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -142011,7 +142085,7 @@
       "identity": [
         "id"
       ],
-      "objects": 170
+      "objects": 171
     },
     {
       "name": "application",
@@ -142174,7 +142248,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1272
+      "objects": 1275
     },
     {
       "name": "knowledge",
@@ -142271,7 +142345,7 @@
         "id",
         "version"
       ],
-      "objects": 192
+      "objects": 193
     },
     {
       "name": "scope",
@@ -142336,7 +142410,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 707
+      "objects": 708
     },
     {
       "name": "use-case",

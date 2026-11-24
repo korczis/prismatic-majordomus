@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [campaigns-are-read-as-provenance](https://majordomus.dev/plan/campaigns-are-read-as-provenance/) | PLANNED | 0/4 | 1 | 3 | 0 | 0 | 0 | campaign is a kind; records cite campaigns through provenance and campaigns list what cites them; one command adds a pack safely; an execution of a record that cites a campaign pins the revision it ran. |
+| [campaigns-are-read-as-provenance](https://majordomus.dev/plan/campaigns-are-read-as-provenance/) | PLANNED | 0/7 | 2 | 5 | 0 | 0 | 0 | campaign is a kind; records cite campaigns through provenance and campaigns list what cites them; one command adds a pack safely; an execution of a record that cites a campaign pins the revision it ran. |
 
 ## Issues
 
@@ -19,6 +19,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3168](https://majordomus.dev/plan/i3168/) | BLOCKED | 1 | I3167 | An intent, milestone or issue cites the campaign that drove it, and a campaign answers which records cite it |
 | [I3169](https://majordomus.dev/plan/i3169/) | BLOCKED | 1 | I3167 | A new pack enters campaigns/ through one command that checks the archive before writing a byte |
 | [I3170](https://majordomus.dev/plan/i3170/) | BLOCKED | 2 | I3168 | An execution of a record that cites a campaign pins the revision it ran, and a later revision changes nothing about it |
+| [I4714](https://majordomus.dev/plan/i4714/) | READY | 0 | — | A pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and no record or ADR cites it there |
+| [I4715](https://majordomus.dev/plan/i4715/) | BLOCKED | 1 | I4714 | Every pack in the staging place is listed with its derived state from any worktree, and a pack left staged too long is reported at session start |
+| [I4716](https://majordomus.dev/plan/i4716/) | BLOCKED | 2 | I4715 | A /ui screen shows every pack from staged to kept to planned, each linked to its records and back |
 
 ## Findings
 
@@ -48,3 +51,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares campaigns/README.md with I4714; they may not run concurrently |

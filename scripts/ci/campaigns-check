@@ -7,7 +7,7 @@
 # did still reads like the brief that drove the work, and a half-copied pack still reads like a
 # pack. A record nobody can prove is not evidence.
 #
-# Four things are decided here, and nothing about what a pack says:
+# Five things are decided here, and nothing about what a pack says:
 #
 #   1. `campaigns/MANIFEST.sha256` covers exactly the files present, with their bytes — declared
 #      and present, in both directions. A checker that walks only the manifest passes a tree
@@ -24,6 +24,9 @@
 #      `.ai/repo/ci/campaigns-unplanned.txt` names it with the reason. A line of that list
 #      whose pack a record does cite is stale and fails, so the list can only shrink. A tree
 #      with no project model owes no plan and is not asked.
+#   5. No record cites a pack where it was staged (`tmp/owner-packs/`, `tmp/prompt-packs/`) rather
+#      than where it is kept, unless `.ai/repo/ci/campaigns-staged-citations.txt` names it; that
+#      list only shrinks. See the block that decides it below, and ADR 0236.
 #
 # SHA-256 is taken without Perl, which this repository does not run (`shasum` is a Perl
 # script on macOS): `sha256sum` where present (GNU coreutils on the runner, /sbin on recent
@@ -223,6 +226,44 @@ if [ -d "$PROJECT" ]; then
   LC_ALL=C comm -23 "$tmp/unplanned" "$tmp/packs" \
     | sed "s|.*|FAIL campaigns  $UNPLANNED — names \`&\`, which is not a pack of this tree  [reproduce: ls '$DIR/&']|" >> "$tmp/findings" || true
 fi
+
+# 5. A record cites a brief where it is kept, never where it was staged. A pack in progress
+# lives in the primary checkout's ignored `tmp/owner-packs/` (older ones in `tmp/prompt-packs/`)
+# until it is kept here (ADR 0236). A record under the plan or an ADR that cites a file there
+# cites bytes only one disk holds: a clone, a worktree and CI cannot open it. Each such citation
+# fails unless `.ai/repo/ci/campaigns-staged-citations.txt` names it, as `<file> <citation>`
+# with the reason after `#`; a line of that list whose citation is gone fails too, so the list
+# can only shrink. `tmp/packs/` is not a staging place: `majordomus pack` writes its output
+# there, and a record may describe that output.
+STAGED_RE='tmp/(owner-packs|prompt-packs)/[A-Za-z0-9._-]+'
+STAGED_ALLOW=.ai/repo/ci/campaigns-staged-citations.txt
+: > "$tmp/staged-cited"
+for src in "$PROJECT" .ai/repo/adrs; do
+  [ -d "$src" ] || continue
+  grc=0
+  grep -rnoE "$STAGED_RE" "$src" > "$tmp/staged-raw" 2> "$tmp/staged.err" || grc=$?
+  if [ "$grc" -gt 1 ]; then
+    echo "campaigns-check: $src/ could not be read for citations of a staged pack (exit $grc)" >&2
+    sed 's/^/  /' "$tmp/staged.err" >&2
+    echo "  [reproduce: grep -rnoE '$STAGED_RE' $src]" >&2
+    exit 12
+  fi
+  # `<file>:<line>:<citation>` becomes `<file> <citation>`; a citation ending a sentence
+  # carries its full stop, which is not part of the name.
+  awk -F: '{ c = $3; sub(/[.]+$/, "", c); print $1 " " c }' "$tmp/staged-raw" >> "$tmp/staged-cited"
+done
+LC_ALL=C sort -u "$tmp/staged-cited" -o "$tmp/staged-cited"
+: > "$tmp/staged-allowed"
+if [ -f "$STAGED_ALLOW" ]; then
+  sed -e 's/[[:space:]]*#.*$//' "$STAGED_ALLOW" | awk 'NF >= 2 { print $1 " " $2 }' \
+    | LC_ALL=C sort -u > "$tmp/staged-allowed"
+fi
+LC_ALL=C comm -23 "$tmp/staged-cited" "$tmp/staged-allowed" \
+  | awk -v allow="$STAGED_ALLOW" '{ print "FAIL campaigns  " $1 " — cites " $2 ", a brief staged on one disk; keep the pack under campaigns/ and cite it there, or name the line in " allow " with the reason  [reproduce: grep -nF \x27" $2 "\x27 " $1 "]" }' \
+  >> "$tmp/findings" || true
+LC_ALL=C comm -13 "$tmp/staged-cited" "$tmp/staged-allowed" \
+  | awk -v allow="$STAGED_ALLOW" '{ print "FAIL campaigns  " allow " — names " $1 " " $2 ", and that file no longer cites it: remove the line  [reproduce: grep -nF \x27" $2 "\x27 " $1 "]" }' \
+  >> "$tmp/findings" || true
 
 findings="$(awk 'END { print NR }' "$tmp/findings")"
 packs="$(awk 'END { print NR }' "$tmp/packs")"

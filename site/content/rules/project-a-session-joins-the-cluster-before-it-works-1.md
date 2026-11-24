@@ -1,7 +1,7 @@
 +++
 title = "A session is current, attached, announced and useful before it changes anything"
 description = "A session is current, attached, announced and useful before it changes anything"
-weight = 76
+weight = 77
 [extra]
 kind = "rule"
 slug = "project-a-session-joins-the-cluster-before-it-works-1"
