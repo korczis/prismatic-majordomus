@@ -2377,6 +2377,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/ci/campaigns-staged-citations.txt",
+        "kind": "file",
+        "label": "campaigns-staged-citations.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/ci/campaigns-staged-citations.txt",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/ci/gates.yaml",
         "kind": "file",
         "label": "gates.yaml",
@@ -4150,6 +4158,14 @@
         "label": "backlog-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci/backlog-check",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/campaigns-check",
+        "kind": "file",
+        "label": "campaigns-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/campaigns-check",
         "external": true
       },
       {
@@ -9916,6 +9932,43 @@
             "profiles",
             "policy",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0236",
+        "kind": "adr",
+        "label": "adr-0236",
+        "summary": "A prompt pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and is kept under campaigns before any record cites it",
+        "route": "/cockpit/objects/adr/adr-0236",
+        "source": ".ai/repo/adrs/0236-a-pack-is-staged-in-tmp-owner-packs-and-kept-before-it-is-cited.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-24",
+          "related": [
+            "file:campaigns/README.md",
+            "file:docs/OWNER_PACKS.md",
+            "file:scripts/ci/campaigns-check",
+            "file:.ai/repo/ci/campaigns-staged-citations.txt",
+            "file:.ai/repo/ci/gates.yaml",
+            "file:.ai/repo/project/issues/I4714.yaml",
+            "file:.ai/repo/project/issues/I4715.yaml",
+            "file:.ai/repo/project/issues/I4716.yaml",
+            "file:.ai/repo/project/milestones/a-paste-is-decomposed-by-a-skill.yaml",
+            "file:.ai/repo/project/milestones/campaigns-are-read-as-provenance.yaml",
+            "file:.ai/repo/project/issues/I3169.yaml",
+            "file:.ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md",
+            "file:.ai/repo/adrs/0180-a-prompt-pack-is-a-campaign-kept-as-received-indexed-as-a-kind-a.md",
+            "file:.ai/repo/adrs/0194-an-ingested-brief-is-an-intake-revision-and-its-requirements-are.md",
+            "test:test/cases/340_a_brief_is_kept_as_received.sh",
+            "test:test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+            "rule:project.a-brief-is-kept-as-received",
+            "rule:project.a-brief-is-cited-where-it-is-kept"
+          ],
+          "tags": [
+            "provenance",
+            "campaigns",
+            "intake"
           ]
         }
       },
@@ -53895,7 +53948,7 @@
             "campaigns-are-provenance-the-plan-reads#intake-is-safe"
           ],
           "slug": "a-pack-is-checked-before-it-is-kept",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-24",
           "validation": [
             "bash test/run.sh 340_a_brief_is_kept_as_received"
           ]
@@ -82660,6 +82713,158 @@
         }
       },
       {
+        "id": "majordomus://issue/I4714",
+        "kind": "issue",
+        "label": "I4714",
+        "summary": "A pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and no record or ADR cites it there",
+        "route": "/cockpit/objects/issue/i4714",
+        "source": ".ai/repo/project/issues/I4714.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An issue that cites tmp/owner-packs/<pack> fails campaigns-check with exit 10 and one finding naming the record, the citation and a reproduce command",
+            "An ADR that cites the same fails the same way, and so does a citation of tmp/prompt-packs/<pack> ending a sentence, its full stop not part of the name",
+            "A citation the list names passes; a line of the list whose citation is gone fails",
+            "A record describing tmp/packs/ output passes",
+            "The check at origin/master passes the same fixture, so the case refuses the build without step 5",
+            "The repository's own tree passes"
+          ],
+          "created_at": "2026-11-24",
+          "depends_on": [],
+          "desired_state": "A record or an ADR that cites a pack's staging place fails the gate that its own edit selects, with a reproduce command, and the two citations made before ADR 0236 are listed and can only be removed.",
+          "evidence_required": [
+            "a_brief_is_cited_where_it_is_kept"
+          ],
+          "milestone": "campaigns-are-read-as-provenance",
+          "non_scope": [
+            "Listing or promoting staged packs (I4715, I3169)",
+            "The /ui packs screen (I4716)",
+            "Moving the packs already staged, or keeping the audit I2460 and I2461 cite",
+            "tmp/packs/, which is majordomus pack output"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0236-a-pack-is-staged-in-tmp-owner-packs-and-kept-before-it-is-cited.md",
+            ".ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md",
+            ".ai/repo/ci/campaigns-staged-citations.txt",
+            ".ai/repo/ci/gates.yaml",
+            "scripts/ci/campaigns-check",
+            "test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+            "docs/OWNER_PACKS.md",
+            "campaigns/README.md",
+            ".ai/repo/project/issues/I4714.yaml",
+            ".ai/repo/project/issues/I4715.yaml",
+            ".ai/repo/project/issues/I4716.yaml",
+            ".ai/repo/project/issues/I3169.yaml",
+            ".ai/repo/project/milestones/campaigns-are-read-as-provenance.yaml"
+          ],
+          "serves": [
+            "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
+          ],
+          "slug": "a-pack-is-staged-before-it-is-kept",
+          "validation": [
+            "scripts/ci/campaigns-check",
+            "bash test/run.sh 340_a_brief_is_kept_as_received 4662_a_brief_is_cited_where_it_is_kept"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4715",
+        "kind": "issue",
+        "label": "I4715",
+        "summary": "Every pack in the staging place is listed with its derived state from any worktree, and a pack left staged too long is reported at session start",
+        "route": "/cockpit/objects/issue/i4715",
+        "source": ".ai/repo/project/issues/I4715.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "From a linked worktree, the capability lists the primary checkout's staged packs, not the worktree's own tmp/",
+            "A pack kept with the same bytes reads kept; with a staged file changed afterwards, diverged; kept and cited by a record, planned; named in campaigns-unplanned.txt, unplanned",
+            "A pack staged longer than the policy's bound is a WARN of doctor and a line of context; under the bound it is neither",
+            "A missing staging place is an empty list with the reason, never an error",
+            "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053)"
+          ],
+          "created_at": "2026-11-24",
+          "current_state": "Measured on 2026-11-24 at origin/master 93739746f8d: no capability reads tmp/ (.ai/repo/scope.yaml excludes **/tmp/); packs are listed by hand with ls in the primary checkout.",
+          "depends_on": [
+            "I4714"
+          ],
+          "desired_state": "One capability answers which packs are staged and what became of each, on every transport, from any worktree, and a stale staged pack is reported where a session starts.",
+          "evidence_required": [
+            "a_staged_pack_is_listed_with_its_state"
+          ],
+          "milestone": "campaigns-are-read-as-provenance",
+          "non_scope": [
+            "Copying a pack into campaigns/ (I3169)",
+            "Publishing staged packs anywhere",
+            "Reading what a pack says beyond its first heading"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "lib/doctor.sh",
+            "lib/context.sh",
+            ".ai/repo/policy.yaml",
+            "docs/OWNER_PACKS.md"
+          ],
+          "serves": [
+            "campaigns-are-provenance-the-plan-reads#campaign-is-indexed"
+          ],
+          "slug": "a-staged-pack-is-listed-with-its-state",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4716",
+        "kind": "issue",
+        "label": "I4716",
+        "summary": "A /ui screen shows every pack from staged to kept to planned, each linked to its records and back",
+        "route": "/cockpit/objects/issue/i4716",
+        "source": ".ai/repo/project/issues/I4716.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The screen lists the packs the capability lists, with the same states",
+            "A filter by state is in the URL, and a deep link opens the screen filtered",
+            "A pack links to each record that cites it, and the record links back",
+            "A Playwright test in a real browser drives the filter and the links, and the coverage gate sees every changed line run"
+          ],
+          "created_at": "2026-11-24",
+          "current_state": "Measured on 2026-11-24 at origin/master 93739746f8d: no /ui screen shows campaigns or staged packs.",
+          "depends_on": [
+            "I4715"
+          ],
+          "desired_state": "A person sees on one screen which packs are in progress, which are kept, and what work came of each.",
+          "evidence_required": [
+            "the_packs_screen_follows_a_pack_to_its_records"
+          ],
+          "milestone": "campaigns-are-read-as-provenance",
+          "non_scope": [
+            "Uploading a pack by drag and drop (ui-surfaces domain)",
+            "Publishing staged packs on the site; the public site shows only kept packs"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            "test/cases"
+          ],
+          "serves": [
+            "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
+          ],
+          "slug": "the-packs-screen-follows-a-pack-to-its-records",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "ADR 0236 decision 6, the second delivery the owner chose (ADR 0236, The owner's answers). The owner's standing orders ask that every visual be driven and every name lead to its page."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -89100,16 +89305,16 @@
           "acceptance_criteria": [
             "Every pack resolves as majordomus://campaign/<id>",
             "A dangling campaign citation is refused",
-            "An unsafe archive is refused before any write"
+            "An unsafe archive is refused before any write",
+            "No record or ADR cites a pack where it was only staged"
           ],
           "created_at": "2026-10-18",
           "current_state": "Verified on master 707a04c: rule project.a-brief-is-kept-as-received is blocking; ADR 0124 status proposed; no ingestion command exists; majordomus pack is the text-shard tool (reserved by ADR 0124).",
-          "desired_state": "I3167-I3170 landed under the campaign ADR.",
           "evidence_required": [],
           "non_scope": [
             "Publishing pack bodies on the site",
             "Executing anything a pack contains",
-            "The /ui drag-and-drop pack view (ui-surfaces domain)"
+            "The /ui drag-and-drop pack upload (ui-surfaces domain); the read-only /ui packs screen of I4716 is in scope"
           ],
           "order": 168,
           "priority": "p2",
@@ -89128,7 +89333,7 @@
             "docs/PLANNING.md"
           ],
           "slug": "campaigns-are-read-as-provenance",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-24",
           "validation": [
             "majordomus plan validate"
           ]
@@ -97739,6 +97944,29 @@
           "statement": "Accept a verification command's recorded exit code as evidence of completion, and accept nothing that merely describes verification.",
           "tags": [
             "principle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-brief-is-cited-where-it-is-kept@1",
+        "kind": "rule",
+        "label": "project.a-brief-is-cited-where-it-is-kept@1",
+        "summary": "A record cites a campaign brief where the repository keeps it, never where it was staged",
+        "route": "/cockpit/objects/rule/project-a-brief-is-cited-where-it-is-kept-1",
+        "source": ".ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.a-brief-is-kept-as-received@1",
+            "project.no-claim-without-test@1"
+          ],
+          "statement": "Keep a pack under campaigns/ before a record or an ADR cites it, and cite campaigns/<pack>, never the staging place it came from.",
+          "tags": [
+            "provenance",
+            "campaigns",
+            "evidence",
+            "records"
           ]
         }
       },
@@ -110589,6 +110817,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+        "kind": "test",
+        "label": "test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
+        "route": "/cockpit/objects/test/test-cases-4662-a-brief-is-cited-where-it-is-kept-sh",
+        "source": "test/cases/4662_a_brief_is_cited_where_it_is_kept.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -126466,6 +126701,101 @@
       {
         "source": "majordomus://adr/adr-0232",
         "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "file:.ai/repo/ci/campaigns-staged-citations.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "file:campaigns/README.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "file:scripts/ci/campaigns-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://adr/adr-0124",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://adr/adr-0180",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://adr/adr-0194",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://document/docs/OWNER_PACKS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://issue/I3169",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://issue/I4714",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://issue/I4715",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://issue/I4716",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://milestone/a-paste-is-decomposed-by-a-skill",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://milestone/campaigns-are-read-as-provenance",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://rule/project.a-brief-is-cited-where-it-is-kept@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0236",
+        "target": "majordomus://test/test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
         "kind": "put_in_force"
       },
       {
@@ -152799,6 +153129,46 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4714",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4714",
+        "target": "majordomus://milestone/campaigns-are-read-as-provenance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4715",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4715",
+        "target": "majordomus://issue/I4714",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4715",
+        "target": "majordomus://milestone/campaigns-are-read-as-provenance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4716",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4716",
+        "target": "majordomus://issue/I4715",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4716",
+        "target": "majordomus://milestone/campaigns-are-read-as-provenance",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -155747,6 +156117,21 @@
         "source": "majordomus://rule/majordomus.verify-outcomes@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-brief-is-cited-where-it-is-kept@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-brief-is-cited-where-it-is-kept@1",
+        "target": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-brief-is-cited-where-it-is-kept@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
@@ -160590,6 +160975,11 @@
       },
       {
         "source": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4662_a_brief_is_cited_where_it_is_kept.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -165725,8 +166115,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4535,
-      "edges": 10218,
+      "nodes": 4543,
+      "edges": 10249,
       "acyclic": false,
       "truncated": false
     }

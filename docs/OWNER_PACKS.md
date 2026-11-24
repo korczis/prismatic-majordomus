@@ -20,7 +20,8 @@ says where to begin.
 
 ```mermaid
 flowchart LR
-  zip["a pack in ~/Downloads"] --> kept["campaigns/&lt;pack&gt;<br>kept byte for byte"]
+  zip["a pack in ~/Downloads<br>or pasted"] --> staged["tmp/owner-packs/&lt;pack&gt;<br>staged, ignored, primary checkout"]
+  staged --> kept["campaigns/&lt;pack&gt;<br>kept byte for byte"]
   kept --> manifest["MANIFEST.sha256<br>and the index row"]
   kept --> measured["measured against the tree:<br>what exists, what is planned, what is decided"]
   measured --> records["milestones and issues<br>.ai/repo/project/"]
@@ -29,10 +30,17 @@ flowchart LR
   records --> github["GitHub milestones and issues<br>scripts/github-sync"]
   gate["scripts/ci/campaigns-check"] -. "bytes, index,<br>cited or unplanned" .-> kept
   gate -.-> records
+  gate -. "never cites a staged pack" .-> records
 ```
 
+0. **Staged.** A pack still being written or handed over lives in `tmp/owner-packs/<pack>/` of
+   the primary checkout (legacy `tmp/prompt-packs/`), ignored by git; drafts that are not yet
+   packs sit under its `drafts/` subdirectory. It may change or vanish, and nothing about it is
+   evidence. A linked worktree has a `tmp/` of its own, so the staging place is the primary
+   checkout's, the work tree whose `.git` is `git rev-parse --git-common-dir` (ADR 0236).
 1. **Kept.** The pack directory is copied in unmodified; `campaigns/MANIFEST.sha256` records
-   its bytes and `campaigns/README.md` its row.
+   its bytes and `campaigns/README.md` its row. This happens before the first record or ADR
+   planned from the pack cites it: a citation of the staging place fails the gate.
 2. **Measured.** Before anything is planned, each thing the pack asks for is checked against
    the tree and against the plan. Much of it usually exists already, some is planned by a
    record written from another brief, and some contradicts a decision the repository has made.
@@ -47,7 +55,18 @@ flowchart LR
 5. **Held.** `scripts/ci/campaigns-check` fails when a record cites a pack that is not kept,
    when a pack is neither cited by a record nor named in
    `.ai/repo/ci/campaigns-unplanned.txt` with the reason, and when a line of that list names a
-   pack a record has come to cite, so the list only shrinks.
+   pack a record has come to cite, so the list only shrinks. It also fails a record or an ADR
+   that cites a staging place, unless `.ai/repo/ci/campaigns-staged-citations.txt` names it
+   with the reason; that list only shrinks too (rule `project.a-brief-is-cited-where-it-is-kept`).
+   An edit to a record or an ADR selects this gate.
+
+What is planned, and not yet built, on top of the staging place (milestone
+`campaigns-are-read-as-provenance`): I4715 lists every staged pack with its derived state
+(staged, kept, diverged, planned, unplanned) from any worktree, on every transport the
+capability registry projects, and reports at session start a pack staged too long; I3169's
+`campaign add` takes a pack by its staged name; I4716 is the `/ui` screen that follows a pack
+to its records and back. Until then, `ls` in the primary checkout's `tmp/owner-packs/` is the
+listing and the copy `campaigns/README.md` shows is the promotion.
 
 ## The packs of 2026-10-11 and 2026-10-12, mapped onto master
 
@@ -185,6 +204,8 @@ A pack that is executed directly, with no records, is named in
 | the packs, their index and their bytes | `campaigns/`, `campaigns/README.md`, `campaigns/MANIFEST.sha256` |
 | the plan | `.ai/repo/project/milestones/`, `.ai/repo/project/issues/` |
 | packs with no plan records, and why | `.ai/repo/ci/campaigns-unplanned.txt` |
-| the gate | `scripts/ci/campaigns-check`, `test/cases/340_a_brief_is_kept_as_received.sh` |
+| the gate | `scripts/ci/campaigns-check`, `test/cases/340_a_brief_is_kept_as_received.sh`, `test/cases/4662_a_brief_is_cited_where_it_is_kept.sh` |
 | the projection to GitHub | `scripts/github-sync`, `scripts/ci/github-check` |
-| the rule | `.ai/repo/rules/project/a-brief-is-kept-as-received.v1.md` |
+| the rules | `.ai/repo/rules/project/a-brief-is-kept-as-received.v1.md`, `.ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md` |
+| packs in progress, and the decision | `tmp/owner-packs/<pack>/` of the primary checkout (ignored), ADR 0236 |
+| citations of a staged pack made before ADR 0236 | `.ai/repo/ci/campaigns-staged-citations.txt` |

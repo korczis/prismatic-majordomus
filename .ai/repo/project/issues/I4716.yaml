@@ -1,0 +1,32 @@
+id: I4716
+milestone: campaigns-are-read-as-provenance
+title: "A /ui screen shows every pack from staged to kept to planned, each linked to its records and back"
+slug: the-packs-screen-follows-a-pack-to-its-records
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Add a read-only screen to the loopback /ui that renders the capability of I4715: each pack with its derived state, file count, first heading and age, each linked to the records that cite it, and each record's page linked back to its pack. Built on Flowbite Pro with the --mj-* tokens, its filters and selected pack in the URL, held by a Playwright test in a real browser that drives the filters and follows a pack to a record and back."
+why: "ADR 0236 decision 6, the second delivery the owner chose (ADR 0236, The owner's answers). The owner's standing orders ask that every visual be driven and every name lead to its page."
+current_state: "Measured on 2026-11-24 at origin/master 93739746f8d: no /ui screen shows campaigns or staged packs."
+desired_state: "A person sees on one screen which packs are in progress, which are kept, and what work came of each."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "share/ui"
+  - "test/cases"
+non_scope:
+  - "Uploading a pack by drag and drop (ui-surfaces domain)"
+  - "Publishing staged packs on the site; the public site shows only kept packs"
+depends_on:
+  - "I4715"
+serves:
+  - "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
+acceptance_criteria:
+  - "The screen lists the packs the capability lists, with the same states"
+  - "A filter by state is in the URL, and a deep link opens the screen filtered"
+  - "A pack links to each record that cites it, and the record links back"
+  - "A Playwright test in a real browser drives the filter and the links, and the coverage gate sees every changed line run"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "the_packs_screen_follows_a_pack_to_its_records"
+created_at: 2026-11-24

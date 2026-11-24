@@ -27,10 +27,11 @@ serves:
 acceptance_criteria:
   - "Each unsafe archive shape is refused before a write"
   - "A safe pack lands with manifest and index rows"
+  - "A pack is named by its directory in the staging place ADR 0236 declares (tmp/owner-packs/<pack>/ of the primary checkout, legacy tmp/prompt-packs/<pack>/), resolved from any linked worktree through the git common directory, as well as by a path to a ZIP or a directory"
   - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
 validation:
   - "bash test/run.sh 340_a_brief_is_kept_as_received"
 evidence_required:
   - "case_pack_checked_before_kept"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-11-24

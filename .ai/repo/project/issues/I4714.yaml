@@ -1,0 +1,46 @@
+id: I4714
+milestone: campaigns-are-read-as-provenance
+title: "A pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and no record or ADR cites it there"
+slug: a-pack-is-staged-before-it-is-kept
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Declare the staging place of a prompt pack in progress (tmp/owner-packs/<pack>/ of the primary checkout, legacy tmp/prompt-packs/<pack>/) in ADR 0236, and refuse a record under .ai/repo/project/ or an ADR that cites a file there: scripts/ci/campaigns-check step 5 fails each such citation unless .ai/repo/ci/campaigns-staged-citations.txt names it with its reason, fails a line of that list whose citation is gone, and the campaigns class of .ai/repo/ci/gates.yaml selects the gate when a record or an ADR changes. Rule project.a-brief-is-cited-where-it-is-kept states it; docs/OWNER_PACKS.md and campaigns/README.md describe the staging place and when a pack moves from it."
+why: "On 2026-11-23 the owner asked whether the repository has a git-excluded directory for in-progress prompt packs, and to make one with tooling, documentation, derived surfaces and enforcement through .ai when packs are uploaded; asked through AskUserQuestion in session 0745dcdc, the owner chose tmp/owner-packs/ and a phased delivery (ADR 0236, The owner's answers). Packs sat there and in tmp/prompt-packs/ and tmp/packs/ by habit only: .gitignore ignores /tmp/, .ai/repo/scope.yaml excludes **/tmp/, a linked worktree has a tmp/ of its own, and I2460 and I2461 cite an audit written beside the pack of 2026-10-11 that no clone can open."
+current_state: "Measured on 2026-11-24 at origin/master 93739746f8d: scripts/ci/campaigns-check decides four things (bytes, index, rows, citations of kept packs) and nothing about a citation of tmp/; the campaigns class of gates.yaml matches campaigns/**, the check, the unplanned list, case 340 and its rule, not .ai/repo/project/** or .ai/repo/adrs/**, so an edit to a record does not select campaigns-provenance although step 4 decides what records cite."
+desired_state: "A record or an ADR that cites a pack's staging place fails the gate that its own edit selects, with a reproduce command, and the two citations made before ADR 0236 are listed and can only be removed."
+scope:
+  - ".ai/repo/adrs/0236-a-pack-is-staged-in-tmp-owner-packs-and-kept-before-it-is-cited.md"
+  - ".ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md"
+  - ".ai/repo/ci/campaigns-staged-citations.txt"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci/campaigns-check"
+  - "test/cases/4662_a_brief_is_cited_where_it_is_kept.sh"
+  - "docs/OWNER_PACKS.md"
+  - "campaigns/README.md"
+  - ".ai/repo/project/issues/I4714.yaml"
+  - ".ai/repo/project/issues/I4715.yaml"
+  - ".ai/repo/project/issues/I4716.yaml"
+  - ".ai/repo/project/issues/I3169.yaml"
+  - ".ai/repo/project/milestones/campaigns-are-read-as-provenance.yaml"
+non_scope:
+  - "Listing or promoting staged packs (I4715, I3169)"
+  - "The /ui packs screen (I4716)"
+  - "Moving the packs already staged, or keeping the audit I2460 and I2461 cite"
+  - "tmp/packs/, which is majordomus pack output"
+depends_on: []
+serves:
+  - "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
+acceptance_criteria:
+  - "An issue that cites tmp/owner-packs/<pack> fails campaigns-check with exit 10 and one finding naming the record, the citation and a reproduce command"
+  - "An ADR that cites the same fails the same way, and so does a citation of tmp/prompt-packs/<pack> ending a sentence, its full stop not part of the name"
+  - "A citation the list names passes; a line of the list whose citation is gone fails"
+  - "A record describing tmp/packs/ output passes"
+  - "The check at origin/master passes the same fixture, so the case refuses the build without step 5"
+  - "The repository's own tree passes"
+validation:
+  - "scripts/ci/campaigns-check"
+  - "bash test/run.sh 340_a_brief_is_kept_as_received 4662_a_brief_is_cited_where_it_is_kept"
+evidence_required:
+  - "a_brief_is_cited_where_it_is_kept"
+created_at: 2026-11-24

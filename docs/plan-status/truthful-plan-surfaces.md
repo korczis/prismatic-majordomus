@@ -152,6 +152,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3319` | shares .ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3319` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3319` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I3319` | shares .ai/repo/ci/gates.yaml with I4714; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/view.rs with I3447; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/milestone.rs with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/dashboard.rs with I4327; they may not run concurrently |
@@ -378,4 +379,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4315` | shares .github/workflows/pages.yml with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares docs/PLANNING.md with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares apps/majordomus-cli/src/plan/delivery.rs with I4616; they may not run concurrently |
+| WARN | `scope_conflict` | `I4315` | shares .ai/repo/adrs with I4714; they may not run concurrently |
 | WARN | `scope_conflict` | `I4596` | shares lib/project.awk with I4630; they may not run concurrently |

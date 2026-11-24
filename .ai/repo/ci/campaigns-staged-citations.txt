@@ -1,0 +1,9 @@
+# Records that cite a file in a pack's staging place rather than where a pack is kept.
+#
+# scripts/ci/campaigns-check (step 5, ADR 0236) fails a record under .ai/repo/project/ or an ADR
+# that cites tmp/owner-packs/<pack> or tmp/prompt-packs/<pack>: those directories are ignored,
+# live in the primary checkout only, and a clone, a worktree or CI cannot open what they hold.
+# A line here is `<file> <citation>`, with the reason after `#`. A line whose citation is gone
+# fails, so this list only shrinks; nothing is added to it.
+.ai/repo/project/issues/I2460.yaml tmp/owner-packs/majordomus-ui-unified-real-data-v2-20261011  # cited before ADR 0236; the M00 audit an agent wrote was never kept with its pack
+.ai/repo/project/issues/I2461.yaml tmp/owner-packs/majordomus-ui-unified-real-data-v2-20261011  # cited before ADR 0236; the same M00 audit

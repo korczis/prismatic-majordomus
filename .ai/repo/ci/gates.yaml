@@ -861,7 +861,7 @@ gates:
     job: structure
     lane: feedback
     runs: scripts/ci/campaigns-check
-    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, every pack has a row in the index that names it, and every pack is cited by a plan record or named as unplanned with its reason
+    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, every pack has a row in the index that names it, every pack is cited by a plan record or named as unplanned with its reason, and no record or ADR cites a pack where it was only staged
 
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
@@ -1222,9 +1222,11 @@ classes:
     gates: [adr-collision, core-check, shell-suite]
 
   # the campaign briefs and what proves them: provenance, read by people rather than by the tool,
-  # so beyond the suite the only gate this class needs is the one that decides them
+  # so beyond the suite the only gate this class needs is the one that decides them. The plan
+  # records and the ADRs are here too: the gate decides what they cite (a pack that is kept,
+  # never one only staged on one disk, ADR 0236), so an edit to them selects it.
   - id: campaigns
-    paths: [campaigns/**, scripts/ci/campaigns-check, .ai/repo/ci/campaigns-unplanned.txt, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
+    paths: [campaigns/**, scripts/ci/campaigns-check, .ai/repo/ci/campaigns-unplanned.txt, .ai/repo/ci/campaigns-staged-citations.txt, .ai/repo/project/**, .ai/repo/adrs/**, test/cases/340_a_brief_is_kept_as_received.sh, test/cases/4662_a_brief_is_cited_where_it_is_kept.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md, .ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md]
     gates: [campaigns-provenance, shell-suite]
 
   # the detector the collision-check gate calls. The gate runs on every plan already; this

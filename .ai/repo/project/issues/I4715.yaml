@@ -1,0 +1,36 @@
+id: I4715
+milestone: campaigns-are-read-as-provenance
+title: "Every pack in the staging place is listed with its derived state from any worktree, and a pack left staged too long is reported at session start"
+slug: a-staged-pack-is-listed-with-its-state
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Declare a read-only capability (campaign staged, under apps/majordomus-cli/src/capability/builtin/, projected by majordomus generate to the CLI, MCP, HTTP, the generated skill and the capability documentation) that lists every pack in the staging places ADR 0236 declares, resolved to the primary checkout through the git common directory from any linked worktree, each with a derived state (staged, kept, diverged, planned, unplanned), its file count, first heading, newest modification time and the records that cite it. majordomus context and doctor report a pack that has stayed staged longer than a bound the policy declares."
+why: "ADR 0236 decision 5. A pack staged in the primary checkout is invisible from every linked worktree, where work is done, and nothing tells a session that a brief has been on one disk for days. The owner asked for DX tooling over the staging place and enforcement when packs are uploaded (ADR 0236, The owner's answers)."
+current_state: "Measured on 2026-11-24 at origin/master 93739746f8d: no capability reads tmp/ (.ai/repo/scope.yaml excludes **/tmp/); packs are listed by hand with ls in the primary checkout."
+desired_state: "One capability answers which packs are staged and what became of each, on every transport, from any worktree, and a stale staged pack is reported where a session starts."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "lib/doctor.sh"
+  - "lib/context.sh"
+  - ".ai/repo/policy.yaml"
+  - "docs/OWNER_PACKS.md"
+non_scope:
+  - "Copying a pack into campaigns/ (I3169)"
+  - "Publishing staged packs anywhere"
+  - "Reading what a pack says beyond its first heading"
+depends_on:
+  - "I4714"
+serves:
+  - "campaigns-are-provenance-the-plan-reads#campaign-is-indexed"
+acceptance_criteria:
+  - "From a linked worktree, the capability lists the primary checkout's staged packs, not the worktree's own tmp/"
+  - "A pack kept with the same bytes reads kept; with a staged file changed afterwards, diverged; kept and cited by a record, planned; named in campaigns-unplanned.txt, unplanned"
+  - "A pack staged longer than the policy's bound is a WARN of doctor and a line of context; under the bound it is neither"
+  - "A missing staging place is an empty list with the reason, never an error"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053)"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "a_staged_pack_is_listed_with_its_state"
+created_at: 2026-11-24

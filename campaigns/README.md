@@ -130,6 +130,21 @@ that is not kept fails, and a pack no record cites fails unless
 a record does cite fails too, so the list can only shrink. `docs/OWNER_PACKS.md` is the page
 to start from when working on what a pack asked for.
 
+## Before a pack is kept
+
+A pack that is still being written or handed over is staged, not kept: in
+`tmp/owner-packs/<pack>/` of the primary checkout, which `.gitignore` ignores, with drafts that
+are not yet packs under its `drafts/` subdirectory (ADR 0236). The older staging place
+`tmp/prompt-packs/` is read as its legacy; `tmp/packs/` is `majordomus pack` output, not a
+staging place. A staged pack may be edited, replaced or deleted, and nothing about it is
+evidence. A linked worktree has a `tmp/` of its own, so a staged pack is reached from the
+primary checkout, the work tree whose `.git` is `git rev-parse --git-common-dir`.
+
+A pack is kept before the first record or ADR planned from it cites it, and the record cites
+`campaigns/<pack>`. `scripts/ci/campaigns-check` fails a record under `.ai/repo/project/` or an
+ADR that cites a staging place, unless `.ai/repo/ci/campaigns-staged-citations.txt` names it
+with its reason; that list only shrinks (rule `project.a-brief-is-cited-where-it-is-kept`).
+
 ## Adding one
 
 Copy the pack directory in unmodified, regenerate `MANIFEST.sha256`, and add its row above.
@@ -138,7 +153,7 @@ byte of the brief and is recorded like any other. Hash with `sha256sum`, or with
 `openssl dgst -sha256 -r` where it is absent, never `shasum`, which is a Perl script on macOS:
 
 ```console
-$ cp -R ~/Downloads/<pack> campaigns/<pack>
+$ cp -R "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/tmp/owner-packs/<pack>" campaigns/<pack>
 $ (cd campaigns && find . -type f ! -path ./MANIFEST.sha256 -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sed 's|^\([0-9a-f]*\) [ *]\./|\1  |' > MANIFEST.sha256)
 ```
 
