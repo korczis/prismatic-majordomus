@@ -1,0 +1,43 @@
+id: I4764
+milestone: a-second-adopter-is-served
+title: "A credential never reaches a log, an argument list or an agent's environment: the baseline says how, and doctor names a credential-shaped value it finds there without printing it"
+slug: a-credential-never-reaches-an-agent
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Two parts. First, the standard rule package carries majordomus.a-credential-never-reaches-an-agent@1, an advisory rule every adopter vendors. It says a credential a person holds is read from a 0600 file when it is used, printed as its path and never as its value, never logged, never passed in argv or a URL, and never inherited by a coding agent or its helpers. Second, doctor scans what an agent could read, reusing redaction::redact_secrets, the redactor Majordomus already applies to its own output. It looks at (a) the log files the policy declares and the run and log paths of Majordomus's own serve and mcp daemons, (b) those files' modes, and (c) the argv and environment of the repository's running serve, mcp and declared services. It names each finding by shape, location and file mode, and never prints the value."
+why: "Seen in the adopter OpenTTD, a public fork, over three days with about ten coding agents on one workstation. A local web panel printed its owner secret to stdout into a 0644 log (and into older stack logs in $TMPDIR). That secret was what let the panel tell its owner apart from the agents, and every agent of the same uid could read it. The launcher then put the secret in the argv of `open` and in the browser's history through a ?owner= URL. Helper processes inherited the user's whole environment, with two code hosts' personal access tokens and the agent runtime's messaging token; none of them needed it. The adopter fixed its own side (OpenTTD PRs #242, #288, #293). Nothing in Majordomus would have told it, and the next adopter will make the same convenient defaults."
+current_state: "Measured at origin/master 46775282570. redaction.rs redacts the text Majordomus itself hands back or sends (I2161, I2708, done); project.executions-carry-no-secret binds this repository's execution inputs; I1207 proves by sentinel that no credential reaches any output this repository produces. Nothing in share/standard/majordomus tells an adopter how to keep its own credentials from agents, and doctor reads no log file's content or mode and no process's argv or environment."
+desired_state: "The rule is in share/standard/majordomus/rules/, listed in the manifest by scripts/rules-package write, vendored here by the rules vendor copy, and published by the derive. doctor, read-only, reports for example: credential-scan: github-token in ~/Documents/x/stack.log:103 (mode 0644, readable by others); credential-scan: env GITLAB_TOKEN of pid 4711 (majordomus-cli serve) has a credential's shape, value not shown. The output never contains a value it found. Once the scan exists, the rule names it as its validator."
+scope:
+  - "share/standard/majordomus/rules/a-credential-never-reaches-an-agent.v1.md"
+  - "share/standard/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus/rules/a-credential-never-reaches-an-agent.v1.md"
+  - "apps/majordomus-cli/src/redaction.rs"
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "lib/doctor.sh"
+  - "test/cases"
+  - ".ai/repo/project/issues/I4764.yaml"
+non_scope:
+  - "Changing what I1207 proves: its sentinel sweep is about this repository's own outputs, and this issue is about what an adopter's programs write; I1207 is related, not rewritten"
+  - "Reading a credential out of a file to judge it, or printing any part of a value found; a finding names the shape, the place and the mode only"
+  - "Killing a process or rewriting a log; doctor reports and a person or the owning session acts"
+  - "Processes that do not belong to the repository's serve, mcp or declared services"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "scripts/rules-package check passes with majordomus.a-credential-never-reaches-an-agent@1 listed, and scripts/ci/rule-proof-check passes with its reviewed_because"
+  - "The rule text is adopter-neutral: test case 3022_the_rule_package_is_stamped_and_adopter_neutral passes"
+  - "A fixture log of mode 0644 carrying a credential shape the redactor knows is a doctor finding naming the shape, the line and the mode; the same content in a 0600 file inside a 0700 directory is reported as readable by the owner only"
+  - "A running fixture process with a credential-shaped variable in its environment, and another with one in its argv, are findings naming the pid, the command and the variable or argument position"
+  - "The scan's output, in text and JSON, never contains the fixture's value. A negative case plants a value and greps the whole output for it"
+  - "doctor's other findings are unchanged when nothing credential-shaped is present"
+validation:
+  - "scripts/rules-package check"
+  - "scripts/ci/rule-proof-check"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+evidence_required:
+  - "rule_shipped"
+  - "credential_scan_finds_without_printing"
+created_at: 2026-11-25

@@ -82853,6 +82853,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I4764",
+        "kind": "issue",
+        "label": "I4764",
+        "summary": "A credential never reaches a log, an argument list or an agent's environment: the baseline says how, and doctor names a credential-shaped value it finds there without printing it",
+        "route": "/cockpit/objects/issue/i4764",
+        "source": ".ai/repo/project/issues/I4764.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "rule_shipped",
+            "credential_scan_finds_without_printing"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Changing what I1207 proves: its sentinel sweep is about this repository's own outputs, and this issue is about what an adopter's programs write; I1207 is related, not rewritten",
+            "Reading a credential out of a file to judge it, or printing any part of a value found; a finding names the shape, the place and the mode only",
+            "Killing a process or rewriting a log; doctor reports and a person or the owning session acts",
+            "Processes that do not belong to the repository's serve, mcp or declared services"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/standard/majordomus/rules/a-credential-never-reaches-an-agent.v1.md",
+            "share/standard/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus/rules/a-credential-never-reaches-an-agent.v1.md",
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "lib/doctor.sh",
+            "test/cases",
+            ".ai/repo/project/issues/I4764.yaml"
+          ],
+          "serves": [],
+          "slug": "a-credential-never-reaches-an-agent",
+          "validation": [
+            "scripts/rules-package check",
+            "scripts/ci/rule-proof-check",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -96773,6 +96817,24 @@
             "linux-aarch64-musl"
           ],
           "tag": "v1.2.0"
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.a-credential-never-reaches-an-agent@1",
+        "kind": "rule",
+        "label": "majordomus.a-credential-never-reaches-an-agent@1",
+        "summary": "A credential never reaches a log, an argument list or an environment a coding agent can read",
+        "route": "/cockpit/objects/rule/majordomus-a-credential-never-reaches-an-agent-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/a-credential-never-reaches-an-agent.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [],
+          "tags": [
+            "security",
+            "credentials",
+            "agents"
+          ]
         }
       },
       {
@@ -153063,6 +153125,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4764",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4764",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -155435,6 +155507,11 @@
       {
         "source": "majordomus://release-record/v1.2.0",
         "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-credential-never-reaches-an-agent@1",
+        "target": "kind:rule",
         "kind": "is_a"
       },
       {
@@ -165999,8 +166076,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4543,
+      "edges": 10232,
       "acyclic": false,
       "truncated": false
     }

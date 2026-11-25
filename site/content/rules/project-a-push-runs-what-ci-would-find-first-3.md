@@ -1,7 +1,7 @@
 +++
 title = "A push runs what CI would find first, and CI decides"
 description = "A push runs what CI would find first, and CI decides"
-weight = 75
+weight = 76
 [extra]
 kind = "rule"
 slug = "project-a-push-runs-what-ci-would-find-first-3"

@@ -42,6 +42,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4460` | shares lib/gates.sh with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I4460` | shares apps/majordomus-cli/src/capability/builtin/gates.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4460` | shares lib/gates.sh with I4628; they may not run concurrently |
+| WARN | `scope_conflict` | `I4460` | shares test/cases/131_completion_gates.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4462; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4464; they may not run concurrently |
@@ -52,6 +53,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4461` | shares test/cases/05_handover.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4465; they may not run concurrently |
@@ -60,6 +62,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4462` | shares test/cases/94_use_cases.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares lib/project.sh with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4467; they may not run concurrently |
@@ -70,6 +73,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares lib/project.awk with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4463` | shares test/cases/4463_a_blocker_named_in_prose_is_a_dependency.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares docs/CLI.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares docs/CLI.md with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares lib/plan.sh with I4468; they may not run concurrently |
@@ -84,6 +88,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4464` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4464` | shares test/cases/4464_ready_work_names_the_build_it_needs.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4465` | shares docs/CLI.md with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4465` | shares lib/doctrine.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4465` | shares docs/DOCTRINE.md with I4584; they may not run concurrently |
@@ -91,6 +96,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4465` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4465` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4465` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4465` | shares share/standard/majordomus/manifest.yaml with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares .ai/repo/ci/mesh-event-fields.yaml with I4488; they may not run concurrently |
@@ -103,11 +109,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/mesh/journal.rs with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4466` | shares test/cases/4466_a_review_verdict_names_its_head_and_base.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares lib/handover.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares lib/common.sh with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4467` | shares test/cases/05_handover.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4488; they may not run concurrently |
@@ -149,7 +157,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares share/allow with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares share/schemas/majordomus/policy with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4685; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4522` | shares apps/majordomus-cli/src/commands/distribution.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I4522` | shares test/cases/4522_release_records_are_judged_by_their_own_model.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/finish.sh with I4628; they may not run concurrently |
@@ -158,7 +168,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4573` | shares .githooks/pre-commit with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4573` | shares lib/check.sh with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4573` | shares .ai/repo/workflows/task-lifecycle.md with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I4573` | shares test/cases/4575_a_commit_outside_a_task_is_told_so.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4628` | shares lib/finish.sh with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4628` | shares lib/finish.sh with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4628` | shares test/cases/4628_a_finish_over_uncommitted_work_says_so.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I4632` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4632` | shares lib/evidence.sh with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4632` | shares test/cases/4632_a_task_withdraws_a_requirement_declared_in_error.sh with I4764; they may not run concurrently |

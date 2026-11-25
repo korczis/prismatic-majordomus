@@ -1,7 +1,7 @@
 +++
 title = "Define done before executing"
 description = "Define done before executing"
-weight = 16
+weight = 17
 [extra]
 kind = "rule"
 slug = "majordomus-define-done-first-1"

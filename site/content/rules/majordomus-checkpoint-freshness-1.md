@@ -1,7 +1,7 @@
 +++
 title = "Checkpoint freshness"
 description = "Checkpoint freshness"
-weight = 7
+weight = 8
 [extra]
 kind = "rule"
 slug = "majordomus-checkpoint-freshness-1"
