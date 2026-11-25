@@ -49,6 +49,9 @@ options:
   --command <cmd>      evidence: the command that produced it
   --result <text>      evidence: what it showed
   --artifact <ref>     evidence: a path, URL or hash
+  --commit <rev>       evidence: record this commit instead of HEAD, by its full name;
+                       refused (15) unless the trunk's remote-tracking branch reaches it,
+                       and when the clone cannot judge (shallow, or no refs/remotes/<remote>/HEAD)
 
 exit codes: 0 ok · 2 usage · 10 the model is invalid or a transition is refused
             12 no canonical project model in this repository · 15 refused
@@ -56,7 +59,7 @@ H
 }
 
 mj_cmd_plan() {
-  local sub="" m="" covers="" etype="" ecmd="" eres="" eart="" ids=""
+  local sub="" m="" covers="" etype="" ecmd="" eres="" eart="" ecommit="" enamed=0 ids=""
   [ $# -ge 1 ] || { mj_plan_usage; exit "$MJ_EX_USAGE"; }
   case "$1" in
     --help|-h|help) mj_plan_usage; return 0 ;;
@@ -81,6 +84,8 @@ mj_cmd_plan() {
     --command)  [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--command needs a command"; ecmd="$2"; shift 2 ;;
     --result)   [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--result needs text"; eres="$2"; shift 2 ;;
     --artifact) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--artifact needs a reference"; eart="$2"; shift 2 ;;
+    --commit)   [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--commit needs a revision"; ecommit="$2"; enamed=1; shift 2 ;;
+    --commit=*) ecommit="${1#--commit=}"; enamed=1; shift ;;
     -*) mj_die "$MJ_EX_USAGE" "plan: unknown option $1" ;;
     *) ids="$ids $1"; shift ;;
   esac; done
@@ -109,7 +114,7 @@ mj_cmd_plan() {
     start)    mj_plan_transition "$ids" start ;;
     verify)   mj_plan_transition "$ids" verify ;;
     done)     mj_plan_transition "$ids" "done" ;;
-    evidence) mj_plan_evidence "$ids" "$covers" "$etype" "$ecmd" "$eres" "$eart" ;;
+    evidence) mj_plan_evidence "$ids" "$covers" "$etype" "$ecmd" "$eres" "$eart" "$enamed" "$ecommit" ;;
   esac
 }
 
@@ -602,7 +607,8 @@ mj_plan_has_evidence() {
 # the contract and the proof that it was met live in one record, so neither can be read
 # without the other.
 mj_plan_evidence() {
-  local id="$1" covers="$2" etype="$3" ecmd="$4" eres="$5" eart="$6" f tmp
+  local id="$1" covers="$2" etype="$3" ecmd="$4" eres="$5" eart="$6" named="${7:-0}" rev="${8:-}"
+  local f tmp commit source=head
   [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs an issue or milestone id"
   [ -n "$covers" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --covers <token>"
   [ -n "$etype" ] || mj_die "$MJ_EX_USAGE" "plan evidence needs --type <test|build|ci|artifact|manual>"
@@ -616,6 +622,12 @@ mj_plan_evidence() {
   [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue or milestone '$id'"
   mj_pj_list "$id" evidence_required | grep -qx -- "$covers" \
     || mj_die "$MJ_EX_REFUSED" "$id does not require evidence '$covers' (declared: $(mj_pj_list "$id" evidence_required | paste -sd, -))"
+  # judged before anything is written: a refused commit leaves the record as it was
+  if [ "$named" = 1 ]; then
+    mj_plan_evidence_commit "$rev"; commit="$MJ_PLAN_EVIDENCE_COMMIT"; source=named
+  else
+    commit="$(mj_git_head)"
+  fi
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ev.XXXXXX")"
   {
     if grep -qE '^evidence:' "$f"; then cat "$f"
@@ -625,11 +637,41 @@ mj_plan_evidence() {
     [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
     [ -n "$eres" ] && printf '    result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
     [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"
-    printf '    commit: %s\n    recorded_at: %s\n' "$(mj_git_head)" "$(mj_now)"
+    printf '    commit: %s\n    recorded_at: %s\n' "$commit" "$(mj_now)"
   } > "$tmp"
   cat "$tmp" > "$f"
   rm -f "$tmp"
   mj_pj_set_field "$id" updated_at "$(mj_now)"
-  mj_ledger_append plan_evidence "\"issue\":\"$id\",\"covers\":\"$covers\",\"type\":\"$etype\""
+  mj_ledger_append plan_evidence "\"issue\":\"$id\",\"covers\":\"$covers\",\"type\":\"$etype\",\"commit\":\"$commit\",\"commit_source\":\"$source\""
   printf 'plan: %s evidence recorded for %s\n' "$id" "$covers"
+}
+
+# The commit an evidence entry names when the worker names one (I4410), into
+# MJ_PLAN_EVIDENCE_COMMIT. Evidence recorded on a branch would otherwise name the branch's
+# HEAD, a commit the trunk may never reach; naming the trunk commit that landed the work is
+# what lets any number of records for landed work travel in one pull request. So the
+# revision is resolved to its full name and accepted only when the trunk's remote-tracking
+# branch reaches it. A clone that cannot judge is refused, never recorded unjudged.
+mj_plan_evidence_commit() {
+  local rev="$1" sha trunk rc=0 why
+  MJ_PLAN_EVIDENCE_COMMIT=""
+  sha="$(mj_git rev-parse -q --verify "$rev^{commit}" 2>/dev/null)" \
+    || mj_die "$MJ_EX_USAGE" "--commit '$rev' names no commit in this repository"
+  trunk="$(mj_git_trunk_ref)"
+  [ -n "$trunk" ] || mj_die "$MJ_EX_REFUSED" \
+    "--commit $sha cannot be judged: no trunk is known here (no refs/remotes/<remote>/HEAD; run: git remote set-head <remote> --auto); nothing was recorded"
+  mj_commit_in_history "$sha" "$trunk" || rc=$?
+  case "$rc" in
+    0) ;;
+    2)
+      if [ "$(mj_git rev-parse --is-shallow-repository 2>/dev/null)" = true ]; then
+        why="this clone is shallow, so its history cannot show whether $trunk reaches it (run: git fetch --unshallow)"
+      else
+        why="this clone lacks the commit object"
+      fi
+      mj_die "$MJ_EX_REFUSED" "--commit $sha cannot be judged: $why; nothing was recorded" ;;
+    *)
+      mj_die "$MJ_EX_REFUSED" "--commit $sha is not reached by the trunk $trunk: evidence names a commit the trunk holds; name the trunk commit that landed the work" ;;
+  esac
+  MJ_PLAN_EVIDENCE_COMMIT="$sha"
 }

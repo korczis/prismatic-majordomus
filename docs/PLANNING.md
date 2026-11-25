@@ -134,6 +134,25 @@ declare. It also refuses without a command or an artifact — narrative is not e
 is set but whose evidence is incomplete derives `VERIFY`, never `DONE`. The evidence lives in
 the issue's own file, beside the contract it satisfies, with the commit it was recorded at.
 
+That commit is HEAD unless the worker names one with `--commit <rev>` (I4410). Evidence
+recorded on a branch would otherwise name a branch commit the trunk may never reach; naming
+the trunk commit that landed the work lets any number of records for landed work travel in
+one branch and one pull request:
+
+```bash
+majordomus plan evidence I0007 --covers doctrine_test --type test \
+  --command "bash test/run.sh 0007_doctrine" --commit origin/main~1
+```
+
+The revision is resolved to its full 40-hex name and recorded only when the trunk's
+remote-tracking branch (`refs/remotes/<remote>/HEAD`, as clone or `git remote set-head`
+wrote it) reaches it. A commit the trunk does not reach is refused with exit 15, naming the
+commit and the trunk ref. A clone that cannot judge — it is shallow, or no
+`refs/remotes/<remote>/HEAD` names a trunk — is refused too (15), with the reason, and
+nothing is written; a revision that names no commit is a usage error (2). The
+`plan_evidence` ledger event carries the recorded `commit` and its `commit_source`: `named`
+or `head`. Without `--commit` the entry is exactly what it was before.
+
 What this does not do: rerun the command. The tool records what a worker says a command
 produced. The commit hash stored beside it is what makes a false record checkable later.
 

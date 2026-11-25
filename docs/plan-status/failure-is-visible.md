@@ -36,7 +36,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3310` | shares docs/CLI.md with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I3310` | shares lib/common.sh with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I3310` | shares docs/CLI.md with I4357; they may not run concurrently |
-| WARN | `scope_conflict` | `I3310` | shares lib/common.sh with I4410; they may not run concurrently |
 | WARN | `scope_conflict` | `I3310` | shares lib/common.sh with I4411; they may not run concurrently |
 | WARN | `scope_conflict` | `I3310` | shares lib/common.sh with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I3310` | shares lib/common.sh with I4415; they may not run concurrently |
@@ -55,7 +54,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3310` | shares docs/CLI.md with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/doctor.sh with I4336; they may not run concurrently |
-| WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4410; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4411; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4323` | shares lib/common.sh with I4415; they may not run concurrently |
