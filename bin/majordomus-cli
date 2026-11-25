@@ -16,7 +16,10 @@
 #                             generation: `majordomus generate` refuses a tree whose crate it
 #                             was not built from (exit 15), and a gate asks
 #                             mj_rust_same_generation before it lets one judge the tree.
-#   MAJORDOMUS_BIN_COMMIT     the commit MAJORDOMUS_BIN was built from, when it is known
+#                             Under a git hook (MAJORDOMUS_HOOK=1) the launcher asks it too and
+#                             sets an executable of another generation aside (I4771).
+#   MAJORDOMUS_BIN_COMMIT     the commit MAJORDOMUS_BIN was built from, when it is known; an
+#                             executable that answers --build-identity names its own instead
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release: which of the tree's builds runs
 #   MAJORDOMUS_INSTALLED_BIN  the installed release (lib/rust_bin.sh, mj_rust_installed)
 #   MAJORDOMUS_HOOK=1         a git hook is asking; it is told so in the refusal

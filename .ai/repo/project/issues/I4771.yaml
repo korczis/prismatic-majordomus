@@ -1,0 +1,42 @@
+id: I4771
+title: "A hook or gate answers only through an executable of the tree's generation, and `majordomus version --commit` names the commit compiled into it"
+milestone: ci-critical-path
+slug: a-hook-answers-only-through-an-executable-of-the-trees-generation
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The executable answers `--build-identity [--tree <root>]` from the constants build.rs compiled in, before it parses a command or loads an index: its commit, dirty flag and generation, and with a root the generation of that tree's crate and whether the two are the same. lib/rust_bin.sh asks it. mj_rust_built_commit takes the executable's own commit before a declared MAJORDOMUS_BIN_COMMIT. mj_rust_same_generation judges an executable that answers by its digest, then by the files it compiles in from outside the crate. mj_rust_resolve, under a git hook (MAJORDOMUS_HOOK=1) in a tree that carries the crate, sets aside a MAJORDOMUS_BIN of another generation, names both sides and the tree's HEAD on stderr, and goes on to the tree's own executable, the installed release or a sibling of this generation, or the refusal naming `just build`. `majordomus version --commit` prints the commit compiled into the executable the tree's commands run."
+why: "On 2026-11-23 a pre-push of #3111 (prismatic-majordomus) ran with MAJORDOMUS_BIN naming a worktree build from 22:25, older than the clippy fix and the master merge the push carried. The launcher trusts MAJORDOMUS_BIN as named, so the commit hook and the pre-push gates judged other code than the code that travelled, and the push looked checked. The shell side could tell an executable's commit only from a declaration (MAJORDOMUS_BIN_COMMIT), the path of the shared master-bin cache, or a release stamp, because asking the executable meant a whole command and an index load of about 1.5 s. A declaration can be wrong, and a dirty build or a commit that left the crate alone makes a commit an unreliable witness of the crate; the generation digest the executable carries is the exact one, and nothing on the shell side could read it."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. lib/rust_bin.sh mj_rust_resolve returns MAJORDOMUS_BIN as named (step 1), and its comment says a caller that must not trust it asks mj_rust_same_generation first. Only scripts/ci/run-plan (gate_executable) and scripts/derive (derive_merged_crate) ask. The git hooks export MAJORDOMUS_HOOK=1 but reach the executable through bin/majordomus-cli, which takes MAJORDOMUS_BIN unasked. mj_rust_built_commit never asks the executable. `majordomus version` prints only the version string, and `--version` of the executable is clap's."
+desired_state: "`majordomus-cli --build-identity` answers in a process start. `--build-identity --tree <root>` exits 0 and says `same yes` of the tree it was built from, and exits 1 with `same no` of a tree whose crate moved. A hook given a MAJORDOMUS_BIN of another generation says so with both generations, the commit it was built from and the tree's HEAD, and then answers through the tree's own executable or refuses naming the build. An executable that predates the answer is judged by its declared commit as before. Outside a hook, and in a tree that carries no crate (an adopter's), MAJORDOMUS_BIN runs as named."
+scope:
+  - "apps/majordomus-cli/src/self_identity.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/main.rs"
+  - "lib/rust_bin.sh"
+  - "bin/majordomus"
+  - "bin/majordomus-cli"
+  - "test/cases/4771_a_hook_answers_only_through_an_executable_of_the_trees_generation.sh"
+  - "test/cases/3248_a_pre_push_gate_does_not_wait_on_another_build.sh"
+  - "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+  - ".ai/repo/project/issues/I4771.yaml"
+non_scope:
+  - "A declared table of executables in the policy, so an adopter's own tools get the same generation check: an adopter's tree carries no Majordomus crate, so it needs its own notion of what an executable of its tree is, which is a design of its own (left for a follow-up issue)"
+  - "Changing what a person or an entry path does with MAJORDOMUS_BIN: it stays trusted as named outside a hook, so no command a person types becomes slower or refuses"
+  - "The generation check of the tree's own executable, which stays the mtime staleness of mj_rust_stale"
+acceptance_criteria:
+  - "`majordomus-cli --build-identity` prints commit, dirty and generation within a few seconds without loading an index, and `--build-identity --tree <root>` exits 0 `same yes` for the tree it was built from and 1 `same no` for a copy whose crate changed"
+  - "`majordomus version --commit` prints the commit `--build-identity` names"
+  - "An answering executable of another digest, or of the same digest with a changed rust-toolchain.toml, is not of the tree's generation, with the reason naming both sides"
+  - "The executable's own commit outranks a MAJORDOMUS_BIN_COMMIT naming another commit; an executable that refuses the flag is judged by the declared commit as before"
+  - "Under MAJORDOMUS_HOOK=1 in a tree with the crate, MAJORDOMUS_BIN of another generation is set aside on stderr naming both sides and HEAD, and the tree's own current executable answers; with none, the refusal names `just build`; MAJORDOMUS_BIN of this generation runs silently"
+  - "Outside a hook, and in a tree without the crate, MAJORDOMUS_BIN runs as named"
+validation:
+  - "bash test/run.sh 4771_a_hook_answers_only_through_an_executable_of_the_trees_generation 3248_a_pre_push_gate_does_not_wait_on_another_build 4627_a_merge_does_not_borrow_a_foreign_executable 4618_the_resolver_borrows_a_sibling_executable 3831_a_hook_never_starts_a_cold_build 3958_no_entry_path_or_gate_builds"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib self_identity"
+evidence_required:
+  - "case_4771"
+  - "self_identity_tests"
+depends_on:
+  - I4627
+created_at: 2026-11-25

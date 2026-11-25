@@ -48,8 +48,11 @@ cat > stand-in/cargo <<'SH'
 #!/usr/bin/env bash
 printf 'cargo %s\n' "$*" >> "$CALLS"
 SH
+# an executable built before `--build-identity` existed (I4771): it refuses the flag, as clap
+# refuses an option it does not know, and the gate falls back to the commit it was built from
 cat > stand-in/majordomus <<'SH'
 #!/usr/bin/env bash
+[ "${1:-}" = --build-identity ] && exit 2
 printf 'bin %s\n' "$*" >> "$CALLS"
 SH
 chmod +x stand-in/cargo stand-in/majordomus

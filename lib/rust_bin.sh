@@ -163,12 +163,54 @@ mj_rust_installed() {
 # pin, and the two files outside it the build compiles in. One list, read by
 # mj_rust_same_generation and by every caller that asks it (scripts/ci/run-plan).
 MJ_RUST_CRATE_INPUTS='apps/majordomus-cli rust-toolchain.toml docs/COCKPIT.md site/data/kit/icons.toml'
+# The inputs of that list outside the crate: the generation digest an executable carries
+# covers the crate (and the crates it takes by path), not these.
+MJ_RUST_COMPILED_IN='rust-toolchain.toml docs/COCKPIT.md site/data/kit/icons.toml'
+
+# mj_rust_self_identity <executable> [<repository-root>]
+#
+# Ask the executable what it is (I4771): `<executable> --build-identity [--tree <root>]`, which
+# it answers from the constants its build compiled in, before it parses a command or loads an
+# index, so the question costs a process start. Sets MJ_RUST_SELF_COMMIT, MJ_RUST_SELF_GENERATION
+# and, with a root, MJ_RUST_SELF_TREE (the generation of the crate at that root, `none` when it
+# has none) and MJ_RUST_SELF_SAME (`yes` or `no`). True (0) when it answered in that shape;
+# false (1), with all four empty, for a launcher (it would resolve an executable of its own),
+# an executable built before the answer existed (it refuses the flag), or a stub that prints
+# something else.
+mj_rust_self_identity() {
+  MJ_RUST_SELF_COMMIT=""; MJ_RUST_SELF_GENERATION=""; MJ_RUST_SELF_TREE=""; MJ_RUST_SELF_SAME=""
+  [ -f "$1" ] && [ -x "$1" ] || return 1
+  mj_rust_is_launcher "$1" && return 1
+  if [ -n "${2:-}" ]; then
+    mj_si_out="$("$1" --build-identity --tree "$2" 2>/dev/null)"
+  else
+    mj_si_out="$("$1" --build-identity 2>/dev/null)"
+  fi
+  while IFS=' ' read -r mj_si_key mj_si_val; do
+    case "$mj_si_key" in
+      commit) MJ_RUST_SELF_COMMIT="$mj_si_val" ;;
+      generation) MJ_RUST_SELF_GENERATION="$mj_si_val" ;;
+      tree) MJ_RUST_SELF_TREE="$mj_si_val" ;;
+      same) MJ_RUST_SELF_SAME="$mj_si_val" ;;
+    esac
+  done <<EOF_SI
+$mj_si_out
+EOF_SI
+  case "$MJ_RUST_SELF_GENERATION" in
+    ''|*[!0-9a-f]*) ;;
+    *) [ -z "${2:-}" ] && return 0
+       case "$MJ_RUST_SELF_SAME" in yes|no) return 0 ;; esac ;;
+  esac
+  MJ_RUST_SELF_COMMIT=""; MJ_RUST_SELF_GENERATION=""; MJ_RUST_SELF_TREE=""; MJ_RUST_SELF_SAME=""
+  return 1
+}
 
 # mj_rust_built_commit <executable>
 #
-# The commit an executable was built from, when it can be known without running it — running
-# it is what a stale or foreign executable cannot be trusted to answer, and asking the
-# executable for its build would load a whole index (1.5 s) to read one string. In order:
+# The commit an executable was built from. In order:
+#   the executable's own answer (mj_rust_self_identity, I4771), when it gives one and the build
+#                             knew its commit: what it was compiled from outranks what anyone
+#                             declares about it
 #   MAJORDOMUS_BIN_COMMIT     when the executable is the one MAJORDOMUS_BIN names
 #   .../majordomus-master-bin/<sha>/...   the shared cache of master builds names its commit
 #   RELEASE.json              the stamp scripts/release-package writes at the root of a
@@ -177,6 +219,10 @@ MJ_RUST_CRATE_INPUTS='apps/majordomus-cli rust-toolchain.toml docs/COCKPIT.md si
 # Prints nothing and fails (1) when none of them names it.
 mj_rust_built_commit() {
   mj_bc_exe="$1"
+  if mj_rust_self_identity "$mj_bc_exe" && [ "$MJ_RUST_SELF_COMMIT" != unknown ] \
+      && [ -n "$MJ_RUST_SELF_COMMIT" ]; then
+    printf '%s\n' "$MJ_RUST_SELF_COMMIT"; return 0
+  fi
   if [ -n "${MAJORDOMUS_BIN_COMMIT:-}" ] && [ "$mj_bc_exe" = "${MAJORDOMUS_BIN:-}" ]; then
     printf '%s\n' "$MAJORDOMUS_BIN_COMMIT"; return 0
   fi
@@ -212,9 +258,30 @@ mj_rust_built_commit() {
 # `generate --check`, which passes an executable whose registry matches the committed one even
 # when the crate differs — right for a derive, wrong for a command that answers for this tree.
 # The executable's own guard (`majordomus generate`, exit 15) stays the derive's.
+#
+# An executable that answers `--build-identity --tree` (mj_rust_self_identity, I4771) is judged
+# by its own digest first: the generation it was compiled from against the generation of this
+# tree's crate, which a dirty build, a declared commit that is wrong, or a commit that left the
+# crate alone cannot fool, and then by the files it compiles in from outside the crate
+# (MJ_RUST_COMPILED_IN) against the commit it names. One that does not answer is judged by the
+# commit, as before.
 mj_rust_same_generation() {
   mj_sg_root="$1"; mj_sg_exe="$2"
   MJ_RUST_GENERATION_WHY=""
+  if mj_rust_self_identity "$mj_sg_exe" "$mj_sg_root"; then
+    MJ_RUST_BUILT="$MJ_RUST_SELF_COMMIT"
+    [ "$MJ_RUST_BUILT" = unknown ] && MJ_RUST_BUILT=""
+    # shellcheck disable=SC2086 # the inputs are one space-separated list of literal paths
+    if [ "$MJ_RUST_SELF_SAME" != yes ]; then
+      MJ_RUST_GENERATION_WHY="its generation $(printf '%.12s' "$MJ_RUST_SELF_GENERATION"), built from $(printf '%.11s' "${MJ_RUST_BUILT:-an unknown commit}"), is not this tree's $(printf '%.12s' "$MJ_RUST_SELF_TREE")"
+    elif [ -n "$MJ_RUST_BUILT" ] \
+        && git -C "$mj_sg_root" rev-parse -q --verify "$MJ_RUST_BUILT^{commit}" >/dev/null 2>&1 \
+        && ! git -C "$mj_sg_root" diff --quiet "$MJ_RUST_BUILT" -- $MJ_RUST_COMPILED_IN 2>/dev/null; then
+      MJ_RUST_GENERATION_WHY="what it compiles in from outside the crate ($MJ_RUST_COMPILED_IN) differs from $(printf '%.11s' "$MJ_RUST_BUILT")"
+    fi
+    [ -z "$MJ_RUST_GENERATION_WHY" ]
+    return
+  fi
   MJ_RUST_BUILT="$(mj_rust_built_commit "$mj_sg_exe")" || MJ_RUST_BUILT=""
   # shellcheck disable=SC2086 # the inputs are one space-separated list of literal paths
   if [ -z "$MJ_RUST_BUILT" ]; then
@@ -296,7 +363,9 @@ EOF_WT
 # stdout and returns 0, or says why there is none on stderr and returns 12:
 #
 #   1. MAJORDOMUS_BIN, as named — trusted about freshness, as it always was; a caller that
-#      must not trust it (a gate) asks mj_rust_same_generation first and unsets it
+#      must not trust it (a gate) asks mj_rust_same_generation first and unsets it, and under
+#      a git hook (MAJORDOMUS_HOOK=1) in a tree that carries the crate this function asks it
+#      itself and goes on to the steps below when it is not of the tree's generation (I4771)
 #   2. the tree's own executable (mj_rust_bin), when mj_rust_stale says it is current
 #   3. the installed release (mj_rust_installed), only when mj_rust_same_generation says it
 #      is of this tree's generation, saying so on stderr
@@ -319,7 +388,22 @@ mj_rust_resolve() {
       } >&2
       return 12
     fi
-    printf '%s\n' "$mj_rv_bin"; return 0
+    # A git hook judges the tree it is about to publish, so it does not take MAJORDOMUS_BIN on
+    # trust (I4771): in a tree that carries the crate, an executable not of its generation is
+    # set aside, said on stderr with both sides, and the hook asks this tree's own below — the
+    # same fallback, else refusal (exit 12, `just build`), as when MAJORDOMUS_BIN is unset.
+    # On 2026-11-23 a pre-push ran every gate through a MAJORDOMUS_BIN built the evening
+    # before, older than the commit it pushed. A person or an entry path keeps it as named.
+    if [ "${MAJORDOMUS_HOOK:-}" = 1 ] && [ -f "$mj_rv_root/apps/majordomus-cli/Cargo.toml" ] \
+        && ! mj_rust_same_generation "$mj_rv_root" "$mj_rv_bin"; then
+      printf '%sMAJORDOMUS_BIN names %s, which is not of this tree'"'"'s generation: %s; this tree is at %s, so a hook does not answer through it and asks this tree'"'"'s own executable\n' \
+        "$mj_rv_p" "$mj_rv_bin" "$MJ_RUST_GENERATION_WHY" \
+        "$(git -C "$mj_rv_root" rev-parse --short=11 HEAD 2>/dev/null || echo 'an unknown commit')" >&2
+      unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT
+      mj_rv_bin="$(mj_rust_bin "$mj_rv_root")"
+    else
+      printf '%s\n' "$mj_rv_bin"; return 0
+    fi
   fi
   if ! mj_rust_stale "$mj_rv_root" "$mj_rv_bin"; then printf '%s\n' "$mj_rv_bin"; return 0; fi
   mj_rv_state="missing"

@@ -79,7 +79,7 @@ SYSTEM
   doctor               governance only: is every declared enforcement wired here? (read-only)
   doctrine             what rules are enforced, by what, and whether they are wired (read-only)
   watch                what has drifted: state, policy, projections, retention    (read-only)
-  version              print the version
+  version              print the version; --commit: the commit its executable was built from
   bench                time every public command, cold and warm, against the baseline
   archive              a snapshot of the tracked tree, for reading or checking elsewhere
 
@@ -286,6 +286,13 @@ case "$cmd" in
   version|--version)
     # every other command refuses an argument it does not know rather than ignoring it;
     # version is dispatched before the option parser and has to say so for itself
+    mj_v_last=""; for mj_v_arg in "$@"; do mj_v_last="$mj_v_arg"; done
+    if [ "$nargs" -eq 1 ] && [ "$mj_v_last" = --commit ]; then
+      # the commit compiled into the executable this tree's commands run, asked of that
+      # executable, which answers from its constants without loading an index (I4771)
+      mj_v_id="$("$MJ_BIN_DIR/majordomus-cli" --build-identity)" || exit $?
+      printf '%s\n' "$mj_v_id" | sed -n 's/^commit //p'; exit 0
+    fi
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
   init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|recover|rules|bench|usecase|adr|evidence|archive)
