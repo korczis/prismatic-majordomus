@@ -134,8 +134,8 @@ pub(crate) fn run_bounded(
         .stderr(Stdio::piped());
     let (mut child, _group) = spawn_group(cmd)?;
     let deadline = Instant::now() + limit;
-    let out = drain(child.stdout.take());
-    let err = drain(child.stderr.take());
+    let out = drain(child.stdout.take().expect("stdout is piped above"));
+    let err = drain(child.stderr.take().expect("stderr is piped above"));
     let mut status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break Some(status),
@@ -159,15 +159,12 @@ pub(crate) fn run_bounded(
     })
 }
 
-/// Read `pipe` to its end on a thread of its own; what was read arrives on the receiver. Both
-/// pipes are asked for by [`run_bounded`], so both are there to take.
-fn drain(pipe: Option<impl Read + Send + 'static>) -> mpsc::Receiver<Vec<u8>> {
+/// Read `pipe` to its end on a thread of its own; what was read arrives on the receiver.
+fn drain(mut pipe: impl Read + Send + 'static) -> mpsc::Receiver<Vec<u8>> {
     let (tx, rx) = mpsc::channel();
     std::thread::spawn(move || {
         let mut bytes = Vec::new();
-        if let Some(mut pipe) = pipe {
-            let _ = pipe.read_to_end(&mut bytes);
-        }
+        let _ = pipe.read_to_end(&mut bytes);
         let _ = tx.send(bytes);
     });
     rx
