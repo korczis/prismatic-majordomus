@@ -1473,7 +1473,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.2.0",
+  "generated_by": "majordomus-cli 1.3.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1482,7 +1482,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "infrastructure": [
     {
@@ -5105,7 +5105,7 @@
       "variants": []
     },
     {
-      "description": "What the class of a failure id is, relative to the base.",
+      "description": "What the class of a failure id is, relative to the base. Unknown is never shown as\npre-existing: a failure that cannot be matched is not the trunk's by default.\n\n```\nuse majordomus_cli::gates::BaselineClass;\n\nassert_eq!(serde_json::to_value(BaselineClass::PreExisting).unwrap(), \"pre_existing\");\nassert_ne!(BaselineClass::Unknown, BaselineClass::PreExisting);\n```",
       "home": "gates",
       "is_enum": true,
       "name": "BaselineClass",
@@ -5136,7 +5136,7 @@
       "variants": []
     },
     {
-      "description": "The denominator: what the verdict is a verdict about.",
+      "description": "The denominator: what the verdict is a verdict about — the runs declared and seen on\neach side, the ids examined and the rule — so no count is read without its population.\n\n```\nuse majordomus_cli::gates::BaselineDenominator;\n\nlet d: BaselineDenominator = serde_json::from_value(serde_json::json!({\n    \"runs_declared\": 3, \"change_runs\": 3, \"base_runs\": 2, \"ids_examined\": 1,\n    \"rule\": \"subset\", \"correction\": \"none\"\n}))\n.unwrap();\nassert_ne!(d.base_runs, d.runs_declared, \"a short side is visible in the denominator\");\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineDenominator",
@@ -5200,7 +5200,7 @@
       "variants": []
     },
     {
-      "description": "One failure a run reported.",
+      "description": "One failure a run reported, by the identity two runs are matched on. The id is whatever\nthe caller's check names — a test, a rule and the file it flagged, a scenario — and the\noptional path is what `in_diff` is answered over.\n\n```\nuse majordomus_cli::gates::BaselineFinding;\n\nlet f: BaselineFinding = serde_json::from_value(serde_json::json!({\n    \"id\": \"refs:docs/a.md\", \"path\": \"docs/a.md\", \"line\": 12\n}))\n.unwrap();\nassert_eq!((f.path.as_deref(), f.line), (Some(\"docs/a.md\"), Some(12)));\n// a key the contract does not know is refused rather than dropped\nassert!(serde_json::from_value::<BaselineFinding>(serde_json::json!({ \"id\": \"x\", \"file\": \"y\" })).is_err());\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineFinding",
@@ -5308,7 +5308,7 @@
       "variants": []
     },
     {
-      "description": "How one failure id was judged.",
+      "description": "How one failure id was judged: its class, whether it blocks, and how many runs of each\nside showed it, so a reader can check the class against the counts.\n\n```\nuse majordomus_cli::gates::{BaselineClass, BaselineJudgement};\n\nlet j: BaselineJudgement = serde_json::from_value(serde_json::json!({\n    \"id\": \"perf\", \"class\": \"pre_existing\", \"blocks\": false,\n    \"change\": 3, \"base\": 2, \"flaky\": true, \"in_diff\": false\n}))\n.unwrap();\nassert_eq!((j.class, j.change, j.base), (BaselineClass::PreExisting, 3, 2));\nassert_eq!(j.in_diff, Some(false), \"this finding is outside the diff\");\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineJudgement",
@@ -5402,7 +5402,7 @@
       "variants": []
     },
     {
-      "description": "Everything the comparison says.",
+      "description": "Everything the comparison says: the verdict, why, over what population, about which\ncommits, every failure id's judgement, the trunk alarm and the introduced findings\noutside the diff. It is what every projection of `gates.baseline` returns.\n\n```\nuse majordomus_cli::gates::{BaselineReport, BaselineVerdict};\n\nlet r: BaselineReport = serde_json::from_value(serde_json::json!({\n    \"verdict\": \"clean_with_trunk_failures\",\n    \"denominator\": { \"runs_declared\": 1, \"change_runs\": 1, \"base_runs\": 1,\n                     \"ids_examined\": 1, \"rule\": \"subset\", \"correction\": \"none\" },\n    \"findings\": [], \"trunk_alarm\": { \"failing\": [\"perf (1/1)\"] }\n}))\n.unwrap();\nassert_eq!(r.verdict, BaselineVerdict::CleanWithTrunkFailures);\nassert!(r.trunk_alarm.is_some(), \"a red base is never silent\");\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineReport",
@@ -5488,7 +5488,7 @@
       "variants": []
     },
     {
-      "description": "How the runs decide.",
+      "description": "How the runs decide which failure ids block. `subset`, the default, is the owner's rule:\nno failure the base does not also show. `rate` compares how often the change shows an id\nagainst the base and the control, and needs at least three runs per side.\n\n```\nuse majordomus_cli::gates::BaselineRule;\n\nassert_eq!(BaselineRule::default(), BaselineRule::Subset);\nlet rate: BaselineRule = serde_json::from_value(serde_json::json!({ \"rate\": { \"slack\": 1 } })).unwrap();\nassert_eq!(rate, BaselineRule::Rate { slack: 1 });\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineRule",
@@ -5521,7 +5521,7 @@
       ]
     },
     {
-      "description": "One run of the check, as the caller observed it.",
+      "description": "One run of the check, as the caller observed it: its exit and what it named as failing.\nAn exit of `null` is a run that did not finish, which counts as a failure of its own.\n\n```\nuse majordomus_cli::gates::BaselineRun;\n\nlet run: BaselineRun = serde_json::from_value(serde_json::json!({\n    \"exit\": 1, \"tree\": \"t1\", \"findings\": [{ \"id\": \"perf\" }]\n}))\n.unwrap();\nassert_eq!((run.exit, run.findings[0].id.as_str()), (Some(1), \"perf\"));\nlet killed: BaselineRun = serde_json::from_value(serde_json::json!({ \"exit\": null })).unwrap();\nassert!(killed.exit.is_none(), \"a run that did not finish has no exit\");\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineRun",
@@ -5559,7 +5559,7 @@
       "variants": []
     },
     {
-      "description": "The runs of one side: the change, the base or the control.",
+      "description": "The runs of one side: the change, the base or the control. A side is compared only over\nexactly the declared number of runs, all over one tree; a side that could not be run at\nall says why in `unavailable` and decides nothing.\n\n```\nuse majordomus_cli::gates::BaselineSide;\n\nlet base: BaselineSide = serde_json::from_value(serde_json::json!({\n    \"commit\": \"b1\", \"unavailable\": \"the merge base is not in this shallow clone\"\n}))\n.unwrap();\nassert!(base.runs.is_empty() && base.unavailable.is_some());\n```",
       "home": "gates",
       "is_enum": false,
       "name": "BaselineSide",
@@ -5597,7 +5597,7 @@
       "variants": []
     },
     {
-      "description": "The one word of the comparison.",
+      "description": "The one word of the comparison. Only `clean` is green: `clean_with_trunk_failures` says\nthe change adds nothing while the base itself is red.\n\n```\nuse majordomus_cli::gates::BaselineVerdict;\n\nlet words: Vec<serde_json::Value> = [\n    BaselineVerdict::Clean,\n    BaselineVerdict::CleanWithTrunkFailures,\n    BaselineVerdict::Introduced,\n    BaselineVerdict::Undecided,\n]\n.iter()\n.map(|v| serde_json::to_value(v).unwrap())\n.collect();\nassert_eq!(words, [\"clean\", \"clean_with_trunk_failures\", \"introduced\", \"undecided\"]);\n```",
       "home": "gates",
       "is_enum": true,
       "name": "BaselineVerdict",
@@ -65409,7 +65409,7 @@
       "variants": []
     },
     {
-      "description": "The base's own failures: the trunk is red, whatever the change did.",
+      "description": "The base's own failures: the trunk is red, whatever the change did. It is raised whenever\nthe base shows a failure, so an inherited failure is reported as the trunk's.\n\n```\nuse majordomus_cli::gates::TrunkAlarm;\n\nlet a: TrunkAlarm = serde_json::from_value(serde_json::json!({\n    \"base_commit\": \"b1\", \"failing\": [\"perf (2/3)\"]\n}))\n.unwrap();\nassert_eq!(a.failing, [\"perf (2/3)\"]);\n```",
       "home": "gates",
       "is_enum": false,
       "name": "TrunkAlarm",

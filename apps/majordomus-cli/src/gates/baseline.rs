@@ -61,7 +61,20 @@ pub(crate) const NOT_FINISHED: &str = "not-finished";
 /// presence, and the `subset` rule already says that more plainly.
 pub(crate) const RATE_MIN_RUNS: u32 = 3;
 
-/// One run of the check, as the caller observed it.
+/// One run of the check, as the caller observed it: its exit and what it named as failing.
+/// An exit of `null` is a run that did not finish, which counts as a failure of its own.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineRun;
+///
+/// let run: BaselineRun = serde_json::from_value(serde_json::json!({
+///     "exit": 1, "tree": "t1", "findings": [{ "id": "perf" }]
+/// }))
+/// .unwrap();
+/// assert_eq!((run.exit, run.findings[0].id.as_str()), (Some(1), "perf"));
+/// let killed: BaselineRun = serde_json::from_value(serde_json::json!({ "exit": null })).unwrap();
+/// assert!(killed.exit.is_none(), "a run that did not finish has no exit");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BaselineRun {
@@ -76,7 +89,21 @@ pub struct BaselineRun {
     pub findings: Vec<BaselineFinding>,
 }
 
-/// One failure a run reported.
+/// One failure a run reported, by the identity two runs are matched on. The id is whatever
+/// the caller's check names — a test, a rule and the file it flagged, a scenario — and the
+/// optional path is what `in_diff` is answered over.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineFinding;
+///
+/// let f: BaselineFinding = serde_json::from_value(serde_json::json!({
+///     "id": "refs:docs/a.md", "path": "docs/a.md", "line": 12
+/// }))
+/// .unwrap();
+/// assert_eq!((f.path.as_deref(), f.line), (Some("docs/a.md"), Some(12)));
+/// // a key the contract does not know is refused rather than dropped
+/// assert!(serde_json::from_value::<BaselineFinding>(serde_json::json!({ "id": "x", "file": "y" })).is_err());
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BaselineFinding {
@@ -91,7 +118,19 @@ pub struct BaselineFinding {
     pub line: Option<u32>,
 }
 
-/// The runs of one side: the change, the base or the control.
+/// The runs of one side: the change, the base or the control. A side is compared only over
+/// exactly the declared number of runs, all over one tree; a side that could not be run at
+/// all says why in `unavailable` and decides nothing.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineSide;
+///
+/// let base: BaselineSide = serde_json::from_value(serde_json::json!({
+///     "commit": "b1", "unavailable": "the merge base is not in this shallow clone"
+/// }))
+/// .unwrap();
+/// assert!(base.runs.is_empty() && base.unavailable.is_some());
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BaselineSide {
@@ -107,7 +146,17 @@ pub struct BaselineSide {
     pub unavailable: Option<String>,
 }
 
-/// How the runs decide.
+/// How the runs decide which failure ids block. `subset`, the default, is the owner's rule:
+/// no failure the base does not also show. `rate` compares how often the change shows an id
+/// against the base and the control, and needs at least three runs per side.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineRule;
+///
+/// assert_eq!(BaselineRule::default(), BaselineRule::Subset);
+/// let rate: BaselineRule = serde_json::from_value(serde_json::json!({ "rate": { "slack": 1 } })).unwrap();
+/// assert_eq!(rate, BaselineRule::Rate { slack: 1 });
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BaselineRule {
@@ -122,7 +171,15 @@ pub enum BaselineRule {
     },
 }
 
-/// What the class of a failure id is, relative to the base.
+/// What the class of a failure id is, relative to the base. Unknown is never shown as
+/// pre-existing: a failure that cannot be matched is not the trunk's by default.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineClass;
+///
+/// assert_eq!(serde_json::to_value(BaselineClass::PreExisting).unwrap(), "pre_existing");
+/// assert_ne!(BaselineClass::Unknown, BaselineClass::PreExisting);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -138,7 +195,23 @@ pub enum BaselineClass {
     Unknown,
 }
 
-/// The one word of the comparison.
+/// The one word of the comparison. Only `clean` is green: `clean_with_trunk_failures` says
+/// the change adds nothing while the base itself is red.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineVerdict;
+///
+/// let words: Vec<serde_json::Value> = [
+///     BaselineVerdict::Clean,
+///     BaselineVerdict::CleanWithTrunkFailures,
+///     BaselineVerdict::Introduced,
+///     BaselineVerdict::Undecided,
+/// ]
+/// .iter()
+/// .map(|v| serde_json::to_value(v).unwrap())
+/// .collect();
+/// assert_eq!(words, ["clean", "clean_with_trunk_failures", "introduced", "undecided"]);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BaselineVerdict {
@@ -153,7 +226,20 @@ pub enum BaselineVerdict {
     Undecided,
 }
 
-/// How one failure id was judged.
+/// How one failure id was judged: its class, whether it blocks, and how many runs of each
+/// side showed it, so a reader can check the class against the counts.
+///
+/// ```
+/// use majordomus_cli::gates::{BaselineClass, BaselineJudgement};
+///
+/// let j: BaselineJudgement = serde_json::from_value(serde_json::json!({
+///     "id": "perf", "class": "pre_existing", "blocks": false,
+///     "change": 3, "base": 2, "flaky": true, "in_diff": false
+/// }))
+/// .unwrap();
+/// assert_eq!((j.class, j.change, j.base), (BaselineClass::PreExisting, 3, 2));
+/// assert_eq!(j.in_diff, Some(false), "this finding is outside the diff");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BaselineJudgement {
     /// The failure's identity.
@@ -186,7 +272,19 @@ pub struct BaselineJudgement {
     pub in_diff: Option<bool>,
 }
 
-/// The denominator: what the verdict is a verdict about.
+/// The denominator: what the verdict is a verdict about — the runs declared and seen on
+/// each side, the ids examined and the rule — so no count is read without its population.
+///
+/// ```
+/// use majordomus_cli::gates::BaselineDenominator;
+///
+/// let d: BaselineDenominator = serde_json::from_value(serde_json::json!({
+///     "runs_declared": 3, "change_runs": 3, "base_runs": 2, "ids_examined": 1,
+///     "rule": "subset", "correction": "none"
+/// }))
+/// .unwrap();
+/// assert_ne!(d.base_runs, d.runs_declared, "a short side is visible in the denominator");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BaselineDenominator {
     /// The runs the caller declared per side.
@@ -206,7 +304,18 @@ pub struct BaselineDenominator {
     pub correction: String,
 }
 
-/// The base's own failures: the trunk is red, whatever the change did.
+/// The base's own failures: the trunk is red, whatever the change did. It is raised whenever
+/// the base shows a failure, so an inherited failure is reported as the trunk's.
+///
+/// ```
+/// use majordomus_cli::gates::TrunkAlarm;
+///
+/// let a: TrunkAlarm = serde_json::from_value(serde_json::json!({
+///     "base_commit": "b1", "failing": ["perf (2/3)"]
+/// }))
+/// .unwrap();
+/// assert_eq!(a.failing, ["perf (2/3)"]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TrunkAlarm {
     /// The commit the base was run at, when the caller named it.
@@ -216,7 +325,23 @@ pub struct TrunkAlarm {
     pub failing: Vec<String>,
 }
 
-/// Everything the comparison says.
+/// Everything the comparison says: the verdict, why, over what population, about which
+/// commits, every failure id's judgement, the trunk alarm and the introduced findings
+/// outside the diff. It is what every projection of `gates.baseline` returns.
+///
+/// ```
+/// use majordomus_cli::gates::{BaselineReport, BaselineVerdict};
+///
+/// let r: BaselineReport = serde_json::from_value(serde_json::json!({
+///     "verdict": "clean_with_trunk_failures",
+///     "denominator": { "runs_declared": 1, "change_runs": 1, "base_runs": 1,
+///                      "ids_examined": 1, "rule": "subset", "correction": "none" },
+///     "findings": [], "trunk_alarm": { "failing": ["perf (1/1)"] }
+/// }))
+/// .unwrap();
+/// assert_eq!(r.verdict, BaselineVerdict::CleanWithTrunkFailures);
+/// assert!(r.trunk_alarm.is_some(), "a red base is never silent");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BaselineReport {
     /// The one word.
