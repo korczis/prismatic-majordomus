@@ -131,3 +131,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares apps/majordomus-cli/src/capability/builtin/integration.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4524` | shares docs/CI.md with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I4671` | shares lib/commands.sh with I4803; they may not run concurrently |
+| WARN | `scope_conflict` | `I4671` | shares lib/init.sh with I4804; they may not run concurrently |
+| WARN | `scope_conflict` | `I4671` | shares lib/doctor.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4671` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4806; they may not run concurrently |
+| WARN | `scope_conflict` | `I4671` | shares lib/init.sh with I4807; they may not run concurrently |
+| WARN | `scope_conflict` | `I4671` | shares docs/CLI.md with I4808; they may not run concurrently |

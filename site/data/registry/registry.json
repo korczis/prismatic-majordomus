@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "c80299901865bd17fc08fa849761194f146b9744963834e0215adb272ab076fa",
     "summary": {
-      "total": 4063,
+      "total": 4069,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3836,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3836
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3846
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3893,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1282,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "d2d7ef29c492e324de7e31c5018417850f775897f017fd0c6e4df13caad837c8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1282,
       "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 141923
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -120222,7 +120222,7 @@
         "path": ".ai/repo/project/issues/I3322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3953
       },
       {
         "uri": "majordomus://issue/I3323",
@@ -122268,7 +122268,7 @@
         "path": ".ai/repo/project/issues/I3915.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2378
+        "bytes": 2817
       },
       {
         "uri": "majordomus://issue/I3916",
@@ -123335,7 +123335,7 @@
         "path": ".ai/repo/project/issues/I4260.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2918
+        "bytes": 3247
       },
       {
         "uri": "majordomus://issue/I4261",
@@ -123808,7 +123808,7 @@
         "path": ".ai/repo/project/issues/I4327.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5324
+        "bytes": 5575
       },
       {
         "uri": "majordomus://issue/I4328",
@@ -123896,7 +123896,7 @@
         "path": ".ai/repo/project/issues/I4336.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6421
+        "bytes": 7067
       },
       {
         "uri": "majordomus://issue/I4337",
@@ -124270,7 +124270,7 @@
         "path": ".ai/repo/project/issues/I4371.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 13931
+        "bytes": 14335
       },
       {
         "uri": "majordomus://issue/I4372",
@@ -124413,7 +124413,7 @@
         "path": ".ai/repo/project/issues/I4415.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7625
+        "bytes": 8091
       },
       {
         "uri": "majordomus://issue/I4416",
@@ -125613,6 +125613,72 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3298
+      },
+      {
+        "uri": "majordomus://issue/I4803",
+        "kind": "issue",
+        "identity": "I4803",
+        "title": "A read-only workspace survey lists every repository under a directory with its layer state, its work and whether this session can reach origin",
+        "description": "`majordomus workspace survey <dir> [--json]` walks every git repository directly under a directory (worktree parents `<repo>-wt/` grouped with their primary) and prints one row per repository: the layer state (tracked on the trunk, tracked only on a branch, personal under info/exclude, present but untracked, absent), the trunk and its remote, the primary checkout's branch and dirty count, the number of linked worktrees, every active Majordomus task in any of its worktrees with its owner session, and whether this session can reach origin non-interactively (I4805). It writes nothing, runs no hook and starts no server. Each state names the command that moves it on (init, init --worktree, init --shared, a push the owner runs).",
+        "path": ".ai/repo/project/issues/I4803.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3634
+      },
+      {
+        "uri": "majordomus://issue/I4804",
+        "kind": "issue",
+        "identity": "I4804",
+        "title": "init adopts a repository on a new canonical worktree branch, never in a dirty primary checkout, and carries a personal layer's tracked half across",
+        "description": "`majordomus init --worktree <branch> [--from <ref>] [--extend]` works in an unsupervised repository too. It creates the canonical worktree `<repository>-wt/<branch>` from the remote trunk as last fetched, or from `--from` when the remote cannot be reached, runs init (or init --extend) and update inside it, and leaves the primary checkout byte-identical. When the primary checkout holds a personal or untracked layer, its `.ai/repo/` is copied into the new worktree as the shared layer's starting content, `.ai/local/` is never copied, and the command lists what it carried. It refuses (15) when another session holds an active task in any worktree of the repository, naming the task and its session, unless `--beside <task>` records that the owner allowed it.",
+        "path": ".ai/repo/project/issues/I4804.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3771
+      },
+      {
+        "uri": "majordomus://issue/I4805",
+        "kind": "issue",
+        "identity": "I4805",
+        "title": "doctor and start say when this session cannot push to origin, and a task then plans a local-only delivery",
+        "description": "A bounded, non-interactive probe of origin (`git ls-remote --exit-code origin HEAD` under `GIT_TERMINAL_PROMPT=0` and `ssh -o BatchMode=yes`, at most 15 s) runs in `doctor` and at `start`, with its result cached per checkout for the session. When origin cannot be reached, doctor reports `origin: unreachable from this session (<reason>)` as INFO, `start` prints that a push will be the owner's, and `finish` names the delivery as `local commits, not pushed: <n> ahead of <remote>/<branch>`, never as delivered. The probe sends no credential the session does not already hold and never retries with another key.",
+        "path": ".ai/repo/project/issues/I4805.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3034
+      },
+      {
+        "uri": "majordomus://issue/I4806",
+        "kind": "issue",
+        "identity": "I4806",
+        "title": "A declared append-only path refuses, at commit, any change to an entry it already holds",
+        "description": "The policy declares append-only paths, each with its unit: `lines` for text, or a JSON pointer to an array for JSON. The commit hook compares the staged blob with HEAD's. Every existing unit must survive unchanged and in order, and new units may only follow them. A modified, removed or reordered unit is refused, naming the path, the unit's index and the first differing text. A merge commit is judged against each parent's units. The remedy names the append the change should have been.",
+        "path": ".ai/repo/project/issues/I4806.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2662
+      },
+      {
+        "uri": "majordomus://issue/I4807",
+        "kind": "issue",
+        "identity": "I4807",
+        "title": "A merge=table-rows driver merges hand-written Markdown tables by row and cell, and conflicts only where both sides changed one cell",
+        "description": "`init` and `update` can install a `table-rows` merge driver that an adopter assigns in `.gitattributes`. Outside tables it is git's own three-way merge. Inside a Markdown pipe table it keys rows by their first cell: rows either side added are unioned in base order, a row both sides changed is merged three-way per cell, and only a cell both sides changed differently conflicts, with standard markers around that row. When the table is one the repository could derive, `doctor` names that as the better remedy (derive the table, then mark the file `merge=derived`).",
+        "path": ".ai/repo/project/issues/I4807.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2406
+      },
+      {
+        "uri": "majordomus://issue/I4808",
+        "kind": "issue",
+        "identity": "I4808",
+        "title": "The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares",
+        "description": "An adopter's plan declares the id prefixes it uses (for example U, Q, E, K), each with its digit width. `mesh allocate issue --prefix <P>` surveys the tree, the worktrees, every ref and the journal for that prefix, exactly as it does for `I<nnnn>`, and reserves the next number with one exclusive claim. `plan validate` and the commit hook (I4616) judge a prefixed id against the allocator's reservations, and an undeclared prefix is refused with the declared list.",
+        "path": ".ai/repo/project/issues/I4808.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2636
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -142242,7 +142308,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1282
     },
     {
       "name": "knowledge",

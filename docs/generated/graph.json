@@ -60007,7 +60007,6 @@
         "source": ".ai/repo/project/issues/I3322.yaml",
         "facts": {
           "created_at": "2026-10-18",
-          "current_state": ".claude/hooks/majordomus-edit-guard exists and case 3069 pipes payloads into it directly; capture install writes no PreToolUse entry and mj_lifecycle_state does not cover the guard.",
           "evidence_required": [
             "case_the_edit_guard_is_wired_in_the_generated_settings"
           ],
@@ -68817,7 +68816,6 @@
             "No member order is read from a session cache"
           ],
           "created_at": "2026-10-22",
-          "current_state": "train.rs reads stacked pull requests and refs/prep only; prs compose was planned in ADR 0167 and never landed; train member order lives in session caches.",
           "depends_on": [
             "I3910"
           ],
@@ -73152,7 +73150,6 @@
             "The ledger names the widening"
           ],
           "created_at": "2026-10-27",
-          "current_state": "start fixes the scope for the task's life.",
           "depends_on": [],
           "desired_state": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
           "evidence_required": [
@@ -82849,6 +82846,241 @@
           "slug": "pages-check-resolves-an-ambiguous-short-sha",
           "validation": [
             "bash test/run.sh 104_published_site"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4803",
+        "kind": "issue",
+        "label": "I4803",
+        "summary": "A read-only workspace survey lists every repository under a directory with its layer state, its work and whether this session can reach origin",
+        "route": "/cockpit/objects/issue/i4803",
+        "source": ".ai/repo/project/issues/I4803.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "a_workspace_survey_lists_every_repository"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Adopting a repository: I4804",
+            "Probing push access itself: I4805, which this command reuses",
+            "The synced-vendor workspace kind of I1301"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/workspace.sh",
+            "lib/commands.sh",
+            "docs/CLI.md",
+            "test/cases/4803_a_workspace_survey_lists_every_repository.sh"
+          ],
+          "serves": [],
+          "slug": "a-workspace-survey-lists-every-repository",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4803_a_workspace_survey_lists_every_repository"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4804",
+        "kind": "issue",
+        "label": "I4804",
+        "summary": "init adopts a repository on a new canonical worktree branch, never in a dirty primary checkout, and carries a personal layer's tracked half across",
+        "route": "/cockpit/objects/issue/i4804",
+        "source": ".ai/repo/project/issues/I4804.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "init_adopts_on_a_worktree_branch"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Pushing the branch or opening the pull request: the adopter's forge flow",
+            "Surveying a workspace: I4803",
+            "Personal and shared covers: I2491"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/init.sh",
+            "lib/worktree.sh",
+            "docs/CLI.md",
+            "test/cases/4804_init_adopts_on_a_worktree_branch.sh"
+          ],
+          "serves": [],
+          "slug": "init-adopts-on-a-worktree-branch",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4804_init_adopts_on_a_worktree_branch"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4805",
+        "kind": "issue",
+        "label": "I4805",
+        "summary": "doctor and start say when this session cannot push to origin, and a task then plans a local-only delivery",
+        "route": "/cockpit/objects/issue/i4805",
+        "source": ".ai/repo/project/issues/I4805.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "Before a task plans its delivery, it knows whether this session can reach origin, and its report never calls unpushed commits delivered.",
+          "evidence_required": [
+            "a_session_knows_it_cannot_push"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Repairing credentials or choosing another key: the owner's act",
+            "Counting unpushed work across branches: I2993"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/start.sh",
+            "lib/finish.sh",
+            "docs/CLI.md",
+            "test/cases/4805_a_session_knows_it_cannot_push.sh"
+          ],
+          "serves": [],
+          "slug": "a-session-knows-it-cannot-push",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4805_a_session_knows_it_cannot_push"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4806",
+        "kind": "issue",
+        "label": "I4806",
+        "summary": "A declared append-only path refuses, at commit, any change to an entry it already holds",
+        "route": "/cockpit/objects/issue/i4806",
+        "source": ".ai/repo/project/issues/I4806.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4806: a fixture declares a JSON array path and a text path append-only; an appended entry commits; an edited entry, a removed entry and a swapped pair are each refused with the path and the index",
+            "A merge whose result keeps both parents' entries and appends commits; a merge that rewrites an entry of either parent is refused",
+            "Negative control: with the check removed, the case finds the edited entry committed"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "A file the repository declares append-only cannot have an existing entry edited, removed or reordered by any commit, merges included.",
+          "evidence_required": [
+            "an_append_only_path_refuses_an_edit"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Majordomus's own record writers, already append-only",
+            "Deriving a ledger instead of keeping one: the adopter's choice"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "lib/append_only.sh",
+            "lib/hooks.sh",
+            "docs/POLICY.md",
+            "test/cases/4806_an_append_only_path_refuses_an_edit.sh"
+          ],
+          "serves": [],
+          "slug": "an-append-only-path-refuses-an-edit",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4806_an_append_only_path_refuses_an_edit"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4807",
+        "kind": "issue",
+        "label": "I4807",
+        "summary": "A merge=table-rows driver merges hand-written Markdown tables by row and cell, and conflicts only where both sides changed one cell",
+        "route": "/cockpit/objects/issue/i4807",
+        "source": ".ai/repo/project/issues/I4807.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4807: two branches each add a different row and each change a different cell of a third row; the driver merges with no conflict and the result holds both rows and both cells",
+            "Both branches change the same cell differently: the merge conflicts on that row only, and the rest of the file merges",
+            "Negative control: with the driver unassigned, the same fixture conflicts on the changed row"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "Parallel additions to a hand-written table merge without conflict, and a true conflict is reported as one row with the cell named.",
+          "evidence_required": [
+            "a_table_merges_by_row"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Derived files: merge=derived",
+            "Tables other than Markdown pipe tables"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "lib/merge_table.sh",
+            "lib/init.sh",
+            "docs/MERGE.md",
+            "test/cases/4807_a_table_merges_by_row.sh"
+          ],
+          "serves": [],
+          "slug": "a-table-merges-by-row",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4807_a_table_merges_by_row"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4808",
+        "kind": "issue",
+        "label": "I4808",
+        "summary": "The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares",
+        "route": "/cockpit/objects/issue/i4808",
+        "source": ".ai/repo/project/issues/I4808.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4808: a fixture plan declaring prefixes U and Q with U120 on a branch gets U121 from `allocate issue --prefix U`, and a second allocation gets U122",
+            "A record named with a prefixed id reserved for another session is refused by plan validate and the commit hook",
+            "An undeclared prefix is refused, naming the declared ones",
+            "Negative control: with the prefix survey removed, the case finds U120 handed out again"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "An adopter with prefixed ids takes them from the allocator like any other number, and a hand-numbered collision is refused locally.",
+          "evidence_required": [
+            "the_allocator_reserves_prefixed_ids"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Atomic reservation at origin: I4357",
+            "Renaming existing prefixed records"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/allocate.rs",
+            "apps/majordomus-cli/src/capability/builtin/allocate.rs",
+            "share/schemas/majordomus/project/project.v1.schema.json",
+            "docs/CLI.md",
+            "test/cases/4808_the_allocator_reserves_prefixed_ids.sh"
+          ],
+          "serves": [],
+          "slug": "the-allocator-reserves-prefixed-ids",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4808_the_allocator_reserves_prefixed_ids"
           ]
         }
       },
@@ -153063,6 +153295,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4803",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4803",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4804",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4804",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4805",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4805",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4806",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4806",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4807",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4807",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4808",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4808",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165999,8 +166291,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4547,
+      "edges": 10241,
       "acyclic": false,
       "truncated": false
     }

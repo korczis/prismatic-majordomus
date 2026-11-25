@@ -1,0 +1,31 @@
+id: I4807
+milestone: a-second-adopter-is-served
+title: "A merge=table-rows driver merges hand-written Markdown tables by row and cell, and conflicts only where both sides changed one cell"
+slug: a-table-merges-by-row
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "`init` and `update` can install a `table-rows` merge driver that an adopter assigns in `.gitattributes`. Outside tables it is git's own three-way merge. Inside a Markdown pipe table it keys rows by their first cell: rows either side added are unioned in base order, a row both sides changed is merged three-way per cell, and only a cell both sides changed differently conflicts, with standard markers around that row. When the table is one the repository could derive, `doctor` names that as the better remedy (derive the table, then mark the file `merge=derived`)."
+why: "Reported by an adopter's reconstruction lane on 2026-11-24/25. A hand-written test index keeps one long line per row, and nearly every PR adds clauses to the same rows, so nearly every merge from the trunk conflicts on them. The lane resolved them again and again with a clause-level diff3 script of its own."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. Majordomus clears conflicts on `merge=derived` files and on the version line (ADR 0134). A hand-written table is neither, and line-based diff3 treats a whole row as one line."
+desired_state: "Parallel additions to a hand-written table merge without conflict, and a true conflict is reported as one row with the cell named."
+scope:
+  - "lib/merge_table.sh"
+  - "lib/init.sh"
+  - "docs/MERGE.md"
+  - "test/cases/4807_a_table_merges_by_row.sh"
+non_scope:
+  - "Derived files: merge=derived"
+  - "Tables other than Markdown pipe tables"
+depends_on: []
+acceptance_criteria:
+  - "Case 4807: two branches each add a different row and each change a different cell of a third row; the driver merges with no conflict and the result holds both rows and both cells"
+  - "Both branches change the same cell differently: the merge conflicts on that row only, and the rest of the file merges"
+  - "Negative control: with the driver unassigned, the same fixture conflicts on the changed row"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4807_a_table_merges_by_row"
+evidence_required:
+  - "a_table_merges_by_row"
+serves: []
+created_at: 2026-11-25
