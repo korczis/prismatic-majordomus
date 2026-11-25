@@ -391,7 +391,11 @@ fn a_planning_only_head_executes_nothing_and_a_retitle_is_a_warning() {
 fn plan_collisions_is_one_answer_on_the_command_line_and_over_mcp() {
     let f = Fixture::new();
     let (_, cli, _) = collisions(&f, &["--issue", "I0001"]);
-    let mcp = mcp_tool(&f, "majordomus_plan_collisions", json!({ "issue": "I0001" }));
+    let mcp = mcp_tool(
+        &f,
+        "majordomus_plan_collisions",
+        json!({ "issue": "I0001" }),
+    );
     assert_eq!(mcp["verdict"], cli["verdict"], "{mcp}");
     assert_eq!(mcp["executes"], json!(["I0001"]));
     assert_eq!(mcp["head"], cli["head"]);

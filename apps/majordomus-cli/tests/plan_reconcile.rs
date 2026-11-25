@@ -320,7 +320,11 @@ fn plan_reconcile_is_one_answer_on_the_command_line_and_over_mcp() {
     let f = fixture();
     observe_forge(&f);
     let (_, cli, _) = reconcile(&f, &["I0001"]);
-    let mcp = mcp_tool(&f, "majordomus_plan_reconcile", json!({ "issues": ["I0001"] }));
+    let mcp = mcp_tool(
+        &f,
+        "majordomus_plan_reconcile",
+        json!({ "issues": ["I0001"] }),
+    );
     assert_eq!(
         without_observation_times(&mcp["proposals"].to_string()),
         without_observation_times(&cli["proposals"].to_string()),
