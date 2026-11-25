@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/owner-answer/owner-answer.v1.schema.json",
+  "x-majordomus-schema": "majordomus.owner-answer/v1",
+  "title": "Owner answer",
+  "description": "One question put to the repository's owner and the owner's answer, under .ai/repo/answers/<id>.yaml, written by `majordomus question record`. The question, the options and the answer are held verbatim, as JSON strings so that no byte is folded away, with the sha256 of the original bytes; a translation, when present, sits beside them and never replaces them. Which session asked, which recorded, and how the text was obtained are stated, and how strong that provenance is (`text_source`) is part of the record. A file cites the record as `owner-answer:<id>` and never retypes it.",
+  "x-majordomus-allow": "owner-answer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "channel",
+    "provider",
+    "asked",
+    "answered_at",
+    "text_source",
+    "digest",
+    "recorded"
+  ],
+  "properties": {
+    "schema": {
+      "const": "owner-answer/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^A-[0-9]{8}-[a-z0-9][a-z0-9-]*$",
+      "description": "A-<yyyymmdd of the answer>-<slug>; also the file name. Records are append-only: a correction is a new record that names this one in `supersedes`."
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "question-tool",
+        "terminal",
+        "chat",
+        "forge",
+        "other"
+      ],
+      "description": "How the question reached the owner: a provider's question tool (options offered), a terminal prompt, a plain chat turn, a forge comment."
+    },
+    "provider": {
+      "type": "string",
+      "description": "The provider adapter the asking session ran in (claude-code, codex, gemini, ...), or `unknown`."
+    },
+    "asked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session",
+        "at",
+        "session_source"
+      ],
+      "properties": {
+        "session": {
+          "type": "string",
+          "description": "The provider session that put the question."
+        },
+        "at": {
+          "type": "string"
+        },
+        "session_source": {
+          "type": "string",
+          "enum": [
+            "environment",
+            "transcript",
+            "declared"
+          ],
+          "description": "environment: computed from the recording process's own provider session; transcript: read from the provider transcript the text was checked against; declared: given by the recorder and not checked."
+        }
+      }
+    },
+    "answered_at": {
+      "type": "string"
+    },
+    "text_source": {
+      "type": "string",
+      "enum": [
+        "transcript-checked",
+        "provider-payload",
+        "typed"
+      ],
+      "description": "transcript-checked: the writer found the question byte for byte in the provider transcript's tool input and every selected label and the free text in the answer part of its tool result, at record time (a reader without the transcript cannot re-run it); provider-payload: written from the provider's own hook payload; typed: given by the recorder and unverified. Verbatim always means as the provider's own rendering, not the owner's keystrokes."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "locator",
+        "sha256"
+      ],
+      "properties": {
+        "transcript": {
+          "type": "string",
+          "description": "The transcript's file name, never its path: a hint for a reader who holds it."
+        },
+        "locator": {
+          "type": "string",
+          "description": "The tool-use id, then '#' and the question's index inside that call (toolu_x#0), or the message id of a chat turn."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "sha256 of the raw transcript lines the locator names, as the transcript holds them, each followed by a newline: the tool_use line then the tool_result line, or the one message line."
+        }
+      }
+    },
+    "question": {
+      "type": "string",
+      "description": "The question, verbatim as the provider rendered it to the owner."
+    },
+    "multi_select": {
+      "type": "boolean"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The labels the owner chose, each one of `options`."
+    },
+    "free_text": {
+      "type": "string",
+      "description": "What the owner typed, verbatim."
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "answer"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "answer": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "sha256 of the compact JSON {\"selected\":[...],\"free_text\":\"...\"} of the original bytes."
+        }
+      },
+      "description": "sha256 of the stored bytes; the validator recomputes both, so an edit or a paraphrase of the stored text after the fact is refused."
+    },
+    "translation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language"
+      ],
+      "properties": {
+        "language": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        }
+      }
+    },
+    "settles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(issue|pr|adr|decision|task|rule|intent|other):.+$"
+      },
+      "description": "What the answer decides: issue:<id>, pr:<owner/repo#n>, adr:<n>, decision:<title>, task:<id>, rule:<id>, intent:<id>, other:<text>."
+    },
+    "supersedes": {
+      "type": "string",
+      "pattern": "^A-[0-9]{8}-[a-z0-9][a-z0-9-]*$"
+    },
+    "recorded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session",
+        "at",
+        "by"
+      ],
+      "properties": {
+        "session": {
+          "type": "string",
+          "description": "The session that wrote the file, computed; empty when the process names none."
+        },
+        "at": {
+          "type": "string"
+        },
+        "by": {
+          "type": "string",
+          "description": "The git identity of the writer, computed."
+        },
+        "task": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

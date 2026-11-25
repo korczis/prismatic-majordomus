@@ -35,6 +35,7 @@
       "milestone": "an object of kind `milestone`",
       "module": "a capability module of this executable",
       "moment": "an object of kind `moment`",
+      "owner-answer": "an object of kind `owner-answer`",
       "policy": "an object of kind `policy`",
       "profile": "an object of kind `profile`",
       "projection": "a transport a capability is projected through",
@@ -5227,6 +5228,12 @@
         "kind": "kind",
         "label": "moment",
         "summary": "every object of kind `moment`"
+      },
+      {
+        "id": "kind:owner-answer",
+        "kind": "kind",
+        "label": "owner-answer",
+        "summary": "every object of kind `owner-answer`"
       },
       {
         "id": "kind:policy",
@@ -15211,13 +15218,14 @@
           "exit_codes": [
             "0",
             "2",
-            "12"
+            "12",
+            "15"
           ],
           "json": false,
-          "note": "Every unresolved entry for the active task refuses finish --outcome completed. That is the whole point of the command; it is a gate, not a notebook.",
           "reads": [
             ".ai/local/state/current.yaml",
-            ".ai/local/state/open-questions.md"
+            ".ai/local/state/open-questions.md",
+            ".ai/repo/answers/"
           ],
           "requires_installed": true,
           "requires_repository": true,
@@ -15228,7 +15236,8 @@
           "visibility": "public",
           "writes": [
             ".ai/local/state/open-questions.md",
-            ".ai/local/state/ledger.jsonl"
+            ".ai/local/state/ledger.jsonl",
+            ".ai/repo/answers/"
           ]
         }
       },
@@ -15650,6 +15659,27 @@
         "summary": "Architecture decisions",
         "route": "/cockpit/objects/context/ai-repo-adrs",
         "source": ".ai/repo/adrs/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree"
+        }
+      },
+      {
+        "id": "majordomus://context/ai.repo.answers",
+        "kind": "context",
+        "label": "ai.repo.answers",
+        "summary": "Owner answers",
+        "route": "/cockpit/objects/context/ai-repo-answers",
+        "source": ".ai/repo/answers/README.md",
         "status": "active",
         "facts": {
           "audience": [
@@ -82696,22 +82726,22 @@
             "an_owner_answer_carries_its_provenance"
           ],
           "milestone": "M002",
-          "non_scope": [
-            "Asking the owner: the provider's question tool or the terminal asks, and this records what was asked and answered",
-            "Typed coordination records in the mesh journal: I4665",
-            "Attributing a record to the session that wrote it: the other issues of M002",
-            "Rewriting the existing prose answers in issue records: a later change cites them once the kind exists"
-          ],
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
             "share/schemas/majordomus/owner-answer/owner-answer.v1.schema.json",
             "share/allow/owner-answer.txt",
-            "lib/answer.sh",
-            "lib/commands.sh",
-            "lib/doctor.sh",
-            "lib/project.awk",
+            "share/kinds.yaml",
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            "share/skeleton/templates/answers-README.md",
+            "share/standard/majordomus/rules/owner-answers-are-recorded.v1.md",
+            "share/standard/majordomus/manifest.yaml",
+            "share/commands.yaml",
+            ".ai/repo/knowledge/sources.yaml",
+            ".ai/repo/rules/vendor/majordomus",
+            ".ai/repo/answers",
+            "lib/question.sh",
             "docs/CLI.md",
             "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
             ".ai/repo/project/issues/I4669.yaml",
@@ -82719,6 +82749,7 @@
           ],
           "serves": [],
           "slug": "an-owner-answer-carries-its-provenance",
+          "updated_at": "2026-11-25",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 4669_an_owner_answer_carries_its_provenance"
@@ -95614,6 +95645,48 @@
         }
       },
       {
+        "id": "majordomus://owner-answer/A-20261125-evolve-majordomus-from-lessons",
+        "kind": "owner-answer",
+        "label": "A-20261125-evolve-majordomus-from-lessons",
+        "summary": "2026-11-25T06:06:37.664Z",
+        "route": "/cockpit/objects/owner-answer/a-20261125-evolve-majordomus-from-lessons",
+        "source": ".ai/repo/answers/A-20261125-evolve-majordomus-from-lessons.yaml",
+        "facts": {
+          "answered_at": "2026-11-25T06:06:37.664Z",
+          "channel": "chat",
+          "provider": "claude-code",
+          "settles": [
+            "issue:I4669"
+          ],
+          "text_source": "transcript-checked"
+        }
+      },
+      {
+        "id": "majordomus://owner-answer/A-20261125-which-majordomus-lessons",
+        "kind": "owner-answer",
+        "label": "A-20261125-which-majordomus-lessons",
+        "summary": "Yes. From this session I've distilled these generic lessons for prismatic-majordomus (nothing OpenTTD-specific). Which should I implement there? (Each one first as a design for review, then implementation with tests in that repo's own workflow.)",
+        "route": "/cockpit/objects/owner-answer/a-20261125-which-majordomus-lessons",
+        "source": ".ai/repo/answers/A-20261125-which-majordomus-lessons.yaml",
+        "facts": {
+          "answered_at": "2026-11-25T05:53:09.117Z",
+          "channel": "question-tool",
+          "free_text": "porad se s ostatnimi ai/llm, na vice pruchodu a vymslete nejlepsi reseni ",
+          "multi_select": true,
+          "provider": "claude-code",
+          "selected": [
+            "Build slots and locks",
+            "Owner answers in the repo",
+            "Plan ↔ merged PRs",
+            "Baseline-relative gates"
+          ],
+          "settles": [
+            "issue:I4669"
+          ],
+          "text_source": "transcript-checked"
+        }
+      },
+      {
         "id": "majordomus://policy/.ai/repo/policy.yaml",
         "kind": "policy",
         "label": ".ai/repo/policy.yaml",
@@ -97441,6 +97514,26 @@
           "statement": "Claim the paths a task needs when it starts; if the fix is elsewhere, stop and record it rather than widening the scope silently.",
           "tags": [
             "principle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.owner-answers-are-recorded@1",
+        "kind": "rule",
+        "label": "majordomus.owner-answers-are-recorded@1",
+        "summary": "An owner's answer is a tracked, verbatim record, and what cites it resolves",
+        "route": "/cockpit/objects/rule/majordomus-owner-answers-are-recorded-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/owner-answers-are-recorded.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.externalise-decisions@1"
+          ],
+          "tags": [
+            "records",
+            "decisions",
+            "owner"
           ]
         }
       },
@@ -110808,6 +110901,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+        "kind": "test",
+        "label": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+        "route": "/cockpit/objects/test/test-cases-4669-an-owner-answer-carries-its-provenance-sh",
+        "source": "test/cases/4669_an_owner_answer_carries_its_provenance.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -131919,6 +132019,11 @@
       },
       {
         "source": "majordomus://context/ai.repo.adrs",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.answers",
         "target": "kind:context",
         "kind": "is_a"
       },
@@ -155168,6 +155273,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://owner-answer/A-20261125-evolve-majordomus-from-lessons",
+        "target": "kind:owner-answer",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://owner-answer/A-20261125-which-majordomus-lessons",
+        "target": "kind:owner-answer",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://policy/.ai/repo/policy.yaml",
         "target": "kind:policy",
         "kind": "is_a"
@@ -155756,6 +155871,16 @@
         "source": "majordomus://rule/majordomus.one-worker-one-scope@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.owner-answers-are-recorded@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.owner-answers-are-recorded@1",
+        "target": "majordomus://rule/majordomus.externalise-decisions@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/majordomus.policy-completeness@1",
@@ -160864,6 +160989,11 @@
       },
       {
         "source": "majordomus://test/test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4669_an_owner_answer_carries_its_provenance.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -165999,8 +166129,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4547,
+      "edges": 10235,
       "acyclic": false,
       "truncated": false
     }

@@ -81710,10 +81710,16 @@
       "scope": [
         "share/schemas/majordomus/owner-answer/owner-answer.v1.schema.json",
         "share/allow/owner-answer.txt",
-        "lib/answer.sh",
-        "lib/commands.sh",
-        "lib/doctor.sh",
-        "lib/project.awk",
+        "share/kinds.yaml",
+        "share/skeleton/ai/repo/knowledge/sources.yaml",
+        "share/skeleton/templates/answers-README.md",
+        "share/standard/majordomus/rules/owner-answers-are-recorded.v1.md",
+        "share/standard/majordomus/manifest.yaml",
+        "share/commands.yaml",
+        ".ai/repo/knowledge/sources.yaml",
+        ".ai/repo/rules/vendor/majordomus",
+        ".ai/repo/answers",
+        "lib/question.sh",
         "docs/CLI.md",
         "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
         ".ai/repo/project/issues/I4669.yaml",
@@ -81723,18 +81729,24 @@
         "Asking the owner: the provider's question tool or the terminal asks, and this records what was asked and answered",
         "Typed coordination records in the mesh journal: I4665",
         "Attributing a record to the session that wrote it: the other issues of M002",
-        "Rewriting the existing prose answers in issue records: a later change cites them once the kind exists"
+        "Rewriting the existing prose answers in issue records: a later change cites them once the kind exists",
+        "A later issue: a provider hook that writes the record from the question tool's own payload (text_source provider-payload), below the model",
+        "A later issue: relay hops (from, to, at, never text) and the lookup of an answer by id from a linked runtime over the mesh",
+        "A later issue: one answer governing several repositories under an NDA, as independently generated per-repository records with their own ids and digests (a shared id or digest links them; literal-substring redaction is no confidentiality boundary)",
+        "ADR acceptance through a record (adr accept --answer <id>): planned by another session on top of this kind"
       ],
-      "objective": "An owner-answer record kind (majordomus.owner-answer/v1) holds one question put to the repository's owner and the answer. Its fields are an id, the channel it was asked through (a provider's question tool, a terminal prompt, a forge comment), the asking session's id, the time it was asked and the time it was answered, the question and the answer verbatim, the options offered when the channel offered any, and the sessions it was relayed through (relayed_by, relayed_to, each with its time). `majordomus answer record` writes one record from the asking session. The session id and the times are computed, never typed. A record whose text a policy marks private is committed as its digest, with the text kept under .ai/local. `majordomus answer relay <id> --to <session>` appends one relay hop. `majordomus answer show <id>` prints it for the receiving session to read. A rule, decision, issue or ADR cites the answer as `owner-answer:<id>` and does not retype it. A validator, run by doctor and by plan validate, refuses a citation that does not resolve. It also refuses a quoted answer that differs from the record's verbatim text, and a relay hop whose receiving session is not one the hop's sender could reach.",
+      "objective": "An owner-answer record kind (majordomus.owner-answer/v1, data-declared in share/kinds.yaml, so the registry validates it and serves it as majordomus://owner-answer/<id> over MCP and HTTP) holds one question put to the repository's owner and the answer, under .ai/repo/answers/<id>.yaml. Its fields are the id, the channel, the provider, the asking session with where that came from, both times, the question, the options and the answer verbatim (as JSON strings, so no byte is folded away), how the text was obtained (text_source: transcript-checked, provider-payload or typed), the transcript locator and the sha256 of its raw lines, sha256 digests of the question and of the answer, an optional translation that never replaces the verbatim text, what it settles, what it supersedes, and the recording session, time and identity, computed. `majordomus question record` writes it, reading the question, options, session and times from the provider transcript when --transcript is given and checking the answer against the result; `question answers` and `question answer <id>` read it back; `question resolve --owner-answer <id>` closes a blocking question with it. A baseline rule (majordomus.owner-answers-are-recorded) and its validator, run by check, doctor and watch, recompute both digests, refuse a label that was not offered, and report every owner-answer:<id> cited under .ai/repo/ that names no record.",
       "why": "Observed on 2026-11-21 and 2026-11-22 during a long run with many sessions in an adopter repository. The lead session asked the owner through its provider's question tool and passed the verbatim answer to a subagent. The subagent wrote the answer into a rule file and a decision. The provider's harness flagged the subagent twice for possible instruction poisoning, because the text it acted on arrived in a message from another agent and nothing in any record proved that the owner had said it. The same gap is in this repository's own plan. I4665's current_state retypes an owner's answer by hand, with the asking session's id, the question and the answer in prose, and the note that a coordinator relayed it. No reader can check that prose, and the next record that needs the answer has to retype it again.",
-      "current_state": "Measured at origin/master d02c59d447c on 2026-11-22. lib/question.sh keeps open questions as single lines of .ai/local/state/open-questions.md: the task id, the question and, once resolved, the answer and a date. Questions are local and never committed, and a line has no channel, asking session, relay or verbatim option list. lib/decision.sh appends free text to .ai/local/state/decisions.md with --why, --rejected and --evidence strings. The milestone M002 attributes each durable record to the session that wrote it (mj_record_attribution, ADR 0164). It names who wrote the record, not who the record quotes. I4665 (open) puts typed coordination records in the mesh journal, authored by the journal's session key, with expiry and staleness. Those are a coordination channel, and an owner's answer is a durable fact that outlives the sessions that relayed it. No record kind and no validator exists for an owner's answer.",
-      "desired_state": "A session that acts on an owner's answer it did not ask for itself cites an id, and `answer show` and the validator prove from committed records who asked, through which channel, when, what the owner said, and which sessions passed it on. Retyping the answer is unnecessary and is refused when it differs.",
+      "current_state": "Measured at origin/master 46775282570 on 2026-11-25. lib/question.sh keeps open questions as single lines of .ai/local/state/open-questions.md and lib/decision.sh appends free text to .ai/local/state/decisions.md: both are local and never committed. Owner answers reach git only as prose retyped into curated knowledge (PR #3103, #3121) or issue fields (I4665), which no validator reads. On 2026-11-25 a relay of three owner answers between sessions of an adopter repository said two English questions had been translated and changed a double space in free text to a single one; the provider transcript showed both. The branch feature/I4669-an-owner-answer-carries-its-provenance delivers the kind, the writer, the readers, the rule and the validator, from a design reviewed in two rounds (codex and an independent reviewer; gemini and the API advisors refused authentication), whose positions are in its pull request. ADR acceptance as one command (adr accept --answer <id>) is planned by another session on top of this record and stores no answer of its own.",
+      "desired_state": "A session that acts on an owner's answer cites owner-answer:<id>; `question answer` and the validator show from committed records who asked, through which channel, when, what the owner said byte for byte and how strong that provenance is. Retyping the answer is unnecessary, and an edit or paraphrase of a record after the fact is reported.",
       "acceptance_criteria": [
-        "Case 4669: a fixture session records an answer with channel question-tool, a question, two offered options and the chosen answer. The record carries the session id and both times without the caller typing them, and `answer show` prints the question and answer byte for byte",
-        "`answer relay` from the asking session to a second fixture session appends one hop with both sessions and the time, and the receiving session's `answer show` lists the hop",
-        "A rule file citing owner-answer:<id> passes the validator. A citation to an id that does not exist is refused, and a quoted answer that differs from the record by one word is refused. Both refusals name the record and the citing file",
-        "A record whose text the policy marks private is committed with its digest only, `answer show` in the checkout that holds the text prints it, and in a fresh clone it prints the digest and says the text is local",
-        "Negative control: with the validator reverted to master, the case finds the unresolved citation accepted"
+        "Case 4669: a fixture transcript in the provider's shape yields a record whose question, options, asking session and both times come from the transcript, whose free text keeps its double and trailing spaces, and whose source carries the transcript's file name (never its path), the locator and the sha256 of the raw lines",
+        "A selected label or free text not in the transcript's answer, a question or options that differ from the transcript, a label not offered, several labels on a single-select question, an empty answer, an existing id and an unknown --supersedes are each refused, and a refused record writes nothing",
+        "A typed record says text_source typed and session_source declared or environment, and `question answer` says it is unverified",
+        "The registry lists the record under kind owner-answer with no schema violation",
+        "`question resolve --owner-answer` closes a blocking question with an id that names a record and refuses one that names none",
+        "check and doctor report a record whose question or answer no longer matches its digest, a label that was not offered, transcript-checked without a locator and digest, a file not in the writer's shape, and a citation owner-answer:<id> under .ai/repo/ that names no record; a citation that resolves is not reported",
+        "Negative control: with the label check alone violated and both digests consistent, the case finds the record reported"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -88791,7 +88803,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1201",
-      "message": "shares share/schemas with I4669; they may not run concurrently"
+      "message": "shares share/kinds.yaml with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92463,7 +92475,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1990",
-      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
+      "message": "shares share/skeleton with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -99687,7 +99699,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2148",
-      "message": "shares test/cases with I4669; they may not run concurrently"
+      "message": "shares share/skeleton with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -108183,7 +108195,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2720",
-      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
+      "message": "shares share/commands.yaml with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -113781,7 +113793,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2901",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
+      "message": "shares .ai/repo/project with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -137223,12 +137235,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3110",
-      "message": "shares lib/commands.sh with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3110",
       "message": "shares lib/commands.sh with I4671; they may not run concurrently"
     },
     {
@@ -137662,12 +137668,6 @@
       "code": "scope_conflict",
       "subject": "I3116",
       "message": "shares lib/doctor.sh with I4668; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3116",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -138578,6 +138578,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3156",
+      "message": "shares share/commands.yaml with I4669; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3160",
       "message": "shares .ai/repo/ci/gates.yaml with I3241; they may not run concurrently"
     },
@@ -139383,7 +139389,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3167",
-      "message": "shares share/allow with I4669; they may not run concurrently"
+      "message": "shares share/kinds.yaml with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -142461,6 +142467,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3309",
+      "message": "shares .ai/repo/rules/vendor/majordomus/rules/profile-requirements.v1.md with I4669; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3309",
       "message": "shares lib/finish.sh with I4671; they may not run concurrently"
     },
     {
@@ -144088,12 +144100,6 @@
       "code": "scope_conflict",
       "subject": "I3322",
       "message": "shares lib/doctor.sh with I4668; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3322",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -148448,12 +148454,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3757",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3759",
       "message": "shares scripts/ci/homepage-check with I3760; they may not run concurrently"
     },
@@ -148736,12 +148736,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3762",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3763",
       "message": "shares docs/generated with I3810; they may not run concurrently"
     },
@@ -148906,12 +148900,6 @@
       "code": "scope_conflict",
       "subject": "I3763",
       "message": "shares docs/generated with I4668; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3763",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -151635,12 +151623,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4255",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4255",
       "message": "shares lib/doctor.sh with I4671; they may not run concurrently"
     },
     {
@@ -152104,12 +152086,6 @@
       "code": "scope_conflict",
       "subject": "I4266",
       "message": "shares lib/plan.sh with I4630; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4266",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -153219,12 +153195,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4323",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4323",
       "message": "shares lib/doctor.sh with I4671; they may not run concurrently"
     },
     {
@@ -153957,7 +153927,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4336",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
+      "message": "shares share/kinds.yaml with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -153988,6 +153958,12 @@
       "code": "scope_conflict",
       "subject": "I4337",
       "message": "shares docs/KNOWLEDGE.md with I4585; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4337",
+      "message": "shares .ai/repo/knowledge with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -154815,7 +154791,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4413",
-      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
+      "message": "shares .ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -154929,7 +154905,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4415",
-      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
+      "message": "shares .ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -155031,7 +155007,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4416",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
+      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -155086,6 +155062,12 @@
       "code": "scope_conflict",
       "subject": "I4417",
       "message": "shares apps/majordomus-cli/src/capability/builtin/trace.rs with I4622; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4417",
+      "message": "shares share/kinds.yaml with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -155164,12 +155146,6 @@
       "code": "scope_conflict",
       "subject": "I4418",
       "message": "shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4418",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -155379,7 +155355,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4463",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
+      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -156429,12 +156405,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4584",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4584",
       "message": "shares lib/doctor.sh with I4671; they may not run concurrently"
     },
     {
@@ -156489,12 +156459,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4595",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4595",
       "message": "shares lib/doctor.sh with I4671; they may not run concurrently"
     },
     {
@@ -156502,12 +156466,6 @@
       "code": "scope_conflict",
       "subject": "I4596",
       "message": "shares lib/project.awk with I4630; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4596",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -156614,14 +156572,8 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I4630",
-      "message": "shares lib/project.awk with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I4632",
-      "message": "shares docs/CLI.md with I4669; they may not run concurrently"
+      "message": "shares share/commands.yaml with I4669; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -156651,26 +156603,20 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4668",
-      "message": "shares lib/doctor.sh with I4669; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I4668",
       "message": "shares lib/doctor.sh with I4671; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I4669",
-      "message": "shares lib/commands.sh with I4671; they may not run concurrently"
+      "message": "shares docs/CLI.md with I4671; they may not run concurrently"
     }
   ],
   "findings_by_code": [
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 11503,
+      "count": 11492,
       "examples": [
         {
           "level": "WARN",

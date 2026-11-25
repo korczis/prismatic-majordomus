@@ -315,7 +315,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4668; they may not run concurrently |
-| WARN | `scope_conflict` | `I2901` | shares lib/project.awk with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4685; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares apps/majordomus-cli/src/ui/idd.rs with I2903; they may not run concurrently |

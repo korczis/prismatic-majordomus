@@ -235,7 +235,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
-| WARN | `scope_conflict` | `I2720` | shares docs/CLI.md with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I2720` | shares share/commands.yaml with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares docs/CLI.md with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares test/cases with I4685; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares apps/majordomus-cli/src/ui with I2747; they may not run concurrently |

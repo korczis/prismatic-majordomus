@@ -69,6 +69,11 @@
     },
     {
       "kind": "derives",
+      "source": "principle:externalise-decisions-and-durable-state",
+      "target": "rule:majordomus.owner-answers-are-recorded"
+    },
+    {
+      "kind": "derives",
       "source": "principle:one-worker-one-clear-scope",
       "target": "rule:majordomus.dag-integrity"
     },
@@ -341,6 +346,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.decision-records",
       "target": "validator:decisions"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.owner-answers-are-recorded",
+      "target": "validator:owner_answers"
     },
     {
       "kind": "decided_by",
@@ -754,6 +764,21 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:owner_answers",
+      "target": "command:check"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:owner_answers",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:owner_answers",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:policy",
       "target": "command:doctor"
     },
@@ -1066,6 +1091,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.decision-records",
       "target": "test:test/cases/21_decision_question.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.owner-answers-are-recorded",
+      "target": "test:test/cases/4669_an_owner_answer_carries_its_provenance.sh"
     },
     {
       "kind": "proved_by",
@@ -1473,6 +1503,17 @@
       "route": "/doctrines/decision-records/",
       "status": "advisory",
       "summary": "Every entry in decisions.md carries the task, the head and the reason, so a decision can be found by the worker who needs it."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.owner-answers-are-recorded",
+      "kind": "rule",
+      "label": "owner-answers-are-recorded",
+      "note": "exit 0 · records",
+      "role": "warn",
+      "route": "/doctrines/owner-answers-are-recorded/",
+      "status": "advisory",
+      "summary": "An answer the repository's owner gives to a question a worker put is recorded in the repository, in the same session, as an owner-answer record holding the question, the options and the answer verbatim with who asked, who recorded and how the text was obtained. A record holds the text its digests name, and every owner-answer:<id> cited under the layer resolves."
     },
     {
       "external": false,
@@ -2061,6 +2102,14 @@
     },
     {
       "external": false,
+      "id": "validator:owner_answers",
+      "kind": "validator",
+      "label": "mj_validate_owner_answers",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/question.sh."
+    },
+    {
+      "external": false,
       "id": "validator:policy",
       "kind": "validator",
       "label": "mj_validate_policy",
@@ -2528,6 +2577,14 @@
       "id": "test:test/cases/44_model_doctrine.sh",
       "kind": "test",
       "label": "test/cases/44_model_doctrine.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+      "kind": "test",
+      "label": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

@@ -68,7 +68,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4463` | shares lib/plan.sh with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares lib/project.awk with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4632; they may not run concurrently |
-| WARN | `scope_conflict` | `I4463` | shares lib/project.awk with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4463` | shares docs/CLI.md with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares docs/CLI.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4464` | shares docs/CLI.md with I4467; they may not run concurrently |
@@ -160,5 +160,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4573` | shares .ai/repo/workflows/task-lifecycle.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4628` | shares lib/finish.sh with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4628` | shares lib/finish.sh with I4671; they may not run concurrently |
-| WARN | `scope_conflict` | `I4632` | shares docs/CLI.md with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I4632` | shares share/commands.yaml with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4632` | shares lib/evidence.sh with I4671; they may not run concurrently |

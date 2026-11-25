@@ -309,6 +309,7 @@
           "4400_a_profile_axis_names_the_limit_it_derives",
           "44_model_doctrine",
           "4595_doctor_names_an_install_behind_its_lockfile",
+          "4669_an_owner_answer_carries_its_provenance",
           "707_knowledge_check_refuses_malformed_records",
           "708_health_sees_a_stopped_knowledge_writer",
           "711_candidates_are_reviewed_not_accumulated",
@@ -344,6 +345,7 @@
           "4226_ci_judges_from_the_kit_evidence_secret",
           "4227_a_fleet_skill_is_proved_by_its_pack",
           "4400_a_profile_axis_names_the_limit_it_derives",
+          "4669_an_owner_answer_carries_its_provenance",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "56_derived_current_gate",
@@ -1508,19 +1510,22 @@
       "json_output": false,
       "syntax": "majordomus question add \"<question>\"",
       "demo": "question-gate",
-      "note": "Every unresolved entry for the active task refuses finish --outcome completed. That is the whole point of the command; it is a gate, not a notebook.",
+      "note": "Every unresolved entry for the active task refuses finish --outcome completed. That is the whole point of the command; it is a gate, not a notebook. question record writes an owner's answer, verbatim, as a tracked owner-answer record under .ai/repo/answers/ (checked against the provider transcript where one is given, typed and said so otherwise); question answers and question answer read them back.",
       "reads": [
         ".ai/local/state/current.yaml",
-        ".ai/local/state/open-questions.md"
+        ".ai/local/state/open-questions.md",
+        ".ai/repo/answers/"
       ],
       "writes": [
         ".ai/local/state/open-questions.md",
-        ".ai/local/state/ledger.jsonl"
+        ".ai/local/state/ledger.jsonl",
+        ".ai/repo/answers/"
       ],
       "exit_codes": [
         0,
         2,
-        12
+        12,
+        15
       ],
       "tests": {
         "behaviour": [
@@ -1530,12 +1535,14 @@
           "25_continuity_lifecycle",
           "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "32_refusal_lifecycle",
-          "33_event_registry"
+          "33_event_registry",
+          "4669_an_owner_answer_carries_its_provenance"
         ],
         "negative": [
           "21_decision_question",
           "3049_a_second_workers_record_lands_on_the_first_workers_task",
-          "32_refusal_lifecycle"
+          "32_refusal_lifecycle",
+          "4669_an_owner_answer_carries_its_provenance"
         ]
       },
       "demo_data": {
@@ -1590,7 +1597,7 @@
           }
         ]
       },
-      "doc_md": "\nOpen, resolve and list the questions that block acceptance. One mutable index:\n`state/open-questions.md`.\n\nUnresolved questions are explicit state, not prose inside a handover, because\n`finish --outcome completed` refuses while any unresolved entry exists here, including an\nentry without a task relation. That gate is\nthe reason the file has a machine-written line format, and the reason `check`, `doctor` and\n`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate\nthat can be bypassed by mistyping one.\n\n- `question add \"<question>\"` appends `- [unresolved] <task id> — <question> (<date>)`.\n  The task is `none` when a different, still-open episode opened the active task; a\n  question does not require an active task.\n- `question resolve <n|\"<text>\"> --answer \"<answer>\"` rewrites that one line to\n  `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.\n  `--answer` is required, and an ambiguous selector is refused rather than guessed.\n- `question list [--all] [--task <id>]` shows every unresolved entry, because every one of\n  them refuses a completed finish here; `--task` narrows to what one task opened and\n  `--all` adds the resolved ones. The numbering is what `question resolve <n>` selects.\n  Any unresolved question can be resolved, not only one the active task opened: a gate\n  nobody can clear is a gate that gets worked around.\n\nResolving edits the index because an index of what is still open must not accumulate. The\nappend-only record of every opening and resolution, with its answer, is the ledger.\nResolution preserves the index entry's original task token. Its ledger event describes\nthe resolving caller and relates that caller's active task only when attributable.\n\n```\n$ majordomus question add \"Does the legacy mobile callback still require the old URI form?\"\nopened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?\n$ majordomus finish --outcome completed --verify-command \"mix test\"\nFAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]\nfinish: refused, 1 unmet\n```"
+      "doc_md": "\nOpen, resolve and list the questions that block acceptance. One mutable index:\n`state/open-questions.md`. Record the owner's answers as tracked records (below).\n\nUnresolved questions are explicit state, not prose inside a handover, because\n`finish --outcome completed` refuses while any unresolved entry exists here, including an\nentry without a task relation. That gate is\nthe reason the file has a machine-written line format, and the reason `check`, `doctor` and\n`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate\nthat can be bypassed by mistyping one.\n\n- `question add \"<question>\"` appends `- [unresolved] <task id> — <question> (<date>)`.\n  The task is `none` when a different, still-open episode opened the active task; a\n  question does not require an active task.\n- `question resolve <n|\"<text>\"> --answer \"<answer>\"` rewrites that one line to\n  `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.\n  `--answer` is required, and an ambiguous selector is refused rather than guessed.\n- `question list [--all] [--task <id>]` shows every unresolved entry, because every one of\n  them refuses a completed finish here; `--task` narrows to what one task opened and\n  `--all` adds the resolved ones. The numbering is what `question resolve <n>` selects.\n  Any unresolved question can be resolved, not only one the active task opened: a gate\n  nobody can clear is a gate that gets worked around.\n\nResolving edits the index because an index of what is still open must not accumulate. The\nappend-only record of every opening and resolution, with its answer, is the ledger.\nResolution preserves the index entry's original task token. Its ledger event describes\nthe resolving caller and relates that caller's active task only when attributable.\n\n```\n$ majordomus question add \"Does the legacy mobile callback still require the old URI form?\"\nopened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?\n$ majordomus finish --outcome completed --verify-command \"mix test\"\nFAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]\nfinish: refused, 1 unmet\n```\n\n### Owner answers: `question record`, `question answers`, `question answer`\n\nAn answer the repository's owner gives is not a blocker that resolves and is forgotten. It is\na durable fact that other records cite, so it is a tracked record of its own kind:\n`.ai/repo/answers/<id>.yaml`, kind `owner-answer`, schema `owner-answer/v1`. The registry\nvalidates it and serves it as `majordomus://owner-answer/<id>` over MCP and HTTP (I4669, rule\n`majordomus.owner-answers-are-recorded`, `docs/OWNER_ANSWERS.md`).\n\n- `question record --slug <slug> --transcript <file.jsonl> --locator <tool-use id>#<n>\n  --selected \"<label>\"... [--free-text \"<text>\"]` reads three things from the provider's\n  transcript: the question and the options offered, the session that asked, and both times.\n  It then checks that every selected label and the free text occur, byte for byte, in the\n  answer that the tool result holds. It never parses the answer out of the result, and it\n  never alters it. A locator without `#` names one chat message by its id, and that\n  message's text is the free text. The record says `text_source: transcript-checked`, and\n  holds the transcript's file name (never its path), the locator, and the sha256 of the raw\n  transcript lines.\n- Without `--transcript`, the text is given with `--question`, `--option`, `--selected`,\n  `--free-text`, or with `--from <file.json|->`. A document carries multi-line text without\n  shell quoting. The record then says `text_source: typed`. The asking session comes from\n  the process's own provider session (`environment`), or from `--asked-in` (`declared`).\n- The writer computes the recording session, the time, the git identity and the sha256 of\n  the question and of the answer. It refuses each of these:\n  - a label that was not offered;\n  - several labels on a single-select question;\n  - a question tool with no options;\n  - an empty answer;\n  - an existing id, because a correction is a new record with `--supersedes <id>`;\n  - a `--settles` ref outside `issue|pr|adr|decision|task|rule|intent|other:<ref>`.\n- `--translation-language` and `--translation-answer` add a translation beside the\n  verbatim text, never in its place. No summary or paraphrase field exists.\n- `question answers [--settles <ref>]` lists the records, one line each.\n- `question answer <id>` prints one record as committed, with its provenance strength in\n  words.\n- `question resolve <n> --owner-answer <id>` closes a blocking question with a record, and\n  refuses an id that names none.\n\n`check`, `doctor` and `watch` recompute both digests of every record. They also report:\n\n- a record that selects a label it did not offer;\n- a record that claims `transcript-checked` without a locator and a digest;\n- a record that is not in the shape the writer emits;\n- every `owner-answer:<id>` cited under `.ai/repo/` that names no record.\n\nThey read explicit citations only."
     },
     {
       "name": "prompt",

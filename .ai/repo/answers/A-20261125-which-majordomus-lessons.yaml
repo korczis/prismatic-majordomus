@@ -1,0 +1,46 @@
+# One owner's answer, written by `majordomus question record`; never edited. Every value is
+# a JSON string or object, byte for byte, and both digests are recomputed by the validator.
+schema: "owner-answer/v1"
+id: "A-20261125-which-majordomus-lessons"
+channel: "question-tool"
+provider: "claude-code"
+asked:
+  session: "7709ab47-7786-494d-bbcc-679b293569a7"
+  at: "2026-11-25T05:06:23.177Z"
+  session_source: "transcript"
+answered_at: "2026-11-25T05:53:09.117Z"
+text_source: "transcript-checked"
+source:
+  transcript: "7709ab47-7786-494d-bbcc-679b293569a7.jsonl"
+  locator: "toolu_01WppK7NfiRXAVW2qWPYgS5s#0"
+  sha256: "e5eb338b5c0f57bf8b11f6f97b2044f2bf9287757bb3da9a6a2990499a1fffd0"
+question: "Yes. From this session I've distilled these generic lessons for prismatic-majordomus (nothing OpenTTD-specific). Which should I implement there? (Each one first as a design for review, then implementation with tests in that repo's own workflow.)"
+multi_select: true
+options:
+  - label: "Build slots and locks"
+    description: "`majordomus slot take/release/status`: the owner file carries pid+session, a stale lock (dead pid, gone session) is reclaimed automatically, an ownerless slot is refused. Here dead/ownerless slots blocked builds 4 times."
+  - label: "Owner answers in the repo"
+    description: "`majordomus decision` today writes only to .ai/local (uncommitted), which contradicts 'record owner answers in the repo'. Add a tracked owner-answer record (verbatim question+answer, session, time) and link it to PRs."
+  - label: "Plan ↔ merged PRs"
+    description: "A reconciliation command: maps merged PRs to issues and milestones and proposes transitions with evidence. Here milestones showed 0/13 even though the work was merged."
+  - label: "Baseline-relative gates"
+    description: "A gate verdict relative to the base (branch vs master over repeated runs and neutral perturbations) for nondeterministic checks. It generalises the owner's 'compare to master' rule. Plus resumable agents: WIP commit+push and handover on interruption."
+selected:
+  - "Build slots and locks"
+  - "Owner answers in the repo"
+  - "Plan ↔ merged PRs"
+  - "Baseline-relative gates"
+free_text: "porad se s ostatnimi ai/llm, na vice pruchodu a vymslete nejlepsi reseni "
+digest:
+  question: "c64f2e1db1abd7d716010e29b0c0fea60bedbd7f9e1667e3a6aabe98f428bfb2"
+  answer: "ad3aaeca6b8300d15e2fd3119fe1a12a52b732d8becf4d70bdcc0508912e905c"
+translation:
+  language: "en"
+  answer: "consult the other AIs/LLMs, in several passes, and work out the best solution"
+settles:
+  - "issue:I4669"
+recorded:
+  session: ""
+  at: "2026-11-25T07:51:24Z"
+  by: "Tomas Korcak <korczis@gmail.com>"
+  task: "t-20261125065146-a4a3"

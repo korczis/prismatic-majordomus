@@ -850,6 +850,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/answers",
+      "kind": "artifact",
+      "label": "repo/answers",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/recover.sh",
       "kind": "module",
       "label": "recover",
@@ -1139,6 +1149,11 @@
     {
       "source": "lib/prompt.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/question.sh",
+      "target": ".ai/repo/answers",
       "kind": "reads"
     },
     {
