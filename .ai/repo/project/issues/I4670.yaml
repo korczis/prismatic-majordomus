@@ -1,0 +1,42 @@
+id: I4670
+milestone: a-session-proceeds-through-the-mesh
+title: "A machine slot's holder is a typed record: one command hands it to another session, it is given back when no build of its holder is alive, and doctor names a slot held idle"
+slug: a-machine-slot-is-handed-over-and-never-held-idle
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Each slot of machine.slot (I4006) holds one typed holder record: the holder's session key, its board peer when it has one, the purpose, the pid of the process the slot was taken for, that process's start time, taken_at, and an expected_release the taker declares. The record is written by the command that takes the slot and is never edited by hand. `majordomus machine slot handover <slot> --to <session>` moves the slot to a live session of this machine in one atomic rename. The new holder names its own pid, and the handover is a ledger line naming both sessions. The slot is given back by the command that holds it, and also when the holder is idle: none of its recorded processes and none of their descendants is a compiler or build process for longer than a policy grace (machine.slot.idle_release_seconds). Then the next reader of the slot releases it and records why. doctor reports a slot held without a live build of its holder (WARN, naming the holder, the age and the idle time), a slot past its expected_release, and a slot whose holder record does not parse. A record that does not parse is never treated as held: doctor reports it and the slot can be taken again."
+why: "Observed from 2026-11-19 to 2026-11-22 during a long run with many sessions on one shared workstation. Its build slots were mkdir locks kept by a convention outside the tool, each with a free-text owner file. Handing a slot from one session to another was done by rewriting the owner text by hand. An idle holder kept a slot for hours while it waited on CI, with no compile alive, and other sessions' builds queued behind it. A peer then rewrote a slot's owner text to `FREE / PAUSED` without releasing it, so the slot read as free and was still held. lib/machine_lock.sh already tolerates owner lines written by hand without a pid (its header says why), and the same free text is what made each of these states unreadable to the tool."
+current_state: "Measured at origin/master d02c59d447c on 2026-11-22. machine.slot is planned by I4006 (READY, not built): a counting slot of N holders, a bounded wait that names its holders, release of a dead holder's slot by deadline, and no new store. It does not plan a typed holder, a handover, release of a holder that is alive and idle, or a doctor finding. lib/machine_lock.sh serialises derives through `.derive.lock/owner`, one line `<who>:<branch> <pid>`. It reads the pid from `pid=<n>` or the last word, accepts a line without a pid as written by hand, and releases only on its holder's exit or signal. lib/rust_bin.sh counts the cargo builders running on the machine (I3825) and attributes none of them to a slot."
+desired_state: "A slot always says which session holds it, for what, since when and until when. Moving it is one command. A holder that stopped building loses it after the grace with a record of why. doctor names every slot that is held and idle, overdue, or unreadable. Rewriting text is never how a slot changes hands."
+scope:
+  - "lib/machine_lock.sh"
+  - "lib/doctor.sh"
+  - "lib/rust_bin.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/OFFLOAD.md"
+  - "test/cases/4670_a_machine_slot_is_handed_over_and_never_held_idle.sh"
+  - ".ai/repo/project/issues/I4670.yaml"
+  - "site/content/plan/I4670.md"
+non_scope:
+  - "The slot itself, its count, its bounded wait and its dead-holder release: I4006"
+  - "The derive lock's one-derive-at-a-time semantics and its owner line, which scripts/reap-orphans and case 1018 read unchanged"
+  - "A slot on another machine"
+depends_on:
+  - "I4006"
+acceptance_criteria:
+  - "Case 4670: a slot taken through the command has a holder record that parses into session, purpose, pid, pid start, taken_at and expected_release. A hand-written free-text owner file is reported by doctor as unreadable, and the slot can be taken again"
+  - "`machine slot handover` to a live fixture session moves the slot atomically. The record then names the new holder and the ledger line names both sessions. A handover to a session that is not live is refused (exit 15) and leaves the slot with its holder"
+  - "With a fixture process table where the holder is alive and none of its descendants is a build process for longer than idle_release_seconds, the next take releases the slot and records `idle`. With a compile child alive, the slot stays held"
+  - "doctor reports one WARN for a slot held idle and one for a slot past its expected_release, each naming the holder, and none for a slot whose holder is building"
+  - "Negative control: against I4006's slot without this change, the case finds the idle slot still held"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4670_a_machine_slot_is_handed_over_and_never_held_idle"
+evidence_required:
+  - "a_machine_slot_is_handed_over_and_never_held_idle"
+serves:
+  - a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine
+created_at: 2026-11-22
