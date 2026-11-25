@@ -36,8 +36,11 @@ printf '[package]\nname = "fixture"\nversion = "0.1.0"\n' > apps/majordomus-cli/
 printf 'pub fn base() {}\n' > apps/majordomus-cli/src/lib.rs
 echo seed > docs/seed.md
 # the executable: says whether it is the borrowed one or a build, and writes nothing
+# built before `--build-identity` existed (I4771): it refuses the flag, so the derive judges it by
+# the commit it was declared to be built from
 cat > "$STUB/majordomus" <<EOF
 #!/bin/sh
+[ "\${1:-}" = --build-identity ] && exit 2
 [ "\$0" = "$STUB/majordomus" ] && echo borrowed >> "$STUB/exe.log" || echo built >> "$STUB/exe.log"
 exit 0
 EOF

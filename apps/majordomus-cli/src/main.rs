@@ -8,6 +8,12 @@ use clap::Parser;
 use majordomus_cli::cli::{Cli, EXIT_USAGE};
 
 fn main() -> ExitCode {
+    // what this executable is, for a hook or a gate deciding whether it may judge a tree:
+    // answered from the compiled-in constants before the command line, an index, a log or a
+    // lease exists, so it costs a process start (I4771)
+    if let Some(code) = majordomus_cli::self_identity::respond(std::env::args_os()) {
+        return ExitCode::from(code);
+    }
     // which bytes this process is, pinned before anything else runs: a server asked later
     // whether its code still exists compares against this, not against the file at that
     // path by then (I1502)

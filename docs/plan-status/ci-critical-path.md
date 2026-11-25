@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 20/52 | 18 | 11 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 20/53 | 18 | 12 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
 
 ## Issues
 
@@ -67,6 +67,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4570](https://majordomus.dev/plan/i4570/) | DONE | 0 | — | The before-push plan runs the formatter and the version-surface gate, the two seconds-long Rust gates a pull request was refused on after passing it |
 | [I4576](https://majordomus.dev/plan/i4576/) | DONE | 0 | — | The integration lease's holder record is never empty or half written while its holder renews it, so no reader of it gets a lease without a holder |
 | [I4592](https://majordomus.dev/plan/i4592/) | READY | 0 | — | The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes |
+| [I4771](https://majordomus.dev/plan/i4771/) | BLOCKED | 1 | I4627 | A hook or gate answers only through an executable of the tree's generation, and `majordomus version --commit` names the commit compiled into it |
 
 ## Findings
 
