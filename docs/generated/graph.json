@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -82576,6 +82576,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4634",
+        "kind": "issue",
+        "label": "I4634",
+        "summary": "A pull request does not land a merge whose delivery differs from the committed projection: plan.delivery reads an anticipated merge and a combined top's member merges, and the gate merge-delivery refuses the rest",
+        "route": "/cockpit/objects/issue/i4634",
+        "source": ".ai/repo/project/issues/I4634.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_pull_request_is_judged_by_the_merge_it_will_be"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Starting validate on `edited`. Every body edit pr-meta writes would then start the whole pipeline. The refusal says to re-run instead.",
+            "Deriving the projection at the anticipated merge. A derived file cannot name the commit it lands in (case 51), and the forge's merge commit does not exist before the merge.",
+            "The trunk's own check, which homepage-check already makes at the merge."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/plan/flight.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "scripts/ci/merge-delivery-check",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4634.yaml"
+          ],
+          "serves": [],
+          "slug": "a-merge-does-not-move-the-committed-delivery",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "bash test/run.sh 4634_a_merge_does_not_move_the_committed_delivery"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4665",
         "kind": "issue",
         "label": "I4665",
@@ -110808,6 +110854,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "kind": "test",
+        "label": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "route": "/cockpit/objects/test/test-cases-4634-a-merge-does-not-move-the-committed-delivery-sh",
+        "source": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -152998,6 +153051,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4634",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4634",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4665",
         "target": "kind:issue",
         "kind": "is_a"
@@ -160868,6 +160931,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165999,8 +166067,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4543,
+      "edges": 10232,
       "acyclic": false,
       "truncated": false
     }

@@ -84,6 +84,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4410; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares scripts/github-sync with I4529; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4596; they may not run concurrently |
+| WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4255` | shares docs/DOCTRINE.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I4255` | shares lib/rules.sh with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I4255` | shares apps/majordomus-cli/src/capability/builtin/rules.rs with I4327; they may not run concurrently |
@@ -235,6 +236,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4410` | shares lib/plan.sh with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares lib/plan.sh with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares docs/CLI.md with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I4410` | shares docs/PLANNING.md with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares docs/CLI.md with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4413; they may not run concurrently |
@@ -323,6 +325,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4418` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/commands/serve.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
+| WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/cli.rs with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares lib/doctor.sh with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares share/skeleton/policy.yaml with I4671; they may not run concurrently |
@@ -338,10 +341,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4599` | shares share/skeleton/policy.yaml with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4615` | shares lib/gates.sh with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I4616` | shares lib/plan.sh with I4630; they may not run concurrently |
+| WARN | `scope_conflict` | `I4616` | shares apps/majordomus-cli/src/plan with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/commands with I4633; they may not run concurrently |
+| WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/commands with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/commands with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares share/skeleton/policy.yaml with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares docs/MONITOR.md with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |

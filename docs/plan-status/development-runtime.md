@@ -353,6 +353,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
+| WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/cli.rs with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I4669; they may not run concurrently |
@@ -539,6 +540,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I2059` | shares test/cases with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I4669; they may not run concurrently |
@@ -728,6 +730,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares docs/CLI.md with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I2114` | shares test/cases with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares test/cases with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2114` | shares docs/CLI.md with I4669; they may not run concurrently |
@@ -831,6 +834,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2690` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2694` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I2720; they may not run concurrently |
@@ -1061,6 +1065,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I2714` | shares test/cases with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2714` | shares test/cases with I4669; they may not run concurrently |

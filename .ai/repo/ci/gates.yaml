@@ -691,6 +691,17 @@ gates:
     runs: scripts/ci/plan-drift-check
     summary: merged work the plan has not recorded is pending on a head and inside the window declared in .ai/repo/ci/plan.yaml, and refused on the trunk past it with `majordomus plan verify|done <id>` named; active_without_work and done_without_trace are reported and never refuse; a missing or unreadable window refuses
 
+  # I4634: the trunk's site infers delivery at its own commit, and the committed projection is
+  # observed before the merge exists, so a merge that proves more than its head (a title that
+  # names an issue, a trunk that moved) turned master red 19 times between 2026-11-01 and
+  # 2026-11-17 (#3077 and its repair #3084 the last). Proof until a measurement says otherwise.
+  - id: merge-delivery
+    job: structure
+    lane: proof
+    always: true
+    runs: scripts/ci/merge-delivery-check
+    summary: a pull request into the trunk proves, at its merge as the forge will title it, the merged and released tallies site/data/generated/delivery.json commits; each issue that would move is named with its cause, the title (retitle, then re-run) or a moved trunk or head (scripts/derive at the head, the trunk merged first if it moved); a run that is no pull request into the trunk, or a tree with no projection, has nothing to judge
+
   - id: providers-data
     job: structure
     lane: feedback
