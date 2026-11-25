@@ -539,7 +539,7 @@ mj_validate_owner_answers() {
     file="${cite%%:*}"; cid="${cite#*:owner-answer:}"
     [ -f "$dir/$cid.yaml" ] && continue
     bad=1; mj_doctrine_fail records "$file" "cites owner-answer:$cid, which names no record under $(mj_rel "$dir")/" "majordomus question answers"
-  done < <(git -C "$MJ_ROOT" grep -I -o -E 'owner-answer:A-[0-9]{8}-[a-z0-9][a-z0-9-]*' -- "$(mj_rel "$MJ_AI_REPO_DIR")" 2>/dev/null | sed 's/-*$//' | sort -u || true)
+  done < <(git -C "$MJ_ROOT" grep -I -o -E 'owner-answer:A-[0-9]{8}-[a-z0-9][a-z0-9-]*' -- "$(mj_rel "$MJ_AI_REPO_DIR")" 2>/dev/null | sed 's/-*$//' | LC_ALL=C sort -u || true)
   [ "$bad" = 1 ] || mj_doctrine_ok records "owner answers" "$n record(s) hold the text their digests name, and every citation resolves"
   return 0
 }
