@@ -2,7 +2,8 @@
 # claims: an-analysis-builds-on-what-survived
 # An evidence-tagged multi-pass analysis is checked, not trusted (I4796). The skill's
 # conforming bundle conforms and the command exits 0. Then one defect at a time is planted in
-# a copy, and each is named with exit 10:
+# a copy, and each is named with exit 10 (the MCP tool gives the same answer for the
+# conforming bundle):
 # - a synthesis root cause built on a REFUTED finding;
 # - an UNVERIFIABLE finding the gaps ledger does not name;
 # - an OBSERVED finding without a locator;
@@ -28,6 +29,14 @@ J="$(rz_json reasoning analysis --path analysis)"
 [ "$(printf '%s' "$J" | jq -r '.counts.findings')" = 5 ] || { echo "    five findings were expected"; exit 1; }
 [ "$(printf '%s' "$J" | jq -r '[.checks[] | select(.state == "passed")] | length')" = 7 ] \
   || { echo "    not every check passed"; exit 1; }
+
+# ---------------------------------------------------------------- the same answer over MCP
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4777","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_reasoning_analysis","arguments":{"path":"analysis"}}}\n'
+} | ( cd "$R" && rz_env "$RB" mcp --standalone --repo "$R" ) 2> "$T/mcp.err" | sed -n 2p > "$T/frame.json"
+jq -e '.result.structuredContent | .state == "conforms" and .ok == true and .analysis == "cache-misses"' "$T/frame.json" >/dev/null \
+  || { echo "    majordomus_reasoning_analysis did not answer conforms over MCP:"; head -c 600 "$T/frame.json"; sed 's/^/    | /' "$T/mcp.err" | head -5; exit 1; }
 
 # ---------------------------------------------------------------- planted defects
 sed -i.bak 's/| RC-b | Every miss in the cold window costs a full read | load-F2 |/| RC-b | Half of the reads miss | load-F1 |/' "$R/analysis/synthesis.md"

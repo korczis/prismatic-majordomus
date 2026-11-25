@@ -1118,14 +1118,14 @@ pub fn read_bundle(root: &Path, path: &str) -> Result<(Vec<Document>, Vec<String
             Vec::new(),
         ));
     }
-    let mut entries: Vec<_> = std::fs::read_dir(&target)
+    let mut names: Vec<String> = std::fs::read_dir(&target)
         .map_err(|e| format!("{path}: {e}"))?
         .filter_map(Result::ok)
-        .map(|e| e.path())
+        .map(|e| e.file_name().to_string_lossy().into_owned())
         .collect();
-    entries.sort();
+    crate::order::canonical_strings(&mut names);
     let (mut docs, mut ignored) = (Vec::new(), Vec::new());
-    for p in entries {
+    for p in names.iter().map(|n| target.join(n)) {
         if p.is_file() && p.extension().is_some_and(|x| x == "md") {
             docs.push(Document::new(rel(&p), read(&p)?));
         } else {
