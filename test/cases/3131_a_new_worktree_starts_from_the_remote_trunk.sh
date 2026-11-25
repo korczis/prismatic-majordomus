@@ -88,3 +88,39 @@ git -C "$R" remote remove origin
 expect_exit 0 mj "$R" worktree create feature/no-remote
 expect_grep "branch  feature/no-remote [(]new, from master at ${local_trunk}[)]"
 expect_no_grep "warning"
+
+# ---------------------------------------------------------------- 6. two remotes name the trunk
+# A forge and its mirror both name master (I4684). `gitlab` sorts first and lags: it holds the
+# local trunk, origin the two commits landed since. Taking the first in `git remote` order cut
+# every new branch from the mirror. The remote the trunk tracks decides; with nothing to
+# decide, remotes whose trunks disagree are refused, each named with its commit; remotes that
+# agree are one answer.
+G="$W/gitlab.git"
+git init -q --bare -b master "$G"
+git -C "$R" push -q "$G" master 2>/dev/null
+git -C "$R" remote add gitlab "$G"
+git -C "$R" remote add origin "$O"
+for remote in gitlab origin; do
+  git -C "$R" fetch -q "$remote"
+  git -C "$R" remote set-head "$remote" master >/dev/null
+done
+[ -z "$(git -C "$R" config --get branch.master.remote)" ] \
+  || { echo "    the fixture's trunk tracks $(git -C "$R" config --get branch.master.remote)"; exit 1; }
+# 6a. nothing configured, the trunks disagree: refused before anything is made
+expect_exit 10 mj "$R" worktree create feature/two-remotes
+expect_grep "gitlab/master at ${local_trunk}"
+expect_grep "origin/master at ${remote_trunk}"
+expect_grep "git config branch.master.remote <remote>"
+[ ! -e "$R-wt/feature/two-remotes" ] || { echo "    a refused create made $R-wt/feature/two-remotes"; exit 1; }
+# 6b. the trunk tracks origin: origin's trunk, not the mirror's
+git -C "$R" config branch.master.remote origin
+expect_exit 0 mj "$R" worktree create feature/two-remotes
+expect_grep "branch  feature/two-remotes [(]new, from origin/master at ${remote_trunk}[)]"
+[ "$(git -C "$R-wt/feature/two-remotes" rev-parse HEAD)" = "$remote_trunk" ] \
+  || { echo "    the branch starts at $(git -C "$R-wt/feature/two-remotes" rev-parse HEAD), not origin's trunk $remote_trunk"; exit 1; }
+# 6c. the mirror catches up and nothing is configured: they agree, and the first listed is taken
+git -C "$R" config --unset branch.master.remote
+git -C "$P" push -q "$G" master 2>/dev/null
+git -C "$R" fetch -q gitlab
+expect_exit 0 mj "$R" worktree create feature/agreeing-remotes
+expect_grep "branch  feature/agreeing-remotes [(]new, from gitlab/master at ${remote_trunk}[)]"

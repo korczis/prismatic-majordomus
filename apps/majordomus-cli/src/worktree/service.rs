@@ -234,8 +234,16 @@ pub struct CreateReport {
     pub hooks: HooksPath,
 }
 
-/// The remote the trunk belongs to: the one whose HEAD names it, else the one the trunk's
-/// configuration tracks. `None` when the trunk lives only here.
+/// The remote the trunk belongs to. `None` when the trunk lives only here.
+///
+/// The trunk's own configuration decides first: the remote `branch.<trunk>.remote` names,
+/// when it is a remote here and its trunk has been fetched. Otherwise the remote whose HEAD
+/// names the trunk; when several do, they are one answer only while their trunks stand at
+/// one commit, and then the first in `git remote` order is taken. Several that disagree are
+/// refused ([`WorktreeError::AmbiguousTrunkRemote`]) rather than settled by the alphabet: a
+/// `gitlab` mirror whose trunk lagged won over `origin` that way, and every new branch
+/// started from the mirror (I4684). Last, the configured remote whose trunk was never
+/// fetched.
 fn trunk_remote(primary: &Path, trunk: &str) -> Result<Option<String>> {
     let remotes = git::try_run(primary, &["remote"])?;
     if remotes.status != Some(0) {
@@ -248,6 +256,20 @@ fn trunk_remote(primary: &Path, trunk: &str) -> Result<Option<String>> {
         .filter(|r| !r.is_empty())
         .map(str::to_string)
         .collect();
+    let configured = git::try_run(
+        primary,
+        &["config", "--get", &format!("branch.{trunk}.remote")],
+    )?;
+    let configured = match configured.status {
+        Some(0) => Some(configured.text()?).filter(|remote| remotes.contains(remote)),
+        _ => None,
+    };
+    if let Some(remote) = &configured {
+        if tracked_trunk(primary, remote, trunk)?.is_some() {
+            return Ok(configured);
+        }
+    }
+    let mut naming = Vec::new();
     for remote in &remotes {
         // A remote with no HEAD, or one git cannot be asked about, names no trunk.
         let head = git::try_run(
@@ -258,21 +280,44 @@ fn trunk_remote(primary: &Path, trunk: &str) -> Result<Option<String>> {
         .filter(|head| head.status == Some(0));
         if let Some(head) = head {
             if head.text()? == format!("refs/remotes/{remote}/{trunk}") {
-                return Ok(Some(remote.clone()));
+                naming.push((remote.clone(), tracked_trunk(primary, remote, trunk)?));
             }
         }
     }
-    let configured = git::try_run(
-        primary,
-        &["config", "--get", &format!("branch.{trunk}.remote")],
-    )?;
-    if configured.status == Some(0) {
-        let remote = configured.text()?;
-        if remotes.contains(&remote) {
-            return Ok(Some(remote));
+    if let Some((first, commit)) = naming.first() {
+        if naming.iter().all(|(_, other)| other == commit) {
+            return Ok(Some(first.clone()));
         }
+        return Err(WorktreeError::AmbiguousTrunkRemote {
+            trunk: trunk.to_string(),
+            remotes: naming
+                .iter()
+                .map(|(remote, commit)| match commit {
+                    Some(commit) => format!("{remote}/{trunk} at {commit}"),
+                    None => format!("{remote}/{trunk} never fetched"),
+                })
+                .collect(),
+        });
     }
-    Ok(None)
+    Ok(configured)
+}
+
+/// The commit `<remote>/<trunk>` stands at as last fetched; `None` when it never was.
+fn tracked_trunk(primary: &Path, remote: &str, trunk: &str) -> Result<Option<String>> {
+    let out = git::try_run(
+        primary,
+        &[
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            "--end-of-options",
+            &format!("refs/remotes/{remote}/{trunk}^{{commit}}"),
+        ],
+    )?;
+    match out.status {
+        Some(0) => Ok(Some(out.text()?)),
+        _ => Ok(None),
+    }
 }
 
 fn default_local() -> LocalOverrides {
@@ -1595,6 +1640,25 @@ mod tests {
             .unwrap()
     }
 
+    /// `git`, deaf to every variable that would point it at another repository: a hook that
+    /// runs these tests from a linked worktree hands them `GIT_DIR`, and a fixture that kept
+    /// it would commit, configure and set heads in the repository the suite started from.
+    fn fixture_git() -> std::process::Command {
+        let mut git = std::process::Command::new("git");
+        for name in [
+            "GIT_DIR",
+            "GIT_WORK_TREE",
+            "GIT_INDEX_FILE",
+            "GIT_COMMON_DIR",
+            "GIT_OBJECT_DIRECTORY",
+            "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+            "GIT_PREFIX",
+        ] {
+            git.env_remove(name);
+        }
+        git
+    }
+
     /// A repository with a primary checkout and whatever linked worktrees a test asks for.
     /// Under the temporary directory on purpose: `ephemeral_root_of` disables the temporary
     /// roots for a repository that is itself inside one, so a worktree outside the container
@@ -1621,7 +1685,7 @@ mod tests {
         }
 
         fn git(&self, args: &[&str]) {
-            let ok = std::process::Command::new("git")
+            let ok = fixture_git()
                 .arg("-C")
                 .arg(&self.primary)
                 .args(args)
@@ -1898,7 +1962,7 @@ mod tests {
     /// Run git in the primary checkout with arguments that need not be UTF-8.
     fn git_bytes(repo: &Repo, args: &[&[u8]]) {
         use std::os::unix::ffi::OsStrExt;
-        let ok = std::process::Command::new("git")
+        let ok = fixture_git()
             .arg("-C")
             .arg(&repo.primary)
             .args(args.iter().map(|a| std::ffi::OsStr::from_bytes(a)))
@@ -2014,7 +2078,7 @@ mod tests {
     }
 
     #[test]
-    fn the_trunks_remote_is_the_one_whose_head_names_it_else_the_configured_one() {
+    fn the_trunks_remote_is_the_configured_one_else_the_one_whose_head_names_it() {
         let home = tempfile::tempdir().expect("tempdir");
         // no repository there: `git remote` refuses, and no remote is named
         let absent = home.path().join("absent");
@@ -2029,7 +2093,8 @@ mod tests {
             trunk_remote(&p, "master").expect("an answer"),
             Some("origin".into())
         );
-        // a HEAD that names another branch is passed over; one that names the trunk wins
+        // the configured remote, its trunk fetched, wins over another whose HEAD names the
+        // trunk and over its own HEAD naming another branch
         let other = repo._home.path().join("other.git");
         repo.git(&["init", "-q", "--bare", &other.to_string_lossy()]);
         repo.git(&["remote", "add", "other", &other.to_string_lossy()]);
@@ -2045,7 +2110,20 @@ mod tests {
         ]);
         assert_eq!(
             trunk_remote(&p, "master").expect("an answer"),
+            Some("origin".into())
+        );
+        // without it, a HEAD that names another branch is passed over and one that names
+        // the trunk wins, even when that remote's trunk was never fetched
+        repo.git(&["config", "--unset", "branch.master.remote"]);
+        assert_eq!(
+            trunk_remote(&p, "master").expect("an answer"),
             Some("other".into())
+        );
+        // a configured remote whose trunk was never fetched is taken when no HEAD names it
+        repo.git(&["config", "branch.solo.remote", "origin"]);
+        assert_eq!(
+            trunk_remote(&p, "solo").expect("an answer"),
+            Some("origin".into())
         );
         // a trunk configured to a remote that is not there lives only here
         repo.git(&["config", "branch.lonely.remote", "gone"]);
@@ -2063,6 +2141,184 @@ mod tests {
         )
         .expect("write");
         assert!(trunk_remote(&p, "master").is_err());
+    }
+
+    /// The commit `rev` names in the primary checkout.
+    fn commit_of(repo: &Repo, rev: &str) -> String {
+        let out = fixture_git()
+            .arg("-C")
+            .arg(&repo.primary)
+            .args(["rev-parse", "--verify", rev])
+            .output()
+            .expect("git runs");
+        assert!(out.status.success(), "rev-parse {rev}");
+        String::from_utf8(out.stdout)
+            .expect("text")
+            .trim()
+            .to_string()
+    }
+
+    /// The trunk pushed to two bare remotes, `gitlab` and `origin`, whose HEADs both name it
+    /// as last fetched, and no `branch.master.remote`. When `agreeing` is false, `origin`
+    /// has one commit more: the remote `git remote` lists first is the one that lags, which
+    /// is the mirror of I4684. Answers `(repo, origin's trunk, gitlab's trunk)`.
+    fn two_remotes(agreeing: bool) -> (Repo, String, String) {
+        let repo = Repo::new();
+        for remote in ["gitlab", "origin"] {
+            let url = repo._home.path().join(format!("{remote}.git"));
+            let url = url.to_string_lossy().to_string();
+            repo.git(&["init", "-q", "--bare", &url]);
+            repo.git(&["remote", "add", remote, &url]);
+            repo.git(&["push", "-q", remote, "master"]);
+        }
+        if !agreeing {
+            repo.git(&["commit", "-q", "--allow-empty", "-m", "landed on origin"]);
+            repo.git(&["push", "-q", "origin", "master"]);
+        }
+        for remote in ["gitlab", "origin"] {
+            repo.git(&["fetch", "-q", remote]);
+            repo.git(&["remote", "set-head", remote, "master"]);
+        }
+        let origin = commit_of(&repo, "refs/remotes/origin/master");
+        let gitlab = commit_of(&repo, "refs/remotes/gitlab/master");
+        assert_eq!(agreeing, origin == gitlab, "the fixture's remotes");
+        (repo, origin, gitlab)
+    }
+
+    /// I4684 (a): with `branch.master.remote` naming origin, a new branch starts at origin's
+    /// trunk although `gitlab`, listed first, has a HEAD naming the trunk too and lags.
+    #[test]
+    fn the_remote_the_trunk_tracks_wins_over_a_lagging_remote_that_sorts_first() {
+        let (repo, origin, gitlab) = two_remotes(false);
+        repo.git(&["config", "branch.master.remote", "origin"]);
+        assert_eq!(
+            trunk_remote(&repo.primary, "master").expect("an answer"),
+            Some("origin".into())
+        );
+        let svc = repo.service();
+        assert_eq!(
+            svc.plan_start(&repo.primary, "feature/tracked")
+                .expect("a plan"),
+            StartPoint::RemoteTrunk {
+                remote: "origin".into(),
+                branch: "master".into(),
+            }
+        );
+        let made = svc
+            .create(&request("feature/tracked", None))
+            .expect("created");
+        assert_eq!(made.base.as_deref(), Some("origin/master"));
+        assert_eq!(made.start_commit.as_deref(), Some(origin.as_str()));
+        assert_ne!(made.start_commit.as_deref(), Some(gitlab.as_str()));
+    }
+
+    /// I4684 (b): with nothing configured and the two remotes' trunks at different commits,
+    /// no remote is the trunk's; the create is refused, naming each remote, where its trunk
+    /// stands and the command that settles it, and nothing is made.
+    #[test]
+    fn remotes_whose_trunks_disagree_are_refused_naming_each_and_the_setting_that_decides() {
+        let (repo, origin, gitlab) = two_remotes(false);
+        let refused = trunk_remote(&repo.primary, "master").expect_err("refused");
+        match &refused {
+            WorktreeError::AmbiguousTrunkRemote { trunk, remotes } => {
+                assert_eq!(trunk, "master");
+                assert_eq!(
+                    remotes,
+                    &vec![
+                        format!("gitlab/master at {gitlab}"),
+                        format!("origin/master at {origin}"),
+                    ]
+                );
+            }
+            other => panic!("{other:?}"),
+        }
+        assert_eq!(refused.code(), "AmbiguousTrunkRemote");
+        assert_eq!(refused.exit_code(), 10);
+        let said = refused.to_string();
+        assert!(
+            said.contains(&format!("gitlab/master at {gitlab}")),
+            "{said}"
+        );
+        assert!(
+            said.contains(&format!("origin/master at {origin}")),
+            "{said}"
+        );
+        assert!(
+            said.contains("git config branch.master.remote <remote>"),
+            "{said}"
+        );
+        let svc = repo.service();
+        assert!(matches!(
+            svc.create(&request("feature/ambiguous", None)),
+            Err(WorktreeError::AmbiguousTrunkRemote { .. })
+        ));
+        assert!(!svc
+            .expected_path_of("feature/ambiguous")
+            .expect("a path")
+            .exists());
+        // a remote naming the trunk that was never fetched cannot be shown to agree
+        repo.git(&["update-ref", "-d", "refs/remotes/origin/master"]);
+        repo.git(&[
+            "symbolic-ref",
+            "refs/remotes/origin/HEAD",
+            "refs/remotes/origin/master",
+        ]);
+        match trunk_remote(&repo.primary, "master") {
+            Err(WorktreeError::AmbiguousTrunkRemote { remotes, .. }) => {
+                assert_eq!(remotes[1], "origin/master never fetched", "{remotes:?}")
+            }
+            other => panic!("{other:?}"),
+        }
+        // and the setting the refusal names settles it
+        repo.git(&["fetch", "-q", "origin"]);
+        repo.git(&["config", "branch.master.remote", "origin"]);
+        assert_eq!(
+            trunk_remote(&repo.primary, "master").expect("an answer"),
+            Some("origin".into())
+        );
+    }
+
+    /// I4684 (c): one remote whose HEAD names the trunk is the trunk's remote, as before,
+    /// with or without the configuration.
+    #[test]
+    fn a_single_remote_naming_the_trunk_is_its_remote_as_before() {
+        let (repo, _origin) = with_origin();
+        repo.git(&["fetch", "-q", "origin"]);
+        repo.git(&["remote", "set-head", "origin", "master"]);
+        repo.git(&["config", "--unset", "branch.master.remote"]);
+        assert_eq!(
+            trunk_remote(&repo.primary, "master").expect("an answer"),
+            Some("origin".into())
+        );
+        let svc = repo.service();
+        let made = svc
+            .create(&request("feature/single", None))
+            .expect("created");
+        assert_eq!(made.base.as_deref(), Some("origin/master"));
+        assert_eq!(
+            made.start_commit,
+            Some(commit_of(&repo, "refs/remotes/origin/master"))
+        );
+    }
+
+    /// I4684 (d): remotes whose trunks agree are one answer, and the first `git remote`
+    /// lists is taken, deterministically.
+    #[test]
+    fn remotes_whose_trunks_agree_are_one_answer_and_the_first_listed_is_taken() {
+        let (repo, origin, gitlab) = two_remotes(true);
+        assert_eq!(origin, gitlab);
+        for _ in 0..2 {
+            assert_eq!(
+                trunk_remote(&repo.primary, "master").expect("an answer"),
+                Some("gitlab".into())
+            );
+        }
+        let made = repo
+            .service()
+            .create(&request("feature/agreeing", None))
+            .expect("created");
+        assert_eq!(made.base.as_deref(), Some("gitlab/master"));
+        assert_eq!(made.start_commit.as_deref(), Some(origin.as_str()));
     }
 
     #[test]

@@ -133,6 +133,24 @@ pub enum WorktreeError {
         base: String,
     },
 
+    /// Several remotes' HEADs name the trunk, their trunks stand at different commits, and
+    /// the trunk's configuration does not settle which is its own: the alphabet is no answer.
+    #[error(
+        "the trunk '{trunk}' is named by the HEADs of {} remotes whose trunks disagree ({}), \
+         and branch.{trunk}.remote does not settle which is its own; nothing was created and \
+         nothing was fetched. Say which remote the trunk tracks: \
+         git config branch.{trunk}.remote <remote>",
+        remotes.len(),
+        remotes.join(", ")
+    )]
+    AmbiguousTrunkRemote {
+        /// The trunk branch.
+        trunk: String,
+        /// Each remote whose HEAD names the trunk, with where its trunk stands, one entry
+        /// each (`origin/master at <sha>`).
+        remotes: Vec<String>,
+    },
+
     /// The current worktree is not where its branch belongs.
     #[error(
         "worktree {path} holds branch '{branch}' but that branch belongs at {expected}; \
@@ -343,6 +361,7 @@ impl WorktreeError {
             BranchAlreadyCheckedOut { .. } => "BranchAlreadyCheckedOut",
             DestinationConflict { .. } => "DestinationConflict",
             BaseDoesNotExist { .. } => "BaseDoesNotExist",
+            AmbiguousTrunkRemote { .. } => "AmbiguousTrunkRemote",
             Misplaced { .. } => "Misplaced",
             PrimaryOnNonTrunk { .. } => "PrimaryOnNonTrunk",
             DirtyWorktree { .. } => "DirtyWorktree",

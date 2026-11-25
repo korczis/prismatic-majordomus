@@ -177,7 +177,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree root` | the container, one path | |
 | `worktree path <branch>` | the canonical path of a branch, one path; the branch need not exist | the name is invalid |
 | `worktree inspect <branch>` | canonical path, whether the branch exists, what occupies the path, what stands in the way | |
-| `worktree create <branch> [--base REF] [--issue ID]` | the canonical worktree; a branch the trunk's remote has is taken up and tracks it, a new one starts at the remote's trunk fetched now, and the line names the exact commit | occupied, checked out elsewhere, invalid |
+| `worktree create <branch> [--base REF] [--issue ID]` | the canonical worktree; a branch the trunk's remote has is taken up and tracks it, a new one starts at the remote's trunk fetched now, and the line names the exact commit | occupied, checked out elsewhere, invalid, remotes disagreeing on the trunk |
 | `worktree ensure <branch>` | the same, answering an existing canonical worktree instead of refusing | checked out elsewhere |
 | `worktree migrate [--plan] [--only B]… [--allow-copy] [--include-ephemeral]` | bring misplaced worktrees home, fingerprint-verified | a step was blocked or failed |
 | `worktree validate` / `worktree doctor` | the errors, or every diagnostic | an error stands |
@@ -253,9 +253,18 @@ the new worktree to `origin/master` by hand. A branch that existed only on the r
 worse: it was started again from that stale `master` rather than taken up.
 
 So `create` and `ensure`, for a branch that does not exist here, ask the trunk's remote —
-the remote whose HEAD names the trunk, else the one `branch.<trunk>.remote` names — with two
-quiet, bounded fetches (`--no-tags`, no prompt, killed after 60 seconds) of the trunk and of
-the branch into their remote-tracking refs. The local trunk is never moved.
+the one `branch.<trunk>.remote` names when its trunk has been fetched, else the remote whose
+HEAD names the trunk, else the configured one never fetched — with two quiet, bounded
+fetches (`--no-tags`, no prompt, killed after 60 seconds) of the trunk and of the branch
+into their remote-tracking refs. The local trunk is never moved.
+
+Several remotes can name the trunk: a forge and its mirror (`gitlab` and `origin`, both
+`main`). Taking the first in `git remote` order took the alphabet's answer, and a lagging
+`gitlab` mirror became the start of every new branch (I4684). Their trunks are compared as
+last fetched: at one commit they are one answer and the first listed is taken; at different
+commits, with no configuration to decide, the create is refused (`AmbiguousTrunkRemote`,
+exit 10) naming each remote and where its trunk stands, before anything is fetched or made.
+`git config branch.<trunk>.remote <remote>` settles it.
 
 | the remote | the branch starts | the report |
 |---|---|---|
