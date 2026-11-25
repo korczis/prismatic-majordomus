@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -2395,22 +2395,6 @@
         "external": true
       },
       {
-        "id": "file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
-        "kind": "file",
-        "label": "0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
-        "external": true
-      },
-      {
-        "id": "file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
-        "kind": "file",
-        "label": "0177-an-identifier-is-taken-by-one-atomic-claim.md",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
-        "external": true
-      },
-      {
         "id": "file:.ai/repo/ci/gates.yaml",
         "kind": "file",
         "label": "gates.yaml",
@@ -2544,6 +2528,14 @@
         "label": "coverage.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/bench/coverage.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/allocate.rs",
+        "kind": "file",
+        "label": "allocate.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/allocate.rs",
         "external": true
       },
       {
@@ -9996,8 +9988,8 @@
         "facts": {
           "date": "2026-11-25",
           "related": [
-            "file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
-            "file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
+            "file:.ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md",
+            "file:apps/majordomus-cli/src/capability/builtin/allocate.rs",
             "file:.ai/repo/project/issues/I4773.yaml",
             "file:.ai/repo/project/issues/I4775.yaml",
             "file:.ai/repo/project/issues/I4777.yaml",
@@ -127065,12 +127057,7 @@
       },
       {
         "source": "majordomus://adr/adr-0238",
-        "target": "file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0238",
-        "target": "file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/allocate.rs",
         "kind": "put_in_force"
       },
       {
@@ -127102,6 +127089,11 @@
         "source": "majordomus://adr/adr-0238",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "majordomus://adr/adr-0166",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0238",
@@ -166540,7 +166532,7 @@
       }
     ],
     "metadata": {
-      "nodes": 4557,
+      "nodes": 4556,
       "edges": 10270,
       "acyclic": false,
       "truncated": false

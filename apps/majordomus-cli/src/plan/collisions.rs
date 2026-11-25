@@ -1,7 +1,7 @@
 //! Whether an issue this head authors or executes is another's: `plan.collisions` (ADR 0238,
 //! I4775).
 //!
-//! `plan.allocate` (ADR 0177) keeps two callers from taking one id, but only callers that use
+//! `plan.allocate` (I3040) keeps two callers from taking one id, but only callers that use
 //! it, and only once their claims have synced. Nothing told a head that the id it authored
 //! had been authored on another line too, or that the issue it was about to execute already
 //! had an open pull request: in one adopter repository on 2026-11-25 peers took colliding ids
@@ -154,6 +154,21 @@ pub(crate) struct Collision {
     pub detail: String,
     /// What settles it.
     pub remedy: String,
+}
+
+/// Collisions are listed refused first, then by class, then by issue in its natural order.
+impl crate::order::Ordered for Collision {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let rank = match self.verdict {
+            CollisionVerdict::Refused => 0,
+            CollisionVerdict::Warned => 3,
+        } + match self.class {
+            CollisionClass::IdReused => 0,
+            CollisionClass::Retitled => 1,
+            CollisionClass::ClaimedElsewhere => 2,
+        };
+        crate::order::OrderKey::plain(&self.issue, &self.holder.name).ranked(rank)
+    }
 }
 
 /// Every collision of one head, and what a gate makes of them.
@@ -741,8 +756,7 @@ fn authored_elsewhere(
 
 /// The verdict and exit code of a report whose collisions are known. Pure.
 pub(crate) fn conclude(mut r: CollisionReport, forge_read: bool) -> CollisionReport {
-    r.collisions
-        .sort_by(|a, b| (a.verdict, a.class, &a.issue).cmp(&(b.verdict, b.class, &b.issue)));
+    crate::order::canonical(&mut r.collisions);
     r.refused = r
         .collisions
         .iter()

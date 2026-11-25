@@ -10,6 +10,35 @@ mod common;
 use common::{run_in, Fixture, Served, ISSUE};
 use serde_json::{json, Value};
 
+/// One MCP `tools/call` against the fixture, answered by a fresh `majordomus mcp`.
+fn mcp_tool(f: &Fixture, name: &str, arguments: Value) -> Value {
+    use std::io::Write;
+    use std::process::Stdio;
+    let mut child = common::majordomus()
+        .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .current_dir(f.root())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    {
+        let mut stdin = child.stdin.take().unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "t", "version": "0" } } })).unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": name, "arguments": arguments } })).unwrap();
+    }
+    let out = child.wait_with_output().unwrap();
+    let last = String::from_utf8(out.stdout)
+        .unwrap()
+        .lines()
+        .last()
+        .map(|l| serde_json::from_str::<Value>(l).unwrap())
+        .unwrap();
+    assert_eq!(last["result"]["isError"], false, "{name}: {last}");
+    last["result"]["structuredContent"].clone()
+}
+
 fn record(id: &str, title: &str) -> String {
     ISSUE
         .replace("id: I0001", &format!("id: {id}"))
@@ -356,4 +385,14 @@ fn a_planning_only_head_executes_nothing_and_a_retitle_is_a_warning() {
     );
     assert_ne!(code, 0);
     assert!(err.contains("does not resolve"), "{err}");
+}
+
+#[test]
+fn plan_collisions_is_one_answer_on_the_command_line_and_over_mcp() {
+    let f = Fixture::new();
+    let (_, cli, _) = collisions(&f, &["--issue", "I0001"]);
+    let mcp = mcp_tool(&f, "majordomus_plan_collisions", json!({ "issue": "I0001" }));
+    assert_eq!(mcp["verdict"], cli["verdict"], "{mcp}");
+    assert_eq!(mcp["executes"], json!(["I0001"]));
+    assert_eq!(mcp["head"], cli["head"]);
 }

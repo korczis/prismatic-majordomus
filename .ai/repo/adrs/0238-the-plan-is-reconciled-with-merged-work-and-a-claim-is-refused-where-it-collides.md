@@ -12,8 +12,8 @@ tags:
   - collisions
   - forge
 related:
-  - file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md
-  - file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md
+  - file:.ai/repo/adrs/0166-the-plan-surfaces-are-inferred-from-delivery.md
+  - file:apps/majordomus-cli/src/capability/builtin/allocate.rs
   - file:.ai/repo/project/issues/I4773.yaml
   - file:.ai/repo/project/issues/I4775.yaml
   - file:.ai/repo/project/issues/I4777.yaml
@@ -61,7 +61,7 @@ several concurrent agent sessions, and a commit grammar with no room for an id i
 - **Issue ids collided.**
   - Board reservations did not stop peers taking an id, and the remedy was "check master, renumber
     yours, re-stamp".
-  - `plan.allocate` (ADR 0177) prevents a collision only for a caller that uses it. Across linked
+  - `plan.allocate` (I3040) prevents a collision only for a caller that uses it. Across linked
     runtimes, two claims made before they sync are both admitted. Nothing detects a collision that
     has already happened.
 - **One issue was executed twice.**

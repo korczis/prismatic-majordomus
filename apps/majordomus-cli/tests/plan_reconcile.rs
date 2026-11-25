@@ -8,7 +8,7 @@
 
 mod common;
 
-use common::{run_in, Fixture, ISSUE};
+use common::{run_in, without_observation_times, Fixture, ISSUE};
 use serde_json::{json, Value};
 
 /// I0001 merged by pull request #5, whose title names it; I0002, which depends on it,
@@ -83,6 +83,35 @@ fn reconcile(f: &Fixture, args: &[&str]) -> (i32, Value, String) {
     let (code, out, err) = run_in(&f.root(), &argv, "");
     let v = serde_json::from_str(&out).unwrap_or_else(|e| panic!("{e}: {out}\n{err}"));
     (code, v, err)
+}
+
+/// One MCP `tools/call` against the fixture, answered by a fresh `majordomus mcp`.
+fn mcp_tool(f: &Fixture, name: &str, arguments: Value) -> Value {
+    use std::io::Write;
+    use std::process::Stdio;
+    let mut child = common::majordomus()
+        .arg("mcp")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .current_dir(f.root())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    {
+        let mut stdin = child.stdin.take().unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "t", "version": "0" } } })).unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": name, "arguments": arguments } })).unwrap();
+    }
+    let out = child.wait_with_output().unwrap();
+    let last = String::from_utf8(out.stdout)
+        .unwrap()
+        .lines()
+        .last()
+        .map(|l| serde_json::from_str::<Value>(l).unwrap())
+        .unwrap();
+    assert_eq!(last["result"]["isError"], false, "{name}: {last}");
+    last["result"]["structuredContent"].clone()
 }
 
 /// One `plan.transition`, as any surface asks it.
@@ -284,4 +313,18 @@ fn drift_reports_a_merged_verify_issue_that_owes_evidence_and_never_refuses_it()
         "majordomus plan evidence I0001 --covers proof"
     );
     assert_eq!(v["tallies"]["merged_unaccepted"], 1);
+}
+
+#[test]
+fn plan_reconcile_is_one_answer_on_the_command_line_and_over_mcp() {
+    let f = fixture();
+    observe_forge(&f);
+    let (_, cli, _) = reconcile(&f, &["I0001"]);
+    let mcp = mcp_tool(&f, "majordomus_plan_reconcile", json!({ "issues": ["I0001"] }));
+    assert_eq!(
+        without_observation_times(&mcp["proposals"].to_string()),
+        without_observation_times(&cli["proposals"].to_string()),
+        "{mcp}"
+    );
+    assert_eq!(mcp["settled"], true);
 }
