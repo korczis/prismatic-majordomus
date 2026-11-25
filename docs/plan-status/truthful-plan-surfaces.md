@@ -388,5 +388,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4315` | shares .github/workflows/pages.yml with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares docs/PLANNING.md with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares apps/majordomus-cli/src/plan/delivery.rs with I4616; they may not run concurrently |
+| WARN | `scope_conflict` | `I4315` | shares .ai/repo/adrs with I4721; they may not run concurrently |
 | WARN | `scope_conflict` | `I4596` | shares lib/project.awk with I4630; they may not run concurrently |
 | WARN | `scope_conflict` | `I4596` | shares lib/project.awk with I4669; they may not run concurrently |

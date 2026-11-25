@@ -209,6 +209,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3118` | shares docs/CLAIMS.yaml with I3163; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I3174; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I3175; they may not run concurrently |
+| WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I3322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I3444; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I3606; they may not run concurrently |

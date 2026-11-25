@@ -202,6 +202,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3163; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares docs/MCP.md with I3179; they may not run concurrently |
+| WARN | `scope_conflict` | `I1997` | shares docs/MCP.md with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3241; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/cli.rs with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/cli.rs with I3251; they may not run concurrently |
@@ -396,6 +397,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I3163; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares apps/majordomus-cli/src/lease.rs with I3179; they may not run concurrently |
+| WARN | `scope_conflict` | `I2059` | shares apps/majordomus-cli/src/lease.rs with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I3241; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I3280; they may not run concurrently |
 | WARN | `scope_conflict` | `I2059` | shares test/cases with I3299; they may not run concurrently |
@@ -771,6 +773,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/mesh/ with I3174; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/mesh/ with I3175; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3179; they may not run concurrently |
+| WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3251; they may not run concurrently |

@@ -71,6 +71,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares share/skeleton with I3163; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares docs/MCP.md with I3179; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares docs/MCP.md with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I3241; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares .ai/repo/project/issues/I2148.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I3280; they may not run concurrently |
@@ -241,6 +242,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I3004; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I3179; they may not run concurrently |
+| WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares apps/majordomus-cli/src/mcp with I3307; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares apps/majordomus-cli/src/execution/engine.rs with I3317; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares apps/majordomus-cli/src/mcp with I3609; they may not run concurrently |

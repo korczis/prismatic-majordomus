@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "7424f5f55b685179433a92e17b1c27d5928e39282801efc1b16924999fe5a772",
     "summary": {
-      "total": 4063,
+      "total": 4073,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3840,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3840
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3850
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3897,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1284,
         "capability_ids": []
       },
       {
@@ -99375,7 +99375,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 117,
+        "capabilities": 119,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "1ac1e59db649270ef8cb982a489aa8104f780b73275eb1273494e1ac71e7f86a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,10 +99981,10 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1284,
       "knowledge": 221,
       "mesh-declaration": 1,
-      "milestone": 117,
+      "milestone": 119,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 142686
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -116262,7 +116262,7 @@
         "path": ".ai/repo/project/issues/I2721.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2152
+        "bytes": 2164
       },
       {
         "uri": "majordomus://issue/I2722",
@@ -125615,6 +125615,94 @@
         "bytes": 3298
       },
       {
+        "uri": "majordomus://issue/I4721",
+        "kind": "issue",
+        "identity": "I4721",
+        "title": "ADR 0199 carries Majordomus Fabric's decision and the owner has accepted it (S00 and P01, gate G0)",
+        "description": "Amend ADR 0199 into Fabric's decision (one opt-in, user-scoped host agent; a 0600 Unix socket checked by peer credentials; per-context authorisation; ADR 0001, 0003 and 0044 narrowed only for the opt-in host mode; the standalone mode unchanged), record the owner's answers that decided it, and land both on master with the ADR's status accepted.",
+        "path": ".ai/repo/project/issues/I4721.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2511
+      },
+      {
+        "uri": "majordomus://issue/I4722",
+        "kind": "issue",
+        "identity": "I4722",
+        "title": "The legacy per-checkout runtime is measured at L1, L2 and L3 before Fabric changes it (S01, gate G1)",
+        "description": "Measure today's model (one shared server per checkout, ADR 0003 and 0044) reproducibly in disposable fixtures at L1 (one checkout, one entry, one MCP client), L2 (one repository, two worktrees, four clients) and L3 (two repositories, ten worktrees, twenty concurrent MCP sessions): every Majordomus process and listener, RSS and descriptors, cold and warm env enter, readiness and MCP attach latencies, and every failure beside its attempts.",
+        "path": ".ai/repo/project/issues/I4722.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2827
+      },
+      {
+        "uri": "majordomus://issue/I4723",
+        "kind": "issue",
+        "identity": "I4723",
+        "title": "Fabric's typed identities and local IPC contract exist, with no service side effect (P02)",
+        "description": "Define the typed identities (NodeId and MeshRepositoryId reused from mesh, a checkout context id distinct from both, a host instance generation, a session id) and the local IPC contract (hello and welcome with protocol ranges, context register, session attach and detach, capability call, subscribe and ack, health, typed errors) beside their owners, with size-bounded framing, deadlines, and a delivery contract that never resends an uncertain write, as mcp::bridge already refuses to.",
+        "path": ".ai/repo/project/issues/I4723.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2580
+      },
+      {
+        "uri": "majordomus://issue/I4724",
+        "kind": "issue",
+        "identity": "I4724",
+        "title": "A user-scoped host agent starts by hand, holds one local socket as a singleton and stops cleanly (P03)",
+        "description": "Add a host mode to the existing executable that a person starts, queries and stops: one user-owned runtime directory and one 0600 Unix socket (a named pipe on a supported Windows target), an atomic singleton claim, peer-credential checks, bounded startup and teardown that removes only what this instance owns, and a typed status with version, instance and uptime.",
+        "path": ".ai/repo/project/issues/I4724.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2148
+      },
+      {
+        "uri": "majordomus://issue/I4725",
+        "kind": "issue",
+        "identity": "I4725",
+        "title": "Entering a checkout registers its logical context with the host agent in one bounded call (P04)",
+        "description": "When a shell enters a checkout, register or revalidate its logical context with a running host agent in one bounded IPC call, derived from the manifest, git, the checkout identity and mesh::repository, with its authority mode (legacy_proxy, host_owned or unavailable); keep registering a context distinct from attaching a live session; change no checkout server's ownership.",
+        "path": ".ai/repo/project/issues/I4725.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2114
+      },
+      {
+        "uri": "majordomus://issue/I4726",
+        "kind": "issue",
+        "identity": "I4726",
+        "title": "The MCP stdio bridge prefers a compatible host agent and falls back to today's path (P05)",
+        "description": "Make the existing MCP stdio launcher attach a long-lived session to a compatible host agent for the caller's context, route each request to that context's current legacy owner (host proxy) without changing who owns it, and fall back to the lease and standalone path with a useful diagnostic when the agent is absent, incompatible or another user's.",
+        "path": ".ai/repo/project/issues/I4726.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2048
+      },
+      {
+        "uri": "majordomus://issue/I4727",
+        "kind": "issue",
+        "identity": "I4727",
+        "title": "Every capability call is authorised against the caller's own context, not only its OS user (S04, gate G4)",
+        "description": "Bind each authenticated IPC peer to a validated root, checkout identity, session and scoped authorisation, and check caller, context, capability effect and ownership on every call, so that a client of repository A cannot read or write repository B by guessing an id, forging a frame field, swapping a symlinked root or replaying a detached session handle.",
+        "path": ".ai/repo/project/issues/I4727.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2733
+      },
+      {
+        "uri": "majordomus://issue/I4728",
+        "kind": "issue",
+        "identity": "I4728",
+        "title": "An unattended follower installs only a release whose provenance it verified, and refuses otherwise",
+        "description": "Make every update a follower applies without a person (follow: stable) run the installer with provenance required, so that an archive whose provenance cannot be verified (gh missing, signed out, or the attestation failing) is refused and the round records why; a manual self update keeps today's behaviour and warns when it installed on the checksum alone.",
+        "path": ".ai/repo/project/issues/I4728.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2713
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -129628,6 +129716,28 @@
         "bytes": 6152
       },
       {
+        "uri": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "milestone",
+        "identity": "fabric-is-decided-and-the-legacy-is-measured",
+        "title": "Majordomus Fabric is decided and the legacy runtime is measured before anything changes it (gates G0 and G1)",
+        "description": "ADR 0199, amended into Fabric's decision, is accepted by the owner and narrows ADR 0001, 0003 and 0044 only for the opt-in host mode (G0); a reproducible script measures the legacy per-checkout runtime at L1, L2 and L3 in disposable fixtures and its first baseline is attached as evidence (G1). No host-agent code lands before G0, and no efficiency claim is made before G1.",
+        "path": ".ai/repo/project/milestones/fabric-is-decided-and-the-legacy-is-measured.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3566
+      },
+      {
+        "uri": "majordomus://milestone/fabric-local-pilot",
+        "kind": "milestone",
+        "identity": "fabric-local-pilot",
+        "title": "One opt-in host agent serves 2 repositories, 10 worktrees and 20 MCP sessions on one host, with standalone fallback (gates G2-G5)",
+        "description": "A developer with 2 unrelated repositories, 10 worktrees and 20 MCP sessions opts in to one user-scoped host agent, enters each directory with no build or network call, attaches with the existing MCP configuration, runs only the capabilities authorised for that context, sees each identity, and stops or uninstalls the agent while the standalone fallback stays correct. No remote mutation and no automatic update. The process, RSS and listener differences are measured against the G1 baseline.",
+        "path": ".ai/repo/project/milestones/fabric-local-pilot.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4450
+      },
+      {
         "uri": "majordomus://milestone/failure-is-visible",
         "kind": "milestone",
         "identity": "failure-is-visible",
@@ -130028,11 +130138,11 @@
         "kind": "milestone",
         "identity": "the-host-knows-its-runtimes",
         "title": "A host knows every Majordomus runtime it runs, with no project open",
-        "description": "A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and no host-level resident is built.",
+        "description": "A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric's opt-in host agent is fabric-local-pilot's, and this inventory needs no process of its own.",
         "path": ".ai/repo/project/milestones/the-host-knows-its-runtimes.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2239
+        "bytes": 3190
       },
       {
         "uri": "majordomus://milestone/the-hub-is-reached-from-any-device",
@@ -142242,7 +142352,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1284
     },
     {
       "name": "knowledge",
@@ -142272,7 +142382,7 @@
       "identity": [
         "id"
       ],
-      "objects": 117
+      "objects": 119
     },
     {
       "name": "moment",

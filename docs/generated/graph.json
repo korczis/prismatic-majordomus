@@ -43959,7 +43959,8 @@
           "created_at": "2026-10-14",
           "current_state": "No process reads releases/latest.json except install.sh run by a person.",
           "depends_on": [
-            "I2720"
+            "I2720",
+            "I4728"
           ],
           "evidence_required": [
             "node_follows_stable_pointer_test",
@@ -82853,6 +82854,376 @@
         }
       },
       {
+        "id": "majordomus://issue/I4721",
+        "kind": "issue",
+        "label": "I4721",
+        "summary": "ADR 0199 carries Majordomus Fabric's decision and the owner has accepted it (S00 and P01, gate G0)",
+        "route": "/cockpit/objects/issue/i4721",
+        "source": ".ai/repo/project/issues/I4721.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "desired_state": "ADR 0199 on master reads accepted with its amendment; the knowledge record is on master; this issue carries both merges as evidence.",
+          "evidence_required": [
+            "adr_0199_accepted"
+          ],
+          "milestone": "fabric-is-decided-and-the-legacy-is-measured",
+          "non_scope": [
+            "Editing the text of an accepted ADR other than 0199; ADR 0001, 0003 and 0044 are narrowed by 0199, not rewritten",
+            "Any host-agent code"
+          ],
+          "priority": "p1",
+          "profile": "docs",
+          "scope": [
+            ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
+            ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md"
+          ],
+          "slug": "0199-fabric-host-agent",
+          "started_at": "2026-11-25T04:10:33Z",
+          "started_event": "sha256:4128d83f6831da85bf1f465072dc7d7c1ae756dcf7f37d1bc264c0ef615a0e55",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3123",
+            "https://github.com/korczis/prismatic-majordomus/pull/3121"
+          ],
+          "updated_at": "2026-11-25T04:10:33Z",
+          "validation": [
+            "majordomus plan validate",
+            "bin/majordomus knowledge check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4722",
+        "kind": "issue",
+        "label": "I4722",
+        "summary": "The legacy per-checkout runtime is measured at L1, L2 and L3 before Fabric changes it (S01, gate G1)",
+        "route": "/cockpit/objects/issue/i4722",
+        "source": ".ai/repo/project/issues/I4722.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/fabric-baseline runs L1, L2 and L3 only in a fixture it made and refuses a non-empty unmarked directory and one inside a git work tree",
+            "Every run reports samples plus failures equal to attempts, and a server killed before its clients attach is counted, not dropped",
+            "Case 4663 proves the L1 positive with a real MCP answer, both refusals and the killed-server count"
+          ],
+          "created_at": "2026-11-25",
+          "desired_state": "PR #3122 is merged; the baseline output (majordomus-fabric-baseline/v1) with host metadata is attached as this issue's evidence; the fabric-local-pilot milestone is measured with the same script.",
+          "evidence_required": [
+            "legacy_baseline_measured"
+          ],
+          "milestone": "fabric-is-decided-and-the-legacy-is-measured",
+          "non_scope": [
+            "Changing production runtime behaviour",
+            "Turning one machine's numbers into a budget; the policy's entry budgets are printed, never changed",
+            "L4 (two hosts), which needs Fabric's networking first"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/fabric-baseline",
+            "test/cases/4663_fabric_legacy_baseline.sh",
+            "docs/PERFORMANCE.md",
+            ".ai/repo/automation/inventory.jsonl"
+          ],
+          "slug": "fabric-s01-legacy-baseline",
+          "started_at": "2026-11-25T04:15:28Z",
+          "started_event": "sha256:017c09767d5535f1804493584c39d31aa7e235182b78e99a6ee4e4d0bf411587",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3122"
+          ],
+          "updated_at": "2026-11-25T04:22:59Z",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 4663_fabric_legacy_baseline"
+          ],
+          "verified_at": "2026-11-25T04:22:59Z",
+          "verified_event": "sha256:f7be2dd43121c88e135c0da2cf6476d84797178291c11a622ab3b7fef5a027ea"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4723",
+        "kind": "issue",
+        "label": "I4723",
+        "summary": "Fabric's typed identities and local IPC contract exist, with no service side effect (P02)",
+        "route": "/cockpit/objects/issue/i4723",
+        "source": ".ai/repo/project/issues/I4723.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An incompatible protocol range is refused with a typed reason, an unknown optional field is ignored and an unknown required feature is refused",
+            "A malformed, truncated or overlong frame is refused before it is parsed into a request",
+            "A write whose outcome is unknown is reported as such and never resent; a test fails when the contract would resend it",
+            "Two worktrees of one repository get distinct context ids and one MeshRepositoryId"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: in flight on branch feature/fabric-p02-ipc-contract (apps/majordomus-cli/src/fabric, uncommitted, not pushed). No IPC contract exists on master.",
+          "depends_on": [
+            "I4721"
+          ],
+          "evidence_required": [
+            "ipc_contract_refusals_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "A listener, a socket or any process (P03)",
+            "A second identity scheme beside mesh::identity and mesh::repository",
+            "A copy of the types in the UI, the OpenAPI document or the docs"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/mesh/repository.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "share/schemas"
+          ],
+          "slug": "fabric-p02-ipc-contract",
+          "traces": [
+            "branch feature/fabric-p02-ipc-contract"
+          ],
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib fabric"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4724",
+        "kind": "issue",
+        "label": "I4724",
+        "summary": "A user-scoped host agent starts by hand, holds one local socket as a singleton and stops cleanly (P03)",
+        "route": "/cockpit/objects/issue/i4724",
+        "source": ".ai/repo/project/issues/I4724.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Ten or more simultaneous starts end with one owner; a live but slow owner is never silently replaced; a stale socket of a dead owner is recovered",
+            "A connection from another OS user, a planted symlink and an incompatible hello are refused",
+            "env enter and mcp --standalone behave exactly as before when no host agent runs",
+            "The host agent's idle process, RSS and descriptor count are reported beside the I4722 baseline"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: no host agent exists; every server is one checkout's (ADR 0035).",
+          "depends_on": [
+            "I4723",
+            "I4722"
+          ],
+          "desired_state": "A manually started host agent, with no service installation, no automatic start from env enter, no mesh socket opened by starting it, and no scan of the home directory for projects.",
+          "evidence_required": [
+            "host_singleton_race_test",
+            "wrong_uid_refused_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Service units and installers (P09)",
+            "Moving any legacy MCP owner (P05, S02)",
+            "A separate binary without footprint evidence"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "fabric-p03-host-singleton",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test fabric_host"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4725",
+        "kind": "issue",
+        "label": "I4725",
+        "summary": "Entering a checkout registers its logical context with the host agent in one bounded call (P04)",
+        "route": "/cockpit/objects/issue/i4725",
+        "source": ".ai/repo/project/issues/I4725.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Registration is idempotent by the derived context id, and two worktrees of one repository are two contexts of one repository",
+            "A deleted, moved or symlink-swapped root and a tampered context id are revalidated or refused, never registered as another context",
+            "With no host agent, env enter stays within the policy's entry budgets and its output is unchanged"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: env enter resolves the checkout's environment and starts no server (ADR 0043); nothing registers a context anywhere.",
+          "depends_on": [
+            "I4724"
+          ],
+          "desired_state": "env enter returns the same exports and banner as today, registers the context when an agent answers, and reports the agent unavailable otherwise, without waiting on it.",
+          "evidence_required": [
+            "context_registration_test",
+            "entry_without_agent_unchanged_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Enrolling a repository into the mesh or granting it access to another project",
+            "A session created by cd alone",
+            "Scanning every project on the host"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/environment",
+            "apps/majordomus-cli/src/mesh/repository.rs",
+            "test/cases"
+          ],
+          "slug": "fabric-p04-context-registry",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "Corrected DAG: P04 follows P03 (I4724). BASE_PACK_MAP: a context entry is not a live session and not a mutable owner (S02, S04)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4726",
+        "kind": "issue",
+        "label": "I4726",
+        "summary": "The MCP stdio bridge prefers a compatible host agent and falls back to today's path (P05)",
+        "route": "/cockpit/objects/issue/i4726",
+        "source": ".ai/repo/project/issues/I4726.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two sessions of two contexts on one host never see each other's requests or tools",
+            "A host crash during a read reconnects with bounded backoff; a host crash after a write was sent reports the outcome unknown and never replays it",
+            "With no host agent, mcp, mcp --standalone and mcp --inspect behave as before"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: mcp::bridge attaches to the checkout's shared server through its lease and refuses to resend an uncertain write (BridgeError::may_resend).",
+          "depends_on": [
+            "I4725"
+          ],
+          "desired_state": "One bridge, two routes (host proxy, legacy lease), the same stdout framing and initialisation semantics, and tool visibility derived from the capability registry for the authorised context only.",
+          "evidence_required": [
+            "bridge_host_route_test",
+            "bridge_fallback_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Transferring mutable ownership of a live legacy context (S02, P11)",
+            "Starting a host agent from inside a client",
+            "A hand-written MCP tool list per frontend"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/tests",
+            "docs/MCP.md"
+          ],
+          "slug": "fabric-p05-mcp-bridge",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4727",
+        "kind": "issue",
+        "label": "I4727",
+        "summary": "Every capability call is authorised against the caller's own context, not only its OS user (S04, gate G4)",
+        "route": "/cockpit/objects/issue/i4727",
+        "source": ".ai/repo/project/issues/I4727.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of A calling B's capabilities by a guessed id is refused a write always, and a read unless an existing policy grants it",
+            "A forged uid, branch, root, checkout id or context id in a frame loses to the identity the host derived",
+            "A session handle replayed after detach, and a root swapped after registration, are refused",
+            "The fabric_cross_context baseline cases of PR #3124 assert the refusal"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: PR #3124 adds apps/majordomus-cli/tests/fabric_cross_context.rs, two cases in which a client of checkout A moves an issue in checkout B over HTTP and over MCP; open, as a draft.",
+          "depends_on": [
+            "I4723",
+            "I4725",
+            "I4726"
+          ],
+          "desired_state": "The two baseline cases of PR #3124 invert: the cross-context write is refused with a stable reason and redacted host-side evidence, and S04's security matrix passes.",
+          "evidence_required": [
+            "scoped_authority_negative_tests"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Cross-host admission (S06, gate G6)",
+            "Arbitrary cross-context delegation; any delegation is a separate typed decision with audit",
+            "A per-frontend tool-name allowlist: rights come from the capability's typed effect and the repository's policy"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/capability/model.rs",
+            "apps/majordomus-cli/src/mcp/surface.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/tests/fabric_cross_context.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "fabric-s04-scoped-authority",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3124"
+          ],
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test fabric_cross_context"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4728",
+        "kind": "issue",
+        "label": "I4728",
+        "summary": "An unattended follower installs only a release whose provenance it verified, and refuses otherwise",
+        "route": "/cockpit/objects/issue/i4728",
+        "source": ".ai/repo/project/issues/I4728.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A following node with gh absent or signed out refuses the update, keeps its version and records the provenance refusal in its round",
+            "An environment that sets MAJORDOMUS_REQUIRE_PROVENANCE=0 does not weaken the follower",
+            "A manual self update without verifiable provenance installs and says it verified the checksum only"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I2720",
+            "I2165"
+          ],
+          "evidence_required": [
+            "follower_refuses_unverified_provenance_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Changing what a person's manual install.sh or self update verifies, beyond the warning",
+            "A second installer or verifier; install.sh stays the one path (ADR 0161)"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "an-unattended-follower-requires-provenance",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3110"
+          ],
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -90156,6 +90527,96 @@
         }
       },
       {
+        "id": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "milestone",
+        "label": "fabric-is-decided-and-the-legacy-is-measured",
+        "summary": "Majordomus Fabric is decided and the legacy runtime is measured before anything changes it (gates G0 and G1)",
+        "route": "/cockpit/objects/milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "source": ".ai/repo/project/milestones/fabric-is-decided-and-the-legacy-is-measured.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "adr_0199_accepted",
+            "legacy_baseline_measured"
+          ],
+          "non_scope": [
+            "Host-agent code of any kind: fabric-local-pilot",
+            "Changing accepted ADR 0001, 0003 or 0044 for the standalone mode, which stays as it is",
+            "A performance budget derived from one machine's baseline: the numbers are evidence, not a budget"
+          ],
+          "order": 177,
+          "priority": "p1",
+          "risks": [
+            "A baseline taken on a loaded machine (the first run saw load average 12-14) overstates latency; the pilot must be compared on the same host under the same load, not against these numbers alone"
+          ],
+          "scope": [
+            ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
+            ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md",
+            "scripts/fabric-baseline",
+            "test/cases",
+            "docs/PERFORMANCE.md"
+          ],
+          "slug": "fabric-is-decided-and-the-legacy-is-measured",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/fabric-local-pilot",
+        "kind": "milestone",
+        "label": "fabric-local-pilot",
+        "summary": "One opt-in host agent serves 2 repositories, 10 worktrees and 20 MCP sessions on one host, with standalone fallback (gates G2-G5)",
+        "route": "/cockpit/objects/milestone/fabric-local-pilot",
+        "source": ".ai/repo/project/milestones/fabric-local-pilot.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "fabric-is-decided-and-the-legacy-is-measured"
+          ],
+          "evidence_required": [
+            "no_second_mutator_test",
+            "hung_context_isolation_test",
+            "scoped_authority_negative_tests",
+            "local_pilot_e2e"
+          ],
+          "non_scope": [
+            "Remote routing and remote mutation (P08, S06, S07 and gates G6 and G7)",
+            "Managed or unattended update (P10, gate G8); the follower's provenance requirement is I4728 under safe-self-update",
+            "Retiring the per-checkout server (P11 retirement, S08, gate G9); the standalone mode stays supported",
+            "A second capability registry, discovery or update system (ADR 0050, ADR 0161)",
+            "The host's read-only runtime inventory, which is I3184 under the-host-knows-its-runtimes"
+          ],
+          "order": 178,
+          "priority": "p1",
+          "risks": [
+            "A file lock or fencing epoch does not stop a running legacy binary that never checks it; ownership cutover must be proved against the old binary, never assumed (MASTER_ADDENDUM, S02)",
+            "Same OS user is necessary but not sufficient: authorisation per context is the gate, not the socket's permissions",
+            "Scope creep: each phase is one vertically complete, independently validated change"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/mesh/repository.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/MCP.md",
+            "docs/MESH.md"
+          ],
+          "slug": "fabric-local-pilot",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/failure-is-visible",
         "kind": "milestone",
         "label": "failure-is-visible",
@@ -91922,10 +92383,7 @@
             "Two versions on one host are both listed and an incompatible request is refused with a typed reason"
           ],
           "created_at": "2026-10-18",
-          "depends_on": [
-            "runtime-lifecycle",
-            "safe-self-update"
-          ],
+          "depends_on": [],
           "desired_state": "majordomus runtimes (host scope) answers with no checkout open; side-by-side versions are routed by negotiated capability; a resident exists only by decision.",
           "evidence_required": [],
           "non_scope": [
@@ -91945,7 +92403,7 @@
             "docs/MCP.md"
           ],
           "slug": "the-host-knows-its-runtimes",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-25",
           "validation": [
             "majordomus plan validate"
           ]
@@ -141449,6 +141907,11 @@
       },
       {
         "source": "majordomus://issue/I2721",
+        "target": "majordomus://issue/I4728",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2721",
         "target": "majordomus://milestone/safe-self-update",
         "kind": "belongs_to"
       },
@@ -153063,6 +153526,136 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4721",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4721",
+        "target": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4722",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4722",
+        "target": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4723",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4723",
+        "target": "majordomus://issue/I4721",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4723",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "majordomus://issue/I4722",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "majordomus://issue/I4723",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4725",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4725",
+        "target": "majordomus://issue/I4724",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4725",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4726",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4726",
+        "target": "majordomus://issue/I4725",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4726",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://issue/I4723",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://issue/I4725",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://issue/I4726",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "majordomus://issue/I2165",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -154568,6 +155161,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/fabric-local-pilot",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/fabric-local-pilot",
+        "target": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://milestone/failure-is-visible",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -154841,16 +155449,6 @@
         "source": "majordomus://milestone/the-host-knows-its-runtimes",
         "target": "kind:milestone",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://milestone/the-host-knows-its-runtimes",
-        "target": "majordomus://milestone/runtime-lifecycle",
-        "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://milestone/the-host-knows-its-runtimes",
-        "target": "majordomus://milestone/safe-self-update",
-        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/the-hub-is-reached-from-any-device",
@@ -165999,8 +166597,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4551,
+      "edges": 10257,
       "acyclic": false,
       "truncated": false
     }

@@ -30,4 +30,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I4500` | shares .ai/repo/adrs with I4721; they may not run concurrently |

@@ -1,0 +1,33 @@
+id: fabric-is-decided-and-the-legacy-is-measured
+title: "Majordomus Fabric is decided and the legacy runtime is measured before anything changes it (gates G0 and G1)"
+slug: fabric-is-decided-and-the-legacy-is-measured
+order: 177
+priority: p1
+problem: "On 2026-11-24 the owner started the Majordomus Fabric program (one opt-in, user-scoped host agent; local IPC over a Unix socket or a supported named pipe with HTTP, MCP and REST as projections; a host-to-host multiplexed mesh; user service installation with a standalone fallback) with P00, S00 and S01 and nothing else (knowledge record fabric-starts-with-p00-s00-s01). Fabric contradicts accepted ADRs 0001, 0003 and 0044 (no daemon, a lease per checkout, one server per checkout), and no claim that a host agent costs less than today's model can be made until today's model is measured. The program's corrected DAG puts two gates first: G0, no contradictory accepted ADR bypassed, and G1, the legacy runtime measured under the 2/10/20 workload."
+outcome: "ADR 0199, amended into Fabric's decision, is accepted by the owner and narrows ADR 0001, 0003 and 0044 only for the opt-in host mode (G0); a reproducible script measures the legacy per-checkout runtime at L1, L2 and L3 in disposable fixtures and its first baseline is attached as evidence (G1). No host-agent code lands before G0, and no efficiency claim is made before G1."
+current_state: "Observed 2026-11-25: P00 and S00 ran read-only at master 93739746f8 and found four owner questions, answered on 2026-11-24. The owner accepted the ADR 0199 amendment on 2026-11-25 (AskUserQuestion, session 9ae82e7a-b0e4-44c0-a305-9c69cd1acf6a: 'Accept, set accepted (Recommended)'); PR #3123 carries the amendment and its status, PR #3121 the knowledge record. S01 is under review in PR #3122 (scripts/fabric-baseline, case 4663)."
+desired_state: "PR #3121, #3123 and #3122 are merged; ADR 0199 reads accepted on master; I4721 and I4722 are done with their evidence; the fabric-local-pilot milestone compares its measurements against I4722's baseline."
+scope:
+  - ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md"
+  - ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md"
+  - "scripts/fabric-baseline"
+  - "test/cases"
+  - "docs/PERFORMANCE.md"
+non_scope:
+  - "Host-agent code of any kind: fabric-local-pilot"
+  - "Changing accepted ADR 0001, 0003 or 0044 for the standalone mode, which stays as it is"
+  - "A performance budget derived from one machine's baseline: the numbers are evidence, not a budget"
+acceptance_criteria:
+  - "G0: ADR 0199 as amended is accepted on master, names the opt-in host agent, the 0600 Unix socket checked by peer credentials and per-context authorisation, and narrows ADR 0001, 0003 and 0044 only for the opt-in host mode"
+  - "G1: scripts/fabric-baseline measures L1, L2 and L3 (2 repositories, 10 worktrees, 20 concurrent MCP sessions) in fixtures it made, counts every Majordomus process and listener, records cold and warm latencies and every failure beside its attempts, and refuses to run outside a fixture"
+  - "G1: the first L3 baseline, with host metadata, is attached as evidence on I4722"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "adr_0199_accepted"
+  - "legacy_baseline_measured"
+depends_on: []
+risks:
+  - "A baseline taken on a loaded machine (the first run saw load average 12-14) overstates latency; the pilot must be compared on the same host under the same load, not against these numbers alone"
+created_at: 2026-11-25
+updated_at: 2026-11-25
