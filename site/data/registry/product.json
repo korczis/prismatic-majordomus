@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
-  "fingerprint": "b548080184badda1118ce404e15878ec5ad3352412c3ae6d70ac812f4219d21d",
+  "fingerprint": "a5f06eca53113524cb64e424cd4b63b76a2d589c0ed516b71a8565b3d410524d",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 6,
+        "capabilities": 7,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 156,
+        "capabilities": 157,
         "moments": 38
       },
       "evidence": {
@@ -7565,7 +7565,7 @@
         },
         {
           "name": "knowledge",
-          "objects": 221
+          "objects": 222
         },
         {
           "name": "document",
@@ -7842,11 +7842,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 756,
+        "mcp_resources": 757,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 753,
+        "objects": 754,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -8542,6 +8542,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
           "capabilities": [
             {
+              "id": "gates.baseline",
+              "title": "A check judged against the commit the change is built on",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_gate_baseline",
+              "route": "POST /api/v1/gates/baseline"
+            },
+            {
               "id": "gates.completion",
               "title": "Whether this task may be called finished",
               "kind": "query",
@@ -8613,10 +8621,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 4,
-        "http_routes": 4,
+        "http_routes": 5,
         "cli_paths": 0,
         "commands": 0,
         "objects": 0,
@@ -8728,6 +8736,14 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
           "capabilities": [
+            {
+              "id": "gates.baseline",
+              "title": "A check judged against the commit the change is built on",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_gate_baseline",
+              "route": "POST /api/v1/gates/baseline"
+            },
             {
               "id": "gates.completion",
               "title": "Whether this task may be called finished",
@@ -9112,10 +9128,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
+        "capabilities": 7,
+        "mcp_tools": 7,
         "mcp_resources": 6,
-        "http_routes": 6,
+        "http_routes": 7,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -11426,6 +11442,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
           "capabilities": [
             {
+              "id": "gates.baseline",
+              "title": "A check judged against the commit the change is built on",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_gate_baseline",
+              "route": "POST /api/v1/gates/baseline"
+            },
+            {
               "id": "gates.completion",
               "title": "Whether this task may be called finished",
               "kind": "query",
@@ -12037,10 +12061,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 115,
-        "mcp_tools": 103,
+        "capabilities": 116,
+        "mcp_tools": 104,
         "mcp_resources": 18,
-        "http_routes": 109,
+        "http_routes": 110,
         "cli_paths": 50,
         "commands": 0,
         "objects": 0,
@@ -13658,7 +13682,7 @@
         },
         {
           "name": "issue",
-          "objects": 1276
+          "objects": 1277
         },
         {
           "name": "intent",
@@ -13868,11 +13892,11 @@
       "counts": {
         "capabilities": 30,
         "mcp_tools": 29,
-        "mcp_resources": 1486,
+        "mcp_resources": 1487,
         "http_routes": 29,
         "cli_paths": 14,
         "commands": 1,
-        "objects": 1483,
+        "objects": 1484,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17818,14 +17842,14 @@
       },
       {
         "id": "issue",
-        "title": "issue (1276)",
+        "title": "issue (1277)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "knowledge",
-        "title": "knowledge (221)",
+        "title": "knowledge (222)",
         "features": [
           "knowledge"
         ]
@@ -18878,17 +18902,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 4063,
-    "builtin": 233,
-    "declarative": 3830,
+    "capabilities": 4066,
+    "builtin": 234,
+    "declarative": 3832,
     "modules": 62,
-    "mcp_tools": 217,
-    "mcp_resources": 3887,
-    "http_routes": 221,
+    "mcp_tools": 218,
+    "mcp_resources": 3889,
+    "http_routes": 222,
     "cli_commands": 229,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3830,
+    "objects": 3832,
     "by_kind": {
       "adr": 170,
       "application": 5,
@@ -18907,8 +18931,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
-      "knowledge": 221,
+      "issue": 1277,
+      "knowledge": 222,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,

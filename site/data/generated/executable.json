@@ -1394,6 +1394,23 @@
       "tool": "majordomus_execution_start"
     },
     {
+      "api_anchor": "/docs/api/gates/#op-gates-baseline",
+      "claims": [],
+      "cli": null,
+      "id": "gates.baseline",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": null,
+      "route": "/registry/capabilities/gates-baseline/",
+      "slug": "gates-baseline",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "A check judged against the commit the change is built on",
+      "tool": "majordomus_gate_baseline"
+    },
+    {
       "api_anchor": "/docs/api/gates/#op-gates-completion",
       "claims": [],
       "cli": null,
@@ -4768,11 +4785,11 @@
     ]
   },
   "counts": {
-    "capabilities": 233,
+    "capabilities": 234,
     "claims": 93,
     "modules": 62
   },
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "modules": [
     {
       "capabilities": [
@@ -5443,6 +5460,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "gates.baseline",
+          "route": "/registry/capabilities/gates-baseline/",
+          "slug": "gates-baseline"
+        },
         {
           "id": "gates.completion",
           "route": "/registry/capabilities/gates-completion/",

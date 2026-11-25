@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -779,6 +779,15 @@
         "route": "/cockpit/capabilities/executions.start",
         "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
         "status": "command"
+      },
+      {
+        "id": "capability:gates.baseline",
+        "kind": "capability",
+        "label": "gates.baseline",
+        "summary": "A check judged against the commit the change is built on",
+        "route": "/cockpit/capabilities/gates.baseline",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
       },
       {
         "id": "capability:gates.completion",
@@ -77693,7 +77702,9 @@
         "source": ".ai/repo/project/issues/I4413.yaml",
         "facts": {
           "created_at": "2026-10-29",
-          "depends_on": [],
+          "depends_on": [
+            "I4730"
+          ],
           "evidence_required": [
             "failed_verification_origin_case"
           ],
@@ -77717,7 +77728,7 @@
           ],
           "serves": [],
           "slug": "a-failed-verification-says-whether-the-trunk-fails-too",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-25",
           "validation": [
             "MJ_TEST_JOBS=4 bash test/run.sh 4413_a_failed_verification_says_whether_the_trunk_fails_too 06_finish 572_verification_records_the_tree_it_proved",
             "bin/majordomus shell check",
@@ -77853,6 +77864,7 @@
             ".ai/repo/project/issues/I4416.yaml",
             "lib/derive.sh",
             "lib/recover.sh",
+            "lib/handover.sh",
             "lib/doctor.sh",
             "lib/finish.sh",
             "lib/common.sh",
@@ -77866,7 +77878,7 @@
           ],
           "serves": [],
           "slug": "a-stale-task-reads-as-stale-and-is-recovered-on-purpose",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-25",
           "validation": [
             "MJ_TEST_JOBS=4 bash test/run.sh 4416_a_stale_task_reads_as_stale_and_is_recovered_on_purpose 130_lifecycle_survives_a_stale_task 60_session_lifecycle 135_session_store_recovery",
             "bin/majordomus shell check",
@@ -82853,6 +82865,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4730",
+        "kind": "issue",
+        "label": "I4730",
+        "summary": "A check is judged against the commit the change is built on: each failure is introduced, pre-existing, fixed or unknown over the declared runs, a red base raises the trunk alarm, and a finding says whether it is outside the diff",
+        "route": "/cockpit/objects/issue/i4730",
+        "source": ".ai/repo/project/issues/I4730.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "baseline_judgement_unit_tests"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4730.yaml",
+            ".ai/repo/project/issues/I4413.yaml",
+            ".ai/repo/project/issues/I4416.yaml",
+            ".ai/repo/knowledge/curated/owner-decision-baseline-relative-gates.md",
+            "apps/majordomus-cli/src/gates/baseline.rs",
+            "apps/majordomus-cli/src/gates/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "docs/CI.md"
+          ],
+          "serves": [],
+          "slug": "a-check-is-judged-against-its-base",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test -p majordomus-cli --lib gates::baseline",
+            "cargo test -p majordomus-cli --lib capability::builtin::gates",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -83585,6 +83634,26 @@
           "tags": [
             "ui-surfaces",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/owner-decision-baseline-relative-gates",
+        "kind": "knowledge",
+        "label": "owner-decision-baseline-relative-gates",
+        "summary": "Owner decision 2026-11-25: an adopter's session lessons become generic Majordomus, each designed, critiqued by other models in several passes, then built; the first is a gate judged against its base",
+        "route": "/cockpit/objects/knowledge/owner-decision-baseline-relative-gates",
+        "source": ".ai/repo/knowledge/curated/owner-decision-baseline-relative-gates.md",
+        "status": "verified",
+        "facts": {
+          "class": "fact",
+          "date": "2026-11-25",
+          "epistemics": "decided",
+          "tags": [
+            "decision",
+            "owner-answer",
+            "gates",
+            "reasoning"
           ]
         }
       },
@@ -116229,6 +116298,21 @@
       },
       {
         "source": "capability:executions.start",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.baseline",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.baseline",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.baseline",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -151724,6 +151808,11 @@
       },
       {
         "source": "majordomus://issue/I4413",
+        "target": "majordomus://issue/I4730",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4413",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
@@ -153063,6 +153152,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4730",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4730",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -153259,6 +153358,11 @@
       },
       {
         "source": "majordomus://knowledge/overview-first-evidence-one-click-away",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/owner-decision-baseline-relative-gates",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -165229,6 +165333,11 @@
       },
       {
         "source": "module:gates",
+        "target": "capability:gates.baseline",
+        "kind": "composes"
+      },
+      {
+        "source": "module:gates",
         "target": "capability:gates.completion",
         "kind": "composes"
       },
@@ -165999,8 +166108,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4544,
+      "edges": 10237,
       "acyclic": false,
       "truncated": false
     }

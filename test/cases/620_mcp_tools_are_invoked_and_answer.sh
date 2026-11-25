@@ -99,6 +99,17 @@ jq -r '.gates[].id' "$S/gatestate.json" | while IFS= read -r id; do
     || bad "majordomus_gate_state names a gate .ai/repo/ci/gates.yaml does not declare: $id"
 done
 
+# ---------------------------------------------------------------- 3d. gates.baseline
+# Runs the caller supplies, judged against the base: a failure both sides show is the trunk's
+# and raises the alarm, one only the change shows is introduced, and the caller's change set
+# places each named file in or outside the diff.
+answer majordomus_gate_baseline '{"runs":1,"changed":["src/x.rs"],"change":{"commit":"c","runs":[{"exit":1,"findings":[{"id":"perf","path":"docs/a.md"},{"id":"parse","path":"src/x.rs"}]}]},"base":{"commit":"b","runs":[{"exit":1,"findings":[{"id":"perf","path":"docs/a.md"}]}]}}' "$S/baseline.json"
+jq -e '.verdict == "introduced"
+  and ([.findings[] | select(.id == "perf") | .class, .in_diff] == ["pre_existing", false])
+  and ([.findings[] | select(.id == "parse") | .class, .in_diff] == ["introduced", true])
+  and .trunk_alarm.failing == ["perf (1/1)"] and .denominator.runs_declared == 1' "$S/baseline.json" >/dev/null \
+  || bad "majordomus_gate_baseline does not judge the supplied runs against the base:" "$S/baseline.json"
+
 # ---------------------------------------------------------------- 4. executions.cancel
 # One of the two sampled capabilities that are not reads (4b is the other). It is asked to refuse, and a refusal is a
 # result with isError, never a transport error — the crate's own contract.

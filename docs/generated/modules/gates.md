@@ -1,11 +1,43 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `gates` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.2.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 # Module `gates` — Completion gates
 
 Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 5.
+
+## `gates.baseline` — A check judged against the commit the change is built on
+
+The runs of one check over the change, over the commit it is built on (its merge base with the trunk, or the trunk's tip) and optionally over a neutral perturbation of that commit, the same declared number of times on each side, judged per failure id: `introduced` (the change shows it and the base never did), `pre_existing` (the base shows it too: the trunk's), `fixed`, or `unknown` (the base could not be compared with, or a failure that names nothing matches another that names nothing). Flaky is a property, never a class. Under the default rule, `subset` — no failure the base does not also show — only an introduced id blocks; under `rate` an id blocks when the change shows it in more runs than the base and the control by more than the declared slack. The verdict is `clean`, `clean_with_trunk_failures` (with the trunk alarm: the base's own failures and their counts), `introduced` or `undecided` with its reason, and carries its denominator and the provenance the caller supplied. A finding that names a file says whether that file is in the change set, so a whole-tree scan can say "outside your diff". It judges and never runs the check, and never turns a red verification into a green one.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_gate_baseline` |
+| HTTP | `POST /api/v1/gates/baseline` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::gates |
+| tags | gates, ci, evidence, verification |
+
+| input | type | required | description |
+|---|---|---|---|
+| `runs` | integer | yes | The runs declared per side: every side is compared over exactly this many. |
+| `rule` | BaselineRule | no | `subset` (the default: no failure the base does not also show) or
+`{"rate": {"slack": k}}`. |
+| `change` | BaselineSide | yes | The runs over the change. |
+| `base` | BaselineSide | yes | The runs over the commit the change is built on: its merge base with the trunk, or
+the trunk's tip. |
+| `control` | object | no | The runs over a neutral perturbation of the base (another seed, an empty commit): the
+noise floor the `rate` rule compares against. |
+| `changed` | array or null | no | The change set `in_diff` is taken over. Absent: the paths between the base commit and
+the working tree of this checkout, when a finding names a file and the base names a
+commit. |
+| `command` | string or null | no | The command that was run, echoed into the report as its provenance. |
+
+Output: `BaselineReport`.
 
 ## `gates.completion` — Whether this task may be called finished
 

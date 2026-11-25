@@ -216,6 +216,51 @@ SITE_PROBE_JOBS=4 scripts/site-probe   # every route at three widths, four route
 
 `just ci-plan`, `just ci-structure`, `just ci-fast` and `just ci-full` are the recipes.
 
+## A gate judged against its base
+
+A red gate says that something is wrong, not that the change is. When the trunk breaks a
+check — a whole-tree scan flags a file another branch added, a test went red on the trunk,
+a simulation varies from run to run — every change built on it fails for a reason that is
+not its own. `gates.baseline` (MCP `majordomus_gate_baseline`, `POST /api/v1/gates/baseline`,
+`majordomus-cli run gates.baseline --input <json>`) is the one judgement of that comparison:
+the caller runs the check the declared number of times over the change and over the commit
+it is built on (its merge base with the trunk, or the trunk's tip), optionally over a neutral
+perturbation of that commit as a control, and hands the runs over. It runs nothing.
+
+```text
+{ "runs": 3, "rule": "subset",
+  "change":  { "commit": "c1", "runs": [ { "exit": 1, "findings": [ { "id": "perf" } ] }, ... ] },
+  "base":    { "commit": "b1", "runs": [ { "exit": 1, "findings": [ { "id": "perf" } ] }, ... ] },
+  "control": { "commit": "b1+seed", "runs": [ ... ] } }
+```
+
+Each failure id is `introduced` (the change shows it, the base never did), `pre_existing`
+(the base shows it too), `fixed`, or `unknown`: the base could not be run, was not run the
+declared number of times or over one tree, or a failure that names nothing (`exit:<code>`,
+`not-finished`) meets another that names nothing. Unknown is never shown as pre-existing.
+`flaky` — seen in some but not all runs of a side — is a property, and never turns an
+introduced id into anything else. The default rule, `subset`, blocks only an introduced id:
+no failure the base does not also show, over the declared runs. `{"rate": {"slack": k}}`
+needs at least three runs per side and blocks an id the change shows in more runs than the
+base and the control by more than `k`; a finding in the change's own files is never excused
+by the control.
+
+The verdict is `clean`, `clean_with_trunk_failures` — the change adds nothing, the base
+itself is red, and `trunk_alarm` lists the base's failures with their counts, so an
+inherited failure is reported as the trunk's and not passed in silence — `introduced`, or
+`undecided` with its reason. Every report carries its denominator (runs declared and seen
+per side, the ids examined, the rule, and that no correction is made for many ids) and the
+commits and command the caller named. A finding that names a file carries `in_diff`, taken
+over the caller's `changed` list or, without one, over this checkout's paths since the base
+commit: a whole-tree scan can say "this finding is outside your diff", and an introduced
+finding outside the diff is listed apart, because an environment or an ordering effect
+lands there as often as a defect does.
+
+The judgement explains a failure and never turns a red verification into a green one:
+`finish` keeps refusing over a red verify command (`majordomus.verification-integrity`), and
+what `clean_with_trunk_failures` means for a pull request is the caller's policy. Running the
+base for `finish` is I4413's.
+
 ## The suite in parallel
 
 `test/run.sh` runs the cases through a bounded pool when `MJ_TEST_JOBS` is set: that many

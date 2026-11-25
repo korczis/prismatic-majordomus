@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "304d7c507921ba886c5b48b41fa8f76c59a694c43a7a829461e34e97ee9c3113",
     "summary": {
-      "total": 4063,
-      "builtin": 233,
-      "declarative": 3830,
+      "total": 4066,
+      "builtin": 234,
+      "declarative": 3832,
       "by_kind": {
         "command": 42,
-        "query": 191,
-        "resource": 3830
+        "query": 192,
+        "resource": 3832
       },
       "by_stability": {
         "behaviorally_verified": 153,
-        "experimental": 70,
-        "implemented": 3840
+        "experimental": 71,
+        "implemented": 3842
       },
-      "mcp_tools": 217,
-      "mcp_resources": 3887,
-      "http_routes": 221,
+      "mcp_tools": 218,
+      "mcp_resources": 3889,
+      "http_routes": 222,
       "cli_commands": 128,
       "modules": 96,
-      "benchmark_required": 187,
+      "benchmark_required": 188,
       "benchmark_waived": 46,
       "cached": 55
     },
@@ -36578,6 +36578,518 @@
           "concurrency": "serial"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs"
+      },
+      {
+        "id": "gates.baseline",
+        "module": "gates",
+        "kind": "query",
+        "title": "A check judged against the commit the change is built on",
+        "description": "The runs of one check over the change, over the commit it is built on (its merge base with the trunk, or the trunk's tip) and optionally over a neutral perturbation of that commit, the same declared number of times on each side, judged per failure id: `introduced` (the change shows it and the base never did), `pre_existing` (the base shows it too: the trunk's), `fixed`, or `unknown` (the base could not be compared with, or a failure that names nothing matches another that names nothing). Flaky is a property, never a class. Under the default rule, `subset` — no failure the base does not also show — only an introduced id blocks; under `rate` an id blocks when the change shows it in more runs than the base and the control by more than the declared slack. The verdict is `clean`, `clean_with_trunk_failures` (with the trunk alarm: the base's own failures and their counts), `introduced` or `undecided` with its reason, and carries its denominator and the provenance the caller supplied. A finding that names a file says whether that file is in the change set, so a whole-tree scan can say \"outside your diff\". It judges and never runs the check, and never turns a red verification into a green one.",
+        "input": {
+          "name": "BaselineInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "runs": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The runs declared per side: every side is compared over exactly this many."
+              },
+              "rule": {
+                "$ref": "#/$defs/BaselineRule",
+                "description": "`subset` (the default: no failure the base does not also show) or\n`{\"rate\": {\"slack\": k}}`.",
+                "default": "subset"
+              },
+              "change": {
+                "$ref": "#/$defs/BaselineSide",
+                "description": "The runs over the change."
+              },
+              "base": {
+                "$ref": "#/$defs/BaselineSide",
+                "description": "The runs over the commit the change is built on: its merge base with the trunk, or\nthe trunk's tip."
+              },
+              "control": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/BaselineSide"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The runs over a neutral perturbation of the base (another seed, an empty commit): the\nnoise floor the `rate` rule compares against."
+              },
+              "changed": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                },
+                "description": "The change set `in_diff` is taken over. Absent: the paths between the base commit and\nthe working tree of this checkout, when a finding names a file and the base names a\ncommit."
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The command that was run, echoed into the report as its provenance."
+              }
+            },
+            "required": [
+              "runs",
+              "change",
+              "base"
+            ],
+            "description": "The input of `gates.baseline`: the runs of one check over the change, over the commit it\nis built on, and optionally over a neutral perturbation of that commit, as the caller ran\nthem. The capability judges them and runs nothing.\n\n```\nuse majordomus_cli::capability::builtin::gates::BaselineInput;\n\nlet input: BaselineInput = serde_json::from_value(serde_json::json!({\n    \"runs\": 1,\n    \"change\": { \"commit\": \"c1\", \"runs\": [{ \"exit\": 1, \"findings\": [{ \"id\": \"perf\" }] }] },\n    \"base\": { \"commit\": \"b1\", \"runs\": [{ \"exit\": 1, \"findings\": [{ \"id\": \"perf\" }] }] }\n}))\n.unwrap();\nassert_eq!(input.runs, 1);\n// a field the contract does not know is refused, never ignored\nassert!(serde_json::from_value::<BaselineInput>(serde_json::json!({\n    \"runs\": 1, \"change\": {}, \"base\": {}, \"seed\": 4\n}))\n.is_err());\n```",
+            "title": "BaselineInput",
+            "$defs": {
+              "BaselineRule": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "subset",
+                    "description": "No failure the base does not also show: only an introduced id blocks."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "rate": {
+                        "type": "object",
+                        "properties": {
+                          "slack": {
+                            "description": "The runs by which the change may exceed the noise floor without blocking.",
+                            "type": "integer",
+                            "format": "uint32",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "slack"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rate"
+                    ],
+                    "additionalProperties": false,
+                    "description": "An id blocks when the change shows it in more runs than the base and the control by\nmore than `slack`; needs at least three runs per side."
+                  }
+                ],
+                "description": "How the runs decide which failure ids block. `subset`, the default, is the owner's rule:\nno failure the base does not also show. `rate` compares how often the change shows an id\nagainst the base and the control, and needs at least three runs per side.\n\n```\nuse majordomus_cli::gates::BaselineRule;\n\nassert_eq!(BaselineRule::default(), BaselineRule::Subset);\nlet rate: BaselineRule = serde_json::from_value(serde_json::json!({ \"rate\": { \"slack\": 1 } })).unwrap();\nassert_eq!(rate, BaselineRule::Rate { slack: 1 });\n```"
+              },
+              "BaselineSide": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit the side was run at."
+                  },
+                  "runs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BaselineRun"
+                    },
+                    "description": "Every run of the check on this side.",
+                    "default": []
+                  },
+                  "unavailable": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the side could not be run at all (the base could not be exported, prepared or\nresolved): the side then decides nothing, and says so."
+                  }
+                },
+                "description": "The runs of one side: the change, the base or the control. A side is compared only over\nexactly the declared number of runs, all over one tree; a side that could not be run at\nall says why in `unavailable` and decides nothing.\n\n```\nuse majordomus_cli::gates::BaselineSide;\n\nlet base: BaselineSide = serde_json::from_value(serde_json::json!({\n    \"commit\": \"b1\", \"unavailable\": \"the merge base is not in this shallow clone\"\n}))\n.unwrap();\nassert!(base.runs.is_empty() && base.unavailable.is_some());\n```"
+              },
+              "BaselineRun": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "exit": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int32",
+                    "description": "The exit status; `null` when the run did not finish (it was killed, or timed out)."
+                  },
+                  "tree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The tree the run was taken over (`git rev-parse HEAD^{tree}`, or any identity the\ncaller uses), when known. The runs of one side must all name the same tree."
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BaselineFinding"
+                    },
+                    "description": "What the run reported as failing, as the caller extracted it from the output."
+                  }
+                },
+                "description": "One run of the check, as the caller observed it: its exit and what it named as failing.\nAn exit of `null` is a run that did not finish, which counts as a failure of its own.\n\n```\nuse majordomus_cli::gates::BaselineRun;\n\nlet run: BaselineRun = serde_json::from_value(serde_json::json!({\n    \"exit\": 1, \"tree\": \"t1\", \"findings\": [{ \"id\": \"perf\" }]\n}))\n.unwrap();\nassert_eq!((run.exit, run.findings[0].id.as_str()), (Some(1), \"perf\"));\nlet killed: BaselineRun = serde_json::from_value(serde_json::json!({ \"exit\": null })).unwrap();\nassert!(killed.exit.is_none(), \"a run that did not finish has no exit\");\n```"
+              },
+              "BaselineFinding": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The failure's identity: a test name, a rule id and the file it flagged, a scenario.\nTwo runs show the same failure when they report the same id."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The repository-relative file the finding is about, when it is about one."
+                  },
+                  "line": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The line in that file, when the check names one."
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "description": "One failure a run reported, by the identity two runs are matched on. The id is whatever\nthe caller's check names — a test, a rule and the file it flagged, a scenario — and the\noptional path is what `in_diff` is answered over.\n\n```\nuse majordomus_cli::gates::BaselineFinding;\n\nlet f: BaselineFinding = serde_json::from_value(serde_json::json!({\n    \"id\": \"refs:docs/a.md\", \"path\": \"docs/a.md\", \"line\": 12\n}))\n.unwrap();\nassert_eq!((f.path.as_deref(), f.line), (Some(\"docs/a.md\"), Some(12)));\n// a key the contract does not know is refused rather than dropped\nassert!(serde_json::from_value::<BaselineFinding>(serde_json::json!({ \"id\": \"x\", \"file\": \"y\" })).is_err());\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "BaselineReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "verdict": {
+                "$ref": "#/$defs/BaselineVerdict",
+                "description": "The one word."
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Why the verdict is what it is, one line each; never empty when undecided."
+              },
+              "denominator": {
+                "$ref": "#/$defs/BaselineDenominator",
+                "description": "What the verdict is about."
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The command the caller ran, when named."
+              },
+              "change_commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit the change side was run at."
+              },
+              "base_commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit the base side was run at."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BaselineJudgement"
+                },
+                "description": "Every failure id, in id order."
+              },
+              "trunk_alarm": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/TrunkAlarm"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Present whenever the base shows a failure."
+              },
+              "introduced_outside_diff": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Introduced ids whose file is outside the change set: an environment or an ordering\neffect as often as a defect, reported rather than exempted."
+              }
+            },
+            "required": [
+              "verdict",
+              "denominator",
+              "findings"
+            ],
+            "description": "Everything the comparison says: the verdict, why, over what population, about which\ncommits, every failure id's judgement, the trunk alarm and the introduced findings\noutside the diff. It is what every projection of `gates.baseline` returns.\n\n```\nuse majordomus_cli::gates::{BaselineReport, BaselineVerdict};\n\nlet r: BaselineReport = serde_json::from_value(serde_json::json!({\n    \"verdict\": \"clean_with_trunk_failures\",\n    \"denominator\": { \"runs_declared\": 1, \"change_runs\": 1, \"base_runs\": 1,\n                     \"ids_examined\": 1, \"rule\": \"subset\", \"correction\": \"none\" },\n    \"findings\": [], \"trunk_alarm\": { \"failing\": [\"perf (1/1)\"] }\n}))\n.unwrap();\nassert_eq!(r.verdict, BaselineVerdict::CleanWithTrunkFailures);\nassert!(r.trunk_alarm.is_some(), \"a red base is never silent\");\n```",
+            "title": "BaselineReport",
+            "$defs": {
+              "BaselineVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "clean",
+                    "description": "The change shows nothing the base does not, and the base is green."
+                  },
+                  {
+                    "type": "string",
+                    "const": "clean_with_trunk_failures",
+                    "description": "The change shows nothing the base does not, and the base itself fails: see the\ntrunk alarm. Not green."
+                  },
+                  {
+                    "type": "string",
+                    "const": "introduced",
+                    "description": "At least one failure id blocks."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undecided",
+                    "description": "The runs do not decide it; `reasons` says why."
+                  }
+                ],
+                "description": "The one word of the comparison. Only `clean` is green: `clean_with_trunk_failures` says\nthe change adds nothing while the base itself is red.\n\n```\nuse majordomus_cli::gates::BaselineVerdict;\n\nlet words: Vec<serde_json::Value> = [\n    BaselineVerdict::Clean,\n    BaselineVerdict::CleanWithTrunkFailures,\n    BaselineVerdict::Introduced,\n    BaselineVerdict::Undecided,\n]\n.iter()\n.map(|v| serde_json::to_value(v).unwrap())\n.collect();\nassert_eq!(words, [\"clean\", \"clean_with_trunk_failures\", \"introduced\", \"undecided\"]);\n```"
+              },
+              "BaselineDenominator": {
+                "type": "object",
+                "properties": {
+                  "runs_declared": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The runs the caller declared per side."
+                  },
+                  "change_runs": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The change runs supplied."
+                  },
+                  "base_runs": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The base runs supplied."
+                  },
+                  "control_runs": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The control runs supplied, when a control was run."
+                  },
+                  "ids_examined": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The distinct failure ids examined."
+                  },
+                  "rule": {
+                    "type": "string",
+                    "description": "The rule, in words."
+                  },
+                  "correction": {
+                    "type": "string",
+                    "description": "What the rule does not correct for."
+                  }
+                },
+                "required": [
+                  "runs_declared",
+                  "change_runs",
+                  "base_runs",
+                  "ids_examined",
+                  "rule",
+                  "correction"
+                ],
+                "description": "The denominator: what the verdict is a verdict about — the runs declared and seen on\neach side, the ids examined and the rule — so no count is read without its population.\n\n```\nuse majordomus_cli::gates::BaselineDenominator;\n\nlet d: BaselineDenominator = serde_json::from_value(serde_json::json!({\n    \"runs_declared\": 3, \"change_runs\": 3, \"base_runs\": 2, \"ids_examined\": 1,\n    \"rule\": \"subset\", \"correction\": \"none\"\n}))\n.unwrap();\nassert_ne!(d.base_runs, d.runs_declared, \"a short side is visible in the denominator\");\n```"
+              },
+              "BaselineJudgement": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The failure's identity."
+                  },
+                  "class": {
+                    "$ref": "#/$defs/BaselineClass",
+                    "description": "Its class relative to the base."
+                  },
+                  "blocks": {
+                    "type": "boolean",
+                    "description": "Whether it blocks under the declared rule."
+                  },
+                  "change": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The change runs that showed it."
+                  },
+                  "base": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The base runs that showed it."
+                  },
+                  "control": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The control runs that showed it, when a control was run."
+                  },
+                  "flaky": {
+                    "type": "boolean",
+                    "description": "Seen in some but not all runs of a side."
+                  },
+                  "synthetic": {
+                    "type": "boolean",
+                    "description": "The id is one this module made up for a failure that named nothing."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The file the finding is about."
+                  },
+                  "line": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The line in that file."
+                  },
+                  "in_diff": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether that file is in the change set: `false` is \"this finding is outside your\ndiff\". Absent when the finding names no file or no change set was established."
+                  }
+                },
+                "required": [
+                  "id",
+                  "class",
+                  "blocks",
+                  "change",
+                  "base",
+                  "flaky"
+                ],
+                "description": "How one failure id was judged: its class, whether it blocks, and how many runs of each\nside showed it, so a reader can check the class against the counts.\n\n```\nuse majordomus_cli::gates::{BaselineClass, BaselineJudgement};\n\nlet j: BaselineJudgement = serde_json::from_value(serde_json::json!({\n    \"id\": \"perf\", \"class\": \"pre_existing\", \"blocks\": false,\n    \"change\": 3, \"base\": 2, \"flaky\": true, \"in_diff\": false\n}))\n.unwrap();\nassert_eq!((j.class, j.change, j.base), (BaselineClass::PreExisting, 3, 2));\nassert_eq!(j.in_diff, Some(false), \"this finding is outside the diff\");\n```"
+              },
+              "BaselineClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "introduced",
+                    "description": "The change shows it; the base never did."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pre_existing",
+                    "description": "The base shows it too: the trunk's failure, inherited."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fixed",
+                    "description": "The base shows it; the change never did."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "The runs cannot tell: the base was not compared, or the id names no failure."
+                  }
+                ],
+                "description": "What the class of a failure id is, relative to the base. Unknown is never shown as\npre-existing: a failure that cannot be matched is not the trunk's by default.\n\n```\nuse majordomus_cli::gates::BaselineClass;\n\nassert_eq!(serde_json::to_value(BaselineClass::PreExisting).unwrap(), \"pre_existing\");\nassert_ne!(BaselineClass::Unknown, BaselineClass::PreExisting);\n```"
+              },
+              "TrunkAlarm": {
+                "type": "object",
+                "properties": {
+                  "base_commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit the base was run at, when the caller named it."
+                  },
+                  "failing": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Each failing id of the base, as `<id> (<b>/<N>)`."
+                  }
+                },
+                "required": [
+                  "failing"
+                ],
+                "description": "The base's own failures: the trunk is red, whatever the change did. It is raised whenever\nthe base shows a failure, so an inherited failure is reported as the trunk's.\n\n```\nuse majordomus_cli::gates::TrunkAlarm;\n\nlet a: TrunkAlarm = serde_json::from_value(serde_json::json!({\n    \"base_commit\": \"b1\", \"failing\": [\"perf (2/3)\"]\n}))\n.unwrap();\nassert_eq!(a.failing, [\"perf (2/3)\"]);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_gate_baseline"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/gates/baseline"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "gates",
+          "ci",
+          "evidence",
+          "verification"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs"
       },
       {
         "id": "gates.completion",
@@ -99095,8 +99607,9 @@
         "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
+          "gates.baseline",
           "gates.completion",
           "gates.model",
           "gates.policy",
@@ -99233,7 +99746,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1277,
         "capability_ids": []
       },
       {
@@ -99241,7 +99754,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 221,
+        "capabilities": 222,
         "capability_ids": []
       },
       {
@@ -99941,7 +100454,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "5cca2a50911ed7ce7a7686d33d69c4a4a7878c9b04fb4aaeeccc125f022b55aa",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,8 +100494,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
-      "knowledge": 221,
+      "issue": 1277,
+      "knowledge": 222,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -107162,7 +107675,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 48012
+        "bytes": 51059
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -107594,7 +108107,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 140881
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -124391,7 +124904,7 @@
         "path": ".ai/repo/project/issues/I4413.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 9887
+        "bytes": 10301
       },
       {
         "uri": "majordomus://issue/I4414",
@@ -124420,11 +124933,11 @@
         "kind": "issue",
         "identity": "I4416",
         "title": "The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check`",
-        "description": "Three changes, none of which closes anything a person did not ask to close. First, the task line of the session briefing (mj_derive_briefing_body, lib/derive.sh:548-552) states the record as it is. A task whose outcome is active reads `Active task <id> (active, profile <p>, started <age> ago, checkpoint <age> ago): <task>`. A task whose outcome is anything else (completed, partial, blocked, no_match, failed, handed_over, interrupted) reads `Last task <id> (<outcome>, closed <age> ago, profile <p>): <task>`, and the word Active is never printed for it. An active task whose checkpoint_at is older than the policy's session.stranded_after gains `stale: no checkpoint for <age>, over the <threshold> session.stranded_after; review it: majordomus recover tasks --check`. Ages come from mj_age_minutes and mj_age_human, as `majordomus context` already renders them (lib/context.sh:190-200), and the threshold is read with mj_pol_req as lib/recover.sh:94 reads it, with no default invented. Second, a new subject `majordomus recover tasks [--check] [--older-than <duration>]` in lib/recover.sh, beside episodes, records and orphans, and included in `recover status` and `recover all`. It reads only this checkout's current.yaml and refuses a foreign one (mj_task_is_foreign) with the worktree it belongs to. An active task whose checkpoint_at is older than the threshold is a candidate; --check prints the task id, its started and checkpoint ages, the threshold and `close with outcome interrupted`, and writes nothing. Without --check, the candidate's current.yaml gets outcome: interrupted and a task.interrupted ledger line carrying task_id, checkpoint_at, age, threshold and source recover; nothing else is rewritten. A task inside the threshold, or one already closed, is named with why it is not a candidate and left byte-for-byte unchanged. The outcome interrupted is admitted by the current.v1 schema and its generated allow-list, and finish answers it as it answers any closed outcome (`already interrupted; run majordomus start for new work`). Third, the remedy column of doctor's lifecycle rows (mj_validate_lifecycle, lib/doctor.sh:1028): the episodes FAIL (lib/doctor.sh:1106-1109) names `majordomus recover episodes --check` instead of `majordomus session list`, and the checkpoints and handovers FAILs (lib/doctor.sh:1056-1075) name it too when the same run counted stranded episodes, because an episode nobody closed is the one that never wrote its handover; with no stranded episode they keep `majordomus <record> --list`.",
+        "description": "Three changes, none of which closes anything a person did not ask to close. First, the task line of the session briefing (mj_derive_briefing_body, lib/derive.sh:548-552) states the record as it is. A task whose outcome is active reads `Active task <id> (active, profile <p>, started <age> ago, checkpoint <age> ago): <task>`. A task whose outcome is anything else (completed, partial, blocked, no_match, failed, handed_over, interrupted) reads `Last task <id> (<outcome>, closed <age> ago, profile <p>): <task>`, and the word Active is never printed for it. An active task whose checkpoint_at is older than the policy's session.stranded_after gains `stale: no checkpoint for <age>, over the <threshold> session.stranded_after; review it: majordomus recover tasks --check`. Ages come from mj_age_minutes and mj_age_human, as `majordomus context` already renders them (lib/context.sh:190-200), and the threshold is read with mj_pol_req as lib/recover.sh:94 reads it, with no default invented. Second, a new subject `majordomus recover tasks [--check] [--older-than <duration>]` in lib/recover.sh, beside episodes, records and orphans, and included in `recover status` and `recover all`. It reads only this checkout's current.yaml and refuses a foreign one (mj_task_is_foreign) with the worktree it belongs to. An active task whose checkpoint_at is older than the threshold is a candidate; --check prints the task id, its started and checkpoint ages, the threshold and `close with outcome interrupted`, and writes nothing. Without --check, the candidate's current.yaml gets outcome: interrupted and a task.interrupted ledger line carrying task_id, checkpoint_at, age, threshold and source recover; nothing else is rewritten. A task inside the threshold, or one already closed, is named with why it is not a candidate and left byte-for-byte unchanged. The outcome interrupted is admitted by the current.v1 schema and its generated allow-list, and finish answers it as it answers any closed outcome (`already interrupted; run majordomus start for new work`). Third, the remedy column of doctor's lifecycle rows (mj_validate_lifecycle, lib/doctor.sh:1028): the episodes FAIL (lib/doctor.sh:1106-1109) names `majordomus recover episodes --check` instead of `majordomus session list`, and the checkpoints and handovers FAILs (lib/doctor.sh:1056-1075) name it too when the same run counted stranded episodes, because an episode nobody closed is the one that never wrote its handover; with no stranded episode they keep `majordomus <record> --list`. Fourth (extended 2026-11-25), the work of an interrupted task survives its worker: `recover tasks --check` also names, for a candidate, what its worktree holds on one disk only, as convergence.report already measures it (uncommitted files, commits on its branch that reach no remote), and the command that preserves it; `recover tasks` closes such a candidate as interrupted only after it has committed that work as one checkpoint commit on the task's own branch (message `chore(wip): checkpoint of interrupted task <id>`, never on the trunk, hooks run) and pushed the branch, never forced, and refuses with the reason when the push fails or the branch is the trunk; and it writes one handover through the handover writer (lib/handover.sh) with # Objective (the task), # Current State (branch, head, pushed or not, the checkpoint commit) and # Next Action (resume in that worktree: `majordomus start` over the same scope), so `majordomus handover --resolve` in the next session returns it.",
         "path": ".ai/repo/project/issues/I4416.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 10107
+        "bytes": 12159
       },
       {
         "uri": "majordomus://issue/I4417",
@@ -125615,6 +126128,17 @@
         "bytes": 3298
       },
       {
+        "uri": "majordomus://issue/I4730",
+        "kind": "issue",
+        "identity": "I4730",
+        "title": "A check is judged against the commit the change is built on: each failure is introduced, pre-existing, fixed or unknown over the declared runs, a red base raises the trunk alarm, and a finding says whether it is outside the diff",
+        "description": "A capability gates.baseline (MCP majordomus_gate_baseline, POST /api/v1/gates/baseline, `majordomus-cli run gates.baseline`) that judges the runs of one check over a change against its runs over the commit the change is built on, and optionally over a neutral perturbation of that commit as a control. The caller runs the check; the capability runs nothing. The input declares the runs per side (`runs`), the rule (`subset`, the default, or `{rate: {slack: k}}` with at least three runs), each side's commit, its runs (exit, or null for a run that did not finish; the tree; the findings, each an id with an optional path and line) and why a side could not be run at all; optionally the change set and the command. Per failure id, with c, b and k the change, base and control runs that show it: introduced (c>0, b=0), pre_existing (c>0, b>0), fixed (c=0, b>0), unknown (the base side is unavailable, of another size than declared, or spans two trees; or the id is synthetic on both sides: a failed run that named nothing shows exit:<code>, one that did not finish also shows not-finished). Flaky (0<n<runs on a side) is a property and never a class. Under subset only introduced blocks; under rate an introduced or pre-existing id blocks when c exceeds max(b, k) by more than the slack, and an introduced finding in the change's own files always blocks. The verdict is clean, clean_with_trunk_failures (the base shows failures; trunk_alarm lists them as `<id> (<b>/<N>)` with the base commit), introduced, or undecided with its reasons. Every report carries its denominator (runs declared and seen per side, ids examined, the rule, and that no multiple-comparison correction is made) and the provenance the caller named. A finding with a path carries in_diff, over the caller's change set or, without one, over gates::changed_paths from the base commit; an introduced finding outside the diff is listed in introduced_outside_diff.",
+        "path": ".ai/repo/project/issues/I4730.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 8327
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -126228,6 +126752,23 @@
         "tags": [
           "ui-surfaces",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/owner-decision-baseline-relative-gates",
+        "kind": "knowledge",
+        "identity": "owner-decision-baseline-relative-gates",
+        "title": "Owner decision 2026-11-25: an adopter's session lessons become generic Majordomus, each designed, critiqued by other models in several passes, then built; the first is a gate judged against its base",
+        "description": "When a session asks why gates.baseline exists, what the owner asked for when a session's lessons are carried into Majordomus, or which advisors weighed the design of I4730 and what each said",
+        "path": ".ai/repo/knowledge/curated/owner-decision-baseline-relative-gates.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 6661,
+        "tags": [
+          "decision",
+          "owner-answer",
+          "gates",
+          "reasoning"
         ]
       },
       {
@@ -140261,7 +140802,7 @@
         "identity": "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
         "path": "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
         "source_class": "case",
-        "bytes": 26508
+        "bytes": 27563
       },
       {
         "uri": "majordomus://test/test/cases/623_a_ref_verdict_needs_the_refs.sh",
@@ -142242,7 +142783,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1277
     },
     {
       "name": "knowledge",
@@ -142252,7 +142793,7 @@
       "identity": [
         "id"
       ],
-      "objects": 221
+      "objects": 222
     },
     {
       "name": "mesh-declaration",
@@ -179757,6 +180298,23 @@
         "output": "StartedExecution"
       },
       {
+        "name": "majordomus_gate_baseline",
+        "id": "gates.baseline",
+        "title": "A check judged against the commit the change is built on",
+        "description": "The runs of one check over the change, over the commit it is built on (its merge base with the trunk, or the trunk's tip) and optionally over a neutral perturbation of that commit, the same declared number of times on each side, judged per failure id: `introduced` (the change shows it and the base never did), `pre_existing` (the base shows it too: the trunk's), `fixed`, or `unknown` (the base could not be compared with, or a failure that names nothing matches another that names nothing). Flaky is a property, never a class. Under the default rule, `subset` — no failure the base does not also show — only an introduced id blocks; under `rate` an id blocks when the change shows it in more runs than the base and the control by more than the declared slack. The verdict is `clean`, `clean_with_trunk_failures` (with the trunk alarm: the base's own failures and their counts), `introduced` or `undecided` with its reason, and carries its denominator and the provenance the caller supplied. A finding that names a file says whether that file is in the change set, so a whole-tree scan can say \"outside your diff\". It judges and never runs the check, and never turns a red verification into a green one.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "BaselineInput",
+        "output": "BaselineReport"
+      },
+      {
         "name": "majordomus_completion",
         "id": "gates.completion",
         "title": "Whether this task may be called finished",
@@ -183058,6 +183616,12 @@
         "path": "/api/v1/executions/start",
         "id": "executions.start",
         "kind": "command"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/gates/baseline",
+        "id": "gates.baseline",
+        "kind": "query"
       },
       {
         "method": "GET",
@@ -186519,6 +187083,35 @@
         "case": "demonstrate",
         "cached": false,
         "route": "POST /api/v1/executions/start"
+      },
+      {
+        "key": "gates.baseline|direct|a-trunk-failure-and-an-introduced-one",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "gates.baseline",
+        "module": "gates",
+        "case": "a-trunk-failure-and-an-introduced-one",
+        "cached": false
+      },
+      {
+        "key": "gates.baseline|mcp|a-trunk-failure-and-an-introduced-one",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "gates.baseline",
+        "module": "gates",
+        "case": "a-trunk-failure-and-an-introduced-one",
+        "cached": false,
+        "tool": "majordomus_gate_baseline"
+      },
+      {
+        "key": "gates.baseline|http|a-trunk-failure-and-an-introduced-one",
+        "kind": "capability",
+        "transport": "http",
+        "id": "gates.baseline",
+        "module": "gates",
+        "case": "a-trunk-failure-and-an-introduced-one",
+        "cached": false,
+        "route": "POST /api/v1/gates/baseline"
       },
       {
         "key": "gates.completion|direct|this-task",
@@ -193777,6 +194370,27 @@
           "cases": 1
         },
         {
+          "subject": "gates.baseline",
+          "module": "gates",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "gates.baseline",
+          "module": "gates",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "gates.baseline",
+          "module": "gates",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "gates.completion",
           "module": "gates",
           "transport": "direct",
@@ -197090,22 +197704,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 233,
-          "covered": 187,
+          "required": 234,
+          "covered": 188,
           "missing": 0,
           "waived": 46,
           "inapplicable": 0
         },
         "http": {
-          "required": 221,
-          "covered": 185,
+          "required": 222,
+          "covered": 186,
           "missing": 0,
           "waived": 36,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 217,
-          "covered": 182,
+          "required": 218,
+          "covered": 183,
           "missing": 0,
           "waived": 35,
           "inapplicable": 0
@@ -197118,8 +197732,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 685,
-          "covered": 568,
+          "required": 688,
+          "covered": 571,
           "missing": 0,
           "waived": 117,
           "inapplicable": 0

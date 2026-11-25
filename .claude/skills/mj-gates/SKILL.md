@@ -1,11 +1,11 @@
 ---
 name: mj-gates
-description: "Majordomus gates: Whether this task may be called finished; The CI model; The completion policy; How each gate last went."
+description: "Majordomus gates: A check judged against the commit the change is built on; Whether this task may be called finished; The CI model; The completion policy; How each gate last went."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:gates; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.2.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 
 # Majordomus `gates`
 
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `gates.baseline` | A check judged against the commit the change is built on | `majordomus_gate_baseline` | — | reads |
 | `gates.completion` | Whether this task may be called finished | `majordomus_completion` | — | reads |
 | `gates.model` | The CI model | `majordomus_gates` | — | reads |
 | `gates.policy` | The completion policy | `majordomus_completion_policy` | — | reads |
