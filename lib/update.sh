@@ -15,6 +15,10 @@
 # leaves is byte for byte the one it left before the pack existed.
 # shellcheck source=fleet.sh
 . "$MJ_LIB_DIR/fleet.sh"
+# The merge drivers for what generators write (I4770): declared in the clone, never in a
+# tracked file, so update converges them in a personal layer exactly as in a shared one.
+# shellcheck source=merge_drivers.sh
+. "$MJ_LIB_DIR/merge_drivers.sh"
 mj_cmd_update() {
   local dry=0 force=0 diff_target=""
   while [ $# -gt 0 ]; do case "$1" in
@@ -35,6 +39,10 @@ usage: majordomus update [--dry-run] [--diff <target>] [--force]
               else ~/.config/majordomus/fleet) and applies here, its listed files are refreshed
               as \`rules vendor update\` does, after the projections; with no pack, update reads
               nothing else and writes exactly what it wrote before packs existed
+  merge       declares, in this clone only (git config and info/attributes), the merge drivers
+              for what generators write: files the scope's out.generated declares or update
+              writes whole resolve to ours, and documents holding generated regions merge the
+              text people wrote while every region is taken from ours (share/libexec/merge-derived)
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "update: unknown option $1" ;;
@@ -135,7 +143,7 @@ H
 
   local p
   for p in $plan; do printf '%s %s\n' "${p%%:*}" "${p#*:}"; done
-  if [ "$dry" = 1 ]; then rm -rf "$tmp"; return 0; fi
+  if [ "$dry" = 1 ]; then mj_merge_drivers_converge --dry-run; rm -rf "$tmp"; return 0; fi
 
   # Under a personal layer every target is covered before any is written, and a target the
   # project tracks refuses the whole update: half of it written is worse than none (ADR 0145).
@@ -164,6 +172,8 @@ H
   mj_ledger_append projections.updated "\"policy_sha256\":\"$psha\",\"targets\":$i"
   rm -rf "$tmp"
   printf 'generated %s target(s) from policy %s; each carries its own stamp\n' "$i" "${psha:0:12}"
+  # after the targets are written, so the region-mode projections just created are found
+  mj_merge_drivers_converge
   # the fleet pack, only where one exists: a refusal leaves the installed copy as it was
   local frc=0
   mj_fleet_present && { mj_fleet_install update || frc=$?; }

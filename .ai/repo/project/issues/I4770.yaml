@@ -1,0 +1,38 @@
+id: I4770
+milestone: merging-and-referencing-are-enforced
+title: "An adopting clone merges what generators write without a conflict: update declares the drivers in the clone, generated files resolve to ours, and a document's generated regions are ours while the text people wrote merges three ways"
+slug: an-adopter-merges-generated-regions-without-conflict
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus update` converges, in the clone only, two merge drivers of share/libexec/merge-derived and the paths each takes. Paths the scope's out.generated.paths and out.generated.names declare, and every projection update writes in file mode, get merge=majordomus-derived, which resolves to ours. Every tracked text file holding a generated region gets merge=majordomus-regions, as does every projection update writes in region mode. A region is a `<!-- NS:begin … -->`…`<!-- NS:end … -->` block (majordomus:, or a repository's own namespace such as surfaces:) or a `# >>> … >>>`…`# <<< … <<<` block whose begin line says generated, majordomus or do not edit. With merge=majordomus-regions, each region of base and theirs is replaced by ours' region of the same key and occurrence before a three-way merge, so the merge conflicts only where people wrote. The drivers go into the clone's git config and the paths into $GIT_COMMON_DIR/info/attributes between two markers. Nothing tracked changes; a path the repository's own .gitattributes already gives a merge attribute is left to it; a second update declares nothing new; `update --dry-run` prints `unchanged merge-drivers` or `update merge-drivers`."
+why: "Majordomus's own repository solved generated-file merges for itself (.gitattributes `merge=derived`, scripts/merge-derived, `just derive-merge-driver`), and an adopter got none of it. In the OpenTTD fork, an adopter supervised by Majordomus, research/capability-matrix.md and the README's `<!-- surfaces:begin … -->` regions conflicted on almost every pull request between 2026-11-22 and 2026-11-25. Each refresh of a branch was a hand resolution of regions a generator rewrites anyway, and the session-lessons analysis of 2026-11-25 (item 2 of ten) ranked it as hitting nearly every pull request. Whole-file `merge=derived` would be wrong for those documents: their prose is a person's, and resolving the whole file to ours would drop the other side's prose with no marker. That is the silent loss scripts/gitattributes warns about."
+current_state: "At origin/master 46775282570: .gitattributes and scripts/merge-derived declare the whole-file driver for Majordomus's own generated outputs only; scripts/ci/core-check:33-34 and .just/site.just:71-74 set merge.derived.* in this repository's clone only; lib/doctor.sh's `git-config` wiring kind checks a declared driver; lib/update.sh writes projections (region mode via mj_region_splice, lib/common.sh:1147-1215) but declares no merge driver; share/ ships no driver; nothing merges a document's generated regions apart from its prose. The OpenTTD side of the same problem is openttd-36's branch fix/derived-surfaces-no-conflict, which changes OpenTTD's own surfaces tooling; this issue is the generic half it can rely on (its generators are declared in its surfaces.toml and its regions use the surfaces: namespace)."
+desired_state: "In any clone `update` has run in, two branches that each regenerate the same regions and edit prose elsewhere merge without a conflict, keeping both sides' prose and ours' regions; an authored conflict stays a conflict; a person's block that only looks like a region merges as text. Enforced by case 4770."
+scope:
+  - ".ai/repo/project/issues/I4770.yaml"
+  - "share/libexec/merge-derived"
+  - "lib/merge_drivers.sh"
+  - "lib/update.sh"
+  - "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh"
+non_scope:
+  - "Majordomus's own whole-file driver (scripts/merge-derived, .gitattributes, scripts/gitattributes), which this leaves as it is"
+  - "Line-number citations inside a document that is not a generated region: citations by symbol are I4705's (PR #3109)"
+  - "Refusing a pull request judged on a base the trunk has left: the integration classifier already makes a head behind master needs_refresh (classify.rs:1585-1600) and an armed forge auto-merge unsafe (classify.rs:1385-1398), and reading branch protection's strict is I4372's; the forge merges with its own default driver, so an adopter that lands through forge auto-merge bypasses both, which docs and I4372's declaration say, not this issue"
+  - "Writing a tracked .gitattributes in the adopter: the declaration is the clone's, as `just derive-merge-driver` is in this repository"
+  - "init: init's next step is update, which converges the drivers; init's hook advice is left to its own issues"
+depends_on: []
+acceptance_criteria:
+  - "Case 4770: in a fresh adopter, update writes `/README.md merge=majordomus-regions` for a tracked document holding `<!-- surfaces:begin … -->` regions and `/out/** merge=majordomus-derived` for a scope out.generated path into info/attributes, and declares merge.majordomus-regions.driver as `<share>/libexec/merge-derived regions %O %A %B %P`; a hand-written `# >>> my own notes >>>` block is not declared"
+  - "Case 4770: a second update reports `merge drivers: unchanged` and leaves info/attributes byte for byte; `update --dry-run` prints `unchanged merge-drivers`; nothing tracked changes"
+  - "Case 4770: two branches that each change a surfaces region, a `# >>> generated … >>>` region, and prose on different lines merge cleanly; the result keeps both sides' prose and ours' regions, and a whole-file generated path resolves to ours"
+  - "Case 4770: two branches that change the same prose line conflict with markers (non-zero merge), and the generated region in the conflicted file is ours; two branches that change a hand-written block of the region shape conflict as text"
+  - "Cases 03, 3018, 2979 and 57 still pass: update's plan lines keep their vocabulary, a personal layer changes nothing shared, and Majordomus's own driver is untouched"
+validation:
+  - "bash test/run.sh 4770_an_adopter_merges_generated_regions_without_conflict"
+  - "bash test/run.sh 03_update 3018_a_comment_in_the_policy_moves_no_bootstrap 2979_a_personal_layer_changes_nothing_shared 57_derived_merge_driver"
+evidence_required:
+  - test
+serves:
+  - merging-and-referencing-are-enforced#merged-result-is-judged
+created_at: 2026-11-25

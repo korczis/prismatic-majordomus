@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "bd0180ea5b429acd762f66d6824cc8651da9315807f8036febe5d3f2c8857835",
     "summary": {
-      "total": 4063,
+      "total": 4066,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3833,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3833
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3843
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3890,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99158,7 +99158,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 54,
+        "capabilities": 55,
         "capability_ids": []
       },
       {
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1277,
         "capability_ids": []
       },
       {
@@ -99848,7 +99848,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 708,
+        "capabilities": 709,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "a25ec2526cef6e33e280f31edd6eb75f5b41564037886a07a710f96df21a831f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99979,9 +99979,9 @@
       "domain": 6,
       "feature": 29,
       "gap": 5,
-      "implementation": 54,
+      "implementation": 55,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1277,
       "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -99995,7 +99995,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 708,
+      "test": 709,
       "use-case": 49,
       "workspace": 1
     },
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 141147
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -110916,6 +110916,14 @@
         "bytes": 12418
       },
       {
+        "uri": "majordomus://implementation/lib/merge_drivers.sh",
+        "kind": "implementation",
+        "identity": "lib/merge_drivers.sh",
+        "path": "lib/merge_drivers.sh",
+        "source_class": "library",
+        "bytes": 8145
+      },
+      {
         "uri": "majordomus://implementation/lib/mermaid.awk",
         "kind": "implementation",
         "identity": "lib/mermaid.awk",
@@ -111065,7 +111073,7 @@
         "identity": "lib/update.sh",
         "path": "lib/update.sh",
         "source_class": "library",
-        "bytes": 14547
+        "bytes": 15330
       },
       {
         "uri": "majordomus://implementation/lib/usecase.sh",
@@ -125615,6 +125623,17 @@
         "bytes": 3298
       },
       {
+        "uri": "majordomus://issue/I4770",
+        "kind": "issue",
+        "identity": "I4770",
+        "title": "An adopting clone merges what generators write without a conflict: update declares the drivers in the clone, generated files resolve to ours, and a document's generated regions are ours while the text people wrote merges three ways",
+        "description": "`majordomus update` converges, in the clone only, two merge drivers of share/libexec/merge-derived and the paths each takes. Paths the scope's out.generated.paths and out.generated.names declare, and every projection update writes in file mode, get merge=majordomus-derived, which resolves to ours. Every tracked text file holding a generated region gets merge=majordomus-regions, as does every projection update writes in region mode. A region is a `<!-- NS:begin … -->`…`<!-- NS:end … -->` block (majordomus:, or a repository's own namespace such as surfaces:) or a `# >>> … >>>`…`# <<< … <<<` block whose begin line says generated, majordomus or do not edit. With merge=majordomus-regions, each region of base and theirs is replaced by ours' region of the same key and occurrence before a three-way merge, so the merge conflicts only where people wrote. The drivers go into the clone's git config and the paths into $GIT_COMMON_DIR/info/attributes between two markers. Nothing tracked changes; a path the repository's own .gitattributes already gives a merge attribute is left to it; a second update declares nothing new; `update --dry-run` prints `unchanged merge-drivers` or `update merge-drivers`.",
+        "path": ".ai/repo/project/issues/I4770.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6479
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -139736,6 +139755,14 @@
         "bytes": 7777
       },
       {
+        "uri": "majordomus://test/test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh",
+        "kind": "test",
+        "identity": "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh",
+        "path": "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh",
+        "source_class": "case",
+        "bytes": 5157
+      },
+      {
         "uri": "majordomus://test/test/cases/47_mutation.sh",
         "kind": "test",
         "identity": "test/cases/47_mutation.sh",
@@ -142222,7 +142249,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 54
+      "objects": 55
     },
     {
       "name": "intent",
@@ -142242,7 +142269,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1277
     },
     {
       "name": "knowledge",
@@ -142404,7 +142431,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 708
+      "objects": 709
     },
     {
       "name": "use-case",
