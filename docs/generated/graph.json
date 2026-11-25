@@ -82887,7 +82887,9 @@
             "docs/MESH.md",
             ".ai/repo/project/issues/I4740.yaml"
           ],
-          "serves": [],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
           "slug": "a-refused-mesh-write-is-counted-and-shown",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml mesh::records"
@@ -82923,7 +82925,9 @@
             "test/cases/4741_no_command_waits_without_a_bound.sh",
             ".ai/repo/project/issues/I4741.yaml"
           ],
-          "serves": [],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
           "slug": "no-command-waits-without-a-bound",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4741_no_command_waits_without_a_bound"
@@ -82961,7 +82965,10 @@
             "docs/MESH.md",
             ".ai/repo/project/issues/I4742.yaml"
           ],
-          "serves": [],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-dead-loop-resumes",
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
           "slug": "who-runs-a-service-is-a-mesh-record",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml mesh::who"
