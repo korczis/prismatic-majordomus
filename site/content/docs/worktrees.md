@@ -648,6 +648,45 @@ runs under `GIT_OPTIONAL_LOCKS=0`, so no index is refreshed, and another worktre
 plants an abandoned worktree, a held one and a recent one, and holds `git status` of every
 worktree byte-identical across the reading, the MCP tool and doctor.
 
+## An install behind its lockfile
+
+Each checkout installs its own dependencies, so a lockfile one worktree changes reaches the
+others through a merge and leaves their installs where they were. On 2026-11-14 an adopter
+installed and committed a new esbuild in a linked worktree; the primary checkout's pre-push
+then died halfway through its build with `ERR_MODULE_NOT_FOUND`, because that checkout's
+`node_modules` predated the new `package-lock.json`, and `npm ci` there made the same push
+pass (I4595).
+
+`majordomus doctor` reads every checkout, the primary and each linked worktree, and prints
+one `WARN clone <path>` per checkout whose install is behind its lockfile, naming the
+lockfile and, as the remedy, the command that brings that checkout current. When every
+install it read is current, one `OK clone install` line says so. It installs nothing.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| ecosystem | judged when | behind when | remedy |
+|---|---|---|---|
+| npm | `package-lock.json` with `node_modules/` beside it | an entry of the lockfile that `node_modules/.package-lock.json`, the install's own record, lacks or holds at another version, or whose directory is gone; an optional entry (another platform's binary) only when installed, dev entries not at all in an install that omitted every one | `npm ci` |
+| mix | `mix.lock` and `mix.exs` with `deps/` beside them | a locked dependency with no directory under `deps/`, or one older than `mix.lock`, sends the question to `mix deps.loadpaths --no-compile`, and it refuses | `mix deps.get` |
+
+</div>
+
+
+The npm reading is two files read by jq; npm itself never runs. The mix reading asks mix only
+when the directories under `deps/` do not already answer, and asks with `--no-compile`, so
+nothing is built: `mix deps.check`, the name the issue gave, is no task of Elixir 1.16 to 1.19,
+and Mix compiles every dependency before saying so. A mix that does not start in that checkout
+makes the reading `INFO`, as does an install with no `.package-lock.json` (npm before 7) or
+jq absent; none of them is a failure. A checkout with no lockfile, or with a lockfile and no
+install beside it, is not judged: an install never made is not behind, and most worktrees never
+make one. With nothing judged the reading prints nothing.
+
+Under `MAJORDOMUS_DOCTOR_CONTEXT=commit` only the committing checkout is read, and an
+`INFO clone install` line says the others were left out. pnpm, yarn and cargo are not read yet.
+`test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh` holds both directions, the
+fix, the commit context, the checkout with no lockfile and the mix reading, and that none of
+it writes.
+
 ## A build behind another worktree's lock
 
 The worktrees share one build directory (ADR 0139), and cargo locks a build directory for
