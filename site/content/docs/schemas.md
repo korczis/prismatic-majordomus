@@ -1693,7 +1693,7 @@ Events and their extra fields:
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |
 | `plan_start` | `issue` |
 | `plan_verify` | `issue` |
-| `plan_evidence` | `issue`, `covers` (the requirement it satisfies), `type` |
+| `plan_evidence` | `issue`, `covers` (the requirement it satisfies), `type`; since I4410 also `commit` (the commit the entry records) and `commit_source` (`named` by `--commit`, or `head`), absent from earlier lines |
 | `plan_done` | `issue` |
 | `layout.migrated` | `from`, `to`, `backup` (the copy of local state made before it moved, or empty) |
 | `rules.vendored` | `package` (the revision of the package now vendored) |

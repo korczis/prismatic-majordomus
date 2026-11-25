@@ -50,7 +50,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4343; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/claims/a-finding-names-how-to-see-it-again.md with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4410; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4416; they may not run concurrently |

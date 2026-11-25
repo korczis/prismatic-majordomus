@@ -2004,7 +2004,15 @@ majordomus plan done <id>        record completion
 
 **Options:** `--json` on the read subcommands a surface consumes; `--milestone <id>` to
 restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, `--command`,
-`--result` and `--artifact` on `evidence`.
+`--result`, `--artifact` and `--commit` on `evidence`.
+
+`evidence` records HEAD as the entry's `commit:` unless `--commit <rev>` names one (I4410):
+the revision is resolved to its full name and recorded only when the trunk's remote-tracking
+branch (`refs/remotes/<remote>/HEAD`) reaches it. A commit the trunk does not reach exits
+`15`, naming the commit and the trunk ref; a shallow clone, or a repository with no
+`refs/remotes/<remote>/HEAD`, exits `15` with the reason; a revision that names no commit
+exits `2`. A refusal writes nothing. The `plan_evidence` ledger event carries `commit` and
+`commit_source` (`named` or `head`).
 
 **Behaviour:**
 - No status is stored anywhere. `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`, `DONE` and
