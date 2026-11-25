@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `3842f50a9dd4`.
+Generated from canonical inputs `31c7a901aad5`.
 
 ## Milestones
 
@@ -539,7 +539,7 @@ Generated from canonical inputs `3842f50a9dd4`.
 
 ## Findings
 
-11541 finding(s), each on the page of the milestone its subject is or belongs to:
+11530 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -548,20 +548,20 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`M004`](plan-status/M004.md) | 514 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 127 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 94 |
-| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 228 |
+| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 226 |
 | [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 67 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 5 |
 | [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 19 |
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 18 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 21 |
-| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 71 |
+| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 70 |
 | [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 160 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 46 |
 | [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 4 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 279 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 276 |
 | [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 141 |
-| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 87 |
-| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 50 |
+| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 86 |
+| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 51 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 25 |
 | [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 4 |
 | [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 712 |
@@ -575,7 +575,7 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`ci-critical-path`](plan-status/ci-critical-path.md) | 424 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 7 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
-| [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 39 |
+| [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 38 |
 | [`development-runtime`](plan-status/development-runtime.md) | 1023 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 25 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 62 |
@@ -583,11 +583,11 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 8 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 11 |
 | [`external-workspaces`](plan-status/external-workspaces.md) | 35 |
-| [`failure-is-visible`](plan-status/failure-is-visible.md) | 46 |
+| [`failure-is-visible`](plan-status/failure-is-visible.md) | 44 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
 | [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3896 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 65 |
-| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 100 |
+| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 101 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 14 |
 | [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 235 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 18 |
@@ -598,7 +598,7 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
 | [`public-proof`](plan-status/public-proof.md) | 134 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
-| [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 35 |
+| [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 36 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 121 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 56 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 42 |
@@ -613,6 +613,6 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 19 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 323 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 319 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 42 |

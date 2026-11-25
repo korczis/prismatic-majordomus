@@ -24,7 +24,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 192,
+      "count": 193,
       "dir": "rules",
       "statuses": [
         "active"
@@ -86,7 +86,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 39
+      "count": 40
     },
     {
       "kind": "critique",
@@ -246,7 +246,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 192
+      "count": 193
     },
     {
       "kind": "scope",
@@ -286,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 708
+      "count": 709
     },
     {
       "kind": "use-case",
@@ -16045,6 +16045,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "majordomus.owner-answers-are-recorded@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-owner-answers-are-recorded-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "majordomus.questions-store-integrity@1",
           "kind": "rule",
           "route": "/rules/majordomus-questions-store-integrity-1/",
@@ -16628,6 +16635,31 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/majordomus.owner-answers-are-recorded@1",
+      "identity": "majordomus.owner-answers-are-recorded@1",
+      "slug": "majordomus-owner-answers-are-recorded-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-owner-answers-are-recorded-1",
+      "title": "An owner's answer is a tracked, verbatim record, and what cites it resolves",
+      "status": "active",
+      "tags": [
+        "records",
+        "decisions",
+        "owner"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/owner-answers-are-recorded.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.externalise-decisions@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-externalise-decisions-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",

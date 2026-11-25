@@ -14644,6 +14644,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4669_an_owner_answer_carries_its_provenance",
+          "path": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:707_knowledge_check_refuses_malformed_records",
           "path": "test/cases/707_knowledge_check_refuses_malformed_records.sh",
           "category": "e2e"
@@ -14838,6 +14844,12 @@
           "via": "negative",
           "test": "suite:4400_a_profile_axis_names_the_limit_it_derives",
           "path": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4669_an_owner_answer_carries_its_provenance",
+          "path": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
           "category": "e2e"
         },
         {
@@ -18067,6 +18079,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:4669_an_owner_answer_carries_its_provenance",
+          "path": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:21_decision_question",
           "path": "test/cases/21_decision_question.sh",
@@ -18082,6 +18100,12 @@
           "via": "negative",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4669_an_owner_answer_carries_its_provenance",
+          "path": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
           "category": "e2e"
         }
       ],
@@ -24329,6 +24353,27 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:majordomus.owner-answers-are-recorded": {
+      "kind": "rule",
+      "id": "majordomus.owner-answers-are-recorded",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:4669_an_owner_answer_carries_its_provenance",
+          "path": "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/owner-answers-are-recorded.v1.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },

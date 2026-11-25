@@ -66,4 +66,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4586` | shares scripts/derive with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I4588` | shares scripts/derive with I4627; they may not run concurrently |
 | WARN | `scope_conflict` | `I4588` | shares scripts/ci/run-plan with I4630; they may not run concurrently |
-| WARN | `scope_conflict` | `I4630` | shares lib/project.awk with I4669; they may not run concurrently |

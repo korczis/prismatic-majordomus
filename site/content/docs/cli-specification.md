@@ -1084,7 +1084,7 @@ recorded: Normalise the callback URI before comparing state
 ## `majordomus question`
 
 Open, resolve and list the questions that block acceptance. One mutable index:
-`state/open-questions.md`.
+`state/open-questions.md`. Record the owner's answers as tracked records (below).
 
 Unresolved questions are explicit state, not prose inside a handover, because
 `finish --outcome completed` refuses while any unresolved entry exists here, including an
@@ -1117,6 +1117,52 @@ $ majordomus finish --outcome completed --verify-command "mix test"
 FAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]
 finish: refused, 1 unmet
 ```
+
+### Owner answers: `question record`, `question answers`, `question answer`
+
+An answer the repository's owner gives is not a blocker that resolves and is forgotten. It is
+a durable fact that other records cite, so it is a tracked record of its own kind:
+`.ai/repo/answers/<id>.yaml`, kind `owner-answer`, schema `owner-answer/v1`. The registry
+validates it and serves it as `majordomus://owner-answer/<id>` over MCP and HTTP (I4669, rule
+`majordomus.owner-answers-are-recorded`, `docs/OWNER_ANSWERS.md`).
+
+- `question record --slug <slug> --transcript <file.jsonl> --locator <tool-use id>#<n>
+  --selected "<label>"... [--free-text "<text>"]` reads three things from the provider's
+  transcript: the question and the options offered, the session that asked, and both times.
+  It then checks that every selected label and the free text occur, byte for byte, in the
+  answer that the tool result holds. It never parses the answer out of the result, and it
+  never alters it. A locator without `#` names one chat message by its id, and that
+  message's text is the free text. The record says `text_source: transcript-checked`, and
+  holds the transcript's file name (never its path), the locator, and the sha256 of the raw
+  transcript lines.
+- Without `--transcript`, the text is given with `--question`, `--option`, `--selected`,
+  `--free-text`, or with `--from <file.json|->`. A document carries multi-line text without
+  shell quoting. The record then says `text_source: typed`. The asking session comes from
+  the process's own provider session (`environment`), or from `--asked-in` (`declared`).
+- The writer computes the recording session, the time, the git identity and the sha256 of
+  the question and of the answer. It refuses each of these:
+  - a label that was not offered;
+  - several labels on a single-select question;
+  - a question tool with no options;
+  - an empty answer;
+  - an existing id, because a correction is a new record with `--supersedes <id>`;
+  - a `--settles` ref outside `issue|pr|adr|decision|task|rule|intent|other:<ref>`.
+- `--translation-language` and `--translation-answer` add a translation beside the
+  verbatim text, never in its place. No summary or paraphrase field exists.
+- `question answers [--settles <ref>]` lists the records, one line each.
+- `question answer <id>` prints one record as committed, with its provenance strength in
+  words.
+- `question resolve <n> --owner-answer <id>` closes a blocking question with a record, and
+  refuses an id that names none.
+
+`check`, `doctor` and `watch` recompute both digests of every record. They also report:
+
+- a record that selects a label it did not offer;
+- a record that claims `transcript-checked` without a locator and a digest;
+- a record that is not in the shape the writer emits;
+- every `owner-answer:<id>` cited under `.ai/repo/` that names no record.
+
+They read explicit citations only.
 
 ## `majordomus prompt`
 

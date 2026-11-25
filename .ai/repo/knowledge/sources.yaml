@@ -96,6 +96,15 @@ sources:
     pathspec: ':(glob).ai/repo/project/critiques/*.yaml'
     required: false
 
+  # The owner's answers: one question put to the repository's owner and the answer, verbatim,
+  # with who asked, who recorded and how the text was obtained (I4669). Written by
+  # `majordomus question record`; cited elsewhere as owner-answer:<id>, never retyped.
+  - id: owner_answer
+    kind: owner-answer
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/answers/*.yaml'
+    required: false
+
   - id: milestone
     kind: milestone
     discovery: vcs

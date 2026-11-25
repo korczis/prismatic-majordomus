@@ -287,11 +287,11 @@ commands:
     requires_task: required
     json: false
     syntax: majordomus question add "<question>"
-    reads: [.ai/local/state/current.yaml, .ai/local/state/open-questions.md]
-    writes: [.ai/local/state/open-questions.md, .ai/local/state/ledger.jsonl]
-    exit_codes: [0, 2, 12]
+    reads: [.ai/local/state/current.yaml, .ai/local/state/open-questions.md, .ai/repo/answers/]
+    writes: [.ai/local/state/open-questions.md, .ai/local/state/ledger.jsonl, .ai/repo/answers/]
+    exit_codes: [0, 2, 12, 15]
     demo: question-gate
-    note: Every unresolved entry for the active task refuses finish --outcome completed. That is the whole point of the command; it is a gate, not a notebook.
+    note: Every unresolved entry for the active task refuses finish --outcome completed. That is the whole point of the command; it is a gate, not a notebook. question record writes an owner's answer, verbatim, as a tracked owner-answer record under .ai/repo/answers/ (checked against the provider transcript where one is given, typed and said so otherwise); question answers and question answer read them back.
 
   - id: prompt
     title: prompt
