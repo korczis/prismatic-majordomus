@@ -197,6 +197,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus reasoning status`](#majordomus-reasoning-status) | `/docs/cli/reasoning/status/` | The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries |
 | [`majordomus reasoning explain`](#majordomus-reasoning-explain) | `/docs/cli/reasoning/explain/` | One record with the whole chain of its assessment: why a decision was made |
 | [`majordomus reasoning check`](#majordomus-reasoning-check) | `/docs/cli/reasoning/check/` | Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding |
+| [`majordomus reasoning analysis`](#majordomus-reasoning-analysis) | `/docs/cli/reasoning/analysis/` | Check the bundle of an evidence-tagged multi-pass analysis: tagged findings, one verdict each, a synthesis on confirmed findings only, gaps ledgered; exit 10 unless it conforms |
 | [`majordomus evidence`](#majordomus-evidence) | `/docs/cli/evidence/` | What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened |
 | [`majordomus evidence show`](#majordomus-evidence-show) | `/docs/cli/evidence/show/` | Every claim against the evidence recorded for it |
 | [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
@@ -5500,7 +5501,7 @@ Examples:
 
 Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor
 
-Subcommands: [`majordomus reasoning advisors`](#majordomus-reasoning-advisors), [`majordomus reasoning plan`](#majordomus-reasoning-plan), [`majordomus reasoning record`](#majordomus-reasoning-record), [`majordomus reasoning status`](#majordomus-reasoning-status), [`majordomus reasoning explain`](#majordomus-reasoning-explain), [`majordomus reasoning check`](#majordomus-reasoning-check).
+Subcommands: [`majordomus reasoning advisors`](#majordomus-reasoning-advisors), [`majordomus reasoning plan`](#majordomus-reasoning-plan), [`majordomus reasoning record`](#majordomus-reasoning-record), [`majordomus reasoning status`](#majordomus-reasoning-status), [`majordomus reasoning explain`](#majordomus-reasoning-explain), [`majordomus reasoning check`](#majordomus-reasoning-check), [`majordomus reasoning analysis`](#majordomus-reasoning-analysis).
 
 ```text
 majordomus reasoning [OPTIONS] <COMMAND>
@@ -5698,6 +5699,34 @@ Examples:
   ```
 
   Verified: exits 0; prints checks.
+
+<a id="majordomus-reasoning-analysis"></a>
+## `majordomus reasoning analysis`
+
+Check the bundle of an evidence-tagged multi-pass analysis: tagged findings, one verdict each, a synthesis on confirmed findings only, gaps ledgered; exit 10 unless it conforms
+
+```text
+majordomus reasoning analysis [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--path` | `<PATH>` | required | The bundle: a directory whose Markdown files declare their pass, or one file, repository-relative |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A directory that is not an analysis bundle is refused** — Every Markdown file of a bundle declares its pass in `analysis:` front matter; one that does not is refused rather than skipped, every check that has nothing to compare is named as not run, and the exit is 10 because the bundle does not conform.
+
+  ```console
+  $ majordomus reasoning analysis --path .ai
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-evidence"></a>
 ## `majordomus evidence`

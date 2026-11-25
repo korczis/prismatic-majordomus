@@ -1,11 +1,12 @@
 //! The `reasoning` module: provider-independent reasoning, projected (ADR 0098).
 //!
-//! Six capabilities over one model (`crate::reasoning`): which advisors can be asked and
+//! Seven capabilities over one model (`crate::reasoning`): which advisors can be asked and
 //! what they can do (`reasoning.advisors`), what a stated uncertainty calls for
 //! (`reasoning.plan`), the one writer of the session's reasoning records
 //! (`reasoning.record`), the state those records derive (`reasoning.status`), one
-//! record's provenance (`reasoning.explain`), and the checks that keep the design honest
-//! (`reasoning.check`). None of them talks to an advisor: the transport is the Node layer
+//! record's provenance (`reasoning.explain`), the checks that keep the design honest
+//! (`reasoning.check`), and the structural check of an evidence-tagged multi-pass
+//! analysis (`reasoning.analysis`, the skill `evidence-tagged-analysis`). None of them talks to an advisor: the transport is the Node layer
 //! (`scripts/lib/advisors/`), which records what it did through `reasoning.record`.
 //!
 //! # Example
@@ -41,6 +42,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, CapabilityKind, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
+use crate::reasoning::analysis::{check as check_analysis, read_bundle, AnalysisReport};
 use crate::reasoning::availability::LinkedPeer;
 use crate::reasoning::check::{applicable, ReasoningFinding};
 use crate::reasoning::record::{ReasoningInput, ReasoningRecord, RECORD_SCHEMA, RECORD_VERSION};
@@ -541,7 +543,48 @@ fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, Cap
     })
 }
 
-/// The canonical declaration of the `reasoning` module: its six capabilities with every
+// ---------------------------------------------------------------- reasoning.analysis
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `reasoning.analysis`: the bundle of one analysis, a directory whose Markdown
+/// files declare their pass, or one file, relative to the repository root. A path outside
+/// the repository is refused.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningAnalysisInput;
+///
+/// let input: ReasoningAnalysisInput = serde_json::from_str(r#"{"path":"research/analysis-x"}"#).unwrap();
+/// assert_eq!(input.path, "research/analysis-x");
+/// assert!(serde_json::from_str::<ReasoningAnalysisInput>("{}").is_err(), "the path is required");
+/// ```
+pub struct ReasoningAnalysisInput {
+    /// The bundle: a directory or one Markdown file, repository-relative.
+    pub path: String,
+}
+
+impl BenchmarkCases for ReasoningAnalysisInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // the root's own Markdown files declare no pass: every one is read and refused
+        vec![NamedCase::new(
+            "root",
+            ReasoningAnalysisInput { path: ".".into() },
+        )]
+    }
+}
+
+fn reasoning_analysis(
+    ctx: &Context,
+    input: ReasoningAnalysisInput,
+) -> Result<AnalysisReport, CapabilityError> {
+    let (documents, ignored) = read_bundle(Path::new(&ctx.index.repository.root), &input.path)
+        .map_err(CapabilityError::InvalidInput)?;
+    let mut report = check_analysis(&documents);
+    report.ignored = ignored;
+    Ok(report)
+}
+
+/// The canonical declaration of the `reasoning` module: its seven capabilities with every
 /// projection each is exposed through. The MCP tools and resources, HTTP routes, CLI
 /// paths and the generated OpenAPI are read from here and nowhere else (ADR 0004).
 ///
@@ -552,7 +595,7 @@ fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, Cap
 /// let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
 /// assert_eq!(ids, [
 ///     "reasoning.advisors", "reasoning.plan", "reasoning.record",
-///     "reasoning.status", "reasoning.explain", "reasoning.check",
+///     "reasoning.status", "reasoning.explain", "reasoning.check", "reasoning.analysis",
 /// ]);
 /// let status = &m.capabilities[3].capability.exposure;
 /// let resource = status.mcp.as_ref().and_then(|m| m.resource.as_ref()).unwrap();
@@ -680,6 +723,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: reasoning_check,
             },
+            capability! {
+                id: "reasoning.analysis",
+                title: "Check an evidence-tagged multi-pass analysis",
+                description: "The structural check of one analysis bundle (the skill evidence-tagged-analysis): a directory whose Markdown files declare their pass in front matter (question, lens, cross-check, synthesis), or one file. Every lens finding is a table row tagged OBSERVED with a locator, DERIVED with a formula or INFERRED with what would confirm it; every finding has exactly one cross-check verdict, CONFIRMED, REFUTED or UNVERIFIABLE, itself tagged; the synthesis cites only CONFIRMED findings outside its refuted register and its gaps ledger, its root causes are chains of findings and its remedies name what they address and an owner; every pass document ledgers its gaps. A check whose inputs are absent is not_run with the reason and the bundle is incomplete, never ok. What it proves is structure, said in the answer's promise: whether a locator supports its claim is the cross-check's work. Reads only.",
+                input: ReasoningAnalysisInput,
+                output: AnalysisReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_reasoning_analysis"),
+                    http: get("/api/v1/reasoning/analysis"),
+                    cli: Some(CliExposure { path: vec!["reasoning".into(), "analysis".into()] }),
+                },
+                tags: ["reasoning", "analysis"],
+                cache: CachePolicy::Disabled,
+                handler: reasoning_analysis,
+            },
         ],
     }
 }
@@ -723,6 +782,11 @@ mod tests {
                 "majordomus_reasoning_check",
                 "/api/v1/reasoning/check",
             ),
+            (
+                "reasoning.analysis",
+                "majordomus_reasoning_analysis",
+                "/api/v1/reasoning/analysis",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -746,6 +810,44 @@ mod tests {
                 "{id}"
             );
         }
+    }
+
+    #[test]
+    fn an_analysis_is_read_from_the_repository_and_checked() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let dir = repo.root().join("analysis");
+        std::fs::create_dir_all(dir.join("raw")).expect("a bundle");
+        std::fs::write(
+            dir.join("synthesis.md"),
+            "---\nanalysis:\n  id: a\n  pass: synthesis\n---\n## Gaps ledger\n- none\n",
+        )
+        .expect("a synthesis");
+        let r = reasoning_analysis(
+            &ctx,
+            ReasoningAnalysisInput {
+                path: "analysis".into(),
+            },
+        )
+        .expect("an answer");
+        assert_eq!(
+            r.state,
+            crate::reasoning::analysis::AnalysisConformance::Fails,
+            "no root cause, no remedy"
+        );
+        assert_eq!(r.ignored, ["analysis/raw"]);
+        assert_eq!(r.analysis.as_deref(), Some("a"));
+        let refused = reasoning_analysis(
+            &ctx,
+            ReasoningAnalysisInput {
+                path: "../x".into(),
+            },
+        );
+        assert!(matches!(refused, Err(CapabilityError::InvalidInput(_))));
+        let cases = ReasoningAnalysisInput::benchmark_cases(&CaseContext::of(&ctx));
+        let root = reasoning_analysis(&ctx, cases.into_iter().next().expect("a case").input)
+            .expect("the root");
+        assert!(!r.ok && !root.ok);
     }
 
     #[test]

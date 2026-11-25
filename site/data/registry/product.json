@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.2.0"
   },
-  "fingerprint": "b548080184badda1118ce404e15878ec5ad3352412c3ae6d70ac812f4219d21d",
+  "fingerprint": "c66bd0ece333f70783fea645e843af14d768f6b2020e31059632a478ee770518",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 91,
+        "capabilities": 92,
         "moments": 17
       },
       "evidence": {
@@ -3509,7 +3509,7 @@
         },
         {
           "name": "claim",
-          "objects": 250
+          "objects": 251
         }
       ],
       "rule_refs": [
@@ -3782,11 +3782,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 323,
+        "mcp_resources": 324,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 316,
+        "objects": 317,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -6441,6 +6441,15 @@
               "cli": "majordomus reasoning advisors"
             },
             {
+              "id": "reasoning.analysis",
+              "title": "Check an evidence-tagged multi-pass analysis",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning_analysis",
+              "route": "GET /api/v1/reasoning/analysis",
+              "cli": "majordomus reasoning analysis"
+            },
+            {
               "id": "reasoning.check",
               "title": "Check that reasoning stays provider-independent",
               "kind": "query",
@@ -6579,11 +6588,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
+        "capabilities": 7,
+        "mcp_tools": 7,
         "mcp_resources": 2,
-        "http_routes": 6,
-        "cli_paths": 6,
+        "http_routes": 7,
+        "cli_paths": 7,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -7561,7 +7570,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 170
+          "objects": 171
         },
         {
           "name": "knowledge",
@@ -7569,7 +7578,7 @@
         },
         {
           "name": "document",
-          "objects": 362
+          "objects": 364
         }
       ],
       "rule_refs": [
@@ -7842,11 +7851,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 756,
+        "mcp_resources": 759,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 753,
+        "objects": 756,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -13654,11 +13663,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 117
+          "objects": 118
         },
         {
           "name": "issue",
-          "objects": 1276
+          "objects": 1277
         },
         {
           "name": "intent",
@@ -13868,11 +13877,11 @@
       "counts": {
         "capabilities": 30,
         "mcp_tools": 29,
-        "mcp_resources": 1486,
+        "mcp_resources": 1488,
         "http_routes": 29,
         "cli_paths": 14,
         "commands": 1,
-        "objects": 1483,
+        "objects": 1485,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14755,7 +14764,7 @@
       "kind_refs": [
         {
           "name": "skill",
-          "objects": 11
+          "objects": 12
         }
       ],
       "rule_refs": [
@@ -14816,11 +14825,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 12,
+        "mcp_resources": 13,
         "http_routes": 3,
         "cli_paths": 3,
         "commands": 1,
-        "objects": 11,
+        "objects": 12,
         "rules": 1,
         "enforced_rules": 1,
         "docs": 1,
@@ -17713,7 +17722,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (170)",
+        "title": "adr (171)",
         "features": [
           "knowledge"
         ]
@@ -17741,7 +17750,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (250)",
+        "title": "claim (251)",
         "features": [
           "declare-once"
         ]
@@ -17818,7 +17827,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1276)",
+        "title": "issue (1277)",
         "features": [
           "planning"
         ]
@@ -17839,7 +17848,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (117)",
+        "title": "milestone (118)",
         "features": [
           "planning"
         ]
@@ -17903,7 +17912,7 @@
       },
       {
         "id": "skill",
-        "title": "skill (11)",
+        "title": "skill (12)",
         "features": [
           "skills"
         ]
@@ -18878,39 +18887,39 @@
     }
   ],
   "telemetry": {
-    "capabilities": 4063,
-    "builtin": 233,
-    "declarative": 3830,
+    "capabilities": 4072,
+    "builtin": 234,
+    "declarative": 3838,
     "modules": 62,
-    "mcp_tools": 217,
-    "mcp_resources": 3887,
-    "http_routes": 221,
-    "cli_commands": 229,
+    "mcp_tools": 218,
+    "mcp_resources": 3895,
+    "http_routes": 222,
+    "cli_commands": 230,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3830,
+    "objects": 3838,
     "by_kind": {
-      "adr": 170,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 250,
+      "claim": 251,
       "command": 31,
       "context": 39,
       "critique": 40,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 362,
+      "document": 364,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1277,
       "knowledge": 221,
       "mesh-declaration": 1,
-      "milestone": 117,
+      "milestone": 118,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18919,9 +18928,9 @@
       "rule": 192,
       "scope": 1,
       "session": 95,
-      "skill": 11,
+      "skill": 12,
       "taxonomy": 10,
-      "test": 708,
+      "test": 709,
       "use-case": 49,
       "workspace": 1
     },
@@ -18939,7 +18948,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 232,
+    "declared": 233,
     "supported": 0,
     "claims": {
       "a-candidate-is-routed-by-what-it-is-about": {
@@ -19021,6 +19030,12 @@
         "supported": false
       },
       "ai-layer-manifest": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "an-analysis-builds-on-what-survived": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

@@ -234,15 +234,89 @@ repository that declares `project.advisors-are-optional`. An adopter's workflows
 documents are its own product, so there the `ci` and `claims` checks do not run. Every
 reasoning test runs against fakes: scripted fixture adapters, a fake fetch, a fake process.
 
+## Analysis
+
+A decision under uncertainty is one executor's, recorded above. An **analysis** is different:
+many claims, read through several lenses, answering a hard question such as why something
+failed or why nothing reacted. Its failure mode is a confident wrong claim that reads as well as
+a right one. The skill `evidence-tagged-analysis` holds the protocol, and ADR 0239 holds the
+decision and the critique that shaped it. The protocol runs in this order:
+
+1. The question and its rules come first.
+2. Independent lenses read.
+3. Cross-checks try to refute every finding and give each one exactly one verdict: CONFIRMED,
+   REFUTED or UNVERIFIABLE.
+4. A synthesis is built only on what survived, and it maps remedies to owners.
+
+Every pass keeps a gaps ledger.
+
+The documents of one analysis are its **bundle**: a directory whose Markdown files declare their
+role in front matter, or one file.
+
+```yaml
+---
+analysis:
+  id: cache-misses
+  pass: lens            # question | lens | cross-check | synthesis
+  lens: cache           # for a lens and a cross-check
+---
+```
+
+Claims are table rows, recognised by their columns. Prose stays free and is not a claim.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Table | Columns | Holds |
+| --- | --- | --- |
+| findings (lens) | `ID`, `Claim`, `Tag`, `Evidence` | the id `<lens>-F<n>` and one tag, with evidence that fits it: OBSERVED needs a locator (`path:line`, a URL, a commit hash, a backtick span), DERIVED a formula (an operator, or the findings it is computed from), INFERRED what would confirm it |
+| verdicts (cross-check) | `ID`, `Verdict`, `Tag`, `Evidence` | exactly one row per finding, CONFIRMED, REFUTED or UNVERIFIABLE (a qualifier may follow), its evidence tagged like a finding's |
+| root causes (synthesis) | `RC`, `Cause`, `Findings` | at least one finding id per cause |
+| remedies (synthesis) | `ID`, `Remedy`, `Addresses`, `Owner` | a root cause or finding addressed, and an owner (`unowned` marks a hole) |
+| refuted register (synthesis) | `ID`, `Verdict`, `Correction` | what did not survive, with the verdict it got |
+
+</div>
+
+
+<!-- majordomus:unrun it reads a bundle the reader writes; case 4777 runs it on the fixture bundle and on each planted defect -->
+```sh
+majordomus reasoning analysis --path <bundle>     # exit 0 conforms, 10 fails or incomplete
+```
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Check | Fails when |
+| --- | --- |
+| `bundle` | a Markdown file has no valid `analysis:` front matter; the files name two analysis ids; there are two questions or two syntheses; a lens or cross-check names no lens |
+| `question` | the question document is empty |
+| `findings` | a lens has no findings table, or a row has a malformed or repeated id, no claim, a missing or unknown tag, or evidence that does not fit its tag |
+| `verdicts` | a finding has no verdict or more than one; a verdict names an id no lens defined; a verdict is not one of the three words or is untagged |
+| `synthesis` | it has no root-cause or remedy table; a root cause cites no finding; a remedy addresses nothing or names no owner |
+| `citations` | the synthesis cites a finding that is not CONFIRMED outside its refuted register (and, for an UNVERIFIABLE one, outside its gaps ledger); the register states a verdict the cross-checks did not give; an UNVERIFIABLE finding is missing from the gaps ledger |
+| `gaps` | a lens, cross-check or synthesis has no gaps ledger, or one with no item (`- none` is the empty ledger) |
+
+</div>
+
+
+A check whose inputs are absent is `not_run` with its reason. Then the bundle is `incomplete`,
+and `ok` is false, so a synthesis published without its cross-checks never reads as checked. A
+path outside the repository is refused. Subdirectories and files that are not Markdown are
+listed as ignored.
+
+What a conforming answer proves is structure. Its `promise` field states this on every answer.
+Whether a locator supports its claim, or whether a ratio compares like with like, is what the
+cross-check pass establishes, and no parser can. The fixture bundle
+`test/fixtures/analysis/conforming/` conforms, and case 4777 plants each defect and expects it
+named.
+
 ## Surfaces
 
 <div class="overflow-x-auto" tabindex="0">
 
 | Surface | Reasoning |
 | --- | --- |
-| CLI | `majordomus reasoning advisors|plan|record|status|explain|check` |
-| HTTP | `/api/v1/reasoning/advisors`, `/api/v1/reasoning/plan`, `/api/v1/reasoning/records` (POST), `/api/v1/reasoning`, `/api/v1/reasoning/explain`, `/api/v1/reasoning/check` |
-| MCP | `majordomus_reasoning_advisors`, `majordomus_reasoning_plan`, `majordomus_reasoning_record`, `majordomus_reasoning`, `majordomus_reasoning_explain`, `majordomus_reasoning_check`; resources `majordomus://reasoning`, `majordomus://reasoning/advisors` |
+| CLI | `majordomus reasoning advisors|plan|record|status|explain|check|analysis` |
+| HTTP | `/api/v1/reasoning/advisors`, `/api/v1/reasoning/plan`, `/api/v1/reasoning/records` (POST), `/api/v1/reasoning`, `/api/v1/reasoning/explain`, `/api/v1/reasoning/check`, `/api/v1/reasoning/analysis` |
+| MCP | `majordomus_reasoning_advisors`, `majordomus_reasoning_plan`, `majordomus_reasoning_record`, `majordomus_reasoning`, `majordomus_reasoning_explain`, `majordomus_reasoning_check`, `majordomus_reasoning_analysis`; resources `majordomus://reasoning`, `majordomus://reasoning/advisors` |
 | Cockpit | `/cockpit/reasoning` |
 | Environment | `reasoning` in `majordomus env --format json`; the `advisors` line of the banner |
 | Doctor | advisor availability as information, `reasoning check` findings as failures; in a repository that does not declare `project.advisors-are-optional` (an adopter), `ci` and `claims` are not run and doctor says so as information |
@@ -251,7 +325,7 @@ reasoning test runs against fakes: scripted fixture adapters, a fake fetch, a fa
 </div>
 
 
-All of them are projections of the six capabilities of the `reasoning` module; none keeps
+All of them are projections of the seven capabilities of the `reasoning` module; none keeps
 an advisor list of its own.
 
 ## Troubleshooting

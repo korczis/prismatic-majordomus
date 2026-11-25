@@ -44,3 +44,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/evidence/record.rs with I4600; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/commands/evidence.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I4796; they may not run concurrently |

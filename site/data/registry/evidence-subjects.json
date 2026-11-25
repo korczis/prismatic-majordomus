@@ -989,6 +989,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:reasoning.analysis",
+      "path": "/evidence/capabilities/reasoning-analysis/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:reasoning.check",
       "path": "/evidence/capabilities/reasoning-check/"
     },
@@ -1276,6 +1281,11 @@
       "kind": "claim",
       "subject": "claim:ai-layer-manifest",
       "path": "/evidence/claims/ai-layer-manifest/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:an-analysis-builds-on-what-survived",
+      "path": "/evidence/claims/an-analysis-builds-on-what-survived/"
     },
     {
       "kind": "claim",
@@ -3371,6 +3381,11 @@
       "kind": "command",
       "subject": "command:reasoning advisors",
       "path": "/evidence/commands/reasoning-advisors/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:reasoning analysis",
+      "path": "/evidence/commands/reasoning-analysis/"
     },
     {
       "kind": "command",
@@ -6408,6 +6423,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:reasoning.analysis": {
+      "kind": "capability",
+      "id": "reasoning.analysis",
+      "page": "/evidence/capabilities/reasoning-analysis/",
+      "programs": [],
+      "members": [
+        "command:reasoning analysis"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:reasoning.check": {
       "kind": "capability",
       "id": "reasoning.check",
@@ -7238,6 +7265,29 @@
             "docs/SCHEMAS.md",
             "lib/init.sh",
             "test/cases/01_init.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:an-analysis-builds-on-what-survived": {
+      "kind": "claim",
+      "id": "an-analysis-builds-on-what-survived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/an-analysis-builds-on-what-survived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:4777_an_analysis_builds_on_what_survived",
+          "path": "test/cases/4777_an_analysis_builds_on_what_survived.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/REASONING.md",
+            "apps/majordomus-cli/src/reasoning/analysis.rs",
+            "test/cases/4777_an_analysis_builds_on_what_survived.sh"
           ]
         }
       ],
@@ -18107,6 +18157,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:reasoning analysis": {
+      "kind": "command",
+      "id": "reasoning analysis",
+      "page": "/evidence/commands/reasoning-analysis/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:reasoning check": {
       "kind": "command",
       "id": "reasoning check",
@@ -23050,6 +23119,18 @@
       "programs": [],
       "members": [
         "capability:reasoning.advisors"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_reasoning_analysis": {
+      "kind": "mcp",
+      "id": "majordomus_reasoning_analysis",
+      "alias_of": "capability:reasoning.analysis",
+      "programs": [],
+      "members": [
+        "capability:reasoning.analysis"
       ],
       "routes": [],
       "mechanisms": [],

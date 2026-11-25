@@ -11,7 +11,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 170,
+      "count": 171,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -40,7 +40,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 170
+      "count": 171
     },
     {
       "kind": "application",
@@ -72,7 +72,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 250
+      "count": 251
     },
     {
       "kind": "command",
@@ -128,7 +128,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 362
+      "count": 364
     },
     {
       "kind": "domain",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1276
+      "count": 1277
     },
     {
       "kind": "knowledge",
@@ -200,7 +200,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 117
+      "count": 118
     },
     {
       "kind": "moment",
@@ -272,7 +272,7 @@
       "route": "/skills/",
       "title": null,
       "reason": null,
-      "count": 11
+      "count": 12
     },
     {
       "kind": "taxonomy",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 708
+      "count": 709
     },
     {
       "kind": "use-case",
@@ -6541,6 +6541,13 @@
           "label": "adr-0217",
           "kind": "adr",
           "route": "/adrs/adr-0217/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0239",
+          "kind": "adr",
+          "route": "/adrs/adr-0239/",
           "external": false
         }
       ]
@@ -15052,6 +15059,53 @@
           "label": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0239",
+      "identity": "adr-0239",
+      "slug": "adr-0239",
+      "cockpit": "/cockpit/objects/adr/adr-0239",
+      "title": "An analysis tags every claim by its evidence and builds only on what survived refutation, and its documents are checked for structure",
+      "status": "proposed",
+      "tags": [
+        "reasoning",
+        "analysis",
+        "evidence",
+        "skills"
+      ],
+      "source": ".ai/repo/adrs/0239-an-analysis-tags-every-claim-and-builds-only-on-what-survived-refutation.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/REASONING.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-tagged-analysis",
+          "kind": "skill",
+          "route": "/skills/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project-picture",
+          "kind": "skill",
+          "route": "/skills/",
           "external": false
         }
       ],

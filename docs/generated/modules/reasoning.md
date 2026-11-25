@@ -5,7 +5,7 @@
 
 Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence.
 
-Stability: experimental. Capabilities: 6.
+Stability: experimental. Capabilities: 7.
 
 ## `reasoning.advisors` — The advisors and what they can do now
 
@@ -27,6 +27,28 @@ Every declared advisor — then every linked mesh peer carrying the review featu
 Input: none.
 
 Output: `AdvisorsReport`.
+
+## `reasoning.analysis` — Check an evidence-tagged multi-pass analysis
+
+The structural check of one analysis bundle (the skill evidence-tagged-analysis): a directory whose Markdown files declare their pass in front matter (question, lens, cross-check, synthesis), or one file. Every lens finding is a table row tagged OBSERVED with a locator, DERIVED with a formula or INFERRED with what would confirm it; every finding has exactly one cross-check verdict, CONFIRMED, REFUTED or UNVERIFIABLE, itself tagged; the synthesis cites only CONFIRMED findings outside its refuted register and its gaps ledger, its root causes are chains of findings and its remedies name what they address and an owner; every pass document ledgers its gaps. A check whose inputs are absent is not_run with the reason and the bundle is incomplete, never ok. What it proves is structure, said in the answer's promise: whether a locator supports its claim is the cross-check's work. Reads only.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_reasoning_analysis` |
+| HTTP | `GET /api/v1/reasoning/analysis` |
+| CLI | `majordomus reasoning analysis` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::reasoning |
+| tags | reasoning, analysis |
+
+| input | type | required | description |
+|---|---|---|---|
+| `path` | string | yes | The bundle: a directory or one Markdown file, repository-relative. |
+
+Output: `AnalysisReport`.
 
 ## `reasoning.check` — Check that reasoning stays provider-independent
 
