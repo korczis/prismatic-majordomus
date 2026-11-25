@@ -1,0 +1,35 @@
+id: I4742
+milestone: a-session-proceeds-through-the-mesh
+title: "Who runs a long-lived service is a mesh record, and a helper whose launcher died is named an orphan"
+slug: who-runs-a-service-is-a-mesh-record
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A long-lived service an adopter runs (a game server, a panel, a daemon on a port) is announced as a mesh record of kind service built on the shared owner record majordomus-owner/v1 (resource name, pid and start time, launcher pid, process group, session, worktree, command, stop command, heartbeat). `mesh who <resource>` answers who runs it, and a holder whose launcher pid is dead while it lives is reported as an orphan with its stop command."
+why: "Measured in the adopter OpenTTD (2026-11-22..25): who owned the live co-play stack on :8800 was settled again and again by chat between five sessions (it changed hands four times; one restart was found only from logs); two mcp-rhai helpers of a dead launcher kept talking to the panel for 6.5 hours with parent pid 1; an mcp-hub ran with its working directory in a deleted worktree; an mcp-bus-blackboard daemon looped on a dead port :59182 holding 54 kqueues; `tail -F | ugrep` monitors of a session that had ended four days earlier were still running; a stale build slot whose holder was dead blocked every session repeatedly because nobody could prove ownership."
+current_state: "Measured at origin/master 46775282570: mesh who <pid|path|issue|tag> (mesh/who.rs) names a leftover process and its owner from MAJORDOMUS_OWNER_SESSION but signals nothing and knows no resource names; claims are path-scoped; scripts/reap-orphans reaps only majordomus serve/mcp. The owner record type is being unified as majordomus-owner/v1 in apps/majordomus-cli/src/owner.rs by the build-slot work (I4006, PR #2397, I4670)."
+desired_state: "`majordomus service announce <resource> --pid N [--stop '<cmd>']` writes a service record (the owner record plus resource and stop) and beats it; `majordomus mesh who <resource>` answers with the holder, its liveness (same host: pid alive and start time matches; other host: heartbeat age) and its stop command; mesh doctor lists services whose launcher is dead while the holder lives as orphans, with their stop command, and signals nothing."
+scope:
+  - "apps/majordomus-cli/src/mesh/records.rs"
+  - "apps/majordomus-cli/src/mesh/who.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I4742.yaml"
+non_scope:
+  - "The owner record type itself (majordomus-owner/v1), which the build-slot work owns"
+  - "Stopping or reaping a service automatically; the record names the stop command and a person or its owner runs it"
+acceptance_criteria:
+  - "A service announced with a resource name is answered by mesh who <resource> with its holder, liveness and stop command"
+  - "A service whose launcher pid is dead while its own pid lives is reported as an orphan by mesh doctor"
+  - "A service whose holder is dead is reported stale, never silently reclaimed"
+  - "A process of a gone session (parent pid 1, or working directory or arguments under a deleted worktree or an ended session's scratchpad, and no live episode) is listed with its owner and stop command; a reclaim ends only what no declared service keeps"
+  - "Negative: mesh who <resource> answers nothing on origin/master"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml mesh::who"
+evidence_required:
+  - "who_runs_a_service_is_a_mesh_record"
+depends_on:
+  - I4006
+  - I4670
+serves: []
+created_at: 2026-11-25

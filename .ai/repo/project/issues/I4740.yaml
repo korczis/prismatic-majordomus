@@ -1,0 +1,33 @@
+id: I4740
+milestone: a-session-proceeds-through-the-mesh
+title: "A refused mesh record write is counted and shown, and a long-running service's session can claim its record scope"
+slug: a-refused-mesh-write-is-counted-and-shown
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A mesh record write refused for a scope outside the writer's live claims (out_of_scope, HTTP 422) is journalled and counted per session, and mesh doctor and the board name the session, the refused scope and the claim that would admit it. A long-running helper that writes under a task's session can claim its own record scope in advisory mode, documented as the remedy."
+why: "Measured in the adopter OpenTTD (2026-11-22..25): the co-play stack's helper services (replan.rhai and others) wrote typed mesh records every game month under MAJORDOMUS_SESSION=task-<active task>, whose claim was only research/coplay.md. Every write was refused with '422 out_of_scope ... claim them first' for days, across three games; nothing recorded or counted it, so no worker noticed until a read-only analysis found it in a service log. The plan records that were meant to reach the board never did."
+current_state: "Measured at origin/master 46775282570: admission is mesh/records.rs:1378-1393 (every scope path inside a live claim of the same session); the refusal maps to out_of_scope at capability/builtin/mesh.rs:602 and to 422 at http/router.rs:1170. Refusals return to the caller only; nothing journals or counts them. Claim modes are Exclusive and Advisory (mesh/journal.rs:496-504). I4598 names remedies for a task-scope refusal at check, not for a record write."
+desired_state: "Each refused record write appends one refusal entry (session, kind, refused paths, time) to the mesh journal; mesh doctor reports sessions with refusals in the last hour with the count and the first refused path, and a reproduce that claims it (majordomus mesh claim --advisory <path> as that session). The board's session row shows the refusal count. docs/MESH.md states that a long-running helper claims its record scope in advisory mode when it starts."
+scope:
+  - "apps/majordomus-cli/src/mesh/records.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I4740.yaml"
+non_scope:
+  - "A new claim mode for services; advisory claims suffice"
+  - "Widening a task's scope in place (I4260)"
+  - "The adopter's own launcher, which must claim its helpers' scope itself"
+acceptance_criteria:
+  - "A record write outside the session's claims is refused as before and leaves one refusal entry in the journal"
+  - "mesh doctor names a session with refusals in the last hour, the count, the first refused path and a claim reproduce"
+  - "After an advisory claim of that path by the same session, the same write is admitted and no new refusal is counted"
+  - "Negative: the case fails against origin/master before this change (no refusal entry, doctor silent)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml mesh::records"
+evidence_required:
+  - "a_refused_mesh_write_is_counted_and_shown"
+depends_on: []
+serves: []
+created_at: 2026-11-25

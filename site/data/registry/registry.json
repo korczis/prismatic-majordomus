@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "eaa503db10032aa4bed6dcf1cc755afc8711c485ec20438393b83ba91d5e4e30",
     "summary": {
-      "total": 4063,
+      "total": 4066,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3833,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3833
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3843
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3890,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1279,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "685427568ac3b6431e71cf0307108866f9e4bc673f902680853ac56797dd8ebf",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1279,
       "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 141212
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -125615,6 +125615,39 @@
         "bytes": 3298
       },
       {
+        "uri": "majordomus://issue/I4740",
+        "kind": "issue",
+        "identity": "I4740",
+        "title": "A refused mesh record write is counted and shown, and a long-running service's session can claim its record scope",
+        "description": "A mesh record write refused for a scope outside the writer's live claims (out_of_scope, HTTP 422) is journalled and counted per session, and mesh doctor and the board name the session, the refused scope and the claim that would admit it. A long-running helper that writes under a task's session can claim its own record scope in advisory mode, documented as the remedy.",
+        "path": ".ai/repo/project/issues/I4740.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3235
+      },
+      {
+        "uri": "majordomus://issue/I4741",
+        "kind": "issue",
+        "identity": "I4741",
+        "title": "No majordomus command waits without a bound: a stdin read refuses a terminal and every command has a deadline",
+        "description": "A command that reads its body from stdin (handover, and every other `< body` command) refuses at once when stdin is a terminal and names the non-interactive form (a file, a pipe or --derive). Every command run by the dispatcher has a deadline (MAJORDOMUS_DEADLINE, default from policy), after which it stops its process group, prints what it was waiting on, and exits with a distinct code.",
+        "path": ".ai/repo/project/issues/I4741.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4660
+      },
+      {
+        "uri": "majordomus://issue/I4742",
+        "kind": "issue",
+        "identity": "I4742",
+        "title": "Who runs a long-lived service is a mesh record, and a helper whose launcher died is named an orphan",
+        "description": "A long-lived service an adopter runs (a game server, a panel, a daemon on a port) is announced as a mesh record of kind service built on the shared owner record majordomus-owner/v1 (resource name, pid and start time, launcher pid, process group, session, worktree, command, stop command, heartbeat). `mesh who <resource>` answers who runs it, and a holder whose launcher pid is dead while it lives is reported as an orphan with its stop command.",
+        "path": ".ai/repo/project/issues/I4742.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3604
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -142242,7 +142275,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1279
     },
     {
       "name": "knowledge",
