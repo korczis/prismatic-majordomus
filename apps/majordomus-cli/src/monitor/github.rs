@@ -16,7 +16,7 @@
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -144,9 +144,8 @@ fn with_deploy_jobs(program: &str, root: &Path, mut runs: Value) -> Value {
 /// reported as `gh`'s, because `gh` is the only program asked in earnest.
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, (MonitorSourceHealth, String)> {
     let mut child = crate::process::retrying_busy(|| {
-        Command::new(program)
+        crate::integration::forge::gh_command(program, root)
             .args(args)
-            .current_dir(root)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

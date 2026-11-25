@@ -2394,8 +2394,7 @@ pub struct ForgeIntegrator<'a> {
 }
 
 fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
-    let out = Command::new("gh")
-        .current_dir(root)
+    let out = super::forge::gh_command("gh", root)
         .args(args)
         .output()
         .map_err(|e| format!("gh could not run: {e}"))?;

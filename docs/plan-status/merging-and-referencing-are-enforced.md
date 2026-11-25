@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [merging-and-referencing-are-enforced](https://majordomus.dev/plan/merging-and-referencing-are-enforced/) | ACTIVE | 1/17 | 8 | 8 | 0 | 0 | 0 | Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once. |
+| [merging-and-referencing-are-enforced](https://majordomus.dev/plan/merging-and-referencing-are-enforced/) | ACTIVE | 1/18 | 8 | 8 | 0 | 1 | 0 | Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once. |
 
 ## Issues
 
@@ -32,6 +32,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4568](https://majordomus.dev/plan/i4568/) | READY | 0 | — | A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk |
 | [I4580](https://majordomus.dev/plan/i4580/) | BLOCKED | 1 | I4357 | An adopter declares its own numbered sequences, the mesh reserves their numbers in landing order, and a landing refuses a gap or a duplicate |
 | [I4582](https://majordomus.dev/plan/i4582/) | READY | 0 | — | When a gate lands on the trunk, every open pull request is judged by it on its merge with the trunk, and the lane that owns each one is told |
+| [I4775](https://majordomus.dev/plan/i4775/) | VERIFY | 0 | — | An issue id authored on two lines of history, or an issue another open pull request or session executes, is refused at start, at push and on the pull request, naming its holder |
 
 ## Findings
 

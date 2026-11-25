@@ -229,6 +229,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus plan`](#majordomus-plan) | `/docs/cli/plan/` | How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan` |
 | [`majordomus plan delivery`](#majordomus-plan-delivery) | `/docs/cli/plan/delivery/` | Every issue's furthest delivery stage, with the object that proved it and its declared status beside it |
 | [`majordomus plan drift`](#majordomus-plan-drift) | `/docs/cli/plan/drift/` | Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares |
+| [`majordomus plan reconcile`](#majordomus-plan-reconcile) | `/docs/cli/plan/reconcile/` | What a merge supports the plan recording and what each issue still owes: the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the refused ones with the guard's reason, the evidence tokens and the unjudged acceptance criteria (ADR 0238); --apply writes the start moves, --done also the admitted done moves, one plan.transition each |
+| [`majordomus plan collisions`](#majordomus-plan-collisions) | `/docs/cli/plan/collisions/` | Whether an issue this head authors or executes is another's: id_reused, retitled and claimed_elsewhere, each naming its holder (ADR 0238); with --gate, a refusal exits 10 and a pull-request gate with no forge reading exits 12 |
 | [`majordomus economics`](#majordomus-economics) | `/docs/cli/economics/` | Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim |
 | [`majordomus economics summary`](#majordomus-economics-summary) | `/docs/cli/economics/summary/` | Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows |
 | [`majordomus economics explain`](#majordomus-economics-explain) | `/docs/cli/economics/explain/` | One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it |
@@ -6526,7 +6528,7 @@ Examples:
 
 How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
 
-Subcommands: [`majordomus plan delivery`](#majordomus-plan-delivery), [`majordomus plan drift`](#majordomus-plan-drift).
+Subcommands: [`majordomus plan delivery`](#majordomus-plan-delivery), [`majordomus plan drift`](#majordomus-plan-drift), [`majordomus plan reconcile`](#majordomus-plan-reconcile), [`majordomus plan collisions`](#majordomus-plan-collisions).
 
 ```text
 majordomus plan [OPTIONS] <COMMAND>
@@ -6614,6 +6616,68 @@ Examples:
   ```
 
   Verified: exits 0; prints plan drift, window.
+
+<a id="majordomus-plan-reconcile"></a>
+## `majordomus plan reconcile`
+
+What a merge supports the plan recording and what each issue still owes: the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the refused ones with the guard's reason, the evidence tokens and the unjudged acceptance criteria (ADR 0238); --apply writes the start moves, --done also the admitted done moves, one plan.transition each
+
+```text
+majordomus plan reconcile [OPTIONS] [ISSUES]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ISSUES>` | `<ISSUES>` | — | The issues; default every issue of the plan |
+| `--apply` | flag | — | Write the proposed start moves through plan.transition, re-reading the plan between moves; refused when the forge was not read (exit 12), exit 10 when a move is refused |
+| `--done` | flag | — | With --apply, also write the admitted done moves |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a merge supports the plan recording, and what each issue still owes** — The same answer `GET /api/v1/plan/reconcile` and the MCP tool `majordomus_plan_reconcile` return: for every issue merged while not DONE, the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the held ones with the guard's reason, the evidence tokens, the validation commands and the acceptance criteria as unjudged. `--apply` writes the start moves through plan.transition, `--done` also the admitted done moves; an unread forge leaves the proposal unsettled and nothing is applied.
+
+  ```console
+  $ majordomus plan reconcile --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /observed/commit, /settled, /tallies/recordable, /proposals.
+
+<a id="majordomus-plan-collisions"></a>
+## `majordomus plan collisions`
+
+Whether an issue this head authors or executes is another's: id_reused, retitled and claimed_elsewhere, each naming its holder (ADR 0238); with --gate, a refusal exits 10 and a pull-request gate with no forge reading exits 12
+
+```text
+majordomus plan collisions [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--issue` | `<ID>` | — | An issue the caller is about to execute, besides the one the head's branch names |
+| `--head` | `<REV>` | — | The head to judge; default HEAD |
+| `--branch` | `<BRANCH>` | — | The head's branch, when git cannot say it (a detached CI checkout of a pull request) |
+| `--gate` | `start` \| `push` \| `pr` | — | Judge as a gate at a task's start, a push or a pull request — `start`: A task's start: an unread forge warns; `push`: A push: an unread or stale forge warns; `pr`: A pull request: an unread forge cannot be judged (exit 12) |
+| `--session` | `<SESSION>` | — | The caller's own mesh session, whose claims are the head's own |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether an issue this head authors or executes is another's** — The same answer `GET /api/v1/plan/collisions` and the MCP tool `majordomus_plan_collisions` return: id_reused, retitled and claimed_elsewhere, each with its holder (a branch, an open pull request, a mesh session), the sources read, and with `--gate start|push|pr` the exit code a gate ends with.
+
+  ```console
+  $ majordomus plan collisions --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /head, /trunk, /executes, /verdict.
 
 <a id="majordomus-economics"></a>
 ## `majordomus economics`

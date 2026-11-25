@@ -1564,6 +1564,15 @@
         "status": "command"
       },
       {
+        "id": "capability:plan.collisions",
+        "kind": "capability",
+        "label": "plan.collisions",
+        "summary": "Whether an issue this head authors or executes is another's",
+        "route": "/cockpit/capabilities/plan.collisions",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:plan.delivery",
         "kind": "capability",
         "label": "plan.delivery",
@@ -1614,6 +1623,15 @@
         "label": "plan.next",
         "summary": "The one issue to take now",
         "route": "/cockpit/capabilities/plan.next",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:plan.reconcile",
+        "kind": "capability",
+        "label": "plan.reconcile",
+        "summary": "What a merge supports the plan recording, and what each issue still owes",
+        "route": "/cockpit/capabilities/plan.reconcile",
         "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
         "status": "query"
       },
@@ -2374,6 +2392,22 @@
         "kind": "command",
         "label": "watch",
         "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
+        "id": "file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
+        "kind": "file",
+        "label": "0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
+        "external": true
+      },
+      {
+        "id": "file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
+        "kind": "file",
+        "label": "0177-an-identifier-is-taken-by-one-atomic-claim.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
         "external": true
       },
       {
@@ -3590,6 +3624,38 @@
         "label": "plan.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/plan.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/plan/collisions.rs",
+        "kind": "file",
+        "label": "collisions.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/plan/collisions.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/plan/delivery.rs",
+        "kind": "file",
+        "label": "delivery.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/plan/delivery.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/plan/drift.rs",
+        "kind": "file",
+        "label": "drift.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/plan/drift.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/plan/reconcile.rs",
+        "kind": "file",
+        "label": "reconcile.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/plan/reconcile.rs",
         "external": true
       },
       {
@@ -9920,6 +9986,39 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0238",
+        "kind": "adr",
+        "label": "adr-0238",
+        "summary": "The plan is reconciled with merged work through plan.transition, and an issue authored or executed twice is refused where it collides",
+        "route": "/cockpit/objects/adr/adr-0238",
+        "source": ".ai/repo/adrs/0238-the-plan-is-reconciled-with-merged-work-and-a-claim-is-refused-where-it-collides.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-25",
+          "related": [
+            "file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
+            "file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
+            "file:.ai/repo/project/issues/I4773.yaml",
+            "file:.ai/repo/project/issues/I4775.yaml",
+            "file:.ai/repo/project/issues/I4777.yaml",
+            "file:.ai/repo/knowledge/curated/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session.md",
+            "file:apps/majordomus-cli/src/plan/delivery.rs",
+            "file:apps/majordomus-cli/src/plan/drift.rs",
+            "file:apps/majordomus-cli/src/plan/reconcile.rs",
+            "file:apps/majordomus-cli/src/plan/collisions.rs",
+            "file:apps/majordomus-cli/src/integration/forge.rs",
+            "file:lib/start.sh"
+          ],
+          "tags": [
+            "plan",
+            "delivery",
+            "drift",
+            "collisions",
+            "forge"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -9956,6 +10055,7 @@
             "read-the-rules-the-tool-applies",
             "block-acceptance-on-an-open-question",
             "complete-an-issue-only-with-its-evidence",
+            "reconcile-the-plan-with-merged-work",
             "gate-ci-on-the-tool-itself",
             "trust-the-policy-before-reading-it"
           ],
@@ -10007,6 +10107,7 @@
             "block-acceptance-on-an-open-question",
             "checkpoint-long-work",
             "complete-an-issue-only-with-its-evidence",
+            "reconcile-the-plan-with-merged-work",
             "deliver-issues-in-waves",
             "read-back-what-happened",
             "read-only-the-context-that-fits",
@@ -82853,6 +82954,168 @@
         }
       },
       {
+        "id": "majordomus://issue/I4773",
+        "kind": "issue",
+        "label": "I4773",
+        "summary": "plan reconcile proposes the moves a merge supports, with the evidence each issue still owes, and applies them only through plan.transition",
+        "route": "/cockpit/objects/issue/i4773",
+        "source": ".ai/repo/project/issues/I4773.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Rust test: a READY issue named by a merge is proposed start and never verify, and done only when its evidence_required tokens are covered by evidence recorded at or after the merge",
+            "Rust test: a BLOCKED merged issue is held with the guard's reason and no move",
+            "Rust test: an issue another open pull request still names is pending_pr with no move",
+            "Rust test: a commit whose final trailer block says Delivers: I0002 delivers I0002, and the same words in the body's prose deliver nothing",
+            "Rust test: VERIFY with a merge and missing evidence is merged_unaccepted with verdict Reported under both gates",
+            "Case 4773: plan reconcile --apply on a fixture writes start through plan.transition with their seals, refuses nothing it proposed, and a second run proposes nothing"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "One dry run names every move a merge supports and what each issue still owes; --apply writes exactly the moves the guard admits, and DONE never follows from a merge alone.",
+          "evidence_required": [
+            "rust",
+            "test"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Attaching evidence or judging a criterion's prose; I3255 judges a command criterion by its receipt",
+            "Renumbering or rewriting records"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4773.yaml",
+            "apps/majordomus-cli/src/plan/reconcile.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/plan/drift.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "lib/plan.sh",
+            "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+            "docs/PLANNING.md"
+          ],
+          "serves": [],
+          "slug": "plan-reconcile-applies-what-a-merge-supports",
+          "started_at": "2026-11-25T10:12:48Z",
+          "started_event": "sha256:8c007d3945f0bd60f8fbbc849fd307412d5f903922b01be950bd98f77cead857",
+          "updated_at": "2026-11-25T10:13:19Z",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::reconcile",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::drift",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
+            "bash test/run.sh 4773_plan_reconcile_applies_what_a_merge_supports"
+          ],
+          "verified_at": "2026-11-25T10:13:19Z",
+          "verified_event": "sha256:722d811d256d16a4490389f0a5726844407d1ad726b6d923447961277369e0af"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4775",
+        "kind": "issue",
+        "label": "I4775",
+        "summary": "An issue id authored on two lines of history, or an issue another open pull request or session executes, is refused at start, at push and on the pull request, naming its holder",
+        "route": "/cockpit/objects/issue/i4775",
+        "source": ".ai/repo/project/issues/I4775.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Rust test: a record added on two branches under different titles is id_reused naming the other branch; the same record inherited from the trunk is not",
+            "Rust test: an issue named by this head's branch and by another open pull request's head branch is claimed_elsewhere naming that pull request; a declared supersession clears it",
+            "Rust test: a train pull request whose title names more than three ids claims none of them",
+            "Rust test: an unread forge makes claimed_elsewhere unread, never clean",
+            "Case 4775: start --issue refuses an issue another branch's open pull request names, names the pull request, and starts with --alongside, recording the reason"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Measured at 46775282570: lib/start.sh asks the binding and claims the scope on the mesh, and reads no branch or pull request; no capability compares an added record with the other refs.",
+          "depends_on": [],
+          "desired_state": "The second author of an id and the second executor of an issue are told who holds it before their work lands.",
+          "evidence_required": [
+            "rust",
+            "test"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "plan next and plan ready passing taken work over; that is I3971",
+            "Taking an exclusive mesh claim on the issue at start; that is I4753, whose claim this check reads beside the forge and the branches",
+            "A pull-request CI gate: the CI jobs read no forge yet (I2750), and this repository's collision-gate already refuses a new path two branches add with different bytes",
+            "A renumber command"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4775.yaml",
+            "apps/majordomus-cli/src/plan/collisions.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "lib/start.sh",
+            "lib/plan.sh",
+            "scripts/ci/plan-collisions-check",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/plan.yaml",
+            "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh"
+          ],
+          "serves": [],
+          "slug": "a-colliding-issue-is-refused-naming-its-holder",
+          "started_at": "2026-11-25T10:13:48Z",
+          "started_event": "sha256:97881f614e4b2270bf4681488fbc10d3d2f1ea561d117abfd17e79bee4f2302c",
+          "updated_at": "2026-11-25T10:14:20Z",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::collisions",
+            "bash test/run.sh 4775_a_colliding_issue_is_refused_naming_its_holder"
+          ],
+          "verified_at": "2026-11-25T10:14:20Z",
+          "verified_event": "sha256:ac8b4bca6f895697a292be779077b46e83656175819fbb82d18326892303532a"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4777",
+        "kind": "issue",
+        "label": "I4777",
+        "summary": "The forge is read for the repository the trunk's remote names, never for the parent gh resolves a fork to",
+        "route": "/cockpit/objects/issue/i4777",
+        "source": ".ai/repo/project/issues/I4777.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Rust test: the GitHub URL forms git@github.com:o/n.git, ssh://git@github.com/o/n and https://github.com/o/n(.git) give o/n, and a non-GitHub URL gives none",
+            "Rust test: a clone whose trunk tracks origin and which also has an upstream remote resolves origin's repository",
+            "Rust test: delivery reports a recorded observation of another repository as an unread forge naming both repositories"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "In a fork, delivery, drift, flight and reconcile read the fork's pull requests, and a cached observation of another repository is unread.",
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "A policy key that overrides the repository; the trunk's remote is the one delivery reads merges from",
+            "Forges other than GitHub"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4777.yaml",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs"
+          ],
+          "serves": [],
+          "slug": "the-forge-is-read-for-the-trunks-remote",
+          "started_at": "2026-11-25T10:06:27Z",
+          "started_event": "sha256:f29a8366e242275796968ceb56a6c7f3e4ca5e0d21700be4cbade09a831e8fa7",
+          "updated_at": "2026-11-25T10:09:59Z",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::forge::repository",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+          ],
+          "verified_at": "2026-11-25T10:09:59Z",
+          "verified_event": "sha256:039f386fcb90c57fd96bf3ed367d61c31a77150593c57984eddd2a2608779fc0"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -83585,6 +83848,26 @@
           "tags": [
             "ui-surfaces",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
+        "kind": "knowledge",
+        "label": "owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
+        "summary": "Owner answers 2026-11-25: implement the generic lessons of an adopter session in Majordomus (all four selected, decided after several passes with other models), and evolve Majordomus from everything that session learned",
+        "route": "/cockpit/objects/knowledge/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
+        "source": ".ai/repo/knowledge/curated/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session.md",
+        "status": "verified",
+        "facts": {
+          "class": "fact",
+          "date": "2026-11-25",
+          "epistemics": "decided",
+          "tags": [
+            "decision",
+            "owner-answer",
+            "plan",
+            "evolve"
           ]
         }
       },
@@ -110817,6 +111100,20 @@
         "source": "test/cases/46_cross_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+        "kind": "test",
+        "label": "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+        "route": "/cockpit/objects/test/test-cases-4773-plan-reconcile-applies-what-a-merge-supports-sh",
+        "source": "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+        "kind": "test",
+        "label": "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+        "route": "/cockpit/objects/test/test-cases-4775-a-colliding-issue-is-refused-naming-its-holder-sh",
+        "source": "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/47_mutation.sh",
         "kind": "test",
         "label": "test/cases/47_mutation.sh",
@@ -113874,6 +114171,45 @@
           ],
           "summary": "List the effective rule set, read one rule as the tool reads it, and see which of them the tool enforces and from where.",
           "target": "guaranteed"
+        }
+      },
+      {
+        "id": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "kind": "use-case",
+        "label": "reconcile-the-plan-with-merged-work",
+        "summary": "Reconcile the plan with merged work, and refuse an issue another already executes",
+        "route": "/cockpit/objects/use-case/reconcile-the-plan-with-merged-work",
+        "source": ".ai/repo/use-cases/reconcile-the-plan-with-merged-work.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "maintainer",
+            "agent"
+          ],
+          "applications": [
+            "ci-gated-project",
+            "long-running-work"
+          ],
+          "category": "completion",
+          "claims": [
+            "evidence-gates-done",
+            "project-status-derived"
+          ],
+          "commands": [
+            "plan",
+            "start"
+          ],
+          "difficulty": "intermediate",
+          "doctrines": [
+            "majordomus.project-integrity",
+            "majordomus.verification-integrity"
+          ],
+          "responsibilities": [
+            "plan"
+          ],
+          "summary": "Ask which moves a merge supports and what each delivered issue still owes, apply only what the transition guard admits, and see whether an issue this head authors or executes is another session's.",
+          "target": "guaranteed",
+          "weight": 63
         }
       },
       {
@@ -117648,6 +117984,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:plan.collisions",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.collisions",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.collisions",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.collisions",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:plan.delivery",
         "target": "projection:cli",
         "kind": "projects"
@@ -117744,6 +118100,26 @@
       },
       {
         "source": "capability:plan.next",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.reconcile",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.reconcile",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.reconcile",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.reconcile",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -126685,6 +127061,71 @@
       {
         "source": "majordomus://adr/adr-0232",
         "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:.ai/repo/adrs/0166-the-plans-surfaces-are-inferred-from-delivery-and-nothing-th.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:.ai/repo/adrs/0177-an-identifier-is-taken-by-one-atomic-claim.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:apps/majordomus-cli/src/integration/forge.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:apps/majordomus-cli/src/plan/collisions.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:apps/majordomus-cli/src/plan/delivery.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:apps/majordomus-cli/src/plan/drift.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "file:apps/majordomus-cli/src/plan/reconcile.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "majordomus://implementation/lib/start.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "majordomus://issue/I4773",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "majordomus://issue/I4775",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "majordomus://issue/I4777",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0238",
+        "target": "majordomus://knowledge/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
         "kind": "put_in_force"
       },
       {
@@ -153063,6 +153504,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4773",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4773",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4775",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4775",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4777",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4777",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -153259,6 +153730,11 @@
       },
       {
         "source": "majordomus://knowledge/overview-first-evidence-one-click-away",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -160873,6 +161349,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/47_mutation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164058,6 +164544,51 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "command:plan",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "command:start",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "majordomus://application/ci-gated-project",
+        "kind": "serves"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "majordomus://application/long-running-work",
+        "kind": "serves"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "majordomus://claim/evidence-gates-done",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "majordomus://claim/project-status-derived",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "majordomus://rule/majordomus.project-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "target": "majordomus://rule/majordomus.verification-integrity@1",
+        "kind": "exercises"
+      },
+      {
         "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
         "target": "command:adr",
         "kind": "runs"
@@ -165664,6 +166195,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.collisions",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.delivery",
         "kind": "composes"
       },
@@ -165690,6 +166226,11 @@
       {
         "source": "module:plan",
         "target": "capability:plan.next",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
+        "target": "capability:plan.reconcile",
         "kind": "composes"
       },
       {
@@ -165999,8 +166540,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4557,
+      "edges": 10270,
       "acyclic": false,
       "truncated": false
     }

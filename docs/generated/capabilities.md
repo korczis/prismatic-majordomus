@@ -53,7 +53,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
-| `plan` | The plan and its derivations | behaviorally_verified | 13 | [`modules/plan.md`](modules/plan.md) |
+| `plan` | The plan and its derivations | behaviorally_verified | 15 | [`modules/plan.md`](modules/plan.md) |
 | `proceed` | What a session proceeds with | behaviorally_verified | 2 | [`modules/proceed.md`](modules/proceed.md) |
 | `product` | Product | behaviorally_verified | 6 | [`modules/product.md`](modules/product.md) |
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
@@ -242,12 +242,14 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
 | `plan.allocate` | `plan` | command | behaviorally_verified | `majordomus_plan_allocate` | — | `POST /api/v1/plan/allocate` | — | — | waived (transient_state) |
+| `plan.collisions` | `plan` | query | experimental | `majordomus_plan_collisions` | — | `GET /api/v1/plan/collisions` | `majordomus plan collisions` | — | required |
 | `plan.delivery` | `plan` | query | experimental | `majordomus_plan_delivery` | — | `GET /api/v1/plan/delivery` | `majordomus plan delivery` | — | required |
 | `plan.drift` | `plan` | query | experimental | `majordomus_plan_drift` | — | `GET /api/v1/plan/drift` | `majordomus plan drift` | — | required |
 | `plan.flight` | `plan` | query | experimental | `majordomus_plan_flight` | — | `GET /api/v1/plan/flight` | — | — | required |
 | `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | process, 16 entries, per generation | required |
 | `plan.model` | `plan` | query | behaviorally_verified | `majordomus_plan` | `majordomus://plan` | `GET /api/v1/plan` | — | — | required |
 | `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | — | process, 16 entries, per generation | required |
+| `plan.reconcile` | `plan` | query | experimental | `majordomus_plan_reconcile` | — | `GET /api/v1/plan/reconcile` | `majordomus plan reconcile` | — | required |
 | `plan.record` | `plan` | query | behaviorally_verified | `majordomus_plan_record` | — | `GET /api/v1/plan/record` | — | — | required |
 | `plan.roadmap` | `plan` | query | behaviorally_verified | `majordomus_plan_roadmap` | — | `GET /api/v1/plan/roadmap` | — | process, 4 entries, per generation | required |
 | `plan.status` | `plan` | query | behaviorally_verified | `majordomus_plan_status` | — | `GET /api/v1/plan/status` | — | process, 16 entries, per generation | required |

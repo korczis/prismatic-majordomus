@@ -3568,6 +3568,53 @@ pub enum PlanCommand {
         #[arg(long, value_enum, value_name = "TREE")]
         gate: Option<DriftGateArg>,
     },
+    /// What a merge supports the plan recording and what each issue still owes: the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the refused ones with the guard's reason, the evidence tokens and the unjudged acceptance criteria (ADR 0238); --apply writes the start moves, --done also the admitted done moves, one plan.transition each
+    Reconcile {
+        /// The issues; default every issue of the plan
+        issues: Vec<String>,
+        /// Write the proposed start moves through plan.transition, re-reading the plan between moves; refused when the forge was not read (exit 12), exit 10 when a move is refused
+        #[arg(long)]
+        apply: bool,
+        /// With --apply, also write the admitted done moves
+        #[arg(long, requires = "apply")]
+        done: bool,
+    },
+    /// Whether an issue this head authors or executes is another's: id_reused, retitled and claimed_elsewhere, each naming its holder (ADR 0238); with --gate, a refusal exits 10 and a pull-request gate with no forge reading exits 12
+    Collisions {
+        /// An issue the caller is about to execute, besides the one the head's branch names
+        #[arg(long, value_name = "ID")]
+        issue: Option<String>,
+        /// The head to judge; default HEAD
+        #[arg(long, value_name = "REV")]
+        head: Option<String>,
+        /// The head's branch, when git cannot say it (a detached CI checkout of a pull request)
+        #[arg(long, value_name = "BRANCH")]
+        branch: Option<String>,
+        /// Judge as a gate at a task's start, a push or a pull request
+        #[arg(long, value_enum, value_name = "WHERE")]
+        gate: Option<CollisionGateArg>,
+        /// The caller's own mesh session, whose claims are the head's own
+        #[arg(long, value_name = "SESSION")]
+        session: Option<String>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// Where `majordomus plan collisions --gate` judges.
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::CollisionGateArg;
+/// assert_eq!(CollisionGateArg::from_str("pr", false), Ok(CollisionGateArg::Pr));
+/// assert!(CollisionGateArg::from_str("merge", false).is_err());
+/// ```
+pub enum CollisionGateArg {
+    /// A task's start: an unread forge warns
+    Start,
+    /// A push: an unread or stale forge warns
+    Push,
+    /// A pull request: an unread forge cannot be judged (exit 12)
+    Pr,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -6294,6 +6341,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::StdoutContains(&["plan drift", "window"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "plan reconcile",
+        examples: &[ExampleDoc {
+            id: "plan-reconcile-json",
+            title: "What a merge supports the plan recording, and what each issue still owes",
+            description: "The same answer `GET /api/v1/plan/reconcile` and the MCP tool `majordomus_plan_reconcile` return: for every issue merged while not DONE, the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the held ones with the guard's reason, the evidence tokens, the validation commands and the acceptance criteria as unjudged. `--apply` writes the start moves through plan.transition, `--done` also the admitted done moves; an unread forge leaves the proposal unsettled and nothing is applied.",
+            argv: &["plan", "reconcile", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/observed/commit", "/settled", "/tallies/recordable", "/proposals"]),
+        }],
+    },
+    CommandExamples {
+        command: "plan collisions",
+        examples: &[ExampleDoc {
+            id: "plan-collisions-json",
+            title: "Whether an issue this head authors or executes is another's",
+            description: "The same answer `GET /api/v1/plan/collisions` and the MCP tool `majordomus_plan_collisions` return: id_reused, retitled and claimed_elsewhere, each with its holder (a branch, an open pull request, a mesh session), the sources read, and with `--gate start|push|pr` the exit code a gate ends with.",
+            argv: &["plan", "collisions", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/head", "/trunk", "/executes", "/verdict"]),
+        }],
     },
     CommandExamples {
         command: "entity kinds",

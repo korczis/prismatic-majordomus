@@ -874,6 +874,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:plan.collisions",
+      "path": "/evidence/capabilities/plan-collisions/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:plan.delivery",
       "path": "/evidence/capabilities/plan-delivery/"
     },
@@ -901,6 +906,11 @@
       "kind": "capability",
       "subject": "capability:plan.next",
       "path": "/evidence/capabilities/plan-next/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:plan.reconcile",
+      "path": "/evidence/capabilities/plan-reconcile/"
     },
     {
       "kind": "capability",
@@ -3229,6 +3239,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:plan collisions",
+      "path": "/evidence/commands/plan-collisions/"
+    },
+    {
+      "kind": "command",
       "subject": "command:plan delivery",
       "path": "/evidence/commands/plan-delivery/"
     },
@@ -3236,6 +3251,11 @@
       "kind": "command",
       "subject": "command:plan drift",
       "path": "/evidence/commands/plan-drift/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:plan reconcile",
+      "path": "/evidence/commands/plan-reconcile/"
     },
     {
       "kind": "command",
@@ -4071,6 +4091,11 @@
       "kind": "use_case",
       "subject": "use_case:read-the-rules-the-tool-applies",
       "path": "/evidence/use-cases/read-the-rules-the-tool-applies/"
+    },
+    {
+      "kind": "use_case",
+      "subject": "use_case:reconcile-the-plan-with-merged-work",
+      "path": "/evidence/use-cases/reconcile-the-plan-with-merged-work/"
     },
     {
       "kind": "use_case",
@@ -6152,6 +6177,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:plan.collisions": {
+      "kind": "capability",
+      "id": "plan.collisions",
+      "page": "/evidence/capabilities/plan-collisions/",
+      "programs": [],
+      "members": [
+        "command:plan collisions"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:plan.delivery": {
       "kind": "capability",
       "id": "plan.delivery",
@@ -6212,6 +6249,18 @@
       "page": "/evidence/capabilities/plan-next/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.reconcile": {
+      "kind": "capability",
+      "id": "plan.reconcile",
+      "page": "/evidence/capabilities/plan-reconcile/",
+      "programs": [],
+      "members": [
+        "command:plan reconcile"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -17423,6 +17472,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4773_plan_reconcile_applies_what_a_merge_supports",
+          "path": "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4775_a_colliding_issue_is_refused_naming_its_holder",
+          "path": "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:581_no_plan_stamp_without_its_event",
           "path": "test/cases/581_no_plan_stamp_without_its_event.sh",
           "category": "e2e"
@@ -17509,6 +17570,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:plan collisions": {
+      "kind": "command",
+      "id": "plan collisions",
+      "page": "/evidence/commands/plan-collisions/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:plan delivery": {
       "kind": "command",
       "id": "plan delivery",
@@ -17532,6 +17612,25 @@
       "kind": "command",
       "id": "plan drift",
       "page": "/evidence/commands/plan-drift/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan reconcile": {
+      "kind": "command",
+      "id": "plan reconcile",
+      "page": "/evidence/commands/plan-reconcile/",
       "programs": [
         "native"
       ],
@@ -19202,6 +19301,12 @@
           "via": "behaviour",
           "test": "suite:3995_a_task_started_before_the_first_commit_finishes",
           "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4775_a_colliding_issue_is_refused_naming_its_holder",
+          "path": "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
           "category": "e2e"
         },
         {
@@ -22719,6 +22824,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_plan_collisions": {
+      "kind": "mcp",
+      "id": "majordomus_plan_collisions",
+      "alias_of": "capability:plan.collisions",
+      "programs": [],
+      "members": [
+        "capability:plan.collisions"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_plan_delivery": {
       "kind": "mcp",
       "id": "majordomus_plan_delivery",
@@ -22774,6 +22891,18 @@
       "programs": [],
       "members": [
         "capability:plan.next"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_reconcile": {
+      "kind": "mcp",
+      "id": "majordomus_plan_reconcile",
+      "alias_of": "capability:plan.reconcile",
+      "programs": [],
+      "members": [
+        "capability:plan.reconcile"
       ],
       "routes": [],
       "mechanisms": [],
@@ -29927,6 +30056,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "use_case:reconcile-the-plan-with-merged-work": {
+      "kind": "use_case",
+      "id": "reconcile-the-plan-with-merged-work",
+      "status": "active",
+      "page": "/evidence/use-cases/reconcile-the-plan-with-merged-work/",
+      "programs": [],
+      "members": [
+        "claim:evidence-gates-done",
+        "claim:project-status-derived",
+        "command:plan",
+        "command:start",
+        "rule:majordomus.project-integrity",
+        "rule:majordomus.verification-integrity"
+      ],
+      "routes": [
+        {
+          "via": "scenario",
+          "path": ".ai/repo/use-cases/reconcile-the-plan-with-merged-work.md",
+          "category": "scenario"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "use_case:record-a-decision-before-it-is-forgotten": {
       "kind": "use_case",
       "id": "record-a-decision-before-it-is-forgotten",
@@ -30351,8 +30504,10 @@
     "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
+    "crate:plan_collisions",
     "crate:plan_delivery",
     "crate:plan_drift",
+    "crate:plan_reconcile",
     "crate:portable_core",
     "crate:product_monitor_coverage_t7",
     "crate:properties",

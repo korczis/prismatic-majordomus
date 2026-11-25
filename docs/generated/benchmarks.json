@@ -5,24 +5,24 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 233,
-      "covered": 187,
+      "required": 235,
+      "covered": 189,
       "missing": 0,
       "waived": 46,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 221,
-      "covered": 185,
+      "required": 223,
+      "covered": 187,
       "missing": 0,
       "waived": 36,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 217,
-      "covered": 182,
+      "required": 219,
+      "covered": 184,
       "missing": 0,
       "waived": 35,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 685,
-      "covered": 568,
+      "required": 691,
+      "covered": 574,
       "missing": 0,
       "waived": 117,
       "inapplicable": 0
@@ -2007,6 +2007,19 @@
       "cases": []
     },
     {
+      "id": "plan.collisions",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "this-head",
+        "this-head-as-a-pull-request-gate"
+      ]
+    },
+    {
       "id": "plan.delivery",
       "module": "plan",
       "kind": "query",
@@ -2082,6 +2095,19 @@
       "cases": [
         "whole-plan",
         "one-milestone"
+      ]
+    },
+    {
+      "id": "plan.reconcile",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-issue",
+        "one-issue"
       ]
     },
     {
