@@ -69,34 +69,32 @@ pub(crate) fn spawn_group(cmd: &mut Command) -> io::Result<(Child, Group)> {
 /// kernel does not hand that id to a new process while any member of the group lives, so the
 /// signal reaches this group or nobody, even once the leader is reaped.
 pub(crate) fn kill_group(child: &mut Child) {
+    // A pid always fits a pid_t: the kernel hands out none larger.
+    // SAFETY: killpg(2) on a group this process created; an id with no group left answers
+    // ESRCH, which is ignored.
     #[cfg(unix)]
-    if let Ok(pgid) = libc::pid_t::try_from(child.id()) {
-        // SAFETY: killpg(2) on a group this process created; an id with no group left answers
-        // ESRCH, which is ignored.
-        unsafe { libc::killpg(pgid, libc::SIGKILL) };
-    }
+    unsafe {
+        libc::killpg(child.id() as libc::pid_t, libc::SIGKILL)
+    };
     let _ = child.kill();
     let _ = child.wait();
 }
 
 /// Wait for `child`, started by [`spawn_group`], at most `limit`, asking every `poll`. On
-/// expiry its whole group is ended and the child reaped ([`kill_group`]), and `Ok(None)`
-/// says it never finished; an error is the wait's own.
-pub(crate) fn wait_group(
-    child: &mut Child,
-    limit: Duration,
-    poll: Duration,
-) -> io::Result<Option<ExitStatus>> {
+/// expiry its whole group is ended and the child reaped ([`kill_group`]), and `None` says it
+/// never finished. A wait that cannot say whether the child has exited is treated as the
+/// bound: the group is ended all the same, so nothing it started outlives the answer.
+pub(crate) fn wait_group(child: &mut Child, limit: Duration, poll: Duration) -> Option<ExitStatus> {
     let deadline = Instant::now() + limit;
     loop {
-        if let Some(status) = child.try_wait()? {
-            return Ok(Some(status));
+        match child.try_wait() {
+            Ok(Some(status)) => return Some(status),
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(poll),
+            _ => {
+                kill_group(child);
+                return None;
+            }
         }
-        if Instant::now() >= deadline {
-            kill_group(child);
-            return Ok(None);
-        }
-        std::thread::sleep(poll);
     }
 }
 
@@ -212,7 +210,7 @@ mod groups {
     use std::sync::atomic::{AtomicI32, Ordering};
     use std::sync::Once;
 
-    const SLOTS: usize = 64;
+    pub const SLOTS: usize = 64;
     static LIVE: [AtomicI32; SLOTS] = [const { AtomicI32::new(0) }; SLOTS];
     static INSTALL: Once = Once::new();
 
@@ -280,7 +278,7 @@ mod groups {
         }
     }
 
-    extern "C" fn on_signal(signal: libc::c_int) {
+    pub extern "C" fn on_signal(signal: libc::c_int) {
         kill_all();
         // SAFETY: restoring the default disposition and re-raising are async-signal-safe
         unsafe {
@@ -486,8 +484,7 @@ mod tests {
             &mut child,
             Duration::from_millis(200),
             Duration::from_millis(10),
-        )
-        .unwrap();
+        );
         assert_eq!(waited, None, "the program did not finish within its bound");
         let mut out = Vec::new();
         child.stdout.take().unwrap().read_to_end(&mut out).unwrap();
@@ -518,7 +515,6 @@ mod tests {
             Duration::from_secs(10),
             Duration::from_millis(10),
         )
-        .unwrap()
         .expect("it finished");
         assert_eq!(status.code(), Some(3));
     }
@@ -664,6 +660,60 @@ mod tests {
         let e = spawn_group(&mut Command::new("/nonexistent/majordomus-no-such-tool"))
             .expect_err("an absent program does not start");
         assert_eq!(e.kind(), io::ErrorKind::NotFound);
+    }
+
+    /// The variable that makes a run of this test binary the signal-handler child below.
+    #[cfg(unix)]
+    const HANDLER_CHILD: &str = "MAJORDOMUS_PROCESS_TEST_HANDLER";
+
+    /// The handler ends every group the process leads, restores the signal's default and
+    /// raises it again; and the table of groups holds no more than its slots. Run here for `SIGWINCH`, whose default is to be ignored, so the
+    /// process lives on after its handler and can say what the handler did — in a process of
+    /// its own, because the handler ends every group the process holds.
+    #[cfg(unix)]
+    #[test]
+    fn the_handler_ends_the_groups_and_raises_the_signal_again() {
+        if let Some(dir) = std::env::var_os(HANDLER_CHILD) {
+            let pids = std::path::Path::new(&dir).join("pids");
+            let (mut child, group) = spawn_group(&mut parent_of_a_sleeper(&pids)).unwrap();
+            let grandchild = sleeper(&pids);
+            groups::on_signal(libc::SIGWINCH);
+            assert_eq!(groups::disposition(libc::SIGWINCH), Some(libc::SIG_DFL));
+            assert!(gone_soon(grandchild), "the handler left {grandchild}");
+            let _ = child.wait();
+            drop(group);
+            // A group id no pid can have is not recorded, and a full table records no more:
+            // the surplus is simply not ended on a signal. Here, where no other test holds a
+            // slot; the ids are ones no process has, so nothing is ever signalled.
+            drop(groups::register(u32::MAX));
+            assert!(!groups::recorded(u32::MAX));
+            let mut held = Vec::new();
+            for id in 2_000_000_000u32.. {
+                held.push(groups::register(id));
+                if !groups::recorded(id) {
+                    break;
+                }
+            }
+            assert_eq!(
+                held.len(),
+                groups::SLOTS + 1,
+                "the table holds its slots and no more"
+            );
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let out = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "process::tests::the_handler_ends_the_groups_and_raises_the_signal_again",
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(HANDLER_CHILD, dir.path())
+            .output()
+            .expect("the child process runs");
+        assert!(out.status.success(), "{out:?}");
     }
 
     /// The boot is named, and named the same way twice.

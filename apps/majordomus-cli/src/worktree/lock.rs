@@ -114,19 +114,24 @@ impl WorktreeLock {
     fn reclaim(path: &Path) {
         let mut name = path.file_name().unwrap_or_default().to_os_string();
         name.push(".reclaim");
+        // A sidecar that cannot be opened leaves the removal unguarded, as it was before.
         let _guard = fs::OpenOptions::new()
             .create(true)
             .truncate(false)
             .write(true)
-            .open(path.with_file_name(name));
-        #[cfg(unix)]
-        if let Ok(file) = &_guard {
-            use std::os::unix::io::AsRawFd;
-            // SAFETY: flock(2) on the descriptor of `file`, which stays open until `_guard`
-            // drops at the end of this function; closing it releases the lock. A lock that
-            // cannot be taken leaves the removal unguarded, as it was before.
-            unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
-        }
+            .open(path.with_file_name(name))
+            .inspect(|file| {
+                #[cfg(unix)]
+                {
+                    use std::os::unix::io::AsRawFd;
+                    // SAFETY: flock(2) on the descriptor of `file`, which stays open until
+                    // `_guard` drops at the end of this function; closing it releases the
+                    // lock. A lock that cannot be taken leaves the removal unguarded.
+                    unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX) };
+                }
+                #[cfg(not(unix))]
+                let _ = file;
+            });
         if Self::is_stale(path) {
             let _ = fs::remove_file(path);
         }
@@ -415,6 +420,7 @@ mod tests {
             "lock 7 at 9",
             "pid 7 at 9 boot",
             "pid 7 at 9 x y",
+            "pid 7 at nine",
         ] {
             assert_eq!(Owner::parse(text), None, "{text:?}");
         }
