@@ -23,13 +23,15 @@ scope:
   - "test/cases/06_finish.sh"
   - "test/cases/4413_a_failed_verification_says_whether_the_trunk_fails_too.sh"
 non_scope:
+  - "The classification itself: gates.baseline (I4730) is the one judgement of runs over a change against runs over its base, with introduced, pre-existing, fixed and unknown, repeated runs and a trunk alarm. finish runs the verification over the base and hands both runs to it (`majordomus-cli run gates.baseline`) instead of classifying in shell, so its classes and gates.baseline's can never disagree"
   - "Reading the evidence ledger at the task's base and carrying the origin of each failure into the closed session record and the next brief: I3313, whose vocabulary (pre-existing, introduced, unknown) this issue uses"
   - "The load the verification ran under, waiting below a declared bound and retrying a failure under load: I4415, which edits the same function and is merged around, not absorbed"
   - "Keeping the tail of the verify command's output in the ledger and admitting verify commands by policy: I3123"
   - "Counting refusals as caught, unanswered or downgraded: I3131, which may read verify.origin.class"
   - "Accepting a task whose verification failed, whatever its class, or closing the episodes of refused tasks: open episodes no session owns are OSCILLA candidate 13"
   - "Parsing any particular test runner's output: the failure ids are only what the declared pattern extracts"
-depends_on: []
+depends_on:
+  - "I4730"
 serves: []
 acceptance_criteria:
   - "Case 4413, in a fixture repository with a bare origin whose refs/remotes/origin/HEAD names main, origin/main carrying a test that fails with `not ok 1 - perf`: with verification.failure_pattern `^not ok [0-9]+ - (.*)$` and verification.base_rerun true, a task whose change touches nothing the test reads is refused, the line names the merge base by short id with (trunk), `pre-existing`, `1 of 1` and `perf`, and task.refused carries verify.failures [\"perf\"] and verify.origin.class pre-existing with base_failures [\"perf\"]"
@@ -50,4 +52,4 @@ validation:
 evidence_required:
   - "failed_verification_origin_case"
 created_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-25

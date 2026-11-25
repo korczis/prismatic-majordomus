@@ -7974,6 +7974,139 @@
         }
       }
     },
+    "/api/v1/gates/baseline": {
+      "post": {
+        "operationId": "gates.baseline",
+        "summary": "A check judged against the commit the change is built on",
+        "description": "The runs of one check over the change, over the commit it is built on (its merge base with the trunk, or the trunk's tip) and optionally over a neutral perturbation of that commit, the same declared number of times on each side, judged per failure id: `introduced` (the change shows it and the base never did), `pre_existing` (the base shows it too: the trunk's), `fixed`, or `unknown` (the base could not be compared with, or a failure that names nothing matches another that names nothing). Flaky is a property, never a class. Under the default rule, `subset` — no failure the base does not also show — only an introduced id blocks; under `rate` an id blocks when the change shows it in more runs than the base and the control by more than the declared slack. The verdict is `clean`, `clean_with_trunk_failures` (with the trunk alarm: the base's own failures and their counts), `introduced` or `undecided` with its reason, and carries its denominator and the provenance the caller supplied. A finding that names a file says whether that file is in the change set, so a whole-tree scan can say \"outside your diff\". It judges and never runs the check, and never turns a red verification into a green one.",
+        "tags": [
+          "gates"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `gates.baseline`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaselineInput"
+              },
+              "examples": {
+                "a-trunk-failure-and-an-introduced-one": {
+                  "value": {
+                    "runs": 1,
+                    "rule": "subset",
+                    "change": {
+                      "commit": "change",
+                      "runs": [
+                        {
+                          "exit": 1,
+                          "findings": [
+                            {
+                              "id": "inherited",
+                              "path": "inherited.md"
+                            },
+                            {
+                              "id": "introduced",
+                              "path": "introduced.md"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "base": {
+                      "commit": "base",
+                      "runs": [
+                        {
+                          "exit": 1,
+                          "findings": [
+                            {
+                              "id": "inherited",
+                              "path": "inherited.md"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "changed": [
+                      "introduced.md"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A check judged against the commit the change is built on: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaselineReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "gates.baseline",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_gate_baseline"
+        }
+      }
+    },
     "/api/v1/gates/completion": {
       "get": {
         "operationId": "gates.completion",
@@ -24777,6 +24910,442 @@
           "note"
         ],
         "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.\n\nThe sign matters and the two directions mean opposite things. Positive `unaccounted` is\nthe outage: episodes that started, are not open, and produced no closed record — work\nthat happened and left nothing behind. Negative is ordinary bookkeeping: the ledger was\nrotated, or a record was committed from a checkout whose ledger lines are not in this\none, so there are more records than started lines to account for them.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::Balance;\nuse serde_json::json;\n\nlet of = |started, closed, open, unaccounted, agrees| -> Balance {\n    serde_json::from_value(json!({\n        \"started\": started, \"closed\": closed, \"open\": open,\n        \"unaccounted\": unaccounted, \"agrees\": agrees, \"note\": \"as measured\",\n    })).unwrap()\n};\n\n// the good case: every episode that started either closed or is still open\nlet sound = of(40, 37, 3, 0, true);\nassert_eq!(sound.started as i64 - sound.closed as i64 - sound.open as i64, sound.unaccounted);\nassert!(sound.agrees);\n\n// the outage ADR 0052 describes: four closes that were never recorded\nlet lost = of(40, 33, 3, 4, false);\nassert!(lost.unaccounted > 0 && !lost.agrees);\n\n// and a rotated ledger, which is not a fault in either half\nlet rotated = of(2, 37, 3, -38, false);\nassert!(rotated.unaccounted < 0, \"more records than lines to account for them\");\n```"
+      },
+      "BaselineClass": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "introduced",
+            "description": "The change shows it; the base never did."
+          },
+          {
+            "type": "string",
+            "const": "pre_existing",
+            "description": "The base shows it too: the trunk's failure, inherited."
+          },
+          {
+            "type": "string",
+            "const": "fixed",
+            "description": "The base shows it; the change never did."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "The runs cannot tell: the base was not compared, or the id names no failure."
+          }
+        ],
+        "description": "What the class of a failure id is, relative to the base."
+      },
+      "BaselineDenominator": {
+        "type": "object",
+        "properties": {
+          "runs_declared": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The runs the caller declared per side."
+          },
+          "change_runs": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The change runs supplied."
+          },
+          "base_runs": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The base runs supplied."
+          },
+          "control_runs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The control runs supplied, when a control was run."
+          },
+          "ids_examined": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The distinct failure ids examined."
+          },
+          "rule": {
+            "type": "string",
+            "description": "The rule, in words."
+          },
+          "correction": {
+            "type": "string",
+            "description": "What the rule does not correct for."
+          }
+        },
+        "required": [
+          "runs_declared",
+          "change_runs",
+          "base_runs",
+          "ids_examined",
+          "rule",
+          "correction"
+        ],
+        "description": "The denominator: what the verdict is a verdict about."
+      },
+      "BaselineFinding": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The failure's identity: a test name, a rule id and the file it flagged, a scenario.\nTwo runs show the same failure when they report the same id."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The repository-relative file the finding is about, when it is about one."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The line in that file, when the check names one."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "description": "One failure a run reported."
+      },
+      "BaselineInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "runs": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The runs declared per side: every side is compared over exactly this many."
+          },
+          "rule": {
+            "$ref": "#/components/schemas/BaselineRule",
+            "description": "`subset` (the default: no failure the base does not also show) or\n`{\"rate\": {\"slack\": k}}`.",
+            "default": "subset"
+          },
+          "change": {
+            "$ref": "#/components/schemas/BaselineSide",
+            "description": "The runs over the change."
+          },
+          "base": {
+            "$ref": "#/components/schemas/BaselineSide",
+            "description": "The runs over the commit the change is built on: its merge base with the trunk, or\nthe trunk's tip."
+          },
+          "control": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BaselineSide"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The runs over a neutral perturbation of the base (another seed, an empty commit): the\nnoise floor the `rate` rule compares against."
+          },
+          "changed": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The change set `in_diff` is taken over. Absent: the paths between the base commit and\nthe working tree of this checkout, when a finding names a file and the base names a\ncommit."
+          },
+          "command": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The command that was run, echoed into the report as its provenance."
+          }
+        },
+        "required": [
+          "runs",
+          "change",
+          "base"
+        ],
+        "description": "The input of `gates.baseline`: the runs of one check over the change, over the commit it\nis built on, and optionally over a neutral perturbation of that commit, as the caller ran\nthem. The capability judges them and runs nothing.\n\n```\nuse majordomus_cli::capability::builtin::gates::BaselineInput;\n\nlet input: BaselineInput = serde_json::from_value(serde_json::json!({\n    \"runs\": 1,\n    \"change\": { \"commit\": \"c1\", \"runs\": [{ \"exit\": 1, \"findings\": [{ \"id\": \"perf\" }] }] },\n    \"base\": { \"commit\": \"b1\", \"runs\": [{ \"exit\": 1, \"findings\": [{ \"id\": \"perf\" }] }] }\n}))\n.unwrap();\nassert_eq!(input.runs, 1);\n// a field the contract does not know is refused, never ignored\nassert!(serde_json::from_value::<BaselineInput>(serde_json::json!({\n    \"runs\": 1, \"change\": {}, \"base\": {}, \"seed\": 4\n}))\n.is_err());\n```"
+      },
+      "BaselineJudgement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The failure's identity."
+          },
+          "class": {
+            "$ref": "#/components/schemas/BaselineClass",
+            "description": "Its class relative to the base."
+          },
+          "blocks": {
+            "type": "boolean",
+            "description": "Whether it blocks under the declared rule."
+          },
+          "change": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The change runs that showed it."
+          },
+          "base": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The base runs that showed it."
+          },
+          "control": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The control runs that showed it, when a control was run."
+          },
+          "flaky": {
+            "type": "boolean",
+            "description": "Seen in some but not all runs of a side."
+          },
+          "synthetic": {
+            "type": "boolean",
+            "description": "The id is one this module made up for a failure that named nothing."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The file the finding is about."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The line in that file."
+          },
+          "in_diff": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether that file is in the change set: `false` is \"this finding is outside your\ndiff\". Absent when the finding names no file or no change set was established."
+          }
+        },
+        "required": [
+          "id",
+          "class",
+          "blocks",
+          "change",
+          "base",
+          "flaky"
+        ],
+        "description": "How one failure id was judged."
+      },
+      "BaselineReport": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "$ref": "#/components/schemas/BaselineVerdict",
+            "description": "The one word."
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Why the verdict is what it is, one line each; never empty when undecided."
+          },
+          "denominator": {
+            "$ref": "#/components/schemas/BaselineDenominator",
+            "description": "What the verdict is about."
+          },
+          "command": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The command the caller ran, when named."
+          },
+          "change_commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit the change side was run at."
+          },
+          "base_commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit the base side was run at."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaselineJudgement"
+            },
+            "description": "Every failure id, in id order."
+          },
+          "trunk_alarm": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrunkAlarm"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Present whenever the base shows a failure."
+          },
+          "introduced_outside_diff": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Introduced ids whose file is outside the change set: an environment or an ordering\neffect as often as a defect, reported rather than exempted."
+          }
+        },
+        "required": [
+          "verdict",
+          "denominator",
+          "findings"
+        ],
+        "description": "Everything the comparison says."
+      },
+      "BaselineRule": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "subset",
+            "description": "No failure the base does not also show: only an introduced id blocks."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "rate": {
+                "type": "object",
+                "properties": {
+                  "slack": {
+                    "description": "The runs by which the change may exceed the noise floor without blocking.",
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "slack"
+                ]
+              }
+            },
+            "required": [
+              "rate"
+            ],
+            "additionalProperties": false,
+            "description": "An id blocks when the change shows it in more runs than the base and the control by\nmore than `slack`; needs at least three runs per side."
+          }
+        ],
+        "description": "How the runs decide."
+      },
+      "BaselineRun": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "exit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The exit status; `null` when the run did not finish (it was killed, or timed out)."
+          },
+          "tree": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tree the run was taken over (`git rev-parse HEAD^{tree}`, or any identity the\ncaller uses), when known. The runs of one side must all name the same tree."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaselineFinding"
+            },
+            "description": "What the run reported as failing, as the caller extracted it from the output."
+          }
+        },
+        "description": "One run of the check, as the caller observed it."
+      },
+      "BaselineSide": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit the side was run at."
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaselineRun"
+            },
+            "description": "Every run of the check on this side.",
+            "default": []
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the side could not be run at all (the base could not be exported, prepared or\nresolved): the side then decides nothing, and says so."
+          }
+        },
+        "description": "The runs of one side: the change, the base or the control."
+      },
+      "BaselineVerdict": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "clean",
+            "description": "The change shows nothing the base does not, and the base is green."
+          },
+          {
+            "type": "string",
+            "const": "clean_with_trunk_failures",
+            "description": "The change shows nothing the base does not, and the base itself fails: see the\ntrunk alarm. Not green."
+          },
+          {
+            "type": "string",
+            "const": "introduced",
+            "description": "At least one failure id blocks."
+          },
+          {
+            "type": "string",
+            "const": "undecided",
+            "description": "The runs do not decide it; `reasons` says why."
+          }
+        ],
+        "description": "The one word of the comparison."
       },
       "BeatInput": {
         "type": "object",
@@ -71034,6 +71603,29 @@
           "job_medians"
         ],
         "description": "The series, or why this checkout holds none."
+      },
+      "TrunkAlarm": {
+        "type": "object",
+        "properties": {
+          "base_commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit the base was run at, when the caller named it."
+          },
+          "failing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Each failing id of the base, as `<id> (<b>/<N>)`."
+          }
+        },
+        "required": [
+          "failing"
+        ],
+        "description": "The base's own failures: the trunk is red, whatever the change did."
       },
       "TrunkDistance": {
         "type": "object",

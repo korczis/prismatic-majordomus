@@ -1,0 +1,45 @@
+id: I4730
+milestone: a-second-adopter-is-served
+title: "A check is judged against the commit the change is built on: each failure is introduced, pre-existing, fixed or unknown over the declared runs, a red base raises the trunk alarm, and a finding says whether it is outside the diff"
+slug: a-check-is-judged-against-its-base
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A capability gates.baseline (MCP majordomus_gate_baseline, POST /api/v1/gates/baseline, `majordomus-cli run gates.baseline`) that judges the runs of one check over a change against its runs over the commit the change is built on, and optionally over a neutral perturbation of that commit as a control. The caller runs the check; the capability runs nothing. The input declares the runs per side (`runs`), the rule (`subset`, the default, or `{rate: {slack: k}}` with at least three runs), each side's commit, its runs (exit, or null for a run that did not finish; the tree; the findings, each an id with an optional path and line) and why a side could not be run at all; optionally the change set and the command. Per failure id, with c, b and k the change, base and control runs that show it: introduced (c>0, b=0), pre_existing (c>0, b>0), fixed (c=0, b>0), unknown (the base side is unavailable, of another size than declared, or spans two trees; or the id is synthetic on both sides: a failed run that named nothing shows exit:<code>, one that did not finish also shows not-finished). Flaky (0<n<runs on a side) is a property and never a class. Under subset only introduced blocks; under rate an introduced or pre-existing id blocks when c exceeds max(b, k) by more than the slack, and an introduced finding in the change's own files always blocks. The verdict is clean, clean_with_trunk_failures (the base shows failures; trunk_alarm lists them as `<id> (<b>/<N>)` with the base commit), introduced, or undecided with its reasons. Every report carries its denominator (runs declared and seen per side, ids examined, the rule, and that no multiple-comparison correction is made) and the provenance the caller named. A finding with a path carries in_diff, over the caller's change set or, without one, over gates::changed_paths from the base commit; an introduced finding outside the diff is listed in introduced_outside_diff."
+why: "Observed on 2026-11-25 in an adopting repository whose gates include whole-tree scans and nondeterministic game-simulation fitness checks (session openttd-36). The trunk broke two whole-tree gates the same day: a reference check flagged a knowledge document that cites a file existing only on another open pull request, and a labelling rule that scans the whole tree flagged test lines a merged pull request had added. From then on every pull request's gate failed for a reason that was not its own, and each worker diagnosed it again as its own defect. The owner's rule for the nondeterministic checks is that a pull request passes when it shows no failure the trunk does not also show, judged over repeated runs. I4413 plans the base re-run for finish and I3313 the ledger lookup for session records; neither offers the judgement to a caller that is not finish (an adopter's gate script, CI), neither handles repeated runs, flakiness, a control or a fixed failure, and neither says whether a whole-tree finding is in the diff. One judgement here keeps finish (I4413), an adopter's gate and CI from classifying the same runs three ways. The design was consulted in two rounds with two independent advisors (Codex, and an independent Claude session; Gemini's client refused to run): both rejected a control that erases an introduced id by its presence, an attribution by the last commit to touch a file, and a clean verdict that hides a red base; those positions are taken. The owner's question and answer are recorded in .ai/repo/knowledge/curated/owner-decision-baseline-relative-gates.md."
+current_state: "Measured at origin/master 46775282570: apps/majordomus-cli/src/gates judges recorded task.gate exits (judge.rs, state.rs) and runs nothing; gates::changed_paths (gates/mod.rs) derives a change set from a base commit and the working tree. No capability compares a check over a change with the same check over its base: `git grep -n -iE 'pre_existing|introduced' apps/majordomus-cli/src/gates` finds nothing. lib/finish.sh runs the verify command once and sends its output to /dev/null (I4413 current_state). The repository's own whole-tree gates hold pre-existing findings in committed ratchet files (.ai/repo/*-baseline.txt), which does not help when the trunk itself adds findings past the ratchet."
+desired_state: "Any caller that can run a check twice can ask one judgement whether a change introduced a failure, inherited it from the trunk, fixed it, or cannot tell, over a declared number of runs per side; a red base is reported as the trunk's in a trunk alarm rather than as every change's defect or as nothing; a whole-tree finding says whether it is in the change's diff; and the verdict never reads green while the base is red. finish (I4413) calls it with the runs it takes over the base."
+scope:
+  - ".ai/repo/project/issues/I4730.yaml"
+  - ".ai/repo/project/issues/I4413.yaml"
+  - ".ai/repo/project/issues/I4416.yaml"
+  - ".ai/repo/knowledge/curated/owner-decision-baseline-relative-gates.md"
+  - "apps/majordomus-cli/src/gates/baseline.rs"
+  - "apps/majordomus-cli/src/gates/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "docs/CI.md"
+non_scope:
+  - "Running the check over the base (export with git archive, prepare, bounded runs, cleanup) for finish: I4413, which now depends on this issue and hands its runs here"
+  - "The ledger lookup of a failure's origin in a closed session record: I3313"
+  - "The load a verification ran under and retries under load: I4415"
+  - "Attributing a pre-existing failure to the commit that introduced it: the last commit to touch a file names its latest editor, not its cause, so it is not offered; a bounded bisect over the trunk is a follow-up"
+  - "A trunk-health surface that keeps trunk alarms over time and raises one across sessions: a follow-up that reads the alarms callers record"
+  - "Choosing the number of runs: the caller declares it, and the report states it; (1-p)^N is not computed"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Unit tests in apps/majordomus-cli/src/gates/baseline.rs: a failure both sides show is pre_existing, does not block, and raises the trunk alarm `perf (2/2)` with the base commit; a failure only the change shows is introduced and blocks even when flaky; a green change over a green base is clean; a failure only the base shows is fixed and the verdict is clean_with_trunk_failures"
+  - "Unit tests: a failed run that names nothing on both sides is unknown, never pre_existing, and the verdict is undecided; exit:137 does not match exit:1; a run that did not finish shows not-finished and blocks"
+  - "Unit tests: a base that could not be run, a side with another number of runs than declared, a side whose runs span two trees, and a control of the wrong size each yield undecided with the reason, and a base that decides nothing reports nothing as fixed"
+  - "Unit tests: a finding whose normalised path is not in the change set has in_diff false, an introduced one is listed in introduced_outside_diff, and with no change set no finding claims in_diff"
+  - "Unit tests: under rate with slack 1, 2 of 4 against a control floor of 1 does not block and 4 of 4 does; a pre-existing id from 1 of 4 to 4 of 4 blocks; a finding in the change's own files blocks whatever the control shows; runs 0, and rate below three runs, are refused"
+  - "The capability's tests in builtin/gates.rs: gates.baseline answers over every projection's handler with the caller's change set, takes the change set from this checkout's git when none is given, says so when it cannot, and refuses an invalid input as invalid input"
+  - "The module declares five capabilities and every one is exposed over MCP and HTTP"
+validation:
+  - "cargo test -p majordomus-cli --lib gates::baseline"
+  - "cargo test -p majordomus-cli --lib capability::builtin::gates"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "baseline_judgement_unit_tests"
+created_at: 2026-11-25
+updated_at: 2026-11-25

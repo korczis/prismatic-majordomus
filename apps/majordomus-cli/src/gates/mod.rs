@@ -55,6 +55,7 @@
 // needs is the *documents* — the completion report and the types inside it — and those are
 // re-exported below, so the public surface is the answer and not the machinery that makes
 // it.
+pub(crate) mod baseline;
 pub(crate) mod closing;
 pub(crate) mod done;
 pub(crate) mod judge;
@@ -73,6 +74,10 @@ use crate::capability::builtin::obligations::Obligation;
 use crate::capability::builtin::ActiveTask;
 use crate::discovery::glob::Glob;
 
+pub use baseline::{
+    BaselineClass, BaselineDenominator, BaselineFinding, BaselineJudgement, BaselineReport,
+    BaselineRule, BaselineRun, BaselineSide, BaselineVerdict, TrunkAlarm,
+};
 pub use done::{DoneQuestion, ObligationStanding};
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;

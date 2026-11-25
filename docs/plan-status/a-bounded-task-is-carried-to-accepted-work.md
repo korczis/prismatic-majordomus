@@ -42,6 +42,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4460` | shares lib/gates.sh with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I4460` | shares apps/majordomus-cli/src/capability/builtin/gates.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4460` | shares lib/gates.sh with I4628; they may not run concurrently |
+| WARN | `scope_conflict` | `I4460` | shares apps/majordomus-cli/src/capability/builtin/gates.rs with I4730; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4462; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4464; they may not run concurrently |
@@ -149,6 +150,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares share/allow with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares share/schemas/majordomus/policy with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4685; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4730; they may not run concurrently |
 | WARN | `scope_conflict` | `I4522` | shares apps/majordomus-cli/src/commands/distribution.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4598; they may not run concurrently |

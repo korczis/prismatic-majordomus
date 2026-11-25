@@ -1,8 +1,10 @@
 //! The `gates` module: completion as a state the repository decides.
 //!
-//! Four capabilities: the model, the policy, and the completion they decide, which split the
-//! way [`super::obligations`] splits, for the same reason; and the state of every declared
-//! gate's last run, which answers the question none of them does.
+//! Five capabilities: the model, the policy, and the completion they decide, which split the
+//! way [`super::obligations`] splits, for the same reason; the state of every declared
+//! gate's last run, which answers the question none of them does; and the baseline, which
+//! judges the runs of one check over a change against the runs over the commit it is built
+//! on, so a failure the trunk already had reads as the trunk's (I4730).
 //!
 //! **The model is declared.** `.ai/repo/ci/gates.yaml` is this repository's CI model: every
 //! validation gate, the job that runs it, the command it runs, and the path classes that
@@ -40,12 +42,12 @@
 //! ```
 //! use majordomus_cli::capability::builtin::gates::module;
 //!
-//! // the whole module, as every projection reads it: four capabilities, none with a
+//! // the whole module, as every projection reads it: five capabilities, none with a
 //! // command-line arm of its own (`majordomus run <id>` reaches each, and `check` and
 //! // `finish` are the command line's answer about completion)
 //! let m = module();
 //! let ids: Vec<&str> = m.capabilities.iter().map(|c| c.capability.id.as_str()).collect();
-//! assert_eq!(ids, ["gates.model", "gates.policy", "gates.completion", "gates.state"]);
+//! assert_eq!(ids, ["gates.model", "gates.policy", "gates.completion", "gates.state", "gates.baseline"]);
 //! for entry in &m.capabilities {
 //!     assert!(entry.capability.exposure.cli.is_none());
 //!     assert!(entry.capability.exposure.http.is_some());
@@ -65,9 +67,9 @@ use crate::capability::module::ModuleDescriptor;
 use crate::gates::{self, judge, model, Completion, CompletionPolicy, GateStateReport};
 use crate::{capability, module};
 
-use super::get;
 use super::obligations::Obligation;
 use super::views::Empty;
+use super::{get, post};
 
 /// The URI under which the CI model is read as an MCP resource.
 pub const GATES_URI: &str = "majordomus://gates";
@@ -125,6 +127,85 @@ pub struct CompletionPolicyReport {
 
 /// The URI under which the state of every declared gate is read as an MCP resource.
 pub const STATE_URI: &str = "majordomus://gates/state";
+
+/// The input of `gates.baseline`: the runs of one check over the change, over the commit it
+/// is built on, and optionally over a neutral perturbation of that commit, as the caller ran
+/// them. The capability judges them and runs nothing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::gates::BaselineInput;
+///
+/// let input: BaselineInput = serde_json::from_value(serde_json::json!({
+///     "runs": 1,
+///     "change": { "commit": "c1", "runs": [{ "exit": 1, "findings": [{ "id": "perf" }] }] },
+///     "base": { "commit": "b1", "runs": [{ "exit": 1, "findings": [{ "id": "perf" }] }] }
+/// }))
+/// .unwrap();
+/// assert_eq!(input.runs, 1);
+/// // a field the contract does not know is refused, never ignored
+/// assert!(serde_json::from_value::<BaselineInput>(serde_json::json!({
+///     "runs": 1, "change": {}, "base": {}, "seed": 4
+/// }))
+/// .is_err());
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BaselineInput {
+    /// The runs declared per side: every side is compared over exactly this many.
+    pub runs: u32,
+    /// `subset` (the default: no failure the base does not also show) or
+    /// `{"rate": {"slack": k}}`.
+    #[serde(default)]
+    pub rule: gates::BaselineRule,
+    /// The runs over the change.
+    pub change: gates::BaselineSide,
+    /// The runs over the commit the change is built on: its merge base with the trunk, or
+    /// the trunk's tip.
+    pub base: gates::BaselineSide,
+    /// The runs over a neutral perturbation of the base (another seed, an empty commit): the
+    /// noise floor the `rate` rule compares against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub control: Option<gates::BaselineSide>,
+    /// The change set `in_diff` is taken over. Absent: the paths between the base commit and
+    /// the working tree of this checkout, when a finding names a file and the base names a
+    /// commit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub changed: Option<Vec<String>>,
+    /// The command that was run, echoed into the report as its provenance.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub command: Option<String>,
+}
+
+impl BenchmarkCases for BaselineInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let side = |commit: &str, ids: &[&str]| gates::BaselineSide {
+            commit: Some(commit.into()),
+            runs: vec![gates::BaselineRun {
+                exit: Some(if ids.is_empty() { 0 } else { 1 }),
+                tree: None,
+                findings: ids
+                    .iter()
+                    .map(|id| gates::BaselineFinding {
+                        id: (*id).into(),
+                        path: Some(format!("{id}.md")),
+                        line: None,
+                    })
+                    .collect(),
+            }],
+            unavailable: None,
+        };
+        vec![NamedCase::new(
+            "a-trunk-failure-and-an-introduced-one",
+            BaselineInput {
+                runs: 1,
+                change: side("change", &["inherited", "introduced"]),
+                base: side("base", &["inherited"]),
+                changed: Some(vec!["introduced.md".into()]),
+                ..Default::default()
+            },
+        )]
+    }
+}
 
 // ---------------------------------------------------------------- output types
 
@@ -333,6 +414,57 @@ fn gates_policy(ctx: &Context, _: Empty) -> Result<CompletionPolicyReport, Capab
 /// readable CI model" rather than failing. Refusing the call instead would make a capability
 /// that cannot answer about most repositories — and the generic tests that replay every
 /// capability's benchmark cases against a fixture are exactly where that showed.
+/// `gates.baseline`: judge the supplied runs, taking the change set from this checkout only
+/// when the caller supplied none and a finding names a file it could be about.
+fn gates_baseline(
+    ctx: &Context,
+    input: BaselineInput,
+) -> Result<gates::BaselineReport, CapabilityError> {
+    let names_a_file = input
+        .change
+        .runs
+        .iter()
+        .chain(input.base.runs.iter())
+        .flat_map(|r| r.findings.iter())
+        .any(|f| f.path.is_some());
+    let mut unestablished: Option<String> = None;
+    let changed: Option<std::collections::BTreeSet<String>> =
+        match (&input.changed, &input.base.commit) {
+            (Some(paths), _) => Some(
+                paths
+                    .iter()
+                    .map(|p| gates::baseline::normalise_path(p))
+                    .collect(),
+            ),
+            (None, Some(base)) if names_a_file => {
+                let root = PathBuf::from(&ctx.index.repository.root);
+                match gates::changed_paths(&root, Some(base)) {
+                    Ok(paths) => Some(paths.into_iter().collect()),
+                    Err(e) => {
+                        unestablished = Some(format!(
+                        "no change set against {base} could be read, so no finding is placed in \
+                         or outside the diff: {e}"
+                    ));
+                        None
+                    }
+                }
+            }
+            _ => None,
+        };
+    let mut report = gates::baseline::judge(
+        input.runs,
+        input.rule,
+        &input.change,
+        &input.base,
+        input.control.as_ref(),
+        changed.as_ref(),
+    )
+    .map_err(CapabilityError::InvalidInput)?;
+    report.command = input.command;
+    report.reasons.extend(unestablished);
+    Ok(report)
+}
+
 fn load_model(root: &Path) -> (model::GateModel, Option<String>) {
     match model::GateModel::load(root) {
         Ok(m) => (m, None),
@@ -663,7 +795,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
 ///     .iter()
 ///     .filter_map(|e| e.capability.exposure.http.as_ref().map(|h| h.path.as_str()))
 ///     .collect();
-/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/policy", "/api/v1/gates/completion", "/api/v1/gates/state"]);
+/// assert_eq!(routes, ["/api/v1/gates", "/api/v1/gates/policy", "/api/v1/gates/completion", "/api/v1/gates/state", "/api/v1/gates/baseline"]);
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -748,6 +880,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: gates_state,
             },
+            capability! {
+                id: "gates.baseline",
+                title: "A check judged against the commit the change is built on",
+                description: "The runs of one check over the change, over the commit it is built on (its merge base with the trunk, or the trunk's tip) and optionally over a neutral perturbation of that commit, the same declared number of times on each side, judged per failure id: `introduced` (the change shows it and the base never did), `pre_existing` (the base shows it too: the trunk's), `fixed`, or `unknown` (the base could not be compared with, or a failure that names nothing matches another that names nothing). Flaky is a property, never a class. Under the default rule, `subset` — no failure the base does not also show — only an introduced id blocks; under `rate` an id blocks when the change shows it in more runs than the base and the control by more than the declared slack. The verdict is `clean`, `clean_with_trunk_failures` (with the trunk alarm: the base's own failures and their counts), `introduced` or `undecided` with its reason, and carries its denominator and the provenance the caller supplied. A finding that names a file says whether that file is in the change set, so a whole-tree scan can say \"outside your diff\". It judges and never runs the check, and never turns a red verification into a green one.",
+                input: BaselineInput,
+                output: gates::BaselineReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: Some(McpExposure { tool: Some("majordomus_gate_baseline".into()), resource: None }),
+                    http: post("/api/v1/gates/baseline"),
+                    cli: None,
+                },
+                tags: ["gates", "ci", "evidence", "verification"],
+                cache: CachePolicy::Disabled,
+                handler: gates_baseline,
+            },
         ],
     }
 }
@@ -760,7 +908,7 @@ mod tests {
     fn the_module_declares_what_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "gates");
-        assert_eq!(m.capabilities.len(), 4);
+        assert_eq!(m.capabilities.len(), 5);
         for e in &m.capabilities {
             assert_eq!(e.capability.id.namespace(), "gates");
             assert!(
@@ -1250,6 +1398,94 @@ mod tests {
         assert!(
             why.starts_with("no distribution to read the completion policy from"),
             "{why}"
+        );
+    }
+
+    /// `gates.baseline` through the registry, the way every projection reaches it: with the
+    /// caller's change set, with the change set taken from this checkout's git, with no git
+    /// to take it from, and over an input that means nothing.
+    #[test]
+    fn the_baseline_judges_supplied_runs_and_places_each_finding_in_or_outside_the_diff() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let ctx = repo.context().unwrap();
+        let input = |base_commit: &str, changed: Option<Vec<&str>>| {
+            let mut v = serde_json::json!({
+                "runs": 1,
+                "command": "scripts/gate",
+                "change": { "commit": "c", "runs": [{ "exit": 1, "findings": [
+                    { "id": "refs", "path": "docs/a.md" },
+                    { "id": "label", "path": "src/x.rs", "line": 3 }
+                ] }] },
+                "base": { "commit": base_commit, "runs": [{ "exit": 1, "findings": [
+                    { "id": "refs", "path": "docs/a.md" }
+                ] }] }
+            });
+            if let Some(paths) = changed {
+                v["changed"] = serde_json::json!(paths);
+            }
+            v
+        };
+        let judge = |v: serde_json::Value| -> gates::BaselineReport {
+            serde_json::from_value(ctx.execute("gates.baseline", v).expect("it answers")).unwrap()
+        };
+
+        // the caller's change set
+        let r = judge(input("b", Some(vec!["./src/x.rs"])));
+        assert_eq!(r.verdict, gates::BaselineVerdict::Introduced);
+        assert_eq!(r.command.as_deref(), Some("scripts/gate"));
+        let in_diff: Vec<(&str, Option<bool>)> = r
+            .findings
+            .iter()
+            .map(|f| (f.id.as_str(), f.in_diff))
+            .collect();
+        assert_eq!(in_diff, [("label", Some(true)), ("refs", Some(false))]);
+        assert!(r.trunk_alarm.is_some());
+
+        // no git here: the change set cannot be read, and the report says so
+        let r = judge(input("HEAD", None));
+        assert!(r.findings.iter().all(|f| f.in_diff.is_none()));
+        assert!(
+            r.reasons
+                .iter()
+                .any(|l| l.starts_with("no change set against HEAD")),
+            "{:?}",
+            r.reasons
+        );
+
+        // this checkout's git: the file changed since the base is in the diff
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(["-c", "user.name=t", "-c", "user.email=t@example.invalid"])
+                .args(args)
+                .output()
+                .expect("git")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "base"]);
+        std::fs::create_dir_all(root.join("src")).unwrap();
+        std::fs::write(root.join("src/x.rs"), "fn x() {}\n").unwrap();
+        let r = judge(input("HEAD", None));
+        assert_eq!(r.introduced_outside_diff, Vec::<String>::new(), "{r:?}");
+        let label = r.findings.iter().find(|f| f.id == "label").unwrap();
+        assert_eq!(label.in_diff, Some(true), "{r:?}");
+
+        // and an input that means nothing is the caller's mistake
+        let e = ctx
+            .execute(
+                "gates.baseline",
+                serde_json::json!({ "runs": 0, "change": {}, "base": {} }),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(e, CapabilityError::InvalidInput(ref m) if m.contains("at least 1")),
+            "{e:?}"
         );
     }
 }
