@@ -59,6 +59,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4753; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4485; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/capability/builtin/capabilities.rs with I4486; they may not run concurrently |
@@ -73,3 +74,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/policy.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/policy.rs with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4684; they may not run concurrently |

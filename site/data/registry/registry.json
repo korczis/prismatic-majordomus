@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "c5ebdd58222a7eee4b0b505d2e13e43e06558f885db6edfb058b0c8c266fd10e",
     "summary": {
-      "total": 4063,
+      "total": 4066,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3833,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3833
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3843
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3890,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1279,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "da64f236a5e6472c3d6fa365cf1a566e474824dc49e50e068a78966766334bed",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1279,
       "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 141482
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -116460,7 +116460,7 @@
         "path": ".ai/repo/project/issues/I2749.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5476
+        "bytes": 5922
       },
       {
         "uri": "majordomus://issue/I2750",
@@ -121531,7 +121531,7 @@
         "path": ".ai/repo/project/issues/I3754.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6202
+        "bytes": 6700
       },
       {
         "uri": "majordomus://issue/I3755",
@@ -123357,7 +123357,7 @@
         "path": ".ai/repo/project/issues/I4262.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1767
+        "bytes": 2226
       },
       {
         "uri": "majordomus://issue/I4263",
@@ -124226,7 +124226,7 @@
         "path": ".ai/repo/project/issues/I4367.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 9804
+        "bytes": 10353
       },
       {
         "uri": "majordomus://issue/I4368",
@@ -125095,7 +125095,7 @@
         "path": ".ai/repo/project/issues/I4568.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2930
+        "bytes": 3483
       },
       {
         "uri": "majordomus://issue/I4569",
@@ -125359,7 +125359,7 @@
         "path": ".ai/repo/project/issues/I4597.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7005
+        "bytes": 7827
       },
       {
         "uri": "majordomus://issue/I4598",
@@ -125579,7 +125579,7 @@
         "path": ".ai/repo/project/issues/I4669.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5634
+        "bytes": 6033
       },
       {
         "uri": "majordomus://issue/I4670",
@@ -125604,6 +125604,17 @@
         "bytes": 5930
       },
       {
+        "uri": "majordomus://issue/I4684",
+        "kind": "issue",
+        "identity": "I4684",
+        "title": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order",
+        "description": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks (branch.<trunk>.remote), and refuses, naming the remotes, when several remotes' HEADs name the trunk and disagree.",
+        "path": ".ai/repo/project/issues/I4684.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4039
+      },
+      {
         "uri": "majordomus://issue/I4685",
         "kind": "issue",
         "identity": "I4685",
@@ -125613,6 +125624,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3298
+      },
+      {
+        "uri": "majordomus://issue/I4753",
+        "kind": "issue",
+        "identity": "I4753",
+        "title": "Starting work on an issue takes an exclusive mesh claim on that issue, and a second session that starts the same issue is refused with the holder named",
+        "description": "Starting work on an issue (`plan start <id>`, or `start` whose `--issue`, branch or scope names an issue) takes an exclusive mesh claim on that issue, and a second session is refused with the holder named.",
+        "path": ".ai/repo/project/issues/I4753.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5206
+      },
+      {
+        "uri": "majordomus://issue/I4754",
+        "kind": "issue",
+        "identity": "I4754",
+        "title": "Overlapping pull requests of different sessions get a proposed landing order, sent to each owning session for agreement, and the lander keeps an agreed order",
+        "description": "When open PRs held by different sessions overlap (the same files, and where measurable the same functions), `majordomus prs` proposes a landing order with its reasons and sends each owning session a mesh review request naming the order and the overlap; the lander refuses to land out of an agreed order.",
+        "path": ".ai/repo/project/issues/I4754.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5551
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -142242,7 +142275,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1279
     },
     {
       "name": "knowledge",

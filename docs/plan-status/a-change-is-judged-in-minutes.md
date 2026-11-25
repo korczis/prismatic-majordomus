@@ -115,6 +115,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I3841` | shares site/content with I4684; they may not run concurrently |
+| WARN | `scope_conflict` | `I3841` | shares site/content with I4753; they may not run concurrently |
+| WARN | `scope_conflict` | `I3841` | shares site/content with I4754; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4460; they may not run concurrently |
@@ -130,4 +133,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4349` | shares apps/majordomus-cli/src/integration/mod.rs with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares apps/majordomus-cli/src/capability/builtin/integration.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I4349` | shares apps/majordomus-cli/src/integration/mod.rs with I4754; they may not run concurrently |
 | WARN | `scope_conflict` | `I4524` | shares docs/CI.md with I4569; they may not run concurrently |

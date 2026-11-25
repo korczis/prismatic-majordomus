@@ -87,3 +87,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3606` | shares docs/MESH.md with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I3606` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I3606` | shares docs/MESH.md with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3606` | shares docs/MESH.md with I4753; they may not run concurrently |
+| WARN | `scope_conflict` | `I3606` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4754; they may not run concurrently |

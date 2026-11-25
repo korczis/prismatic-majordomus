@@ -44803,7 +44803,6 @@
           "completed_at": "2026-10-28T23:37:35Z",
           "completed_event": "sha256:830375688143134c3b58d7d942b5a5c2b937b51ba7a166ff233965ef39673f07",
           "created_at": "2026-10-16",
-          "current_state": "delivery.rs takes the newest commit or merge in the trunk's history whose subject, title or branch names the issue as its merge, whatever that commit changed.",
           "depends_on": [
             "I2741"
           ],
@@ -65835,6 +65834,7 @@
             ".ai/repo/project/issues/I3754.yaml"
           ],
           "slug": "plan-next-never-names-delivered-work",
+          "updated_at": "2026-11-25",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3727_plan_next_never_names_delivered_work 99_plan_capabilities",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan",
@@ -73227,7 +73227,8 @@
         "facts": {
           "acceptance_criteria": [
             "A subject without an issue id is refused when the policy requires one",
-            "A closing keyword is refused"
+            "A closing keyword is refused",
+            "An adopter-declared external commit-message validator (an argv) is run by the commit-msg hook init installs"
           ],
           "created_at": "2026-10-27",
           "current_state": "commit.validate judges this repository's own policy.",
@@ -73252,7 +73253,7 @@
             "test/cases/4262_an_adopter_commit_is_judged.sh"
           ],
           "slug": "a-commit-message-guard-ships-for-adopters",
-          "updated_at": "2026-10-27",
+          "updated_at": "2026-11-25",
           "validation": [
             "bash test/run.sh 4262_an_adopter_commit_is_judged"
           ]
@@ -76981,7 +76982,7 @@
           ],
           "serves": [],
           "slug": "delivery-reads-the-projected-refs-region",
-          "updated_at": "2026-10-29"
+          "updated_at": "2026-11-25"
         }
       },
       {
@@ -80928,6 +80929,7 @@
             "merging-and-referencing-are-enforced#every-commit-names-its-issue"
           ],
           "slug": "a-commit-names-its-task-and-session",
+          "updated_at": "2026-11-25",
           "validation": [
             "bash test/run.sh <the new cases>"
           ]
@@ -81882,7 +81884,7 @@
           ],
           "serves": [],
           "slug": "a-recomputed-line-is-the-landings-to-write",
-          "updated_at": "2026-11-15",
+          "updated_at": "2026-11-25",
           "validation": [
             "bash test/run.sh 4597_a_recomputed_line_is_the_landings_to_write",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::relation integration::classify integration::drain policy",
@@ -82719,6 +82721,7 @@
           ],
           "serves": [],
           "slug": "an-owner-answer-carries-its-provenance",
+          "updated_at": "2026-11-25",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 4669_an_owner_answer_carries_its_provenance"
@@ -82820,6 +82823,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4684",
+        "kind": "issue",
+        "label": "I4684",
+        "summary": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order",
+        "route": "/cockpit/objects/issue/i4684",
+        "source": ".ai/repo/project/issues/I4684.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "worktree_create_follows_the_tracked_trunk_remote"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "start's report of its base's distance from the remote trunk: I3153",
+            "Fetching or pushing any remote other than the one chosen",
+            "Changing a repository's remotes or its branch.<trunk>.remote setting"
+          ],
+          "objective": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks (branch.<trunk>.remote), and refuses, naming the remotes, when several remotes' HEADs name the trunk and disagree.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4684.yaml",
+            "apps/majordomus-cli/src/worktree/service.rs",
+            "apps/majordomus-cli/tests/worktree.rs",
+            "docs/WORKTREES.md",
+            "test/cases/4684_worktree_create_follows_the_tracked_trunk_remote.sh",
+            "site/content/plan/I4684.md"
+          ],
+          "serves": [],
+          "slug": "worktree-create-follows-the-tracked-trunk-remote",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test worktree",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4684_worktree_create_follows_the_tracked_trunk_remote 3131_a_new_worktree_starts_from_the_remote_trunk"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4685",
         "kind": "issue",
         "label": "I4685",
@@ -82849,6 +82892,95 @@
           "slug": "pages-check-resolves-an-ambiguous-short-sha",
           "validation": [
             "bash test/run.sh 104_published_site"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4753",
+        "kind": "issue",
+        "label": "I4753",
+        "summary": "Starting work on an issue takes an exclusive mesh claim on that issue, and a second session that starts the same issue is refused with the holder named",
+        "route": "/cockpit/objects/issue/i4753",
+        "source": ".ai/repo/project/issues/I4753.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "starting_an_issue_claims_it_exclusively"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "Mapping a namespaced claim scope such as issue:<id> to a record path: I3771",
+            "Passing over an issue that sits in an open pull request or under a live branch claim: I3971",
+            "Passing over delivered work: I3754",
+            "Making a task's path claim exclusive: the scope claim stays advisory, and only the issue key excludes",
+            "Inferring an issue from prose in a commit, an intent or a task title"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4753.yaml",
+            "lib/common.sh",
+            "lib/start.sh",
+            "lib/plan.sh",
+            "lib/handover.sh",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "docs/MESH.md",
+            "docs/PLANNING.md",
+            "test/cases/4753_starting_an_issue_claims_it_exclusively.sh",
+            "site/content/plan/I4753.md"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#two-sessions-never-share-an-item"
+          ],
+          "slug": "starting-an-issue-claims-it-exclusively",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4753_starting_an_issue_claims_it_exclusively"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4754",
+        "kind": "issue",
+        "label": "I4754",
+        "summary": "Overlapping pull requests of different sessions get a proposed landing order, sent to each owning session for agreement, and the lander keeps an agreed order",
+        "route": "/cockpit/objects/issue/i4754",
+        "source": ".ai/repo/project/issues/I4754.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "overlapping_pull_requests_get_a_landing_order"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "Resolving the conflict between the overlapping pull requests: their owners and the repair lanes do that",
+            "Composing a combined top: the landing seat's, under the cooperation rule",
+            "Recomputed lines and regenerated regions, which are not authored overlaps: I4597",
+            "Pull requests of one session, which that session orders itself"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4754.yaml",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "docs/INTEGRATION.md",
+            "test/cases/4754_overlapping_pull_requests_get_a_landing_order.sh",
+            "site/content/plan/I4754.md"
+          ],
+          "serves": [],
+          "slug": "overlapping-pull-requests-get-a-landing-order",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::classify integration::drain",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4754_overlapping_pull_requests_get_a_landing_order"
           ]
         }
       },
@@ -153053,6 +153185,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4684",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4684",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4685",
         "target": "kind:issue",
         "kind": "is_a"
@@ -153060,6 +153202,26 @@
       {
         "source": "majordomus://issue/I4685",
         "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4753",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4753",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4754",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4754",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
         "kind": "belongs_to"
       },
       {
@@ -165999,8 +166161,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4544,
+      "edges": 10235,
       "acyclic": false,
       "truncated": false
     }
