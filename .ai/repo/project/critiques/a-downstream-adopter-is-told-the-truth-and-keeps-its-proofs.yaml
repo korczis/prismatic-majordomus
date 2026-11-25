@@ -1,0 +1,93 @@
+intent: a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs
+reviewed_at: "46775282570"
+reviewed_by: "claude-code (the /evolve subagent that wrote the plan) — SELF-REVIEW: the session that authored the intent, the gap and the fifteen issues also wrote this critique. Stated rather than hidden: a critique carries more weight when another session or the owner writes it, and no advisor was consulted because the machine was below its disk floor and at load above 70."
+findings:
+  - id: a-probe-is-a-network-call-in-availability
+    class: regression_risk
+    subject: I4778
+    finding: "A liveness probe could be wired into availability itself, which would make every reasoning advisors call reach the network and break ADR 0032's offline derivation."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4778
+      because: "The probe is an explicit command whose outcome is recorded; derive_availability reads the record and the clock only, and its unit tests run with the network unreachable (acceptance criterion five)."
+  - id: author-is-not-agency
+    class: unproven_assumption
+    subject: I4789
+    finding: "Telling the person's commit from the agent's by author email fails on every machine where the agent commits under the person's git identity, which is the common case; it would exempt every agent commit."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4789
+      because: "Agency is proved by a session trailer the commit-msg hook stamps when the committing environment carries the agent session's marker; the author alone never exempts, and the case holds an agent commit under the person's identity being refused."
+  - id: credential-value-leaks
+    class: regression_risk
+    subject: I4780
+    finding: "A probe that reads secrets can leak them through an error message, a debug log or a fixture request log."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4780
+      because: "The value never enters a formatted string that reaches output, duplicates are named by a digest prefix, and the case greps stdout, stderr, the ledger and every file it can reach for the planted value."
+  - id: a-cloud-marker-may-change
+    class: unproven_assumption
+    subject: I4779
+    finding: "Classifying remote models by a `:cloud` tag suffix assumes a runtime's naming convention that the vendor can change."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4779
+      because: "The classification names the evidence it read and the patterns are declared in share/advisors.yaml, so a new marker is a declaration; a model the classification cannot place is reported, and the offline mode admits only what it positively classified local."
+  - id: gated-mode-moves-numbers
+    class: regression_risk
+    subject: I4781
+    finding: "Counting gated rules as enforced changes every repository's doctrine summary, and this repository's rule-proof-check could disagree with the moved reader."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4781
+      because: "The summary names the mode of each count, and an acceptance criterion holds rule-proof-check's findings on this repository equal before and after the move."
+  - id: requirement-coverage-waits-on-a-record
+    class: delivery_verification
+    subject: I4787
+    finding: "I4787 and I4790 depend on I4261, whose case is on master while the issue is not recorded DONE, so both read BLOCKED for a reason that is only a missing record."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "The dependency is the truth: traces is I4261's contract and its evidence has not been recorded. Recording I4261 is a records-seat task (plan drift lists it as merged_not_recorded), and removing the edge would let two issues build on an unverified contract."
+  - id: campsite-duplicates-baselines
+    class: unnecessary_work
+    subject: I4786
+    finding: "A campsite capability beside this repository's many baseline files could become a second ratchet mechanism with overlapping metrics."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4786
+      because: "Campsite measures at the merge base and needs no baseline file, which is what an adopter lacks; folding this repository's baselines into it is named as later work in I4786's non_scope, after it has run here, so no metric is counted twice by design."
+  - id: doctor-budget-unmeasured-here
+    class: insufficient_work
+    subject: I4793
+    finding: "The 90 to 104 s figure was measured downstream on a loaded machine; planning a fix against it without a measurement here could chase load, not cost."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4793
+      because: "The first deliverable is per-section timing and a populated-machine fixture; the fixes target only sections the measurement names, and the budget is re-derived from the new run."
+  - id: progress-comments-spam
+    class: regression_risk
+    subject: I4790
+    finding: "Writing to external trackers from a push hook could post duplicate or unwanted comments visible outside the repository."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4790
+      because: "Each comment carries a marker and the command lists before it writes, a rerun writes nothing, the setup starts with --dry-run, and the adapters are off until the repository declares them."
+  - id: reopen-report-cost
+    class: regression_risk
+    subject: I4788
+    finding: "Deriving the plan at the base as well as at the tree doubles plan validate's cost in the commit hook of a large plan."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4788
+      because: "The base derivation is cached by the base commit's tree id, and the comparison runs only when the plan files differ from the base."

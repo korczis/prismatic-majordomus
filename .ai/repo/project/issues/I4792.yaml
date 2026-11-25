@@ -1,0 +1,37 @@
+id: I4792
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "Optional plan fields are a stated contract: every machine-readable plan answer carries an absent `due_on` (and every other optional milestone field) as an explicit null, and every shipped consumer renders both"
+slug: optional-plan-fields-are-a-stated-contract
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the absence of an optional milestone field visible to a consumer: plan show, list, roadmap and status in JSON, the published plan data and the MCP answers carry every optional key the milestone schema declares, `due_on` first, with null when the record omits it; the schema marks the field nullable and documents that no status is derived from it; and the shipped consumers (roadmap, the forge projection, the site templates, docs/PLAN_STATUS.md) are each held by a fixture plan with one milestone that has due_on and one that has not."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), a milestone without due_on was valid against the schema, yet a consumer of the plan's JSON assumed the key and broke; the contract that the key is optional was stated only in docs/SCHEMAS.md, and an answer that drops an absent key gives a consumer nothing to read the contract from."
+current_state: "Measured at origin/master 46775282570. share/allow/milestone.txt admits `due_on`; docs/SCHEMAS.md:520 marks it optional, projected to the forge's due date and never read to derive a status; scripts/github-sync:1041-1042 sends it only when present; whether a JSON answer carries an absent key depends on the projection that wrote it."
+desired_state: "One serialisation of a milestone feeds every JSON answer and carries each optional key; the milestone schema says `\"type\": [\"string\", \"null\"]` for due_on with its format; docs/SCHEMAS.md and docs/PLANNING.md say what a consumer may assume; the fixture case renders both milestones through each consumer and compares the JSON keys of the two."
+scope:
+  - ".ai/repo/project/issues/I4792.yaml"
+  - "lib/plan.sh"
+  - "lib/plan_json.awk"
+  - "share/schemas/majordomus/milestone/milestone.v1.schema.json"
+  - "docs/SCHEMAS.md"
+  - "docs/PLANNING.md"
+  - "test/cases/4792_optional_plan_fields_are_a_stated_contract.sh"
+non_scope:
+  - "Adding due_on to any milestone of this repository"
+  - "Deriving any status or order from a date"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#optional-fields-are-a-stated-contract"
+acceptance_criteria:
+  - "`plan show <milestone> --json` of a milestone without due_on carries `\"due_on\": null`, and the same keys as one with it"
+  - "The roadmap, the forge projection's dry run and the site's milestone page render both fixture milestones without error"
+  - "The schema validates both records and refuses a due_on that is not a date"
+validation:
+  - "bash test/run.sh 4792_optional_plan_fields_are_a_stated_contract"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_4792"
+risk: "Low. A consumer that tests for key presence rather than value changes its reading; the change makes that consumer correct, and the changelog names it."
+created_at: 2026-11-25
+updated_at: 2026-11-25

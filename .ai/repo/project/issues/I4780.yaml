@@ -1,0 +1,39 @@
+id: I4780
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "`majordomus credential probe <service>` asks every declared source of one credential whether the service accepts it, and reports a status per source without ever printing the value"
+slug: a-credential-source-is-probed-not-read
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A repository (or the tool's own share/) declares a service's credential: the variable names it may be held under, the files that may hold them (a dotenv file, an .envrc.local), an optional credential helper, and one cheap authenticated endpoint with the status that means accepted. `credential probe <service>` reads each source in turn, sends that source's value only to the declared endpoint, and reports per source: answered, rejected (401 or 403), unreachable, absent, or duplicate-of (when two sources hold the same value, named by a digest prefix, never the value). `credential sources` lists what is declared and which sources exist, reading no value at all."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), two copies of one service's credentials existed in two files: one stale (401) and one working. Finding which one the shell actually loaded took a manual round of probes, each a risk of echoing a secret into a transcript. A probe that says which source answers, and never prints what it read, turns that into one command."
+current_state: "Measured at origin/master 46775282570. availability.rs knows whether a credential variable is set and never reads its value; no command reads a credential source, compares two of them or asks a service whether it accepts one; share/ declares no credential source or probe endpoint."
+desired_state: "The capability is declared under apps/majordomus-cli/src/capability/builtin/ and projected by `majordomus generate`; a credential declaration has a schema under share/schemas/majordomus/; the probe writes no record of any value, its output and its log carry only statuses, source names and digest prefixes; docs/ENVIRONMENT.md documents declaring a service and running the probe; reasoning advisors (I4778) may name this command as the remedy for credential_rejected."
+scope:
+  - ".ai/repo/project/issues/I4780.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/credential.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "share/schemas/majordomus/credential/credential.v1.schema.json"
+  - "share/credentials.yaml"
+  - "docs/ENVIRONMENT.md"
+  - "test/cases/4780_a_credential_is_probed_not_read.sh"
+non_scope:
+  - "Storing, rotating, copying or repairing a credential"
+  - "Any endpoint not declared for the service: the value goes to one URL and nowhere else"
+  - "Probing advisors, which I4778 does through their adapters"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#credentials-are-probed-without-being-read"
+acceptance_criteria:
+  - "Against a local fake service, a source holding the accepted value reads answered and a source holding a stale one reads rejected"
+  - "Two sources holding one value read duplicate-of with a digest prefix, and neither value appears in stdout, stderr, the ledger or any file the case can grep"
+  - "A declared source that does not exist reads absent; an unreachable endpoint reads unreachable and the probe exits non-zero without a retry storm"
+  - "`credential sources` reads no file content: the case replaces each file with one that is unreadable and the listing still answers"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::credential"
+  - "bash test/run.sh 4780_a_credential_is_probed_not_read"
+evidence_required:
+  - "case_4780"
+risk: "Medium: it handles secrets. The value lives only in the process that sends it, is never formatted into a string that reaches output, and the case greps every output channel for the planted value."
+created_at: 2026-11-25
+updated_at: 2026-11-25

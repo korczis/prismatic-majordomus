@@ -95,3 +95,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares apps/majordomus-cli/src/commands/bench.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4630; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4788; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares lib/check.sh with I4789; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4792; they may not run concurrently |
