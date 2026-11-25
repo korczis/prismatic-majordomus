@@ -96,12 +96,12 @@ mj_merge_block_wanted() {
       [ -n "$p" ] || continue
       mj_merge_repo_decides "$p" && continue
       mj_merge_attr_line "$p" majordomus-derived || true
-    done < <(mj_merge_whole_patterns | sort -u)
+    done < <(mj_merge_whole_patterns | LC_ALL=C sort -u)
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       mj_merge_repo_decides "$p" && continue
       mj_merge_attr_line "/$p" majordomus-regions || true
-    done < <(mj_merge_region_paths | sort -u)
+    done < <(mj_merge_region_paths | LC_ALL=C sort -u)
   } | awk '!seen[$1]++'
 }
 
