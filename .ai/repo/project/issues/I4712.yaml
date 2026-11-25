@@ -1,0 +1,42 @@
+id: I4712
+milestone: the-runtime-supervises-itself
+title: "A bounded subprocess ends with everything it started, and the worktree lock is taken at once from an owner that is gone"
+slug: bounded-subprocesses-end-their-group-and-dead-lock-owners-are-reclaimed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Every bounded subprocess the executable runs (worktree git fetch and git runs, gh for the monitor, the tailscale status read, the environment probe) leads a process group of its own, and its bound ends the group and reaps the child; the groups this process leads are ended when it dies of SIGTERM, SIGINT or SIGHUP, through one primitive in crate::process that the benchmark runner uses too. The worktree lock names its owner with its pid and this boot's identity, and a caller takes a lock whose owner is dead, or that was written in another boot, at once instead of after the 900-second staleness bound."
+why: "On 2026-11-22 the owner asked that majordomus-cli create no zombies and leak nothing. Killing only the child at a bound left what it had started: a git fetch killed alone leaves its git-remote-https with no parent, and that orphan keeps the output pipes the drain threads read to their end, so the bound did not bound the call either. The same day OpenTTD's .git/majordomus/locks/worktrees.lock was held by dead pid 74771 and was removed by hand: a lock left by a process that died of a signal stopped every worktree create until a person or the age rule cleared it."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. worktree/git.rs wait_until, monitor/github.rs run and mesh/tailscale.rs read_status call child.kill() on the direct child at their bound; environment/probe.rs bounded_output sends SIGKILL to the pid alone; economics/runner.rs alone runs its children as group leaders, with a private registry whose handler it installs over any other. worktree/lock.rs reclaims a lock only by its age. A reproducer with the installed 1.2.0 (a client killed with SIGKILL, a bridging peer, the host itself killed) found the stdio mcp and its hosted server leave nothing behind: stdin EOF ends the session, and a peer that never closes its session is expired after 90 s."
+desired_state: "crate::process holds spawn_group, kill_group, wait_group and the signal-time group registry, installed only over a default disposition and ended by lease::end_by_signal too; every bounded runner uses it; worktree/lock.rs writes pid, time and boot and reclaims a dead or other-boot owner at once."
+scope:
+  - "apps/majordomus-cli/src/process.rs"
+  - "apps/majordomus-cli/src/worktree/git.rs"
+  - "apps/majordomus-cli/src/worktree/lock.rs"
+  - "apps/majordomus-cli/src/monitor/github.rs"
+  - "apps/majordomus-cli/src/mesh/tailscale.rs"
+  - "apps/majordomus-cli/src/environment/probe.rs"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - ".ai/repo/project/issues/I4712.yaml"
+non_scope:
+  - "The serve daemon's own lifecycle (idle exit, lease election), which I4007 and I2127 already bound"
+  - "A sweep that kills processes this process did not start"
+  - "Locks other than the worktree lock"
+depends_on: []
+acceptance_criteria:
+  - "A bounded command whose child left a program holding its output returns at its bound, and that program is gone"
+  - "A process ended by SIGTERM ends the groups it leads first and still dies of the signal; an ignored signal stays ignored"
+  - "A worktree lock whose owner is dead, or was written in another boot, is taken at once; one whose owner lives, or that names no owner, is held"
+  - "A holder killed with SIGKILL while holding the worktree lock leaves a file the next caller takes at once"
+validation:
+  - "cargo test --lib process::"
+  - "cargo test --lib worktree::"
+  - "cargo test --lib environment::probe"
+  - "cargo test --lib monitor::github"
+  - "cargo test --lib mesh::tailscale"
+  - "cargo test --lib economics::runner"
+evidence_required:
+  - rust
+serves: []
+created_at: 2026-11-22

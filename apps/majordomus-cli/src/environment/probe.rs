@@ -11,53 +11,31 @@
 //! network. The lease a Majordomus server publishes always names a loopback address.
 
 use std::net::{IpAddr, SocketAddr, TcpStream};
-use std::process::{Command, Output, Stdio};
-use std::sync::mpsc;
+use std::process::{Command, Output};
 use std::time::Duration;
 
 use super::ServiceAvailability;
 
 /// Run a command and take its output, or give up after `budget`.
 ///
-/// The child is waited for on its own thread so that its pipes are drained while the
-/// caller's clock runs: polling `try_wait` from here instead would deadlock the moment a
-/// child wrote more than a pipe buffer. On expiry the child is killed and `None` comes
-/// back; a caller that cannot say what it wanted must say that, not guess.
+/// It is the bounded run every runner shares (`crate::process::run_bounded`): the pipes are
+/// drained while the caller's clock runs, so a child that writes more than a pipe buffer is
+/// not held on its write; the child leads a process group of its own, and on expiry the
+/// group is killed — the child and whatever it started, which would otherwise keep the
+/// pipes open — and `None` comes back; a caller that cannot say what it wanted must say
+/// that, not guess. A child that cannot be started is `None` too.
 ///
 /// A program written a moment ago can still be open for writing in a child another thread
 /// forked meanwhile, and exec then fails with ETXTBSY; it is started through
 /// `crate::process::retrying_busy`, as every other freshly written program is, rather than
 /// reported as absent (#2501's coverage run: a stand-in sccache "does not answer --version").
 pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    let child = crate::process::retrying_busy(|| command.spawn()).ok()?;
-    // The child's id, kept here so it can still be signalled after the waiting thread
-    // has taken ownership of the `Child` itself.
-    #[cfg(unix)]
-    let pid = child.id();
-    let (tx, rx) = mpsc::channel();
-    std::thread::spawn(move || {
-        let _ = tx.send(child.wait_with_output());
-    });
-    match rx.recv_timeout(budget) {
-        Ok(Ok(output)) => Some(output),
-        Ok(Err(_)) => None,
-        Err(_) => {
-            // Out of time. The waiting thread owns the child, so the signal goes to the
-            // process directly; the thread then completes and exits on its own.
-            #[cfg(unix)]
-            // SAFETY: `pid` is this process's own child, and SIGKILL to a child is
-            // defined behaviour whether or not it has already been reaped: an already
-            // reaped pid returns ESRCH, which is ignored.
-            unsafe {
-                libc::kill(pid as libc::pid_t, libc::SIGKILL);
-            }
-            None
-        }
-    }
+    let run = crate::process::run_bounded(command, budget, Duration::from_millis(10)).ok()?;
+    Some(Output {
+        status: run.status?,
+        stdout: run.stdout,
+        stderr: run.stderr,
+    })
 }
 
 /// Does something accept a connection at `url` within `budget`?
@@ -145,6 +123,37 @@ mod tests {
             started.elapsed() < Duration::from_secs(5),
             "it returned after {:?}, so the budget did not bound it",
             started.elapsed()
+        );
+    }
+
+    /// A command over its budget is ended with what it started: a program it left running
+    /// with the output pipe does not outlive the probe.
+    #[cfg(unix)]
+    #[test]
+    fn a_command_over_its_budget_ends_with_what_it_started() {
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let out = bounded_output(
+            Command::new("sh")
+                .arg("-c")
+                .arg("sleep 30 & echo $! > \"$1\"; wait")
+                .arg("sh")
+                .arg(&pids),
+            Duration::from_millis(500),
+        );
+        assert!(out.is_none(), "a command over its budget yields nothing");
+        let sleeper: u32 = std::fs::read_to_string(&pids)
+            .expect("the sleeper started")
+            .trim()
+            .parse()
+            .unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while crate::lease::alive(sleeper) && std::time::Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(25));
+        }
+        assert!(
+            !crate::lease::alive(sleeper),
+            "the sleeper {sleeper} outlived the probe"
         );
     }
 
