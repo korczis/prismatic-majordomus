@@ -82853,6 +82853,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4718",
+        "kind": "issue",
+        "label": "I4718",
+        "summary": "A derived delivery.json whose observed commit is not an ancestor of the tree it ships in is refused before the commit, with its remedy named, so an offloaded derive's throwaway input commit never reaches CI",
+        "route": "/cockpit/objects/issue/i4718",
+        "source": ".ai/repo/project/issues/I4718.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4718"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "~/dev/.derive-offload-v2.sh and any other machine-local offload script: it lives outside this repository, and its owner migrates it to `majordomus offload derive` or sets MJ_DERIVE_OBSERVE",
+            "How scripts/generate-site-data chooses the observed commit (I3836)",
+            "CI's whole-file comparison of the derived data, which stays as it is"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive-check",
+            "scripts/pages",
+            "test/cases/4718_a_delivery_observing_a_throwaway_commit_is_refused_locally.sh",
+            ".ai/repo/project/issues/I4718.yaml",
+            "site/content/plan/I4718.md"
+          ],
+          "slug": "a-delivery-observing-a-throwaway-commit-is-refused-locally",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 4718_a_delivery_observing_a_throwaway_commit_is_refused_locally 3846_an_offload_derive_observes_its_base_commit"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -153063,6 +153099,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4718",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4718",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -165999,8 +166045,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4542,
+      "edges": 10231,
       "acyclic": false,
       "truncated": false
     }
