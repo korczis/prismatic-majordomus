@@ -399,6 +399,14 @@ from another host may name the machine as it knows it. `/swagger` is served with
 Content-Security-Policy that admits only its pinned CDN files, whose integrity hashes the page
 names, and its one inline script.
 
+The other side of the same judgement: a caller on loopback is not asked which checkout it
+works in, because no request has a field for it. A client of one checkout that reaches another
+checkout's port, over a plain HTTP route or an MCP session it opens there, runs that checkout's
+writers as its own clients do. `apps/majordomus-cli/tests/fabric_cross_context.rs` pins this as
+the legacy baseline of Majordomus Fabric's gate G4. Under the proposed amendment of ADR 0199,
+a session is bound to its context and such a write is refused; when that lands, the test is
+rewritten to prove the refusal.
+
 ### What a contest is judged by
 
 Four numbers decide which process owns the lease, and a fifth keeps the owner able to
