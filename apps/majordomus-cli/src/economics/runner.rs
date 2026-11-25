@@ -291,7 +291,11 @@ fn git(dir: &Path, args: &[&str]) -> Result<String, String> {
 /// process group — the child and everything it started — is killed and the child reaped,
 /// and `None` says it never finished.
 fn wait_bounded(child: &mut Child, limit: Duration) -> Result<Option<ExitStatus>, String> {
-    crate::process::wait_group(child, limit, Duration::from_millis(100)).map_err(|e| e.to_string())
+    Ok(crate::process::wait_group(
+        child,
+        limit,
+        Duration::from_millis(100),
+    ))
 }
 
 /// The directory one run works in: a fresh directory of the system temporary directory,
@@ -2023,6 +2027,26 @@ mod tests {
         let probe = tempfile::tempdir().unwrap();
         let h = harness(probe.path(), "", SUCCESS);
         assert_eq!(harness_version(&h).unwrap(), "1.2.3");
+    }
+
+    /// A bounded wait answers a program that finished with its status, and ends one that
+    /// does not finish at its bound.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_wait_answers_a_finished_program_and_ends_a_slow_one() {
+        let (mut quick, _q) = spawn_group(Command::new("sh").args(["-c", "exit 2"])).unwrap();
+        let done = wait_bounded(&mut quick, Duration::from_secs(10)).unwrap();
+        assert_eq!(done.and_then(|s| s.code()), Some(2));
+        let (mut slow, _s) = spawn_group(Command::new("sleep").arg("30")).unwrap();
+        let started = std::time::Instant::now();
+        assert_eq!(
+            wait_bounded(&mut slow, Duration::from_millis(200)).unwrap(),
+            None
+        );
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the bound was waited out"
+        );
     }
 
     /// A session whose program cannot be started is answered at once with the reason, and
