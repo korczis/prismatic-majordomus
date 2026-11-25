@@ -140,8 +140,7 @@ the trunk commit that landed the work lets any number of records for landed work
 one branch and one pull request:
 
 ```bash
-majordomus plan evidence I0007 --covers doctrine_test --type test \
-  --command "bash test/run.sh 0007_doctrine" --commit origin/main~1
+majordomus plan evidence <id> --covers <token> --type test --command "<cmd>" --commit origin/main~1
 ```
 
 The revision is resolved to its full 40-hex name and recorded only when the trunk's
