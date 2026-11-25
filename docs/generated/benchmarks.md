@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.2.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 233 | 187 | 0 | 46 |
-| http | 221 | 185 | 0 | 36 |
-| mcp | 217 | 182 | 0 | 35 |
+| direct | 235 | 189 | 0 | 46 |
+| http | 223 | 187 | 0 | 36 |
+| mcp | 219 | 184 | 0 | 35 |
 | system | 14 | 14 | 0 | 0 |
-| total | 685 | 568 | 0 | 117 |
+| total | 691 | 574 | 0 | 117 |
 
 ## Capabilities
 
@@ -185,12 +185,14 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
 | `plan.allocate` | plan | command | — | waived | waived | waived | — |
+| `plan.collisions` | plan | query | — | covered | covered | covered | `this-head`, `this-head-as-a-pull-request-gate` |
 | `plan.delivery` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head` |
 | `plan.drift` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head-as-trunk-gate` |
 | `plan.flight` | plan | query | — | covered | covered | covered | `where-the-work-is`, `one-milestone-inspected` |
 | `plan.issues` | plan | query | process, 16 entries, per generation | covered | covered | covered | `all`, `ready`, `one-milestone` |
 | `plan.model` | plan | query | — | covered | covered | covered | `default` |
 | `plan.next` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.reconcile` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue` |
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
 | `plan.roadmap` | plan | query | process, 4 entries, per generation | covered | covered | covered | `default` |
 | `plan.status` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |

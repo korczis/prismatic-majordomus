@@ -1,0 +1,61 @@
+id: I4775
+milestone: merging-and-referencing-are-enforced
+title: "An issue id authored on two lines of history, or an issue another open pull request or session executes, is refused at start, at push and on the pull request, naming its holder"
+slug: a-colliding-issue-is-refused-naming-its-holder
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A read-only capability plan.collisions: id_reused for an issue record the head adds since its merge-base with the trunk that another ref (the trunk or any branch) added after its own merge-base under another title; claimed_elsewhere for an issue the head executes (named by its branch, or by --issue) that another open pull request names (by head branch, or by a title naming at most three ids) unless one declares it supersedes the other, or that another session's live mesh claim holds; a bare branch with no pull request is a warning. A planning-only head executes nothing. An unread or stale (collisions.max_age) forge is unread, never absence. `majordomus start --issue` asks it and refuses naming the holder, `--alongside \"<reason>\"` starting anyway with the reason recorded; scripts/ci/plan-collisions-check is the gate on pull requests and in the pre-push hook."
+why: "ADR 0238. In an adopter repository on 2026-11-25 peers took colliding issue ids although board reservations existed, and two sessions executed one issue because the second session's picker ran before the first one's pull request existed. plan.allocate (I3040) prevents a collision only for its callers; I4356 refuses a start only on an exclusive mesh claim; I3971 makes plan next pass such an issue over but tells neither start nor a push."
+current_state: "Measured at 46775282570: lib/start.sh asks the binding and claims the scope on the mesh, and reads no branch or pull request; no capability compares an added record with the other refs."
+desired_state: "The second author of an id and the second executor of an issue are told who holds it before their work lands."
+scope:
+  - ".ai/repo/project/issues/I4775.yaml"
+  - "apps/majordomus-cli/src/plan/collisions.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/commands/plan.rs"
+  - "lib/start.sh"
+  - "lib/plan.sh"
+  - "scripts/ci/plan-collisions-check"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/ci/plan.yaml"
+  - "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh"
+non_scope:
+  - "plan next and plan ready passing taken work over; that is I3971"
+  - "Taking an exclusive mesh claim on the issue at start; that is I4753, whose claim this check reads beside the forge and the branches"
+  - "A pull-request CI gate: the CI jobs read no forge yet (I2750), and this repository's collision-gate already refuses a new path two branches add with different bytes"
+  - "A renumber command"
+acceptance_criteria:
+  - "Rust test: a record added on two branches under different titles is id_reused naming the other branch; the same record inherited from the trunk is not"
+  - "Rust test: an issue named by this head's branch and by another open pull request's head branch is claimed_elsewhere naming that pull request; a declared supersession clears it"
+  - "Rust test: a train pull request whose title names more than three ids claims none of them"
+  - "Rust test: an unread forge makes claimed_elsewhere unread, never clean"
+  - "Case 4775: start --issue refuses an issue another branch's open pull request names, names the pull request, and starts with --alongside, recording the reason"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::collisions"
+  - "bash test/run.sh 4775_a_colliding_issue_is_refused_naming_its_holder"
+evidence_required:
+  - "rust"
+  - "test"
+depends_on: []
+serves: []
+created_at: 2026-11-25
+updated_at: 2026-11-25T10:14:20Z
+started_at: 2026-11-25T10:13:48Z
+started_event: sha256:97881f614e4b2270bf4681488fbc10d3d2f1ea561d117abfd17e79bee4f2302c
+verified_at: 2026-11-25T10:14:20Z
+verified_event: sha256:ac8b4bca6f895697a292be779077b46e83656175819fbb82d18326892303532a
+evidence:
+  - covers: "rust"
+    type: test
+    command: "cargo test --locked --lib -- plan::collisions; cargo test --locked --test plan_collisions"
+    result: "lib plan::collisions 5 passed; plan_collisions 4 passed (id_reused, supersession, train title, planning-only, mesh claim through the server), 0 failed"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-25T10:08:44Z
+  - covers: "test"
+    type: test
+    command: "bash test/run.sh 4775_a_colliding_issue_is_refused_naming_its_holder"
+    result: "1 passed, 0 failed"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-25T10:09:22Z

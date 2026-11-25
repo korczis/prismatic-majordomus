@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `plan` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.2.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 # Module `plan` — The plan and its derivations
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.
 
-Stability: behaviorally_verified. Capabilities: 13.
+Stability: behaviorally_verified. Capabilities: 15.
 
 ## `plan.allocate` — Reserve the next issue, case or ADR number
 
@@ -29,6 +29,33 @@ One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh ses
 | `at_least` | integer or null | no | The lowest number the caller will take: a survey it ran itself, or a block it was given. The candidate is the higher of this and one past every source. |
 
 Output: `Allocation`.
+
+## `plan.collisions` — Whether an issue this head authors or executes is another's
+
+Every collision between this head and the other lines of work, each naming its holder (ADR 0238). `id_reused` (refused): an issue record this head adds since its merge-base with the trunk that another line of history (the trunk, or any local or remote-tracking branch) also added under another title; a record inherited from the trunk, or the same record carried on two refs, is none. `retitled` (warned): a record the base already holds whose title this head changes, the hidden form of a collision after a rebase. `claimed_elsewhere`: an issue this head executes (named by its branch, by the I1405 rule or its slug, or by `issue`) that another open pull request names by its head branch, or by a title naming it among at most three ids, refused unless one of the two declares it supersedes the other; or that a live mesh claim of another session names, refused; or that only another branch names, warned. A head whose change is planning-only executes nothing. A forge observation older than `collisions.max_age` (`.ai/repo/ci/plan.yaml`) is stale, and a stale or unread forge never proves that no other pull request names an issue. With `gate`, the exit code is 10 on a refusal, 12 when the forge could not be read and the gate is `pr`, and 0 otherwise.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_collisions` |
+| HTTP | `GET /api/v1/plan/collisions` |
+| CLI | `majordomus plan collisions` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, collisions, gate |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issue` | string or null | no | An issue the caller is about to execute (`start --issue`), besides the one the head's
+branch names. |
+| `head` | string or null | no | The head to judge. Default: `HEAD`. |
+| `branch` | string or null | no | The head's branch, when git cannot say it: a CI checkout of a pull request is detached. |
+| `gate` | object | no | Judge as a gate at `start`, `push` or `pr`. Default: report only, exit 0. |
+| `session` | string or null | no | The caller's own mesh session (`task-<id>`): its claims are the head's, not another's. |
+
+Output: `CollisionReport`.
 
 ## `plan.delivery` — How far each issue's work has travelled
 
@@ -167,6 +194,29 @@ The lowest-wave READY issue of the active milestone, highest priority first, the
 active milestone with the rest of the plan as the fallback. |
 
 Output: `PlanNextIssue`.
+
+## `plan.reconcile` — What a merge supports the plan recording, and what each issue still owes
+
+For every issue (or the ones named) whose work plan.delivery proves merged, released or deployed while its declared status is READY, BLOCKED, ACTIVE or VERIFY: the proof (the newest merge naming it and how: title, branch, slug, subject or a `Delivers:` trailer), the plan.transition moves the plan admits now, in order, and the moves it does not with the guard's own reason (ADR 0238). A merge proves that execution began, so a READY issue is proposed `start`; `done` is proposed only where the done guard admits it, the issue declares evidence_required, and every covering evidence entry was recorded at or after that merge; `verify` is never proposed, because it is a worker's attestation and a merge can be one slice of an issue. Each proposal lists every required token as covered, stale or missing, the declared validation commands that would cover it, and every acceptance criterion as `unjudged`. Classes: recordable, acceptable, held (BLOCKED, or a done held by something other than evidence), unaccepted (ACTIVE or VERIFY with evidence owed), pending_pr (another open pull request still names it; nothing is proposed). `settled` is false when the forge was not read, because no open pull request can then be ruled out. It writes nothing: `majordomus plan reconcile --apply` performs the start moves, and `--done` the admitted done moves, one plan.transition each.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_plan_reconcile` |
+| HTTP | `GET /api/v1/plan/reconcile` |
+| CLI | `majordomus plan reconcile` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, delivery, drift, lifecycle |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issues` | array | no | Issue ids. Default: every issue of the plan. An id the plan does not declare is not
+found. |
+
+Output: `ReconcileReport`.
 
 ## `plan.record` — One milestone or issue, with everything derived about it
 

@@ -22,7 +22,6 @@
 //! that could merge, close or push: the cycle is fixed.
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -101,8 +100,7 @@ pub struct DryRunProof {
 }
 
 fn run(root: &Path, program: &str, args: &[&str]) -> Result<String, String> {
-    let out = Command::new(program)
-        .current_dir(root)
+    let out = super::forge::gh_command(program, root)
         .args(args)
         .output()
         .map_err(|e| format!("{program} could not run: {e}"))?;

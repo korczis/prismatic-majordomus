@@ -10,6 +10,7 @@
 //! | `merged_not_recorded` | READY, BLOCKED or ACTIVE | a merge names it, and no open pull request names it           |
 //! | `active_without_work` | ACTIVE, started before the window | no branch, no pull request, no merge and no mesh claim names it |
 //! | `done_without_trace`  | DONE                     | no merge names it (advisory: record-only issues exist)        |
+//! | `merged_unaccepted`   | VERIFY                   | a merge names it, and evidence it requires is missing (reported) |
 //!
 //! # The window and the gate
 //!
@@ -66,14 +67,18 @@ pub(crate) enum DriftClass {
     ActiveWithoutWork,
     /// DONE with no merge naming it. Advisory: record-only issues exist.
     DoneWithoutTrace,
+    /// VERIFY, with merged work and evidence it requires still missing: a merged pull
+    /// request claims it while its acceptance is unmet (ADR 0238). Reported, never refused.
+    MergedUnaccepted,
 }
 
 impl DriftClass {
     /// Every class, in order.
-    pub(crate) const ALL: [DriftClass; 3] = [
+    pub(crate) const ALL: [DriftClass; 4] = [
         DriftClass::MergedNotRecorded,
         DriftClass::ActiveWithoutWork,
         DriftClass::DoneWithoutTrace,
+        DriftClass::MergedUnaccepted,
     ];
 
     /// The word the report spells it with.
@@ -82,6 +87,7 @@ impl DriftClass {
             DriftClass::MergedNotRecorded => "merged_not_recorded",
             DriftClass::ActiveWithoutWork => "active_without_work",
             DriftClass::DoneWithoutTrace => "done_without_trace",
+            DriftClass::MergedUnaccepted => "merged_unaccepted",
         }
     }
 }
@@ -262,10 +268,15 @@ fn seconds_of(stamp: &str) -> Option<u64> {
         .or_else(|| crate::peers::parse_rfc3339(&format!("{stamp}T00:00:00Z")))
 }
 
-/// How a finding is settled.
-fn remedy(class: DriftClass, d: &IssueDelivery) -> String {
+/// How a finding is settled; `owing` is the evidence the issue still owes.
+fn remedy(class: DriftClass, d: &IssueDelivery, owing: &[String]) -> String {
     let id = &d.issue;
     match class {
+        DriftClass::MergedUnaccepted => owing
+            .iter()
+            .map(|t| format!("majordomus plan evidence {id} --covers {t}"))
+            .collect::<Vec<_>>()
+            .join("; "),
         DriftClass::MergedNotRecorded if d.status == "ACTIVE" => {
             format!("majordomus plan verify|done {id}")
         }
@@ -291,10 +302,13 @@ fn is_read(sources: &[DeliverySource], name: &str) -> bool {
 /// The findings over a delivery report, judged by `gate` when one is asked. Pure.
 ///
 /// `claims` maps an issue to the live mesh claim that names it; `None` when the mesh was not
-/// read. `started` maps an issue to its start stamp.
+/// read. `started` maps an issue to its start stamp, and `owing` an issue to the
+/// `evidence_required` tokens no evidence of its record covers.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn judge(
     delivery: IssueDeliveryReport,
     started: &BTreeMap<String, String>,
+    owing: &BTreeMap<String, Vec<String>>,
     claims: Option<&BTreeMap<String, String>>,
     claims_source: DeliverySource,
     window: DriftWindow,
@@ -308,6 +322,7 @@ pub(crate) fn judge(
     let past = |age: Option<u64>| -> Option<bool> { Some(age? > window.seconds?) };
     let mut findings: Vec<DriftFinding> = Vec::new();
     for d in &delivery.issues {
+        let owes: &[String] = owing.get(&d.issue).map(Vec::as_slice).unwrap_or(&[]);
         let mut found =
             |class: DriftClass, proof: DriftProof, since: Option<String>, unread: Vec<String>| {
                 let age_seconds = age(since.as_deref());
@@ -319,7 +334,7 @@ pub(crate) fn judge(
                     stage: d.stage,
                     class,
                     advisory: class == DriftClass::DoneWithoutTrace,
-                    remedy: remedy(class, d),
+                    remedy: remedy(class, d, owes),
                     settled: unread.is_empty(),
                     unread,
                     proof,
@@ -367,6 +382,15 @@ pub(crate) fn judge(
                     found(DriftClass::ActiveWithoutWork, proof, since, unread);
                 }
             }
+            "VERIFY" if d.merged.is_some() && !owes.is_empty() => {
+                let since = d.merged.as_ref().map(|m| m.merged_at.clone());
+                found(
+                    DriftClass::MergedUnaccepted,
+                    merge_proof(),
+                    since,
+                    Vec::new(),
+                );
+            }
             "DONE" if d.merged.is_none() => {
                 let unread = if titles_read {
                     Vec::new()
@@ -390,7 +414,9 @@ pub(crate) fn judge(
         for f in &mut findings {
             f.verdict = Some(match f.class {
                 DriftClass::DoneWithoutTrace => DriftVerdict::Advisory,
-                DriftClass::ActiveWithoutWork => DriftVerdict::Reported,
+                DriftClass::ActiveWithoutWork | DriftClass::MergedUnaccepted => {
+                    DriftVerdict::Reported
+                }
                 DriftClass::MergedNotRecorded => match (gate, f.past_window) {
                     (DriftGate::Trunk, Some(true)) => DriftVerdict::Refused,
                     _ => DriftVerdict::Pending,
@@ -516,6 +542,7 @@ mod tests {
         judge(
             report(issues, true),
             &BTreeMap::new(),
+            &BTreeMap::new(),
             Some(&BTreeMap::new()),
             source("claims", true),
             w,
@@ -634,6 +661,7 @@ mod tests {
                 false,
             ),
             &BTreeMap::new(),
+            &BTreeMap::new(),
             None,
             source("claims", false),
             window(60, "blocking"),
@@ -672,6 +700,7 @@ mod tests {
                 true,
             ),
             &started,
+            &BTreeMap::new(),
             Some(&claims),
             source("claims", true),
             window(3600, "blocking"),
@@ -748,6 +777,7 @@ mod tests {
         let r = judge(
             delivery,
             &started,
+            &BTreeMap::new(),
             None,
             source("claims", false),
             window(60, "blocking"),
@@ -791,6 +821,7 @@ mod tests {
         let r = judge(
             unclocked,
             &BTreeMap::new(),
+            &BTreeMap::new(),
             Some(&BTreeMap::new()),
             source("claims", true),
             window(60, "blocking"),
@@ -800,5 +831,46 @@ mod tests {
             (r.findings[0].age_seconds, r.findings[0].verdict),
             (None, Some(DriftVerdict::Pending))
         );
+    }
+
+    /// A VERIFY issue whose merge landed while the evidence it requires is missing is
+    /// `merged_unaccepted` (ADR 0238): reported under both gates, never refused, and settled
+    /// by recording each missing token. Once nothing is owed it is no finding.
+    #[test]
+    fn a_merged_verify_issue_owing_evidence_is_merged_unaccepted_and_never_refused() {
+        let issues = vec![merged(issue("I4", "VERIFY"), "2026-10-01T00:00:00Z")];
+        let mut owing = BTreeMap::new();
+        owing.insert(
+            "I4".to_string(),
+            vec!["rust".to_string(), "test".to_string()],
+        );
+        for gate in [None, Some(DriftGate::Head), Some(DriftGate::Trunk)] {
+            let r = judge(
+                report(issues.clone(), true),
+                &BTreeMap::new(),
+                &owing,
+                Some(&BTreeMap::new()),
+                source("claims", true),
+                window(3600, "blocking"),
+                gate,
+            );
+            assert_eq!(r.findings.len(), 1, "{gate:?}");
+            let f = &r.findings[0];
+            assert_eq!(f.class, DriftClass::MergedUnaccepted);
+            assert_eq!(f.class.as_str(), "merged_unaccepted");
+            assert_eq!(f.proof.merge_commit.as_deref(), Some("c0ffee"));
+            assert_eq!(
+                f.remedy,
+                "majordomus plan evidence I4 --covers rust; majordomus plan evidence I4 --covers test"
+            );
+            assert_eq!(r.tallies["merged_unaccepted"], 1);
+            assert_eq!(r.refused, 0, "{gate:?}");
+            if gate.is_some() {
+                assert_eq!(f.verdict, Some(DriftVerdict::Reported));
+                assert_eq!(r.exit_code, 0);
+            }
+        }
+        let settled = run(issues, window(3600, "blocking"), Some(DriftGate::Trunk));
+        assert!(settled.findings.is_empty(), "nothing owed, nothing found");
     }
 }

@@ -13,7 +13,7 @@
 . "$MJ_LIB_DIR/context_docs.sh"
 mj_cmd_start() {
   local task="" scope="" requires="" profile="" owner="${USER:-unknown}"
-  local issue="" intent="" exempt="" because=""
+  local issue="" intent="" exempt="" because="" alongside=""
   while [ $# -gt 0 ]; do case "$1" in
     --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs paths"; scope="$scope,$2"; shift 2 ;;
     --scope=*) scope="$scope,${1#--scope=}"; shift ;;
@@ -30,10 +30,13 @@ mj_cmd_start() {
     --exempt=*) exempt="${1#--exempt=}"; shift ;;
     --because) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--because needs a reason"; because="$2"; shift 2 ;;
     --because=*) because="${1#--because=}"; shift ;;
+    --alongside) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--alongside needs a reason"; alongside="$2"; shift 2 ;;
+    --alongside=*) alongside="${1#--alongside=}"; shift ;;
     --help|-h) cat <<H
 usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]]
                        [--profile <name>] [--owner <who>]
                        [--issue <id> | --intent <id> | --exempt <class> --because "<reason>"]
+                       [--alongside "<reason>"]
   one active task per checkout; refuses (15) while a task is active — handover or finish it first
   scope paths are normalised (no trailing /, no escapes); overlap with other worktrees is reported
   --requires  what this task owes before it may be called completed: tokens of
@@ -48,6 +51,9 @@ usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[
               under advisory it is reported, and with the key absent it is asked only when
               one of these flags is given. The record keeps what was named and two pins a
               handover carries; the intent itself is derived on every read (ADR 0111).
+  --alongside an --issue another open pull request or another session's live mesh claim
+              already executes is refused (15), naming its holder (plan.collisions, ADR 0238);
+              this starts it anyway, and the record keeps the reason.
 H
       return 0 ;;
     -*) mj_die "$MJ_EX_USAGE" "start: unknown option $1" ;;
@@ -137,6 +143,9 @@ H
     fi
   fi
 
+  [ -z "$alongside" ] || [ -n "$issue" ] || mj_die "$MJ_EX_USAGE" "start: --alongside gives the reason to execute an --issue another holds; it was given without --issue"
+  [ -z "$issue" ] || mj_start_collisions "$issue" "$alongside"
+
   local id; id="t-$(mj_now_compact | tr -d 'TZ')-$(mj_rand16 | cut -c1-4)"
   local now; now="$(mj_now)"
   mkdir -p "$MJ_STATE_DIR"
@@ -147,6 +156,7 @@ H
     # what the worker named, and two pins; never the intent's stage, verdict or criteria
     [ -z "$issue" ]  || printf 'issue: %s\n' "$issue"
     [ -z "$intent" ] || printf 'intent: %s\n' "$intent"
+    [ -z "$alongside" ] || printf 'alongside: "%s"\n' "$(printf '%s' "$alongside" | sed 's/"/\\"/g')"
     if [ -n "$exempt" ]; then printf 'exemption: %s\nexemption_because: "%s"\n' "$exempt" "$(printf '%s' "$because" | sed 's/"/\\"/g')"; fi
     [ -z "$bind_standing" ] || printf 'binding: %s\n' "$bind_standing"
     [ -z "$plan_rev" ]      || printf 'plan_revision: %s\n' "$plan_rev"
@@ -178,6 +188,41 @@ H
       "majordomus handover --resolve"
   fi
   printf 'next: majordomus context; checkpoint every %s; majordomus check before claiming anything\n' "$(mj_pro checkpoint_interval)"
+}
+
+# Whether the issue this task is about to execute is another's (plan.collisions, ADR 0238):
+# an open pull request whose branch or title names it, or another session's live mesh claim,
+# refuses the start naming the holder, unless --alongside gives the reason to execute it
+# anyway; a branch that only names it, an unread forge or an executable that cannot answer is
+# a warning, because a session that cannot see the forge must still be able to work.
+mj_start_collisions() { # <issue> <alongside reason>
+  local issue="$1" alongside="$2" bin out rc=0 verdict
+  command -v jq >/dev/null 2>&1 || { mj_warn collisions "$issue" "jq is not installed, so whether another holds this issue was not asked" "brew install jq"; return 0; }
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || { mj_warn collisions "$issue" "the executable is not built at $bin, so whether another holds this issue was not asked" "just build"; return 0; }
+  # the repository's own distribution when it has one, else the tool's (as the binding does)
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] || { [ -f "$MJ_BIN_DIR/../share/kinds.yaml" ] && share="$MJ_BIN_DIR/../share"; }
+  out="$( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+          "$bin" plan collisions --issue "$issue" --gate start --format json --repo "$MJ_ROOT" 2>/dev/null )" || rc=$?
+  verdict="$(printf '%s' "$out" | jq -r '.verdict // empty' 2>/dev/null)" || verdict=""
+  if [ -z "$verdict" ]; then
+    mj_warn collisions "$issue" "plan collisions did not answer (exit $rc), so whether another holds this issue is unknown" "majordomus plan collisions --issue $issue"
+    return 0
+  fi
+  local said
+  said="$(printf '%s' "$out" | jq -r --arg i "$issue" '(.collisions[] | select(.issue == $i)
+    | "\(.verdict | ascii_upcase)  \(.class)  \(.detail) — \(.remedy)"),
+    (.sources[] | select(.state != "read") | "unread   \(.name)  \(.detail)")' 2>/dev/null)" || said=""
+  [ -z "$said" ] || printf '%s\n' "$said" >&2
+  [ "$verdict" = refused ] || return 0
+  if [ -n "$alongside" ]; then
+    mj_warn collisions "$issue" "another holds this issue; starting alongside it as asked: $alongside" "majordomus plan collisions --issue $issue"
+    return 0
+  fi
+  mj_die "$MJ_EX_REFUSED" "start: $issue is already executed elsewhere (above); join that work, or start alongside it with --alongside \"<reason>\""
 }
 
 # report claims in other worktrees that contain or are contained by our scope

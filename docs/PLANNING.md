@@ -562,6 +562,7 @@ prove it (ADR 0166, decision 2):
 | `merged_not_recorded` | READY, BLOCKED or ACTIVE | a merge names it (pull request, merge commit, release), and no open pull request names it |
 | `active_without_work` | ACTIVE, started before the window | no branch, pull request, merge or live mesh claim names it |
 | `done_without_trace` | DONE | no merge names it; advisory, because record-only issues exist |
+| `merged_unaccepted` | VERIFY | a merge names it, and evidence it requires is missing; reported, never refused (ADR 0238) |
 
 Each finding carries its age, whether that is past the window, the sources that were not
 read and could have dissolved it (`unread`; a finding with the forge unread is still a
@@ -584,6 +585,52 @@ everywhere else:
 
 The same answer is `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift`.
 `test/cases/3101_merged_work_unrecorded_is_drift.sh` proves the classes, the window and the gate, with six code mutations failing it.
+
+A commit can name what it delivers in its final trailer block, `Delivers: I0002`. A
+repository whose commit grammar has no place for an id in a subject needs this, and it is an
+author's explicit claim, never a mention in prose (`via: trailer`, ADR 0238).
+
+### Reconciling: what a merge supports recording
+
+Drift names a disagreement; `majordomus plan reconcile [<id>...] [--apply [--done]]`
+(capability `plan.reconcile`, ADR 0238) says what may be written about it now. For every
+issue merged, released or deployed while READY, BLOCKED, ACTIVE or VERIFY it answers:
+
+- the proof: the newest merge naming the issue, and how it names it;
+- the `plan.transition` moves the guard admits now. A READY issue gets `start`, because a merge
+  proves that execution began. It gets `done` only when the issue declares evidence_required
+  and every covering entry was recorded at or after that merge. It never gets `verify`, which
+  is a worker's attestation, and a merge can be one slice of an issue;
+- the refused moves, each with the guard's own reason. BLOCKED is `held`, and an issue another
+  open pull request still names is `pending_pr`, with nothing proposed;
+- every required token as covered, stale or missing, the declared validation commands that
+  would cover it, and every acceptance criterion as `unjudged`.
+
+`--apply` writes the start moves, and `--done` the admitted done moves. Each is one
+`plan.transition`, and the plan is read again before every move. A refused move stops its
+issue and not the batch, and exits 10. A proposal over a forge that was not read is
+`unsettled`, and nothing of it is applied (exit 12). Reconcile never writes evidence.
+
+### Collisions: an issue authored or executed twice
+
+`majordomus plan collisions [--issue <id>] [--gate start|push|pr]` (capability
+`plan.collisions`) names, for one head, everything it collides with and the holder of each:
+
+- `id_reused` (refused): a record the head adds that another line of history added under
+  another title.
+- `retitled` (warned): a record the base holds whose title the head changes.
+- `claimed_elsewhere`: an issue the head executes (by its branch or `--issue`) that one of
+  these names:
+  - another open pull request, by its head branch or by a title naming it among at most three
+    ids (refused);
+  - another session's live mesh claim (refused);
+  - only another unmerged branch (warned).
+
+A planning-only head executes nothing. A forge observation older than `collisions.max_age`
+(`.ai/repo/ci/plan.yaml`) is stale, and a stale or unread forge never proves absence.
+`start --issue` asks it before a task is written. It refuses (15) naming the holder unless
+`--alongside "<reason>"` is given, and the reason is kept in the task. The pre-push hook asks
+`--gate push`.
 
 ## Projections
 

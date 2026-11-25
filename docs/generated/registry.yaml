@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.2.0
+# Generator: majordomus-cli 1.3.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.2.0
+generator: majordomus-cli 1.3.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -274,7 +274,7 @@ modules:
     description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 13
+    capabilities: 15
   - id: proceed
     title: What a session proceeds with
     description: "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing."
@@ -49160,6 +49160,305 @@ capabilities:
       cancellable: false
       concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: plan.collisions
+    module: plan
+    kind: query
+    title: "Whether an issue this head authors or executes is another's"
+    description: "Every collision between this head and the other lines of work, each naming its holder (ADR 0238). `id_reused` (refused): an issue record this head adds since its merge-base with the trunk that another line of history (the trunk, or any local or remote-tracking branch) also added under another title; a record inherited from the trunk, or the same record carried on two refs, is none. `retitled` (warned): a record the base already holds whose title this head changes, the hidden form of a collision after a rebase. `claimed_elsewhere`: an issue this head executes (named by its branch, by the I1405 rule or its slug, or by `issue`) that another open pull request names by its head branch, or by a title naming it among at most three ids, refused unless one of the two declares it supersedes the other; or that a live mesh claim of another session names, refused; or that only another branch names, warned. A head whose change is planning-only executes nothing. A forge observation older than `collisions.max_age` (`.ai/repo/ci/plan.yaml`) is stale, and a stale or unread forge never proves that no other pull request names an issue. With `gate`, the exit code is 10 on a refusal, 12 when the forge could not be read and the gate is `pr`, and 0 otherwise."
+    input:
+      name: PlanCollisionsInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          issue:
+            type:
+              - string
+              - "null"
+            description: "An issue the caller is about to execute (`start --issue`), besides the one the head's\nbranch names."
+          head:
+            type:
+              - string
+              - "null"
+            description: "The head to judge. Default: `HEAD`."
+          branch:
+            type:
+              - string
+              - "null"
+            description: "The head's branch, when git cannot say it: a CI checkout of a pull request is detached."
+          gate:
+            anyOf:
+              - "$ref": "#/$defs/CollisionGate"
+              - type: "null"
+            description: "Judge as a gate at `start`, `push` or `pr`. Default: report only, exit 0."
+          session:
+            type:
+              - string
+              - "null"
+            description: "The caller's own mesh session (`task-<id>`): its claims are the head's, not another's."
+        description: "What to judge: the input of `plan.collisions`.\n\n```\nuse majordomus_cli::capability::builtin::plan::{CollisionGate, PlanCollisionsInput};\n\nlet plain: PlanCollisionsInput = serde_json::from_str(\"{}\").unwrap();\nassert!(plain.issue.is_none() && plain.head.is_none() && plain.gate.is_none());\nlet start: PlanCollisionsInput =\n    serde_json::from_value(serde_json::json!({\"issue\": \"I1\", \"gate\": \"start\"})).unwrap();\nassert_eq!(start.gate, Some(CollisionGate::Start));\nassert!(serde_json::from_str::<PlanCollisionsInput>(r#\"{\"force\":true}\"#).is_err());\n```"
+        title: PlanCollisionsInput
+        "$defs":
+          CollisionGate:
+            oneOf:
+              - type: string
+                const: start
+                description: "A task start: an unread forge warns."
+              - type: string
+                const: push
+                description: "A push: an unread or stale forge warns."
+              - type: string
+                const: pr
+                description: "A pull request: an unread forge cannot be judged (exit 12)."
+            description: "Where a `plan.collisions` gate runs, which decides what an unread forge does.\n\n```\nuse majordomus_cli::capability::builtin::plan::CollisionGate;\nassert_eq!(serde_json::to_value(CollisionGate::Pr).unwrap(), \"pr\");\nassert_eq!(serde_json::from_str::<CollisionGate>(r#\"\"start\"\"#).unwrap(), CollisionGate::Start);\n```"
+    output:
+      name: CollisionReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The version of this shape.
+          head:
+            type: string
+            description: "The head judged, as a commit."
+          branch:
+            type:
+              - string
+              - "null"
+            description: "Its branch, when it has one."
+          trunk:
+            type: string
+            description: The trunk ref it was judged against.
+          merge_base:
+            type:
+              - string
+              - "null"
+            description: Their merge-base.
+          planning_only:
+            type: boolean
+            description: "True when the head's change is planning-only."
+          executes:
+            type: array
+            items:
+              type: string
+            description: The issues the head executes.
+          authors:
+            type: array
+            items:
+              type: string
+            description: The issue records the head adds.
+          gate:
+            anyOf:
+              - "$ref": "#/$defs/CollisionGate"
+              - type: "null"
+            description: "The gate asked, when one was."
+          sources:
+            type: array
+            items:
+              "$ref": "#/$defs/DeliverySource"
+            description: "Every source, read or not."
+          collisions:
+            type: array
+            items:
+              "$ref": "#/$defs/Collision"
+            description: "The collisions, refused first."
+          refused:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many are refused.
+          warned:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many are warned.
+          verdict:
+            type: string
+            description: "`clean`, `warned`, `refused`, or `unjudged` (a pull-request gate with no forge)."
+          exit_code:
+            type: integer
+            format: uint8
+            minimum: 0
+            maximum: 255
+            description: "The exit code a gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`."
+        required:
+          - schema
+          - head
+          - trunk
+          - planning_only
+          - executes
+          - authors
+          - sources
+          - collisions
+          - refused
+          - warned
+          - verdict
+          - exit_code
+        description: "Every collision of one head, and what a gate makes of them."
+        title: CollisionReport
+        "$defs":
+          CollisionGate:
+            oneOf:
+              - type: string
+                const: start
+                description: "A task start: an unread forge warns."
+              - type: string
+                const: push
+                description: "A push: an unread or stale forge warns."
+              - type: string
+                const: pr
+                description: "A pull request: an unread forge cannot be judged (exit 12)."
+            description: "Where a `plan.collisions` gate runs, which decides what an unread forge does.\n\n```\nuse majordomus_cli::capability::builtin::plan::CollisionGate;\nassert_eq!(serde_json::to_value(CollisionGate::Pr).unwrap(), \"pr\");\nassert_eq!(serde_json::from_str::<CollisionGate>(r#\"\"start\"\"#).unwrap(), CollisionGate::Start);\n```"
+          DeliverySource:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "`branches`, `forge`, `history`, `releases` or `publication`."
+              state:
+                "$ref": "#/$defs/DeliveryReading"
+                description: Read or unread.
+              detail:
+                type: string
+                description: "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+              observed_at:
+                type:
+                  - string
+                  - "null"
+                description: "When what was read was observed, RFC 3339, when it was read."
+            required:
+              - name
+              - state
+              - detail
+            description: "One source the answer is built from, and whether it was read."
+          DeliveryReading:
+            oneOf:
+              - type: string
+                const: read
+                description: It was read; what it holds is in the answer.
+              - type: string
+                const: unread
+                description: "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+            description: Whether one source of the answer was read.
+          Collision:
+            type: object
+            properties:
+              class:
+                "$ref": "#/$defs/CollisionClass"
+                description: The class.
+              issue:
+                type: string
+                description: The issue id.
+              verdict:
+                "$ref": "#/$defs/CollisionVerdict"
+                description: Refused or warned.
+              holder:
+                "$ref": "#/$defs/CollisionHolder"
+                description: Who holds it.
+              detail:
+                type: string
+                description: "What collides, in one sentence."
+              remedy:
+                type: string
+                description: What settles it.
+            required:
+              - class
+              - issue
+              - verdict
+              - holder
+              - detail
+              - remedy
+            description: One collision.
+          CollisionClass:
+            oneOf:
+              - type: string
+                const: id_reused
+                description: "An id another line of history authored too, under another title."
+              - type: string
+                const: retitled
+                description: A record the base holds whose title the head changes.
+              - type: string
+                const: claimed_elsewhere
+                description: "An issue the head executes that another pull request, session or branch names."
+            description: One kind of collision.
+          CollisionVerdict:
+            oneOf:
+              - type: string
+                const: refused
+                description: The head may not proceed while it stands.
+              - type: string
+                const: warned
+                description: Reported; it does not refuse.
+            description: What the check made of one collision.
+          CollisionHolder:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`trunk`, `branch`, `pull_request` or `claim`."
+              name:
+                type: string
+                description: "The ref, the pull request's head branch, or the claim's key."
+              pull_request:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The pull request.
+              session:
+                type:
+                  - string
+                  - "null"
+                description: The holding mesh session.
+              commit:
+                type:
+                  - string
+                  - "null"
+                description: "The commit that authored the record, for `id_reused`."
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "The title the holder gives the record, or its pull request's title."
+            required:
+              - kind
+              - name
+            description: Who holds what the head collides with.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::plan
+    exposure:
+      mcp:
+        tool: majordomus_plan_collisions
+      http:
+        method: GET
+        path: /api/v1/plan/collisions
+      cli:
+        path:
+          - plan
+          - collisions
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - plan
+      - project
+      - delivery
+      - collisions
+      - gate
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
   - id: plan.delivery
     module: plan
     kind: query
@@ -49757,6 +50056,9 @@ capabilities:
               - type: string
                 const: done_without_trace
                 description: "DONE with no merge naming it. Advisory: record-only issues exist."
+              - type: string
+                const: merged_unaccepted
+                description: "VERIFY, with merged work and evidence it requires still missing: a merged pull\nrequest claims it while its acceptance is unmet (ADR 0238). Reported, never refused."
             description: One kind of contradiction between the stamps and the work.
           DriftFinding:
             type: object
@@ -51013,6 +51315,398 @@ capabilities:
     cache:
       policy: generation
       max_entries: 16
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: plan.reconcile
+    module: plan
+    kind: query
+    title: "What a merge supports the plan recording, and what each issue still owes"
+    description: "For every issue (or the ones named) whose work plan.delivery proves merged, released or deployed while its declared status is READY, BLOCKED, ACTIVE or VERIFY: the proof (the newest merge naming it and how: title, branch, slug, subject or a `Delivers:` trailer), the plan.transition moves the plan admits now, in order, and the moves it does not with the guard's own reason (ADR 0238). A merge proves that execution began, so a READY issue is proposed `start`; `done` is proposed only where the done guard admits it, the issue declares evidence_required, and every covering evidence entry was recorded at or after that merge; `verify` is never proposed, because it is a worker's attestation and a merge can be one slice of an issue. Each proposal lists every required token as covered, stale or missing, the declared validation commands that would cover it, and every acceptance criterion as `unjudged`. Classes: recordable, acceptable, held (BLOCKED, or a done held by something other than evidence), unaccepted (ACTIVE or VERIFY with evidence owed), pending_pr (another open pull request still names it; nothing is proposed). `settled` is false when the forge was not read, because no open pull request can then be ruled out. It writes nothing: `majordomus plan reconcile --apply` performs the start moves, and `--done` the admitted done moves, one plan.transition each."
+    input:
+      name: PlanReconcileInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          issues:
+            type: array
+            items:
+              type: string
+            description: "Issue ids. Default: every issue of the plan. An id the plan does not declare is not\nfound."
+        description: "Which issues to reconcile: the input of `plan.reconcile`.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanReconcileInput;\n\nlet every: PlanReconcileInput = serde_json::from_str(\"{}\").unwrap();\nassert!(every.issues.is_empty(), \"every issue\");\nassert!(serde_json::from_str::<PlanReconcileInput>(r#\"{\"apply\":true}\"#).is_err());\n```"
+        title: PlanReconcileInput
+    output:
+      name: ReconcileReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The version of this shape.
+          observed:
+            "$ref": "#/$defs/DeliveryObservation"
+            description: Where and when the delivery was observed.
+          sources:
+            type: array
+            items:
+              "$ref": "#/$defs/DeliverySource"
+            description: "Every source the delivery read, or did not."
+          settled:
+            type: boolean
+            description: "True when the forge was read: only then can \"no open pull request names it\" be said,\nand only then may the moves be applied."
+          unsettled:
+            type:
+              - string
+              - "null"
+            description: Why it is not settled.
+          classes:
+            type: array
+            items:
+              "$ref": "#/$defs/ReconcileClass"
+            description: "The class vocabulary, in order."
+          tallies:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many proposals of each class, keyed by every class."
+          proposals:
+            type: array
+            items:
+              "$ref": "#/$defs/ReconcileProposal"
+            description: "The proposals, in issue order."
+          moves:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many moves are proposed in all.
+        required:
+          - schema
+          - observed
+          - sources
+          - settled
+          - classes
+          - tallies
+          - proposals
+          - moves
+        description: "Every issue whose merged work the plan has not finished recording, with what may be\nwritten now."
+        title: ReconcileReport
+        "$defs":
+          DeliveryObservation:
+            type: object
+            properties:
+              mode:
+                type: string
+                description: "`live`, or `at` a named commit."
+              trunk:
+                type: string
+                description: "The history read: the trunk ref in live mode, the commit asked for otherwise."
+              commit:
+                type: string
+                description: The commit that history ends at.
+              observed_at:
+                type: string
+                description: "When: the clock in live mode, the commit's committer time at a commit."
+            required:
+              - mode
+              - trunk
+              - commit
+              - observed_at
+            description: Where and when the answer was observed.
+          DeliverySource:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "`branches`, `forge`, `history`, `releases` or `publication`."
+              state:
+                "$ref": "#/$defs/DeliveryReading"
+                description: Read or unread.
+              detail:
+                type: string
+                description: "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+              observed_at:
+                type:
+                  - string
+                  - "null"
+                description: "When what was read was observed, RFC 3339, when it was read."
+            required:
+              - name
+              - state
+              - detail
+            description: "One source the answer is built from, and whether it was read."
+          DeliveryReading:
+            oneOf:
+              - type: string
+                const: read
+                description: It was read; what it holds is in the answer.
+              - type: string
+                const: unread
+                description: "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+            description: Whether one source of the answer was read.
+          ReconcileClass:
+            oneOf:
+              - type: string
+                const: recordable
+                description: "`start` is proposed and `done` is not."
+              - type: string
+                const: acceptable
+                description: "`done` is admitted: the evidence it requires is recorded, and recorded since the merge."
+              - type: string
+                const: held
+                description: "The guard admits no move: BLOCKED, or a `done` held by something other than evidence."
+              - type: string
+                const: unaccepted
+                description: "ACTIVE or VERIFY, merged, with evidence missing or older than the merge."
+              - type: string
+                const: pending_pr
+                description: "Another open pull request still names it: the work is still landing."
+            description: What a merge supports for one issue.
+          ReconcileProposal:
+            type: object
+            properties:
+              issue:
+                type: string
+                description: The issue id.
+              title:
+                type: string
+                description: Its title.
+              milestone:
+                type: string
+                description: Its milestone.
+              status:
+                type: string
+                description: Its declared status.
+              stage:
+                "$ref": "#/$defs/DeliveryStage"
+                description: Its inferred delivery stage.
+              class:
+                "$ref": "#/$defs/ReconcileClass"
+                description: What a merge supports.
+              merge:
+                anyOf:
+                  - "$ref": "#/$defs/DeliveryMerge"
+                  - type: "null"
+                description: "The newest merge naming it: its proof."
+              pending_pr:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The open pull request that still names it, for `pending_pr`."
+              moves:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReconcileMove"
+                description: "The moves the plan admits now, in order."
+              refused:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReconcileRefusal"
+                description: "The moves it does not, with why."
+              evidence:
+                type: array
+                items:
+                  "$ref": "#/$defs/TokenStanding"
+                description: Every required token.
+              validation:
+                type: array
+                items:
+                  type: string
+                description: "The declared validation commands: what a worker runs to cover a token."
+              acceptance:
+                type: array
+                items:
+                  "$ref": "#/$defs/CriterionStanding"
+                description: "Every acceptance criterion, unjudged."
+            required:
+              - issue
+              - title
+              - milestone
+              - status
+              - stage
+              - class
+              - moves
+              - refused
+              - evidence
+              - validation
+              - acceptance
+            description: "What a merge supports for one issue, with everything that proves or holds it."
+          DeliveryStage:
+            oneOf:
+              - type: string
+                const: none
+                description: Nothing that was read names the issue.
+              - type: string
+                const: branch
+                description: A branch names it.
+              - type: string
+                const: pr_open
+                description: An open pull request names it.
+              - type: string
+                const: merged
+                description: "A merge in the trunk's history names it."
+              - type: string
+                const: released
+                description: "A `v*` release contains its newest merge."
+              - type: string
+                const: deployed
+                description: "The published `latest.json` names that release or a later one."
+            description: "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
+          DeliveryMerge:
+            type: object
+            properties:
+              commit:
+                type: string
+                description: "The commit: a merge commit, or a commit whose subject names the issue."
+              pull_request:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The pull request it merged, when its subject names one."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch it merged, when its subject names one."
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "The pull request's title, when the merge carries one, or the commit's subject."
+              via:
+                type: string
+                description: "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it."
+              merged_at:
+                type: string
+                description: "When it was committed, RFC 3339."
+              merges:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many commits in the history name the issue; this one is the newest.
+              observed_at:
+                type: string
+                description: When the history was read.
+            required:
+              - commit
+              - via
+              - merged_at
+              - merges
+              - observed_at
+            description: "The newest commit in the trunk's history that names the issue: a merge, by its pull\nrequest's title or its branch, or a commit whose subject names it the way this\nrepository's commits do (`type(scope): description (I2740)`)."
+          ReconcileMove:
+            type: object
+            properties:
+              issue:
+                type: string
+                description: The issue.
+              transition:
+                "$ref": "#/$defs/PlanTransition"
+                description: "The move, as `plan.transition` takes it."
+              command:
+                type: string
+                description: The same move on the command line.
+            required:
+              - issue
+              - transition
+              - command
+            description: "One `plan.transition` the plan admits now."
+          PlanTransition:
+            oneOf:
+              - type: string
+                const: start
+                description: Execution began. Refused unless the issue is READY.
+              - type: string
+                const: verify
+                description: Implementation is complete and the evidence is still outstanding.
+              - type: string
+                const: done
+                description: "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+            description: "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```"
+          ReconcileRefusal:
+            type: object
+            properties:
+              transition:
+                "$ref": "#/$defs/PlanTransition"
+                description: The move.
+              reason:
+                type: string
+                description: "The guard's reason, or the evidence that is owed."
+            required:
+              - transition
+              - reason
+            description: "A move the plan does not admit, and why."
+          TokenStanding:
+            type: object
+            properties:
+              token:
+                type: string
+                description: "The `evidence_required` token."
+              covered:
+                type: boolean
+                description: An evidence entry covers it.
+              fresh:
+                type: boolean
+                description: A covering entry was recorded at or after the newest merge naming the issue.
+              recorded_at:
+                type:
+                  - string
+                  - "null"
+                description: "The newest `recorded_at` among the covering entries."
+            required:
+              - token
+              - covered
+              - fresh
+            description: "One required evidence token, and whether the record covers it."
+          CriterionStanding:
+            type: object
+            properties:
+              criterion:
+                type: string
+                description: "The criterion's prose."
+              standing:
+                type: string
+                description: "Always `unjudged`: reconcile never reads a merge as a criterion met."
+            required:
+              - criterion
+              - standing
+            description: "One acceptance criterion, as the record states it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::plan
+    exposure:
+      mcp:
+        tool: majordomus_plan_reconcile
+      http:
+        method: GET
+        path: /api/v1/plan/reconcile
+      cli:
+        path:
+          - plan
+          - reconcile
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - plan
+      - project
+      - delivery
+      - drift
+      - lifecycle
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
     execution:
       effect: read
       cancellable: false

@@ -344,6 +344,9 @@ pub(crate) struct MergeCommit {
     /// The first parent: what the commit's own change is read against. `None` for a root
     /// commit, or when the history read did not say.
     pub parent: Option<String>,
+    /// The ids its message's final trailer block declares it delivers (`Delivers: <id>`),
+    /// as written: an author's explicit claim, never a mention (ADR 0238, I4773).
+    pub delivers: Vec<String>,
 }
 
 /// A history as one `git log --format=%H%x00%ct%x00%P%x00%s%x00%b%x1e` states it: the commit
@@ -393,6 +396,7 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
                 branch,
                 title,
                 parent,
+                delivers: delivers_of(body),
             });
         } else {
             subjects.push(MergeCommit {
@@ -402,6 +406,7 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
                 branch: None,
                 title: Some(subject.trim().to_string()),
                 parent,
+                delivers: delivers_of(body),
             });
         }
     }
@@ -443,6 +448,54 @@ fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, bool) {
         }
     }
     (None, None, false)
+}
+
+/// The trailer key a commit declares what it delivers with.
+pub(crate) const DELIVERS: &str = "Delivers";
+
+/// The ids the final trailer block of a commit body declares under [`DELIVERS`] (ADR 0238).
+///
+/// A trailer block is the body's last paragraph when every line of it is `Key: value`, as
+/// `git interpret-trailers` reads one; a paragraph with any other line is prose, and prose is
+/// never read, because a body mentions the issues around the work as readily as the one it
+/// realises. Values are split on commas and whitespace. Which of them are declared issues is
+/// the caller's question.
+pub(crate) fn delivers_of(body: &str) -> Vec<String> {
+    let Some(block) = body
+        .trim_end()
+        .rsplit("\n\n")
+        .next()
+        .map(str::trim)
+        .filter(|b| !b.is_empty())
+    else {
+        return Vec::new();
+    };
+    let lines: Vec<&str> = block.lines().map(str::trim_end).collect();
+    let is_trailer = |l: &str| {
+        l.split_once(':').is_some_and(|(k, v)| {
+            !k.is_empty()
+                && k.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+                && v.starts_with(' ')
+        })
+    };
+    if !lines.iter().all(|l| is_trailer(l)) {
+        return Vec::new();
+    }
+    let mut ids: Vec<String> = Vec::new();
+    for l in lines {
+        let Some((key, value)) = l.split_once(':') else {
+            continue;
+        };
+        if key.eq_ignore_ascii_case(DELIVERS) {
+            for id in value.split(|c: char| c == ',' || c.is_whitespace()) {
+                let id = id.trim();
+                if !id.is_empty() && !ids.iter().any(|i| i == id) {
+                    ids.push(id.to_string());
+                }
+            }
+        }
+    }
+    ids
 }
 
 /// The issues a name, a title or both name, among `declared`, each with how: the I1405
@@ -602,10 +655,26 @@ fn git_ok(root: &Path, args: &[&str]) -> Option<String> {
     git(root, args).ok()
 }
 
+/// Whether a recorded observation of `observed` is a reading of the repository the trunk's
+/// remote names (I4777). With no pinned repository there is nothing to compare it with, and
+/// the observation is what gh's own resolution read: it is taken, as it was before.
+pub(crate) fn observation_is_of(observed: &str, pinned: Option<&str>) -> bool {
+    pinned.is_none_or(|p| p.eq_ignore_ascii_case(observed))
+}
+
+/// Why an observation of another repository is unread.
+pub(crate) fn foreign_observation(observed: &str, pinned: Option<&str>) -> String {
+    format!(
+        "the recorded forge observation is of {observed}, and the trunk's remote is {}; \
+         `majordomus prs refresh` records one of the trunk's repository",
+        pinned.unwrap_or("unknown")
+    )
+}
+
 /// The ref the live answer reads the trunk from: the remote-tracking trunk unless the local
 /// one is ahead of it, because a primary checkout's local trunk can lag the forge by hundreds
 /// of merges and every merge it lacks would read as unmerged.
-fn trunk_ref(root: &Path, trunk: &str) -> Option<String> {
+pub(crate) fn trunk_ref(root: &Path, trunk: &str) -> Option<String> {
     let remote = format!("origin/{trunk}");
     let local_ok = git_ok(
         root,
@@ -665,7 +734,10 @@ const PLANNING_PATHS: [&str; 2] = [
 /// [`PLANNING_PATHS`]. One `git diff-tree --stdin` reads every pair, and prints a commit's id
 /// only when its change reaches some other path; a commit with no known parent is never
 /// planning.
-fn planning_only(root: &Path, commits: &[(&str, &str)]) -> Result<BTreeSet<String>, String> {
+pub(crate) fn planning_only(
+    root: &Path,
+    commits: &[(&str, &str)],
+) -> Result<BTreeSet<String>, String> {
     use std::io::Write;
     use std::process::Stdio;
     if commits.is_empty() {
@@ -937,7 +1009,7 @@ impl Ordered for NewestPull<'_> {
 impl Ordered for (MergeCommit, &'static str) {
     fn order_key(&self) -> OrderKey<'_> {
         let kind = match self.1 {
-            "subject" => 1,
+            "subject" | "trailer" => 1,
             "forge_title" => 2,
             _ => 0,
         };
@@ -1022,6 +1094,18 @@ pub(crate) fn infer(
             merges.entry(id).or_default().push((c.clone(), "subject"));
         }
     }
+    // A `Delivers:` trailer is the author's explicit claim, for a repository whose commit
+    // grammar leaves no room for an id in a subject (ADR 0238). It is a field of the
+    // message, not its prose, and it names only a declared issue; planning-only commits are
+    // passed over below as for every other edge.
+    for c in all_subjects.iter().chain(&all_merges) {
+        for id in c.delivers.iter().filter(|id| declared.contains(*id)) {
+            let named = merges.entry(id.clone()).or_default();
+            if !named.iter().any(|(m, _)| m.commit == c.commit) {
+                named.push((c.clone(), "trailer"));
+            }
+        }
+    }
     // The forge's titles of merged pull requests, live only: a pull request merged inside a
     // combined top has its title nowhere in git, and its commits' subjects may not name the
     // issue (#1097 realised I2653 and named it only in a body). A title counts when the
@@ -1068,6 +1152,7 @@ pub(crate) fn infer(
                         branch: Some(pr.head_ref.clone()),
                         title: Some(pr.title.clone()),
                         parent: parent.clone(),
+                        delivers: Vec::new(),
                     },
                     "forge_title",
                 ));
@@ -1180,7 +1265,19 @@ pub(crate) fn infer(
         ));
         let branches_read = b.is_ok();
         let b = b.unwrap_or_default();
+        let pinned = crate::integration::forge::pinned_repository(root);
         let open = match crate::integration::load_observation(root) {
+            // an observation of another repository than the trunk's remote is not a reading
+            // of this one: a fork's cache recorded by gh's own resolution is the parent's
+            // (I4777)
+            Ok(Some(o)) if !observation_is_of(&o.repository, pinned.as_deref()) => {
+                sources.push(source(
+                    "forge",
+                    Err(foreign_observation(&o.repository, pinned.as_deref())),
+                    Some(&o.observed_at),
+                ));
+                None
+            }
             Ok(Some(o)) => {
                 sources.push(source(
                     "forge",
@@ -1362,6 +1459,7 @@ mod tests {
                     branch: None,
                     title: None,
                     parent: None,
+                    delivers: Vec::new(),
                 },
                 via,
             )
@@ -1608,6 +1706,7 @@ mod tests {
             branch: None,
             title: Some(format!("{commit} (I0001)")),
             parent: Some("p".into()),
+            delivers: Vec::new(),
         };
         let mut e = evidence();
         e.merges.insert(
@@ -1660,6 +1759,7 @@ mod tests {
             branch: Some("feature/x".into()),
             title: Some("x (I0001)".into()),
             parent: None,
+            delivers: Vec::new(),
         };
         e.merges
             .insert("I0001".into(), vec![(merge, "title_or_branch")]);
@@ -1702,5 +1802,54 @@ mod tests {
         for s in DeliveryStage::ALL {
             assert_eq!(serde_json::to_value(s).unwrap(), json!(s.as_str()));
         }
+    }
+
+    /// A `Delivers:` trailer is read from the final trailer block only (ADR 0238): every
+    /// line of the last paragraph must be `Key: value`, and prose that mentions an id names
+    /// nothing.
+    #[test]
+    fn a_delivers_trailer_is_read_from_the_final_trailer_block_only() {
+        assert_eq!(
+            delivers_of("why.\n\nDelivers: I0002, I0003\nCo-Authored-By: a <a@b>\n"),
+            ["I0002", "I0003"]
+        );
+        assert_eq!(
+            delivers_of("delivers: I0002 I0002\n"),
+            ["I0002"],
+            "once, any case"
+        );
+        assert!(delivers_of("Delivers: I0002 and then\nprose follows").is_empty());
+        assert!(delivers_of("Delivers: I0002\n\nand a closing paragraph of prose").is_empty());
+        assert!(
+            delivers_of("Refs: I0002\n").is_empty(),
+            "only the Delivers key"
+        );
+        assert!(delivers_of("").is_empty());
+        assert!(
+            delivers_of("Bad key: I0002\n").is_empty(),
+            "a key is one word"
+        );
+        assert!(
+            delivers_of("Delivers:I0002\n").is_empty(),
+            "a value follows a space"
+        );
+        let text = "aaa\x001700000000\x00p1\x00feat: a thing\x00body\n\nDelivers: I0002\x1e\n";
+        let h = parse_history(text).unwrap();
+        assert_eq!(h.subjects[0].delivers, ["I0002"]);
+    }
+
+    /// A cached forge observation is a reading of this repository only when it names the
+    /// repository the trunk's remote does (I4777).
+    #[test]
+    fn an_observation_of_another_repository_is_not_this_ones() {
+        assert!(observation_is_of("o/fork", None), "nothing to compare with");
+        assert!(observation_is_of("O/Fork", Some("o/fork")));
+        assert!(!observation_is_of("them/parent", Some("o/fork")));
+        let why = foreign_observation("them/parent", Some("o/fork"));
+        assert!(
+            why.contains("is of them/parent") && why.contains("remote is o/fork"),
+            "{why}"
+        );
+        assert!(foreign_observation("x/y", None).contains("remote is unknown"));
     }
 }

@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
-  "fingerprint": "b548080184badda1118ce404e15878ec5ad3352412c3ae6d70ac812f4219d21d",
+  "fingerprint": "abb295050be83ba49e3c4407cf54f46e679ff28a099da639e9b0bf8ea33d5091",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 91,
+        "capabilities": 93,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 156,
+        "capabilities": 158,
         "moments": 38
       },
       "evidence": {
@@ -7561,11 +7561,11 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 170
+          "objects": 171
         },
         {
           "name": "knowledge",
-          "objects": 221
+          "objects": 222
         },
         {
           "name": "document",
@@ -7842,11 +7842,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 756,
+        "mcp_resources": 758,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 753,
+        "objects": 755,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9982,6 +9982,15 @@
               "route": "POST /api/v1/plan/allocate"
             },
             {
+              "id": "plan.collisions",
+              "title": "Whether an issue this head authors or executes is another's",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_collisions",
+              "route": "GET /api/v1/plan/collisions",
+              "cli": "majordomus plan collisions"
+            },
+            {
               "id": "plan.delivery",
               "title": "How far each issue's work has travelled",
               "kind": "query",
@@ -10031,6 +10040,15 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_plan_next",
               "route": "GET /api/v1/plan/next"
+            },
+            {
+              "id": "plan.reconcile",
+              "title": "What a merge supports the plan recording, and what each issue still owes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_reconcile",
+              "route": "GET /api/v1/plan/reconcile",
+              "cli": "majordomus plan reconcile"
             },
             {
               "id": "plan.record",
@@ -10524,11 +10542,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 73,
-        "mcp_tools": 64,
+        "capabilities": 75,
+        "mcp_tools": 66,
         "mcp_resources": 9,
-        "http_routes": 68,
-        "cli_paths": 26,
+        "http_routes": 70,
+        "cli_paths": 28,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10816,6 +10834,15 @@
               "route": "POST /api/v1/plan/allocate"
             },
             {
+              "id": "plan.collisions",
+              "title": "Whether an issue this head authors or executes is another's",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_collisions",
+              "route": "GET /api/v1/plan/collisions",
+              "cli": "majordomus plan collisions"
+            },
+            {
               "id": "plan.delivery",
               "title": "How far each issue's work has travelled",
               "kind": "query",
@@ -10865,6 +10892,15 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_plan_next",
               "route": "GET /api/v1/plan/next"
+            },
+            {
+              "id": "plan.reconcile",
+              "title": "What a merge supports the plan recording, and what each issue still owes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_reconcile",
+              "route": "GET /api/v1/plan/reconcile",
+              "cli": "majordomus plan reconcile"
             },
             {
               "id": "plan.record",
@@ -12037,11 +12073,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 115,
-        "mcp_tools": 103,
+        "capabilities": 117,
+        "mcp_tools": 105,
         "mcp_resources": 18,
-        "http_routes": 109,
-        "cli_paths": 50,
+        "http_routes": 111,
+        "cli_paths": 52,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -13383,6 +13419,15 @@
               "route": "POST /api/v1/plan/allocate"
             },
             {
+              "id": "plan.collisions",
+              "title": "Whether an issue this head authors or executes is another's",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_collisions",
+              "route": "GET /api/v1/plan/collisions",
+              "cli": "majordomus plan collisions"
+            },
+            {
               "id": "plan.delivery",
               "title": "How far each issue's work has travelled",
               "kind": "query",
@@ -13432,6 +13477,15 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_plan_next",
               "route": "GET /api/v1/plan/next"
+            },
+            {
+              "id": "plan.reconcile",
+              "title": "What a merge supports the plan recording, and what each issue still owes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_plan_reconcile",
+              "route": "GET /api/v1/plan/reconcile",
+              "cli": "majordomus plan reconcile"
             },
             {
               "id": "plan.record",
@@ -13658,7 +13712,7 @@
         },
         {
           "name": "issue",
-          "objects": 1276
+          "objects": 1279
         },
         {
           "name": "intent",
@@ -13866,13 +13920,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 30,
-        "mcp_tools": 29,
-        "mcp_resources": 1486,
-        "http_routes": 29,
-        "cli_paths": 14,
+        "capabilities": 32,
+        "mcp_tools": 31,
+        "mcp_resources": 1489,
+        "http_routes": 31,
+        "cli_paths": 16,
         "commands": 1,
-        "objects": 1483,
+        "objects": 1486,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14506,7 +14560,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 49
+          "objects": 50
         },
         {
           "name": "application",
@@ -14622,11 +14676,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 64,
+        "mcp_resources": 65,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 64,
+        "objects": 65,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17713,7 +17767,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (170)",
+        "title": "adr (171)",
         "features": [
           "knowledge"
         ]
@@ -17818,14 +17872,14 @@
       },
       {
         "id": "issue",
-        "title": "issue (1276)",
+        "title": "issue (1279)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "knowledge",
-        "title": "knowledge (221)",
+        "title": "knowledge (222)",
         "features": [
           "knowledge"
         ]
@@ -17917,7 +17971,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (49)",
+        "title": "use-case (50)",
         "features": [
           "use-cases"
         ]
@@ -18878,19 +18932,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 4063,
-    "builtin": 233,
-    "declarative": 3830,
+    "capabilities": 4073,
+    "builtin": 235,
+    "declarative": 3838,
     "modules": 62,
-    "mcp_tools": 217,
-    "mcp_resources": 3887,
-    "http_routes": 221,
-    "cli_commands": 229,
+    "mcp_tools": 219,
+    "mcp_resources": 3895,
+    "http_routes": 223,
+    "cli_commands": 231,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3830,
+    "objects": 3838,
     "by_kind": {
-      "adr": 170,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18907,8 +18961,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
-      "knowledge": 221,
+      "issue": 1279,
+      "knowledge": 222,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -18921,8 +18975,8 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 708,
-      "use-case": 49,
+      "test": 710,
+      "use-case": 50,
       "workspace": 1
     },
     "providers": 6,

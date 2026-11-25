@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/47 | 20 | 5 | 1 | 1 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/49 | 20 | 5 | 1 | 3 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
 
 ## Issues
 
@@ -62,6 +62,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4294](https://majordomus.dev/plan/i4294/) | READY | 0 | — | The delivery board's documents are derived by one capability, and every open milestone has a lane |
 | [I4315](https://majordomus.dev/plan/i4315/) | READY | 0 | — | The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red |
 | [I4596](https://majordomus.dev/plan/i4596/) | READY | 0 | — | A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it |
+| [I4773](https://majordomus.dev/plan/i4773/) | VERIFY | 0 | — | plan reconcile proposes the moves a merge supports, with the evidence each issue still owes, and applies them only through plan.transition |
+| [I4777](https://majordomus.dev/plan/i4777/) | VERIFY | 0 | — | The forge is read for the repository the trunk's remote names, never for the parent gh resolves a fork to |
 
 ## Findings
 

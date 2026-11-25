@@ -43,9 +43,11 @@ use crate::capability::model::{
     McpResource, Stability, WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::plan::collisions::{self, CollisionReport};
 use crate::plan::delivery::{self, DeliveryReading, DeliverySource, IssueDeliveryReport};
 use crate::plan::drift::{self, DriftReport};
 use crate::plan::flight::{self, IssueClaim, PlanFlight};
+use crate::plan::reconcile::{self, ReconcileReport};
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
     Transition, TransitionError,
@@ -742,6 +744,38 @@ pub fn module() -> ModuleDescriptor {
                 handler: plan_drift,
             },
             capability! {
+                id: "plan.reconcile",
+                title: "What a merge supports the plan recording, and what each issue still owes",
+                description: "For every issue (or the ones named) whose work plan.delivery proves merged, released or deployed while its declared status is READY, BLOCKED, ACTIVE or VERIFY: the proof (the newest merge naming it and how: title, branch, slug, subject or a `Delivers:` trailer), the plan.transition moves the plan admits now, in order, and the moves it does not with the guard's own reason (ADR 0238). A merge proves that execution began, so a READY issue is proposed `start`; `done` is proposed only where the done guard admits it, the issue declares evidence_required, and every covering evidence entry was recorded at or after that merge; `verify` is never proposed, because it is a worker's attestation and a merge can be one slice of an issue. Each proposal lists every required token as covered, stale or missing, the declared validation commands that would cover it, and every acceptance criterion as `unjudged`. Classes: recordable, acceptable, held (BLOCKED, or a done held by something other than evidence), unaccepted (ACTIVE or VERIFY with evidence owed), pending_pr (another open pull request still names it; nothing is proposed). `settled` is false when the forge was not read, because no open pull request can then be ruled out. It writes nothing: `majordomus plan reconcile --apply` performs the start moves, and `--done` the admitted done moves, one plan.transition each.",
+                input: PlanReconcileInput,
+                output: ReconcileReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_reconcile"),
+                    http: get("/api/v1/plan/reconcile"),
+                    cli: Some(CliExposure { path: vec!["plan".into(), "reconcile".into()] }),
+                },
+                tags: ["plan", "project", "delivery", "drift", "lifecycle"],
+                cache: CachePolicy::Disabled,
+                handler: plan_reconcile,
+            },
+            capability! {
+                id: "plan.collisions",
+                title: "Whether an issue this head authors or executes is another's",
+                description: "Every collision between this head and the other lines of work, each naming its holder (ADR 0238). `id_reused` (refused): an issue record this head adds since its merge-base with the trunk that another line of history (the trunk, or any local or remote-tracking branch) also added under another title; a record inherited from the trunk, or the same record carried on two refs, is none. `retitled` (warned): a record the base already holds whose title this head changes, the hidden form of a collision after a rebase. `claimed_elsewhere`: an issue this head executes (named by its branch, by the I1405 rule or its slug, or by `issue`) that another open pull request names by its head branch, or by a title naming it among at most three ids, refused unless one of the two declares it supersedes the other; or that a live mesh claim of another session names, refused; or that only another branch names, warned. A head whose change is planning-only executes nothing. A forge observation older than `collisions.max_age` (`.ai/repo/ci/plan.yaml`) is stale, and a stale or unread forge never proves that no other pull request names an issue. With `gate`, the exit code is 10 on a refusal, 12 when the forge could not be read and the gate is `pr`, and 0 otherwise.",
+                input: PlanCollisionsInput,
+                output: CollisionReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_collisions"),
+                    http: get("/api/v1/plan/collisions"),
+                    cli: Some(CliExposure { path: vec!["plan".into(), "collisions".into()] }),
+                },
+                tags: ["plan", "project", "delivery", "collisions", "gate"],
+                cache: CachePolicy::Disabled,
+                handler: plan_collisions,
+            },
+            capability! {
                 id: "plan.allocate",
                 kind: CapabilityKind::Command,
                 title: "Reserve the next issue, case or ADR number",
@@ -1039,10 +1073,16 @@ fn plan_drift(ctx: &Context, input: PlanDriftInput) -> Result<DriftReport, Capab
         .iter()
         .map(|i| (i.id.clone(), i.started_at.clone()))
         .collect();
+    let owing: BTreeMap<String, Vec<String>> = crate::plan::owed(&ctx.index)
+        .into_iter()
+        .map(|(id, o)| (id, crate::plan::reconcile::missing_tokens(&o)))
+        .filter(|(_, missing)| !missing.is_empty())
+        .collect();
     let (claims, claims_source) = issue_claims(ctx);
     Ok(drift::judge(
         delivered,
         &started,
+        &owing,
         claims.as_ref(),
         claims_source,
         drift::read_window(root),
@@ -1322,6 +1362,16 @@ mod tests {
             ),
             ("plan.drift", "majordomus_plan_drift", "/api/v1/plan/drift"),
             (
+                "plan.reconcile",
+                "majordomus_plan_reconcile",
+                "/api/v1/plan/reconcile",
+            ),
+            (
+                "plan.collisions",
+                "majordomus_plan_collisions",
+                "/api/v1/plan/collisions",
+            ),
+            (
                 "plan.allocate",
                 "majordomus_plan_allocate",
                 "/api/v1/plan/allocate",
@@ -1489,4 +1539,202 @@ mod tests {
             )
         );
     }
+}
+
+// ---------------------------------------------------------------- plan.reconcile
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which issues to reconcile: the input of `plan.reconcile`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanReconcileInput;
+///
+/// let every: PlanReconcileInput = serde_json::from_str("{}").unwrap();
+/// assert!(every.issues.is_empty(), "every issue");
+/// assert!(serde_json::from_str::<PlanReconcileInput>(r#"{"apply":true}"#).is_err());
+/// ```
+pub struct PlanReconcileInput {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// Issue ids. Default: every issue of the plan. An id the plan does not declare is not
+    /// found.
+    pub issues: Vec<String>,
+}
+
+impl BenchmarkCases for PlanReconcileInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let issue = plan
+            .issues
+            .first()
+            .map_or_else(|| "I0001".to_string(), |i| i.id.clone());
+        vec![
+            NamedCase::new("every-issue", PlanReconcileInput::default()),
+            NamedCase::new(
+                "one-issue",
+                PlanReconcileInput {
+                    issues: vec![issue],
+                },
+            ),
+        ]
+    }
+}
+
+fn plan_reconcile(
+    ctx: &Context,
+    input: PlanReconcileInput,
+) -> Result<ReconcileReport, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    if let Some(id) = input.issues.iter().find(|id| plan.issue(id).is_none()) {
+        return Err(CapabilityError::NotFound(format!(
+            "no issue '{id}' in this plan; `plan.issues` lists every one"
+        )));
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let delivered = delivery::infer(root, &plan, identity.trunk(), None, None)
+        .map_err(CapabilityError::Refused)?;
+    let owes = crate::plan::owed(&ctx.index);
+    let now = crate::ledger::now();
+    // the guard is the transition's own, asked of the plan as the proposed start leaves it
+    let admits = |id: &str, t: Transition, after_start: bool| -> Result<(), String> {
+        let started;
+        let judged = if after_start {
+            started = Plan::after_moves(&ctx.index, &[(id, Transition::Start)], &now);
+            &started
+        } else {
+            &plan
+        };
+        crate::plan::check(&ctx.index, judged, id, t, &now).map_err(|e| e.to_string())
+    };
+    Ok(reconcile::propose(delivered, &owes, &input.issues, &admits))
+}
+
+// ---------------------------------------------------------------- plan.collisions
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// Where a `plan.collisions` gate runs, which decides what an unread forge does.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::CollisionGate;
+/// assert_eq!(serde_json::to_value(CollisionGate::Pr).unwrap(), "pr");
+/// assert_eq!(serde_json::from_str::<CollisionGate>(r#""start""#).unwrap(), CollisionGate::Start);
+/// ```
+pub enum CollisionGate {
+    /// A task start: an unread forge warns.
+    Start,
+    /// A push: an unread or stale forge warns.
+    Push,
+    /// A pull request: an unread forge cannot be judged (exit 12).
+    Pr,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// What to judge: the input of `plan.collisions`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::{CollisionGate, PlanCollisionsInput};
+///
+/// let plain: PlanCollisionsInput = serde_json::from_str("{}").unwrap();
+/// assert!(plain.issue.is_none() && plain.head.is_none() && plain.gate.is_none());
+/// let start: PlanCollisionsInput =
+///     serde_json::from_value(serde_json::json!({"issue": "I1", "gate": "start"})).unwrap();
+/// assert_eq!(start.gate, Some(CollisionGate::Start));
+/// assert!(serde_json::from_str::<PlanCollisionsInput>(r#"{"force":true}"#).is_err());
+/// ```
+pub struct PlanCollisionsInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// An issue the caller is about to execute (`start --issue`), besides the one the head's
+    /// branch names.
+    pub issue: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The head to judge. Default: `HEAD`.
+    pub head: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The head's branch, when git cannot say it: a CI checkout of a pull request is detached.
+    pub branch: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Judge as a gate at `start`, `push` or `pr`. Default: report only, exit 0.
+    pub gate: Option<CollisionGate>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The caller's own mesh session (`task-<id>`): its claims are the head's, not another's.
+    pub session: Option<String>,
+}
+
+impl BenchmarkCases for PlanCollisionsInput {
+    fn benchmark_cases(_ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("this-head", PlanCollisionsInput::default()),
+            NamedCase::new(
+                "this-head-as-a-pull-request-gate",
+                PlanCollisionsInput {
+                    gate: Some(CollisionGate::Pr),
+                    ..PlanCollisionsInput::default()
+                },
+            ),
+        ]
+    }
+}
+
+fn plan_collisions(
+    ctx: &Context,
+    input: PlanCollisionsInput,
+) -> Result<CollisionReport, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    if let Some(id) = input.issue.as_deref() {
+        if plan.issue(id).is_none() {
+            return Err(CapabilityError::NotFound(format!(
+                "no issue '{id}' in this plan; `plan.issues` lists every one"
+            )));
+        }
+    }
+    let root = Path::new(&ctx.index.repository.root);
+    let identity = crate::worktree::RepositoryIdentity::discover(root)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    // the claims are the mesh's: this server's own fold, or the checkout's server asked
+    // over HTTP from a command line, which is where `start` asks from
+    let views = match ctx.mesh.cooperation() {
+        Some(c) => Ok(c.state().claims),
+        None => match crate::guard::server_claims(root) {
+            crate::guard::ClaimSource::Claims(c) => Ok(c),
+            crate::guard::ClaimSource::Unavailable(why) => Err(why),
+        },
+    };
+    let (claims, claims_unread) = match views {
+        Ok(views) => (
+            Some(
+                views
+                    .into_iter()
+                    .filter(|c| c.state.is_live())
+                    .filter_map(|c| {
+                        c.issue.map(|issue| collisions::LiveClaim {
+                            issue: issue.trim().to_string(),
+                            key: c.key,
+                            session: c.session,
+                        })
+                    })
+                    .collect::<Vec<_>>(),
+            ),
+            None,
+        ),
+        Err(why) => (None, Some(why)),
+    };
+    collisions::judge_repository(
+        root,
+        &plan,
+        identity.trunk(),
+        &collisions::Asked {
+            head: input.head.as_deref().unwrap_or("HEAD"),
+            branch: input.branch.as_deref(),
+            issue: input.issue.as_deref(),
+            gate: input.gate,
+            session: input.session.as_deref(),
+        },
+        claims.as_deref(),
+        claims_unread,
+    )
+    .map_err(CapabilityError::Refused)
 }

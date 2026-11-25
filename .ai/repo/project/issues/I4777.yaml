@@ -1,0 +1,42 @@
+id: I4777
+milestone: truthful-plan-surfaces
+title: "The forge is read for the repository the trunk's remote names, never for the parent gh resolves a fork to"
+slug: the-forge-is-read-for-the-trunks-remote
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "GhForge resolves `owner/name` from the URL of the remote the trunk tracks (worktree::trunk::remote_trunk_of), asks `gh repo view <owner/name>`, and runs every gh call of the observation with GH_REPO set to it; a remote URL that names no GitHub repository keeps gh's own resolution. Delivery reads a recorded forge observation only when its repository is the trunk remote's, and reports it unread, naming both, when it is not."
+why: "ADR 0238. An adopter fork with an `upstream` remote read the parent's 174 open pull requests on 2026-11-25: `gh repo view` without an argument and `gh pr list` resolve a fork to its parent, so every pr_open stage, every merged_not_recorded and every protection read was judged against the wrong repository, and the fork's own pull requests were never read."
+current_state: "Measured at 46775282570: forge.rs GhForge::observe asks `gh repo view --json nameWithOwner,defaultBranchRef` in the root and lists pull requests with no --repo; delivery.rs reads `load_observation` without comparing its repository to anything."
+desired_state: "In a fork, delivery, drift, flight and reconcile read the fork's pull requests, and a cached observation of another repository is unread."
+scope:
+  - ".ai/repo/project/issues/I4777.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+non_scope:
+  - "A policy key that overrides the repository; the trunk's remote is the one delivery reads merges from"
+  - "Forges other than GitHub"
+acceptance_criteria:
+  - "Rust test: the GitHub URL forms git@github.com:o/n.git, ssh://git@github.com/o/n and https://github.com/o/n(.git) give o/n, and a non-GitHub URL gives none"
+  - "Rust test: a clone whose trunk tracks origin and which also has an upstream remote resolves origin's repository"
+  - "Rust test: delivery reports a recorded observation of another repository as an unread forge naming both repositories"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::forge::repository"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+evidence_required:
+  - "rust"
+depends_on: []
+serves: []
+created_at: 2026-11-25
+updated_at: 2026-11-25T10:09:59Z
+started_at: 2026-11-25T10:06:27Z
+started_event: sha256:f29a8366e242275796968ceb56a6c7f3e4ca5e0d21700be4cbade09a831e8fa7
+verified_at: 2026-11-25T10:09:59Z
+verified_event: sha256:039f386fcb90c57fd96bf3ed367d61c31a77150593c57984eddd2a2608779fc0
+evidence:
+  - covers: "rust"
+    type: test
+    command: "cargo test --locked --lib -- plan:: integration::forge::repository; cargo test --locked --test plan_delivery --test plan_drift"
+    result: "lib 117 passed (incl. integration::forge::repository_tests, plan::delivery observation and trailer tests); plan_delivery and plan_drift integration suites passed, 0 failed"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-25T10:07:40Z

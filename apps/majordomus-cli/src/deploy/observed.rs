@@ -19,7 +19,6 @@
 
 use std::collections::BTreeMap;
 use std::path::Path;
-use std::process::Command;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -322,7 +321,9 @@ pub fn merged_pages(
 
 fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, String> {
     let out = crate::process::retrying_busy(|| {
-        Command::new(program).current_dir(root).args(args).output()
+        crate::integration::forge::gh_command(program, root)
+            .args(args)
+            .output()
     })
     .map_err(|e| format!("the GitHub CLI ({program}) could not run: {e}"))?;
     let text = String::from_utf8_lossy(&out.stdout);
@@ -338,7 +339,12 @@ fn run(program: &str, root: &Path, args: &[&str]) -> Result<Value, String> {
 
 /// Ask the forge through `program` (the GitHub CLI) from the repository at `root`.
 pub fn observe_with(program: &str, root: &Path) -> Result<DeploymentObservation, String> {
-    let named = run(program, root, &["repo", "view", "--json", "nameWithOwner"])?;
+    let view = crate::integration::forge::repo_view_args(root, "nameWithOwner");
+    let named = run(
+        program,
+        root,
+        &view.iter().map(String::as_str).collect::<Vec<_>>(),
+    )?;
     let repository = string(&named, "/nameWithOwner")
         .ok_or_else(|| format!("{program} repo view named no repository"))?;
     let (owner, name) = repository

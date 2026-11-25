@@ -2,7 +2,7 @@
   "schema": 1,
   "source": "docs/generated/graph.json",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: docs/generated/graph.json and site/data/publication.toml; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "kinds": [
     {
       "kind": "adr",
@@ -11,7 +11,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 170,
+      "count": 171,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -40,7 +40,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 170
+      "count": 171
     },
     {
       "kind": "application",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1276
+      "count": 1279
     },
     {
       "kind": "knowledge",
@@ -184,7 +184,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 221
+      "count": 222
     },
     {
       "kind": "mesh-declaration",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 708
+      "count": 710
     },
     {
       "kind": "use-case",
@@ -296,7 +296,7 @@
       "route": "/use-cases/",
       "title": null,
       "reason": null,
-      "count": 49
+      "count": 50
     },
     {
       "kind": "workspace",
@@ -9978,6 +9978,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0198/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0238",
+          "kind": "adr",
+          "route": "/adrs/adr-0238/",
+          "external": false
         }
       ]
     },
@@ -15058,6 +15065,110 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0238",
+      "identity": "adr-0238",
+      "slug": "adr-0238",
+      "cockpit": "/cockpit/objects/adr/adr-0238",
+      "title": "The plan is reconciled with merged work through plan.transition, and an issue authored or executed twice is refused where it collides",
+      "status": "proposed",
+      "tags": [
+        "plan",
+        "delivery",
+        "drift",
+        "collisions",
+        "forge"
+      ],
+      "source": ".ai/repo/adrs/0238-the-plan-is-reconciled-with-merged-work-and-a-claim-is-refused-where-it-collides.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/allocate.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/forge.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan/collisions.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan/delivery.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan/drift.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan/reconcile.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0166",
+          "kind": "adr",
+          "route": "/adrs/adr-0166/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/start.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4773",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4775",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4777",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -16824,6 +16935,13 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
+        },
+        {
+          "edge": "exercises",
+          "label": "reconcile-the-plan-with-merged-work",
+          "kind": "use-case",
+          "route": "/use-cases/",
+          "external": false
         }
       ]
     },
@@ -17836,6 +17954,13 @@
         {
           "edge": "exercises",
           "label": "prove-performance-with-benchmarks",
+          "kind": "use-case",
+          "route": "/use-cases/",
+          "external": false
+        },
+        {
+          "edge": "exercises",
+          "label": "reconcile-the-plan-with-merged-work",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false

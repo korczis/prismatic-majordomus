@@ -25,3 +25,11 @@ drift:
   # Advisory until the drift that exists today is settled; I2748 settles it and makes the
   # gate blocking, so that landing the gate does not turn the trunk red on work it predates.
   enforcement: advisory
+
+collisions:
+  # Seconds a forge observation (`majordomus prs refresh`) is current for when
+  # `majordomus plan collisions` (capability plan.collisions, ADR 0238) asks whether another
+  # open pull request executes an issue this head executes. An older one is stale, and a
+  # stale or unread forge never proves that no other pull request names an issue: at a
+  # task's start and at a push it is a warning, never a refusal.
+  max_age: 3600

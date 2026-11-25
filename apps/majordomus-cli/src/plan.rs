@@ -34,9 +34,11 @@ use serde_json::Value;
 
 use crate::index::Index;
 
+pub(crate) mod collisions;
 pub(crate) mod delivery;
 pub(crate) mod drift;
 pub(crate) mod flight;
+pub(crate) mod reconcile;
 
 /// The kind of a milestone record.
 pub const MILESTONE: &str = "milestone";
@@ -648,11 +650,78 @@ impl Plan {
     /// # }
     /// ```
     pub fn after(index: &Index, id: &str, transition: Transition, now: &str) -> Plan {
+        Plan::after_moves(index, &[(id, transition)], now)
+    }
+
+    /// [`Plan::after`] for several moves in order: what the plan would say once each of them
+    /// had been written. `plan.reconcile` asks it whether a `done` would be admitted after the
+    /// `start` it proposes first (ADR 0238), so the question stays the one `derive` answers.
+    pub(crate) fn after_moves(index: &Index, moves: &[(&str, Transition)], now: &str) -> Plan {
         let (header, milestones, mut issues) = raws(index);
-        if let Some(r) = issues.iter_mut().find(|r| r.id == id) {
-            r.stamp_with_seal(transition, now);
+        for (id, transition) in moves {
+            if let Some(r) = issues.iter_mut().find(|r| r.id == *id) {
+                r.stamp_with_seal(*transition, now);
+            }
         }
         derive(header, milestones, issues)
+    }
+}
+
+/// One evidence entry of an issue's record: the token it covers and when it was recorded.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub(crate) struct RecordedEvidence {
+    /// The `evidence_required` token it covers.
+    pub covers: String,
+    /// When it was recorded, as the record says; empty when it does not.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub recorded_at: String,
+}
+
+/// What an issue's record declares it owes before it may be DONE, as written: the tokens,
+/// the evidence that covers them, the criteria and the validation commands (ADR 0238). None
+/// of it is judged here; `plan.reconcile` says which tokens are covered and leaves the prose
+/// unjudged.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub(crate) struct IssueOwes {
+    /// The `evidence_required` tokens.
+    pub evidence_required: Vec<String>,
+    /// Every evidence entry that covers a token.
+    pub evidence: Vec<RecordedEvidence>,
+    /// The `acceptance_criteria`, as prose.
+    pub acceptance_criteria: Vec<String>,
+    /// The `validation` commands.
+    pub validation: Vec<String>,
+}
+
+/// [`IssueOwes`] of every issue the index holds, by id.
+pub(crate) fn owed(index: &Index) -> std::collections::BTreeMap<String, IssueOwes> {
+    index
+        .objects
+        .iter()
+        .filter(|o| o.kind == ISSUE)
+        .map(|o| (o.identity.clone(), owes_of(&o.metadata)))
+        .collect()
+}
+
+/// [`IssueOwes`] of one record's metadata.
+fn owes_of(meta: &Value) -> IssueOwes {
+    let evidence = match meta.get("evidence") {
+        Some(Value::Array(items)) => items
+            .iter()
+            .filter_map(|e| {
+                e.get("covers").map(|c| RecordedEvidence {
+                    covers: scalar(Some(c)),
+                    recorded_at: field(e, "recorded_at"),
+                })
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    IssueOwes {
+        evidence_required: list(meta, "evidence_required"),
+        evidence,
+        acceptance_criteria: list(meta, "acceptance_criteria"),
+        validation: list(meta, "validation"),
     }
 }
 
@@ -3007,5 +3076,44 @@ mod seal_tests {
                 ("v0.10.0".to_string(), "c10".to_string()),
             ]
         );
+    }
+}
+
+#[cfg(test)]
+mod owes_tests {
+    use super::*;
+    use serde_json::json;
+
+    /// What a record owes is read as written: the tokens, every covering entry with its time,
+    /// the criteria and the validation; an entry without `covers` is not evidence.
+    #[test]
+    fn a_record_owes_what_it_declares() {
+        let o = owes_of(&json!({
+            "evidence_required": ["rust", "test"],
+            "evidence": [
+                {"covers": "rust", "recorded_at": "2026-11-25T08:00:00Z"},
+                {"type": "manual"},
+                {"covers": "test"}
+            ],
+            "acceptance_criteria": ["it works"],
+            "validation": "cargo test"
+        }));
+        assert_eq!(o.evidence_required, ["rust", "test"]);
+        assert_eq!(
+            o.evidence,
+            [
+                RecordedEvidence {
+                    covers: "rust".into(),
+                    recorded_at: "2026-11-25T08:00:00Z".into()
+                },
+                RecordedEvidence {
+                    covers: "test".into(),
+                    recorded_at: String::new()
+                }
+            ]
+        );
+        assert_eq!(o.acceptance_criteria, ["it works"]);
+        assert_eq!(o.validation, ["cargo test"], "a scalar is one item");
+        assert_eq!(owes_of(&json!({"evidence": "none"})), IssueOwes::default());
     }
 }

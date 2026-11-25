@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "2c30dc61f3a64288a17703a7beae54c54b65070abc432ebc640e086e40cd69fb",
     "summary": {
-      "total": 4063,
-      "builtin": 233,
-      "declarative": 3830,
+      "total": 4073,
+      "builtin": 235,
+      "declarative": 3838,
       "by_kind": {
         "command": 42,
-        "query": 191,
-        "resource": 3830
+        "query": 193,
+        "resource": 3838
       },
       "by_stability": {
         "behaviorally_verified": 153,
-        "experimental": 70,
-        "implemented": 3840
+        "experimental": 72,
+        "implemented": 3848
       },
-      "mcp_tools": 217,
-      "mcp_resources": 3887,
-      "http_routes": 221,
-      "cli_commands": 128,
+      "mcp_tools": 219,
+      "mcp_resources": 3895,
+      "http_routes": 223,
+      "cli_commands": 130,
       "modules": 96,
-      "benchmark_required": 187,
+      "benchmark_required": 189,
       "benchmark_waived": 46,
       "cached": 55
     },
@@ -69073,6 +69073,432 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
       },
       {
+        "id": "plan.collisions",
+        "module": "plan",
+        "kind": "query",
+        "title": "Whether an issue this head authors or executes is another's",
+        "description": "Every collision between this head and the other lines of work, each naming its holder (ADR 0238). `id_reused` (refused): an issue record this head adds since its merge-base with the trunk that another line of history (the trunk, or any local or remote-tracking branch) also added under another title; a record inherited from the trunk, or the same record carried on two refs, is none. `retitled` (warned): a record the base already holds whose title this head changes, the hidden form of a collision after a rebase. `claimed_elsewhere`: an issue this head executes (named by its branch, by the I1405 rule or its slug, or by `issue`) that another open pull request names by its head branch, or by a title naming it among at most three ids, refused unless one of the two declares it supersedes the other; or that a live mesh claim of another session names, refused; or that only another branch names, warned. A head whose change is planning-only executes nothing. A forge observation older than `collisions.max_age` (`.ai/repo/ci/plan.yaml`) is stale, and a stale or unread forge never proves that no other pull request names an issue. With `gate`, the exit code is 10 on a refusal, 12 when the forge could not be read and the gate is `pr`, and 0 otherwise.",
+        "input": {
+          "name": "PlanCollisionsInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "An issue the caller is about to execute (`start --issue`), besides the one the head's\nbranch names."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The head to judge. Default: `HEAD`."
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The head's branch, when git cannot say it: a CI checkout of a pull request is detached."
+              },
+              "gate": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CollisionGate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Judge as a gate at `start`, `push` or `pr`. Default: report only, exit 0."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The caller's own mesh session (`task-<id>`): its claims are the head's, not another's."
+              }
+            },
+            "description": "What to judge: the input of `plan.collisions`.\n\n```\nuse majordomus_cli::capability::builtin::plan::{CollisionGate, PlanCollisionsInput};\n\nlet plain: PlanCollisionsInput = serde_json::from_str(\"{}\").unwrap();\nassert!(plain.issue.is_none() && plain.head.is_none() && plain.gate.is_none());\nlet start: PlanCollisionsInput =\n    serde_json::from_value(serde_json::json!({\"issue\": \"I1\", \"gate\": \"start\"})).unwrap();\nassert_eq!(start.gate, Some(CollisionGate::Start));\nassert!(serde_json::from_str::<PlanCollisionsInput>(r#\"{\"force\":true}\"#).is_err());\n```",
+            "title": "PlanCollisionsInput",
+            "$defs": {
+              "CollisionGate": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "start",
+                    "description": "A task start: an unread forge warns."
+                  },
+                  {
+                    "type": "string",
+                    "const": "push",
+                    "description": "A push: an unread or stale forge warns."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pr",
+                    "description": "A pull request: an unread forge cannot be judged (exit 12)."
+                  }
+                ],
+                "description": "Where a `plan.collisions` gate runs, which decides what an unread forge does.\n\n```\nuse majordomus_cli::capability::builtin::plan::CollisionGate;\nassert_eq!(serde_json::to_value(CollisionGate::Pr).unwrap(), \"pr\");\nassert_eq!(serde_json::from_str::<CollisionGate>(r#\"\"start\"\"#).unwrap(), CollisionGate::Start);\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "CollisionReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The version of this shape."
+              },
+              "head": {
+                "type": "string",
+                "description": "The head judged, as a commit."
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Its branch, when it has one."
+              },
+              "trunk": {
+                "type": "string",
+                "description": "The trunk ref it was judged against."
+              },
+              "merge_base": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Their merge-base."
+              },
+              "planning_only": {
+                "type": "boolean",
+                "description": "True when the head's change is planning-only."
+              },
+              "executes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues the head executes."
+              },
+              "authors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issue records the head adds."
+              },
+              "gate": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CollisionGate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The gate asked, when one was."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeliverySource"
+                },
+                "description": "Every source, read or not."
+              },
+              "collisions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Collision"
+                },
+                "description": "The collisions, refused first."
+              },
+              "refused": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many are refused."
+              },
+              "warned": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many are warned."
+              },
+              "verdict": {
+                "type": "string",
+                "description": "`clean`, `warned`, `refused`, or `unjudged` (a pull-request gate with no forge)."
+              },
+              "exit_code": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0,
+                "maximum": 255,
+                "description": "The exit code a gate ends with: 0, `EXIT_REFUSED` or `EXIT_UNJUDGED`."
+              }
+            },
+            "required": [
+              "schema",
+              "head",
+              "trunk",
+              "planning_only",
+              "executes",
+              "authors",
+              "sources",
+              "collisions",
+              "refused",
+              "warned",
+              "verdict",
+              "exit_code"
+            ],
+            "description": "Every collision of one head, and what a gate makes of them.",
+            "title": "CollisionReport",
+            "$defs": {
+              "CollisionGate": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "start",
+                    "description": "A task start: an unread forge warns."
+                  },
+                  {
+                    "type": "string",
+                    "const": "push",
+                    "description": "A push: an unread or stale forge warns."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pr",
+                    "description": "A pull request: an unread forge cannot be judged (exit 12)."
+                  }
+                ],
+                "description": "Where a `plan.collisions` gate runs, which decides what an unread forge does.\n\n```\nuse majordomus_cli::capability::builtin::plan::CollisionGate;\nassert_eq!(serde_json::to_value(CollisionGate::Pr).unwrap(), \"pr\");\nassert_eq!(serde_json::from_str::<CollisionGate>(r#\"\"start\"\"#).unwrap(), CollisionGate::Start);\n```"
+              },
+              "DeliverySource": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "`branches`, `forge`, `history`, `releases` or `publication`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/DeliveryReading",
+                    "description": "Read or unread."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+                  },
+                  "observed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When what was read was observed, RFC 3339, when it was read."
+                  }
+                },
+                "required": [
+                  "name",
+                  "state",
+                  "detail"
+                ],
+                "description": "One source the answer is built from, and whether it was read."
+              },
+              "DeliveryReading": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "It was read; what it holds is in the answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+                  }
+                ],
+                "description": "Whether one source of the answer was read."
+              },
+              "Collision": {
+                "type": "object",
+                "properties": {
+                  "class": {
+                    "$ref": "#/$defs/CollisionClass",
+                    "description": "The class."
+                  },
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/CollisionVerdict",
+                    "description": "Refused or warned."
+                  },
+                  "holder": {
+                    "$ref": "#/$defs/CollisionHolder",
+                    "description": "Who holds it."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What collides, in one sentence."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What settles it."
+                  }
+                },
+                "required": [
+                  "class",
+                  "issue",
+                  "verdict",
+                  "holder",
+                  "detail",
+                  "remedy"
+                ],
+                "description": "One collision."
+              },
+              "CollisionClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "id_reused",
+                    "description": "An id another line of history authored too, under another title."
+                  },
+                  {
+                    "type": "string",
+                    "const": "retitled",
+                    "description": "A record the base holds whose title the head changes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed_elsewhere",
+                    "description": "An issue the head executes that another pull request, session or branch names."
+                  }
+                ],
+                "description": "One kind of collision."
+              },
+              "CollisionVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "The head may not proceed while it stands."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warned",
+                    "description": "Reported; it does not refuse."
+                  }
+                ],
+                "description": "What the check made of one collision."
+              },
+              "CollisionHolder": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "`trunk`, `branch`, `pull_request` or `claim`."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The ref, the pull request's head branch, or the claim's key."
+                  },
+                  "pull_request": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The holding mesh session."
+                  },
+                  "commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit that authored the record, for `id_reused`."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The title the holder gives the record, or its pull request's title."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "name"
+                ],
+                "description": "Who holds what the head collides with."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_collisions"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/collisions"
+          },
+          "cli": {
+            "path": [
+              "plan",
+              "collisions"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "plan",
+          "project",
+          "delivery",
+          "collisions",
+          "gate"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
         "id": "plan.delivery",
         "module": "plan",
         "kind": "query",
@@ -69916,6 +70342,11 @@
                     "type": "string",
                     "const": "done_without_trace",
                     "description": "DONE with no merge naming it. Advisory: record-only issues exist."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged_unaccepted",
+                    "description": "VERIFY, with merged work and evidence it requires still missing: a merged pull\nrequest claims it while its acceptance is unmet (ADR 0238). Reported, never refused."
                   }
                 ],
                 "description": "One kind of contradiction between the stamps and the work."
@@ -71627,6 +72058,554 @@
         "cache": {
           "policy": "generation",
           "max_entries": 16
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.reconcile",
+        "module": "plan",
+        "kind": "query",
+        "title": "What a merge supports the plan recording, and what each issue still owes",
+        "description": "For every issue (or the ones named) whose work plan.delivery proves merged, released or deployed while its declared status is READY, BLOCKED, ACTIVE or VERIFY: the proof (the newest merge naming it and how: title, branch, slug, subject or a `Delivers:` trailer), the plan.transition moves the plan admits now, in order, and the moves it does not with the guard's own reason (ADR 0238). A merge proves that execution began, so a READY issue is proposed `start`; `done` is proposed only where the done guard admits it, the issue declares evidence_required, and every covering evidence entry was recorded at or after that merge; `verify` is never proposed, because it is a worker's attestation and a merge can be one slice of an issue. Each proposal lists every required token as covered, stale or missing, the declared validation commands that would cover it, and every acceptance criterion as `unjudged`. Classes: recordable, acceptable, held (BLOCKED, or a done held by something other than evidence), unaccepted (ACTIVE or VERIFY with evidence owed), pending_pr (another open pull request still names it; nothing is proposed). `settled` is false when the forge was not read, because no open pull request can then be ruled out. It writes nothing: `majordomus plan reconcile --apply` performs the start moves, and `--done` the admitted done moves, one plan.transition each.",
+        "input": {
+          "name": "PlanReconcileInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Issue ids. Default: every issue of the plan. An id the plan does not declare is not\nfound."
+              }
+            },
+            "description": "Which issues to reconcile: the input of `plan.reconcile`.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanReconcileInput;\n\nlet every: PlanReconcileInput = serde_json::from_str(\"{}\").unwrap();\nassert!(every.issues.is_empty(), \"every issue\");\nassert!(serde_json::from_str::<PlanReconcileInput>(r#\"{\"apply\":true}\"#).is_err());\n```",
+            "title": "PlanReconcileInput"
+          }
+        },
+        "output": {
+          "name": "ReconcileReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The version of this shape."
+              },
+              "observed": {
+                "$ref": "#/$defs/DeliveryObservation",
+                "description": "Where and when the delivery was observed."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DeliverySource"
+                },
+                "description": "Every source the delivery read, or did not."
+              },
+              "settled": {
+                "type": "boolean",
+                "description": "True when the forge was read: only then can \"no open pull request names it\" be said,\nand only then may the moves be applied."
+              },
+              "unsettled": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why it is not settled."
+              },
+              "classes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReconcileClass"
+                },
+                "description": "The class vocabulary, in order."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many proposals of each class, keyed by every class."
+              },
+              "proposals": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReconcileProposal"
+                },
+                "description": "The proposals, in issue order."
+              },
+              "moves": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many moves are proposed in all."
+              }
+            },
+            "required": [
+              "schema",
+              "observed",
+              "sources",
+              "settled",
+              "classes",
+              "tallies",
+              "proposals",
+              "moves"
+            ],
+            "description": "Every issue whose merged work the plan has not finished recording, with what may be\nwritten now.",
+            "title": "ReconcileReport",
+            "$defs": {
+              "DeliveryObservation": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "description": "`live`, or `at` a named commit."
+                  },
+                  "trunk": {
+                    "type": "string",
+                    "description": "The history read: the trunk ref in live mode, the commit asked for otherwise."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit that history ends at."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When: the clock in live mode, the commit's committer time at a commit."
+                  }
+                },
+                "required": [
+                  "mode",
+                  "trunk",
+                  "commit",
+                  "observed_at"
+                ],
+                "description": "Where and when the answer was observed."
+              },
+              "DeliverySource": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "`branches`, `forge`, `history`, `releases` or `publication`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/DeliveryReading",
+                    "description": "Read or unread."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was read, or why nothing was: the ref, the file, the command that would record\nit."
+                  },
+                  "observed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When what was read was observed, RFC 3339, when it was read."
+                  }
+                },
+                "required": [
+                  "name",
+                  "state",
+                  "detail"
+                ],
+                "description": "One source the answer is built from, and whether it was read."
+              },
+              "DeliveryReading": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "It was read; what it holds is in the answer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied."
+                  }
+                ],
+                "description": "Whether one source of the answer was read."
+              },
+              "ReconcileClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "recordable",
+                    "description": "`start` is proposed and `done` is not."
+                  },
+                  {
+                    "type": "string",
+                    "const": "acceptable",
+                    "description": "`done` is admitted: the evidence it requires is recorded, and recorded since the merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The guard admits no move: BLOCKED, or a `done` held by something other than evidence."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unaccepted",
+                    "description": "ACTIVE or VERIFY, merged, with evidence missing or older than the merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pending_pr",
+                    "description": "Another open pull request still names it: the work is still landing."
+                  }
+                ],
+                "description": "What a merge supports for one issue."
+              },
+              "ReconcileProposal": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "Its milestone."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Its declared status."
+                  },
+                  "stage": {
+                    "$ref": "#/$defs/DeliveryStage",
+                    "description": "Its inferred delivery stage."
+                  },
+                  "class": {
+                    "$ref": "#/$defs/ReconcileClass",
+                    "description": "What a merge supports."
+                  },
+                  "merge": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryMerge"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The newest merge naming it: its proof."
+                  },
+                  "pending_pr": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The open pull request that still names it, for `pending_pr`."
+                  },
+                  "moves": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ReconcileMove"
+                    },
+                    "description": "The moves the plan admits now, in order."
+                  },
+                  "refused": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ReconcileRefusal"
+                    },
+                    "description": "The moves it does not, with why."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/TokenStanding"
+                    },
+                    "description": "Every required token."
+                  },
+                  "validation": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The declared validation commands: what a worker runs to cover a token."
+                  },
+                  "acceptance": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/CriterionStanding"
+                    },
+                    "description": "Every acceptance criterion, unjudged."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "title",
+                  "milestone",
+                  "status",
+                  "stage",
+                  "class",
+                  "moves",
+                  "refused",
+                  "evidence",
+                  "validation",
+                  "acceptance"
+                ],
+                "description": "What a merge supports for one issue, with everything that proves or holds it."
+              },
+              "DeliveryStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "none",
+                    "description": "Nothing that was read names the issue."
+                  },
+                  {
+                    "type": "string",
+                    "const": "branch",
+                    "description": "A branch names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pr_open",
+                    "description": "An open pull request names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged",
+                    "description": "A merge in the trunk's history names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "A `v*` release contains its newest merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "deployed",
+                    "description": "The published `latest.json` names that release or a later one."
+                  }
+                ],
+                "description": "How far one issue's work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue's stage."
+              },
+              "DeliveryMerge": {
+                "type": "object",
+                "properties": {
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit: a merge commit, or a commit whose subject names the issue."
+                  },
+                  "pull_request": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request it merged, when its subject names one."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it merged, when its subject names one."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The pull request's title, when the merge carries one, or the commit's subject."
+                  },
+                  "via": {
+                    "type": "string",
+                    "description": "How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request's title as the forge recorded it."
+                  },
+                  "merged_at": {
+                    "type": "string",
+                    "description": "When it was committed, RFC 3339."
+                  },
+                  "merges": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many commits in the history name the issue; this one is the newest."
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "description": "When the history was read."
+                  }
+                },
+                "required": [
+                  "commit",
+                  "via",
+                  "merged_at",
+                  "merges",
+                  "observed_at"
+                ],
+                "description": "The newest commit in the trunk's history that names the issue: a merge, by its pull\nrequest's title or its branch, or a commit whose subject names it the way this\nrepository's commits do (`type(scope): description (I2740)`)."
+              },
+              "ReconcileMove": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue."
+                  },
+                  "transition": {
+                    "$ref": "#/$defs/PlanTransition",
+                    "description": "The move, as `plan.transition` takes it."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "The same move on the command line."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "transition",
+                  "command"
+                ],
+                "description": "One `plan.transition` the plan admits now."
+              },
+              "PlanTransition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "start",
+                    "description": "Execution began. Refused unless the issue is READY."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verify",
+                    "description": "Implementation is complete and the evidence is still outstanding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "done",
+                    "description": "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+                  }
+                ],
+                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```"
+              },
+              "ReconcileRefusal": {
+                "type": "object",
+                "properties": {
+                  "transition": {
+                    "$ref": "#/$defs/PlanTransition",
+                    "description": "The move."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The guard's reason, or the evidence that is owed."
+                  }
+                },
+                "required": [
+                  "transition",
+                  "reason"
+                ],
+                "description": "A move the plan does not admit, and why."
+              },
+              "TokenStanding": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "The `evidence_required` token."
+                  },
+                  "covered": {
+                    "type": "boolean",
+                    "description": "An evidence entry covers it."
+                  },
+                  "fresh": {
+                    "type": "boolean",
+                    "description": "A covering entry was recorded at or after the newest merge naming the issue."
+                  },
+                  "recorded_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The newest `recorded_at` among the covering entries."
+                  }
+                },
+                "required": [
+                  "token",
+                  "covered",
+                  "fresh"
+                ],
+                "description": "One required evidence token, and whether the record covers it."
+              },
+              "CriterionStanding": {
+                "type": "object",
+                "properties": {
+                  "criterion": {
+                    "type": "string",
+                    "description": "The criterion's prose."
+                  },
+                  "standing": {
+                    "type": "string",
+                    "description": "Always `unjudged`: reconcile never reads a merge as a criterion met."
+                  }
+                },
+                "required": [
+                  "criterion",
+                  "standing"
+                ],
+                "description": "One acceptance criterion, as the record states it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_reconcile"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/reconcile"
+          },
+          "cli": {
+            "path": [
+              "plan",
+              "reconcile"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "plan",
+          "project",
+          "delivery",
+          "drift",
+          "lifecycle"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
         },
         "execution": {
           "effect": "read",
@@ -98576,7 +99555,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 170,
+        "capabilities": 171,
         "capability_ids": []
       },
       {
@@ -99233,7 +100212,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1279,
         "capability_ids": []
       },
       {
@@ -99241,7 +100220,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 221,
+        "capabilities": 222,
         "capability_ids": []
       },
       {
@@ -99517,15 +100496,17 @@
         "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 13,
+        "capabilities": 15,
         "capability_ids": [
           "plan.allocate",
+          "plan.collisions",
           "plan.delivery",
           "plan.drift",
           "plan.flight",
           "plan.issues",
           "plan.model",
           "plan.next",
+          "plan.reconcile",
           "plan.record",
           "plan.roadmap",
           "plan.status",
@@ -99848,7 +100829,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 708,
+        "capabilities": 710,
         "capability_ids": []
       },
       {
@@ -99875,7 +100856,7 @@
         "title": "use-case",
         "description": "Declarative objects of kind 'use-case' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 49,
+        "capabilities": 50,
         "capability_ids": []
       },
       {
@@ -99941,7 +100922,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "4076b5cf08ba4e2f55c0b11e9a275535b1641d387d16b201e80f932aaf50a9ff",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99964,7 +100945,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 170,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -99981,8 +100962,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
-      "knowledge": 221,
+      "issue": 1279,
+      "knowledge": 222,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -99995,8 +100976,8 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 708,
-      "use-case": 49,
+      "test": 710,
+      "use-case": 50,
       "workspace": 1
     },
     "diagnostics": {},
@@ -102761,6 +103742,24 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0238",
+        "kind": "adr",
+        "identity": "adr-0238",
+        "title": "The plan is reconciled with merged work through plan.transition, and an issue authored or executed twice is refused where it collides",
+        "description": "The plan is reconciled with merged work through plan.transition, and an issue authored or executed twice is refused where it collides",
+        "path": ".ai/repo/adrs/0238-the-plan-is-reconciled-with-merged-work-and-a-claim-is-refused-where-it-collides.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 20387,
+        "tags": [
+          "plan",
+          "delivery",
+          "drift",
+          "collisions",
+          "forge"
+        ]
+      },
+      {
         "uri": "majordomus://application/ci-gated-project",
         "kind": "application",
         "identity": "ci-gated-project",
@@ -102769,7 +103768,7 @@
         "path": ".ai/repo/applications/ci-gated-project.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1419
+        "bytes": 1456
       },
       {
         "uri": "majordomus://application/long-running-work",
@@ -102780,7 +103779,7 @@
         "path": ".ai/repo/applications/long-running-work.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1701
+        "bytes": 1738
       },
       {
         "uri": "majordomus://application/repository-opened-in-ai-clients",
@@ -107585,7 +108584,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 47895
+        "bytes": 50776
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -107594,7 +108593,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 140868
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -110937,7 +111936,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 32734
+        "bytes": 33367
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -111057,7 +112056,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13667
+        "bytes": 16925
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -125615,6 +126614,39 @@
         "bytes": 3298
       },
       {
+        "uri": "majordomus://issue/I4773",
+        "kind": "issue",
+        "identity": "I4773",
+        "title": "plan reconcile proposes the moves a merge supports, with the evidence each issue still owes, and applies them only through plan.transition",
+        "description": "A read-only capability plan.reconcile over the delivery report plan.drift reads: for every issue merged, released or deployed while READY, BLOCKED, ACTIVE or VERIFY it answers the proof, the plan.transition moves the plan admits now in order (start; done only where the done guard passes and every covering evidence entry was recorded at or after the newest merge; never verify, which is a worker's attestation), the refused move with the guard's reason, each evidence token covered or missing with the declared validation commands, the acceptance criteria as unjudged, and a class (recordable, acceptable, held, unaccepted, pending_pr). `majordomus plan reconcile [<id>...] [--apply [--done]]` prints it; --apply writes start, --done also the admitted done, each one plan.transition re-reading the plan between moves, never evidence. A `Delivers: <id>` trailer in a commit's final trailer block is a delivery edge (via trailer), and drift gains merged_unaccepted (VERIFY, merged, evidence missing), reported and never refused.",
+        "path": ".ai/repo/project/issues/I4773.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4980
+      },
+      {
+        "uri": "majordomus://issue/I4775",
+        "kind": "issue",
+        "identity": "I4775",
+        "title": "An issue id authored on two lines of history, or an issue another open pull request or session executes, is refused at start, at push and on the pull request, naming its holder",
+        "description": "A read-only capability plan.collisions: id_reused for an issue record the head adds since its merge-base with the trunk that another ref (the trunk or any branch) added after its own merge-base under another title; claimed_elsewhere for an issue the head executes (named by its branch, or by --issue) that another open pull request names (by head branch, or by a title naming at most three ids) unless one declares it supersedes the other, or that another session's live mesh claim holds; a bare branch with no pull request is a warning. A planning-only head executes nothing. An unread or stale (collisions.max_age) forge is unread, never absence. `majordomus start --issue` asks it and refuses naming the holder, `--alongside \\\"<reason>\\\"` starting anyway with the reason recorded; scripts/ci/plan-collisions-check is the gate on pull requests and in the pre-push hook.",
+        "path": ".ai/repo/project/issues/I4775.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4758
+      },
+      {
+        "uri": "majordomus://issue/I4777",
+        "kind": "issue",
+        "identity": "I4777",
+        "title": "The forge is read for the repository the trunk's remote names, never for the parent gh resolves a fork to",
+        "description": "GhForge resolves `owner/name` from the URL of the remote the trunk tracks (worktree::trunk::remote_trunk_of), asks `gh repo view <owner/name>`, and runs every gh call of the observation with GH_REPO set to it; a remote URL that names no GitHub repository keeps gh's own resolution. Delivery reads a recorded forge observation only when its repository is the trunk remote's, and reports it unread, naming both, when it is not.",
+        "path": ".ai/repo/project/issues/I4777.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3215
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -126228,6 +127260,23 @@
         "tags": [
           "ui-surfaces",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
+        "kind": "knowledge",
+        "identity": "owner-answers-2026-11-25-generic-lessons-of-an-adopter-session",
+        "title": "Owner answers 2026-11-25: implement the generic lessons of an adopter session in Majordomus (all four selected, decided after several passes with other models), and evolve Majordomus from everything that session learned",
+        "description": "When a session asks whether the owner ordered build-slot and lock work, owner answers recorded in the repository, plan reconciliation with merged pull requests, or baseline-relative gates as generic Majordomus work on 2026-11-25, or how the designs were to be reached (several passes with other models)",
+        "path": ".ai/repo/knowledge/curated/owner-answers-2026-11-25-generic-lessons-of-an-adopter-session.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 4018,
+        "tags": [
+          "decision",
+          "owner-answer",
+          "plan",
+          "evolve"
         ]
       },
       {
@@ -139736,6 +140785,22 @@
         "bytes": 7777
       },
       {
+        "uri": "majordomus://test/test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+        "kind": "test",
+        "identity": "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+        "path": "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh",
+        "source_class": "case",
+        "bytes": 3931
+      },
+      {
+        "uri": "majordomus://test/test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+        "kind": "test",
+        "identity": "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+        "path": "test/cases/4775_a_colliding_issue_is_refused_naming_its_holder.sh",
+        "source_class": "case",
+        "bytes": 2976
+      },
+      {
         "uri": "majordomus://test/test/cases/47_mutation.sh",
         "kind": "test",
         "identity": "test/cases/47_mutation.sh",
@@ -141916,6 +142981,17 @@
         "bytes": 2244
       },
       {
+        "uri": "majordomus://use-case/reconcile-the-plan-with-merged-work",
+        "kind": "use-case",
+        "identity": "reconcile-the-plan-with-merged-work",
+        "title": "Reconcile the plan with merged work, and refuse an issue another already executes",
+        "description": "Ask which moves a merge supports and what each delivered issue still owes, apply only what the transition guard admits, and see whether an issue this head authors or executes is another session's.",
+        "path": ".ai/repo/use-cases/reconcile-the-plan-with-merged-work.md",
+        "section": "use-cases",
+        "source_class": "use_case",
+        "bytes": 2619
+      },
+      {
         "uri": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
         "kind": "use-case",
         "identity": "record-a-decision-before-it-is-forgotten",
@@ -142079,7 +143155,7 @@
       "identity": [
         "id"
       ],
-      "objects": 170
+      "objects": 171
     },
     {
       "name": "application",
@@ -142242,7 +143318,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1279
     },
     {
       "name": "knowledge",
@@ -142252,7 +143328,7 @@
       "identity": [
         "id"
       ],
-      "objects": 221
+      "objects": 222
     },
     {
       "name": "mesh-declaration",
@@ -142404,7 +143480,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 708
+      "objects": 710
     },
     {
       "name": "use-case",
@@ -142414,7 +143490,7 @@
       "identity": [
         "id"
       ],
-      "objects": 49
+      "objects": 50
     },
     {
       "name": "workspace",
@@ -172496,6 +173572,346 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "reconcile"
+            ],
+            "route": "/docs/cli/plan/reconcile/",
+            "executable": true,
+            "usage": "majordomus plan reconcile [OPTIONS] [ISSUES]",
+            "about": "What a merge supports the plan recording and what each issue still owes: the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the refused ones with the guard's reason, the evidence tokens and the unjudged acceptance criteria (ADR 0238); --apply writes the start moves, --done also the admitted done moves, one plan.transition each",
+            "args": [
+              {
+                "name": "issues",
+                "positional": true,
+                "help": "The issues; default every issue of the plan",
+                "value_name": "ISSUES",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Write the proposed start moves through plan.transition, re-reading the plan between moves; refused when the forge was not read (exit 12), exit 10 when a move is refused",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "done",
+                "long": "done",
+                "positional": false,
+                "help": "With --apply, also write the admitted done moves",
+                "value_name": "DONE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-reconcile-json",
+                "title": "What a merge supports the plan recording, and what each issue still owes",
+                "description": "The same answer `GET /api/v1/plan/reconcile` and the MCP tool `majordomus_plan_reconcile` return: for every issue merged while not DONE, the plan.transition moves admitted now (start; done only on evidence recorded since the merge; never verify), the held ones with the guard's reason, the evidence tokens, the validation commands and the acceptance criteria as unjudged. `--apply` writes the start moves through plan.transition, `--done` also the admitted done moves; an unread forge leaves the proposal unsettled and nothing is applied.",
+                "argv": [
+                  "plan",
+                  "reconcile",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan reconcile --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /settled, /tallies/recordable, /proposals"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "collisions"
+            ],
+            "route": "/docs/cli/plan/collisions/",
+            "executable": true,
+            "usage": "majordomus plan collisions [OPTIONS]",
+            "about": "Whether an issue this head authors or executes is another's: id_reused, retitled and claimed_elsewhere, each naming its holder (ADR 0238); with --gate, a refusal exits 10 and a pull-request gate with no forge reading exits 12",
+            "args": [
+              {
+                "name": "issue",
+                "long": "issue",
+                "positional": false,
+                "help": "An issue the caller is about to execute, besides the one the head's branch names",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "head",
+                "long": "head",
+                "positional": false,
+                "help": "The head to judge; default HEAD",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "branch",
+                "long": "branch",
+                "positional": false,
+                "help": "The head's branch, when git cannot say it (a detached CI checkout of a pull request)",
+                "value_name": "BRANCH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "gate",
+                "long": "gate",
+                "positional": false,
+                "help": "Judge as a gate at a task's start, a push or a pull request",
+                "value_name": "WHERE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "start",
+                    "help": "A task's start: an unread forge warns"
+                  },
+                  {
+                    "name": "push",
+                    "help": "A push: an unread or stale forge warns"
+                  },
+                  {
+                    "name": "pr",
+                    "help": "A pull request: an unread forge cannot be judged (exit 12)"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "session",
+                "long": "session",
+                "positional": false,
+                "help": "The caller's own mesh session, whose claims are the head's own",
+                "value_name": "SESSION",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-collisions-json",
+                "title": "Whether an issue this head authors or executes is another's",
+                "description": "The same answer `GET /api/v1/plan/collisions` and the MCP tool `majordomus_plan_collisions` return: id_reused, retitled and claimed_elsewhere, each with its holder (a branch, an open pull request, a mesh session), the sources read, and with `--gate start|push|pr` the exit code a gate ends with.",
+                "argv": [
+                  "plan",
+                  "collisions",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan collisions --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /head, /trunk, /executes, /verdict"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -181117,6 +182533,23 @@
         "output": "Allocation"
       },
       {
+        "name": "majordomus_plan_collisions",
+        "id": "plan.collisions",
+        "title": "Whether an issue this head authors or executes is another's",
+        "description": "Every collision between this head and the other lines of work, each naming its holder (ADR 0238). `id_reused` (refused): an issue record this head adds since its merge-base with the trunk that another line of history (the trunk, or any local or remote-tracking branch) also added under another title; a record inherited from the trunk, or the same record carried on two refs, is none. `retitled` (warned): a record the base already holds whose title this head changes, the hidden form of a collision after a rebase. `claimed_elsewhere`: an issue this head executes (named by its branch, by the I1405 rule or its slug, or by `issue`) that another open pull request names by its head branch, or by a title naming it among at most three ids, refused unless one of the two declares it supersedes the other; or that a live mesh claim of another session names, refused; or that only another branch names, warned. A head whose change is planning-only executes nothing. A forge observation older than `collisions.max_age` (`.ai/repo/ci/plan.yaml`) is stale, and a stale or unread forge never proves that no other pull request names an issue. With `gate`, the exit code is 10 on a refusal, 12 when the forge could not be read and the gate is `pr`, and 0 otherwise.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "PlanCollisionsInput",
+        "output": "CollisionReport"
+      },
+      {
         "name": "majordomus_plan_delivery",
         "id": "plan.delivery",
         "title": "How far each issue's work has travelled",
@@ -181217,6 +182650,23 @@
         },
         "input": "PlanMilestoneFilter",
         "output": "PlanNextIssue"
+      },
+      {
+        "name": "majordomus_plan_reconcile",
+        "id": "plan.reconcile",
+        "title": "What a merge supports the plan recording, and what each issue still owes",
+        "description": "For every issue (or the ones named) whose work plan.delivery proves merged, released or deployed while its declared status is READY, BLOCKED, ACTIVE or VERIFY: the proof (the newest merge naming it and how: title, branch, slug, subject or a `Delivers:` trailer), the plan.transition moves the plan admits now, in order, and the moves it does not with the guard's own reason (ADR 0238). A merge proves that execution began, so a READY issue is proposed `start`; `done` is proposed only where the done guard admits it, the issue declares evidence_required, and every covering evidence entry was recorded at or after that merge; `verify` is never proposed, because it is a worker's attestation and a merge can be one slice of an issue. Each proposal lists every required token as covered, stale or missing, the declared validation commands that would cover it, and every acceptance criterion as `unjudged`. Classes: recordable, acceptable, held (BLOCKED, or a done held by something other than evidence), unaccepted (ACTIVE or VERIFY with evidence owed), pending_pr (another open pull request still names it; nothing is proposed). `settled` is false when the forge was not read, because no open pull request can then be ruled out. It writes nothing: `majordomus plan reconcile --apply` performs the start moves, and `--done` the admitted done moves, one plan.transition each.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "PlanReconcileInput",
+        "output": "ReconcileReport"
       },
       {
         "name": "majordomus_plan_record",
@@ -183565,6 +185015,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/plan/collisions",
+        "id": "plan.collisions",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/plan/delivery",
         "id": "plan.delivery",
         "kind": "query"
@@ -183597,6 +185053,12 @@
         "method": "GET",
         "path": "/api/v1/plan/next",
         "id": "plan.next",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/reconcile",
+        "id": "plan.reconcile",
         "kind": "query"
       },
       {
@@ -189004,6 +190466,64 @@
         "route": "GET /api/v1/perf"
       },
       {
+        "key": "plan.collisions|direct|this-head",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.collisions",
+        "module": "plan",
+        "case": "this-head",
+        "cached": false
+      },
+      {
+        "key": "plan.collisions|direct|this-head-as-a-pull-request-gate",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.collisions",
+        "module": "plan",
+        "case": "this-head-as-a-pull-request-gate",
+        "cached": false
+      },
+      {
+        "key": "plan.collisions|mcp|this-head",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.collisions",
+        "module": "plan",
+        "case": "this-head",
+        "cached": false,
+        "tool": "majordomus_plan_collisions"
+      },
+      {
+        "key": "plan.collisions|mcp|this-head-as-a-pull-request-gate",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.collisions",
+        "module": "plan",
+        "case": "this-head-as-a-pull-request-gate",
+        "cached": false,
+        "tool": "majordomus_plan_collisions"
+      },
+      {
+        "key": "plan.collisions|http|this-head",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.collisions",
+        "module": "plan",
+        "case": "this-head",
+        "cached": false,
+        "route": "GET /api/v1/plan/collisions"
+      },
+      {
+        "key": "plan.collisions|http|this-head-as-a-pull-request-gate",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.collisions",
+        "module": "plan",
+        "case": "this-head-as-a-pull-request-gate",
+        "cached": false,
+        "route": "GET /api/v1/plan/collisions"
+      },
+      {
         "key": "plan.delivery|direct|every-issue",
         "kind": "capability",
         "transport": "direct",
@@ -189350,6 +190870,64 @@
         "case": "one-milestone",
         "cached": true,
         "route": "GET /api/v1/plan/next"
+      },
+      {
+        "key": "plan.reconcile|direct|every-issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.reconcile",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false
+      },
+      {
+        "key": "plan.reconcile|direct|one-issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.reconcile",
+        "module": "plan",
+        "case": "one-issue",
+        "cached": false
+      },
+      {
+        "key": "plan.reconcile|mcp|every-issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.reconcile",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false,
+        "tool": "majordomus_plan_reconcile"
+      },
+      {
+        "key": "plan.reconcile|mcp|one-issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.reconcile",
+        "module": "plan",
+        "case": "one-issue",
+        "cached": false,
+        "tool": "majordomus_plan_reconcile"
+      },
+      {
+        "key": "plan.reconcile|http|every-issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.reconcile",
+        "module": "plan",
+        "case": "every-issue",
+        "cached": false,
+        "route": "GET /api/v1/plan/reconcile"
+      },
+      {
+        "key": "plan.reconcile|http|one-issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.reconcile",
+        "module": "plan",
+        "case": "one-issue",
+        "cached": false,
+        "route": "GET /api/v1/plan/reconcile"
       },
       {
         "key": "plan.record|direct|issue",
@@ -195597,6 +197175,27 @@
           "reason": "transient_state"
         },
         {
+          "subject": "plan.collisions",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.collisions",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.collisions",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "plan.delivery",
           "module": "plan",
           "transport": "direct",
@@ -195717,6 +197316,27 @@
         },
         {
           "subject": "plan.next",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.reconcile",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.reconcile",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.reconcile",
           "module": "plan",
           "transport": "http",
           "state": "covered",
@@ -197090,22 +198710,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 233,
-          "covered": 187,
+          "required": 235,
+          "covered": 189,
           "missing": 0,
           "waived": 46,
           "inapplicable": 0
         },
         "http": {
-          "required": 221,
-          "covered": 185,
+          "required": 223,
+          "covered": 187,
           "missing": 0,
           "waived": 36,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 217,
-          "covered": 182,
+          "required": 219,
+          "covered": 184,
           "missing": 0,
           "waived": 35,
           "inapplicable": 0
@@ -197118,8 +198738,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 685,
-          "covered": 568,
+          "required": 691,
+          "covered": 574,
           "missing": 0,
           "waived": 117,
           "inapplicable": 0

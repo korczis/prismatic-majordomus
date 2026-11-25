@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 
 use crate::app::App;
 use crate::capability::{CapabilityError, Context};
-use crate::cli::{DriftGateArg, OutputFormat, PlanArgs, PlanCommand};
+use crate::cli::{CollisionGateArg, DriftGateArg, OutputFormat, PlanArgs, PlanCommand};
 use crate::error::{Error, Result};
 
 /// Run `majordomus plan <subcommand>`.
@@ -46,6 +46,61 @@ pub fn run(args: PlanArgs) -> Result<u8> {
             }
             execute(&app.context, &["plan", "drift"], input)?
         }
+        PlanCommand::Reconcile {
+            issues,
+            apply,
+            done,
+        } => {
+            let mut v = execute(
+                &app.context,
+                &["plan", "reconcile"],
+                json!({ "issues": issues }),
+            )?;
+            let code = if *apply {
+                apply_moves(&args.repo, &mut v, *done)?
+            } else {
+                0
+            };
+            let body = match args.format {
+                OutputFormat::Json => format!("{v:#}"),
+                OutputFormat::Text => reconcile_text(&v),
+            };
+            writeln!(std::io::stdout().lock(), "{body}").map_err(Error::Transport)?;
+            return Ok(code);
+        }
+        PlanCommand::Collisions {
+            issue,
+            head,
+            branch,
+            gate,
+            session,
+        } => {
+            let mut input = json!({});
+            for (key, value) in [
+                ("issue", issue),
+                ("head", head),
+                ("branch", branch),
+                ("session", session),
+            ] {
+                if let Some(value) = value {
+                    input[key] = json!(value);
+                }
+            }
+            if let Some(g) = gate {
+                input["gate"] = json!(match g {
+                    CollisionGateArg::Start => "start",
+                    CollisionGateArg::Push => "push",
+                    CollisionGateArg::Pr => "pr",
+                });
+            }
+            let v = execute(&app.context, &["plan", "collisions"], input)?;
+            let body = match args.format {
+                OutputFormat::Json => format!("{v:#}"),
+                OutputFormat::Text => collisions_text(&v),
+            };
+            writeln!(std::io::stdout().lock(), "{body}").map_err(Error::Transport)?;
+            return Ok(exit_code_of(&v));
+        }
     };
     let drift = matches!(args.command, PlanCommand::Drift { .. });
     let body = match args.format {
@@ -55,14 +110,193 @@ pub fn run(args: PlanArgs) -> Result<u8> {
     };
     writeln!(std::io::stdout().lock(), "{body}").map_err(Error::Transport)?;
     // a gate's verdict is its exit code; a report exits 0
-    Ok(if drift {
-        v["exit_code"]
-            .as_u64()
-            .and_then(|c| u8::try_from(c).ok())
-            .unwrap_or(0)
-    } else {
-        0
-    })
+    Ok(if drift { exit_code_of(&v) } else { 0 })
+}
+
+/// The exit code an answer carries.
+fn exit_code_of(v: &Value) -> u8 {
+    v["exit_code"]
+        .as_u64()
+        .and_then(|c| u8::try_from(c).ok())
+        .unwrap_or(0)
+}
+
+/// Perform a reconcile proposal's moves, one `plan.transition` each, and record what each
+/// did under `applied` (ADR 0238). The plan is read again before every move, because the
+/// stamp the previous one wrote is the next one's guard; a refused move stops its issue and
+/// not the batch. Nothing is applied from a proposal that is not settled.
+fn apply_moves(repo: &crate::cli::RepoArgs, v: &mut Value, done: bool) -> Result<u8> {
+    use crate::plan::reconcile::{EXIT_REFUSED, EXIT_UNSETTLED};
+    if v["settled"] != true {
+        v["applied"] = json!([]);
+        return Ok(EXIT_UNSETTLED);
+    }
+    let mut applied: Vec<Value> = Vec::new();
+    let mut refused = false;
+    for p in v["proposals"].as_array().cloned().unwrap_or_default() {
+        for m in p["moves"].as_array().cloned().unwrap_or_default() {
+            if m["transition"] == "done" && !done {
+                continue;
+            }
+            let input = json!({ "issue": m["issue"], "transition": m["transition"] });
+            let app = App::load(repo)?;
+            match app.context.execute("plan.transition", input) {
+                Ok(result) => applied.push(json!({
+                    "issue": m["issue"], "transition": m["transition"],
+                    "outcome": "written", "status": result["to"],
+                })),
+                Err(e) => {
+                    refused = true;
+                    applied.push(json!({
+                        "issue": m["issue"], "transition": m["transition"],
+                        "outcome": "refused", "reason": e.to_string(),
+                    }));
+                    break;
+                }
+            }
+        }
+    }
+    v["applied"] = json!(applied);
+    Ok(if refused { EXIT_REFUSED } else { 0 })
+}
+
+fn reconcile_text(v: &Value) -> String {
+    let mut out = format!(
+        "plan reconcile — {} at {} {} ({})\n",
+        s(v, "/observed/mode"),
+        s(v, "/observed/trunk"),
+        short(s(v, "/observed/commit")),
+        s(v, "/observed/observed_at")
+    );
+    if v["settled"] != true {
+        out.push_str(&format!("  unsettled    {}\n", s(v, "/unsettled")));
+    }
+    let tallies: Vec<String> = v["classes"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .map(|c| format!("{c} {}", v["tallies"][c].as_u64().unwrap_or(0)))
+        .collect();
+    out.push_str(&format!("classes: {}\n", tallies.join(" · ")));
+    for p in v["proposals"].as_array().into_iter().flatten() {
+        let proof = match p.pointer("/merge/pull_request").and_then(Value::as_u64) {
+            Some(n) => format!(
+                "#{n} {} via {}",
+                short(s(p, "/merge/commit")),
+                s(p, "/merge/via")
+            ),
+            None => format!(
+                "{} via {}",
+                short(s(p, "/merge/commit")),
+                s(p, "/merge/via")
+            ),
+        };
+        out.push_str(&format!(
+            "\n{:<6} {:<8} {:<11} {}\n",
+            s(p, "/issue"),
+            s(p, "/status"),
+            s(p, "/class"),
+            proof
+        ));
+        for m in p["moves"].as_array().into_iter().flatten() {
+            out.push_str(&format!("  MOVE     {}\n", s(m, "/command")));
+        }
+        for r in p["refused"].as_array().into_iter().flatten() {
+            out.push_str(&format!(
+                "  HELD     {}: {}\n",
+                s(r, "/transition"),
+                s(r, "/reason")
+            ));
+        }
+        for t in p["evidence"].as_array().into_iter().flatten() {
+            let standing = match (t["covered"] == true, t["fresh"] == true) {
+                (true, true) => "covered",
+                (true, false) => "stale",
+                _ => "missing",
+            };
+            out.push_str(&format!("  EVIDENCE {} {standing}\n", s(t, "/token")));
+        }
+        for c in p["validation"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+        {
+            out.push_str(&format!("  RUN      {c}\n"));
+        }
+        for c in p["acceptance"].as_array().into_iter().flatten() {
+            out.push_str(&format!("  CRITERION (unjudged) {}\n", s(c, "/criterion")));
+        }
+    }
+    if let Some(applied) = v["applied"].as_array() {
+        out.push_str("\napplied (each stamp is the time of this run, not of the merge):\n");
+        for a in applied {
+            out.push_str(&format!(
+                "  {:<8} {} {}{}\n",
+                s(a, "/outcome"),
+                s(a, "/transition"),
+                s(a, "/issue"),
+                if s(a, "/reason").is_empty() {
+                    format!(" -> {}", s(a, "/status"))
+                } else {
+                    format!(": {}", s(a, "/reason"))
+                }
+            ));
+        }
+        if applied.is_empty() && v["settled"] != true {
+            out.push_str("  nothing: the proposal is unsettled\n");
+        }
+    }
+    out.trim_end().to_string()
+}
+
+fn collisions_text(v: &Value) -> String {
+    let mut out = format!(
+        "plan collisions — {} {} against {}{}\n",
+        short(s(v, "/head")),
+        s(v, "/branch"),
+        s(v, "/trunk"),
+        if v["planning_only"] == true {
+            " (planning only)"
+        } else {
+            ""
+        }
+    );
+    for src in v["sources"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "  {:<12} {:<7} {}\n",
+            s(src, "/name"),
+            s(src, "/state"),
+            s(src, "/detail")
+        ));
+    }
+    let list = |key: &str| -> String {
+        v[key]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    out.push_str(&format!(
+        "executes: {} · authors: {}\n",
+        list("executes"),
+        list("authors")
+    ));
+    for c in v["collisions"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<8} {:<6} {:<17} {}\n         {}\n",
+            s(c, "/verdict").to_uppercase(),
+            s(c, "/issue"),
+            s(c, "/class"),
+            s(c, "/detail"),
+            s(c, "/remedy")
+        ));
+    }
+    out.push_str(&format!("plan collisions: {}", s(v, "/verdict")));
+    out
 }
 
 fn execute(ctx: &Context, path: &[&str], input: Value) -> Result<Value> {

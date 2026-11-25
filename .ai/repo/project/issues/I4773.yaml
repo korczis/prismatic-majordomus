@@ -1,0 +1,61 @@
+id: I4773
+milestone: truthful-plan-surfaces
+title: "plan reconcile proposes the moves a merge supports, with the evidence each issue still owes, and applies them only through plan.transition"
+slug: plan-reconcile-applies-what-a-merge-supports
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A read-only capability plan.reconcile over the delivery report plan.drift reads: for every issue merged, released or deployed while READY, BLOCKED, ACTIVE or VERIFY it answers the proof, the plan.transition moves the plan admits now in order (start; done only where the done guard passes and every covering evidence entry was recorded at or after the newest merge; never verify, which is a worker's attestation), the refused move with the guard's reason, each evidence token covered or missing with the declared validation commands, the acceptance criteria as unjudged, and a class (recordable, acceptable, held, unaccepted, pending_pr). `majordomus plan reconcile [<id>...] [--apply [--done]]` prints it; --apply writes start, --done also the admitted done, each one plan.transition re-reading the plan between moves, never evidence. A `Delivers: <id>` trailer in a commit's final trailer block is a delivery edge (via trailer), and drift gains merged_unaccepted (VERIFY, merged, evidence missing), reported and never refused."
+why: "ADR 0238. In an adopter repository on 2026-11-25, seven merged_not_recorded issues were settled by hand over hours, one plan start/verify/evidence/done at a time; one delivered issue was named by no subject, title or branch because the commit grammar has no room for an id; a VERIFY issue with a merge and no evidence was no finding."
+current_state: "Measured at 46775282570: plan/drift.rs names a remedy string per finding and has no VERIFY class; plan/delivery.rs reads commit subjects, merge titles and branches only; plan.transition moves one issue per call."
+desired_state: "One dry run names every move a merge supports and what each issue still owes; --apply writes exactly the moves the guard admits, and DONE never follows from a merge alone."
+scope:
+  - ".ai/repo/project/issues/I4773.yaml"
+  - "apps/majordomus-cli/src/plan/reconcile.rs"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/plan/drift.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/commands/plan.rs"
+  - "lib/plan.sh"
+  - "test/cases/4773_plan_reconcile_applies_what_a_merge_supports.sh"
+  - "docs/PLANNING.md"
+non_scope:
+  - "Attaching evidence or judging a criterion's prose; I3255 judges a command criterion by its receipt"
+  - "Renumbering or rewriting records"
+acceptance_criteria:
+  - "Rust test: a READY issue named by a merge is proposed start and never verify, and done only when its evidence_required tokens are covered by evidence recorded at or after the merge"
+  - "Rust test: a BLOCKED merged issue is held with the guard's reason and no move"
+  - "Rust test: an issue another open pull request still names is pending_pr with no move"
+  - "Rust test: a commit whose final trailer block says Delivers: I0002 delivers I0002, and the same words in the body's prose deliver nothing"
+  - "Rust test: VERIFY with a merge and missing evidence is merged_unaccepted with verdict Reported under both gates"
+  - "Case 4773: plan reconcile --apply on a fixture writes start through plan.transition with their seals, refuses nothing it proposed, and a second run proposes nothing"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::reconcile"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::drift"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+  - "bash test/run.sh 4773_plan_reconcile_applies_what_a_merge_supports"
+evidence_required:
+  - "rust"
+  - "test"
+depends_on: []
+serves: []
+created_at: 2026-11-25
+updated_at: 2026-11-25T10:13:19Z
+started_at: 2026-11-25T10:12:48Z
+started_event: sha256:8c007d3945f0bd60f8fbbc849fd307412d5f903922b01be950bd98f77cead857
+verified_at: 2026-11-25T10:13:19Z
+verified_event: sha256:722d811d256d16a4490389f0a5726844407d1ad726b6d923447961277369e0af
+evidence:
+  - covers: "rust"
+    type: test
+    command: "cargo test --locked --lib -- plan::; cargo test --locked --no-fail-fast --test plan_reconcile --test plan_drift --test plan_delivery"
+    result: "lib plan:: tests passed (reconcile, drift merged_unaccepted, delivery trailer); plan_reconcile 3 passed, plan_drift and plan_delivery passed, 0 failed"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-25T10:08:01Z
+  - covers: "test"
+    type: test
+    command: "bash test/run.sh 4773_plan_reconcile_applies_what_a_merge_supports 3101_merged_work_unrecorded_is_drift 99_plan_capabilities 133_plan_transition"
+    result: "4 passed, 0 failed"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-25T10:08:21Z

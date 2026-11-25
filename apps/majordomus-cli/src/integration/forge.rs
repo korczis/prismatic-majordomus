@@ -389,9 +389,110 @@ pub struct GhForge<'a> {
     pub root: &'a Path,
 }
 
-fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
-    let out = Command::new("gh")
+/// The `owner/name` a GitHub remote URL names: `git@github.com:o/n(.git)`,
+/// `ssh://git@github.com/o/n`, `https://github.com/o/n(.git)` (I4777). `None` for a URL of
+/// another host, or one that names no two-part path.
+///
+/// ```
+/// use majordomus_cli::integration::forge::github_repository_of;
+/// assert_eq!(github_repository_of("git@github.com:o/n.git").as_deref(), Some("o/n"));
+/// assert_eq!(github_repository_of("https://github.com/o/n").as_deref(), Some("o/n"));
+/// assert_eq!(github_repository_of("ssh://git@github.com/o/n").as_deref(), Some("o/n"));
+/// assert_eq!(github_repository_of("https://t:x@github.com/o/n.git/").as_deref(), Some("o/n"));
+/// assert_eq!(github_repository_of("https://gitlab.com/o/n.git"), None);
+/// assert_eq!(github_repository_of("git@github.com:o"), None);
+/// assert_eq!(github_repository_of("/srv/git/o/n.git"), None);
+/// ```
+pub fn github_repository_of(url: &str) -> Option<String> {
+    let url = url.trim();
+    // a credential before the host (`https://x-access-token:...@github.com/o/n`) is not
+    // part of the repository's name
+    let url = match url.split_once("://") {
+        Some((scheme, rest)) => match rest.split_once('/') {
+            Some((authority, path)) => {
+                let host = authority.rsplit_once('@').map_or(authority, |(_, h)| h);
+                format!("{scheme}://{host}/{path}")
+            }
+            None => url.to_string(),
+        },
+        None => url.to_string(),
+    };
+    let url = url.as_str();
+    let path = url
+        .strip_prefix("git@github.com:")
+        .or_else(|| url.strip_prefix("ssh://github.com/"))
+        .or_else(|| url.strip_prefix("https://github.com/"))
+        .or_else(|| url.strip_prefix("http://github.com/"))?;
+    let path = path.trim_end_matches('/');
+    let path = path.strip_suffix(".git").unwrap_or(path);
+    let (owner, name) = path.split_once('/')?;
+    (!owner.is_empty() && !name.is_empty() && !name.contains('/'))
+        .then(|| format!("{owner}/{name}"))
+}
+
+/// The GitHub repository of the remote the trunk tracks, read from git (I4777).
+///
+/// `gh` resolves a checkout to a repository by its own rule, which prefers a remote named
+/// `upstream`: in a fork that is the parent, and on 2026-11-25 an adopter fork's delivery read
+/// the parent's open pull requests as its own. The trunk is what delivery reads merges from,
+/// so the repository its remote names is the one every forge read must be of. `None` when the
+/// trunk has no remote, or its remote names no GitHub repository: gh's own resolution is then
+/// all there is, and the observation still records which repository it read.
+pub fn trunk_repository(root: &Path) -> Option<String> {
+    let trunk = crate::worktree::RepositoryIdentity::discover(root)
+        .ok()
+        .and_then(|i| i.trunk().branch.clone())
+        .unwrap_or_else(|| "master".to_string());
+    let remote_trunk = crate::worktree::trunk::remote_trunk_of(root, &trunk)?;
+    let (remote, _) = remote_trunk.split_once('/')?;
+    let out = Command::new("git")
         .current_dir(root)
+        .args(["remote", "get-url", remote])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())?;
+    github_repository_of(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// [`trunk_repository`], asked once per root in a process: every `gh` call of one
+/// observation would otherwise run the same few git commands again.
+pub fn pinned_repository(root: &Path) -> Option<String> {
+    use std::sync::{Mutex, OnceLock};
+    static SEEN: OnceLock<Mutex<BTreeMap<std::path::PathBuf, Option<String>>>> = OnceLock::new();
+    let seen = SEEN.get_or_init(|| Mutex::new(BTreeMap::new()));
+    if let Some(known) = seen.lock().ok().and_then(|m| m.get(root).cloned()) {
+        return known;
+    }
+    let found = trunk_repository(root);
+    if let Ok(mut m) = seen.lock() {
+        m.insert(root.to_path_buf(), found.clone());
+    }
+    found
+}
+
+/// A `gh` command run in `root`, pinned to [`pinned_repository`] through `GH_REPO`. An
+/// inherited `GH_REPO` is overridden: a caller's environment naming another repository would
+/// make the observation read it as this one's.
+pub fn gh_command(program: &str, root: &Path) -> Command {
+    let mut command = Command::new(program);
+    command.current_dir(root);
+    if let Some(repository) = pinned_repository(root) {
+        command.env("GH_REPO", repository);
+    }
+    command
+}
+
+/// The arguments of the `gh repo view` that names the repository: the pinned one when there
+/// is one, because `gh repo view` without an argument ignores `GH_REPO`.
+pub fn repo_view_args(root: &Path, fields: &str) -> Vec<String> {
+    let mut args = vec!["repo".to_string(), "view".to_string()];
+    args.extend(pinned_repository(root));
+    args.extend(["--json".to_string(), fields.to_string()]);
+    args
+}
+
+fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+    let out = gh_command("gh", root)
         .args(args)
         .output()
         .map_err(|e| ForgeError(format!("the GitHub CLI (gh) could not run: {e}")))?;
@@ -1724,10 +1825,8 @@ pub fn declare(prs: &mut [PullRequestObservation], read: &Declarations) -> Value
 impl Forge for GhForge<'_> {
     fn observe(&self) -> Result<ForgeObservation, ForgeError> {
         let root = self.root;
-        let repo = gh_json(
-            root,
-            &["repo", "view", "--json", "nameWithOwner,defaultBranchRef"],
-        )?;
+        let view = repo_view_args(root, "nameWithOwner,defaultBranchRef");
+        let repo = gh_json(root, &view.iter().map(String::as_str).collect::<Vec<_>>())?;
         let repository = repo
             .get("nameWithOwner")
             .and_then(Value::as_str)
@@ -4496,5 +4595,100 @@ mod tests {
             "#5 unread"
         );
         assert!(!resolved[&4].merged);
+    }
+}
+
+#[cfg(test)]
+mod repository_tests {
+    use super::*;
+
+    #[test]
+    fn every_github_url_form_names_its_repository_and_no_other_host_does() {
+        for (url, named) in [
+            ("git@github.com:o/n.git", Some("o/n")),
+            ("git@github.com:o/n", Some("o/n")),
+            ("ssh://git@github.com/o/n", Some("o/n")),
+            ("https://github.com/o/n.git", Some("o/n")),
+            ("https://github.com/o/n/", Some("o/n")),
+            ("http://github.com/o/n", Some("o/n")),
+            (
+                "https://x-access-token:secret@github.com/o/n.git\n",
+                Some("o/n"),
+            ),
+            ("https://github.com", None),
+            ("https://github.com/o", None),
+            ("https://github.com/o/n/tree/x", None),
+            ("https://gitlab.com/o/n.git", None),
+            ("/srv/git/o/n.git", None),
+        ] {
+            assert_eq!(github_repository_of(url).as_deref(), named, "{url}");
+        }
+    }
+
+    fn git(dir: &Path, args: &[&str]) {
+        let ok = Command::new("git")
+            .current_dir(dir)
+            .args(args)
+            .env("GIT_AUTHOR_NAME", "a")
+            .env("GIT_AUTHOR_EMAIL", "a@b.c")
+            .env("GIT_COMMITTER_NAME", "a")
+            .env("GIT_COMMITTER_EMAIL", "a@b.c")
+            .status()
+            .unwrap()
+            .success();
+        assert!(ok, "git {args:?}");
+    }
+
+    /// A fork's checkout has its own repository as `origin` and the parent as `upstream`; gh
+    /// would read the parent, and the trunk's remote names the fork (I4777).
+    #[test]
+    fn a_fork_is_read_as_the_repository_its_trunk_tracks() {
+        let base = tempfile::tempdir().unwrap();
+        let (up, co) = (base.path().join("up"), base.path().join("co"));
+        std::fs::create_dir_all(&up).unwrap();
+        git(&up, &["init", "-q", "-b", "master"]);
+        git(&up, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(base.path(), &["clone", "-q", "up", "co"]);
+        // nothing GitHub names: gh's own resolution is all there is
+        assert_eq!(trunk_repository(&co), None);
+        git(
+            &co,
+            &["remote", "set-url", "origin", "git@github.com:me/fork.git"],
+        );
+        git(
+            &co,
+            &[
+                "remote",
+                "add",
+                "upstream",
+                "https://github.com/them/parent.git",
+            ],
+        );
+        assert_eq!(trunk_repository(&co).as_deref(), Some("me/fork"));
+        assert_eq!(pinned_repository(&co).as_deref(), Some("me/fork"));
+        assert_eq!(
+            pinned_repository(&co).as_deref(),
+            Some("me/fork"),
+            "asked once"
+        );
+        assert_eq!(
+            repo_view_args(&co, "nameWithOwner"),
+            ["repo", "view", "me/fork", "--json", "nameWithOwner"]
+        );
+        let command = gh_command("gh", &co);
+        let pinned: Vec<_> = command
+            .get_envs()
+            .filter(|(k, _)| *k == "GH_REPO")
+            .map(|(_, v)| v.map(|v| v.to_string_lossy().into_owned()))
+            .collect();
+        assert_eq!(pinned, [Some("me/fork".to_string())]);
+        assert_eq!(command.get_current_dir(), Some(co.as_path()));
+        // the upstream itself has no remote that carries its trunk
+        assert_eq!(trunk_repository(&up), None);
+        assert_eq!(
+            repo_view_args(&up, "nameWithOwner"),
+            ["repo", "view", "--json", "nameWithOwner"]
+        );
+        assert_eq!(gh_command("gh", &up).get_envs().count(), 0);
     }
 }

@@ -1,11 +1,11 @@
 ---
 name: mj-plan
-description: "Majordomus plan: Reserve the next issue, case or ADR number; How far each issue's work has travelled; Where the plan's stamps contradict the delivered work; Where the work is now; The issues, filtered by what the graph derived; The whole derived plan; The one issue to take now; One milestone or…"
+description: "Majordomus plan: Reserve the next issue, case or ADR number; Whether an issue this head authors or executes is another's; How far each issue's work has travelled; Where the plan's stamps contradict the delivered work; Where the work is now; The issues, filtered by what the graph derived; The whole…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:plan; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.2.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 
 # Majordomus `plan`
 
@@ -16,12 +16,14 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `plan.allocate` | Reserve the next issue, case or ADR number | `majordomus_plan_allocate` | — | changes |
+| `plan.collisions` | Whether an issue this head authors or executes is another's | `majordomus_plan_collisions` | `majordomus plan collisions` | reads |
 | `plan.delivery` | How far each issue's work has travelled | `majordomus_plan_delivery` | `majordomus plan delivery` | reads |
 | `plan.drift` | Where the plan's stamps contradict the delivered work | `majordomus_plan_drift` | `majordomus plan drift` | reads |
 | `plan.flight` | Where the work is now | `majordomus_plan_flight` | — | reads |
 | `plan.issues` | The issues, filtered by what the graph derived | `majordomus_plan_issues` | — | reads |
 | `plan.model` | The whole derived plan | `majordomus_plan` | — | reads |
 | `plan.next` | The one issue to take now | `majordomus_plan_next` | — | reads |
+| `plan.reconcile` | What a merge supports the plan recording, and what each issue still owes | `majordomus_plan_reconcile` | `majordomus plan reconcile` | reads |
 | `plan.record` | One milestone or issue, with everything derived about it | `majordomus_plan_record` | — | reads |
 | `plan.roadmap` | The milestones in derived order | `majordomus_plan_roadmap` | — | reads |
 | `plan.status` | Where the plan stands | `majordomus_plan_status` | — | reads |

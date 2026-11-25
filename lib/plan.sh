@@ -34,6 +34,13 @@ READ
                        active_without_work, done_without_trace, each with its proof;
                        answered by the executable (plan.drift); --gate head|trunk judges
                        it against .ai/repo/ci/plan.yaml's window (read-only)
+  reconcile [<id>...]  what a merge supports recording and what each issue still owes: the
+                       plan.transition moves admitted now, the held ones with why, the
+                       evidence and validation owed (plan.reconcile, ADR 0238); --apply
+                       writes the start moves, --apply --done also the admitted done moves
+  collisions           whether an issue this head authors or executes is another's:
+                       id_reused, retitled, claimed_elsewhere, each naming its holder
+                       (plan.collisions); --gate start|push|pr judges it (read-only)
 
 WRITE (one lifecycle marker each, into the issue's own file)
   start <id>           record that execution began
@@ -63,7 +70,7 @@ mj_cmd_plan() {
     # Inferred from git, the forge cache and the published release pointer, which is the
     # executable's work (ADR 0166): no awk derivation of it exists to disagree with. Handed
     # over with its arguments unchanged, and with the global options this launcher took.
-    delivery|drift)
+    delivery|drift|reconcile|collisions)
       sub="$1"; shift
       local -a fwd=()
       [ -z "${MJ_REPO:-}" ] || fwd+=(--repo "$MJ_REPO")
