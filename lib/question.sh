@@ -273,8 +273,8 @@ mj_answer_transcript() {
       done
       [ -n "$use_line" ] || mj_die "$MJ_EX_MISSING" "question record: no tool use $id in $(basename "$file")"
       [ -n "$res_line" ] || mj_die "$MJ_EX_MISSING" "question record: tool use $id in $(basename "$file") has no result: the owner has not answered it"
-      { sed -n "${use_line}p" "$file"; sed -n "${res_line}p" "$file"; } > "$MJ_ANSWER_TMP.raw"
-      jq -cs --arg id "$id" --argjson i "$idx" --arg sha "$(mj_answer_sha < "$MJ_ANSWER_TMP.raw")" '
+      { sed -n "${use_line}p" "$file"; sed -n "${res_line}p" "$file"; } > "$mj_answer_tmp.raw"
+      jq -cs --arg id "$id" --argjson i "$idx" --arg sha "$(mj_answer_sha < "$mj_answer_tmp.raw")" '
         (.[0]) as $u | (.[1]) as $r
         | ([$u.message.content[] | select(type=="object" and .type=="tool_use" and .id==$id)][0].input.questions[$i]) as $q
         | ([$r.message.content[] | select(type=="object" and .type=="tool_result" and .tool_use_id==$id)][0].content
@@ -283,8 +283,8 @@ mj_answer_transcript() {
         | { question: $q.question, multi_select: ($q.multiSelect // false),
             options: [($q.options // [])[] | {label} + (if .description then {description} else {} end)],
             session: ($u.sessionId // ""), asked_at: ($u.timestamp // ""), answered_at: ($r.timestamp // ""),
-            result: $res, sha256: $sha, kind: "tool" }' "$MJ_ANSWER_TMP.raw" 2>"$MJ_ANSWER_TMP.err" \
-        || mj_die "$MJ_EX_MISSING" "question record: the transcript does not carry the question: $(cat "$MJ_ANSWER_TMP.err")" ;;
+            result: $res, sha256: $sha, kind: "tool" }' "$mj_answer_tmp.raw" 2>"$mj_answer_tmp.err" \
+        || mj_die "$MJ_EX_MISSING" "question record: the transcript does not carry the question: $(cat "$mj_answer_tmp.err")" ;;
     *)
       use_line=""
       for n in $(grep -n -F -- "\"$loc\"" "$file" | cut -d: -f1); do
@@ -292,18 +292,18 @@ mj_answer_transcript() {
         if printf '%s' "$raw" | jq -e --arg u "$loc" '.uuid == $u and .type == "user"' >/dev/null 2>&1; then use_line="$n"; break; fi
       done
       [ -n "$use_line" ] || mj_die "$MJ_EX_MISSING" "question record: no message $loc from the person in $(basename "$file")"
-      sed -n "${use_line}p" "$file" > "$MJ_ANSWER_TMP.raw"
-      jq -c --arg sha "$(mj_answer_sha < "$MJ_ANSWER_TMP.raw")" '
+      sed -n "${use_line}p" "$file" > "$mj_answer_tmp.raw"
+      jq -c --arg sha "$(mj_answer_sha < "$mj_answer_tmp.raw")" '
         (.message.content | if type=="string" then . else (map(select(.type=="text") | .text) | join("")) end) as $t
         | { free_text: $t, session: (.sessionId // ""), asked_at: (.timestamp // ""), answered_at: (.timestamp // ""),
-            sha256: $sha, kind: "message" }' "$MJ_ANSWER_TMP.raw" ;;
+            sha256: $sha, kind: "message" }' "$mj_answer_tmp.raw" ;;
   esac
 }
 
 mj_answer_record() {
   mj_answer_require_jq record
   local from="" transcript="" locator="" slug="" json args='{}' t
-  MJ_ANSWER_TMP="$(mktemp "${TMPDIR:-/tmp}/mj.answer.XXXXXX")"
+  mj_answer_tmp="$(mktemp "${TMPDIR:-/tmp}/mj.answer.XXXXXX")"
   # Every flag becomes one key of an input object; --from supplies the same keys as a JSON
   # document, so multi-line verbatim text never passes through shell quoting.
   local q="" ch="" pr="" ai="" aa="" wa="" ft="" sup="" tl="" tq="" ta="" ms="" hasq=0 hasft=0
@@ -387,8 +387,8 @@ mj_answer_record() {
       | . + {asked_session: (if $t.session != "" then $t.session else .asked_session end),
              asked_at: (if $t.asked_at != "" then $t.asked_at else .asked_at end),
              answered_at: (if $t.answered_at != "" then $t.answered_at else .answered_at end),
-             source: {transcript: $f, locator: $loc, sha256: $t.sha256}}' 2>"$MJ_ANSWER_TMP.err")" \
-      || mj_die "$MJ_EX_REFUSED" "question record: refused: $(sed 's/^jq: error[^:]*: //' "$MJ_ANSWER_TMP.err")"
+             source: {transcript: $f, locator: $loc, sha256: $t.sha256}}' 2>"$mj_answer_tmp.err")" \
+      || mj_die "$MJ_EX_REFUSED" "question record: refused: $(sed 's/^jq: error[^:]*: //' "$mj_answer_tmp.err")"
     source_kind="transcript-checked"; session_source="transcript"
     printf '%s' "$args" | jq -e '(.asked_session // "") != ""' >/dev/null || session_source="declared"
   fi
@@ -430,8 +430,8 @@ mj_answer_record() {
       + (if .translation then {translation: .translation} else {} end)
       + (if ((.settles // []) | length) > 0 then {settles: .settles} else {} end)
       + (if .supersedes then {supersedes: .supersedes} else {} end)
-      + {recorded: ({session: $rs, at: $now, by: $by} + (if $rt != "" then {task: $rt} else {} end))}' 2>"$MJ_ANSWER_TMP.err")" \
-    || mj_die "$MJ_EX_REFUSED" "question record: refused: $(sed 's/^jq: error[^:]*: //' "$MJ_ANSWER_TMP.err")"
+      + {recorded: ({session: $rs, at: $now, by: $by} + (if $rt != "" then {task: $rt} else {} end))}' 2>"$mj_answer_tmp.err")" \
+    || mj_die "$MJ_EX_REFUSED" "question record: refused: $(sed 's/^jq: error[^:]*: //' "$mj_answer_tmp.err")"
   local s
   while IFS= read -r s; do
     case "$s" in ''|issue:?*|pr:?*|adr:?*|decision:?*|task:?*|rule:?*|intent:?*|other:?*) ;;
@@ -458,7 +458,7 @@ EOF_SETTLES
     printf '# a JSON string or object, byte for byte, and both digests are recomputed by the validator.\n'
     printf '%s' "$rec" | mj_answer_yaml
   } > "$file.tmp" && mv "$file.tmp" "$file"
-  rm -f "$MJ_ANSWER_TMP" "$MJ_ANSWER_TMP.raw" "$MJ_ANSWER_TMP.err"
+  rm -f "$mj_answer_tmp" "$mj_answer_tmp.raw" "$mj_answer_tmp.err"
   printf 'recorded %s (%s): %s\n' "$id" "$source_kind" "$(mj_rel "$file")"
   printf 'cite it as owner-answer:%s; commit it with the work it settles\n' "$id"
 }
