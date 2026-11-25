@@ -105,6 +105,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares share/events.yaml with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4764; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |
@@ -126,3 +127,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4337` | shares .ai/repo/project/issues/I4362.yaml with I4362; they may not run concurrently |
 | WARN | `scope_conflict` | `I4337` | shares docs/KNOWLEDGE.md with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I4337` | shares docs/KNOWLEDGE.md with I4585; they may not run concurrently |
+| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4764; they may not run concurrently |

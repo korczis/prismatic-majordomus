@@ -1,7 +1,7 @@
 +++
 title = "Doctrine wiring integrity"
 description = "Doctrine wiring integrity"
-weight = 19
+weight = 20
 [extra]
 kind = "rule"
 slug = "majordomus-doctrine-wiring-integrity-1"

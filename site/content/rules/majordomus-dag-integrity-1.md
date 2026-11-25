@@ -1,7 +1,7 @@
 +++
 title = "Dependency graph integrity"
 description = "Dependency graph integrity"
-weight = 13
+weight = 14
 [extra]
 kind = "rule"
 slug = "majordomus-dag-integrity-1"

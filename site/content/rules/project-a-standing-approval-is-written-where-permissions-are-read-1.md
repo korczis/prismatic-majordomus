@@ -1,7 +1,7 @@
 +++
 title = "A standing approval is written where the permission layer reads it"
 description = "A standing approval is written where the permission layer reads it"
-weight = 77
+weight = 78
 [extra]
 kind = "rule"
 slug = "project-a-standing-approval-is-written-where-permissions-are-read-1"

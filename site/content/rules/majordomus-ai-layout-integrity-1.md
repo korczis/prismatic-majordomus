@@ -1,7 +1,7 @@
 +++
 title = "AI layer integrity"
 description = "AI layer integrity"
-weight = 2
+weight = 3
 [extra]
 kind = "rule"
 slug = "majordomus-ai-layout-integrity-1"

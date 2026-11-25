@@ -1,7 +1,7 @@
 +++
 title = "A deployment is described once, and every artifact built from it is generated from it"
 description = "A deployment is described once, and every artifact built from it is generated from it"
-weight = 17
+weight = 18
 [extra]
 kind = "rule"
 slug = "majordomus-deployment-contract-2"

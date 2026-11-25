@@ -1,7 +1,7 @@
 +++
 title = "Bootstrap integrity"
 description = "Bootstrap integrity"
-weight = 4
+weight = 5
 [extra]
 kind = "rule"
 slug = "majordomus-bootstrap-integrity-1"

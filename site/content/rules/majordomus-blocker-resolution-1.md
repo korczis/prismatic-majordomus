@@ -1,7 +1,7 @@
 +++
 title = "Blocker resolution"
 description = "Blocker resolution"
-weight = 3
+weight = 4
 [extra]
 kind = "rule"
 slug = "majordomus-blocker-resolution-1"
