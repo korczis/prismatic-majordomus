@@ -82853,6 +82853,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4810",
+        "kind": "issue",
+        "label": "I4810",
+        "summary": "homepage-check holds the hero's delivery counts to the delivery the page renders: the build's reading when the build carries one, the committed projection otherwise",
+        "route": "/cockpit/objects/issue/i4810",
+        "source": ".ai/repo/project/issues/I4810.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hero rendering build.delivery whose tallies differ from the committed projection passes the product check",
+            "A hero rendering the committed tallies while build.delivery differs is refused with a finding naming the build's delivery reading",
+            "Without build.json, without build.delivery, or with delivery null, the committed projection is compared and named in the finding",
+            "test/cases/4779 fails at its first assertion against scripts/ci/homepage-check as it was at 46775282570, and its mutant of the fixed checker fails situation 1",
+            "test/cases/333, 3742 and every other case that runs scripts/ci/homepage-check pass unchanged"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "homepage_check_compares_the_delivery_the_page_renders"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The merge-side guard that keeps the committed projection current (I4634, PR #3092: apps/majordomus-cli/src/plan/delivery.rs, scripts/ci/merge-delivery-check)",
+            "The templates and scripts/site-build, which already render the build's reading (I3769)",
+            "The I3769 block of homepage-check that judges the commit build.delivery names"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/homepage-check",
+            "test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh",
+            ".ai/repo/project/issues/I4810.yaml"
+          ],
+          "slug": "homepage-check-compares-the-delivery-the-page-renders",
+          "validation": [
+            "bash test/run.sh 4779_homepage_check_compares_the_delivery_the_page_renders",
+            "bash test/run.sh 333_homepage_narrative 3742_a_published_page_reads_delivery_at_its_build_commit"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -110815,6 +110856,13 @@
         "label": "test/cases/46_cross_surface.sh",
         "route": "/cockpit/objects/test/test-cases-46-cross-surface-sh",
         "source": "test/cases/46_cross_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh",
+        "kind": "test",
+        "label": "test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh",
+        "route": "/cockpit/objects/test/test-cases-4779-homepage-check-compares-the-delivery-the-page-renders-sh",
+        "source": "test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh"
       },
       {
         "id": "majordomus://test/test/cases/47_mutation.sh",
@@ -153063,6 +153111,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4810",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4810",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -160873,6 +160931,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/47_mutation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165999,8 +166062,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4543,
+      "edges": 10232,
       "acyclic": false,
       "truncated": false
     }

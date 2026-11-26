@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/47 | 20 | 5 | 1 | 1 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/48 | 21 | 5 | 1 | 1 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
 
 ## Issues
 
@@ -62,6 +62,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4294](https://majordomus.dev/plan/i4294/) | READY | 0 | — | The delivery board's documents are derived by one capability, and every open milestone has a lane |
 | [I4315](https://majordomus.dev/plan/i4315/) | READY | 0 | — | The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red |
 | [I4596](https://majordomus.dev/plan/i4596/) | READY | 0 | — | A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it |
+| [I4810](https://majordomus.dev/plan/i4810/) | READY | 0 | — | homepage-check holds the hero's delivery counts to the delivery the page renders: the build's reading when the build carries one, the committed projection otherwise |
 
 ## Findings
 
@@ -336,6 +337,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares site/templates/index.html with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3764` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3764` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/roadmap.html with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I4317; they may not run concurrently |
@@ -343,6 +345,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3769` | shares site/templates/index.html with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3769` | shares scripts/site-build with I4531; they may not run concurrently |
+| WARN | `scope_conflict` | `I3769` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |
 | WARN | `scope_conflict` | `I4294` | shares site with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I4294` | shares site with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I4294` | shares site with I4318; they may not run concurrently |
