@@ -14,7 +14,9 @@ scope:
   - "scripts/ci/release-check"
   - "test/cases/3029_a_tag_in_flight_is_pending.sh"
   - "test/cases/3021_a_tag_does_not_freeze_the_queue.sh"
+  - "test/cases/3224_a_published_alpha_owes_its_record.sh"
   - "docs/RELEASE.md"
+  - "docs/DISTRIBUTION.md"
 non_scope:
   - "Landing #2626, the owner's act due before 2026-10-29 12:47Z"
   - "Case 103 reading the checkout's own tags instead of its fixture (the review's N24, not filed in this block)"
@@ -32,4 +34,16 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-09T19:20:59Z
+started_at: 2026-11-09T19:05:25Z
+started_event: sha256:09042cbd35bcf7f051c53a3304bf01846cc7fb90e144a4fc32c56b6d9cfcd860
+completed_at: 2026-11-09T19:20:59Z
+completed_event: sha256:92e2b60e1e011b3dd55322827a9299f24e3db3319abd08793e52929ab13401f0
+evidence:
+  - covers: "test"
+    type: test
+    command: "bash test/run.sh 103_release_projection 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue 3224_a_published_alpha_owes_its_record"
+    result: "tests: 4 passed, 0 failed (2026-11-09 on master 426e98551ff plus this change); case 3029 drives {record branch unpushed, pushed after the fetch, pushed before it} x {in_progress, success, failure, cancelled} inside the grace: pending, exit 0, origin's branch fetched by ls-remote when the fetch missed it; past the grace and with origin unreachable (note names the remote) the finding stands, exit 10; 3029 fails against origin/master's release-check (unpushed/success refused); 3021 unchanged and passing"
+    artifact: "scripts/ci/release-check"
+    commit: 426e98551fffde8613b77faedcd05de14f191317
+    recorded_at: 2026-11-09T19:20:10Z
