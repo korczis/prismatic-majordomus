@@ -147,3 +147,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares share with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4778; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4780; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4781; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares lib with I4783; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4788; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4789; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4791; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4792; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4793; they may not run concurrently |

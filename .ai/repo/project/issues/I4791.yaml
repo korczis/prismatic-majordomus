@@ -1,0 +1,38 @@
+id: I4791
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "A derived mention index answers, for every rule, ADR, knowledge record, issue, milestone and requirement, which records name it and which it names, and doctor's prose-link finding names each dangling mention"
+slug: every-mention-is-a-link-both-ways
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive, on read and never stored as a second truth, a mention index over the text of every record the index discovers: each typed identifier the layer declares (rule ids with or without @version, ADR numbers, knowledge ids, issue ids, milestone and intent ids, and the requirement identifiers of I4787's sources when declared) found in a record's body or fields, with the file and line. `entity show` gains `mentioned_by` and `mentions` beside the declared relations; `entity mentions <identity>` lists both directions; doctor's knowledge finding stops saying only how many prose links resolve to nothing and names each one with its file, line and the identifier read, so the count it prints is a list a person can fix."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), doctor reported '47 links written in prose resolve to nothing' with no list of them, and the repository derived its own mention graph (ids of rules, ADRs, knowledge, issues, milestones and requirements named in file text) and showed both directions to make its records navigable. The tool already knows every identity and its address; it does not read the identities named in prose."
+current_state: "Measured at origin/master 46775282570. lib/knowledge.sh:868 prints '<n> link(s) written in prose resolve to nothing in the graph ... (majordomus knowledge validate lists them)' as INFO; the knowledge compiler reads typed identifiers in prose for its own graph (lib/knowledge.sh:263) and records unresolved ones as external findings; entity.rs answers declared relations and no reverse edges from text; I3318 plans the /ui inspector that shows the records that name a decision or a note, and I3412 makes entity.affected answer declared references."
+desired_state: "One extractor, declared by the kinds registry's identifier patterns rather than a list in code, feeds the index; entity show, the objects API and MCP carry both directions; doctor's finding carries the list (bounded, with the total) in text and JSON; docs/KNOWLEDGE.md documents the index; I3318's inspector can read the reverse edges from it; a fixture with three records that name each other and one dangling id answers both directions and names the dangling one."
+scope:
+  - ".ai/repo/project/issues/I4791.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/entity.rs"
+  - "apps/majordomus-cli/src/graph.rs"
+  - "share/kinds.yaml"
+  - "lib/knowledge.sh"
+  - "docs/KNOWLEDGE.md"
+  - "test/cases/4791_every_mention_is_a_link_both_ways.sh"
+non_scope:
+  - "The /ui screens (I3318) and entity.affected's declared references (I3412)"
+  - "Rewriting prose mentions into links in any record"
+  - "Mentions of things outside the layer (URLs, forge numbers)"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#every-mention-is-a-link-both-ways"
+acceptance_criteria:
+  - "A fixture knowledge note naming rule project.x@1 and issue I0002 is listed in `entity show rule/project-x-1` under mentioned_by with its line, and the note's own answer lists both under mentions"
+  - "A note naming I9999, which the plan lacks, is named by doctor's prose-link finding with its file and line"
+  - "The index is derived on read: deleting the mention and asking again answers without it, with no file to regenerate"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib graph::"
+  - "bash test/run.sh 4791_every_mention_is_a_link_both_ways"
+evidence_required:
+  - "case_4791"
+risk: "Medium. Scanning every record's text costs time on a large layer; the extractor runs once per index build, which already reads every file."
+created_at: 2026-11-25
+updated_at: 2026-11-25
