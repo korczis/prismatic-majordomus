@@ -1358,7 +1358,24 @@ pub struct MeshFirewallArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh doctor`'s arguments (I4343).
+/// `mesh doctor`'s arguments: the mesh self-check alone, or with `--build-host` this build
+/// host's own guard as well, observed live rather than trusted from its last report (I4343).
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshDoctorArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "doctor", "--build-host"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Doctor(doctor) = mesh.command else { panic!("expected `doctor`") };
+/// let doctor: MeshDoctorArgs = doctor;
+/// assert!(doctor.build_host);
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "doctor"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Doctor(doctor) = mesh.command else { panic!("expected `doctor`") };
+/// assert!(!doctor.build_host, "the host's guard is observed only when asked");
+/// ```
 pub struct MeshDoctorArgs {
     #[command(flatten)]
     /// Where the repository is and how to answer.

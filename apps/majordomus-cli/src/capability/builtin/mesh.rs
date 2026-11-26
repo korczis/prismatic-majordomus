@@ -293,10 +293,13 @@ fn mesh_doctor(ctx: &Context, input: DoctorInput) -> Result<MeshDoctorReport, Ca
         // problem, not evidence the guard is down
         let _ = crate::mesh::cache_provision::write_build_host_state(&observed, check.ok);
         if let Some(cooperation) = ctx.mesh.cooperation() {
-            let _ = cooperation.journal().append_own(crate::mesh::journal::EventBody::BuildHostObserved {
-                ok: check.ok,
-                failing: observed.failing(crate::mesh::cache_provision::BUILD_HOST_STATE_MAX_AGE),
-            });
+            let _ = cooperation.journal().append_own(
+                crate::mesh::journal::EventBody::BuildHostObserved {
+                    ok: check.ok,
+                    failing: observed
+                        .failing(crate::mesh::cache_provision::BUILD_HOST_STATE_MAX_AGE),
+                },
+            );
         }
         report.checks.push(check);
     }

@@ -1770,7 +1770,11 @@ mod tests {
     fn a_doctor_outside_any_repository_is_an_error_not_a_report() {
         let plain = tempfile::tempdir().unwrap();
         let args = query(Some(plain.path().to_path_buf()), OutputFormat::Json);
-        assert!(doctor(MeshDoctorArgs { query: args, build_host: false }).is_err());
+        assert!(doctor(MeshDoctorArgs {
+            query: args,
+            build_host: false
+        })
+        .is_err());
     }
 
     /// Through a borrowed server, a publish is refused by name on the text surface too.
@@ -1815,7 +1819,10 @@ mod tests {
         assert!(asked.to_string().contains(&url), "{asked}");
         let doctor = doctor_through(
             Some(serving()),
-            MeshDoctorArgs { query: query(None, OutputFormat::Json), build_host: false },
+            MeshDoctorArgs {
+                query: query(None, OutputFormat::Json),
+                build_host: false,
+            },
         )
         .expect_err("nothing answers");
         assert!(

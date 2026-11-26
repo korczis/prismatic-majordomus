@@ -48,9 +48,9 @@
 
 use std::collections::BTreeMap;
 use std::io::Write;
-use std::time::Duration;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::Duration;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -931,6 +931,27 @@ pub const BUILD_HOST_STATE_MAX_AGE: Duration = Duration::from_secs(15 * 60);
 /// timer's own activity, the ballast, the age of its last state, every declared drop-in, and
 /// every declared tenant's size against its bound. Pure data: [`build_host_verdict`] (in
 /// [`super::doctor`]) is what judges it.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::BuildHostObserved;
+///
+/// let bound = Duration::from_secs(15 * 60); // BUILD_HOST_STATE_MAX_AGE
+/// // nothing observed is nothing held: every item is named
+/// let nothing = BuildHostObserved::default();
+/// assert!(!nothing.ok(bound));
+/// assert_eq!(nothing.failing(bound).len(), 4);
+///
+/// let held = BuildHostObserved {
+///     guard_timer_active: true,
+///     observe_timer_active: true,
+///     ballast_present: true,
+///     state_age: Some(Duration::from_secs(60)),
+///     ..Default::default()
+/// };
+/// assert!(held.ok(bound));
+/// assert!(held.failing(bound).is_empty());
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct BuildHostObserved {
     /// `disk-guard.timer` is active.
@@ -950,6 +971,25 @@ pub struct BuildHostObserved {
 
 impl BuildHostObserved {
     /// Every item held: the guard observes nothing wrong (I4343's acceptance criteria 1-2).
+    /// A state older than `max_state_age`, or one never written, is not held: a guard that
+    /// stopped writing is a guard that stopped guarding.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::BuildHostObserved;
+    ///
+    /// let mut o = BuildHostObserved {
+    ///     guard_timer_active: true,
+    ///     observe_timer_active: true,
+    ///     ballast_present: true,
+    ///     state_age: Some(Duration::from_secs(20 * 60)),
+    ///     ..Default::default()
+    /// };
+    /// assert!(o.ok(Duration::from_secs(30 * 60)));
+    /// assert!(!o.ok(Duration::from_secs(15 * 60)), "a stale state is not held");
+    /// o.tenants_over_bound.push("ci is 3G over its 40G bound".into());
+    /// assert!(!o.ok(Duration::from_secs(30 * 60)));
+    /// ```
     pub fn ok(&self, max_state_age: Duration) -> bool {
         self.guard_timer_active
             && self.observe_timer_active
@@ -959,7 +999,31 @@ impl BuildHostObserved {
             && self.tenants_over_bound.is_empty()
     }
 
-    /// Every item that fails, one line each, naming what is missing or over its bound.
+    /// Every item that fails, one line each, naming what is missing or over its bound; empty
+    /// exactly when [`Self::ok`] holds. These lines are what the `build_host_observed` event
+    /// carries and what `monitor` shows.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::BuildHostObserved;
+    ///
+    /// let o = BuildHostObserved {
+    ///     guard_timer_active: true,
+    ///     observe_timer_active: true,
+    ///     ballast_present: false,
+    ///     state_age: Some(Duration::from_secs(40 * 60)),
+    ///     missing_drop_ins: vec!["sshd.service".into()],
+    ///     ..Default::default()
+    /// };
+    /// assert_eq!(
+    ///     o.failing(Duration::from_secs(15 * 60)),
+    ///     vec![
+    ///         "the ballast is missing".to_string(),
+    ///         "disk-guard.json is 40m old, over the 15m bound".to_string(),
+    ///         "the drop-in of sshd.service is missing".to_string(),
+    ///     ]
+    /// );
+    /// ```
     pub fn failing(&self, max_state_age: Duration) -> Vec<String> {
         let mut out = Vec::new();
         if !self.guard_timer_active {
@@ -1004,7 +1068,11 @@ pub fn du_gib(path: &Path) -> Option<u64> {
     if !path.exists() {
         return None;
     }
-    let out = Command::new("du").args(["-sx", "-BG"]).arg(path).output().ok()?;
+    let out = Command::new("du")
+        .args(["-sx", "-BG"])
+        .arg(path)
+        .output()
+        .ok()?;
     if !out.status.success() {
         return None;
     }
@@ -2552,10 +2620,7 @@ mod tests {
         std::fs::create_dir_all(root.join("var/lib/majordomus")).unwrap();
         std::fs::write(root.join("var/lib/majordomus/disk-guard.json"), b"{}").unwrap();
         std::fs::write(root.join("var/lib/majordomus/ballast"), b"").unwrap();
-        std::fs::create_dir_all(
-            root.join("etc/systemd/system/minio.service.d"),
-        )
-        .unwrap();
+        std::fs::create_dir_all(root.join("etc/systemd/system/minio.service.d")).unwrap();
         std::fs::write(
             root.join("etc/systemd/system/minio.service.d/50-build-host.conf"),
             b"",
@@ -2564,7 +2629,10 @@ mod tests {
         let size_under = |_: &Path| Some(10u64);
         let observed = observe_build_host(&p, &root, &always, &size_under);
         assert!(observed.ok(BUILD_HOST_STATE_MAX_AGE), "{:?}", observed);
-        assert_eq!(observed.failing(BUILD_HOST_STATE_MAX_AGE), Vec::<String>::new());
+        assert_eq!(
+            observed.failing(BUILD_HOST_STATE_MAX_AGE),
+            Vec::<String>::new()
+        );
     }
 
     /// Each signal missing on its own fails the check, naming what is missing: the inactive
@@ -2587,7 +2655,9 @@ mod tests {
         assert!(!observed.ok(BUILD_HOST_STATE_MAX_AGE));
         let failing = observed.failing(BUILD_HOST_STATE_MAX_AGE);
         assert!(failing.iter().any(|f| f.contains("disk-guard.timer")));
-        assert!(failing.iter().any(|f| f.contains("build-host-observe.timer")));
+        assert!(failing
+            .iter()
+            .any(|f| f.contains("build-host-observe.timer")));
         assert!(failing.iter().any(|f| f.contains("ballast")));
         assert!(failing.iter().any(|f| f.contains("never been written")));
 
@@ -2632,8 +2702,11 @@ mod tests {
             .files
             .iter()
             .any(|f| f.path == "/etc/systemd/system/build-host-observe.timer"));
-        assert!(planned.steps.iter().any(|s| s.id == "observe-timer"
-            && s.line.contains("enable --now build-host-observe.timer")));
+        assert!(planned
+            .steps
+            .iter()
+            .any(|s| s.id == "observe-timer"
+                && s.line.contains("enable --now build-host-observe.timer")));
 
         let root = scratch("build-host-provision");
         let first = apply(&p, &root);
