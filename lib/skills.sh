@@ -442,10 +442,12 @@ mj_skills_proof_doctrine() {
   fi
   while IFS=$'\037' read -r level code subject message reproduce; do
     [ -n "$code" ] || continue
-    # no test here names a stamped fleet skill and nothing here need invoke it: the pack
-    # proves both (fleet provenance, above). A contract finding is never the pack's to waive.
+    # no test here names a stamped fleet skill, nothing here need invoke it and no gate here
+    # need verify it: the pack proves all three (fleet provenance, above), and a local
+    # `skills verify` gate would fail on it by design, since the executable's verdict stays
+    # untested. A contract finding is never the pack's to waive.
     case "$code" in
-      untested|unused|unevidenced)
+      untested|unused|unevidenced|unenforced)
         if mj_skills_fleet_proved "$subject"; then
           case " $fleet " in *" $subject "*) ;; *) fleet="$fleet $subject" ;; esac
           continue
