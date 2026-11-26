@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `3842f50a9dd4`.
+Generated from canonical inputs `172bc6106e45`.
 
 ## Milestones
 
@@ -17,7 +17,7 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [M000](https://majordomus.dev/plan/m000/) | DONE | 15/15 | 0 | 0 | 0 | 0 | 0 | Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model. | [`plan-status/M000.md`](plan-status/M000.md) |
 | [M001](https://majordomus.dev/plan/m001/) | DONE | 4/4 | 0 | 0 | 0 | 0 | 0 | An unresolved question keeps refusing a completed finish after the work moves to a new task, or the alternative is chosen deliberately and the reason is recorded where the next worker will read it. | [`plan-status/M001.md`](plan-status/M001.md) |
 | [M002](https://majordomus.dev/plan/m002/) | ACTIVE | 2/7 | 2 | 1 | 2 | 0 | 0 | A durable record either names the worker that produced it or is refused, and a record written from one session can never arrive attributed to another session's task. | [`plan-status/M002.md`](plan-status/M002.md) |
-| [M003](https://majordomus.dev/plan/m003/) | ACTIVE | 13/17 | 2 | 2 | 0 | 0 | 1 | A worker with no conversation history can answer what happened, why, what was decided, which evidence supports it, where the canonical source lives, and what to do next — from records and a derived index, with git still the authority over both. | [`plan-status/M003.md`](plan-status/M003.md) |
+| [M003](https://majordomus.dev/plan/m003/) | ACTIVE | 13/17 | 1 | 2 | 1 | 0 | 1 | A worker with no conversation history can answer what happened, why, what was decided, which evidence supports it, where the canonical source lives, and what to do next — from records and a derived index, with git still the authority over both. | [`plan-status/M003.md`](plan-status/M003.md) |
 | [M004](https://majordomus.dev/plan/m004/) | ACTIVE | 24/45 | 11 | 10 | 0 | 0 | 0 | Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it. | [`plan-status/M004.md`](plan-status/M004.md) |
 | [a-bounded-task-is-carried-to-accepted-work](https://majordomus.dev/plan/a-bounded-task-is-carried-to-accepted-work/) | PLANNED | 0/15 | 14 | 1 | 0 | 0 | 0 | Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget. | [`plan-status/a-bounded-task-is-carried-to-accepted-work.md`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) |
 | [a-change-is-judged-in-minutes](https://majordomus.dev/plan/a-change-is-judged-in-minutes/) | ACTIVE | 2/17 | 6 | 9 | 0 | 0 | 0 | The owner should never wait on the toolchain for a change that touched little. An ordinary derive finishes in under a second. A pull request's required verdict arrives within five minutes. Both are measured and enforced, and the speed comes from not repeating work whose inputs did not move, never from weakening a gate. | [`plan-status/a-change-is-judged-in-minutes.md`](plan-status/a-change-is-judged-in-minutes.md) |
@@ -242,7 +242,6 @@ Generated from canonical inputs `3842f50a9dd4`.
 - `I3005` (idd-reads-at-a-glance, wave 0) — Code on the UI has one highlighter
 - `I3016` (two-folder-integration, wave 1) — A capability reads the repository from its context, never by opening it again
 - `I3040` (a-session-proceeds, wave 0) — An id is taken by one atomic claim
-- `I3061` (M003, wave 0) — A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record
 - `I3071` (a-version-follows-the-work, wave 1) — /ui/delivery shows how much landed work waits for a release, and since when
 - `I3072` (a-version-follows-the-work, wave 1) — A task holding the release seat does not finish completed while landed work has waited past the threshold
 - `I3076` (a-version-follows-the-work, wave 1) — The landing clock's first source is measured, a fresh clone's wait is a labelled bound, and case 3470 shows a decided version

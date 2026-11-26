@@ -673,8 +673,11 @@ mj_session_close() {
   rm -f "$body"
 
   # On the trunk the record goes to the outbox, not the tracked section (ADR 0091 amendment).
-  local wstore; wstore="$(mj_session_write_store)"
-  mj_session_write_store_ready "$wstore"
+  # A guest of another live worker (I3061, set by the lifecycle's end event) writes its record
+  # to this checkout's local store and nowhere tracked: the tree stays the worker's.
+  local wstore
+  if [ "${MJ_SESSION_LOCAL_RECORD:-0}" = 1 ]; then wstore="$(mj_session_dir)"; mkdir -p "$wstore"
+  else wstore="$(mj_session_write_store)"; mj_session_write_store_ready "$wstore"; fi
   # One episode, one record. `mj_publish_record` gives each file a unique name, which makes
   # a second close of the same episode a second *file* rather than a collision — so nothing
   # here ever refused it, and the identity contract this section declares was enforced only
@@ -725,7 +728,7 @@ mj_session_close() {
 
   # Off the trunk, this boundary also carries what a trunk episode staged (ADR 0091,
   # amendment of 2026-10-15): after this episode's own record, so the two never share a lock.
-  mj_session_outbox_drain
+  [ "${MJ_SESSION_LOCAL_RECORD:-0}" = 1 ] || mj_session_outbox_drain
 
   # What the episode learned, derived on the single path every close takes (ADR 0091):
   # after its record, so that the episode's own record exists before anything names it,
@@ -734,7 +737,9 @@ mj_session_close() {
   # than clocks. Best effort, on purpose: a derivation that fails is said on stderr and
   # reported by the adapter as the typed event, and the episode still closes.
   [ -n "${MJ_POL_FLAT:-}" ] || mj_load_policy 2>/dev/null || true
-  if [ "$(mj_pol session.knowledge_on_end)" != false ]; then
+  if [ "${MJ_SESSION_LOCAL_RECORD:-0}" = 1 ]; then
+    mj_err "session close: a guest episode's record is local, so no knowledge is derived from it"
+  elif [ "$(mj_pol session.knowledge_on_end)" != false ]; then
     # shellcheck source=knowledge.sh
     . "$MJ_LIB_DIR/knowledge.sh"
     local kout

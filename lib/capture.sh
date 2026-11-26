@@ -283,6 +283,16 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # beside the payload keys, because a provider is one thing and a second table naming the
 # same providers elsewhere is how two lists come to disagree. A provider that exports
 # nothing writes `-`, and its workers resolve through the pointer as everything did before.
+#
+# Not every provider session that fires these events is the worker (I3061). A headless run
+# an adopter's script starts inside a supervised worktree, or any session started under
+# another live session of the same checkout, is a guest: its start opens a local episode
+# bound to nothing, and its end, interrupted or not, neither hands the checkout's task over
+# nor writes a tracked record. Two facts decide it, both read from what the provider says
+# (mj_capture_guest_of): the hook's environment names, through field 13, a different
+# provider session whose episode is open here, so this one was spawned from inside it; or the
+# active task was opened by an episode of a different provider session that is still open,
+# so the task already has its worker. Two windows with no task between them stay two workers.
 MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
 
 # The mods a provider loads by itself from a folder inside the repository (ADR 0123): one
@@ -1607,6 +1617,55 @@ mj_capture_safe() {
   printf '%s' "$v" | tr -c 'A-Za-z0-9._:@/-' '-' | tr -s '-' | cut -c1-64 | sed -e 's/^-//' -e 's/-$//'
 }
 
+# Whether provider session <psession> is a guest of another live worker here (I3061), and of
+# which: prints "<worker session id>|<why>" and returns 0 when it is, returns 1 when it is the
+# worker. Read from what the provider says, never guessed: the hook's environment naming a
+# different provider session whose episode is open here (this one was spawned inside it), or
+# the active task having been opened by a different episode that is still open (the task
+# already has its worker). The decision of the start event is kept beside the open episodes
+# (mj_capture_guest_file), so the end reads what the start saw even after the worker left.
+mj_capture_guest_dir()  { printf '%s/sessions-guest' "$MJ_STATE_DIR"; }
+mj_capture_guest_file() { printf '%s/%s' "$(mj_capture_guest_dir)" "$(mj_session_key "${1:-}")"; }
+mj_capture_guest_of() {
+  local psession="$1" envk f w sid mine="" id opened
+  [ -n "$psession" ] || return 1
+  # its own episode, when the start event fires again on a resume or the end arrives
+  f="$(mj_session_key_file "$psession")"
+  [ -f "$f" ] && mine="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+  # What the start decided, kept as "<worker episode>|<this episode>|<why>", holds for as long
+  # as that episode of this provider session is the one open; a marker an episode closed by
+  # hand left behind decides nothing.
+  f="$(mj_capture_guest_file "$psession")"
+  if [ -f "$f" ]; then
+    local kept; kept="$(head -n 1 "$f")"
+    w="${kept#*|}"; w="${w%%|*}"
+    if [ -n "$mine" ] && [ "$w" = "$mine" ]; then
+      printf '%s|%s\n' "${kept%%|*}" "${kept#*|*|}"; return 0
+    fi
+    rm -f "$f"
+  fi
+  # (a) spawned inside another provider session of this checkout
+  envk="$(mj_provider_session_env)"
+  if [ -n "$envk" ] && [ "$(mj_session_key "$envk")" != "$(mj_session_key "$psession")" ]; then
+    f="$(mj_session_key_file "$envk")"
+    if [ -f "$f" ]; then
+      w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+      if [ -z "$w" ] || [ "$w" = "$MJ_ROOT" ]; then
+        sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+        [ -n "$sid" ] && { printf '%s|started inside provider session %s, whose episode is open here\n' "$sid" "$envk"; return 0; }
+      fi
+    fi
+  fi
+  # (b) the active task is held by another live episode
+  mj_load_current || return 1
+  [ "$(mj_cur outcome)" = active ] || return 1
+  w="$(mj_cur worktree)"; [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 1
+  id="$(mj_cur id)"; [ -n "$id" ] || return 1
+  opened="$(mj_task_opening_session "$id")"
+  [ -n "$opened" ] && [ "$opened" != "$mine" ] && mj_session_is_open "$opened" || return 1
+  printf '%s|task %s is held by episode %s, which is still open\n' "$opened" "$id" "$opened"
+}
+
 # Opening the episode is half of it. The other half is that the worker which just started
 # is told what the last one left, and this is the only moment at which telling it costs
 # nothing: the provider adds what this event writes to standard output to the context it is
@@ -1621,7 +1680,10 @@ mj_capture_safe() {
 # resolves, and nothing reads it unless a worker remembers to ask. That is the same
 # failure the whole design is against, moved one step later.
 mj_capture_session_start() {
-  local provider="$1" psession="$2" source="$3" out
+  local provider="$1" psession="$2" source="$3" out guest=""
+  # A guest of another live worker (I3061) is decided before its episode exists, so that the
+  # decision is about the checkout as this session found it.
+  guest="$(mj_capture_guest_of "$psession")" || guest=""
   set -- --if-open keep --provider "$provider"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_start "$@") 2>&1 )" || {
@@ -1629,6 +1691,15 @@ mj_capture_session_start() {
     mj_err "capture session: the episode did not open; see the log beside the working contexts"
     return 0; }
   mj_err "capture session: $(printf '%s' "$out" | head -n 1)${source:+ (source $source)}"
+  # A guest's episode is local and bound to nothing: the decision is kept for its end, and it
+  # joins the mesh, below, without the task (mj_capture_mesh_join reads the marker).
+  if [ -n "$guest" ]; then
+    local own; own="$(sed -n 's/^session_id: //p' "$(mj_session_key_file "$psession")" 2>/dev/null | head -n 1)"
+    mkdir -p "$(mj_capture_guest_dir)" 2>/dev/null \
+      && printf '%s|%s|%s\n' "${guest%%|*}" "$own" "${guest#*|}" > "$(mj_capture_guest_file "$psession")" 2>/dev/null || true
+    mj_session_context_log "$provider start event: provider session $psession is a guest of episode ${guest%%|*}, not the worker: ${guest#*|}"
+    mj_err "capture session: provider session $psession is not the worker here (${guest#*|}); its episode stays local"
+  fi
 
   # The briefing is best-effort and never decides the event: an episode that opened and
   # could not be described is worth more than no episode, and a hook that failed because a
@@ -1740,7 +1811,9 @@ mj_capture_mesh_join() {
   # The task is this session's to carry or none (ADR 0164), resolved through
   # mj_record_attribution as the episode its provider session opened: a second window joins
   # the mesh without claiming the task the first window's episode opened.
+  # A guest of another live worker (I3061) never carries the task, whatever attribution says.
   MJ_SESSION_KEY="$psession" mj_record_attribution
+  [ -f "$(mj_capture_guest_file "$psession")" ] && MJ_RECORD_TASK=""
   if [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ]; then
     set -- "$@" --task "$MJ_RECORD_TASK" --intent "$(mj_cur task)"
   fi
@@ -1879,8 +1952,22 @@ mj_capture_end_room() {
 }
 
 mj_capture_session_end() {
-  local provider="$1" psession="$2" reason="$3" outcome=interrupted out
+  local provider="$1" psession="$2" reason="$3" outcome=interrupted out guest=""
   case ",$(mj_lifecycle_keys "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
+  # A guest's end (I3061) leaves the worker's task and the tracked tree exactly as they were:
+  # no closing checkpoint, no continuation, no handover of the task, and its record, if its
+  # episode is open, goes to this checkout's local store and is never committed.
+  guest="$(mj_capture_guest_of "$psession")" || guest=""
+  if [ -n "$guest" ]; then
+    mj_capture_mesh_leave "$provider" "$psession"
+    out="$( (MJ_SESSION_LOCAL_RECORD=1 mj_session_close --if-none ignore --outcome "$outcome" \
+      --provider-session "$psession" < /dev/null) 2>&1 )" \
+      || mj_capture_session_failed "$provider" end "the guest episode did not close: $(printf '%s' "$out" | tail -n 1)"
+    rm -f "$(mj_capture_guest_file "$psession")"
+    mj_session_context_log "$provider end event: provider session $psession is a guest of episode ${guest%%|*} (${guest#*|}); the task was not handed over and no tracked record was written${out:+; local record $(printf '%s\n' "$out" | tail -n 1)}"
+    mj_err "capture session: provider session $psession is not the worker here; the task is untouched${out:+ and its record stays local at $(printf '%s\n' "$out" | tail -n 1)}"
+    return 0
+  fi
   # shellcheck source=handover.sh
   . "$MJ_LIB_DIR/handover.sh"
   # The same reasoning as the compaction event, with one difference: an end that cannot read
