@@ -283,6 +283,97 @@ fn shape_cached(
         .flatten()
 }
 
+/// The environment variable that bounds how many relations a read decides at once.
+pub(crate) const WORKERS_VAR: &str = "MAJORDOMUS_INTEGRATION_WORKERS";
+
+/// How many relations a read decides at once: [`WORKERS_VAR`] when it names a positive number,
+/// and otherwise half the machine's parallelism, between one and six. Each relation is a
+/// handful of git processes that read the object store and write a merge tree into it, so more
+/// than that contends for the disk rather than finishing sooner.
+fn relation_workers() -> usize {
+    std::env::var(WORKERS_VAR)
+        .ok()
+        .and_then(|v| v.trim().parse::<usize>().ok())
+        .filter(|n| *n > 0)
+        .unwrap_or_else(|| {
+            std::thread::available_parallelism().map_or(1, |n| (n.get() / 2).clamp(1, 6))
+        })
+}
+
+/// Decide, side by side and at most `workers` at a time, every relation and shape of
+/// `master..head` that `cache` lacks for `heads`, and put each one in `cache` under the same key
+/// and rule as [`relation_cached`] and [`shape_cached`]: an unknown relation is not a fact and
+/// is not kept. Returns how many relations and shapes git decided.
+///
+/// Each pair is a fact about two commit ids that no other pair changes, so the order in which
+/// they are decided cannot change an answer: the queue built afterwards reads the cache exactly
+/// as it would have filled it one pair at a time. What changes is the wall time of a cold read
+/// — on 2026-11-01, with 85 open pull requests and a master newer than `relations.json`, one
+/// at a time took 15 min 22 s.
+fn prefetch_relations(
+    root: &Path,
+    cache: &mut RelationCache,
+    master: &str,
+    heads: &[&str],
+    workers: usize,
+) -> (u64, u64) {
+    if !is_object_id(master) {
+        return (0, 0);
+    }
+    let key = |h: &str| format!("{master}..{h}");
+    let mut seen = BTreeSet::new();
+    let wanted: Vec<(&str, bool, bool)> = heads
+        .iter()
+        .copied()
+        .filter(|h| is_object_id(h) && seen.insert(*h))
+        .map(|h| {
+            let k = key(h);
+            (
+                h,
+                !cache.entries.contains_key(&k),
+                !cache.shapes.contains_key(&k),
+            )
+        })
+        .filter(|(_, relation, shape)| *relation || *shape)
+        .collect();
+    if wanted.is_empty() {
+        return (0, 0);
+    }
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let decided = std::sync::Mutex::new(Vec::with_capacity(wanted.len()));
+    std::thread::scope(|scope| {
+        for _ in 0..workers.clamp(1, wanted.len()) {
+            scope.spawn(|| loop {
+                let i = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                let Some(&(head, relation, shape)) = wanted.get(i) else {
+                    break;
+                };
+                let r = relation.then(|| relation::relation_to_master(root, master, head));
+                let c = shape.then(|| relation::change_shape(root, master, head));
+                if let Ok(mut d) = decided.lock() {
+                    d.push((head, r, c));
+                }
+            });
+        }
+    });
+    let (mut relations, mut shapes) = (0, 0);
+    for (head, r, c) in decided.into_inner().unwrap_or_default() {
+        if let Some(r) = r {
+            relations += 1;
+            if !matches!(r, RelationToMaster::Unknown { .. }) {
+                cache.entries.insert(key(head), r);
+            }
+        }
+        if let Some(c) = c {
+            shapes += 1;
+            if let Some(c) = c {
+                cache.shapes.insert(key(head), c);
+            }
+        }
+    }
+    (relations, shapes)
+}
+
 /// Whether `s` is a full commit id, SHA-1 or SHA-256, as git prints one.
 fn is_object_id(s: &str) -> bool {
     matches!(s.len(), 40 | 64) && s.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
@@ -1242,8 +1333,33 @@ fn computed(
     };
     let key = |head: &str| format!("{master}..{head}");
     let decidable = |head: &str| is_object_id(&master) && is_object_id(head);
+    // what the queue will ask and the cache lacks is decided first, side by side: every pair
+    // is a fact on its own, so the closures below then read the cache as they would have
+    // filled it one pair at a time
+    let present_heads: Vec<&str> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.head_sha.as_str())
+        .filter(|h| has_commit(h))
+        .collect();
+    let (prefetched_relations, prefetched_shapes) = prefetch_relations(
+        root,
+        &mut cache,
+        &master,
+        &present_heads,
+        relation_workers(),
+    );
+    let prefetched: BTreeSet<String> = present_heads.iter().map(|h| key(h)).collect();
     // the relation and the shape share the cache, and each is asked from its own closure
-    let cell = std::cell::RefCell::new((cache, memo::Decided::default(), BTreeSet::new()));
+    let cell = std::cell::RefCell::new((
+        cache,
+        memo::Decided {
+            relations: prefetched_relations,
+            shapes: prefetched_shapes,
+            ..memo::Decided::default()
+        },
+        BTreeSet::new(),
+    ));
     let mut queue = build_queue_shaped(
         &obs,
         &master,
@@ -1279,16 +1395,19 @@ fn computed(
     let (cache, decided, asked) = cell.into_inner();
     memo.decided.relations += decided.relations;
     memo.decided.shapes += decided.shapes;
-    // bounded: the next read is kept what this one asked about, against this master
+    // bounded: the next read is kept what this one asked about or decided ahead, against
+    // this master — a pair decided ahead and not asked (a draft's head) is still a fact, and
+    // dropping it would decide it again on the next read
+    let kept: BTreeSet<&String> = asked.iter().chain(prefetched.iter()).collect();
     memo.relations = RelationCache {
         vocabulary: RELATION_VOCABULARY,
-        entries: asked
+        entries: kept
             .iter()
-            .filter_map(|k| cache.entries.get(k).map(|r| (k.clone(), r.clone())))
+            .filter_map(|k| cache.entries.get(*k).map(|r| ((*k).clone(), r.clone())))
             .collect(),
-        shapes: asked
+        shapes: kept
             .iter()
-            .filter_map(|k| cache.shapes.get(k).map(|s| (k.clone(), s.clone())))
+            .filter_map(|k| cache.shapes.get(*k).map(|s| ((*k).clone(), s.clone())))
             .collect(),
     };
     let heads: Vec<String> = queue
