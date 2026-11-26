@@ -3,8 +3,8 @@ schema: knowledge/v1
 id: fabric-starts-with-p00-s00-s01
 kind: knowledge
 class: fact
-title: "Owner decisions 2026-11-24: Majordomus Fabric starts with P00, S00 and S01; ADR 0199 is amended into its decision; #3108 is held; an unattended follower requires provenance; one OS user locally, encrypted between hosts"
-description: "When a session asks whether the Majordomus Fabric program (user-scoped host agent, local IPC, host-to-host mesh multiplexing, user services, managed update) has been ordered, where it starts, which ADR carries it, what happens to PR #3108 or #3110, or what Fabric's trust boundary is"
+title: "Owner decisions 2026-11-24/25: Majordomus Fabric starts with P00, S00 and S01; ADR 0199 is amended and accepted (G0); #3108 is held; an unattended follower requires provenance; one OS user locally, encrypted between hosts; I3184 is unblocked"
+description: "When a session asks whether the Majordomus Fabric program (user-scoped host agent, local IPC, host-to-host mesh multiplexing, user services, managed update) has been ordered, where it starts, which ADR carries it, what happens to PR #3108 or #3110, what Fabric's trust boundary is, whether gate G0 is passed, or whether I3184 may start"
 status: verified
 epistemics: decided
 date: 2026-11-24
@@ -113,3 +113,35 @@ encrypted (Recommended)". The option read: "Locally only the same OS user, throu
 0600 permissions and checked by peer credentials (another OS user is out). Host-to-host only
 over an authenticated, encrypted channel, tailnet included. Cleartext hub links stay only for
 the legacy mode."
+
+# Further answers of 2026-11-25 (gate G0 and two unblockings)
+
+Asked in one AskUserQuestion from the same session (9ae82e7a-b0e4-44c0-a305-9c69cd1acf6a,
+openttd-7d) on 2026-11-25, after the owner sent the pack files again without an instruction. Each
+answer is recorded verbatim.
+
+**1. Gate G0.** Question: "Fabric gate G0: PR #3123 amends ADR 0199 into Fabric's decision (one
+opt-in user-scoped host agent, a 0600 Unix socket with peer credentials, per-context authorisation;
+ADR 0001/0003/0044 narrowed only for the opt-in host mode; standalone mode unchanged). No host-agent
+code lands before you accept it. Do you accept it?" Answer: "Accept, set accepted (Recommended)".
+The option read: "I set ADR 0199 to accepted in #3123, record your answer verbatim, merge
+#3121-#3124, and start P02 (the IPC contract) toward the local pilot G5."
+
+**2. The arena's referee.** Question: "The arena on the remote ttd-battle orchestrator runs an older
+BattleReferee that logs no loan (none of the 11,207 match logs here has loan=). Without it the
+net-investment hoard rule (#282) can't be calibrated on arena data. May the arena move to the
+repository's current referee?" Answer: "Yes, update the referee (Recommended)". The option read:
+"The arena's BattleReferee.tar follows the repository's referee, so new matches log loan=. Its
+scoring is unchanged, only extra fields." This concerns the OpenTTD research fork; it is recorded
+there too.
+
+**3. I3184's dependencies.** Question: "Milestone the-host-knows-its-runtimes is blocked on
+runtime-lifecycle and safe-self-update. Its first issue, I3184, is read-only: the host's process
+inventory built from leases, no daemon. May it stop waiting on those two so I3184 can start?"
+Answer: "Lift the dependencies (Recommended)". The option read: "I3184 starts now as a read-only
+inventory; it starts no service and changes no lifecycle."
+
+Consequences:
+- ADR 0199 is accepted with its amendment (PR #3123), and gate G0 is passed.
+- P02, the IPC contract, and I3184 may start.
+- Host-agent runtime code (P03 onwards) still follows the corrected DAG and its gates.
