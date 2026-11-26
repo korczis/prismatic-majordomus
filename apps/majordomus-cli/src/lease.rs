@@ -16,6 +16,10 @@
 //! is a checkout, so it has a manifest, a root, a lease and a server of its own, and on
 //! 2026-09-11 this repository had seven of them at once. What is repository-wide is the
 //! board, which `peers.list` gathers over these very leases; the election is unchanged.
+//!
+//! Which checkouts of the host have a server at all is [`host`]'s question (I3184): a server
+//! that publishes its lease adds its root to the user's disposable index of checkout roots,
+//! and a reader re-reads each root's lease rather than believing the index.
 
 use std::fs;
 use std::io::Write;
@@ -32,6 +36,8 @@ use crate::error::{Error, Result};
 use crate::mcp::bridge;
 use crate::release::version::Version;
 use crate::repository::Repository;
+
+pub mod host;
 
 /// The lease file, relative to the checkout-local half (`.ai/local/`).
 pub const LEASE_PATH: &str = "state/mcp/server.json";
@@ -1592,6 +1598,9 @@ impl Lease {
     /// (`take_over_with` says why there is one), the file is checked to be still this
     /// process's and the temporary file is renamed over it. No take-over can land between
     /// the check and the rename, and no other writer shares the temporary file.
+    ///
+    /// Once published, the checkout's root is added to this user's host index
+    /// ([`host::remember`]), a cache a host reader re-reads leases from and never believes.
     pub fn publish(&self, url: &str) -> Result<()> {
         self.publish_with(url, || {})
     }
@@ -1625,6 +1634,7 @@ impl Lease {
             crate::capability::builtin::server::ServerStanding::Ready,
             &format!("published {url}"),
         );
+        host::remember(&self.root);
         Ok(())
     }
 

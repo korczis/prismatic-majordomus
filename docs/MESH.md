@@ -82,6 +82,13 @@ nothing to `node.json`, and keeps one node id across every boot; with the variab
 malformed the mesh stays off and its reason names the variable, never the value (ADR 0220,
 I3826). The seed's public key is what `trust.allow` lists for the hub.
 
+Which runtimes a node has is read, not registered: `majordomus runtimes --host` (the
+capability `server.runtimes`) lists every runtime of this user on this machine from each
+checkout's lease, found through `checkout-roots` — a disposable cache of checkout roots beside
+`node.json` — and the process table, with the node id read from `node.json` (I3184,
+[`MCP.md`](MCP.md#every-runtime-of-the-host)). It holds no peers: the mesh registry stays
+the only holder of those.
+
 An address, a port, a host name or a PID is never identity. Two worktrees of one machine
 share the node key and are two runtimes; a restarted server keeps its runtime and changes
 its instance, so its peers list it once with `restarts` counted.

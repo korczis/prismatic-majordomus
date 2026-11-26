@@ -36,6 +36,15 @@
 //!
 //! Read on every call and never cached: the lease is written by other processes.
 //!
+//! # Every runtime of the host
+//!
+//! `server.runtimes` (`majordomus runtimes --host`) asks the same question of every checkout
+//! of this user on this machine, whatever repository it belongs to, and needs no checkout to
+//! be asked from: the checkouts come from the host index of checkout roots and from the
+//! process table ([`crate::lease::host`]), and each is answered by its own lease exactly as
+//! `server.status` answers one ([`host_runtimes`]). No process of its own, no registry: the
+//! index is a cache of roots, and peers stay `mesh/registry.rs`'s (I3184, ADR 0199).
+//!
 //! ```
 //! use majordomus_cli::capability::builtin::server::{
 //!     module, standing_of, Checkouts, ServerStanding, ServerStatusInput,
@@ -75,10 +84,14 @@ use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, VersionVe
 use crate::repository::{self, GitIdentity, Repository};
 use crate::{capability, module};
 
-use super::get;
+use super::{get, Empty};
+use crate::lease::host::{self, HostProcess, Subcommand};
 
 /// The URI under which `server.status` is read as an MCP resource.
 pub const SERVER_URI: &str = "majordomus://server";
+
+/// The URI under which `server.runtimes` is read as an MCP resource.
+pub const RUNTIMES_URI: &str = "majordomus://runtimes";
 
 /// Which checkouts a reading of the server status covers.
 ///
@@ -1205,18 +1218,381 @@ fn desired_host(linked: bool) -> String {
     crate::cli::resolve_checkout_http_host(None, environment.as_deref(), linked).0
 }
 
-/// The module: one capability, `server.status`, composed into the application by
-/// `builtin::modules`; adding a second capability to it touches this file alone.
+// ---------------------------------------------------------------- every runtime of the host (I3184)
+
+/// Where a checkout of the host inventory was found. Neither source is believed: each only
+/// says which lease to read.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::FoundBy;
+/// assert_eq!(serde_json::to_value(FoundBy::ProcessTable).unwrap(), "process_table");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum FoundBy {
+    /// The host index of checkout roots: its server published a lease and added its root.
+    Index,
+    /// The process table: a `majordomus serve` or `majordomus mcp` works on this checkout.
+    ProcessTable,
+}
+
+/// Where a runtime's version was read.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::VersionSource;
+/// assert_eq!(serde_json::to_value(VersionSource::Executable).unwrap(), "executable");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VersionSource {
+    /// The lease: what the server wrote about itself when it started.
+    Lease,
+    /// `<executable> --version`: a lease too old to carry a version, or no lease at all.
+    Executable,
+}
+
+/// A `majordomus serve` or `majordomus mcp` process of a checkout, as the process table
+/// shows it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::HostProcessView;
+/// use majordomus_cli::lease::host::Subcommand;
+/// let p = HostProcessView { pid: 7, subcommand: Subcommand::Mcp, executable: "/bin/majordomus".into(), holds_lease: false };
+/// assert_eq!(serde_json::to_value(&p).unwrap()["subcommand"], "mcp");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct HostProcessView {
+    /// The process id.
+    pub pid: u32,
+    /// `serve` or `mcp`.
+    pub subcommand: Subcommand,
+    /// The executable, as the process table names it.
+    pub executable: PathBuf,
+    /// Whether the checkout's lease names this process: the server, rather than a client
+    /// attached to it or a server superseded by another.
+    pub holds_lease: bool,
+}
+
+impl HostProcessView {
+    fn of(p: &HostProcess, lease: Option<&LeaseDocument>) -> Self {
+        HostProcessView {
+            pid: p.pid,
+            subcommand: p.subcommand,
+            executable: p.executable.clone(),
+            holds_lease: lease.is_some_and(|d| d.pid == p.pid),
+        }
+    }
+}
+
+/// One checkout of the host, and the runtime its lease names.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{FoundBy, HostRuntime, ServerStanding};
+/// let r = HostRuntime { checkout: "/r".into(), checkout_id: "c".into(), git: None,
+///     found_by: vec![FoundBy::Index], standing: ServerStanding::Stale, live: false,
+///     reason: Some("gone".into()), lease: None, port: None, version: None, version_source: None,
+///     processes: Vec::new() };
+/// let v = serde_json::to_value(&r).unwrap();
+/// assert_eq!(v["standing"], "stale");
+/// assert_eq!(v["live"], false);
+/// assert!(v.get("port").is_none() && v.get("version").is_none(), "what there is not is not written");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct HostRuntime {
+    /// The checkout, absolute and canonical where it still exists.
+    pub checkout: PathBuf,
+    /// The checkout's identity: what its server answers as `repository_id`.
+    pub checkout_id: String,
+    /// The git repository the checkout belongs to: one id for every worktree of it, so two
+    /// runtimes of one repository are told from runtimes of two. Absent where git cannot be
+    /// asked.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub git: Option<GitIdentity>,
+    /// Where the checkout was found: the index, the process table, or both.
+    pub found_by: Vec<FoundBy>,
+    /// Where its server stands, as `server.status` would say it: measured against this
+    /// executable, from the lease and one probe of the address it names.
+    pub standing: ServerStanding,
+    /// Whether a server answers for the checkout: `ready` or `outdated`. A lease whose
+    /// process is gone is `stale` and never live.
+    pub live: bool,
+    /// Why, when the standing is not `ready`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The lease, when the file holds one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lease: Option<LeaseView>,
+    /// The port of the address the lease names.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+    /// The version the runtime runs: the lease's, else what its executable reports.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    /// Where `version` was read.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version_source: Option<VersionSource>,
+    /// The `serve` and `mcp` processes the process table shows working on the checkout.
+    pub processes: Vec<HostProcessView>,
+}
+
+/// The host index as one reading found it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::HostIndexView;
+/// let v = serde_json::to_value(HostIndexView { path: None, entries: 0, problem: None }).unwrap();
+/// assert_eq!(v["entries"], 0);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct HostIndexView {
+    /// Where it is: `checkout-roots` beside `node.json`; absent when this user has no state
+    /// directory.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<PathBuf>,
+    /// How many checkout roots it lists.
+    pub entries: usize,
+    /// Why it could not be read, when it could not.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub problem: Option<String>,
+}
+
+/// The process table as one reading found it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::ProcessTableView;
+/// let v = serde_json::to_value(ProcessTableView { read: true, processes: 2, problem: None }).unwrap();
+/// assert_eq!(v["processes"], 2);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ProcessTableView {
+    /// Whether it was read. A table that could not be read lists nothing, and the
+    /// inventory then holds only what the index found.
+    pub read: bool,
+    /// How many `serve` and `mcp` processes it holds.
+    pub processes: usize,
+    /// Why it could not be read, when it could not.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub problem: Option<String>,
+}
+
+/// Every Majordomus runtime of this user on this host.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{HostIndexView, HostRuntimes, ProcessTableView};
+/// let r = HostRuntimes { version: "1.0.0".into(), node: None,
+///     index: HostIndexView { path: None, entries: 0, problem: None },
+///     process_table: ProcessTableView { read: true, processes: 0, problem: None },
+///     runtimes: Vec::new(), not_running: 0, unplaced: Vec::new() };
+/// let text = serde_json::to_string(&r).unwrap();
+/// assert_eq!(serde_json::from_str::<HostRuntimes>(&text).unwrap(), r);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct HostRuntimes {
+    /// The version of the executable that answered, which every `standing` is measured
+    /// against.
+    pub version: String,
+    /// This host's node id, read from this user's `node.json` and never created by asking.
+    /// Every runtime of the user on the host shares it unless it was started with another
+    /// state directory.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node: Option<String>,
+    /// The host index this reading started from.
+    pub index: HostIndexView,
+    /// The process table this reading started from.
+    pub process_table: ProcessTableView,
+    /// Every checkout with a lease or a Majordomus process, in path order.
+    pub runtimes: Vec<HostRuntime>,
+    /// How many checkouts the index lists that have neither a lease nor a process: their
+    /// servers stopped cleanly, and they are not listed.
+    pub not_running: usize,
+    /// The `serve` and `mcp` processes whose checkout could not be found: no working
+    /// directory the system would say, or one inside no repository of the layer.
+    pub unplaced: Vec<HostProcessView>,
+}
+
+/// The repository root `p` works on: the nearest directory at or above what it works on
+/// that holds a manifest; `None` when there is none, or the system did not say.
+fn checkout_of(p: &HostProcess) -> Option<PathBuf> {
+    let start = p.works_on()?;
+    Repository::discover(&start)
+        .ok()
+        .map(|r| r.root().to_path_buf())
+}
+
+/// The port of an address `http://host:port[/...]`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::port_of;
+/// assert_eq!(port_of("http://127.0.0.1:8741"), Some(8741));
+/// assert_eq!(port_of("http://[::1]:9000/x"), Some(9000));
+/// assert_eq!(port_of("http://localhost"), None);
+/// ```
+pub fn port_of(url: &str) -> Option<u16> {
+    let rest = url.split_once("://").map_or(url, |(_, r)| r);
+    let authority = rest.split('/').next()?;
+    let (_, port) = authority.rsplit_once(':')?;
+    port.parse().ok()
+}
+
+/// Every Majordomus runtime of this user on this host: the host index of checkout roots
+/// this user's servers keep beside `node.json`, and every `serve` and `mcp` process of the
+/// machine, each checkout then answered by its own lease. Needs no checkout to be asked
+/// from and no server to answer: the command line reads it itself, and any running server
+/// answers the same reading over its API.
+pub fn host_runtimes() -> HostRuntimes {
+    let node = crate::mesh::identity::default_identity_path()
+        .and_then(|path| crate::mesh::identity::node_id_at(&path))
+        .map(|id| id.to_string());
+    host_runtimes_from(
+        host::index_path(),
+        host::read_process_table(),
+        node,
+        |exe| host::executable_version(exe, host::VERSION_TIMEOUT),
+    )
+}
+
+/// [`host_runtimes`] from an index path, a reading of the process table and a node id
+/// already in hand, asking `version_of` an executable's version: the seam the tests drive.
+pub fn host_runtimes_from(
+    index_path: Option<PathBuf>,
+    table: Result<Vec<HostProcess>, String>,
+    node: Option<String>,
+    version_of: impl Fn(&Path) -> Option<String> + Sync,
+) -> HostRuntimes {
+    use std::collections::BTreeMap;
+    let (roots, index_problem) = match index_path.as_deref().map(host::read_index) {
+        Some(Ok(roots)) => (roots, None),
+        Some(Err(problem)) => (Vec::new(), Some(problem)),
+        None => (Vec::new(), None),
+    };
+    let index = HostIndexView {
+        path: index_path,
+        entries: roots.len(),
+        problem: index_problem,
+    };
+    let (processes, process_table) = match table {
+        Ok(processes) => {
+            let view = ProcessTableView {
+                read: true,
+                processes: processes.len(),
+                problem: None,
+            };
+            (processes, view)
+        }
+        Err(problem) => (
+            Vec::new(),
+            ProcessTableView {
+                read: false,
+                processes: 0,
+                problem: Some(problem),
+            },
+        ),
+    };
+    type Found = (Vec<FoundBy>, Vec<HostProcess>);
+    let mut checkouts: BTreeMap<PathBuf, Found> = BTreeMap::new();
+    for root in roots {
+        let root = root.canonicalize().unwrap_or(root);
+        let entry = checkouts.entry(root).or_default();
+        if !entry.0.contains(&FoundBy::Index) {
+            entry.0.push(FoundBy::Index);
+        }
+    }
+    let mut unplaced = Vec::new();
+    for p in processes {
+        match checkout_of(&p) {
+            Some(root) => {
+                let entry = checkouts.entry(root).or_default();
+                if !entry.0.contains(&FoundBy::ProcessTable) {
+                    entry.0.push(FoundBy::ProcessTable);
+                }
+                entry.1.push(p);
+            }
+            None => unplaced.push(HostProcessView::of(&p, None)),
+        }
+    }
+    let checkouts: Vec<(PathBuf, Found)> = checkouts.into_iter().collect();
+    let answered = each_checkout(&checkouts, |(root, (found_by, processes))| {
+        host_runtime_at(root, found_by, processes, &version_of)
+    });
+    let not_running = answered.iter().filter(|r| r.is_none()).count();
+    HostRuntimes {
+        version: crate::VERSION.into(),
+        node,
+        index,
+        process_table,
+        runtimes: answered.into_iter().flatten().collect(),
+        not_running,
+        unplaced,
+    }
+}
+
+/// One checkout of the host, answered by its lease: `None` when it has neither a lease nor
+/// a process, which is a checkout whose server stopped and not a runtime.
+fn host_runtime_at(
+    root: &Path,
+    found_by: &[FoundBy],
+    processes: &[HostProcess],
+    version_of: &(impl Fn(&Path) -> Option<String> + Sync),
+) -> Option<HostRuntime> {
+    let (standing, reason, read) = standing_at(root, &local_half(root));
+    if matches!(read, LeaseFile::Absent) && processes.is_empty() {
+        return None;
+    }
+    let doc = read.document();
+    let views: Vec<HostProcessView> = processes
+        .iter()
+        .map(|p| HostProcessView::of(p, doc))
+        .collect();
+    let live = matches!(standing, ServerStanding::Ready | ServerStanding::Outdated);
+    let (version, version_source) = match doc.and_then(|d| d.version.clone()) {
+        Some(version) => (Some(version), Some(VersionSource::Lease)),
+        // a lease too old to carry a version, or none: the executable is asked, but only
+        // of a runtime that is there — a dead server's file says what is on disk now
+        None if live || !views.is_empty() => {
+            let holder = views.iter().find(|v| v.holds_lease).or(views.first());
+            let exe = doc
+                .and_then(|d| d.executable.as_ref())
+                .map(|e| e.path.clone())
+                .or_else(|| holder.map(|v| v.executable.clone()))
+                .filter(|exe| exe.is_absolute());
+            match exe.and_then(|exe| version_of(&exe)) {
+                Some(version) => (Some(version), Some(VersionSource::Executable)),
+                None => (None, None),
+            }
+        }
+        None => (None, None),
+    };
+    Some(HostRuntime {
+        checkout_id: repository::identity(root),
+        git: repository::git_identity(root),
+        found_by: found_by.to_vec(),
+        standing,
+        live,
+        reason,
+        port: doc.and_then(|d| d.url.as_deref()).and_then(port_of),
+        lease: doc.map(LeaseView::of),
+        version,
+        version_source,
+        processes: views,
+        checkout: root.to_path_buf(),
+    })
+}
+
+fn server_runtimes(_: &Context, _: Empty) -> Result<HostRuntimes, CapabilityError> {
+    Ok(host_runtimes())
+}
+
+/// The module: `server.status`, this repository's servers, and `server.runtimes`, every
+/// runtime of the host; composed into the application by `builtin::modules`.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::server::module;
-/// assert_eq!(module().capabilities.len(), 1);
+/// assert_eq!(module().capabilities.len(), 2);
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "server",
         title: "Server",
-        description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
+        description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds; and every Majordomus runtime of this user on this host, read from leases with no checkout open.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
@@ -1237,6 +1613,25 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["server", "lease", "coordination", "introspection"],
                 cache: CachePolicy::Disabled,
                 handler: server_status,
+            },
+            capability! {
+                id: "server.runtimes",
+                title: "Every Majordomus runtime of this user on this host",
+                description: "Every Majordomus runtime of this user on this host, whatever repository it serves, with no checkout open: each checkout with its root and identity, the git repository it belongs to, where its server stands (the same five words as `server.status`, measured against the answering executable, and `live` only when a server answers — a lease whose process is gone is `stale`), the port its lease names, the version it runs (the lease's, else what its executable reports to `--version`), the `serve` and `mcp` processes working on it and whether each holds the lease, and this host's node id. The checkouts come from two places and neither is believed: the disposable index of checkout roots each server adds itself to beside `node.json` (`checkout-roots` in `$XDG_STATE_HOME/majordomus`, else `~/.local/state/majordomus`), and the process table, where every `majordomus serve` and `majordomus mcp` is found by executable path — which is how a runtime older than the index, or one with another state directory, is listed. Every row is re-read from its checkout's lease, so deleting the index loses nothing but speed. Read-only: no process of its own, no registry, nothing started or stopped; peers stay the mesh registry's. The command line answers it without a server (`majordomus runtimes --host`, from any directory), and any running server answers the same reading here.",
+                input: Empty,
+                output: HostRuntimes,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_runtimes".into()),
+                        resource: Some(McpResource { uri: RUNTIMES_URI.into(), name: "runtimes".into() }),
+                    }),
+                    http: get("/api/v1/runtimes"),
+                    cli: Some(CliExposure { path: vec!["runtimes".into()] }),
+                },
+                tags: ["server", "lease", "host", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: server_runtimes,
             },
         ]
     }
@@ -2056,6 +2451,144 @@ mod tests {
             }
         });
         url
+    }
+
+    /// The host lists every runtime from its leases (I3184): one found by the index and the
+    /// process table, one found by the process table alone whose lease is too old to carry a
+    /// version (its executable is asked), one whose index entry names a process that is gone
+    /// (stale, never live), one whose checkout was deleted (not running, not listed), and a
+    /// process whose checkout cannot be found (unplaced). An index that cannot be read and
+    /// a process table that cannot be read are reasons, not an empty host.
+    #[test]
+    fn the_host_lists_every_runtime_from_its_leases() {
+        use crate::synthetic::{Shape, SyntheticRepository};
+        let write_lease = |root: &Path, doc: &LeaseFile| {
+            let path = lease::lease_file(root, &local_half(root));
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, serde_json::to_string(doc.document().unwrap()).unwrap()).unwrap();
+        };
+        let answering = |root: &Path| {
+            let id = repository::identity(root);
+            serve_http(move |path| match path {
+                "/" => (200, serde_json::json!({ "name": "majordomus", "repository_id": id }).to_string()),
+                _ => (404, "{}".into()),
+            })
+        };
+        let indexed = SyntheticRepository::new(Shape::default()).unwrap();
+        let unindexed = SyntheticRepository::new(Shape::default()).unwrap();
+        let stale = SyntheticRepository::new(Shape::default()).unwrap();
+        let (a, b, c) = (
+            indexed.root().canonicalize().unwrap(),
+            unindexed.root().canonicalize().unwrap(),
+            stale.root().canonicalize().unwrap(),
+        );
+        let me = std::process::id();
+        // the indexed one: live, its version in its lease, its port in its address
+        let url_a = answering(&a);
+        write_lease(&a, &lease_of(me, Some(&url_a)));
+        // the one the index never heard of: live, a lease from before versions were written
+        let url_b = answering(&b);
+        let LeaseFile::Document(mut old) = lease_of(me, Some(&url_b)) else { unreachable!() };
+        old.version = None;
+        write_lease(&b, &LeaseFile::Document(old));
+        // the stale one: its process is gone
+        write_lease(&c, &lease_of(DEAD, Some("http://127.0.0.1:1")));
+
+        let state = tempfile::tempdir().unwrap();
+        let index = state.path().join(host::INDEX_FILE);
+        let deleted = tempfile::tempdir().unwrap();
+        for root in [&a, &c, &deleted.path().to_path_buf()] {
+            host::remember_at(&index, root).unwrap();
+        }
+        let deleted_root = deleted.path().to_path_buf();
+        drop(deleted);
+        let process = |pid: u32, repo: Option<&Path>, exe: &str, cwd: Option<&Path>| HostProcess {
+            pid,
+            subcommand: Subcommand::Serve,
+            executable: exe.into(),
+            repo: repo.map(Path::to_path_buf),
+            cwd: cwd.map(Path::to_path_buf),
+        };
+        let table = vec![
+            process(me, Some(a.as_path()), "/opt/new/majordomus", None),
+            process(me, None, "/opt/old/majordomus", Some(b.join(".ai").as_path())),
+            process(me + 1, None, "majordomus", None),
+            process(me + 2, Some(Path::new("/")), "/opt/x/majordomus", None),
+        ];
+        let asked = std::sync::Mutex::new(Vec::new());
+        let inventory = host_runtimes_from(Some(index.clone()), Ok(table), Some("n1".into()), |exe| {
+            asked.lock().unwrap().push(exe.to_path_buf());
+            Some("0.29.0".into())
+        });
+        assert_eq!(inventory.node.as_deref(), Some("n1"));
+        assert_eq!(inventory.index.entries, 3);
+        assert_eq!(inventory.index.path.as_deref(), Some(index.as_path()));
+        assert!(inventory.process_table.read && inventory.process_table.processes == 4);
+        assert_eq!(inventory.not_running, 1, "the deleted checkout {}", deleted_root.display());
+        assert_eq!(inventory.unplaced.len(), 2, "{:?}", inventory.unplaced);
+        assert_eq!(inventory.runtimes.len(), 3, "{:?}", inventory.runtimes);
+        let row = |root: &Path| inventory.runtimes.iter().find(|r| r.checkout == root).unwrap();
+
+        let ra = row(&a);
+        assert_eq!(ra.found_by, vec![FoundBy::Index, FoundBy::ProcessTable]);
+        assert!(ra.live && ra.standing == ServerStanding::Ready, "{ra:?}");
+        assert_eq!(ra.port, port_of(&url_a));
+        assert_eq!((ra.version.as_deref(), ra.version_source), (Some(crate::VERSION), Some(VersionSource::Lease)));
+        assert!(ra.processes[0].holds_lease);
+        assert_eq!(ra.checkout_id, repository::identity(&a));
+
+        let rb = row(&b);
+        assert_eq!(rb.found_by, vec![FoundBy::ProcessTable], "the index never heard of it");
+        assert!(rb.live, "{rb:?}");
+        assert_eq!((rb.version.as_deref(), rb.version_source), (Some("0.29.0"), Some(VersionSource::Executable)));
+        assert_eq!(*asked.lock().unwrap(), vec![PathBuf::from("/opt/old/majordomus")], "only the versionless runtime's executable is asked");
+
+        let rc = row(&c);
+        assert_eq!(rc.found_by, vec![FoundBy::Index]);
+        assert_eq!(rc.standing, ServerStanding::Stale);
+        assert!(!rc.live, "a stale index entry whose process is gone is never live");
+        assert!(rc.reason.as_deref().unwrap().contains("does not answer"));
+        assert_eq!(rc.version_source, Some(VersionSource::Lease), "its lease says what it ran");
+
+        // an index that cannot be read, a table that cannot be read, no state directory
+        let unread = host_runtimes_from(Some(state.path().to_path_buf()), Err("no ps".into()), None, |_| None);
+        assert!(unread.index.problem.as_deref().unwrap().contains("cannot be read"));
+        assert!(!unread.process_table.read && unread.process_table.problem.as_deref() == Some("no ps"));
+        assert!(unread.runtimes.is_empty() && unread.not_running == 0);
+        let nowhere = host_runtimes_from(None, Ok(Vec::new()), None, |_| None);
+        assert!(nowhere.index.path.is_none() && nowhere.index.entries == 0);
+
+        // a versionless lease whose process is gone asks nobody for a version
+        let LeaseFile::Document(mut dead) = lease_of(DEAD, Some("http://127.0.0.1:1")) else {
+            unreachable!()
+        };
+        dead.version = None;
+        write_lease(&c, &LeaseFile::Document(dead));
+        let gone = host_runtimes_from(Some(index.clone()), Ok(Vec::new()), None, |exe| {
+            panic!("asked {} for the version of a runtime that is gone", exe.display())
+        });
+        let rc = gone.runtimes.iter().find(|r| r.checkout == c).unwrap();
+        assert!(!rc.live && rc.version.is_none() && rc.version_source.is_none(), "{rc:?}");
+        // and a live versionless runtime whose executable will not say has no version
+        let process_b = process(me, Some(b.as_path()), "/opt/old/majordomus", None);
+        let mute = host_runtimes_from(None, Ok(vec![process_b]), None, |_| None);
+        let rb = &mute.runtimes[0];
+        assert!(rb.live && rb.version.is_none() && rb.version_source.is_none(), "{rb:?}");
+    }
+
+    /// `server.runtimes` is answered through the registry from a context of any repository,
+    /// and the answer is the host's: it carries the version that answered and what it read.
+    #[test]
+    fn the_host_inventory_is_a_capability_of_the_one_registry() {
+        use crate::synthetic::{Shape, SyntheticRepository};
+        let repo = SyntheticRepository::new(Shape::default()).unwrap();
+        let ctx = repo.context().unwrap();
+        let v = ctx.execute("server.runtimes", serde_json::json!({})).unwrap();
+        assert_eq!(v["version"], crate::VERSION);
+        assert!(v["runtimes"].is_array() && v["index"].is_object() && v["process_table"].is_object(), "{v}");
+        let c = ctx.registry.get("server.runtimes").unwrap();
+        assert_eq!(c.exposure.http.as_ref().unwrap().path, "/api/v1/runtimes");
+        assert_eq!(c.exposure.cli.as_ref().unwrap().path, vec!["runtimes".to_string()]);
     }
 
     /// `server.status` carries the runtime of the checkout and of each server: asked of

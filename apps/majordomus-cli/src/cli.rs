@@ -101,6 +101,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// Every Majordomus runtime of this user on this host, from any directory and with no server: each checkout's server as its lease says, with version, repository, port and node, found through the host index and the process table
+    Runtimes(RuntimesArgs),
     /// The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit
     Deploy(DeployArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
@@ -3584,6 +3586,32 @@ pub enum DriftGateArg {
     Head,
     /// The trunk: merged work unrecorded past the window is refused
     Trunk,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus runtimes --host`: every Majordomus runtime of this user on this host, read
+/// without a repository and without a server (I3184). It is the command-line projection of
+/// `server.runtimes`, answered in this process from the host index and the process table
+/// because a question asked from outside every checkout has no layer to load.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat};
+/// let cli = Cli::try_parse_from(["majordomus", "runtimes", "--host", "--format", "json"]).unwrap();
+/// let Command::Runtimes(args) = cli.command else { panic!("runtimes") };
+/// assert!(args.host && args.format == OutputFormat::Json);
+/// // the scope is said, so that a later scope is an addition and not a change of meaning
+/// assert!(Cli::try_parse_from(["majordomus", "runtimes"]).is_err());
+/// ```
+pub struct RuntimesArgs {
+    /// Every runtime of the host — the only scope there is today; one repository's servers
+    /// are `serve status`
+    #[arg(long, required = true)]
+    pub host: bool,
+
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
