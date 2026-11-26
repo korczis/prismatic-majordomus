@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0236
 kind: adr
 title: A prompt pack in progress is staged in the primary checkout's ignored tmp/owner-packs, and is kept under campaigns before any record cites it
-status: proposed
+status: accepted
 date: 2026-11-24
 tags:
   - provenance
@@ -84,6 +84,21 @@ migration), declare it as a contract, let tooling resolve it to the primary chec
 The second: a first pull request with the contract, ADR, rule, documentation, the
 capability and enforcement, and a second with the `/ui` screen and its browser test.
 
+The owner accepted this decision through AskUserQuestion in the same session on 2026-11-24,
+before 18:56:11Z, after the first delivery (I4714, pull request #3119) was reported:
+
+> **Question:** Fáze 1 (adresář tmp/owner-packs/, vynucení, dokumentace) je hotová v PR #3119
+> a čeká jen na opravu CI v PR #3092. Tooling (I4715 výpis + doctor varování, I4716 /ui
+> obrazovka) podle milníku smí přistát až po tvém přijetí ADR. Disk má teď 71 GiB, takže Rust
+> build jde. Jak pokračovat?
+>
+> **Answer:** Přijímám 0236, stavěj I4715 (Recommended)
+
+The option read: record the acceptance of ADR 0236 in the repository and build I4715, the
+typed `campaigns.staged` capability with its warning in context and doctor; the listing does
+not need the campaign kind of ADR 0180, so I3169 still waits for 0180. ADR 0180 and ADR 0194
+stay proposed.
+
 ## Decision
 
 1. **The staging place is `tmp/owner-packs/<pack>/` in the primary checkout.** It stays
@@ -122,8 +137,12 @@ capability and enforcement, and a second with the `/ui` screen and its browser t
      its name in the staging place, resolved from any worktree, besides a path to a ZIP or a
      directory. It copies byte for byte, appends the manifest lines and the index member, and
      refuses an unsafe archive before a write.
-   The milestone's risk stands: the campaign ADR is accepted before code of I4715 or I3169
-   lands.
+   The milestone's risk stands for I3169: the campaign ADR is accepted before its code lands.
+   I4715 lands under this decision alone, as the owner chose on acceptance: it reads a
+   git-ignored directory and ingests nothing, so it is not the ingestion surface ADR 0124
+   point 3 holds back, and its noun is the name the tracked `campaigns/` directory and
+   `scripts/ci/campaigns-check` already carry. If the owner chooses `intake` (ADR 0194) over
+   `campaign` (ADR 0180), the capability is renamed with the kind.
 6. **The screen is the second delivery.** I4716 adds a `/ui` screen on the loopback server
    that renders `campaigns.staged`: staged, kept, planned, each pack linked to its records
    and each record back to its pack, built on Flowbite Pro with the `--mj-*` tokens, held by

@@ -402,6 +402,14 @@ checkout:
 build_cache:
   local_max_gib: 20
 
+# ---------------------------------------------------------------- prompt packs in progress
+# A pack in progress is staged in the primary checkout's git-ignored tmp/owner-packs/ and kept
+# under campaigns/ before any record cites it (ADR 0236). A pack still only staged after this
+# many days, by its newest file, is a brief one disk holds: `majordomus context` names it and
+# `doctor` warns (I4715; `majordomus campaigns staged` lists every pack and its state).
+campaigns:
+  staged_max_age_days: 7
+
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four
 # numbers are what a contest between two processes is judged by, and until 2026-09-15 all

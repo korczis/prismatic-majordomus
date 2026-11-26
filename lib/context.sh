@@ -195,6 +195,9 @@ mj_context_sections() {
   # last merge: what a session continuing drain work needs before its first command.
   mj_context_integration
 
+  # 1d. prompt packs left in the staging place past the policy's bound (ADR 0236, I4715)
+  mj_context_campaigns
+
   # 2. task
   if [ "$have_task" = 0 ]; then
     printf '## TASK\nnone active — run: majordomus start "<task>" --scope <paths>\n' > "$MJ_CTX_TMP/20.task"
@@ -558,7 +561,7 @@ mj_context_pointers() {
 # related`) and goes with the other derived listings, before the document chain: under a
 # tight budget it is lost before git, the task, the profile, the intent and the open
 # questions, none of which is ever dropped, and the drop is named with that command.
-MJ_CTX_DROP_ORDER="90.history 16.monitor 75.integration 80.files 46.knowledge-pointers 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_DROP_ORDER="90.history 16.monitor 75.integration 76.campaigns 80.files 46.knowledge-pointers 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
 MJ_CTX_ORDER="10.git 15.peers 16.monitor 20.task 30.profile 32.intent 35.documents 40.questions 45.knowledge 46.knowledge-pointers 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
@@ -768,6 +771,30 @@ mj_context_integration() {
     printf '%s\n' "$line"
     printf '# majordomus prs status for the queue, prs drain --dry-run for the next step\n'
   } > "$MJ_CTX_TMP/75.integration"
+  return 0
+}
+
+# The prompt packs staged in the primary checkout's tmp/owner-packs/ longer than the policy's
+# campaigns.staged_max_age_days and never kept under campaigns/ (ADR 0236, I4715): a brief one
+# disk holds is the loss project.a-brief-is-kept-as-received names, so the session that starts
+# is told. `campaigns staged` reads files only, never builds and reaches no network; no
+# executable, no jq or no stale pack, and the section is not written.
+mj_context_campaigns() {
+  local bin share report
+  mj_has jq || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  report="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+               "$bin" campaigns staged --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  [ -n "$report" ] && [ "$(printf '%s' "$report" | jq -r '.stale // 0')" -gt 0 ] || return 0
+  {
+    printf '## STAGED PACKS\n'
+    printf '%s' "$report" | jq -r '"\(.stale) pack(s) staged past \(.stale_after_days) day(s) and not kept under campaigns/: " + ([.packs[] | select(.stale) | "\(.place)/\(.name) (\(.age_days)d)"] | join(", "))'
+    printf '# keep each under campaigns/ before a record cites it (campaigns/README.md); majordomus campaigns staged lists every pack\n'
+  } > "$MJ_CTX_TMP/76.campaigns"
   return 0
 }
 

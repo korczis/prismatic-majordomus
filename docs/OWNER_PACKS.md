@@ -60,13 +60,34 @@ flowchart LR
    with the reason; that list only shrinks too (rule `project.a-brief-is-cited-where-it-is-kept`).
    An edit to a record or an ADR selects this gate.
 
-What is planned, and not yet built, on top of the staging place (milestone
-`campaigns-are-read-as-provenance`): I4715 lists every staged pack with its derived state
-(staged, kept, diverged, planned, unplanned) from any worktree, on every transport the
-capability registry projects, and reports at session start a pack staged too long; I3169's
-`campaign add` takes a pack by its staged name; I4716 is the `/ui` screen that follows a pack
-to its records and back. Until then, `ls` in the primary checkout's `tmp/owner-packs/` is the
-listing and the copy `campaigns/README.md` shows is the promotion.
+**The listing (I4715).** `majordomus campaigns staged` lists every pack in the staging places,
+from any worktree: the primary checkout is derived from the git common directory, so a linked
+worktree reads the primary's `tmp/owner-packs/`, never its own `tmp/`. The same answer is the
+MCP tool `majordomus_campaigns_staged` and `GET /api/v1/campaigns/staged`, projected from one
+`capability!` declaration (`campaigns.staged`). Each pack carries a state derived from the
+tracked tree of the checkout asking:
+
+| state | when |
+|---|---|
+| `staged` | `campaigns/MANIFEST.sha256` records no file of it |
+| `kept` | every staged file has the bytes the manifest records |
+| `diverged` | kept, and a staged file differs from the manifest or is not in it (`differing` names them) |
+| `planned` | kept, and a record under `.ai/repo/project/` or an ADR cites `campaigns/<pack>` |
+| `unplanned` | kept, and `.ai/repo/ci/campaigns-unplanned.txt` names it |
+
+with its file count, first heading, newest modification time, age in days and every record
+that names it, in `campaigns/` or in the staging place. Directories of a staging place that
+hold something other than a pack are listed as `holding`, not as packs: `drafts/` (ADR 0236)
+and the session holding areas `archives/`, `duplicates/`, `pending/`, `prompts/` and `zips/`.
+A pack still `staged` after the policy's `campaigns.staged_max_age_days` (7 here) is `stale`:
+`majordomus doctor` warns, naming each, and `majordomus context` writes a `STAGED PACKS`
+section, because a brief one disk holds is the loss `project.a-brief-is-kept-as-received`
+names. With no bound declared, nothing is stale. The listing reads files only and executes
+nothing a pack contains (ADR 0124 point 6).
+
+What is planned, and not yet built: I3169's `campaign add` takes a pack by its staged name
+(waiting on ADR 0180), and I4716 is the `/ui` screen that follows a pack to its records and
+back. Until then the copy `campaigns/README.md` shows is the promotion.
 
 ## The packs of 2026-10-11 and 2026-10-12, mapped onto master
 
@@ -208,4 +229,5 @@ A pack that is executed directly, with no records, is named in
 | the projection to GitHub | `scripts/github-sync`, `scripts/ci/github-check` |
 | the rules | `.ai/repo/rules/project/a-brief-is-kept-as-received.v1.md`, `.ai/repo/rules/project/a-brief-is-cited-where-it-is-kept.v1.md` |
 | packs in progress, and the decision | `tmp/owner-packs/<pack>/` of the primary checkout (ignored), ADR 0236 |
+| the listing of packs in progress | `majordomus campaigns staged` (`campaigns.staged`, `apps/majordomus-cli/src/campaigns.rs`), `test/cases/4664_a_staged_pack_is_listed_with_its_state.sh`, policy `campaigns.staged_max_age_days` |
 | citations of a staged pack made before ADR 0236 | `.ai/repo/ci/campaigns-staged-citations.txt` |

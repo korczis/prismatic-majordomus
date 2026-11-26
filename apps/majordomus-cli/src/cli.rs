@@ -119,6 +119,8 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// The prompt packs staged in the primary checkout's git-ignored tmp/owner-packs/ before they are kept under campaigns/: `staged` lists each with the state the tracked tree derives for it (ADR 0236)
+    Campaigns(CampaignsArgs),
     /// The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints
     Design(DesignArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
@@ -654,6 +656,41 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus campaigns`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, CampaignsCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "campaigns", "staged", "--format", "json"]).unwrap();
+/// let Command::Campaigns(args) = cli.command else { panic!("not the campaigns command") };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, CampaignsCommand::Staged));
+/// assert!(Cli::try_parse_from(["majordomus", "campaigns"]).is_err());
+/// ```
+pub struct CampaignsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `staged`. Required: the group runs nothing of its own.
+    pub command: CampaignsCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus campaigns`: `staged` lists the packs in the staging places
+/// of the primary checkout, from any linked worktree (ADR 0236, I4715).
+pub enum CampaignsCommand {
+    /// Every pack in tmp/owner-packs/ and the legacy tmp/prompt-packs/ of the primary checkout, with its derived state (staged, kept, diverged, planned, unplanned), age and the records that name it; exit 0, 12 when the primary checkout cannot be derived
+    Staged,
 }
 
 #[derive(Debug, Args)]
@@ -6463,6 +6500,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["layout", "check", "--format", "json"],
             setup: &[],
             expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
+        }],
+    },
+    CommandExamples {
+        command: "campaigns staged",
+        examples: &[ExampleDoc {
+            id: "campaigns-staged-json",
+            title: "The prompt packs staged before they are kept",
+            description: "The same answer the MCP tool `majordomus_campaigns_staged` and `GET /api/v1/campaigns/staged` return: the primary checkout derived from the git common directory under `/primary`, each staging place (`tmp/owner-packs`, the legacy `tmp/prompt-packs`) under `/places` with whether it is present, every pack under `/packs` with its derived state (staged, kept, diverged, planned, unplanned), files, first heading, age and the records that name it, and how many are staged past the policy's bound under `/stale`. A fresh repository has no staging place, so both places are absent with their reason and the list is empty; the exit is 0, and 12 only when the primary checkout cannot be derived.",
+            argv: &["campaigns", "staged", "--format", "json"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["\"places\"", "\"packs\"", "\"stale\""]),
         }],
     },
     CommandExamples {

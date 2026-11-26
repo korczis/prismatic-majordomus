@@ -33,6 +33,7 @@ pub(crate) mod bench;
 pub(crate) mod blackboard;
 pub(crate) mod board;
 pub(crate) mod brief;
+mod campaigns;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
@@ -128,6 +129,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Layout(args) => layout::run(args),
+        Command::Campaigns(args) => campaigns::run(args),
         Command::Design(args) => design::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
