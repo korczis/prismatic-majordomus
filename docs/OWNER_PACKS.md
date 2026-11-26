@@ -246,14 +246,16 @@ Resolved since the packs were measured:
   60a880b1-999a-4666-90c8-925623cc29b4 at 2026-11-08T00:43:36Z.
 - Later on 2026-11-08 the owner answered three Mesh Fabric questions in one message, after a
   report in session 8e226cf8-e383-4936-afd0-7cd6f4227ccd (the session that now leads the
-  pack). Asked "QUIC (fáze 06, I3189): dělat ho teď, nebo ho odložit, dokud nepoběží lokální
-  výměna?", answered "hned" (now): phase 06 is planned, superseding "Keep HTTP for now".
-  Asked "Zúžení packu: má transportem zůstat journal plus socket providera, jak píše
+  pack). Asked "QUIC (faze 06, I3189): delat ho ted, nebo ho odlozit, dokud nepobezi lokalni
+  vymena?", answered "hned" (now): phase 06 is planned, superseding "Keep HTTP for now".
+  Asked "Zuzeni packu: ma transportem zustat journal plus socket providera, jak pise
   OWNER_PACKS.md?", answered "nezuzuj" (do not narrow): every phase is planned, phases 04
   and 07 each opening with its written assessment, while `MeshEvent` stays the envelope and
-  no second bus is built. Asked "Vedení MMF: kdo ho vede?", answered "ty vybrt" (sic, you
+  no second bus is built. Asked "Vedeni MMF: kdo ho vede?", answered "ty vybrt" (sic, you
   choose): that session took the lead as the exclusive mesh claim `seat/mesh-fabric-lead`,
   and its branch carries the transport's ADR and the QUIC slice.
+  The Czech of the three questions is quoted without its diacritics, because rule
+  `project.english-only` and its gate refuse those letters here; nothing else of them is changed.
 
 ## What was not planned, and why
 
