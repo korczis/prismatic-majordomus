@@ -1,0 +1,33 @@
+id: I4803
+milestone: a-second-adopter-is-served
+title: "A read-only workspace survey lists every repository under a directory with its layer state, its work and whether this session can reach origin"
+slug: a-workspace-survey-lists-every-repository
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus workspace survey <dir> [--json]` walks every git repository directly under a directory (worktree parents `<repo>-wt/` grouped with their primary) and prints one row per repository: the layer state (tracked on the trunk, tracked only on a branch, personal under info/exclude, present but untracked, absent), the trunk and its remote, the primary checkout's branch and dirty count, the number of linked worktrees, every active Majordomus task in any of its worktrees with its owner session, and whether this session can reach origin non-interactively (I4805). It writes nothing, runs no hook and starts no server. Each state names the command that moves it on (init, init --worktree, init --shared, a push the owner runs)."
+why: "Observed on 2026-11-25 in an adopter workspace of 22 repositories that the owner ordered adopted in one run. The state of all 22 was assembled by a hand-written shell loop: 5 already supervised (one of them with an untracked layer in its primary checkout), 4 primaries dirty with 28-151 files, 12 on a forge whose SSH key the agents could not use, one with no remote. The loop missed the fact that mattered most: another session held an active task in one repository. That repository was fanned out to an agent, which created a branch and a worktree there before the other session asked to be left alone, and the run had to withdraw it mid-pipeline."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. `doctor`, `context` and `worktree` each judge one repository: the one the working directory is in. `majordomus peers` lists the workers of one repository's board. I1301 declares a workspace as a synced external vendor workspace, not a directory of repositories. No command reads a directory of repositories, and nothing reports an active task of another checkout before work there begins."
+desired_state: "One read-only command answers, before any fan-out, which repositories of a workspace are supervised and how, which are dirty, which are busy with another session's task, and which cannot be pushed from here, and names the next step for each."
+scope:
+  - "lib/workspace.sh"
+  - "lib/commands.sh"
+  - "docs/CLI.md"
+  - "test/cases/4803_a_workspace_survey_lists_every_repository.sh"
+non_scope:
+  - "Adopting a repository: I4804"
+  - "Probing push access itself: I4805, which this command reuses"
+  - "The synced-vendor workspace kind of I1301"
+depends_on: []
+acceptance_criteria:
+  - "Case 4803: a fixture directory with five repositories (tracked layer, personal layer, untracked layer, no layer and dirty, an active task in a linked worktree) gets five rows whose states match, and `git status --porcelain` of every fixture reads the same before and after"
+  - "The row of the repository with an active task in a linked worktree names the task id and its session"
+  - "`--json` output validates against its schema, and a repository whose origin refuses the probe reads `origin: unreachable` with the probe's reason"
+  - "Negative control: with the task lookup removed, the case finds the busy repository reported free"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4803_a_workspace_survey_lists_every_repository"
+evidence_required:
+  - "a_workspace_survey_lists_every_repository"
+serves: []
+created_at: 2026-11-25
