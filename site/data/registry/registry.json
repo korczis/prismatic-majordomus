@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "465779573af39151958518ba35c0e11ad04802e1f5b12669776f7d109bf2a149",
+    "fingerprint": "d412918574b2ff6fd89183b308a794e9fb10ff6f8baf5a5819cbe98729632e10",
     "summary": {
-      "total": 4058,
+      "total": 4064,
       "builtin": 233,
-      "declarative": 3825,
+      "declarative": 3831,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3825
+        "resource": 3831
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3835
+        "implemented": 3841
       },
       "mcp_tools": 217,
-      "mcp_resources": 3882,
+      "mcp_resources": 3888,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1272,
+        "capabilities": 1276,
         "capability_ids": []
       },
       {
@@ -99241,7 +99241,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 220,
+        "capabilities": 221,
         "capability_ids": []
       },
       {
@@ -99848,7 +99848,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 708,
+        "capabilities": 709,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2a23ecefa185a3393ac615b90038a8155d257a3c9aefc9ff973d26d662909be2",
+    "fingerprint": "6938b88ba5b704129e4ec60a2489a14574d016ef9b3abc9e170dc4b3c000e9d4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,8 +99981,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1272,
-      "knowledge": 220,
+      "issue": 1276,
+      "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -99995,7 +99995,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 708,
+      "test": 709,
       "use-case": 49,
       "workspace": 1
     },
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140125
+        "bytes": 140847
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107792,7 +107792,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 56210
+        "bytes": 58820
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -110801,7 +110801,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 114562
+        "bytes": 123237
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -125337,7 +125337,7 @@
         "path": ".ai/repo/project/issues/I4595.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4290
+        "bytes": 4722
       },
       {
         "uri": "majordomus://issue/I4596",
@@ -125560,6 +125560,50 @@
         "bytes": 5985
       },
       {
+        "uri": "majordomus://issue/I4668",
+        "kind": "issue",
+        "identity": "I4668",
+        "title": "doctor names every heavy process group that no session, claim, run record or declared service accounts for, with the inbound SSH peer that started it, and the owner pauses one through a governed command",
+        "description": "One capability sweeps the local process table and groups heavy work by process group. A group is heavy when its summed CPU or resident memory stays above a policy threshold (machine.heavy_process: cpu_percent, rss_mib, sustained_seconds, min_members) for the declared interval. Each heavy group is attributed from facts only, in this order: a live session's process tree (the provider registry who.rs already reads), a mesh claim or board row that records the pid or group, an offload run record or the owner variables in the environment, and a declared service (machine.services of I4622 once it exists). A group none of them accounts for is unattributed. When its parent chain reaches an SSH server's per-connection process, the report names the inbound peer address and port, the remote user and the connection's start time. Otherwise it names the chain up to init. `majordomus mesh who --unattributed` lists every unattributed heavy group with its process group, leader, member count, summed CPU and memory, start time, chain and peer. doctor reports one WARN that counts them and names that command. `majordomus machine pause <pgid> --because <text>` sends SIGSTOP to the group, and `machine resume <pgid>` sends SIGCONT. Each one is refused unless an owner approval names that group and its leader's start time. Each one writes a ledger line with the attribution, the approval and the reason. Nothing is killed, and no file or permission is changed.",
+        "path": ".ai/repo/project/issues/I4668.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7466
+      },
+      {
+        "uri": "majordomus://issue/I4669",
+        "kind": "issue",
+        "identity": "I4669",
+        "title": "An owner's answer is a typed, committed record with its provenance, so a session that receives it relayed cites it by id and a validator proves where it came from",
+        "description": "An owner-answer record kind (majordomus.owner-answer/v1) holds one question put to the repository's owner and the answer. Its fields are an id, the channel it was asked through (a provider's question tool, a terminal prompt, a forge comment), the asking session's id, the time it was asked and the time it was answered, the question and the answer verbatim, the options offered when the channel offered any, and the sessions it was relayed through (relayed_by, relayed_to, each with its time). `majordomus answer record` writes one record from the asking session. The session id and the times are computed, never typed. A record whose text a policy marks private is committed as its digest, with the text kept under .ai/local. `majordomus answer relay <id> --to <session>` appends one relay hop. `majordomus answer show <id>` prints it for the receiving session to read. A rule, decision, issue or ADR cites the answer as `owner-answer:<id>` and does not retype it. A validator, run by doctor and by plan validate, refuses a citation that does not resolve. It also refuses a quoted answer that differs from the record's verbatim text, and a relay hop whose receiving session is not one the hop's sender could reach.",
+        "path": ".ai/repo/project/issues/I4669.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5634
+      },
+      {
+        "uri": "majordomus://issue/I4670",
+        "kind": "issue",
+        "identity": "I4670",
+        "title": "A machine slot's holder is a typed record: one command hands it to another session, it is given back when no build of its holder is alive, and doctor names a slot held idle",
+        "description": "Each slot of machine.slot (I4006) holds one typed holder record: the holder's session key, its board peer when it has one, the purpose, the pid of the process the slot was taken for, that process's start time, taken_at, and an expected_release the taker declares. The record is written by the command that takes the slot and is never edited by hand. `majordomus machine slot handover <slot> --to <session>` moves the slot to a live session of this machine in one atomic rename. The new holder names its own pid, and the handover is a ledger line naming both sessions. The slot is given back by the command that holds it, and also when the holder is idle: none of its recorded processes and none of their descendants is a compiler or build process for longer than a policy grace (machine.slot.idle_release_seconds). Then the next reader of the slot releases it and records why. doctor reports a slot held without a live build of its holder (WARN, naming the holder, the age and the idle time), a slot past its expected_release, and a slot whose holder record does not parse. A record that does not parse is never treated as held: doctor reports it and the slot can be taken again.",
+        "path": ".ai/repo/project/issues/I4670.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5361
+      },
+      {
+        "uri": "majordomus://issue/I4671",
+        "kind": "issue",
+        "identity": "I4671",
+        "title": "A push hook judges every cheap precondition before its first heavy gate, runs each heavy gate within a declared budget, and reuses a commit's review verdict unless the commit changed",
+        "description": "An enforcement entry wired into a git hook declares its cost (`cheap` or `heavy`) and, for a heavy one, `budget_seconds`. `majordomus hook run <hook>` runs a hook's declared entries in two phases. First it runs every cheap entry and the built-in preconditions: the work tree is clean apart from paths the policy declares as session state, the active task's scope is claimed and covers the change, and the finish contract holds. It refuses before any heavy entry starts if one of them fails. Then it runs the heavy entries in declared order, each under its budget. A heavy entry over its budget is stopped as a process group and reported with its elapsed time, and the policy says whether that refuses the push. An entry may declare `verdict: commit`. Its result is then recorded through `majordomus evidence --gate` under a key of the commit id, its tree, a digest of its message and a digest of the entry's own configuration. A later hook run, pre-push after commit-msg for example, reuses a recorded pass for every pushed commit whose key is unchanged and runs the entry only for the commits whose key moved. doctor reports a hook that runs a heavy entry before a cheap one, a heavy entry with no budget, and an entry wired twice into one hook.",
+        "path": ".ai/repo/project/issues/I4671.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5930
+      },
+      {
         "uri": "majordomus://issue/I4685",
         "kind": "issue",
         "identity": "I4685",
@@ -125722,6 +125766,22 @@
         "tags": [
           "context-knowledge",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/a-push-may-start-at-35-gib-free",
+        "kind": "knowledge",
+        "identity": "a-push-may-start-at-35-gib-free",
+        "title": "Owner decision 2026-11-19 (~04:00 local, ~03:00Z): a Majordomus push may start at 35 GiB free, the build floor, instead of the 45 GiB pre-push floor sessions kept; the owner also asked the session to free disk",
+        "description": "When a session decides whether the machine has disk enough to push, or quotes a push floor",
+        "path": ".ai/repo/knowledge/curated/a-push-may-start-at-35-gib-free.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3445,
+        "tags": [
+          "decision",
+          "disk",
+          "owner-answer"
         ]
       },
       {
@@ -139620,6 +139680,14 @@
         "bytes": 4299
       },
       {
+        "uri": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "kind": "test",
+        "identity": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "path": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "source_class": "case",
+        "bytes": 13245
+      },
+      {
         "uri": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
         "kind": "test",
         "identity": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
@@ -142182,7 +142250,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1272
+      "objects": 1276
     },
     {
       "name": "knowledge",
@@ -142192,7 +142260,7 @@
       "identity": [
         "id"
       ],
-      "objects": 220
+      "objects": 221
     },
     {
       "name": "mesh-declaration",
@@ -142344,7 +142412,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 708
+      "objects": 709
     },
     {
       "name": "use-case",
