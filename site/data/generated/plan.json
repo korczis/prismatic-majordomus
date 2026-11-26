@@ -81930,7 +81930,9 @@
         "share/libexec/merge-derived",
         "lib/merge_drivers.sh",
         "lib/update.sh",
-        "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh"
+        "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh",
+        "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+        "docs/TWO_FOLDER_CONSOLIDATION.md"
       ],
       "non_scope": [
         "Majordomus's own whole-file driver (scripts/merge-derived, .gitattributes, scripts/gitattributes), which this leaves as it is",
@@ -81948,10 +81950,12 @@
         "Case 4770: a second update reports `merge drivers: unchanged` and leaves info/attributes byte for byte; `update --dry-run` prints `unchanged merge-drivers`; nothing tracked changes",
         "Case 4770: two branches that each change a surfaces region, a `# >>> generated … >>>` region, and prose on different lines merge cleanly; the result keeps both sides' prose and ours' regions, and a whole-file generated path resolves to ours",
         "Case 4770: two branches that change the same prose line conflict with markers (non-zero merge), and the generated region in the conflicted file is ours; two branches that change a hand-written block of the region shape conflict as text",
+        "Case 3113: the adoption footprint inventory (docs/TWO_FOLDER_CONSOLIDATION.md) names the four merge.majordomus-* keys and the .git/info/attributes block a default adoption now writes, and the case requires .git/config to change by exactly those keys while .git/info/exclude and .git/hooks stay as they were",
         "Cases 03, 3018, 2979 and 57 still pass: update's plan lines keep their vocabulary, a personal layer changes nothing shared, and Majordomus's own driver is untouched"
       ],
       "validation": [
         "bash test/run.sh 4770_an_adopter_merges_generated_regions_without_conflict",
+        "bash test/run.sh 3113_the_adoption_footprint_is_inventoried",
         "bash test/run.sh 03_update 3018_a_comment_in_the_policy_moves_no_bootstrap 2979_a_personal_layer_changes_nothing_shared 57_derived_merge_driver"
       ],
       "evidence_required": [

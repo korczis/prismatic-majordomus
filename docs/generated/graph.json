@@ -82881,7 +82881,9 @@
             "share/libexec/merge-derived",
             "lib/merge_drivers.sh",
             "lib/update.sh",
-            "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh"
+            "test/cases/4770_an_adopter_merges_generated_regions_without_conflict.sh",
+            "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+            "docs/TWO_FOLDER_CONSOLIDATION.md"
           ],
           "serves": [
             "merging-and-referencing-are-enforced#merged-result-is-judged"
@@ -82889,6 +82891,7 @@
           "slug": "an-adopter-merges-generated-regions-without-conflict",
           "validation": [
             "bash test/run.sh 4770_an_adopter_merges_generated_regions_without_conflict",
+            "bash test/run.sh 3113_the_adoption_footprint_is_inventoried",
             "bash test/run.sh 03_update 3018_a_comment_in_the_policy_moves_no_bootstrap 2979_a_personal_layer_changes_nothing_shared 57_derived_merge_driver"
           ]
         }

@@ -36,12 +36,19 @@ footprint() {
     | sed -E 's#^(\.claude/skills/[^/]+/).*#\1#' \
     | LC_ALL=C sort -u
 }
+# The git directory, with the four merge-driver keys update declares (I4770) taken out: they
+# are the adoption's one write there, measured on their own below.
+merge_keys='merge.majordomus-derived.driver
+merge.majordomus-derived.name
+merge.majordomus-regions.driver
+merge.majordomus-regions.name'
 gitdir_state() {
-  { cat .git/config; printf '%s\n' '--- exclude'; cat .git/info/exclude 2>/dev/null
+  { git config --local --list | grep -v '^merge\.majordomus-\(derived\|regions\)\.' || true
+    printf '%s\n' '--- exclude'; cat .git/info/exclude 2>/dev/null
     printf '%s\n' '--- hooks'; ls .git/hooks 2>/dev/null; } | cksum
 }
 
-# --- a shared adoption: these paths and no others, and nothing in the git directory
+# --- a shared adoption: these paths and no others, and in the git directory only the drivers
 before="$(gitdir_state)"
 expect_exit 0 "$MJ" init
 expect_exit 0 "$MJ" update
@@ -54,9 +61,17 @@ if [ "$observed" != "$expected" ]; then
 fi
 [ "$(gitdir_state)" = "$before" ] \
   || { echo "    a shared adoption changed .git/config, .git/info/exclude or .git/hooks"; exit 1; }
+observed_keys="$(git config --local --name-only --get-regexp '^merge\.majordomus-' | LC_ALL=C sort)"
+if [ "$observed_keys" != "$merge_keys" ]; then
+  echo "    the merge-driver keys of a shared adoption are not the ones the inventory records"
+  diff <(printf '%s\n' "$merge_keys") <(printf '%s\n' "$observed_keys") | sed 's/^/    /'
+  exit 1
+fi
+grep -qx '# >>> majordomus merge drivers (majordomus update) >>>' .git/info/attributes \
+  || { echo "    update declared no merge-driver block in .git/info/attributes"; exit 1; }
 
 # --- the inventory names every one of them, so the document cannot fall behind the code
-printf '%s\n' "$expected" | while IFS= read -r p; do
+printf '%s\n' "$expected" "$merge_keys" '.git/info/attributes' | while IFS= read -r p; do
   grep -qF -- "\`$p" "$inventory" \
     || { echo "    $inventory does not name \`$p\`, which a default adoption writes"; exit 1; }
 done

@@ -88,6 +88,20 @@ in an adopter.
 </div>
 
 
+A default adoption also writes into the git directory, and only these two things there (case
+3113 requires that `.git/config` changes by these four keys and nothing else, and that
+`.git/info/exclude` and `.git/hooks/` do not change):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Effect | Written by | Mode | Recorded by | Class | Fate |
+|---|---|---|---|---|---|
+| `.git/config`: `merge.majordomus-derived.name`, `merge.majordomus-derived.driver`, `merge.majordomus-regions.name`, `merge.majordomus-regions.driver` | `update`: `lib/merge_drivers.sh:144-147` (`mj_merge_drivers_converge`), called at `lib/update.sh:176` (I4770) | set when a driver line differs from `<share>/libexec/merge-derived ours` (or `regions`) `%O %A %B %P`; a second `update` writes nothing | the plan line `unchanged merge-drivers` / `update merge-drivers` of `update --dry-run` | `runtime` (clone configuration) | **bridge**: git reads a merge driver only from its config |
+| `.git/info/attributes` (`$GIT_COMMON_DIR/info/attributes`) — the block between `# >>> majordomus merge drivers (majordomus update) >>>` and `# <<< majordomus merge drivers <<<` | `update`: `lib/merge_drivers.sh:140`, `:152` | the block is rewritten whole (temp file and `mv`); a path the repository's own `.gitattributes` gives a merge attribute is left out | the block is the record | `runtime` (clone configuration) | **bridge**: git reads nothing else for a clone-local attribute |
+
+</div>
+
+
 The measured run also produced `.claude/skills/majordomus-*/.claude-plugin/types/`, which
 Claude Code lays down when it loads the mod and which each mod's own `.gitignore` excludes.
 
@@ -170,8 +184,9 @@ settings, every SessionEnd commits and tries to push.
 </div>
 
 
-There is no `git config` write in `bin/majordomus` or `lib/*.sh`. `core.hooksPath` and
-`merge.derived.*` appear there only as advice that `doctor` prints (`lib/doctor.sh:157-161`,
+The one `git config` write in `bin/majordomus` or `lib/*.sh` is `update`'s
+`merge.majordomus-*` drivers, listed with [the default adoption](#1-the-default-adoption).
+`core.hooksPath` and `merge.derived.*` appear there only as advice that `doctor` prints (`lib/doctor.sh:157-161`,
 `:228-230`). No command writes `.git/hooks/`. `init` prints the two hook lines and installs
 neither (`lib/init.sh:200-226`), and the measured run confirms `.git/hooks/` unchanged.
 
