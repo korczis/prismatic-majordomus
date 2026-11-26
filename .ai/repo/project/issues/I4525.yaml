@@ -1,0 +1,33 @@
+id: I4525
+milestone: truthful-plan-surfaces
+title: "The deployed stage reads unknown, not 0, while the forge's deployment record is absent or older than the pointer majordomus.dev serves"
+slug: the-deployed-stage-is-unknown-until-the-forge-is-observed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "plan delivery reports the deployed stage as unknown, naming why, whenever no `served forge` observation exists or the newest one predates the deployment that published the pointer the site serves; it reports a count only from an observation that covers that deployment."
+why: "Measured on 2026-10-30 at origin/master 6b30ede2d13, after I4315 landed and Pages run 41107049733 published that commit: plan delivery read deployed 0 of 1124 issues, and still 0 after `served observe` recorded the served commit; after `served forge` (19:31:26Z) the same read gave deployed 136 with observed.commit equal to the served pointer. A checkout that has not run `served forge` since the last deployment therefore states a false fact, zero deployed, instead of saying it does not know. I4315 left this out of scope on purpose (deployments are observed only by `served forge` since 3e8225a4329)."
+current_state: "With no forge observation, or one older than the newest Pages deployment, plan delivery counts every issue below deployed and reports deployed 0, with no reason attached to the stage."
+desired_state: "The deployed stage carries a state: known, with the observation it was read from and when, or unknown, with the reason (no forge observation, or an observation older than the served deployment) and the command that resolves it. Tallies, the delivery board and the site show unknown as unknown, never as 0."
+scope:
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "docs/PLANNING.md"
+  - ".ai/repo/project/issues/I4525.yaml"
+non_scope:
+  - "Observing deployments inside `prs refresh` or `plan delivery` itself (3e8225a4329 separated them on purpose)"
+  - "How `served forge` reads the forge"
+depends_on:
+  - I4315
+acceptance_criteria:
+  - "With no forge observation, plan delivery reports the deployed stage unknown with the reason 'forge not observed' and names `majordomus served forge`, and no tally reports deployed 0"
+  - "With a forge observation older than the newest successful Pages deployment, the deployed stage is unknown with the reason naming both times"
+  - "With an observation that covers the served deployment, the deployed count is reported as today, with the observation's time"
+  - "The derived delivery data and the site render unknown as unknown, never as 0"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "majordomus plan delivery on a fresh clone (deployed unknown), then after majordomus served forge (deployed > 0)"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-10-30

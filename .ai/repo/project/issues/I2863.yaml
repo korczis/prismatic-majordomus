@@ -24,4 +24,6 @@ validation:
 evidence_required:
   - "a_derive_refuses_mid_merge_case"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-30
+cancelled: true
+completion: "Cancelled 2026-10-30: superseded by I3963 (done 2026-10-26). The refusal this issue asked for shipped in train 3b on 2026-10-22, and it left a merge of master that could be neither derived nor committed, because the pre-commit pages gate refuses a merge commit whose derived data is stale. I3963 replaced it: scripts/derive derives a staged merge with both parents as history, and refuses only what that cannot represent (an unresolved or unstaged merge, a cherry-pick, a revert). Restoring the refusal would undo I3963."

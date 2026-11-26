@@ -32,4 +32,16 @@ evidence_required:
   - test
 risk: "A future hero figure that links a page declaring figures must name one of them, so adding a data-figure to a page the strip links obliges the homepage to name it; that is the intent, and the finding says which figures the target shows. A data-figure placed on the homepage outside the strip owes a data-figure-href, and one the check's element pattern cannot read fails as uncompared rather than passing."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-07T14:26:34Z
+started_at: 2026-11-07T14:13:20Z
+started_event: sha256:44a05705150c9c4c8e3bead70f2848d9912bf9b13dfbda8fd2ae19172207aef5
+completed_at: 2026-11-07T14:26:34Z
+completed_event: sha256:8bbb1db267e5bf02f5bcdb65143fa868fc578ed1a77d23374b4cef07e0dc2a3a
+evidence:
+  - covers: "test"
+    type: test
+    command: "bash test/run.sh 4318_the_homepage_rule_figure_agrees_with_its_link"
+    result: "delivered by d4745fa and bff63bff21b: homepage-check figures reads every rules-blocking figure and holds it to /doctrines/; train 29 validate run 42259789353 at e3dd08606fa passed site, ui and suite (1)-(4)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/42259789353"
+    commit: d7fd9a3617024a7390ac36c1888d6fcee63b600e
+    recorded_at: 2026-11-07T14:21:47Z
