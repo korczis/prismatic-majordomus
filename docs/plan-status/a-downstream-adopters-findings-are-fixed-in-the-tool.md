@@ -39,8 +39,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4781` | shares share/skeleton/policy.yaml with I4788; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares share/skeleton/policy.yaml with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares lib/doctor.sh with I4793; they may not run concurrently |
+| WARN | `scope_conflict` | `I4781` | shares lib/doctor.sh with I4805; they may not run concurrently |
 | WARN | `scope_conflict` | `I4783` | shares lib/doctor.sh with I4793; they may not run concurrently |
+| WARN | `scope_conflict` | `I4783` | shares lib/doctor.sh with I4805; they may not run concurrently |
 | WARN | `scope_conflict` | `I4788` | shares share/skeleton/policy.yaml with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I4788` | shares lib/plan.sh with I4792; they may not run concurrently |
 | WARN | `scope_conflict` | `I4788` | shares share/skeleton/policy.yaml with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I4789` | shares share/skeleton/policy.yaml with I4793; they may not run concurrently |
+| WARN | `scope_conflict` | `I4789` | shares lib/finish.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4793` | shares lib/doctor.sh with I4805; they may not run concurrently |

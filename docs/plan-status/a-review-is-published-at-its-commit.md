@@ -77,6 +77,15 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4740; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/DOCTRINE.md with I4781; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4788; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4792; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/PERFORMANCE.md with I4793; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4803; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4804; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares scripts/ci/design-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares .ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares .ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md with I4500; they may not run concurrently |

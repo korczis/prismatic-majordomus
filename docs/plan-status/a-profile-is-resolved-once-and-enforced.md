@@ -32,4 +32,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I4500` | shares .ai/repo/adrs with I4721; they may not run concurrently |
 | WARN | `scope_conflict` | `I4500` | shares docs/PERFORMANCE.md with I4793; they may not run concurrently |

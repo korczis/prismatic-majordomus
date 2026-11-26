@@ -77,3 +77,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1201` | shares share/kinds.yaml with I4791; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I4792; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I4793; they may not run concurrently |
+| WARN | `scope_conflict` | `I1201` | shares share/schemas with I4806; they may not run concurrently |
+| WARN | `scope_conflict` | `I1201` | shares share/schemas with I4808; they may not run concurrently |

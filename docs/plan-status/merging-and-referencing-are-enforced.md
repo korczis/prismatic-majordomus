@@ -84,7 +84,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4357` | shares .ai/repo/ci/gates.yaml with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares lib/plan.sh with I4788; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares lib/plan.sh with I4792; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4803; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4804; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I4362` | shares lib/adr.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4568` | shares scripts/ci/commit-policy with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4568` | shares apps/majordomus-cli/src/capability/builtin/trace.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I4568` | shares .githooks/commit-msg with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I4582` | shares docs/INTEGRATION.md with I4597; they may not run concurrently |
