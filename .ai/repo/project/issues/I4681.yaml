@@ -1,0 +1,30 @@
+id: I4681
+milestone: a-second-adopter-is-served
+title: "finish --note given text, not a readable file, says that --note takes a file and prints the usage"
+slug: finish-note-says-it-takes-a-file
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When the argument of `majordomus finish --note` is not a readable file, finish refuses before judging any doctrine, says that --note takes the path of a file holding the completion note, and prints the usage line, instead of reporting only an unmet majordomus.note-integrity."
+why: "Met by two OSCILLA sessions. oscilla-0b, 2026-11-17 at about 07:38 CET on fix/czech-pass-6b (majordomus 1.0.2 launcher, 1.0.1 pinned in CI): `finish --note \"$(printf '# Objective...')\"` (text, not a path) was refused with only 'finish: refused, 1 unmet' and 'blocking doctrines: - majordomus.note-integrity'. Only `finish --help` says --note <file>, and a file passed at once. oscilla-e5 hit the same refusal with `finish --note \"<text>\"`, and its /evolve principle 31 asked for the remedy."
+current_state: "Observed as above. lib/finish.sh parses --note (it refuses only a missing argument, '--note needs a file'), its usage reads '[--note <file>]', and the note is read later, where an unreadable path surfaces only as the note-integrity doctrine."
+desired_state: "A --note argument that is not a readable file is refused at once with a message that names --note as a file path and the usage line; a readable file behaves as today."
+scope:
+  - ".ai/repo/project/issues/I4681.yaml"
+  - "lib/finish.sh"
+  - "test/cases/4681_finish_note_says_it_takes_a_file.sh"
+non_scope:
+  - "Accepting the note as inline text"
+  - "Which doctrines finish judges: note-integrity itself is unchanged"
+depends_on: []
+acceptance_criteria:
+  - "Case 4681 runs `finish --outcome partial --note '# Objective x'` in a task: the refusal says --note takes a file, prints the usage line, and does not name majordomus.note-integrity"
+  - "The same call with a readable note file behaves as on master"
+  - "Negative control: the case fails against master, which reports only the unmet note-integrity doctrine"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4681_finish_note_says_it_takes_a_file"
+evidence_required:
+  - "finish_note_says_it_takes_a_file"
+serves: []
+created_at: 2026-11-22

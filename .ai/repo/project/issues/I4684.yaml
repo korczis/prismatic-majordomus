@@ -1,0 +1,31 @@
+id: I4684
+milestone: entry-proves-what-it-handed
+title: "worktree create starts a new branch from the trunk's configured remote (branch.<trunk>.remote), not from the alphabetically first remote whose HEAD names the trunk"
+slug: worktree-create-reads-the-trunks-remote
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "trunk_remote consults branch.<trunk>.remote first, and falls back to a remote whose HEAD names the trunk only when that is unset. When it is unset and several remotes' HEADs name the trunk, worktree create refuses and names them, instead of picking one."
+why: "Reported by sonic-playground-3c on 2026-11-22 (majordomus 1.2.0). At about 11:29Z `worktree create feature/visualizer-winamp-25` printed 'new, from gitlab/main at aad7683' while `majordomus worktree` read upstream origin/main at 8d5910b. Both refs/remotes/gitlab/HEAD and refs/remotes/origin/HEAD point at <remote>/main, branch.main.remote=origin, and gitlab/main is a mirror last updated 2026-11-17. The same happened on 2026-11-12 (gitlab/main e32d2ca). A stale mirror wins, and the new branch starts days behind the trunk."
+current_state: "Cause verified by the reporter at master 636acc8c: apps/majordomus-cli/src/worktree/service.rs:239, trunk_remote, loops over `git remote` (alphabetical) and returns the first remote whose HEAD names the trunk, using branch.<trunk>.remote only as a fallback. The nearest record, I3153 (create fetches and starts from the remote's trunk, case 3131), covers a stale local master, not the choice among remotes."
+desired_state: "worktree create starts from branch.<trunk>.remote when it is set; with it unset and one matching remote HEAD it starts from that remote; with it unset and several matching HEADs it refuses naming each."
+scope:
+  - ".ai/repo/project/issues/I4684.yaml"
+  - "apps/majordomus-cli/src/worktree/service.rs"
+  - "docs/WORKTREES.md"
+  - "test/cases/4684_worktree_create_reads_the_trunks_remote.sh"
+non_scope:
+  - "Starting from a stale local master instead of the remote's trunk: I3153"
+  - "Fetching or pruning mirrors"
+depends_on: []
+acceptance_criteria:
+  - "Case 4684 sets up two remotes whose HEADs both point at main, sets branch.main.remote to the alphabetically later one, which holds a newer commit, and `worktree create` starts the new branch from that remote's main"
+  - "With branch.main.remote unset and both HEADs naming main, worktree create refuses and names both remotes"
+  - "Negative control: the case fails against master, which starts from the alphabetically first remote"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4684_worktree_create_reads_the_trunks_remote"
+evidence_required:
+  - "worktree_create_reads_the_trunks_remote"
+serves: []
+created_at: 2026-11-22
