@@ -29,6 +29,9 @@
 # derived files back staged: `majordomus offload derive .` (docs/OFFLOAD.md).
 #
 #   MAJORDOMUS_BIN            the Rust executable to use instead of building one
+#   MAJORDOMUS_BIN_COMMIT     the commit MAJORDOMUS_BIN was built from; where the crate came
+#                             through a merge, the executable is borrowed only when this
+#                             commit carries the tree's crate (I4627, below)
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   CARGO_TARGET_DIR          where cargo builds, when worktrees share one build directory
 #   MAJORDOMUS_DERIVE_NO_SCENARIOS=1
@@ -211,6 +214,45 @@ fi
 # without a word. The executable refuses that now (`majordomus generate` compares its
 # generation against the tree's), but a run that names what it is using is a run whose log
 # answers "which binary?" without anyone having to guess.
+#
+# A merged crate is the one place that refusal cannot see (I4627). It lets an executable of
+# another generation through when the registry it projects is the one the tree has committed,
+# and after a merge the committed registry is the side scripts/merge-derived kept — what the
+# previous derive's executable wrote. On 2026-11-17 a combined top of four pull requests
+# (#3065) borrowed the first member's executable for every later derive: each one projected
+# the registry it had itself written, every check passed, and the top carried an openapi.json
+# without #3062's capabilities until CI built a fresh executable. So where this tree's crate
+# came through a merge, a borrowed executable must be of this tree's generation
+# (mj_rust_same_generation: the commit it was built from, MAJORDOMUS_BIN_COMMIT, carries this
+# tree's crate inputs byte for byte), or the derive builds its own and says why. A merged
+# crate is either of:
+#   MERGE_HEAD is present and the staged merge changes MJ_RUST_CRATE_INPUTS against HEAD
+#   HEAD is a merge and its crate inputs differ from its first parent's
+# A merge that leaves the crate alone keeps the committed registry an honest witness, and a
+# borrowed executable is used there as before.
+derive_merged_crate() {
+  local gd
+  gd="$(git -C "$ROOT" rev-parse --git-dir 2>/dev/null)" || return 1
+  case "$gd" in /*) ;; *) gd="$ROOT/$gd" ;; esac
+  if [ -e "$gd/MERGE_HEAD" ]; then
+    # shellcheck disable=SC2086 # the inputs are one space-separated list of literal paths
+    git -C "$ROOT" diff --quiet --cached HEAD -- $MJ_RUST_CRATE_INPUTS 2>/dev/null && return 1
+    printf 'the merge in progress (MERGE_HEAD %.11s) changes the crate' "$(head -n 1 "$gd/MERGE_HEAD")"
+    return 0
+  fi
+  git -C "$ROOT" rev-parse -q --verify 'HEAD^2' >/dev/null 2>&1 || return 1
+  # shellcheck disable=SC2086
+  git -C "$ROOT" diff --quiet 'HEAD^1' HEAD -- $MJ_RUST_CRATE_INPUTS 2>/dev/null && return 1
+  printf 'HEAD %s is a merge that changes the crate' "$(git -C "$ROOT" rev-parse --short=11 HEAD)"
+}
+if [ -n "${MAJORDOMUS_BIN:-}" ] && merged_why="$(derive_merged_crate)" \
+  && ! mj_rust_same_generation "$ROOT" "$MAJORDOMUS_BIN"; then
+  printf '==> derive: not borrowing MAJORDOMUS_BIN=%s: %s, and the executable is not of this tree'"'"'s generation (%s).\n' \
+    "$MAJORDOMUS_BIN" "$merged_why" "$MJ_RUST_GENERATION_WHY" >&2
+  printf '    After a merge the committed registry is the side the merge kept, so it cannot vouch for an\n' >&2
+  printf '    executable built from one side (I4627); building this tree'"'"'s own.\n' >&2
+  unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT
+fi
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"; BORROWED_BIN=1
   printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
@@ -255,9 +297,15 @@ if [ -n "$IN_MERGE" ]; then
   scratch="$scratch_parent/tree"
   git -C "$ROOT" worktree add --quiet --detach "$scratch" "$merge_commit"
   step_done
+  # The scratch tree's HEAD is that merge, so its derive asks the question above again
+  # (I4627), and is told the commit the executable is of: the merge commit itself when it was
+  # built here (from the staged merge, since the preflight refused unstaged changes), or the
+  # commit a borrowed one was vouched for by.
+  bin_commit="${MAJORDOMUS_BIN_COMMIT:-}"; [ -n "${BORROWED_BIN:-}" ] || bin_commit="$merge_commit"
   rc=0
   mj_lock_run env MJ_DERIVE_OBSERVE="$(git -C "$ROOT" rev-parse HEAD)" \
-    MAJORDOMUS_SHARE="$scratch/share" MAJORDOMUS_BIN="$RB" "$scratch/scripts/derive" || rc=$?
+    MAJORDOMUS_SHARE="$scratch/share" MAJORDOMUS_BIN="$RB" MAJORDOMUS_BIN_COMMIT="$bin_commit" \
+    "$scratch/scripts/derive" || rc=$?
   if [ "$rc" = 0 ]; then
     step "a merge in progress: staging what the derive changed"
     changed="$scratch_parent/changed"; removed="$scratch_parent/removed"; : > "$changed"; : > "$removed"

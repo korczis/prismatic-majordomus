@@ -1,0 +1,45 @@
+id: I4671
+milestone: a-change-is-judged-in-minutes
+title: "A push hook judges every cheap precondition before its first heavy gate, runs each heavy gate within a declared budget, and reuses a commit's review verdict unless the commit changed"
+slug: a-push-refuses-early-and-reviews-a-commit-once
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "An enforcement entry wired into a git hook declares its cost (`cheap` or `heavy`) and, for a heavy one, `budget_seconds`. `majordomus hook run <hook>` runs a hook's declared entries in two phases. First it runs every cheap entry and the built-in preconditions: the work tree is clean apart from paths the policy declares as session state, the active task's scope is claimed and covers the change, and the finish contract holds. It refuses before any heavy entry starts if one of them fails. Then it runs the heavy entries in declared order, each under its budget. A heavy entry over its budget is stopped as a process group and reported with its elapsed time, and the policy says whether that refuses the push. An entry may declare `verdict: commit`. Its result is then recorded through `majordomus evidence --gate` under a key of the commit id, its tree, a digest of its message and a digest of the entry's own configuration. A later hook run, pre-push after commit-msg for example, reuses a recorded pass for every pushed commit whose key is unchanged and runs the entry only for the commits whose key moved. doctor reports a hook that runs a heavy entry before a cheap one, a heavy entry with no budget, and an entry wired twice into one hook."
+why: "Observed from 2026-11-19 to 2026-11-22 during a long run with many sessions in an adopter repository. Its pre-push hook ran a full compile of the merge result and a model review of the pushed commits, with no budget and no early refusal. Thirteen push attempts each spent 25-40 minutes. Two of them were refused late, after the compile, for reasons known at the start. In one, the work tree was dirty from an untracked session record. In the other, the review found a problem in a commit message that the commit-time review had already passed. The machine was loaded the whole time, so each wasted attempt also delayed every other session's build."
+current_state: "Measured at origin/master d02c59d447c on 2026-11-22. An adopter's hooks are lines its owner adds. lib/init.sh prints the two lines to add (`doctor` on pre-commit, `finish --check` on pre-push) and installs nothing. lib/doctor.sh's mj_validate_wiring proves that each policy enforcement entry is invoked by the hook its wired_by names and that its exit code is not swallowed. An entry declares no cost, budget or order, and doctor does not judge the order of the lines. lib/finish.sh's `--check` judges the task's scope and contract, wherever the hook happens to call it. `majordomus evidence --gate` records a gate run with its tree and head, and gates.state reads the last run of each gate (apps/majordomus-cli/src/capability/builtin/gates.rs). No hook asks either before it runs an entry again. This repository's own .githooks/pre-push orders its checks by hand, with finish --check and case-numbers before run-plan, and states the reasons in comments. Related open work: I3161 composes the pre-commit hook into one call with a budget, I2348 reuses a gate's result only for the exact inputs it judged, and I4466 keys a mesh review verdict to the head and base it reviewed."
+desired_state: "A push that is going to be refused for something knowable is refused in seconds, before any compile. A heavy gate cannot run unbounded. A commit reviewed once is not reviewed again by a later hook unless its tree, message or reviewer changed. Every adopter gets this from its policy without writing the ordering into its own hook."
+scope:
+  - "lib/doctor.sh"
+  - "lib/init.sh"
+  - "lib/finish.sh"
+  - "lib/evidence.sh"
+  - "lib/commands.sh"
+  - "lib/hook.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/CLI.md"
+  - "test/cases/4671_a_push_refuses_early_and_reviews_a_commit_once.sh"
+  - ".ai/repo/project/issues/I4671.yaml"
+  - "site/content/plan/I4671.md"
+non_scope:
+  - "This repository's own .githooks/pre-push and scripts/ci/run-plan: they may adopt `hook run` later, as a change of their own"
+  - "What a review judges, or which model or provider runs it"
+  - "Making a local gate refuse what CI decides (I3830): the policy states which heavy entries refuse"
+  - "The pre-commit composition of I3161"
+depends_on: []
+acceptance_criteria:
+  - "Case 4671: a fixture repository declares a cheap entry, a heavy entry that sleeps and writes a marker, and a precondition. With an untracked file outside the declared session-state paths, `hook run pre-push` refuses in under 2 s, names the file, and the heavy entry's marker is absent. With only declared session-state paths untracked, the push proceeds"
+  - "A heavy entry whose budget_seconds is shorter than its run is stopped as a process group, reported with its elapsed time, and refuses or reports as the policy states"
+  - "An entry declaring `verdict: commit` that passed for a commit at commit-msg is not run again by pre-push for that commit. Amending only the message, or changing the entry's configuration, runs it again for that commit alone"
+  - "doctor reports a hook whose wired order puts a heavy entry before a cheap one, and a heavy entry with no budget, each naming the entry and the hook"
+  - "Negative control: on master's lib/, the dirty-tree push runs the heavy entry before it is refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4671_a_push_refuses_early_and_reviews_a_commit_once"
+evidence_required:
+  - "a_push_refuses_early_and_reviews_a_commit_once"
+serves:
+  - a-change-is-judged-in-minutes#a-regression-fails-its-budget
+created_at: 2026-11-22

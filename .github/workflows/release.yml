@@ -193,6 +193,13 @@ jobs:
       - name: the executable that answers what an artifact is called
         run: cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
 
+      # The commit that executable was built from, for every later step that borrows it: the
+      # default branch's tip is usually a merge, and where a merge changed the crate,
+      # scripts/derive borrows only an executable whose commit carries it (I4627). Without it
+      # the derive below would build a second executable inside this job's bound.
+      - name: the commit the executable was built from
+        run: echo "MAJORDOMUS_BIN_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       # Rerunning this workflow for a tag that already has a release is a supported path, and
       # it is the one an operator reaches for after a failure in a later step. The choice made
       # here is: the assets on an existing release are the release. This run's rebuild is

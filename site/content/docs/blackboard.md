@@ -1,7 +1,7 @@
 +++
 title = "The peer blackboard"
 description = "the peer blackboard: who works on what across every checkout's board and every linked machine, one projection of the board, the mesh journal and the monitor — workers keyed by explicit identifiers, the claims that meet, the reviews and handovers that wait, and what could not be read"
-weight = 68
+weight = 69
 [extra]
 source = "docs/BLACKBOARD.md"
 +++
@@ -22,7 +22,7 @@ capability, `blackboard.snapshot`. The decision is ADR 0176
 | source | what it knows | where it is decided |
 |---|---|---|
 | the board of every checkout (`peers.list`) | the MCP clients attached to each checkout's server, their named claims (announcements) | ADR 0044 |
-| the mesh journal (`mesh.state`) | the sessions, claims (advisory or exclusive), reviews and handovers of every linked machine | ADR 0067 |
+| the mesh journal (`mesh.state`) | the sessions, claims (advisory or exclusive), reviews, handovers and typed coordination records of every linked machine | ADR 0067; records I4665 |
 | the monitor (`monitor.stream`) | what happened, folded, with a cursor to resume from | ADR 0133 |
 
 </div>
@@ -76,6 +76,13 @@ commit. `last_beat_ms` is the runtime's heartbeat, which shows liveness, not wor
   exclusive. The answer lists at most 100 and counts them all in `conflicts_total`.
 - **Reviews** are the open ones. **Handovers** are the untaken ones, without their bodies, which
   `mesh.state` holds. The journal names no recipient for a handover, so none is inferred.
+- **Records** are the typed coordination records of the journal (observations, hypotheses,
+  plans, decisions, blockers, handoffs, outcomes) that are open and not superseded, at most 50
+  with `records_total` counting them all, each with its author's worker, kind, task, title,
+  revision, derived evidence state and the reasons it is stale; **record conflicts** are the
+  live plans or decisions of different authors for one task or over meeting scopes. Bodies,
+  sources and history are in `mesh.records`; how they are written is `docs/MESH.md`, "Typed
+  records".
 
 ## Completeness
 

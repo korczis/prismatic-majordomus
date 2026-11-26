@@ -387,7 +387,7 @@ test('a new section brings its own sweep without a list changing', () => {
 
 // ------------------------------------------------------------------ the site's bar
 const builtPage = (origin) => `<html><body><a href="#main">skip</a>
-<nav class="sticky" aria-label="Main"><a href="${origin}/">Majordomus <span data-release="0.27.0">v0.27.0</span></a>
+<nav class="sticky" aria-label="Main"><a href="${origin}/">Majordomus <span data-release="0.27.0" data-version-role="stable" title="The stable release">v0.27.0</span> <span class="p" data-prerelease="1.0.0-alpha.3" data-version-role="prerelease" title="t">pre-release v1.0.0-alpha.3</span></a>
 <!-- a comment of the build -->
 <a href="#site-map-1">All 9 pages</a></nav><main><nav aria-label="Other">x</nav></main></body></html>`;
 
@@ -403,10 +403,19 @@ test('the bar is cut out of a built page as its first nav, by its place, and not
 test('the copy leaves the version to the executable, drops the build\'s comments and leads the site map to the site', () => {
   const f = fragment(builtPage('https://example.test'), 'https://example.test');
   assert.ok(f.startsWith(GENERATED));
-  assert.ok(f.includes(`data-release="${VERSION_SLOT}">v${VERSION_SLOT}<`), f);
+  // the badge names the executable's build, and says so; the site's pre-release is not carried
+  assert.ok(f.includes(`data-release="${VERSION_SLOT}" data-version-role="build" `
+    + `title="The version of the executable serving this page">v${VERSION_SLOT}<`), f);
+  assert.ok(!f.includes('data-prerelease') && !f.includes('1.0.0-alpha.3'), f);
   assert.ok(!f.includes('0.27.0') && !f.includes('a comment of the build'), f);
   assert.ok(f.includes('href="https://example.test/#site-map-1"'), f);
   assert.ok(!f.includes('href="#'), f);
+});
+
+test('a badge that does not say its role is refused rather than cut into a bar with no slot', () => {
+  const page = '<html><body><nav aria-label="Main"><a href="https://example.test/">'
+    + '<span data-release="0.27.0">v0.27.0</span></a></nav></body></html>';
+  assert.throws(() => fragment(page, 'https://example.test'), /data-version-role="stable"/);
 });
 
 test('a site built for another origin is refused, never copied', () => {

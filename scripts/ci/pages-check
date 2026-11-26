@@ -294,11 +294,19 @@ if [ -z "$source_sha" ]; then
   exit 12
 fi
 
-if ! git cat-file -e "$source_sha^{commit}" 2>/dev/null; then
+# The subject names the commit abbreviated (`${HEAD_SHA:0:7}`), and an abbreviation is unique
+# only in the clone that wrote it. Every git question below is asked of `source_commit`, the
+# abbreviation resolved once, as a commit: in a clone where the prefix also names a blob, the
+# bare prefix is ambiguous and git refuses it, so the ancestry test failed and the gate said
+# "NOT on master" of the trunk's own merge (2026-11-22, 636acc8: commit 636acc8c845, blob
+# 636acc8f878), and the owed-publication range read nothing and said `ok` (I4685).
+# `source_sha` stays the abbreviation: it is what the served identity is compared against.
+source_commit="$(git rev-parse --verify -q "$source_sha^{commit}" 2>/dev/null || true)"
+if [ -z "$source_commit" ]; then
   bad "the published commit $source_sha is not in this clone; fetch, or it was never pushed"
-elif git merge-base --is-ancestor "$source_sha" "$REMOTE/$TRUNK" 2>/dev/null; then
+elif git merge-base --is-ancestor "$source_commit" "$REMOTE/$TRUNK" 2>/dev/null; then
   on_trunk=1
-  behind="$(git rev-list --count "$source_sha..$REMOTE/$TRUNK")"
+  behind="$(git rev-list --count "$source_commit..$REMOTE/$TRUNK")"
   # How far behind is stated here and judged in 3: this half answers *which tree*, not *how
   # old*. Printing the distance as part of an `ok` was how an hours-old site read as healthy.
   ok "the published commit $source_sha is on $TRUNK ($behind commit(s) behind its head)"
@@ -371,7 +379,7 @@ fi
 # two callers, as with `scripts/pages built` below.
 rustdoc_live() {
   local declared out rc=0
-  declared="$(git show "$source_sha:docs/generated/web.json" 2>/dev/null \
+  declared="$(git show "${source_commit:-$source_sha}:docs/generated/web.json" 2>/dev/null \
     | jq -r '[.surfaces[]? | select(.id == "rustdoc")] | length' 2>/dev/null || true)"
   if [ -z "$declared" ]; then
     note "the published commit's docs/generated/web.json could not be read; its rustdoc reference was not judged"
@@ -448,7 +456,7 @@ ui_live() {
   # holds the trunk to being published; this section holds a publication to what it declared.
   # A published commit this checkout cannot read (a shallow clone) is asked as before.
   local other published_model
-  published_model="$(git -C "$ROOT" show "$source_sha:.ai/repo/ci/pages.yaml" 2>/dev/null || true)"
+  published_model="$(git -C "$ROOT" show "${source_commit:-$source_sha}:.ai/repo/ci/pages.yaml" 2>/dev/null || true)"
   for other in $(printf '%s\n' "$declared" | awk -F '\t' '$1 != "" && $1 != "ui" { print $1 }'); do
     if [ -n "$published_model" ] \
       && ! grep -qE "^[[:space:]]*-[[:space:]]+surface:[[:space:]]+${other}[[:space:]]*\$" \
@@ -511,14 +519,14 @@ if [ "$on_trunk" = 1 ]; then
     note "the trigger paths could not be read from the publication model; every commit ahead counts"
   fi
   # The oldest commit still unpublished — `| tail -1`, not `log -1`. See the note above.
-  owed="$(git log --first-parent --format='%H %ct' "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null | tail -1 || true)"
+  owed="$(git log --first-parent --format='%H %ct' "${source_commit:-$source_sha}..$REMOTE/$TRUNK" -- "$@" 2>/dev/null | tail -1 || true)"
   if [ -z "$owed" ]; then
     ok "no publication is owed: nothing $TRUNK gained since $source_sha changes what the site is built from"
   else
     owed_sha="${owed%% *}"
     owed_at="${owed##* }"
     age=$(( $(date +%s) - owed_at ))
-    count="$(git rev-list --count --first-parent "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null || echo '?')"
+    count="$(git rev-list --count --first-parent "${source_commit:-$source_sha}..$REMOTE/$TRUNK" -- "$@" 2>/dev/null || echo '?')"
     if [ "$age" -lt "$OWED_AFTER" ]; then
       ok "a publication is owed for ${owed_sha:0:12} and is ${age}s old; inside the ${OWED_AFTER}s deploy window"
     else

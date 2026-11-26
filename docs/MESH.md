@@ -155,7 +155,16 @@ clone of a public repository and a new machine nobody has enrolled yet. Without 
 a machine would announce itself on its network and dial every endpoint the repository commits,
 while every peer refused it. `mesh doctor` fails its `trust` check with the key and the remedy,
 its `runtime` check reads `closed: …`, and the session's briefing says `Mesh: CLOSED — …`.
-Listing the key and restarting the server opens it. `tofu` never closes on this ground.
+Listing the key and committing it on the trunk opens it with no restart: the server reads the
+change with its next generation of the repository, holds the key it closed with against the
+declaration in force, and runs its own activation again, cooperation included, when that now
+opens. Withdrawing the key closes a running mesh the same way: its providers and cooperation
+stop and its reason names the key (I4571). `tofu` never closes on this ground.
+Until it has read the change, the `trust` check, which reads the declaration in force, already
+passes: then the `runtime` check fails as `stale: …`, naming the key the declaration now trusts,
+and says that a server which stays closed is restarted with `majordomus serve stop &&
+majordomus serve ensure` (I4572). The check reads the
+server's key out of the reason it closed with, so the verdict is about the key it loaded.
 
 ### Which copy of the declaration is obeyed
 
@@ -327,7 +336,7 @@ Three layers, deliberately separate:
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
 `review_requested`, `review_answered`, `review_withdrawn`, `session_beat` (a working session's progress and phase, left out of `mesh events` unless `--beats` asks and never a monitor signal), and a node's offer of its build
-cache, `build_cache_offered` and `build_cache_withdrawn` ([Build-cache offers](#build-cache-offers)). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+cache, `build_cache_offered` and `build_cache_withdrawn` ([Build-cache offers](#build-cache-offers)), and a typed coordination record, `record_written` ([Typed records](#typed-records)). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -449,6 +458,59 @@ path of the publishing machine travels. On another runtime, `mesh handover consu
 into that checkout's handovers directory — once, however often consumed — naming the local
 repository and `mesh:<origin runtime>` as its worktree, so `majordomus handover --resolve` on
 the same branch finds it as another checkout's handover.
+
+## Typed records
+
+The owner decided on 2026-11-20 that the typed records agents coordinate through live here, in
+the journal, and not in a second blackboard beside it (I4665). A record is one event kind,
+`record_written`, signed, replicated and folded like a claim; `mesh::records` holds its shape,
+its fold and its admission.
+
+| field | meaning |
+|---|---|
+| `key` | `<stream>/<id>`, answered by the first write; what a revision or a supersession names |
+| `author` | `<stream>/<session>` of the event that created it — the signature's stream, never a name in the input |
+| `kind` | closed set: `observation`, `hypothesis`, `plan`, `decision`, `blocker`, `handoff`, `outcome` |
+| `task`, `scope`, `status`, `title`, `body` | what it is about: a task, intent or issue id; repository paths; `open`, `resolved` or `withdrawn` |
+| `sources` | `file` (path, commit, lines), `tool` (command, result, observed_at) or `record` (key, revision) |
+| `evidence` | derived, never written: `evidenced` when a source is a file at a commit or a tool's result, else `asserted` |
+| `revision`, `history` | the current revision, and every revision with its event, title, sources and digest |
+| `supersedes`, `superseded_by` | the record it replaces, and the records that replace it |
+| `expires_at` | an optional lease, RFC 3339 UTC, judged on the reader's clock |
+| `author_state`, `stale` | `active`, `closed`, `expired` or `unknown`, and every reason the record no longer holds |
+
+Writing one is `mesh.record.write` (MCP `majordomus_mesh_record_write`, `POST
+/api/v1/mesh/records`); reading them is `mesh.records` (MCP `majordomus_mesh_records`, `GET
+/api/v1/mesh/records`, narrowed by `record`, `task`, `kind`, `author`, `path`, `live`; where
+the process runs no mesh it answers `active: false` with the reason, as `mesh.state` does), `mesh
+state --full` and `blackboard.snapshot`, which lists the open records that are not superseded
+and the conflicts. What admission refuses, before anything is signed, and with what code:
+
+- `out_of_scope` — a path of the record outside every live claim of the writing session (a
+  board session's announcement is an advisory claim, so a worker writes inside what it
+  announced);
+- `not_own` — a revision of another session's record: the other session writes a new record
+  with `supersedes` instead, and the old one is kept with its link; over MCP, too, naming
+  any session but the caller's own;
+- `stale_revision` — a revision whose read revision is not the current one (compare-and-swap),
+  or of a record already superseded; the refusal names the current revision;
+- `invalid_input` — a malformed record, a revision without the revision it read, a change of
+  kind, and a `handoff` without `objective`, `current_state`, `evidence` (at least one),
+  `blockers` (`[]` for none) and `next_action`;
+- `idempotency_conflict` — a retry key reused for other content. The same key with the same
+  content answers the first write (`repeated: true`) and writes nothing.
+
+A record's free text — title, body, a handoff's parts, a tool source's command and result — is
+redacted (`redaction::redact_secrets`) before admission and signing, as a review's text is
+(`.ai/repo/ci/mesh-event-fields.yaml`). The fold applies a revision only from the record's author, in order, of the same kind and
+before the author's session closed; anything else a peer signs is listed in
+`records_ignored` with its reason and changes nothing. Two live plans or two live decisions of
+different authors for one task or over meeting scopes are `record_conflicts`, reported and not
+refused: a supersession or a withdrawal settles them. A record past its lease, or whose author's
+session closed or runtime stopped beating, is stale — flagged, never removed; compaction keeps
+a stream while it holds a record still open and not superseded. A runtime restart is a new
+stream, so a record of an earlier run is superseded rather than revised. An older runtime
+relays `record_written` opaquely, like every kind it does not know.
 
 ## Build-cache offers
 
