@@ -2931,7 +2931,8 @@ mod tests {
     fn a_placeholder_command_or_a_deployment_never_meets_a_criterion() {
         let p = plan(vec![milestone("m", "DONE")], vec![]);
         // even a current receipt of the placeholder is no receipt: intent explain exits 0
-        let ev = Table::new().with_command("majordomus intent explain x", IntentEvidenceState::Current);
+        let ev =
+            Table::new().with_command("majordomus intent explain x", IntentEvidenceState::Current);
         let i = Intents::derive(
             vec![record(
                 "x",
@@ -2981,7 +2982,10 @@ mod tests {
             assert_eq!(c.state, state);
             assert_eq!(c.met, state == IntentEvidenceState::Current, "{state:?}");
             assert_eq!(c.reproduce.as_deref(), Some("just verify"));
-            assert!(c.proof.is_some(), "a judged command carries the proof behind it");
+            assert!(
+                c.proof.is_some(),
+                "a judged command carries the proof behind it"
+            );
             let want = if state == IntentEvidenceState::Current {
                 IntentVerdictState::Satisfied
             } else {

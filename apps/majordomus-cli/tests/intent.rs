@@ -293,7 +293,10 @@ fn a_command_criterion_is_judged_current_by_a_passing_receipt_of_exactly_it_at_t
     let command = "bash test/run.sh 00_x --strict";
     with_command_criterion(&f, "it-verifies", command);
     let (state, met, proof, _) = command_criterion(&f, "it-verifies");
-    assert_eq!((state.as_str(), met, proof.as_str()), ("not_run", false, "not_run"));
+    assert_eq!(
+        (state.as_str(), met, proof.as_str()),
+        ("not_run", false, "not_run")
+    );
 
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
     record_command_run(&f, command, Outcome::Pass, &head);
@@ -321,10 +324,17 @@ fn a_command_criterion_is_judged_not_current_by_a_near_miss_a_failing_run_or_a_l
 
     // a near miss: the same command with one argument fewer, and with one more, is not its
     // receipt, however it went
-    for near in ["bash test/run.sh 00_x", "bash test/run.sh 00_x --strict --fast"] {
+    for near in [
+        "bash test/run.sh 00_x",
+        "bash test/run.sh 00_x --strict --fast",
+    ] {
         record_command_run(&f, near, Outcome::Pass, &head());
         let (state, proof, verdict) = judged(&f);
-        assert_eq!((state.as_str(), proof.as_str()), ("not_run", "not_run"), "{near}");
+        assert_eq!(
+            (state.as_str(), proof.as_str()),
+            ("not_run", "not_run"),
+            "{near}"
+        );
         assert_eq!(verdict["state"], "unsatisfied", "{near}: {verdict}");
     }
 
@@ -341,7 +351,10 @@ fn a_command_criterion_is_judged_not_current_by_a_near_miss_a_failing_run_or_a_l
     // a pass, then a change to what it may read: another revision is not the one presented
     record_command_run(&f, command, Outcome::Pass, &head());
     assert_eq!(judged(&f).0, "current");
-    f.write("lib/a.sh", "#!/usr/bin/env bash\n# the one library file\nexit 1\n");
+    f.write(
+        "lib/a.sh",
+        "#!/usr/bin/env bash\n# the one library file\nexit 1\n",
+    );
     assert_eq!(judged(&f).0, "stale", "an uncommitted change since the run");
     f.commit("a change since the run");
     let (state, proof, _) = judged(&f);
@@ -378,7 +391,10 @@ fn a_command_criterion_is_judged_unless_it_is_its_own_intents_explain_placeholde
     let f = Fixture::new();
     with_command_criterion(&f, "model-is-gated", &command);
     let (state, _, proof, _) = command_criterion(&f, "model-is-gated");
-    assert_ne!(state, "not_derivable", "{command} is judged from the ledger");
+    assert_ne!(
+        state, "not_derivable",
+        "{command} is judged from the ledger"
+    );
     assert_eq!((state.as_str(), proof.as_str()), ("not_run", "not_run"));
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
     record_command_run(&f, &command, Outcome::Pass, &head);
@@ -400,7 +416,10 @@ fn a_command_criterion_is_judged_unless_it_is_its_own_intents_explain_placeholde
         .clone();
     assert_eq!(c["state"], "not_derivable", "{c:#}");
     assert_eq!(c["met"], false);
-    assert_eq!(c["reproduce"], placeholder, "it names the command it stands for");
+    assert_eq!(
+        c["reproduce"], placeholder,
+        "it names the command it stands for"
+    );
 }
 
 /// A test criterion and a claim criterion over the same case, judged at every step through
