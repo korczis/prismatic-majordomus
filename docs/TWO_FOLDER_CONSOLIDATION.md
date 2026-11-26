@@ -70,6 +70,15 @@ in an adopter.
 | `.claude/hooks/majordomus-capture`, `.claude/hooks/majordomus-session-start`, `.claude/hooks/majordomus-session-end`, `.claude/hooks/majordomus-session-compact` | `capture install`: `lib/capture.sh:2255-2279`, table at `:249`, `:286` | create; rewritten only when the file carries the marker ``Written by `majordomus capture install` `` (`:2263`) | the marker line in the shim (`:2364`) | `generated` | **move**: `settings.json` names a command path, so the shims can live under `.majordomus/hooks/` and the settings file stays the only bridge |
 | `.claude/skills/majordomus-brief/`, `.claude/skills/majordomus-handover/` | `capture install`: `lib/capture.sh:2326-2356`, copied from `share/mods/claude-code/*` | written while `session.brief_on_interval` / `session.handover_on_fill` are true (both true in the skeleton, `share/skeleton/policy.yaml:99-101`); **removed** file by file when the key is false (`:2311-2341`) | the marker on line 1 of `hooks/register.ts` | `generated` | **bridge**: Claude Code loads a mod only from `.claude/skills/` |
 
+A default adoption also writes into the git directory, and only these two things there (case
+3113 requires that `.git/config` changes by these four keys and nothing else, and that
+`.git/info/exclude` and `.git/hooks/` do not change):
+
+| Effect | Written by | Mode | Recorded by | Class | Fate |
+|---|---|---|---|---|---|
+| `.git/config`: `merge.majordomus-derived.name`, `merge.majordomus-derived.driver`, `merge.majordomus-regions.name`, `merge.majordomus-regions.driver` | `update`: `lib/merge_drivers.sh:144-147` (`mj_merge_drivers_converge`), called at `lib/update.sh:176` (I4770) | set when a driver line differs from `<share>/libexec/merge-derived ours` (or `regions`) `%O %A %B %P`; a second `update` writes nothing | the plan line `unchanged merge-drivers` / `update merge-drivers` of `update --dry-run` | `runtime` (clone configuration) | **bridge**: git reads a merge driver only from its config |
+| `.git/info/attributes` (`$GIT_COMMON_DIR/info/attributes`) — the block between `# >>> majordomus merge drivers (majordomus update) >>>` and `# <<< majordomus merge drivers <<<` | `update`: `lib/merge_drivers.sh:140`, `:152` | the block is rewritten whole (temp file and `mv`); a path the repository's own `.gitattributes` gives a merge attribute is left out | the block is the record | `runtime` (clone configuration) | **bridge**: git reads nothing else for a clone-local attribute |
+
 The measured run also produced `.claude/skills/majordomus-*/.claude-plugin/types/`, which
 Claude Code lays down when it loads the mod and which each mod's own `.gitignore` excludes.
 
@@ -132,8 +141,9 @@ settings, every SessionEnd commits and tries to push.
 | `refs/majordomus/prs/<n>` (forced mirror) | `integration/forge.rs:45`, `:1736-1809` | `prs refresh` | none | `cache` | stays under `refs/majordomus/` |
 | `refs/offload/in-<tag>`, `refs/offload/<tag>-derived`; then files staged in the person's worktree | `offload/run.rs:387-388`, `:584-601`, `:655-659` | `offload`, only when `.ai/repo/offload/*.yaml` is declared | none | `runtime` | **move** to `refs/majordomus/offload/`: the only ref Majordomus writes outside its ref namespace |
 
-There is no `git config` write in `bin/majordomus` or `lib/*.sh`. `core.hooksPath` and
-`merge.derived.*` appear there only as advice that `doctor` prints (`lib/doctor.sh:157-161`,
+The one `git config` write in `bin/majordomus` or `lib/*.sh` is `update`'s
+`merge.majordomus-*` drivers, listed with [the default adoption](#1-the-default-adoption).
+`core.hooksPath` and `merge.derived.*` appear there only as advice that `doctor` prints (`lib/doctor.sh:157-161`,
 `:228-230`). No command writes `.git/hooks/`. `init` prints the two hook lines and installs
 neither (`lib/init.sh:200-226`), and the measured run confirms `.git/hooks/` unchanged.
 

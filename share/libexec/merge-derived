@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# merge-derived: the merge driver Majordomus declares in an adopting clone (I4770).
+#
+#   merge-derived ours    %O %A %B %P   a file a generator writes whole
+#   merge-derived regions %O %A %B %P   a file a person writes that holds generated regions
+#
+# git calls a merge driver with the base (%O), ours (%A), theirs (%B) and the path (%P); %A is
+# both input and output, and the driver's exit status says whether the path merged (0) or is
+# left conflicted (anything else).
+#
+# A generated file, or a generated region, carries what its generator computed from the tree it
+# ran on. After a merge that tree is neither side's, so neither side's text is right, and no
+# textual combination of them is either: the answer appears only when the generator runs
+# again. The default text merge stops on exactly that, on nearly every pull request of a
+# repository whose generators write counts, line-number citations or fingerprints into
+# documents. In the OpenTTD fork that adopted Majordomus, a capability matrix and the README's
+# generated regions conflicted on almost every pull request between 2026-11-22 and 2026-11-25.
+#
+# ours     resolves the whole file to ours. The file is then stale, which is what the
+#          repository's own staleness check (its derive gate, `majordomus doctor` for a
+#          projection) is there to refuse until the generator runs.
+# regions  merges the authored text three ways and takes ours for every generated region. Each
+#          region of base and theirs is replaced, before the merge, by ours' region of the same
+#          key and occurrence, so the merge can conflict only where people wrote. A region only
+#          theirs has is theirs to keep. An authored conflict stays a conflict with markers,
+#          and the exit is non-zero. A region that never closes is not a region, and is merged
+#          as text.
+#
+# A region is a block between a begin and an end line in one of two spellings:
+#   <!-- NS:begin [name] [...] -->  ...  <!-- NS:end [...] -->   (Markdown, HTML; majordomus:,
+#                                                                 a repository's own namespace)
+#   # >>> TEXT >>>                  ...  # <<< ... <<<            (YAML, shell, gitattributes;
+#                                                                 only a begin line saying
+#                                                                 generated, majordomus or
+#                                                                 do not edit, because a
+#                                                                 person's own block of that
+#                                                                 shape must merge as text)
+# Its key is the namespace and the first word after `begin` that is not a hash or `k=v`, or the
+# hash-comment text, so a stamp that changes between the sides does not make two regions of one.
+set -u
+
+mode="${1:-}"; base="${2:-}"; ours="${3:-}"; theirs="${4:-}"; path="${5:-${3:-a generated file}}"
+
+if [ -z "$ours" ] || [ -z "$base" ] || [ -z "$theirs" ]; then
+  echo "merge-derived: git named no base, ours or theirs; leaving the path conflicted" >&2
+  exit 1
+fi
+
+case "$mode" in
+  ours)
+    printf 'merge-derived: %s resolved to ours and is stale until its generator runs again\n' "$path" >&2
+    exit 0 ;;
+  regions) ;;
+  *)
+    printf "merge-derived: unknown mode '%s' (ours | regions); leaving %s conflicted\n" "$mode" "$path" >&2
+    exit 1 ;;
+esac
+
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.md.XXXXXX")" || exit 1
+trap 'rm -rf "$tmp"' EXIT
+
+# awk -f this R F: print F with each closed region whose key R also holds (same occurrence)
+# replaced, begin and end lines included, by R's block.
+cat > "$tmp/regions.awk" <<'AWK'
+function key_of(line,    m, rest, n, w, i, ns) {
+  if (match(line, /^[ \t]*<!--[ \t]*[A-Za-z0-9_.-]+:begin([ \t].*)?-->[ \t]*$/)) {
+    rest = line; sub(/^[ \t]*<!--[ \t]*/, "", rest); sub(/[ \t]*-->[ \t]*$/, "", rest)
+    ns = rest; sub(/:begin.*$/, "", ns)
+    sub(/^[A-Za-z0-9_.-]+:begin[ \t]*/, "", rest)
+    n = split(rest, w, /[ \t]+/)
+    for (i = 1; i <= n; i++) if (w[i] != "" && w[i] !~ /^[0-9a-f]+$/ && w[i] !~ /=/) return ns ":" w[i]
+    return ns ":"
+  }
+  if (match(line, /^#[ \t]*>>>[ \t].*[ \t]>>>[ \t]*$/) && tolower(line) ~ /generated|majordomus|do not edit/) {
+    rest = line; sub(/^#[ \t]*>>>[ \t]*/, "", rest); sub(/[ \t]*>>>[ \t]*$/, "", rest)
+    return "#" rest
+  }
+  return ""
+}
+function ends(line, k,    ns) {
+  if (substr(k, 1, 1) == "#") return line ~ /^#[ \t]*<<<[ \t].*[ \t]<<<[ \t]*$/
+  ns = k; sub(/:.*$/, "", ns)
+  return index(line, ns ":end") > 0 && line ~ /^[ \t]*<!--.*-->[ \t]*$/
+}
+# the reference: collect every closed block by key and occurrence
+FNR == NR {
+  if (open == "") {
+    k = key_of($0)
+    if (k != "") { open = k; buf = $0; next }
+    next
+  }
+  buf = buf "\n" $0
+  if (ends($0, open)) { seen[open]++; block[open, seen[open]] = buf; open = "" }
+  next
+}
+# the file: replace a closed block the reference holds, else print it as it is
+{
+  if (fopen == "") {
+    k = key_of($0)
+    if (k != "") { fopen = k; fbuf = $0; next }
+    print; next
+  }
+  fbuf = fbuf "\n" $0
+  if (ends($0, fopen)) {
+    occ[fopen]++
+    if ((fopen, occ[fopen]) in block) print block[fopen, occ[fopen]]
+    else print fbuf
+    fopen = ""
+  }
+}
+END { if (fopen != "") print fbuf }
+AWK
+
+awk -f "$tmp/regions.awk" "$ours" "$base" > "$tmp/base" || exit 1
+awk -f "$tmp/regions.awk" "$ours" "$theirs" > "$tmp/theirs" || exit 1
+# a file ending without a newline: keep it that way rather than gain one in the merge
+for f in base theirs; do
+  src="$base"; [ "$f" = theirs ] && src="$theirs"
+  if [ -s "$src" ] && [ "$(tail -c 1 "$src" | od -An -c | tr -d ' ')" != '\n' ]; then
+    printf '%s' "$(cat "$tmp/$f")" > "$tmp/$f.nn" && mv "$tmp/$f.nn" "$tmp/$f"
+  fi
+done
+
+rc=0
+git merge-file -L ours -L base -L theirs "$ours" "$tmp/base" "$tmp/theirs" || rc=$?
+if [ "$rc" = 0 ]; then
+  printf 'merge-derived: %s merged; its generated regions are ours and stale until their generator runs again\n' "$path" >&2
+  exit 0
+fi
+printf 'merge-derived: %s has %s conflict(s) in text people wrote; its generated regions are ours\n' "$path" "$rc" >&2
+exit 1

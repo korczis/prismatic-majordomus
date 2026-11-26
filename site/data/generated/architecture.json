@@ -790,6 +790,16 @@
       "external": false
     },
     {
+      "id": "lib/merge_drivers.sh",
+      "kind": "module",
+      "label": "merge_drivers",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/migrate.sh",
       "kind": "module",
       "label": "migrate",
@@ -1109,6 +1119,11 @@
     {
       "source": "lib/knowledge.sh",
       "target": ".ai/local/state/sessions-open",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/merge_drivers.sh",
+      "target": ".ai/repo/scope.yaml",
       "kind": "reads"
     },
     {
@@ -1799,6 +1814,11 @@
     {
       "source": "lib/update.sh",
       "target": "lib/fleet.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": "lib/merge_drivers.sh",
       "kind": "sources"
     },
     {
