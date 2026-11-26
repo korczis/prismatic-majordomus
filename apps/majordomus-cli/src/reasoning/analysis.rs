@@ -127,9 +127,9 @@ pub enum AnalysisConformance {
 /// One check and how it ended.
 ///
 /// ```
-/// use majordomus_cli::reasoning::analysis::{check, AnalysisCheckState, Document};
+/// use majordomus_cli::reasoning::analysis::{check, AnalysisCheck, AnalysisCheckState, Document};
 /// let r = check(&[Document::new("s.md", "# not an analysis\n")]);
-/// let bundle = r.checks.iter().find(|c| c.check == "bundle").unwrap();
+/// let bundle: &AnalysisCheck = r.checks.iter().find(|c| c.check == "bundle").unwrap();
 /// assert_eq!(bundle.state, AnalysisCheckState::Failed);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -146,9 +146,10 @@ pub struct AnalysisCheck {
 /// One defect: the check that found it, where, the id it concerns and what is wrong.
 ///
 /// ```
-/// use majordomus_cli::reasoning::analysis::{check, Document};
+/// use majordomus_cli::reasoning::analysis::{check, AnalysisFinding, Document};
 /// let r = check(&[Document::new("s.md", "# not an analysis\n")]);
-/// assert_eq!((r.findings[0].check.as_str(), r.findings[0].file.as_str()), ("bundle", "s.md"));
+/// let f: &AnalysisFinding = &r.findings[0];
+/// assert_eq!((f.check.as_str(), f.file.as_str()), ("bundle", "s.md"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct AnalysisFinding {
@@ -169,9 +170,10 @@ pub struct AnalysisFinding {
 /// One document and the role it declares.
 ///
 /// ```
-/// use majordomus_cli::reasoning::analysis::{check, Document};
+/// use majordomus_cli::reasoning::analysis::{check, AnalysisDocument, Document};
 /// let r = check(&[Document::new("q.md", "---\nanalysis:\n  id: a\n  pass: question\n---\n# Q1 why?\n")]);
-/// assert_eq!(r.documents[0].pass.as_deref(), Some("question"));
+/// let d: &AnalysisDocument = &r.documents[0];
+/// assert_eq!(d.pass.as_deref(), Some("question"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct AnalysisDocument {
