@@ -9,6 +9,10 @@ Current version: **1.2.0**
 
 ## v1.2.0 — 2026-11-22
 
+### Decisions
+
+- **ADR-0232** One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins _(proposed)_
+
 ### Added
 
 - **mesh**: typed coordination records live in the mesh journal (I4665) (`92b817cab`)
