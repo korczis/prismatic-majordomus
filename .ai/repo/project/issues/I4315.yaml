@@ -37,3 +37,16 @@ evidence_required:
   - test
 serves: []
 created_at: 2026-10-28
+started_at: 2026-11-26T14:24:52Z
+started_event: sha256:9ae55f6c4adab0f496ae40b08edcbabfd53b0cd93708377642109851811230d3
+updated_at: 2026-11-26T14:25:42Z
+completed_at: 2026-11-26T14:25:42Z
+completed_event: sha256:e6bc06095ea66c308c23cf1fe53eddc0ea7e1a6e4e70cc92164975c71e8cb1ab
+evidence:
+  - covers: "test"
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+    result: "delivered by 543bc86ce59 (with 8b7de9692f4) on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: tests/plan_delivery.rs 6 passed 0 failed (rust (3) job 138952669033), plan::delivery 13 lib tests ok (rust (2) job 138952668919); .github/workflows/pages.yml ui-snapshot errors 'The deployed stage is unread' when no publication source is named; pages run 45754133556 at 46775282570: ui-snapshot success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:25:24Z

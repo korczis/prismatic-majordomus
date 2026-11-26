@@ -30,6 +30,16 @@ evidence_required:
   - suite
 risk: "The launcher check no longer touches the source checkout at all; a launcher that reads only a newer layer would pass here, which is the skew I1980 owns, not this gate."
 created_at: 2026-11-01
-updated_at: 2026-11-01T02:54:21Z
+updated_at: 2026-11-26T14:40:50Z
 started_at: 2026-11-01T02:54:21Z
 started_event: sha256:cc9eecd15f90e75f239c2d02bd1b647435a2e1381f16427d538b057859cb357e
+completed_at: 2026-11-26T14:40:50Z
+completed_event: sha256:751ade79ea8c8e11d5f9611e0fbec4384016a238e3a3568d9116163259ff32ec
+evidence:
+  - covers: "suite"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 97_install_gate 1024_an_installed_release_serves_a_foreign_repository"
+    result: "delivered by 36ec3550f0b on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 1024_an_installed_release_serves_a_foreign_repository ok in suite-shard (1) job 138971458450; 97_install_gate ok in suite-shard (4) job 138971458386; scheduled validate 45196093346 at 93739746f8d: install (ubuntu-latest) and install (macos-latest) success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:40:33Z

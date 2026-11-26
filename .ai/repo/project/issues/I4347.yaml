@@ -33,4 +33,16 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-29
-updated_at: 2026-11-01
+updated_at: 2026-11-26T14:35:42Z
+started_at: 2026-11-26T14:34:18Z
+started_event: sha256:4e9264a8ce714eb5a996d860a31c099a3b5fdb5b8c1f05a2750979e369f63597
+completed_at: 2026-11-26T14:35:42Z
+completed_event: sha256:89dd12be2da0c77757a05a02609c7f35a6f01fb7d145e857ede8c8435784aab7
+evidence:
+  - covers: "test"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 26_ci_wiring 94_ci_plan"
+    result: "delivered by 06a59af9f5f on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 94_ci_plan ok in suite-shard (1) job 138971458450; 26_ci_wiring ok in suite-shard (4) job 138971458386; actionlint .github/workflows/validate.yml exit 0 at 46775282570"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:35:28Z
