@@ -73,6 +73,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/MONITOR.md with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4665; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/PLANNING.md with I4702; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4704; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4706; they may not run concurrently |

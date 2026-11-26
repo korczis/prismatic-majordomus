@@ -48,6 +48,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares docs/SCHEMAS.md with I4702; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4704; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4706; they may not run concurrently |
