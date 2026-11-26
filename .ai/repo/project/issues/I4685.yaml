@@ -1,0 +1,27 @@
+id: I4685
+title: "The published-site gate resolves the deploy subject's abbreviated commit once, so an abbreviation that is ambiguous in the reading clone is still the commit it names"
+milestone: surfaces-never-disagree
+slug: pages-check-resolves-an-ambiguous-short-sha
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "scripts/ci/pages-check resolves the abbreviated commit named by the deploy subject once, as a commit (`git rev-parse --verify <abbrev>^{commit}`). It then asks every git question with that full id: the ancestry test against the trunk, the distance behind it, the published tree's web.json and pages.yaml, and the owed-publication range. The abbreviation stays what the served identity is compared against."
+why: "The deploy subject names its source as `${HEAD_SHA:0:7}`. An abbreviation is unique only in the clone that wrote it. On 2026-11-22 the subject named 636acc8, the head of master (the #3106 merge, 636acc8c845). The prismatic-majordomus checkout that read it also held the blob 636acc8f878. git refused the bare prefix, so `git merge-base --is-ancestor 636acc8 origin/master` exited 128. The gate then printed 'the published commit 636acc8 is NOT on master: an unmerged ref is being served' about master's own head, and `majordomus finish` of the #3103 task refused on doctrine majordomus.publication-currency. The same ambiguity made the owed range `636acc8..origin/master` read nothing, which says 'no publication is owed' about any trunk: a false pass beside the false refusal."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. In scripts/ci/pages-check, `git cat-file -e \"$source_sha^{commit}\"` passes, because the ^{commit} hint disambiguates. Every later git call takes the bare abbreviation: `merge-base --is-ancestor`, `rev-list --count`, `git show <sha>:docs/generated/web.json`, `git show <sha>:.ai/repo/ci/pages.yaml`, and `git log` and `rev-list` over `<sha>..origin/master`. test/cases/104_published_site.sh builds fixtures whose abbreviations are never ambiguous."
+desired_state: "In a clone where the deploy subject's abbreviation also names another object, the gate says the publication is on master when it is, and says a publication is owed when the trunk has moved past it. test/cases/104_published_site.sh holds both directions with a planted blob that shares the published commit's prefix, and fails against the gate before the change."
+scope:
+  - "scripts/ci/pages-check"
+  - "test/cases/104_published_site.sh"
+  - ".ai/repo/project/issues/I4685.yaml"
+non_scope:
+  - "Writing the full commit into the deploy subject (scripts/site-deploy): the served identity is compared against the subject's abbreviation as a prefix, so a longer subject would need that comparison changed too, and every subject already on gh-pages stays abbreviated"
+acceptance_criteria:
+  - "A deploy subject whose abbreviation also names a blob, published from master, is accepted with 'is on master'"
+  - "The same fixture with master moved past it and --owed-after 0 is refused with 'owes a publication'"
+  - "test/cases/104_published_site.sh fails against scripts/ci/pages-check as it was at 636acc8c845"
+validation:
+  - "bash test/run.sh 104_published_site"
+evidence_required:
+  - "case_104"
+depends_on: []
+created_at: 2026-11-22
