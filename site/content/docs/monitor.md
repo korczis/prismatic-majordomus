@@ -1,7 +1,7 @@
 +++
 title = "The monitor"
 description = "the monitor: everything that happens around a repository in one stream — mesh sessions, claims, handovers and reviews, the executor's outcomes, GitHub's pull requests and runs — with the noise folded away, what names you first, one cursor across every source, and the command, MCP, HTTP and Cockpit surfaces"
-weight = 67
+weight = 68
 [extra]
 source = "docs/MONITOR.md"
 +++
@@ -69,7 +69,9 @@ checkout's running server. With no server, the command prints the reason and exi
 Kinds, by source:
 
 - **mesh**: `session_joined`, `session_changed`, `session_left`, `claimed`, `released`,
-  `handover`, `handover_taken`, `review_requested`, `review_answered`, `review_withdrawn`.
+  `handover`, `handover_taken`, `review_requested`, `review_answered`, `review_withdrawn`,
+  `record` (a typed coordination record written or revised, I4665; a blocker, decision or
+  handoff asks for attention).
 - **executor**: `merged`, `merge_failed`, `verification_failed`, `refreshed`,
   `refresh_failed`, `closed`, `close_failed`, `repaired`, `repair_refused`, `lane_taken`,
   `lane_released`, `observe_failed`.
