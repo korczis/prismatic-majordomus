@@ -2247,6 +2247,15 @@
       "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
     },
     {
+      "id": "claim:an-analysis-builds-on-what-survived",
+      "kind": "claim",
+      "label": "An evidence-tagged multi-pass analysis is checked, not trusted; reasoning analysis says whether every finding of its bundle is tagged and sourced, judged by exactly one cross-check verdict, cited by the synthesis only when CONFIRMED and ledgered when UNVERIFIABLE, and a bundle missing a pass is incomplete, never ok",
+      "status": "guaranteed",
+      "route": "/guarantees/an-analysis-builds-on-what-survived/",
+      "external": false,
+      "note": "the conforming fixture bundle conforms; each planted defect is named with exit 10; what is proven is structure, not that a locator supports its claim."
+    },
+    {
       "id": "claim:the-closing-question-is-measured",
       "kind": "claim",
       "label": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
@@ -2625,6 +2634,13 @@
       "id": "impl:apps/majordomus-cli/src/quality/rustdoc.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/quality/rustdoc.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/analysis.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/analysis.rs",
       "route": null,
       "external": false
     },
@@ -4125,6 +4141,13 @@
       "label": "test/cases/45_github_projection.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/45_github_projection.sh"
+    },
+    {
+      "id": "test:test/cases/4777_an_analysis_builds_on_what_survived.sh",
+      "kind": "test",
+      "label": "test/cases/4777_an_analysis_builds_on_what_survived.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/4777_an_analysis_builds_on_what_survived.sh"
     },
     {
       "id": "test:test/cases/486_rustdoc_composition.sh",
@@ -5859,6 +5882,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:an-analysis-builds-on-what-survived",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:the-closing-question-is-measured",
       "target": "source:docs/CLI.md",
       "kind": "specified_by"
@@ -7049,6 +7077,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:an-analysis-builds-on-what-survived",
+      "target": "impl:apps/majordomus-cli/src/reasoning/analysis.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:the-closing-question-is-measured",
       "target": "impl:apps/majordomus-cli/src/gates/closing.rs",
       "kind": "implemented_by"
@@ -8236,6 +8269,11 @@
     {
       "source": "claim:review-is-never-fabricated",
       "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:an-analysis-builds-on-what-survived",
+      "target": "test:test/cases/4777_an_analysis_builds_on_what_survived.sh",
       "kind": "proved_by"
     },
     {

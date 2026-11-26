@@ -73,6 +73,46 @@
       "route": "/skills/deploy-site/"
     },
     {
+      "id": "evidence-tagged-analysis",
+      "uri": "majordomus://skill/evidence-tagged-analysis",
+      "title": "Evidence-tagged multi-pass analysis",
+      "description": "Answer a hard causal question in passes (the question and its rules first, independent lenses, lenses refuting each other, a synthesis from confirmed findings only) with every claim tagged by its evidence and the bundle checked by reasoning analysis.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "analysis",
+        "evidence",
+        "reasoning",
+        "review"
+      ],
+      "related": [
+        "project-picture",
+        "report-verification-state",
+        "repo-review"
+      ],
+      "inputs": [
+        "QUESTION: what is to be explained, such as why something keeps failing or why nothing reacted",
+        "LENSES: the independent angles, one per sub-question (default: one per question of the question document)",
+        "BUNDLE: the directory the documents go to, tracked where the analysis will be published"
+      ],
+      "outputs": [
+        "a bundle of Markdown documents, one per pass and lens, each declaring its role in front matter",
+        "a synthesis whose root causes and remedies rest only on CONFIRMED findings, each remedy with an owner",
+        "the answer of `majordomus reasoning analysis --path <bundle>`, conforms, fails or incomplete"
+      ],
+      "path": ".ai/repo/skills/evidence-tagged-analysis/SKILL.md",
+      "sha256": "7be94023165eab65431f0c631691d3b05bf4829f4613304f2839ad5876fbe8dd",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/evidence-tagged-analysis/examples/why-a-cache-misses.md",
+          "title": "Why a cache misses after every deploy",
+          "body": "\nIntent: \"Find out why reads are slow after every deploy. Use two independent lenses, have each\nlens refute the other, and give me only what survives.\"\n\nThe worker writes the question document first. It holds two questions (what empties the cache,\nand how much of the latency the misses explain), the read-only rule and the tag grammar. Two\nlens workers read independently. The cache lens finds:\n\n- the cache lives in process memory (OBSERVED, `src/cache.rs:12`);\n- a deploy restarts every process (OBSERVED, the deploy log);\n- eviction may drop hot keys (INFERRED: a run with eviction disabled would confirm it).\n\nThe load lens derives that half of the reads miss and that a miss costs 40 ms.\n\nIn pass 2 each lens cross-checks the other:\n\n- The \"half of the reads\" claim is REFUTED. The metrics count a retried read twice, so the\n  true rate is 20%.\n- The eviction claim is UNVERIFIABLE under the read-only rule, so it goes to the gaps ledger.\n\nThe synthesis builds two root causes from the CONFIRMED findings and maps two remedies to\nowners. One remedy is `unowned`, which marks it as a hole for someone to take. The refuted\nclaim goes in the register.\n\n`majordomus reasoning analysis --path test/fixtures/analysis/conforming` reads `conforms`.\nRemove a cross-check document and the same bundle reads `incomplete`, naming the check that\ndid not run. Cite the refuted finding as a root cause and the bundle reads `fails`.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/evidence-tagged-analysis/"
+    },
+    {
       "id": "evolve",
       "uri": "majordomus://skill/evolve",
       "title": "Evolve the repository's know-how",
@@ -482,7 +522,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 11,
+  "count": 12,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -493,6 +533,7 @@
     "evidence": [
       "assess-before-deleting",
       "deploy-site",
+      "evidence-tagged-analysis",
       "implement",
       "project-picture",
       "repo-review",
@@ -508,15 +549,22 @@
     "deploy": [
       "deploy-site"
     ],
-    "knowledge": [
-      "evolve",
-      "project-picture"
+    "analysis": [
+      "evidence-tagged-analysis"
+    ],
+    "reasoning": [
+      "evidence-tagged-analysis"
     ],
     "review": [
+      "evidence-tagged-analysis",
       "evolve",
       "pack-for-chatgpt",
       "pack-for-review",
       "repo-review"
+    ],
+    "knowledge": [
+      "evolve",
+      "project-picture"
     ],
     "delivery": [
       "evolve",
@@ -944,7 +992,7 @@
       "path": ".claude/skills/mj-reasoning/SKILL.md",
       "kind": "domain",
       "source": "module:reasoning",
-      "description": "Majordomus reasoning: The advisors and what they can do now; Check that reasoning stays provider-independent; Why a decision was made; What an uncertainty calls for; Record a reasoning step; The session's reasoning state."
+      "description": "Majordomus reasoning: The advisors and what they can do now; Check an evidence-tagged multi-pass analysis; Check that reasoning stays provider-independent; Why a decision was made; What an uncertainty calls for; Record a reasoning step; The session's reasoning state."
     },
     {
       "name": "mj-recover",
@@ -1052,6 +1100,13 @@
       "description": "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable."
     },
     {
+      "name": "evidence-tagged-analysis",
+      "path": ".claude/skills/evidence-tagged-analysis/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/evidence-tagged-analysis/SKILL.md",
+      "description": "Answer a hard causal question in passes (the question and its rules first, independent lenses, lenses refuting each other, a synthesis from confirmed findings only) with every claim tagged by its evidence and the bundle checked by reasoning analysis."
+    },
+    {
       "name": "evolve",
       "path": ".claude/skills/evolve/SKILL.md",
       "kind": "skill",
@@ -1111,6 +1166,6 @@
   "claude_by_kind": {
     "command": 2,
     "domain": 62,
-    "skill": 10
+    "skill": 11
   }
 }

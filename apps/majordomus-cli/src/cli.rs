@@ -922,7 +922,7 @@ pub struct ReasoningArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `advisors`, `plan`, `record`, `status`, `explain`, `check`.
+    /// `advisors`, `plan`, `record`, `status`, `explain`, `check`, `analysis`.
     pub command: ReasoningCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -932,7 +932,8 @@ pub struct ReasoningArgs {
 
 #[derive(Debug, Subcommand)]
 /// The `reasoning` subcommands, one per capability: `advisors`, `plan` and `status` read,
-/// `explain` traces one record, `check` gates, and `record` is the one that writes.
+/// `explain` traces one record, `check` gates, `analysis` checks an analysis bundle, and
+/// `record` is the one that writes.
 /// # Example
 ///
 /// ```
@@ -948,6 +949,9 @@ pub struct ReasoningArgs {
 /// let cli = Cli::try_parse_from(["majordomus", "reasoning", "status", "--task", "all", "--report"]).unwrap();
 /// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
 /// assert!(matches!(args.command, ReasoningCommand::Status { report: true, .. }));
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "analysis", "--path", "research/a"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// assert!(matches!(args.command, ReasoningCommand::Analysis { path } if path == "research/a"));
 /// ```
 pub enum ReasoningCommand {
     /// Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer
@@ -986,6 +990,12 @@ pub enum ReasoningCommand {
     },
     /// Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding
     Check,
+    /// Check the bundle of an evidence-tagged multi-pass analysis: tagged findings, one verdict each, a synthesis on confirmed findings only, gaps ledgered; exit 10 unless it conforms
+    Analysis {
+        /// The bundle: a directory whose Markdown files declare their pass, or one file, repository-relative
+        #[arg(long)]
+        path: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -8738,6 +8748,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["reasoning", "check"],
             setup: &[],
             expect: Expect::StdoutContains(&["checks"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning analysis",
+        examples: &[ExampleDoc {
+            id: "reasoning-analysis-refused",
+            title: "A directory that is not an analysis bundle is refused",
+            description: "Every Markdown file of a bundle declares its pass in `analysis:` front matter; one that does not is refused rather than skipped, every check that has nothing to compare is named as not run, and the exit is 10 because the bundle does not conform.",
+            argv: &["reasoning", "analysis", "--path", ".ai"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
 ];

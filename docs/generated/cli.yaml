@@ -19120,6 +19120,99 @@ cli:
               setup: []
               expectation: exits 0; prints checks
           subcommands: []
+        - path:
+            - majordomus
+            - reasoning
+            - analysis
+          route: /docs/cli/reasoning/analysis/
+          executable: true
+          usage: "majordomus reasoning analysis [OPTIONS]"
+          about: "Check the bundle of an evidence-tagged multi-pass analysis: tagged findings, one verdict each, a synthesis on confirmed findings only, gaps ledgered; exit 10 unless it conforms"
+          args:
+            - name: path
+              long: path
+              positional: false
+              help: "The bundle: a directory whose Markdown files declare their pass, or one file, repository-relative"
+              value_name: PATH
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: "`text` for a person, `json` for a machine; both render the same answer"
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: reasoning-analysis-refused
+              title: A directory that is not an analysis bundle is refused
+              description: "Every Markdown file of a bundle declares its pass in `analysis:` front matter; one that does not is refused rather than skipped, every check that has nothing to compare is named as not run, and the exit is 10 because the bundle does not conform."
+              argv:
+                - reasoning
+                - analysis
+                - "--path"
+                - .ai
+              command: majordomus reasoning analysis --path .ai
+              setup: []
+              expectation: exits 10
+          subcommands: []
     - path:
         - majordomus
         - evidence

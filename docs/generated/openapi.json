@@ -19047,6 +19047,102 @@
         "x-majordomus-cli": "reasoning advisors"
       }
     },
+    "/api/v1/reasoning/analysis": {
+      "get": {
+        "operationId": "reasoning.analysis",
+        "summary": "Check an evidence-tagged multi-pass analysis",
+        "description": "The structural check of one analysis bundle (the skill evidence-tagged-analysis): a directory whose Markdown files declare their pass in front matter (question, lens, cross-check, synthesis), or one file. Every lens finding is a table row tagged OBSERVED with a locator, DERIVED with a formula or INFERRED with what would confirm it; every finding has exactly one cross-check verdict, CONFIRMED, REFUTED or UNVERIFIABLE, itself tagged; the synthesis cites only CONFIRMED findings outside its refuted register and its gaps ledger, its root causes are chains of findings and its remedies name what they address and an owner; every pass document ledgers its gaps. A check whose inputs are absent is not_run with the reason and the bundle is incomplete, never ok. What it proves is structure, said in the answer's promise: whether a locator supports its claim is the cross-check's work. Reads only.",
+        "tags": [
+          "reasoning"
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The bundle: a directory or one Markdown file, repository-relative.",
+            "examples": {
+              "root": {
+                "value": "."
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Check an evidence-tagged multi-pass analysis: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "reasoning.analysis",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::reasoning"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_reasoning_analysis"
+        },
+        "x-majordomus-cli": "reasoning analysis"
+      }
+    },
     "/api/v1/reasoning/check": {
       "get": {
         "operationId": "reasoning.check",
@@ -23700,6 +23796,208 @@
           "skipped"
         ],
         "description": "A number reserved for one session, with the survey it was chosen from."
+      },
+      "AnalysisCheck": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "type": "string",
+            "description": "One of `CHECKS`."
+          },
+          "state": {
+            "$ref": "#/components/schemas/AnalysisCheckState",
+            "description": "How it ended."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it did not run, when it did not."
+          }
+        },
+        "required": [
+          "check",
+          "state"
+        ],
+        "description": "One check and how it ended.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisCheck, AnalysisCheckState, Document};\nlet r = check(&[Document::new(\"s.md\", \"# not an analysis\\n\")]);\nlet bundle: &AnalysisCheck = r.checks.iter().find(|c| c.check == \"bundle\").unwrap();\nassert_eq!(bundle.state, AnalysisCheckState::Failed);\n```"
+      },
+      "AnalysisCheckState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "passed",
+            "description": "It ran and found nothing."
+          },
+          {
+            "type": "string",
+            "const": "failed",
+            "description": "It ran and found at least one defect."
+          },
+          {
+            "type": "string",
+            "const": "not_run",
+            "description": "Its inputs are absent; the reason says which."
+          }
+        ],
+        "description": "How one check ended: it ran and found nothing, it ran and found something, or it could\nnot run because what it compares is absent.\n\n```\nuse majordomus_cli::reasoning::analysis::AnalysisCheckState;\nassert_eq!(serde_json::to_value(AnalysisCheckState::NotRun).unwrap(), \"not_run\");\n```"
+      },
+      "AnalysisConformance": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "conforms",
+            "description": "Every check ran and passed."
+          },
+          {
+            "type": "string",
+            "const": "fails",
+            "description": "At least one check failed."
+          },
+          {
+            "type": "string",
+            "const": "incomplete",
+            "description": "Nothing failed, and at least one check did not run."
+          }
+        ],
+        "description": "The verdict over a whole bundle.\n\n```\nuse majordomus_cli::reasoning::analysis::AnalysisConformance;\nassert_eq!(serde_json::to_value(AnalysisConformance::Incomplete).unwrap(), \"incomplete\");\n```"
+      },
+      "AnalysisDocument": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "The document, as given."
+          },
+          "pass": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`question`, `lens`, `cross-check` or `synthesis`; absent when it declares none."
+          },
+          "lens": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The lens it reads through, for a lens or a cross-check."
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "description": "One document and the role it declares.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisDocument, Document};\nlet r = check(&[Document::new(\"q.md\", \"---\\nanalysis:\\n  id: a\\n  pass: question\\n---\\n# Q1 why?\\n\")]);\nlet d: &AnalysisDocument = &r.documents[0];\nassert_eq!(d.pass.as_deref(), Some(\"question\"));\n```"
+      },
+      "AnalysisFinding": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "type": "string",
+            "description": "The check that found it."
+          },
+          "file": {
+            "type": "string",
+            "description": "The document, as given."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint",
+            "minimum": 0,
+            "description": "The 1-based line, when the defect has one."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The finding, root cause or remedy id it concerns."
+          },
+          "message": {
+            "type": "string",
+            "description": "One sentence saying what the grammar refuses."
+          }
+        },
+        "required": [
+          "check",
+          "file",
+          "message"
+        ],
+        "description": "One defect: the check that found it, where, the id it concerns and what is wrong.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisFinding, Document};\nlet r = check(&[Document::new(\"s.md\", \"# not an analysis\\n\")]);\nlet f: &AnalysisFinding = &r.findings[0];\nassert_eq!((f.check.as_str(), f.file.as_str()), (\"bundle\", \"s.md\"));\n```"
+      },
+      "AnalysisReport": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Every check ran and passed."
+          },
+          "state": {
+            "$ref": "#/components/schemas/AnalysisConformance",
+            "description": "conforms, fails or incomplete."
+          },
+          "promise": {
+            "type": "string",
+            "description": "What a conforming answer proves, and what it does not."
+          },
+          "analysis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The analysis id the documents declare, when they agree on one."
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisDocument"
+            },
+            "description": "Each document and its role."
+          },
+          "ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Paths beside the documents that are not part of the bundle: subdirectories and files\nthat are not Markdown. Reported, never read."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisCheck"
+            },
+            "description": "Every check in `CHECKS` order."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisFinding"
+            },
+            "description": "Every defect."
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "Counts: findings defined, and verdicts by kind."
+          }
+        },
+        "required": [
+          "ok",
+          "state",
+          "promise",
+          "documents",
+          "checks",
+          "findings",
+          "counts"
+        ],
+        "description": "The answer over a bundle.\n\n`ok` is true exactly when `state` is `conforms`: an incomplete bundle is not ok.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisReport, AnalysisConformance, PROMISE};\nlet r: AnalysisReport = check(&[]);\nassert_eq!(r.state, AnalysisConformance::Fails, \"no document is a failed bundle\");\nassert_eq!(r.promise, PROMISE);\n```"
       },
       "AnnounceInput": {
         "type": "object",

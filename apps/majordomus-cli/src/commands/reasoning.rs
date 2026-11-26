@@ -96,6 +96,13 @@ pub fn run(args: ReasoningArgs) -> Result<u8> {
                 return Ok(10);
             }
         }
+        ReasoningCommand::Analysis { path } => {
+            let v = execute(&["reasoning", "analysis"], json!({ "path": path }))?;
+            print(&v, analysis_text(&v));
+            if v["ok"] != Value::Bool(true) {
+                return Ok(10);
+            }
+        }
     }
     Ok(0)
 }
@@ -253,5 +260,33 @@ fn check_text(v: &Value) -> String {
             s(&f["message"])
         ));
     }
+    out
+}
+
+fn analysis_text(v: &Value) -> String {
+    let mut out = format!(
+        "analysis    {} · {}\npromise     {}\n",
+        v["analysis"].as_str().unwrap_or("no single id"),
+        s(&v["state"]),
+        s(&v["promise"])
+    );
+    for c in v["checks"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "  {:<10} {:<8} {}\n",
+            s(&c["check"]),
+            s(&c["state"]),
+            s(&c["reason"])
+        ));
+    }
+    for f in v["findings"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "FAIL {:<9} {}:{} {}\n",
+            s(&f["check"]),
+            s(&f["file"]),
+            f["line"].as_u64().unwrap_or_default(),
+            s(&f["message"])
+        ));
+    }
+    out.push_str(&format!("ignored     {}\n", list(&v["ignored"]).join(", ")));
     out
 }

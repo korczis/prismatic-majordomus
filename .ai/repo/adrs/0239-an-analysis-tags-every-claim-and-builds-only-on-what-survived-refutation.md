@@ -1,0 +1,177 @@
+---
+schema: adr/v1
+id: adr-0239
+kind: adr
+title: An analysis tags every claim by its evidence and builds only on what survived refutation, and its documents are checked for structure
+status: proposed
+date: 2026-11-25
+tags: [reasoning, analysis, evidence, skills]
+related:
+  - "file:.ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md"
+  - "file:docs/REASONING.md"
+  - "file:.ai/repo/skills/evidence-tagged-analysis/SKILL.md"
+  - "file:.ai/repo/skills/project-picture/SKILL.md"
+provenance:
+  origin: authored
+---
+
+# 239. An analysis tags every claim by its evidence and builds only on what survived refutation, and its documents are checked for structure
+
+## Context
+
+The owner answered on 2026-11-25, in session `7709ab47-7786-494d-bbcc-679b293569a7`. The
+answers are recorded verbatim in the curated record
+`owner-answers-2026-11-25-generic-lessons-of-an-adopter-session`:
+
+- The first answer selected four lessons, with the free text "porad se s ostatnimi ai/llm, na
+  vice pruchodu a vymslete nejlepsi reseni" ("consult the other AIs/LLMs, in several passes,
+  and work out the best solution").
+- The second answer, at about 07:40 CET, read "muzes na zaklade vseho z teto sesion, z lessons
+  learned, obecne / dynamicky zlepsi ~/dev/prismatic-majordomus /evolve it? ..." ("improve the
+  generic Majordomus from everything this session learned"). It added the lesson this record
+  decides.
+
+That adopter session was a repository with nondeterministic simulation tests. It asked why its
+agent kept losing and why nothing reacted, and it answered in three passes:
+
+1. a prompt written first;
+2. six independent lenses;
+3. four refuting agents plus one outside model, then a synthesis from confirmed findings only.
+
+The second pass refuted or corrected 21 claims that the first pass or a peer had stated with
+confidence. Examples:
+
+- a list was called empty, but it had held rows that a deadline drained within seconds;
+- a cap was blamed on an outside change, but it was a default exposed by another change;
+- a three-way decomposition divided a year's profit by a later fleet;
+- a per-unit parity claim rested on the same mismatch of periods.
+
+The format caught them. Every claim was tagged OBSERVED (with a locator), DERIVED (with a
+formula) or INFERRED (with what would confirm it). Every finding had a verdict. A gaps ledger
+held what was not verified.
+
+That format was enforced by hand. The pass documents were session scratch and did not last, so
+the published synthesis could not show which of its findings had survived.
+
+Majordomus has `reasoning` records for one executor's decision (ADR 0098), but those live in
+`.ai/local` and are never published. The `project-picture` skill asks for the same three tags,
+and nothing checks them.
+
+## Decision
+
+**A skill and one read-only capability, no new record.**
+
+The skill `evidence-tagged-analysis` holds the protocol and the document shapes:
+
+- the question and its rules first;
+- independent lenses;
+- cross-checks that refute, with exactly one verdict per finding;
+- a synthesis from CONFIRMED findings, with remedies mapped to owners;
+- a gaps ledger in every pass.
+
+`reasoning.analysis` is the seventh capability of the `reasoning` module. It checks one bundle,
+the documents of one analysis, and is projected to CLI, HTTP and MCP from its one declaration.
+It writes nothing. It is not part of `reasoning.check`, which judges the repository and not a
+set of documents.
+
+**Claims are table rows.** The tables are:
+
+- findings: `ID | Claim | Tag | Evidence`;
+- verdicts: `ID | Verdict | Tag | Evidence`;
+- root causes: `RC | Cause | Findings`;
+- remedies: `ID | Remedy | Addresses | Owner`;
+- the refuted register: `ID | Verdict | Correction`.
+
+Prose stays free and is not a claim. Each document declares its role in front matter (`analysis:
+{id, pass, lens}`), and a Markdown file of the bundle that does not is refused, never skipped.
+
+**The answer has three states.**
+
+- `conforms`: every check ran and passed.
+- `fails`: a check found a defect.
+- `incomplete`: nothing failed, but a check could not run, with its reason.
+
+`ok` is true only for `conforms`. A synthesis checked alone is therefore incomplete.
+
+**What a conforming answer proves is structure**, and the answer says so in a fixed `promise`:
+
+- every claim row is typed and sourced;
+- every finding has one verdict;
+- the synthesis cites only CONFIRMED findings outside its refuted register and gaps ledger;
+- every UNVERIFIABLE finding is ledgered.
+
+It does not prove that a locator supports its claim, or that a formula compares like with like.
+That is the refutation pass's work, done by a worker.
+
+**A disagreement is settled as ADR 0098 settles one.** Two verdicts on one finding fail the
+check. The protocol records the disagreement and runs the experiment, and one verdict row
+remains, its evidence naming the experiment. A count of opinions decides nothing.
+
+## How it was reached
+
+The design went through two rounds of critique.
+
+- **Round 1.**
+  - `scripts/advisor-consult` selected two API and CLI advisors. Both refused: one returned an
+    HTTP 401, and the other's account tier no longer admits it. Both outcomes are recorded as
+    consultations.
+  - A CLI advisor read the repository and the draft, and recommended option B with a narrower
+    promise. Its objections:
+    - `not_run` could read as clean;
+    - verdicts had no conflict policy;
+    - the bundle discovery could silently skip files;
+    - the finding ids were brittle;
+    - the backtick locators were permissive;
+    - the synthesis linkage was ambiguous;
+    - the workflow requirements (lens count, the advisor step, the ranking) were not checkable.
+- **Round 2.**
+  - Through `scripts/advisor-consult`, the same CLI advisor (stance: opposes, high confidence)
+    found a contradiction in the revision: an UNVERIFIABLE finding had to be named in the
+    synthesis's gaps ledger, while every unconfirmed citation outside the register was refused.
+    It also noted that prose stays unchecked, and that a verdict's evidence need not be typed.
+  - The local-runtime advisor was unavailable, because no model was pulled. That is recorded.
+- **Peers.** A mesh review request went to the sessions working in this repository.
+
+What was taken:
+
+- the structural promise;
+- `incomplete` and `ok` only for `conforms`;
+- explicit bundles that refuse an undeclared Markdown file;
+- tables instead of inline markers;
+- hyphenated lens ids and emphasis-tolerant cells;
+- one verdict row per finding, with identical duplicates refused too, the disagreement kept in
+  the reasoning records;
+- a tag on every verdict, CONFIRMED included;
+- the gaps-ledger exemption for UNVERIFIABLE findings, proven by a unit test that is the round-2
+  falsifier;
+- the workflow requirements moved to the skill, unchecked.
+
+What was rejected, and why:
+
+- **Cutting owners and root causes from the check.** They stay, because remedies mapped to owners
+  are half of what the owner's protocol is for, and a table column is a checkable fact.
+- **Checking prose.** It is rejected because a sentence cannot be told from a claim without
+  guessing. The skill says a claim that matters goes in a row, and the limit is stated in the
+  promise.
+
+## Alternatives rejected
+
+- **The skill alone, no check.** That is the hand enforcement that failed.
+- **Findings and verdicts as reasoning records.** They would be strongly typed, but local and never
+  published, which is the durability the analysis needs. They would also add two record kinds for
+  what is a document people read.
+- **An `analyses` check inside `reasoning.check`.** It would judge every document that declares the
+  front matter on every run, which makes a draft analysis a repository failure. A bundle is
+  checked when its author asks.
+- **Inline `[OBSERVED: locator]` markers.** They are readable, but the extraction is fuzzy and the
+  error reporting poor. Both critics preferred named columns.
+
+## Consequences
+
+- An analysis is checkable wherever it is tracked. The fixture bundle
+  `test/fixtures/analysis/conforming/` conforms, and case 4777 plants each defect and expects the
+  check to name it.
+- `project-picture` and `report-verification-state` already speak the same three tags. Their
+  outputs can adopt the table grammar later without a new mechanism.
+- The check can be satisfied by a document that is structurally right and substantively wrong.
+  The protocol's refutation pass is the defence, and the answer's promise says so.

@@ -1,7 +1,7 @@
 +++
 title = "Project picture"
 description = "Build the best evidenced picture of a project from every source the worker can reach, local first, every source optional, with each claim tagged and sourced and every gap recorded."
-weight = 8
+weight = 9
 [extra]
 id = "project-picture"
 status = "draft"

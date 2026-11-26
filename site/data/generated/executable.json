@@ -3384,6 +3384,23 @@
       "tool": "majordomus_reasoning_advisors"
     },
     {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-analysis",
+      "claims": [],
+      "cli": "majordomus reasoning analysis",
+      "id": "reasoning.analysis",
+      "kind": "query",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": null,
+      "route": "/registry/capabilities/reasoning-analysis/",
+      "slug": "reasoning-analysis",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "Check an evidence-tagged multi-pass analysis",
+      "tool": "majordomus_reasoning_analysis"
+    },
+    {
       "api_anchor": "/docs/api/reasoning/#op-reasoning-check",
       "claims": [],
       "cli": "majordomus reasoning check",
@@ -4699,6 +4716,13 @@
         "test": "test/cases/736_reasoning_check_refuses_drift.sh"
       },
       {
+        "id": "an-analysis-builds-on-what-survived",
+        "implementation": "apps/majordomus-cli/src/reasoning/analysis.rs",
+        "route": "/guarantees/an-analysis-builds-on-what-survived/",
+        "status": "guaranteed",
+        "test": "test/cases/4777_an_analysis_builds_on_what_survived.sh"
+      },
+      {
         "id": "the-closing-question-is-measured",
         "implementation": "apps/majordomus-cli/src/gates/closing.rs",
         "route": "/guarantees/the-closing-question-is-measured/",
@@ -4768,8 +4792,8 @@
     ]
   },
   "counts": {
-    "capabilities": 233,
-    "claims": 93,
+    "capabilities": 234,
+    "claims": 94,
     "modules": 62
   },
   "generator": "majordomus-cli 1.2.0",
@@ -6280,6 +6304,11 @@
           "id": "reasoning.advisors",
           "route": "/registry/capabilities/reasoning-advisors/",
           "slug": "reasoning-advisors"
+        },
+        {
+          "id": "reasoning.analysis",
+          "route": "/registry/capabilities/reasoning-analysis/",
+          "slug": "reasoning-analysis"
         },
         {
           "id": "reasoning.check",

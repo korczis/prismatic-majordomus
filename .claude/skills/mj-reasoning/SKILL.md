@@ -1,6 +1,6 @@
 ---
 name: mj-reasoning
-description: "Majordomus reasoning: The advisors and what they can do now; Check that reasoning stays provider-independent; Why a decision was made; What an uncertainty calls for; Record a reasoning step; The session's reasoning state."
+description: "Majordomus reasoning: The advisors and what they can do now; Check an evidence-tagged multi-pass analysis; Check that reasoning stays provider-independent; Why a decision was made; What an uncertainty calls for; Record a reasoning step; The session's reasoning state."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -16,6 +16,7 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `reasoning.advisors` | The advisors and what they can do now | `majordomus_reasoning_advisors` | `majordomus reasoning advisors` | reads |
+| `reasoning.analysis` | Check an evidence-tagged multi-pass analysis | `majordomus_reasoning_analysis` | `majordomus reasoning analysis` | reads |
 | `reasoning.check` | Check that reasoning stays provider-independent | `majordomus_reasoning_check` | `majordomus reasoning check` | reads |
 | `reasoning.explain` | Why a decision was made | `majordomus_reasoning_explain` | `majordomus reasoning explain` | reads |
 | `reasoning.plan` | What an uncertainty calls for | `majordomus_reasoning_plan` | `majordomus reasoning plan` | reads |

@@ -82,6 +82,10 @@ The work between `start` and `finish` follows the repository's skills, each read
 `majordomus://skill/implement`; removing a file, branch, worktree, record or process that
 this task did not create follows `majordomus://skill/assess-before-deleting`; the final
 report and every handover body follow `majordomus://skill/report-verification-state`.
+Explaining why something failed, or why nothing reacted, from evidence spread over many
+sources follows `majordomus://skill/evidence-tagged-analysis`: the question and its rules first,
+independent lenses, each finding put to refutation, and a synthesis built only on what survived,
+checked with `majordomus reasoning analysis`.
 A change that is implemented and pushed is not yet delivered: bringing its branch current
 with master follows `majordomus://skill/rebaser`, which picks the cheapest safe strategy from
 the integration engine's own assessment and never rewrites a published branch, and taking

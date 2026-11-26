@@ -3238,6 +3238,19 @@
       "test_case": "736_reasoning_check_refuses_drift"
     },
     {
+      "id": "an-analysis-builds-on-what-survived",
+      "claim": "An evidence-tagged multi-pass analysis is checked, not trusted; reasoning analysis says whether every finding of its bundle is tagged and sourced, judged by exactly one cross-check verdict, cited by the synthesis only when CONFIRMED and ledgered when UNVERIFIABLE, and a bundle missing a pass is incomplete, never ok",
+      "source": "docs/REASONING.md",
+      "implementation": "apps/majordomus-cli/src/reasoning/analysis.rs",
+      "test": "test/cases/4777_an_analysis_builds_on_what_survived.sh",
+      "status": "guaranteed",
+      "note": "the conforming fixture bundle conforms; each planted defect is named with exit 10; what is proven is structure, not that a locator supports its claim.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "4777_an_analysis_builds_on_what_survived"
+    },
+    {
       "id": "the-closing-question-is-measured",
       "claim": "Whether a task added debt, left a branch or a worktree behind, or grew the backlog is answered by the done invariant from git, the debt baselines and the recorded forge observation, measured from where the task started; a reading that was not taken is unknown, never a pass",
       "source": "docs/CLI.md",

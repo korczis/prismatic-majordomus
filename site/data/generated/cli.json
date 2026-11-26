@@ -29016,6 +29016,12 @@
           "command": "majordomus reasoning check",
           "name": "check",
           "route": "/docs/cli/reasoning/check/"
+        },
+        {
+          "about": "Check the bundle of an evidence-tagged multi-pass analysis: tagged findings, one verdict each, a synthesis on confirmed findings only, gaps ledgered; exit 10 unless it conforms",
+          "command": "majordomus reasoning analysis",
+          "name": "analysis",
+          "route": "/docs/cli/reasoning/analysis/"
         }
       ],
       "command": "majordomus reasoning",
@@ -29931,6 +29937,149 @@
       ],
       "route": "/docs/cli/reasoning/check/",
       "usage": "majordomus reasoning check [OPTIONS]"
+    },
+    {
+      "about": "Check the bundle of an evidence-tagged multi-pass analysis: tagged findings, one verdict each, a synthesis on confirmed findings only, gaps ledgered; exit 10 unless it conforms",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The bundle: a directory whose Markdown files declare their pass, or one file, repository-relative",
+          "long": "path",
+          "name": "path",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning analysis",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "analysis",
+            "--path",
+            ".ai"
+          ],
+          "command": "majordomus reasoning analysis --path .ai",
+          "description": "Every Markdown file of a bundle declares its pass in `analysis:` front matter; one that does not is refused rather than skipped, every check that has nothing to compare is named as not run, and the exit is 10 because the bundle does not conform.",
+          "expectation": "exits 10",
+          "id": "reasoning-analysis-refused",
+          "setup": [],
+          "title": "A directory that is not an analysis bundle is refused"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "analysis",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "analysis"
+      ],
+      "route": "/docs/cli/reasoning/analysis/",
+      "usage": "majordomus reasoning analysis [OPTIONS]"
     },
     {
       "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
@@ -41961,10 +42110,10 @@
     }
   ],
   "counts": {
-    "arguments": 1819,
-    "commands": 264,
-    "examples": 263,
-    "runnable": 229
+    "arguments": 1825,
+    "commands": 265,
+    "examples": 264,
+    "runnable": 230
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.2.0",

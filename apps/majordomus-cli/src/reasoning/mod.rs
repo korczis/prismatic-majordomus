@@ -62,6 +62,7 @@
 //! assert_eq!(p.selected[0].advisor, "peer:n1-r1");
 //! ```
 
+pub mod analysis;
 pub mod availability;
 pub mod catalogue;
 pub mod check;

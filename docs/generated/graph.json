@@ -1771,6 +1771,15 @@
         "status": "query"
       },
       {
+        "id": "capability:reasoning.analysis",
+        "kind": "capability",
+        "label": "reasoning.analysis",
+        "summary": "Check an evidence-tagged multi-pass analysis",
+        "route": "/cockpit/capabilities/reasoning.analysis",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:reasoning.check",
         "kind": "capability",
         "label": "reasoning.check",
@@ -3654,6 +3663,14 @@
         "label": "source.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/quality/source.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/analysis.rs",
+        "kind": "file",
+        "label": "analysis.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/analysis.rs",
         "external": true
       },
       {
@@ -9920,6 +9937,30 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0239",
+        "kind": "adr",
+        "label": "adr-0239",
+        "summary": "An analysis tags every claim by its evidence and builds only on what survived refutation, and its documents are checked for structure",
+        "route": "/cockpit/objects/adr/adr-0239",
+        "source": ".ai/repo/adrs/0239-an-analysis-tags-every-claim-and-builds-only-on-what-survived-refutation.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-25",
+          "related": [
+            "file:.ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md",
+            "file:docs/REASONING.md",
+            "file:.ai/repo/skills/evidence-tagged-analysis/SKILL.md",
+            "file:.ai/repo/skills/project-picture/SKILL.md"
+          ],
+          "tags": [
+            "reasoning",
+            "analysis",
+            "evidence",
+            "skills"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -10697,6 +10738,22 @@
           "responsibility": "layer",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/01_init.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/an-analysis-builds-on-what-survived",
+        "kind": "claim",
+        "label": "an-analysis-builds-on-what-survived",
+        "summary": "An evidence-tagged multi-pass analysis is checked, not trusted; reasoning analysis says whether every finding of its bundle is tagged and sourced, judged by exactly one cross-check verdict, cited by the synthesis only when CONFIRMED and ledgered when UNVERIFIABLE, and a bundle missing a pass is incomplete, never ok",
+        "route": "/cockpit/objects/claim/an-analysis-builds-on-what-survived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/reasoning/analysis.rs",
+          "note": "the conforming fixture bundle conforms; each planted defect is named with exit 10; what is proven is structure, not that a locator supports its claim.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/4777_an_analysis_builds_on_what_survived.sh"
         }
       },
       {
@@ -17044,6 +17101,14 @@
         "source": ".ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/evidence-tagged-analysis/examples/why-a-cache-misses.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/evidence-tagged-analysis/examples/why-a-cache-misses.md",
+        "summary": "Why a cache misses after every deploy",
+        "route": "/cockpit/objects/document/ai-repo-skills-evidence-tagged-analysis-examples-why-a-cache-misses-md",
+        "source": ".ai/repo/skills/evidence-tagged-analysis/examples/why-a-cache-misses.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/evolve/examples/after-an-incident.md",
         "kind": "document",
         "label": ".ai/repo/skills/evolve/examples/after-an-incident.md",
@@ -18042,6 +18107,14 @@
         "summary": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
         "route": "/cockpit/objects/document/docs-claims-ai-layer-manifest-md",
         "source": "docs/claims/ai-layer-manifest.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/an-analysis-builds-on-what-survived.md",
+        "kind": "document",
+        "label": "docs/claims/an-analysis-builds-on-what-survived.md",
+        "summary": "An evidence-tagged multi-pass analysis is checked, not trusted; reasoning analysis says whether every finding of its bundle is tagged and sourced, judged by exactly one cross-check verdict, cited by the synthesis only when CONFIRMED and ledgered when UNVERIFIABLE, and a bundle missing a pass is incomplete, never ok",
+        "route": "/cockpit/objects/document/docs-claims-an-analysis-builds-on-what-survived-md",
+        "source": "docs/claims/an-analysis-builds-on-what-survived.md"
       },
       {
         "id": "majordomus://document/docs/claims/an-observation-becomes-a-grouped-candidate.md",
@@ -82853,6 +82926,66 @@
         }
       },
       {
+        "id": "majordomus://issue/I4796",
+        "kind": "issue",
+        "label": "I4796",
+        "summary": "reasoning analysis checks an evidence-tagged multi-pass analysis: every finding tagged and sourced, one verdict each, a synthesis on CONFIRMED findings only, gaps ledgered, and not_run never reads as ok",
+        "route": "/cockpit/objects/issue/i4796",
+        "source": ".ai/repo/project/issues/I4796.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The fixture bundle test/fixtures/analysis/conforming conforms and majordomus reasoning analysis exits 0 on it",
+            "A bundle whose synthesis cites a REFUTED finding outside the refuted register fails, naming the finding, and the CLI exits 10",
+            "An UNVERIFIABLE finding named in the synthesis gaps ledger is not a citation defect, and one the ledger does not name is",
+            "A synthesis checked without its cross-checks is incomplete, ok is false, and the checks that did not run carry their reason",
+            "A Markdown file of the bundle without analysis front matter is refused, never skipped; a path outside the repository is refused"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "an_analysis_builds_on_what_survived"
+          ],
+          "milestone": "an-analysis-builds-on-what-survived-refutation",
+          "non_scope": [
+            "Judging whether a locator supports its claim, or whether a formula compares like with like: that is the cross-check's work",
+            "Checking prose outside the tables; a claim that matters is a row",
+            "Storing an analysis as reasoning records under .ai/local: an analysis is published, records are not",
+            "Requiring an advisor (project.advisors-are-optional)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. A new read-only capability and a skill; no existing record, store or check changes.",
+          "scope": [
+            ".ai/repo/project/issues/I4796.yaml",
+            ".ai/repo/project/milestones/an-analysis-builds-on-what-survived-refutation.yaml",
+            "share/board.yaml",
+            "apps/majordomus-cli/src/reasoning/analysis.rs",
+            "apps/majordomus-cli/src/reasoning/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/reasoning.rs",
+            ".ai/repo/skills/evidence-tagged-analysis",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "test/fixtures/analysis",
+            "test/cases/4777_an_analysis_builds_on_what_survived.sh",
+            "docs/REASONING.md",
+            "docs/CLAIMS.yaml",
+            "docs/generated",
+            "site"
+          ],
+          "slug": "an-analysis-is-checked-for-what-survived",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::analysis",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::reasoning",
+            "test/run.sh 4777",
+            "bin/majordomus-cli generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -88837,6 +88970,28 @@
             "bin/majordomus plan validate",
             "bin/majordomus usecase validate",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/an-analysis-builds-on-what-survived-refutation",
+        "kind": "milestone",
+        "label": "an-analysis-builds-on-what-survived-refutation",
+        "summary": "An analysis of a hard question tags every claim by its evidence, puts every finding to refutation and builds its conclusion only on what survived, and a check says whether its documents conform",
+        "route": "/cockpit/objects/milestone/an-analysis-builds-on-what-survived-refutation",
+        "source": ".ai/repo/project/milestones/an-analysis-builds-on-what-survived-refutation.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "I4796 has landed: the skill, the capability reasoning.analysis on every surface, and a fixture bundle that conforms"
+          ],
+          "created_at": "2026-11-25",
+          "evidence_required": [],
+          "order": 551,
+          "priority": "p1",
+          "slug": "an-analysis-builds-on-what-survived-refutation",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -107021,6 +107176,38 @@
         }
       },
       {
+        "id": "majordomus://skill/evidence-tagged-analysis",
+        "kind": "skill",
+        "label": "evidence-tagged-analysis",
+        "summary": "Evidence-tagged multi-pass analysis",
+        "route": "/cockpit/objects/skill/evidence-tagged-analysis",
+        "source": ".ai/repo/skills/evidence-tagged-analysis/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "QUESTION: what is to be explained, such as why something keeps failing or why nothing reacted",
+            "LENSES: the independent angles, one per sub-question (default: one per question of the question document)",
+            "BUNDLE: the directory the documents go to, tracked where the analysis will be published"
+          ],
+          "outputs": [
+            "a bundle of Markdown documents, one per pass and lens, each declaring its role in front matter",
+            "a synthesis whose root causes and remedies rest only on CONFIRMED findings, each remedy with an owner",
+            "the answer of `majordomus reasoning analysis --path <bundle>`, conforms, fails or incomplete"
+          ],
+          "related": [
+            "project-picture",
+            "report-verification-state",
+            "repo-review"
+          ],
+          "tags": [
+            "analysis",
+            "evidence",
+            "reasoning",
+            "review"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/evolve",
         "kind": "skill",
         "label": "evolve",
@@ -110815,6 +111002,13 @@
         "label": "test/cases/46_cross_surface.sh",
         "route": "/cockpit/objects/test/test-cases-46-cross-surface-sh",
         "source": "test/cases/46_cross_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4777_an_analysis_builds_on_what_survived.sh",
+        "kind": "test",
+        "label": "test/cases/4777_an_analysis_builds_on_what_survived.sh",
+        "route": "/cockpit/objects/test/test-cases-4777-an-analysis-builds-on-what-survived-sh",
+        "source": "test/cases/4777_an_analysis_builds_on_what_survived.sh"
       },
       {
         "id": "majordomus://test/test/cases/47_mutation.sh",
@@ -118054,6 +118248,26 @@
       },
       {
         "source": "capability:reasoning.advisors",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.analysis",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.analysis",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.analysis",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.analysis",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -126688,6 +126902,31 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0239",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0239",
+        "target": "majordomus://adr/adr-0098",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0239",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0239",
+        "target": "majordomus://skill/evidence-tagged-analysis",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0239",
+        "target": "majordomus://skill/project-picture",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -127150,6 +127389,26 @@
       {
         "source": "majordomus://claim/ai-layer-manifest",
         "target": "majordomus://test/test/cases/01_init.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/an-analysis-builds-on-what-survived",
+        "target": "file:apps/majordomus-cli/src/reasoning/analysis.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/an-analysis-builds-on-what-survived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/an-analysis-builds-on-what-survived",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/an-analysis-builds-on-what-survived",
+        "target": "majordomus://test/test/cases/4777_an_analysis_builds_on_what_survived.sh",
         "kind": "tested_by"
       },
       {
@@ -132608,6 +132867,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/evidence-tagged-analysis/examples/why-a-cache-misses.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/evolve/examples/after-an-incident.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -133229,6 +133493,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/ai-layer-manifest.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/an-analysis-builds-on-what-survived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -153063,6 +153332,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4796",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4796",
+        "target": "majordomus://milestone/an-analysis-builds-on-what-survived-refutation",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -154389,6 +154668,11 @@
       },
       {
         "source": "majordomus://milestone/adopter-upgrades",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/an-analysis-builds-on-what-survived-refutation",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -158243,6 +158527,26 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/evidence-tagged-analysis",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/evidence-tagged-analysis",
+        "target": "majordomus://skill/project-picture",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/evidence-tagged-analysis",
+        "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/evidence-tagged-analysis",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/evolve",
         "target": "kind:skill",
         "kind": "is_a"
@@ -160869,6 +161173,11 @@
       },
       {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4777_an_analysis_builds_on_what_survived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -165779,6 +166088,11 @@
       },
       {
         "source": "module:reasoning",
+        "target": "capability:reasoning.analysis",
+        "kind": "composes"
+      },
+      {
+        "source": "module:reasoning",
         "target": "capability:reasoning.check",
         "kind": "composes"
       },
@@ -165999,8 +166313,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4551,
+      "edges": 10253,
       "acyclic": false,
       "truncated": false
     }

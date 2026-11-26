@@ -1,0 +1,51 @@
+id: I4796
+milestone: an-analysis-builds-on-what-survived-refutation
+title: "reasoning analysis checks an evidence-tagged multi-pass analysis: every finding tagged and sourced, one verdict each, a synthesis on CONFIRMED findings only, gaps ledgered, and not_run never reads as ok"
+slug: an-analysis-is-checked-for-what-survived
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add the skill evidence-tagged-analysis (the protocol: question and rules first, independent lenses, cross-refutation with one verdict per finding, a synthesis from CONFIRMED findings with remedies mapped to owners, a gaps ledger) and the read-only capability reasoning.analysis that checks one bundle of it against a table grammar, projected to CLI, HTTP and MCP from one declaration."
+why: "The owner ordered on 2026-11-25 that the lessons of a long adopter session become generic Majordomus improvements, consulting other models in several passes (BRIEF of session 7709ab47-7786-494d-bbcc-679b293569a7, recorded in docs/REASONING.md#analysis). The best result of that session came from a three-pass evidence-tagged analysis, and its weakness was that the tags were checked by hand and the pass documents were lost."
+current_state: "On 46775282570 the reasoning module has six capabilities (capability/builtin/reasoning.rs) and none reads a document of claims; the project-picture skill asks for evidence tags and nothing checks them."
+desired_state: "reasoning/analysis.rs parses a bundle and runs the checks bundle, question, findings, verdicts, synthesis, citations and gaps; reasoning.analysis answers conforms, fails or incomplete with ok true only for conforms; the skill and test/fixtures/analysis/conforming/ show a conforming bundle; docs/REASONING.md documents the grammar."
+scope:
+  - ".ai/repo/project/issues/I4796.yaml"
+  - ".ai/repo/project/milestones/an-analysis-builds-on-what-survived-refutation.yaml"
+  - "share/board.yaml"
+  - "apps/majordomus-cli/src/reasoning/analysis.rs"
+  - "apps/majordomus-cli/src/reasoning/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/reasoning.rs"
+  - ".ai/repo/skills/evidence-tagged-analysis"
+  - ".ai/repo/workflows/task-lifecycle.md"
+  - "test/fixtures/analysis"
+  - "test/cases/4777_an_analysis_builds_on_what_survived.sh"
+  - "docs/REASONING.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/generated"
+  - "site"
+non_scope:
+  - "Judging whether a locator supports its claim, or whether a formula compares like with like: that is the cross-check's work"
+  - "Checking prose outside the tables; a claim that matters is a row"
+  - "Storing an analysis as reasoning records under .ai/local: an analysis is published, records are not"
+  - "Requiring an advisor (project.advisors-are-optional)"
+depends_on: []
+acceptance_criteria:
+  - "The fixture bundle test/fixtures/analysis/conforming conforms and majordomus reasoning analysis exits 0 on it"
+  - "A bundle whose synthesis cites a REFUTED finding outside the refuted register fails, naming the finding, and the CLI exits 10"
+  - "An UNVERIFIABLE finding named in the synthesis gaps ledger is not a citation defect, and one the ledger does not name is"
+  - "A synthesis checked without its cross-checks is incomplete, ok is false, and the checks that did not run carry their reason"
+  - "A Markdown file of the bundle without analysis front matter is refused, never skipped; a path outside the repository is refused"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::analysis"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::reasoning"
+  - "test/run.sh 4777"
+  - "bin/majordomus-cli generate --check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "an_analysis_builds_on_what_survived"
+risk: "Low. A new read-only capability and a skill; no existing record, store or check changes."
+created_at: 2026-11-25
+updated_at: 2026-11-25
