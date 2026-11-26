@@ -44003,10 +44003,10 @@
           "acceptance_criteria": [
             "A hub with a newer installed version ends serving it, with no session lost that was attached before the grace",
             "A version whose readiness or mesh verify fails is rolled back within the grace and the board names node, version and failed check",
-            "The hub service unit is written by a capability, not by hand"
+            "The hub service unit is written by a capability, not by hand",
+            "When the service-manager activation lands, the interim daily installer timer of 2026-11-22 is removed from every machine that carries it"
           ],
           "created_at": "2026-10-14",
-          "current_state": "Updating a hub is a fetch, a build and a service restart by hand; the macOS hub is started by hand.",
           "depends_on": [
             "I2720"
           ],
@@ -44030,7 +44030,7 @@
             "test/cases"
           ],
           "slug": "a-hub-activates-and-rolls-back",
-          "updated_at": "2026-10-14",
+          "updated_at": "2026-11-22",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -69866,25 +69866,15 @@
         "route": "/cockpit/objects/issue/i3949",
         "source": ".ai/repo/project/issues/I3949.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "pipefail-check over the tree before this change exits 10 and names collision-gate:89, command-graph:75, pages-check:284 and :454, and generate-site-data:771",
-            "pipefail-check over the changed tree exits 0",
-            "Case 300 writes the spelling, a comment about it, a here-string, an `||` and a script without pipefail, and only the spelling is refused"
-          ],
           "completed_at": "2026-10-26T01:15:30Z",
           "completed_event": "sha256:ec83d080409782ff25e5ffdcaef33464e8971462b3c38016fb81bed797ea6b33",
           "created_at": "2026-10-23",
-          "current_state": "pipefail-check measures only the scripts that pipe under set -e without pipefail; a script that sets pipefail is never read again, and five of them pipe a printf into grep -q.",
           "depends_on": [],
           "desired_state": "pipefail-check exits 10 with a RACE line per site and the here-string remedy; the tree carries no such site; comments, `||`, here-strings and other readers are not findings.",
           "evidence_required": [
             "suite"
           ],
           "milestone": "ci-critical-path",
-          "non_scope": [
-            "Pipes into `head`, which pipefail exposes the same way only when the producer outwrites the pipe buffer; 69 sites, each to be judged by its producer",
-            "scripts/ci-plan, which pipes printf into grep -q but sets no pipefail, so its status is grep's own"
-          ],
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
@@ -69895,13 +69885,14 @@
             "scripts/ci/command-graph",
             "scripts/ci/pages-check",
             "scripts/generate-site-data",
+            "lib/rust_bin.sh",
             "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
             ".ai/repo/project/issues/I3949.yaml"
           ],
           "slug": "an-early-exit-reader-reads-a-here-string",
           "started_at": "2026-10-26T01:14:55Z",
           "started_event": "sha256:bc66df6e39cbb2b7a001a77437e4c480dc596f1ffe5dcdad3ab6bf44ccb3e9cd",
-          "updated_at": "2026-10-26T01:15:30Z",
+          "updated_at": "2026-11-22",
           "validation": [
             "bash test/run.sh 300_a_pipeline_cannot_hide_a_failure",
             "scripts/ci/pipefail-check"
@@ -80970,7 +80961,7 @@
           ],
           "serves": [],
           "slug": "a-yielded-run-resumes-when-the-path-clears",
-          "updated_at": "2026-11-15",
+          "updated_at": "2026-11-22",
           "validation": [
             "actionlint .github/workflows/pages.yml .github/workflows/release.yml .github/workflows/validate.yml .github/workflows/release-path.yml",
             "bash test/run.sh 3027_the_release_path_goes_first",
@@ -82816,6 +82807,470 @@
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 4671_a_push_refuses_early_and_reviews_a_commit_once"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4673",
+        "kind": "issue",
+        "label": "I4673",
+        "summary": "Every repository of a fleet trusts the fleet's machines from one list: init and update seed trust.allow and the hubs, and doctor names a repository that drifts from it",
+        "route": "/cockpit/objects/issue/i4673",
+        "source": ".ai/repo/project/issues/I4673.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "a_fleet_trusts_its_machines_from_one_list"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "Reloading a running server's trust when the trunk's trust.allow changes: I4571",
+            "mesh doctor failing a runtime that is closed while the declaration trusts this machine's key: I4572",
+            "Admitting a key nobody listed: the fleet list is written by its owner, never learned from what discovery heard",
+            "The per-repository blockers met in the hand rollout (a doctor finding on a knowledge record, a pre-commit that needs deps): each belongs to its own repository"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4673.yaml",
+            "lib/init.sh",
+            "lib/update.sh",
+            "lib/doctor.sh",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "docs/MESH.md",
+            "test/cases/4673_a_fleet_trusts_its_machines_from_one_list.sh"
+          ],
+          "serves": [],
+          "slug": "a-fleet-trusts-its-machines-from-one-list",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4673_a_fleet_trusts_its_machines_from_one_list"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4674",
+        "kind": "issue",
+        "label": "I4674",
+        "summary": "A long-running job is a mesh record with its machine, process group, budget, heartbeat and stop handle; jobs consult one machine guard; an owner's stop order reaches them",
+        "route": "/cockpit/objects/issue/i4674",
+        "source": ".ai/repo/project/issues/I4674.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A job started on node A is listed by `job list` on node B within one beat",
+            "A job whose beat is missed is reported stalled, and one whose recorded pid is gone is reported orphaned",
+            "`job admit` grants 0 while the machine guard reads over a bound, and names the reading",
+            "`job stop` from node B signals the recorded process group on node A; a remote child carrying MAJORDOMUS_OWNER_JOB is stopped; a decoy process with the same command line is never signalled",
+            "The stop order and the job's exit appear in the journal and in the brief",
+            "Case 4674 fails first against master"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "a_long_running_job_is_a_mesh_record"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "Naming a heavy process group that nobody registered, and pausing it: I4668 (related; detection after the fact)",
+            "Supervising a service a session declares: I4622",
+            "Tracing a session's own workers: I3956",
+            "Stopping a process by its name or command line: a stop signals only a recorded process group"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4674.yaml",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/who.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "docs/MESH.md",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4674_a_long_running_job_is_a_mesh_record.sh"
+          ],
+          "serves": [],
+          "slug": "a-long-running-job-is-a-mesh-record",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4674_a_long_running_job_is_a_mesh_record"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4675",
+        "kind": "issue",
+        "label": "I4675",
+        "summary": "`majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready",
+        "route": "/cockpit/objects/issue/i4675",
+        "source": ".ai/repo/project/issues/I4675.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "mesh_allocate_answers_when_the_capability_does"
+          ],
+          "milestone": "a-session-proceeds",
+          "non_scope": [
+            "Reserving an id the mesh allocator holds for another session: I4616",
+            "Ids in an adopter's own pattern: I4679",
+            "Atomic reservation at origin and checks at landing: I4357"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4675.yaml",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/allocate.rs",
+            "test/cases/4675_mesh_allocate_answers_when_the_capability_does.sh"
+          ],
+          "serves": [],
+          "slug": "mesh-allocate-answers-when-the-capability-does",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4675_mesh_allocate_answers_when_the_capability_does"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4676",
+        "kind": "issue",
+        "label": "I4676",
+        "summary": "A quoted YAML scalar followed by a trailing comment loads without its quotes",
+        "route": "/cockpit/objects/issue/i4676",
+        "source": ".ai/repo/project/issues/I4676.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A sequence item `- \\\"abc\\\"  # note` and a mapping value `k: 'abc'  # note` each load as abc",
+            "`- \\\"a # b\\\"` loads as a # b: a '#' inside the quotes is part of the value",
+            "Case 4676 loads a mesh declaration whose trust.allow entries are quoted keys with trailing comments, and it passes majordomus.mesh-declaration/v1",
+            "Negative control: the case fails against master, where the key keeps its quotes"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "desired_state": "A quoted scalar with a trailing comment loads as its unquoted value in a sequence item and in a mapping value; a '#' inside the quotes stays part of the value.",
+          "evidence_required": [
+            "a_quoted_scalar_before_a_comment_loses_its_quotes"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "A present but invalid mesh declaration reading as absent: I4677",
+            "Widening the YAML subset to other constructs"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4676.yaml",
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "test/cases/4676_a_quoted_scalar_before_a_comment_loses_its_quotes.sh"
+          ],
+          "serves": [],
+          "slug": "a-quoted-scalar-before-a-comment-loses-its-quotes",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4676_a_quoted_scalar_before_a_comment_loses_its_quotes"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4677",
+        "kind": "issue",
+        "label": "I4677",
+        "summary": "A mesh declaration that exists but fails its schema fails mesh doctor and names the diagnostic, instead of reading as absent",
+        "route": "/cockpit/objects/issue/i4677",
+        "source": ".ai/repo/project/issues/I4677.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "desired_state": "A missing declaration reads as the default posture; a present but invalid one FAILs mesh doctor with the file, the schema and the diagnostic, and doctor's verdict says a check failed.",
+          "evidence_required": [
+            "an_invalid_mesh_declaration_is_not_absent"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "The quoted-scalar parsing defect that produced the invalid declaration: I4676",
+            "A runtime that is closed while a valid declaration trusts this machine: I4572"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4677.yaml",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "docs/MESH.md",
+            "test/cases/4677_an_invalid_mesh_declaration_is_not_absent.sh"
+          ],
+          "serves": [],
+          "slug": "an-invalid-mesh-declaration-is-not-absent",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4677_an_invalid_mesh_declaration_is_not_absent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4678",
+        "kind": "issue",
+        "label": "I4678",
+        "summary": "The tailscale provider finds the macOS app's bundled CLI and probes again on every interval, not only at server start",
+        "route": "/cockpit/objects/issue/i4678",
+        "source": ".ai/repo/project/issues/I4678.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A unit test with a fixture app-bundle path and no tailscale on PATH finds the bundled CLI and runs it by exec",
+            "A unit test in which the fixture CLI first fails and then answers shows the provider stopped, then running at the next interval, without a restart",
+            "Negative control: both tests fail against master"
+          ],
+          "created_at": "2026-11-22",
+          "current_state": "Observed 2026-11-22 as above. apps/majordomus-cli/src/mesh/tailscale.rs holds the provider (id 'tailscale'); I2410 made a trusted machine on the tailnet discoverable through Tailscale.",
+          "depends_on": [],
+          "desired_state": "A Mac with the Tailscale app and no CLI on PATH is discovered through the bundle's CLI; a provider that read stopped reads running at the next interval after the tailnet comes up.",
+          "evidence_required": [
+            "tailscale_provider_unit_tests"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "Installing or configuring Tailscale",
+            "Other discovery means (multicast, broadcast, rendezvous)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4678.yaml",
+            "apps/majordomus-cli/src/mesh/tailscale.rs",
+            "apps/majordomus-cli/src/mesh/provider.rs",
+            "docs/MESH.md"
+          ],
+          "serves": [],
+          "slug": "the-tailscale-provider-finds-the-bundled-cli",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::tailscale"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4679",
+        "kind": "issue",
+        "label": "I4679",
+        "summary": "plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn>",
+        "route": "/cockpit/objects/issue/i4679",
+        "source": ".ai/repo/project/issues/I4679.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4679 builds a repository that declares a letter-plus-3-digits pattern and holds K247 and G030: allocating for K returns K248 and for G returns G031, and a second allocation for K returns K249",
+            "A repository with no declared pattern still receives I<nnnn>",
+            "Negative control: the case fails against master, where the allocation returns I0001"
+          ],
+          "created_at": "2026-11-22",
+          "current_state": "Observed as above. apps/majordomus-cli/src/capability/builtin/allocate.rs holds plan.allocate (I3040). The nearest records, I4357 and I4616, cover I<nnnn> only.",
+          "depends_on": [],
+          "evidence_required": [
+            "allocate_reads_the_declared_id_pattern"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Refusing locally an id the allocator reserved for another session: I4616",
+            "The command-line allocate path failing with os error 35: I4675",
+            "Renaming an adopter's existing ids"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4679.yaml",
+            "apps/majordomus-cli/src/capability/builtin/allocate.rs",
+            "test/cases/4679_allocate_reads_the_declared_id_pattern.sh"
+          ],
+          "serves": [],
+          "slug": "allocate-reads-the-declared-id-pattern",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4679_allocate_reads_the_declared_id_pattern"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4680",
+        "kind": "issue",
+        "label": "I4680",
+        "summary": "The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it",
+        "route": "/cockpit/objects/issue/i4680",
+        "source": ".ai/repo/project/issues/I4680.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4680 holds the pusher's branch, two other branches and an orphan dirty worktree: the pre-push check refuses only while the pusher's own branch is stale, and lists the others without refusing",
+            "The rescue command turns the orphan worktree into a refs/rescue/ ref and a bundle that `git bundle verify` accepts, removes the worktree, and pushes nothing (the remote's refs are unchanged)",
+            "Negative control: the case's first assertion fails against master, where the other holdings refuse the push"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "stale_topology_judges_the_pushers_own_holdings"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Uncommitted work in a worktree being named: I1995",
+            "Reclaiming a finished worktree's build output: I4324",
+            "A stale task read as active: I4416",
+            "Deleting a holding without first keeping it in a rescue ref and a verified bundle"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4680.yaml",
+            "apps/majordomus-cli/src/gates/done.rs",
+            "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4680_stale_topology_judges_the_pushers_own_holdings.sh"
+          ],
+          "serves": [],
+          "slug": "stale-topology-judges-the-pushers-own-holdings",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4680_stale_topology_judges_the_pushers_own_holdings"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4681",
+        "kind": "issue",
+        "label": "I4681",
+        "summary": "finish --note given text, not a readable file, says that --note takes a file and prints the usage",
+        "route": "/cockpit/objects/issue/i4681",
+        "source": ".ai/repo/project/issues/I4681.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4681 runs `finish --outcome partial --note '# Objective x'` in a task: the refusal says --note takes a file, prints the usage line, and does not name majordomus.note-integrity",
+            "The same call with a readable note file behaves as on master",
+            "Negative control: the case fails against master, which reports only the unmet note-integrity doctrine"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "desired_state": "A --note argument that is not a readable file is refused at once with a message that names --note as a file path and the usage line; a readable file behaves as today.",
+          "evidence_required": [
+            "finish_note_says_it_takes_a_file"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Accepting the note as inline text",
+            "Which doctrines finish judges: note-integrity itself is unchanged"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4681.yaml",
+            "lib/finish.sh",
+            "test/cases/4681_finish_note_says_it_takes_a_file.sh"
+          ],
+          "serves": [],
+          "slug": "finish-note-says-it-takes-a-file",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4681_finish_note_says_it_takes_a_file"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4682",
+        "kind": "issue",
+        "label": "I4682",
+        "summary": "An issue marked DONE on the claim that a named function or path does the work is reported when nothing in product code refers to that name",
+        "route": "/cockpit/objects/issue/i4682",
+        "source": ".ai/repo/project/issues/I4682.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4682 builds a repository with an issue whose claim names helpRows, defined in one source file and referenced nowhere else: the check reports the issue, the name and the file",
+            "With a second source file that calls helpRows, the check reports nothing",
+            "Negative control: the case fails against master, which reports nothing for the first repository"
+          ],
+          "created_at": "2026-11-22",
+          "current_state": "Observed as above. plan done (lib/plan.sh, mj_plan_done) judges the issue's recorded evidence and does not look up the names its claim relies on. No nearest record was named by the reporter.",
+          "depends_on": [],
+          "desired_state": "A DONE claim that names a mechanism referenced only at its own definition is reported with the issue, the name and its single occurrence; a claim whose mechanism has a caller is not.",
+          "evidence_required": [
+            "a_done_claims_mechanism_is_called"
+          ],
+          "milestone": "a-claim-stands-only-on-its-evidence",
+          "non_scope": [
+            "Deciding whether a caller is correct: the check asks only whether the name is referenced outside its definition",
+            "Parsing free prose for names: the mechanism is the one the issue's claim names explicitly"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4682.yaml",
+            "lib/plan.sh",
+            "test/cases/4682_a_done_claims_mechanism_is_called.sh"
+          ],
+          "serves": [],
+          "slug": "a-done-claims-mechanism-is-called",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4682_a_done_claims_mechanism_is_called"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4683",
+        "kind": "issue",
+        "label": "I4683",
+        "summary": "An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries",
+        "route": "/cockpit/objects/issue/i4683",
+        "source": ".ai/repo/project/issues/I4683.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "an_upgrade_keeps_the_firewall_admission"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Activating the new version under the service manager and rolling back: I2722",
+            "Firewalls other than the macOS application firewall"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4683.yaml",
+            "apps/majordomus-cli/src/mesh/firewall.rs",
+            "share/install/install.sh.in",
+            "docs/MESH.md",
+            "test/cases/495_the_firewall_admits_the_mesh.sh"
+          ],
+          "serves": [],
+          "slug": "an-upgrade-keeps-the-firewall-admission",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 495_the_firewall_admits_the_mesh"
           ]
         }
       },
@@ -153053,6 +153508,116 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4673",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4673",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4674",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4674",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4675",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4675",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4676",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4676",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4677",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4677",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4678",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4678",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4679",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4679",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4680",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4680",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4681",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4681",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4682",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4682",
+        "target": "majordomus://milestone/a-claim-stands-only-on-its-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4683",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4683",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4685",
         "target": "kind:issue",
         "kind": "is_a"
@@ -165999,8 +166564,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4552,
+      "edges": 10251,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "89ce8a4894d455041f24438999b3c3b518db535c03316aafa70ecd222e39007c",
     "summary": {
-      "total": 4063,
+      "total": 4074,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3841,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3841
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3851
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3898,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1287,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "125eb23afcc07c12c3a7a8604a14c9250e2c1371f90929977384d1302f9b8b71",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1287,
       "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 142947
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -116273,7 +116273,7 @@
         "path": ".ai/repo/project/issues/I2722.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2127
+        "bytes": 3111
       },
       {
         "uri": "majordomus://issue/I2723",
@@ -122532,7 +122532,7 @@
         "path": ".ai/repo/project/issues/I3949.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3238
+        "bytes": 4382
       },
       {
         "uri": "majordomus://issue/I3950",
@@ -125106,7 +125106,7 @@
         "path": ".ai/repo/project/issues/I4569.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6855
+        "bytes": 7739
       },
       {
         "uri": "majordomus://issue/I4570",
@@ -125602,6 +125602,127 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 5930
+      },
+      {
+        "uri": "majordomus://issue/I4673",
+        "kind": "issue",
+        "identity": "I4673",
+        "title": "Every repository of a fleet trusts the fleet's machines from one list: init and update seed trust.allow and the hubs, and doctor names a repository that drifts from it",
+        "description": "A machine's node key is per machine and shared by every repository and worktree on it, so the trusted keys and the hubs are a fact of the fleet, not of one repository. `majordomus init` and `majordomus update` seed a repository's mesh declaration (trust.allow and the rendezvous hubs) from one fleet list, and doctor names a repository whose declaration drifts from that list, with the keys and hubs it lacks and the command that brings it level. A repository may still trust less than the fleet by declaring so; an undeclared difference is the drift doctor reports.",
+        "path": ".ai/repo/project/issues/I4673.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4371
+      },
+      {
+        "uri": "majordomus://issue/I4674",
+        "kind": "issue",
+        "identity": "I4674",
+        "title": "A long-running job is a mesh record with its machine, process group, budget, heartbeat and stop handle; jobs consult one machine guard; an owner's stop order reaches them",
+        "description": "`majordomus job run --name <n> --budget procs=N[,hosts=...] -- <argv>` starts a job in its own session (setsid), exports MAJORDOMUS_OWNER_JOB, beats, and watches for a stop order. `job register --pid` adopts a job that is already running, `job beat` beats for it, and `job list` lists every job on every node. `job stop <key|glob> [--host] [--grace]` signals the recorded process group, never a name match, and reaches remote children through the declared ssh host. `job admit <key> --want N` asks the machine guard for N more processes. The mesh journal gains the events job_registered, job_beat, job_ended and job_stop_ordered, which need no path claim and are shown in mesh state and mesh who. `machine guard [--json]` reads load per core, swap used and free disk against the policy's machine.guard (load_per_core_max, swap_used_max_pct, free_floor_gib: 35); doctor reports it, and I4006 and I4355 consume it.",
+        "path": ".ai/repo/project/issues/I4674.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5260
+      },
+      {
+        "uri": "majordomus://issue/I4675",
+        "kind": "issue",
+        "identity": "I4675",
+        "title": "`majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready",
+        "description": "The command-line path of `majordomus mesh allocate` reaches the same plan.allocate capability that a POST to /api/v1/plan/allocate reaches, and answers with the same reservation. A transient refusal from the socket (EAGAIN, os error 35) is retried within a bound and, if it persists, reported with the address the command dialled, the address the server reports, and the HTTP route that works.",
+        "path": ".ai/repo/project/issues/I4675.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3569
+      },
+      {
+        "uri": "majordomus://issue/I4676",
+        "kind": "issue",
+        "identity": "I4676",
+        "title": "A quoted YAML scalar followed by a trailing comment loads without its quotes",
+        "description": "The YAML subset parser strips the quotes of a double- or single-quoted scalar that is followed by whitespace and a trailing comment, as YAML 1.2 reads it, so `- \\\"<key>\\\"  # <note>` loads as the key and not as the key wrapped in quotes.",
+        "path": ".ai/repo/project/issues/I4676.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2560
+      },
+      {
+        "uri": "majordomus://issue/I4677",
+        "kind": "issue",
+        "identity": "I4677",
+        "title": "A mesh declaration that exists but fails its schema fails mesh doctor and names the diagnostic, instead of reading as absent",
+        "description": "mesh doctor tells a repository with no mesh declaration from one whose declaration is present but fails majordomus.mesh-declaration/v1. The second is a FAIL of the declaration check that names the file and the schema diagnostic, and the verdict is not 'every check holds'. The default posture (mesh off) is reported only when no declaration exists.",
+        "path": ".ai/repo/project/issues/I4677.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2910
+      },
+      {
+        "uri": "majordomus://issue/I4678",
+        "kind": "issue",
+        "identity": "I4678",
+        "title": "The tailscale provider finds the macOS app's bundled CLI and probes again on every interval, not only at server start",
+        "description": "On macOS the tailscale provider also probes the CLI inside the Tailscale app bundle, and runs it by exec rather than through a symlink. The provider probes again on each discovery interval, so a tailnet that comes up after the server started is found without a restart.",
+        "path": ".ai/repo/project/issues/I4678.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2199
+      },
+      {
+        "uri": "majordomus://issue/I4679",
+        "kind": "issue",
+        "identity": "I4679",
+        "title": "plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn>",
+        "description": "plan.allocate reads the repository's declared issue-id pattern and reserves the next free id for the prefix it is asked for (letter plus digits, as in K247 or G030), surveying the same sources it surveys for I<nnnn>. A repository that declares no pattern keeps I<nnnn>.",
+        "path": ".ai/repo/project/issues/I4679.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2560
+      },
+      {
+        "uri": "majordomus://issue/I4680",
+        "kind": "issue",
+        "identity": "I4680",
+        "title": "The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it",
+        "description": "finish --check's no-stale-topology question, as the pre-push hook asks it, refuses a push only over holdings that belong to the pushing session or its branch, and reports the others without refusing. One command rescues a named holding (a branch, a dirty worktree, a stash) into a local refs/rescue/ ref and a verified bundle, then removes it from the disk, without pushing it anywhere.",
+        "path": ".ai/repo/project/issues/I4680.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3405
+      },
+      {
+        "uri": "majordomus://issue/I4681",
+        "kind": "issue",
+        "identity": "I4681",
+        "title": "finish --note given text, not a readable file, says that --note takes a file and prints the usage",
+        "description": "When the argument of `majordomus finish --note` is not a readable file, finish refuses before judging any doctrine, says that --note takes the path of a file holding the completion note, and prints the usage line, instead of reporting only an unmet majordomus.note-integrity.",
+        "path": ".ai/repo/project/issues/I4681.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2347
+      },
+      {
+        "uri": "majordomus://issue/I4682",
+        "kind": "issue",
+        "identity": "I4682",
+        "title": "An issue marked DONE on the claim that a named function or path does the work is reported when nothing in product code refers to that name",
+        "description": "When an issue's completion or evidence names a mechanism (a function, a module path) as what delivers the work, a check looks the name up in the product code and reports a DONE issue whose named mechanism is defined but referenced from nowhere else, naming the issue, the name and the one place it occurs.",
+        "path": ".ai/repo/project/issues/I4682.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2353
+      },
+      {
+        "uri": "majordomus://issue/I4683",
+        "kind": "issue",
+        "identity": "I4683",
+        "title": "An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries",
+        "description": "The macOS application firewall admits a program by its binary path, and the installer puts each version under its own versioned path. The hub's admission survives an upgrade: either the firewall admits a stable launcher path once, or the installer checks the admission and names the firewall step that restores it. `mesh firewall apply` also removes the entries it left for earlier versions and for temporary test binaries.",
+        "path": ".ai/repo/project/issues/I4683.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2898
       },
       {
         "uri": "majordomus://issue/I4685",
@@ -142242,7 +142363,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1287
     },
     {
       "name": "knowledge",

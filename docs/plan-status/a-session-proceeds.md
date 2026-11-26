@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/5 | 2 | 3 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
+| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/6 | 3 | 3 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
 
 ## Issues
 
@@ -24,6 +24,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2978](https://majordomus.dev/plan/i2978/) | BLOCKED | 1 | I2972 | The UI shows what proceeding chose, what it refused and why |
 | [I2979](https://majordomus.dev/plan/i2979/) | CANCELLED | 3 | I2974 | A finished task hands its head and receipt to the landing seat |
 | [I3040](https://majordomus.dev/plan/i3040/) | READY | 0 | — | An id is taken by one atomic claim |
+| [I4675](https://majordomus.dev/plan/i4675/) | READY | 0 | — | `majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready |
 
 ## Findings
 
@@ -106,6 +107,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
+| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3110; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3155; they may not run concurrently |
@@ -170,3 +175,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
+| WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4679; they may not run concurrently |

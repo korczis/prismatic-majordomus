@@ -48,6 +48,16 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3774` | shares docs/MONITOR.md with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4673; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4677; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4678; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4683; they may not run concurrently |
 | WARN | `scope_conflict` | `I4587` | shares docs/MONITOR.md with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4665; they may not run concurrently |
 | WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4673; they may not run concurrently |
+| WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4677; they may not run concurrently |
+| WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4678; they may not run concurrently |
+| WARN | `scope_conflict` | `I4587` | shares docs/MESH.md with I4683; they may not run concurrently |
