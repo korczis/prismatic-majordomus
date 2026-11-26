@@ -3398,6 +3398,10 @@ pub enum EvidenceCommand {
         /// Also write the run record to this file
         #[arg(long)]
         run_record: Option<PathBuf>,
+        /// Run the verification the effective profile declares under this name
+        /// (verification.commands) and record it; an intent criterion cites it as verify:NAME
+        #[arg(long, value_name = "NAME")]
+        verify: Option<String>,
     },
     /// Measure the checkout as a run left it, for `record --provenance`
     Stamp {
