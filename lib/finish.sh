@@ -233,6 +233,13 @@ mj_validate_note() {
     partial|blocked) need_sec="Next Action|" ;;
     *) need_sec="Reason|" ;;
   esac
+  # `--note` takes a path. A note's text given in its place (`--note "# Next Action ..."`) used
+  # to read as "no --note file", which says nothing about what went wrong; the refusal now says
+  # what --note takes and quotes the start of what it got, on one line.
+  if [ -n "$MJ_FINISH_NOTE" ] && { [ ! -e "$MJ_FINISH_NOTE" ] || [ -d "$MJ_FINISH_NOTE" ]; }; then
+    local got; got="$(printf '%s' "$MJ_FINISH_NOTE" | tr '\n\t' '  ' | cut -c1-40)"
+    mj_doctrine_fail note "$id" "--note takes the path of a file holding the note; '$got' is not one" \
+      "write the note to a file and pass its path: --note note.md (or: majordomus handover < note.md)"; return 0; fi
   if [ -n "$MJ_FINISH_NOTE" ]; then nf="$MJ_FINISH_NOTE"
   else nf="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | LC_ALL=C sort | tail -n1)"; fi
   if [ -z "$nf" ] || [ ! -f "$nf" ]; then

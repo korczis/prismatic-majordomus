@@ -67,7 +67,7 @@ flowchart TD
     class hook,gate,cli,mcp,api surface
 ```
 
-Four capabilities, declared once in
+Five capabilities, declared once in
 `apps/majordomus-cli/src/capability/builtin/commit.rs`, each projected onto every surface
 the exposure policy admits:
 
@@ -77,6 +77,7 @@ the exposure policy admits:
 | `commit.plan` | what the working tree would commit, divided, fingerprinted | `majordomus commit plan` | `majordomus_commit_plan`, `majordomus://commit/plan` | `GET /api/v1/commit/plan` |
 | `commit.validate` | the verdict on one message | `majordomus commit validate` | `majordomus_commit_validate` | `GET /api/v1/commit/validate` |
 | `commit.history` | every commit in a range, in one pass | `majordomus commit history` | `majordomus_commit_history` | `GET /api/v1/commit/history` |
+| `commit.reword` | a published range replayed with new messages, every one judged | `majordomus commit reword` | `majordomus_commit_reword` | `GET /api/v1/commit/reword` |
 
 Nothing in that table is registered anywhere twice. The MCP tool name, the route and the
 command line are fields of the capability declaration; the OpenAPI operation, the Cockpit
@@ -114,6 +115,65 @@ duplication this subsystem removes. `merge` is among them: this repository write
 held to the same width and the same references as every other rather than exempted from
 being checked at all.
 
+## A repository's own grammar
+
+The conventional grammar is the default, not the only one. A repository whose history follows
+another grammar declares it, and the judge, the history gate and the scope vocabulary all read
+that declaration. Without it such a repository cannot wire the `commit-msg` hook at all,
+because every one of its valid messages reads as `commit.not_conventional`. A defect in a
+message is then found by the forge after the push, when fixing it means superseding the
+branch. The first adopter measured keeps its upstream's grammar, which is the keyword style:
+
+```yaml
+commit:
+  grammar:
+    style: keyword
+    words:                    # the closed list, each word with the kind of change it records
+      - word: Feature
+        kind: feat
+      - word: Fix
+        kind: fix
+      - word: Codechange
+        kind: refactor
+      - word: Codefix
+        kind: chore
+      - word: Doc
+        kind: docs
+    component: brackets       # `[X] ` opening the details is the scope; read, never judged
+```
+
+```text
+  Fix #6673, 99bb3a95b4: [YAPF] Store the setting
+  ^^^ ^^^^^  ^^^^^^^^^^  ^^^^^^ ^^^^^^^^^^^^^^^^^
+  word issue  hash       scope  subject
+```
+
+The keyword rules are the upstream checker's, encoded rule for rule rather than as one
+regular expression, so that a finding can say what is wrong:
+
+- The header is `<prefixes>: <details>`, split at the first `": "`.
+- The prefixes are separated by `", "`. Each one is `Word #N`, `Word <hash>`, a bare `Word`
+  only when it is the only prefix, or a bare `<hash>` only after the first.
+- A hash is four or more lowercase hexadecimal digits.
+- The first prefix's word is the commit's kind, so `Revert d9065fbfbe, Fix #5922: ...` is a
+  revert. `fix_requires_test` asks a `fix` for a test, and a word mapped to `chore` is not
+  asked.
+- Under this style only a merge is exempt. Reverts, fixups and squashes are judged, because
+  the forge check the style mirrors judges every non-merge commit.
+
+The defaults follow the style. Under the keyword style, `subject_max_chars` is no limit, a
+closing full stop is allowed, and a character outside printable ASCII (a tab included, DEL
+allowed) or trailing whitespace on any stored line is an error. Under the conventional
+grammar these keep their old values. Every one of them is a policy key a repository can set.
+A declaration with a defect refuses every message with `commit.grammar_invalid`, rather than
+judging some messages by a grammar nobody meant: a word that reads as a hash, a word with a
+space, a kind that is not a change kind, a word mapped to `merge`, a word declared twice, or
+no words at all.
+
+Declare the grammar before wiring the hook. `majordomus commit history HEAD~50..HEAD`
+measures what the policy says about the history as it stands. A hook that refuses every valid
+message is worse than none, because people stop wiring it.
+
 ## The policy
 
 `commit:` in `.ai/repo/policy.yaml`, whose shape the schema `majordomus.policy/v1` owns and
@@ -127,6 +187,19 @@ commit:
   reference_unresolved: error
   breaking_unexplained: error
 ```
+
+An adopter can add six more keys, each with a default that judges exactly as before:
+
+| key | default | what it judges |
+|---|---|---|
+| `grammar` | conventional | the header's grammar (see above) |
+| `reference_required` | off | a message that names no issue or milestone the layer holds; under the keyword style a header's `#N` counts |
+| `closing_keyword` | off | `Closes #12`, `fixes #3` anywhere in the message, which a forge acts on when the commit lands |
+| `subject_trailing_period` | error, or off under the keyword style | a subject that ends in a full stop |
+| `non_ascii` | off, or error under the keyword style | a character outside 0x20 to 0x7F on a stored line |
+| `trailing_whitespace` | off, or error under the keyword style | a stored line that ends in whitespace |
+
+`subject_max_chars: 0` is no width limit.
 
 `subject_max_chars` is measured, not chosen. The git convention is 72; over 1161 non-merge
 commits of this repository the median subject is 73 characters and the 95th percentile is 98.
@@ -143,6 +216,11 @@ decision, and a decision is worth reading back.
 | code | severity | what it means |
 |---|---|---|
 | `commit.not_conventional` | error | the header is not `type(scope): subject` |
+| `commit.grammar_invalid` | error | the policy's `commit.grammar` is defective |
+| `commit.unknown_word` | error | a keyword header opens with a word the grammar does not declare; the finding names the words |
+| `commit.header_malformed` | error | a keyword header is not `<prefixes>: <details>`, or a prefix is malformed |
+| `commit.non_ascii` | policy | a character outside printable ASCII, with its line, column and code point |
+| `commit.trailing_whitespace` | policy | a line that ends in whitespace, with its line |
 | `commit.subject_empty` | error | nothing after the colon |
 | `commit.subject_too_long` | error | wider than `subject_max_chars`, measured whole |
 | `commit.subject_trailing_period` | error | a subject is a title, not a sentence |
@@ -150,6 +228,8 @@ decision, and a decision is worth reading back.
 | `commit.breaking_unexplained` | policy | `!` with no body and no `BREAKING CHANGE:` |
 | `commit.unresolved_reference` | policy | a record id the layer does not hold |
 | `commit.fix_without_test` | policy | a `fix` with no test among its files |
+| `commit.reference_missing` | policy | no issue or milestone named, where the policy requires one |
+| `commit.closing_keyword` | policy | a forge closing keyword |
 
 Every one is a `Diagnostic` — the same severity, code and message the rest of this executable
 reports with, so a finding reaches a terminal, a JSON consumer and an MCP client the same way.
@@ -276,6 +356,54 @@ commit-policy: history 54 failing, baseline 54
 A checkout with no trunk to compare against reports that it measured nothing rather than
 reporting a pass.
 
+## Superseding instead of rewriting
+
+A commit already pushed is held by more than its author: the forge's pull request, its CI
+runs, a peer's merge and the integration engine's assessment. Rewriting it in place
+invalidates all of them silently, and a protected branch refuses the force push anyway. So a
+published message is never reworded in place. The range is replayed onto a new branch, and
+the new pull request supersedes the old one:
+
+```console
+$ majordomus commit reword origin/master..HEAD                       # what would be replayed, judged
+$ gh pr view 41 --json body -q .body > old.md
+$ majordomus commit reword origin/master..HEAD --trunk origin/master \
+    --message 3fa9c1e=reworded.txt --supersedes 41 --url <link of #41> \
+    --body old.md --body-out successor.md --apply --branch fix/x-reworded
+$ git push -u origin fix/x-reworded
+$ gh pr create --head fix/x-reworded --body-file successor.md
+$ gh pr merge 41 --disable-auto; gh pr ready 41 --undo
+```
+
+The plan (`commit.reword`, read-only) lists every first-parent commit of the range with the
+message it would carry. The new message is used where a revision is named, the commit's own
+otherwise, each stored as `git stripspace --strip-comments` stores it, so what is judged is
+what is stored. Every one is judged with that commit's own paths. The plan also names every
+failing commit that only a kept second parent carries, which no rewording reaches. Name
+`--trunk` when the branch merges the trunk in, so that the trunk's own commits are not judged
+as the branch's.
+
+`--apply` replays a plan that passes with `git commit-tree`:
+
+- each commit keeps its tree, its author and its author date, and gets a new committer;
+- each first parent is the replayed one, and every other parent (a trunk merge) is unchanged;
+- the new branch is created with `update-ref` against the zero id, so a branch that appeared
+  meanwhile is refused;
+- no ref that exists is moved;
+- a signature, a merged tag's header or an encoding header the replay cannot carry is named
+  as dropped.
+
+The successor's body opens with `Supersedes #N` on a line of its own, then the old body
+without the lines that named its own successor.
+
+The old pull request is held, not closed. Once the successor is open, the integration
+engine reads the marker and holds #N `waiting_for_dependency`. After the successor lands,
+`majordomus prs cleanup --apply` closes #N (docs/INTEGRATION.md, "Supersession markers"). If
+the successor is abandoned, the old one is still there with its review. The marker counts
+only from an owner, member or collaborator on a branch of this repository. Taking the old
+pull request out of auto-merge and back to draft keeps anyone from merging it by habit,
+which is how one such commit once reached an adopter's trunk.
+
 ## Using it
 
 ```console
@@ -287,6 +415,7 @@ EOF
 $ majordomus commit validate --rev HEAD           # the message of a commit already made
 $ majordomus commit history origin/master..HEAD   # this branch's commits
 $ majordomus commit plan --format json            # the same answer, for a program
+$ majordomus commit reword <base>..<head>          # a published range replayed, planned and judged
 ```
 
 Everything above works offline. Nothing in this subsystem reaches a network, and nothing
@@ -299,13 +428,14 @@ moment that already involves waiting for git.
 | what | where |
 |---|---|
 | rule | `.ai/repo/rules/project/conventional-commits.v2.md` (blocking) |
-| unit | `apps/majordomus-cli/src/commit/` — 46 tests beside the code they judge |
-| behavioural | `test/cases/274_commit_policy.sh` — real repositories, real worktrees, the real hook |
+| unit | `apps/majordomus-cli/src/commit/`, tests beside the code they judge |
+| behavioural | `test/cases/274_commit_policy.sh`: real repositories, real worktrees, the real hook |
+| adopter | `test/cases/4262_an_adopter_commit_is_judged.sh`: a keyword grammar, its hook, a reword onto a new branch against a bare remote |
 | gate | `scripts/ci/commit-policy`, declared in `.ai/repo/ci/gates.yaml` |
 | declaration | `apps/majordomus-cli/src/capability/builtin/commit.rs` |
 
 ```sh
-bash test/run.sh 274_commit_policy
+bash test/run.sh 274_commit_policy 4262_an_adopter_commit_is_judged
 scripts/ci/commit-policy
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commit::
 ```
@@ -316,7 +446,8 @@ It does not judge whether the subject is a good sentence, whether the change is 
 whether the work was worth doing. A reviewer decides those, and a validator that pretended to
 is a validator nobody trusts.
 
-It does not create issues, push, or open pull requests. Those are remote mutations with their
+It does not create issues, push, or open pull requests. The one write is `commit reword
+--apply`, which creates a branch and moves none. Those are remote mutations with their
 own failure modes, and this subsystem's whole value is that it is a pure function of a tree
 and a message: it works offline, it cannot half-succeed, and every answer it gives can be
 recomputed and checked.

@@ -5915,6 +5915,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "commit reword",
+        examples: &[ExampleDoc {
+            id: "commit-reword-plan",
+            title: "A replay planned before anything is written",
+            description: "Without `--apply` the command only plans: every first-parent commit of the range with the message it would carry, each judged against the commit policy, and what refuses the plan. Here the range `HEAD..HEAD` holds no commit, so the plan is refused (exit 10) and says so; a real call names `<base>..<head>` of a pushed branch and one `--message <rev>=<file>` per commit to reword, and `--apply --branch <new>` replays a plan that passes onto a new branch without moving any ref that exists.",
+            argv: &["commit", "reword", "HEAD..HEAD"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "commit history",
         examples: &[ExampleDoc {
             id: "commit-history",
@@ -8789,11 +8800,13 @@ pub struct CommitArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus commit`: `plan`, `scopes`, `history` and `validate`.
+/// The subcommands of `majordomus commit`: `plan`, `scopes`, `history`, `validate` and
+/// `reword`.
 ///
-/// All four are read-only. `validate` is the one the `commit-msg` hook runs, and its shape
-/// is the hook's: the file git will take the message from, and the paths that are staged,
-/// so that a `fix` carrying no test among its files is judged rather than guessed at.
+/// All are read-only but `reword --apply`, which only creates a branch. `validate` is the one
+/// the `commit-msg` hook runs, and its shape is the hook's: the file git will take the message
+/// from, and the paths that are staged, so that a `fix` carrying no test among its files is
+/// judged rather than guessed at.
 ///
 /// ```
 /// use clap::Parser;
@@ -8844,6 +8857,44 @@ pub enum CommitCommand {
         /// Judge the message of this commit instead of a file: any revision `git show` accepts
         #[arg(long, value_name = "REV", conflicts_with = "file")]
         rev: Option<String>,
+    },
+    /// Supersede, don't rewrite: plan the replay of a published range with new messages, every message judged; with --apply, replay it onto a new branch with the same trees and move no ref that exists
+    Reword {
+        /// `<base>..<head>`: the first-parent commits after base are replayed, and base stays the base
+        #[arg(value_name = "RANGE")]
+        range: String,
+
+        /// The new message of one commit, as `<rev>=<file>`; repeat it for each commit to reword
+        #[arg(long = "message", value_name = "REV=FILE")]
+        messages: Vec<String>,
+
+        /// The trunk the forge compares with (`origin/master`), when the branch merges it in; base when absent
+        #[arg(long, value_name = "REF")]
+        trunk: Option<String>,
+
+        /// The pull request the successor supersedes
+        #[arg(long, value_name = "N")]
+        supersedes: Option<u64>,
+
+        /// Its address, for the successor's body
+        #[arg(long, value_name = "URL")]
+        url: Option<String>,
+
+        /// A file holding its body (`gh pr view N --json body -q .body > old.md`), carried into the successor's
+        #[arg(long, value_name = "FILE")]
+        body: Option<String>,
+
+        /// Replay the plan onto the new branch named by --branch; without it nothing is written
+        #[arg(long, requires = "branch")]
+        apply: bool,
+
+        /// The new branch the replay creates; it must not exist
+        #[arg(long, value_name = "NAME")]
+        branch: Option<String>,
+
+        /// Write the successor's body to this file, for `gh pr create --body-file`
+        #[arg(long, value_name = "FILE")]
+        body_out: Option<String>,
     },
 }
 

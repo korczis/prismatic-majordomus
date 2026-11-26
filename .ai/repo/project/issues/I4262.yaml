@@ -5,10 +5,10 @@ slug: a-commit-message-guard-ships-for-adopters
 priority: p2
 profile: implementation
 parallel_safe: true
-objective: "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy."
+objective: "init offers a commit-msg line whose policy is declared in the adopter's policy: the grammar its history is written in (commit.grammar, conventional or a keyword grammar with its own words), an issue id required, closing keywords refused; and a pushed commit whose message must change is superseded by a replay onto a new branch (commit reword), never force-pushed."
 why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the projection refuses closing keywords and derives served issues from commit subjects, but nothing shipped checks an adopter's commit messages; the adopter wrote its own commit-msg hook for issue ids, tracker keys and closing keywords."
-current_state: "commit.validate judges this repository's own policy."
-desired_state: "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy."
+current_state: "Measured on 2026-11-25 with majordomus 1.2.0 in an adopter that keeps its upstream's keyword grammar (`Fix #12: [YAPF] Infinite loop in pathfinder`): commit validate refuses that valid message with commit.not_conventional (exit 10), because commit/header.rs knows only `type(scope): subject` and policy.rs has no grammar key; so the adopter never wired a commit-msg hook, a `Test:` subject (not a word of its grammar) was found by the forge's checker after the push, and the force push the rewording needed was refused, so the pull request was superseded by hand. init (lib/init.sh mj_init_hook_advice) prints pre-commit and pre-push lines and no commit-msg line. PR #2619 (a month old, 694 commits behind master) added reference_required and closing_keyword; this record's delivery carries them and supersedes it."
+desired_state: "A repository declares its commit grammar in policy and the commit-msg hook judges every message against it while git still holds the commit; a published commit is reworded only by a replay onto a new branch whose pull request supersedes the old one."
 scope:
   - ".ai/repo/project/issues/I4262.yaml"
   - "lib/init.sh"
@@ -18,13 +18,23 @@ scope:
   - "apps/majordomus-cli/src/commit"
   - "docs/COMMIT.md"
   - "test/cases/4262_an_adopter_commit_is_judged.sh"
+non_scope:
+  - "Tracker key patterns and branch naming (the original field report's other two asks): no adopter has asked again"
+  - "A pre-push check of the pushed range, which I4619 (the adopter pre-push receives the pushed commits) makes possible"
+  - "The changelog reading a keyword grammar's kinds (release::commits still reads conventional subjects)"
+  - "Opening, closing or editing pull requests: the remote half of a supersession stays with the person and gh"
 depends_on: []
 acceptance_criteria:
   - "A subject without an issue id is refused when the policy requires one"
   - "A closing keyword is refused"
+  - "With commit.grammar declaring the keyword style, `Fix #12: [YAPF] Infinite loop in pathfinder.` passes and `Test: [X] y` is refused as commit.unknown_word naming the declared words; every example the upstream checker prints passes"
+  - "Under the keyword style a tab or a trailing space on any stored line is refused with its line number, and only a merge is exempt"
+  - "A policy that declares nothing judges exactly as before"
+  - "init prints a commit-msg line with the measurement to take before wiring it"
+  - "commit reword plans a replay of `<base>..<head>` with every message judged, and --apply creates a new branch with the same trees, authors and dates and moves no ref that exists; the successor body opens with `Supersedes #N`"
 validation:
   - "bash test/run.sh 4262_an_adopter_commit_is_judged"
 evidence_required:
   - "case_a_commit_message_guard_ships_for_adopter"
 created_at: 2026-10-27
-updated_at: 2026-10-27
+updated_at: 2026-11-25

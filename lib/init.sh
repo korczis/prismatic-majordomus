@@ -218,6 +218,7 @@ hooks are not installed by init; add these two lines yourself, doctor verifies t
   pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
   pre-push:   $rel finish --check || exit \$?
 OUT
+    mj_init_commit_msg_advice "$rel"
     return 0
   fi
   printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
@@ -231,7 +232,20 @@ OUT
       printf "  %s: %s/%s is tracked and runs no %s.d/, so there is no place of your own for: %s\n" "$h" "$hookrel" "$h" "$h" "$line"
     fi
   done
+  mj_init_commit_msg_advice "$rel"
   printf '  doctor verifies whichever you add; an entry you cannot wire is yours to remove from %s\n' "$(mj_rel "$MJ_POLICY_FILE")"
+}
+
+# The third line, the commit message (docs/COMMIT.md, I4262): judged against the grammar the
+# policy declares while git still holds it, rather than by the forge after the push. A hook
+# that refuses every valid message is worse than none, because people stop wiring it, so the
+# line comes with the measurement to take first; doctor does not require it.
+mj_init_commit_msg_advice() {
+  local rel="$1"
+  # shellcheck disable=SC2016  # the hook's own $1 and $?, printed for the hook to expand
+  printf '  commit-msg (optional, doctor does not require it): %s commit validate "$1" || exit $?\n' "$rel"
+  printf '    first measure your history: %s commit history HEAD~50..HEAD; when it refuses messages your\n' "$rel"
+  printf '    project accepts, declare their grammar under commit.grammar in %s (docs/COMMIT.md) before wiring it\n' "$(mj_rel "$MJ_POLICY_FILE")"
 }
 
 # Fit the seeded projections to a repository other people share (ADR 0145). The skeleton

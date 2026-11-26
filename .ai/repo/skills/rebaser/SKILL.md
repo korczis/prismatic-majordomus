@@ -69,6 +69,7 @@ hand with `git rebase` dry runs.
 | `blocked`, `draft`, `unsafe`, `waiting_for_review`, `unknown` | **wait** | the table's own next step in `docs/INTEGRATION.md` (a label, a review, `prs refresh`) |
 | unpublished local commits only (no remote ref, no pull request) | **rebase** allowed | `git rebase origin/master` in the branch's own worktree — nothing anyone else holds is rewritten |
 | a published branch whose history must change (a member's fix that cannot be merged, a split) | **fresh branch from master** | rescue ref first (step 4), then a new branch from origin/master carrying the commits, and a new pull request that declares it supersedes the old one |
+| a published commit whose message must change (the forge's commit check refused it, a wrong issue id) | **reword onto a new branch** | `majordomus commit reword <base>..<head> --message <rev>=<file> --supersedes <n> --body old.md --body-out successor.md --apply --branch <new>` (docs/COMMIT.md): the same trees, authors and dates, every message judged first, no existing ref moved; push the new branch, open the successor with `--body-file successor.md`, and take the old pull request out of auto-merge and back to draft. The old branch is its own rescue ref |
 
 Two rules decide every row:
 

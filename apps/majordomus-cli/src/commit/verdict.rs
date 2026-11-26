@@ -35,7 +35,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::policy::{git_authored, CommitPolicy, FindingLevel};
+use super::grammar::HeaderDefect;
+use super::policy::{CommitPolicy, FindingLevel};
 use super::CommitMessage;
 use crate::model::{Diagnostic, Severity};
 use crate::release::commits::record_candidates;
@@ -59,6 +60,16 @@ use crate::release::ChangeKind;
 pub enum CommitRule {
     /// The header is not `type(scope): subject`.
     NotConventional,
+    /// The policy's own `commit.grammar` declaration is defective.
+    GrammarInvalid,
+    /// A keyword header opens with a word the declared grammar does not hold.
+    UnknownWord,
+    /// A keyword header is not `<prefixes>: <details>`, or a prefix is malformed.
+    HeaderMalformed,
+    /// A line carries a character outside printable ASCII.
+    NonAscii,
+    /// A line ends in whitespace.
+    TrailingWhitespace,
     /// The subject is wider than the policy allows.
     SubjectTooLong,
     /// The header parsed but said nothing after the colon.
@@ -73,6 +84,10 @@ pub enum CommitRule {
     UnresolvedReference,
     /// The commit declares itself breaking and explains nothing.
     BreakingUnexplained,
+    /// The message names no record id the layer holds, where the policy requires one.
+    ReferenceMissing,
+    /// The message carries a forge's closing keyword, `Closes #12`.
+    ClosingKeyword,
 }
 
 impl CommitRule {
@@ -85,6 +100,11 @@ impl CommitRule {
     pub fn code(self) -> &'static str {
         match self {
             CommitRule::NotConventional => "commit.not_conventional",
+            CommitRule::GrammarInvalid => "commit.grammar_invalid",
+            CommitRule::UnknownWord => "commit.unknown_word",
+            CommitRule::HeaderMalformed => "commit.header_malformed",
+            CommitRule::NonAscii => "commit.non_ascii",
+            CommitRule::TrailingWhitespace => "commit.trailing_whitespace",
             CommitRule::SubjectTooLong => "commit.subject_too_long",
             CommitRule::SubjectEmpty => "commit.subject_empty",
             CommitRule::SubjectTrailingPeriod => "commit.subject_trailing_period",
@@ -92,6 +112,8 @@ impl CommitRule {
             CommitRule::FixWithoutTest => "commit.fix_without_test",
             CommitRule::UnresolvedReference => "commit.unresolved_reference",
             CommitRule::BreakingUnexplained => "commit.breaking_unexplained",
+            CommitRule::ReferenceMissing => "commit.reference_missing",
+            CommitRule::ClosingKeyword => "commit.closing_keyword",
         }
     }
 
@@ -100,12 +122,19 @@ impl CommitRule {
     /// fix them.
     pub const ALL: &'static [CommitRule] = &[
         CommitRule::NotConventional,
+        CommitRule::GrammarInvalid,
+        CommitRule::UnknownWord,
+        CommitRule::HeaderMalformed,
+        CommitRule::NonAscii,
+        CommitRule::TrailingWhitespace,
         CommitRule::SubjectEmpty,
         CommitRule::SubjectTooLong,
         CommitRule::SubjectTrailingPeriod,
         CommitRule::UnknownScope,
         CommitRule::BreakingUnexplained,
         CommitRule::UnresolvedReference,
+        CommitRule::ReferenceMissing,
+        CommitRule::ClosingKeyword,
         CommitRule::FixWithoutTest,
     ];
 }
@@ -223,18 +252,10 @@ fn is_test_path(path: &str) -> bool {
 /// assert!(!judge(&invented, &p).passed);
 /// ```
 pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
-    let message = CommitMessage::parse(&subject.text);
+    let grammar = &policy.grammar;
+    let message = CommitMessage::parse_with(&subject.text, grammar);
     let head = &message.header;
-
-    if git_authored(&head.subject) || git_authored(subject.text.lines().next().unwrap_or_default())
-    {
-        return CommitVerdict {
-            message,
-            passed: true,
-            exempt: Some(CommitExemption::GitAuthored),
-            findings: Vec::new(),
-        };
-    }
+    let first_line = stored_lines(&subject.text).next().unwrap_or_default();
 
     let mut found: Vec<(CommitRule, Severity, String)> = Vec::new();
     let mut add = |rule: CommitRule, level: FindingLevel, message: String| {
@@ -243,21 +264,60 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
         }
     };
 
-    if !head.is_conventional() {
-        let detail = if head.word.is_empty() {
-            format!(
-                "'{}' is not `type(scope): subject`; the types are {}",
-                head.subject.chars().take(60).collect::<String>(),
-                ChangeKind::WORDS.join(", ")
-            )
-        } else {
-            format!(
-                "'{}' is not a commit type; the types are {}",
-                head.word,
-                ChangeKind::WORDS.join(", ")
-            )
+    // A defective declaration refuses every message: judging some of them by a grammar the
+    // repository did not mean is worse than judging none.
+    let problems = grammar.problems();
+    if !problems.is_empty() {
+        for p in problems {
+            add(CommitRule::GrammarInvalid, FindingLevel::Error, p);
+        }
+        return finish(message, found);
+    }
+
+    if grammar.exempt(&head.subject) || grammar.exempt(first_line) {
+        return CommitVerdict {
+            message,
+            passed: true,
+            exempt: Some(CommitExemption::GitAuthored),
+            findings: Vec::new(),
         };
-        add(CommitRule::NotConventional, FindingLevel::Error, detail);
+    }
+
+    // The characters of every line that will be stored, before the header: a tab or a
+    // trailing space is a finding of its own whatever the header says.
+    for (n, line) in stored_lines(&subject.text).enumerate() {
+        if let Some((col, c)) = line
+            .chars()
+            .enumerate()
+            .find(|(_, c)| !(' '..='\u{7f}').contains(c))
+        {
+            add(
+                CommitRule::NonAscii,
+                policy.non_ascii_level(),
+                format!(
+                    "line {}, column {}: U+{:04X} is outside printable ASCII, which this repository's messages keep to",
+                    n + 1,
+                    col + 1,
+                    c as u32
+                ),
+            );
+        }
+        if line != line.trim_end() {
+            add(
+                CommitRule::TrailingWhitespace,
+                policy.trailing_whitespace_level(),
+                format!("line {} ends in whitespace", n + 1),
+            );
+        }
+    }
+
+    if let Some(defect) = grammar.defect(first_line) {
+        let (rule, detail) = match defect {
+            HeaderDefect::NotConventional(d) => (CommitRule::NotConventional, d),
+            HeaderDefect::UnknownWord(d) => (CommitRule::UnknownWord, d),
+            HeaderDefect::Malformed(d) => (CommitRule::HeaderMalformed, d),
+        };
+        add(rule, FindingLevel::Error, detail);
         // Everything below reads fields this parse did not produce; reporting them as well
         // would bury the one finding that matters under consequences of it.
         return finish(message, found);
@@ -270,21 +330,26 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
             "the header says nothing after the colon".into(),
         );
     }
-    let width = head.render().chars().count();
-    if width > policy.subject_max_chars {
-        add(
-            CommitRule::SubjectTooLong,
-            FindingLevel::Error,
-            format!(
-                "the subject is {width} characters; the policy allows {}",
-                policy.subject_max_chars
-            ),
-        );
+    // The conventional width is measured on the header as rendered, which is the line for
+    // every well-formed one; a keyword header is measured as written.
+    let width = if grammar.is_keyword() {
+        first_line.trim_end().chars().count()
+    } else {
+        head.render().chars().count()
+    };
+    if let Some(max) = policy.max_chars() {
+        if width > max {
+            add(
+                CommitRule::SubjectTooLong,
+                FindingLevel::Error,
+                format!("the subject is {width} characters; the policy allows {max}"),
+            );
+        }
     }
     if head.subject.ends_with('.') {
         add(
             CommitRule::SubjectTrailingPeriod,
-            FindingLevel::Error,
+            policy.trailing_period(),
             "the subject ends in a full stop; a subject is a title, not a sentence".into(),
         );
     }
@@ -309,7 +374,31 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
             "the commit is marked breaking and explains nothing; write a body or a BREAKING CHANGE trailer".into(),
         );
     }
-    for candidate in record_candidates(&without_code_spans(&subject.text)) {
+    let prose = without_code_spans(&subject.text);
+    let candidates = record_candidates(&prose);
+    // A keyword header's `#N` is the forge issue the change serves, which is the reference
+    // such a repository asks for.
+    let header_issue = grammar.is_keyword()
+        && first_line
+            .split_once(": ")
+            .is_some_and(|(prefixes, _)| prefixes.contains(" #"));
+    if !header_issue && !candidates.iter().any(|c| subject.records.contains(c)) {
+        add(
+            CommitRule::ReferenceMissing,
+            policy.reference_required,
+            "the message names no issue or milestone this repository's layer holds; name the one this change serves, as (I0012)".into(),
+        );
+    }
+    if let Some(phrase) = closing_keyword(&prose) {
+        add(
+            CommitRule::ClosingKeyword,
+            policy.closing_keyword,
+            format!(
+                "'{phrase}' closes a forge issue when the commit lands; the layer decides when an issue is done, so refer to it (Refs #n) instead"
+            ),
+        );
+    }
+    for candidate in candidates {
         if !subject.records.contains(&candidate) {
             add(
                 CommitRule::UnresolvedReference,
@@ -333,6 +422,42 @@ pub fn judge(subject: &CommitSubject, policy: &CommitPolicy) -> CommitVerdict {
     }
 
     finish(message, found)
+}
+
+/// The words a forge reads as "close this issue" when a commit naming one lands.
+const CLOSING_WORDS: &[&str] = &[
+    "close", "closes", "closed", "fix", "fixes", "fixed", "resolve", "resolves", "resolved",
+];
+
+/// The first closing phrase in `text` — a closing word, an optional colon, then `#12` or
+/// `owner/repo#12` — as written, or `None`.
+///
+/// ```
+/// use majordomus_cli::commit::verdict::closing_keyword;
+/// assert_eq!(closing_keyword("a body\n\nCloses #12").as_deref(), Some("Closes #12"));
+/// assert_eq!(closing_keyword("fixes: org/repo#3").as_deref(), Some("fixes: org/repo#3"));
+/// // a reference is not a closing phrase, and neither is the word without an issue
+/// assert_eq!(closing_keyword("Refs #12; this fixes the parser"), None);
+/// ```
+pub fn closing_keyword(text: &str) -> Option<String> {
+    let words: Vec<&str> = text.split_whitespace().collect();
+    words.windows(2).find_map(|pair| {
+        let word = pair[0].trim_end_matches(':').to_ascii_lowercase();
+        let target = pair[1].trim_end_matches(|c: char| ",.;:)".contains(c));
+        let issue = target.rsplit_once('#').is_some_and(|(repo, n)| {
+            !n.is_empty()
+                && n.chars().all(|c| c.is_ascii_digit())
+                && (repo.is_empty() || repo.contains('/'))
+        });
+        (CLOSING_WORDS.contains(&word.as_str()) && issue).then(|| format!("{} {}", pair[0], target))
+    })
+}
+
+/// The lines git will store, in order: the message split at line feeds alone (a carriage
+/// return stays visible to the character checks), with comment lines left out as git leaves
+/// them out.
+fn stored_lines(text: &str) -> impl Iterator<Item = &str> {
+    text.split('\n').filter(|l| !l.starts_with('#'))
 }
 
 /// Order the findings and decide the verdict.
@@ -602,6 +727,251 @@ mod tests {
         for p in ["src/commit/verdict.rs", "docs/COMMIT.md", "latest.rs"] {
             assert!(!is_test_path(p), "{p}");
         }
+    }
+
+    #[test]
+    fn a_required_reference_is_asked_for_only_when_the_policy_requires_one() {
+        let bare = CommitSubject {
+            text: "feat(plan): a thing".into(),
+            records: vec!["I1305".into()],
+            ..CommitSubject::default()
+        };
+        // this repository lets a commit stand on its own
+        assert!(judge(&bare, &CommitPolicy::default()).findings.is_empty());
+
+        let bound = CommitPolicy {
+            reference_required: FindingLevel::Error,
+            ..CommitPolicy::default()
+        };
+        let v = judge(&bare, &bound);
+        assert_eq!(codes(&v), vec!["commit.reference_missing"]);
+        assert!(!v.passed);
+
+        let named = CommitSubject {
+            text: "feat(plan): a thing (I1305)".into(),
+            ..bare.clone()
+        };
+        assert!(judge(&named, &bound).findings.is_empty());
+
+        // an invented id is not a reference: it is reported as unresolved and as missing
+        let invented = CommitSubject {
+            text: "feat(plan): a thing (I9999)".into(),
+            ..bare
+        };
+        assert_eq!(
+            codes(&judge(&invented, &bound)),
+            vec!["commit.unresolved_reference", "commit.reference_missing"]
+        );
+
+        // under the keyword style the header's own `#N` is the reference
+        let mut kw = keyword();
+        kw.reference_required = FindingLevel::Error;
+        assert!(judge(&CommitSubject::of("Fix #12: [Net] A thing"), &kw).passed);
+        assert_eq!(
+            codes(&judge(&CommitSubject::of("Fix: [Net] A thing"), &kw)),
+            vec!["commit.reference_missing"]
+        );
+    }
+
+    #[test]
+    fn a_closing_keyword_is_refused_where_the_policy_refuses_it() {
+        let closing = CommitSubject::of("feat(plan): a thing\n\nCloses #12");
+        assert!(judge(&closing, &CommitPolicy::default())
+            .findings
+            .is_empty());
+
+        let projected = CommitPolicy {
+            closing_keyword: FindingLevel::Error,
+            ..CommitPolicy::default()
+        };
+        let v = judge(&closing, &projected);
+        assert_eq!(codes(&v), vec!["commit.closing_keyword"]);
+        assert!(v.findings[0].message.contains("'Closes #12'"));
+        assert!(!v.passed);
+
+        // a reference, the word in prose, and a keyword inside a code span all pass
+        for text in [
+            "feat(plan): a thing\n\nRefs #12",
+            "fix(plan): this fixes the parser",
+            "feat(plan): a thing\n\nthe projection refuses `Closes #12`",
+        ] {
+            assert!(
+                judge(&CommitSubject::of(text), &projected)
+                    .findings
+                    .is_empty(),
+                "{text}"
+            );
+        }
+    }
+
+    /// A policy in the keyword style, the upstream checker's words and nothing else said.
+    fn keyword() -> CommitPolicy {
+        serde_json::from_value(serde_json::json!({
+            "grammar": {
+                "style": "keyword",
+                "words": [
+                {"word": "Add", "kind": "feat"},
+                {"word": "Feature", "kind": "feat"},
+                {"word": "Change", "kind": "refactor"},
+                {"word": "Remove", "kind": "refactor"},
+                {"word": "Codechange", "kind": "refactor"},
+                {"word": "Codefix", "kind": "chore"},
+                {"word": "Cleanup", "kind": "refactor"},
+                {"word": "Fix", "kind": "fix"},
+                {"word": "Revert", "kind": "revert"},
+                {"word": "Doc", "kind": "docs"},
+                {"word": "Update", "kind": "build"},
+                {"word": "Upgrade", "kind": "build"},
+                {"word": "Prepare", "kind": "other"}
+            ]
+            }
+        }))
+        .expect("a keyword policy")
+    }
+
+    #[test]
+    fn a_keyword_repository_passes_its_own_valid_messages_and_refuses_an_unknown_word() {
+        let p = keyword();
+        for ok in [
+            "Fix #12: [YAPF] Infinite loop in pathfinder",
+            "Fix: [YAPF] Infinite loop in pathfinder.",
+            "Codechange: [Script] The allocator's purchases run inside a search round, which is a header far wider than seventy-two characters",
+            "Prepare: for the release",
+        ] {
+            let v = judge(&CommitSubject::of(ok), &p);
+            assert!(v.passed, "{ok}: {:?}", v.findings);
+            assert!(v.findings.is_empty(), "{ok}: {:?}", v.findings);
+        }
+        let v = judge(
+            &CommitSubject::of("Test: [PrismaticMCP] Runs under a fake panel"),
+            &p,
+        );
+        assert!(!v.passed);
+        assert_eq!(codes(&v), vec!["commit.unknown_word"]);
+        assert!(
+            v.findings[0].message.contains("Codechange"),
+            "{:?}",
+            v.findings
+        );
+        let m = judge(&CommitSubject::of("Fix #12, #13: x"), &p);
+        assert_eq!(codes(&m), vec!["commit.header_malformed"]);
+        // the same valid message is refused by the conventional grammar, which is the defect
+        // this grammar exists for
+        assert_eq!(
+            codes(&judge(
+                &CommitSubject::of("Fix #12: [YAPF] Infinite loop"),
+                &CommitPolicy::default()
+            )),
+            vec!["commit.not_conventional"]
+        );
+    }
+
+    #[test]
+    fn the_keyword_style_checks_every_stored_line_as_its_upstream_checker_does() {
+        let p = keyword();
+        let v = judge(
+            &CommitSubject::of("Fix: [Net] A thing \n\nWhy\tit\u{e9}.\r\n"),
+            &p,
+        );
+        assert!(!v.passed);
+        let c = codes(&v);
+        assert!(c.contains(&"commit.trailing_whitespace"), "{c:?}");
+        assert!(c.contains(&"commit.non_ascii"), "{c:?}");
+        let text: Vec<&str> = v.findings.iter().map(|d| d.message.as_str()).collect();
+        assert!(text.iter().any(|m| m.starts_with("line 1 ")), "{text:?}");
+        assert!(
+            text.iter()
+                .any(|m| m.starts_with("line 3, column 4: U+0009")),
+            "{text:?}"
+        );
+        // DEL is printable ASCII to the upstream checker, and a comment line is not stored
+        let ok = judge(
+            &CommitSubject::of("Fix: [Net] A \u{7f}thing\n# a comment\twith a tab "),
+            &p,
+        );
+        assert!(ok.passed, "{:?}", ok.findings);
+        // and under the conventional grammar the line checks are off unless asked for
+        let c = judge(
+            &CommitSubject::of("fix(a): b \n\nc\td"),
+            &CommitPolicy::default(),
+        );
+        assert!(c.findings.is_empty(), "{:?}", c.findings);
+    }
+
+    #[test]
+    fn under_the_keyword_style_only_a_merge_is_exempt() {
+        let p = keyword();
+        assert!(
+            judge(&CommitSubject::of("Merge branch 'master' into x"), &p)
+                .exempt
+                .is_some()
+        );
+        let r = judge(&CommitSubject::of("Revert \"Fix: x\""), &p);
+        assert!(r.exempt.is_none());
+        assert!(!r.passed);
+        assert!(!judge(&CommitSubject::of("fixup! Fix: x"), &p).passed);
+    }
+
+    #[test]
+    fn a_keyword_fix_is_asked_for_a_test_and_a_codefix_is_not() {
+        let mut p = keyword();
+        p.fix_requires_test = FindingLevel::Error;
+        let paths = Some(vec!["src/a.cpp".to_string()]);
+        let fix = CommitSubject {
+            text: "Fix #3: [Net] A thing".into(),
+            paths: paths.clone(),
+            ..CommitSubject::default()
+        };
+        assert_eq!(codes(&judge(&fix, &p)), vec!["commit.fix_without_test"]);
+        let codefix = CommitSubject {
+            text: "Codefix: [Net] A comment".into(),
+            paths,
+            ..CommitSubject::default()
+        };
+        assert!(judge(&codefix, &p).findings.is_empty());
+    }
+
+    #[test]
+    fn a_component_is_a_scope_the_vocabulary_judges() {
+        let p = keyword();
+        let s = CommitSubject {
+            text: "Fix: [Yapf] A thing".into(),
+            scopes: Some(vec!["YAPF".into()]),
+            ..CommitSubject::default()
+        };
+        let v = judge(&s, &p);
+        assert!(v.passed, "an unknown scope is a warning");
+        assert_eq!(codes(&v), vec!["commit.unknown_scope"]);
+    }
+
+    #[test]
+    fn a_defective_grammar_refuses_every_message_and_says_why() {
+        let p: CommitPolicy = serde_json::from_value(serde_json::json!({
+            "grammar": {"style": "keyword", "words": [{"word": "beef", "kind": "fix"}]}
+        }))
+        .unwrap();
+        for text in ["beef: x", "Merge branch 'a'"] {
+            let v = judge(&CommitSubject::of(text), &p);
+            assert!(!v.passed, "{text}");
+            assert_eq!(codes(&v), vec!["commit.grammar_invalid"], "{text}");
+        }
+    }
+
+    #[test]
+    fn a_policy_may_put_a_width_and_a_full_stop_back_on_the_keyword_style() {
+        let mut p = keyword();
+        p.subject_max_chars = Some(20);
+        p.subject_trailing_period = Some(FindingLevel::Warning);
+        let v = judge(&CommitSubject::of("Fix: [Net] A thing that is long."), &p);
+        assert_eq!(
+            codes(&v),
+            vec!["commit.subject_too_long", "commit.subject_trailing_period"]
+        );
+        assert!(
+            v.findings[0].message.contains("32 characters"),
+            "{:?}",
+            v.findings
+        );
     }
 }
 

@@ -102,6 +102,20 @@ impl CommitMessage {
     /// assert_eq!(m.body, "The reason: it was wrong.");
     /// ```
     pub fn parse(text: &str) -> CommitMessage {
+        Self::parse_with(text, &super::grammar::CommitGrammar::Conventional)
+    }
+
+    /// Read a whole commit message whose header is written in `grammar`. The body and the
+    /// trailers are read the same way under every grammar; only the first line differs.
+    /// ```
+    /// use majordomus_cli::commit::{grammar::CommitGrammar, CommitMessage};
+    /// let g: CommitGrammar =
+    ///     serde_json::from_str(r#"{"style":"keyword","words": [{"word": "Fix", "kind": "fix"}]}"#).unwrap();
+    /// let m = CommitMessage::parse_with("Fix #1: [Net] A thing\n\nWhy.", &g);
+    /// assert_eq!(m.header.scope.as_deref(), Some("Net"));
+    /// assert_eq!(m.body, "Why.");
+    /// ```
+    pub fn parse_with(text: &str, grammar: &super::grammar::CommitGrammar) -> CommitMessage {
         // A message given to `git commit` may carry comment lines; git strips them and so
         // does this, so that what is validated is what will be stored.
         let lines: Vec<&str> = text
@@ -109,7 +123,7 @@ impl CommitMessage {
             .filter(|l| !l.starts_with('#'))
             .map(|l| l.trim_end())
             .collect();
-        let header = CommitHeader::parse(lines.first().copied().unwrap_or_default());
+        let header = grammar.parse(lines.first().copied().unwrap_or_default());
         let rest = lines.get(1..).unwrap_or_default();
         // The trailer block is the last paragraph, and only when every line of it is a
         // trailer. Anything else is body.

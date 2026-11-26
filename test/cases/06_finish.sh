@@ -120,6 +120,13 @@ expect_grep "\"event\":\"task.finished\".*\"task_id\":\"$id\".*\"outcome\":\"no_
 "$MJ" start "t3c" --scope lib >/dev/null
 expect_exit 10 "$MJ" finish --outcome no_match --note /nonexistent/note.md
 expect_grep 'FAIL note'
+expect_grep "FAIL note .* --note takes the path of a file holding the note; '/nonexistent/note.md' is not one"
+expect_grep '^outcome: active$' .ai/local/state/current.yaml
+# the note's text given where its path belongs is named as such, its start quoted on one line
+# and cut at 40 characters, rather than read as "no --note file"
+expect_exit 10 "$MJ" finish --outcome no_match --note "$(printf '# Reason\nthe text of the note itself, not a path to it')"
+expect_grep "FAIL note .* --note takes the path of a file holding the note; '# Reason the text of the note itself, no' is not one"
+expect_no_grep 'no --note file'
 expect_grep '^outcome: active$' .ai/local/state/current.yaml
 expect_exit 0 "$MJ" finish --outcome no_match --note "$n2"
 # --check fails on out-of-scope work
