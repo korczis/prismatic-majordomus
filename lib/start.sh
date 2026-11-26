@@ -37,7 +37,8 @@ usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[
   one active task per checkout; refuses (15) while a task is active — handover or finish it first
   scope paths are normalised (no trailing /, no escapes); overlap with other worktrees is reported
   --requires  what this task owes before it may be called completed: tokens of
-              share/obligations.yaml, listed by \`majordomus evidence\` with no arguments.
+              share/obligations.yaml (GET /api/v1/obligations and MCP majordomus_obligations
+              list them; \`majordomus evidence\` with no arguments prints its usage).
               A scope says where a worker may write; requires says what the worker owes.
               \`check\` reports each one, \`evidence --covers\` discharges the ones a worker
               records, and \`finish --outcome completed\` refuses while any is outstanding.
