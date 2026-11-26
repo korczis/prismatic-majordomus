@@ -4,7 +4,7 @@ description: "Keep a pasted or handed-over brief as a campaign in one canonical 
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/decompose-a-brief/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0 -->
+     Generator: majordomus-cli 1.2.0 -->
 
 # Decompose a brief into the plan
 

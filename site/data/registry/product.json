@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0"
+    "version": "1.2.0"
   },
-  "fingerprint": "de1342412234a3fc316cb16fa9a062b37adba17f8f14aee3fbd82842eddcbb54",
+  "fingerprint": "4eb6214470e6f49b349b1785cff19898ba71af98ce4118ed8f4d0f324a41e5e5",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 89,
+        "capabilities": 91,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 154,
+        "capabilities": 156,
         "moments": 38
       },
       "evidence": {
@@ -5753,6 +5753,22 @@
               "route": "GET /api/v1/mesh/peers"
             },
             {
+              "id": "mesh.record.write",
+              "title": "Write a typed coordination record to the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_record_write",
+              "route": "POST /api/v1/mesh/records"
+            },
+            {
+              "id": "mesh.records",
+              "title": "The typed coordination records of the mesh",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_records",
+              "route": "GET /api/v1/mesh/records"
+            },
+            {
               "id": "mesh.register",
               "title": "Register with this node's mesh",
               "kind": "command",
@@ -5961,10 +5977,10 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 31,
-        "mcp_tools": 26,
+        "capabilities": 33,
+        "mcp_tools": 28,
         "mcp_resources": 2,
-        "http_routes": 28,
+        "http_routes": 30,
         "cli_paths": 10,
         "commands": 0,
         "objects": 1,
@@ -7545,15 +7561,15 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 169
+          "objects": 170
         },
         {
           "name": "knowledge",
-          "objects": 186
+          "objects": 221
         },
         {
           "name": "document",
-          "objects": 357
+          "objects": 362
         }
       ],
       "rule_refs": [
@@ -7826,11 +7842,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 715,
+        "mcp_resources": 756,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 712,
+        "objects": 753,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9843,6 +9859,22 @@
               "route": "GET /api/v1/mesh/peers"
             },
             {
+              "id": "mesh.record.write",
+              "title": "Write a typed coordination record to the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_record_write",
+              "route": "POST /api/v1/mesh/records"
+            },
+            {
+              "id": "mesh.records",
+              "title": "The typed coordination records of the mesh",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_records",
+              "route": "GET /api/v1/mesh/records"
+            },
+            {
               "id": "mesh.register",
               "title": "Register with this node's mesh",
               "kind": "command",
@@ -10492,10 +10524,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 71,
-        "mcp_tools": 62,
+        "capabilities": 73,
+        "mcp_tools": 64,
         "mcp_resources": 9,
-        "http_routes": 66,
+        "http_routes": 68,
         "cli_paths": 26,
         "commands": 0,
         "objects": 1,
@@ -11124,6 +11156,22 @@
               "stability": "experimental",
               "tool": "majordomus_mesh_peers",
               "route": "GET /api/v1/mesh/peers"
+            },
+            {
+              "id": "mesh.record.write",
+              "title": "Write a typed coordination record to the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_record_write",
+              "route": "POST /api/v1/mesh/records"
+            },
+            {
+              "id": "mesh.records",
+              "title": "The typed coordination records of the mesh",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_records",
+              "route": "GET /api/v1/mesh/records"
             },
             {
               "id": "mesh.register",
@@ -11989,10 +12037,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 113,
-        "mcp_tools": 101,
+        "capabilities": 115,
+        "mcp_tools": 103,
         "mcp_resources": 18,
-        "http_routes": 107,
+        "http_routes": 109,
         "cli_paths": 50,
         "commands": 0,
         "objects": 0,
@@ -13002,7 +13050,7 @@
         },
         {
           "name": "release-record",
-          "objects": 40
+          "objects": 44
         }
       ],
       "rule_refs": [
@@ -13170,11 +13218,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 42,
+        "mcp_resources": 46,
         "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 41,
+        "objects": 45,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 3,
@@ -13610,7 +13658,7 @@
         },
         {
           "name": "issue",
-          "objects": 1223
+          "objects": 1276
         },
         {
           "name": "intent",
@@ -13820,11 +13868,11 @@
       "counts": {
         "capabilities": 30,
         "mcp_tools": 29,
-        "mcp_resources": 1433,
+        "mcp_resources": 1486,
         "http_routes": 29,
         "cli_paths": 14,
         "commands": 1,
-        "objects": 1430,
+        "objects": 1483,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -14707,7 +14755,7 @@
       "kind_refs": [
         {
           "name": "skill",
-          "objects": 11
+          "objects": 12
         }
       ],
       "rule_refs": [
@@ -14768,11 +14816,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 12,
+        "mcp_resources": 13,
         "http_routes": 3,
         "cli_paths": 3,
         "commands": 1,
-        "objects": 11,
+        "objects": 12,
         "rules": 1,
         "enforced_rules": 1,
         "docs": 1,
@@ -17665,7 +17713,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (169)",
+        "title": "adr (170)",
         "features": [
           "knowledge"
         ]
@@ -17770,14 +17818,14 @@
       },
       {
         "id": "issue",
-        "title": "issue (1223)",
+        "title": "issue (1276)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "knowledge",
-        "title": "knowledge (186)",
+        "title": "knowledge (221)",
         "features": [
           "knowledge"
         ]
@@ -17826,7 +17874,7 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (40)",
+        "title": "release-record (44)",
         "features": [
           "install"
         ]
@@ -17855,7 +17903,7 @@
       },
       {
         "id": "skill",
-        "title": "skill (11)",
+        "title": "skill (12)",
         "features": [
           "skills"
         ]
@@ -18830,19 +18878,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3952,
-    "builtin": 231,
-    "declarative": 3721,
+    "capabilities": 4064,
+    "builtin": 233,
+    "declarative": 3831,
     "modules": 62,
-    "mcp_tools": 215,
-    "mcp_resources": 3778,
-    "http_routes": 219,
+    "mcp_tools": 217,
+    "mcp_resources": 3888,
+    "http_routes": 221,
     "cli_commands": 229,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3721,
+    "objects": 3831,
     "by_kind": {
-      "adr": 169,
+      "adr": 170,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18853,27 +18901,27 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 357,
+      "document": 362,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1223,
-      "knowledge": 186,
+      "issue": 1276,
+      "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 40,
+      "release-record": 44,
       "rule": 192,
       "scope": 1,
       "session": 95,
-      "skill": 11,
+      "skill": 12,
       "taxonomy": 10,
-      "test": 697,
+      "test": 708,
       "use-case": 49,
       "workspace": 1
     },
