@@ -56,7 +56,8 @@ mj_cmd_doctor() {
   local a
   for a in "$@"; do case "$a" in
     --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
-               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
+               echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading, and the"
+               echo "                                     context builder when nothing staged can change it, and says so"
                return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
   esac; done
@@ -81,6 +82,7 @@ mj_cmd_doctor() {
   mj_report_environment
   mj_report_reasoning
   mj_report_layout
+  mj_fleet_report_licence
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -120,7 +122,77 @@ mj_validate_policy() {
   else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml" \
     "ls $(mj_rel "$MJ_PROFILES_DIR")"; fi
 
+  mj_profile_limits_reconcile
   return 0
+}
+
+# share/profile-limits.yaml against the profiles and lib/ (I0201): every declared axis is set
+# on every profile, every declared adapter is a function that names its limit in a
+# `# majordomus-limit: <limit>` line above it, and no function names a limit the file does
+# not declare. Each profile's limits are then printed as data, one name=value per limit.
+mj_profile_limits_reconcile() {
+  local reg="$MJ_BIN_DIR/../share/profile-limits.yaml" rel="share/profile-limits.yaml"
+  local flat tagged i id axis derive adapter ids="" pf n v line vals bad
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.pl.XXXXXX")"
+  if ! mj_yaml_flatten "$reg" > "$flat" 2>/dev/null; then
+    mj_doctrine_fail profile-limits "$rel" "does not parse" "cat $rel"; rm -f "$flat"; return 0
+  fi
+  if [ "$(mj_yget "$flat" version)" != 1 ]; then
+    mj_doctrine_fail profile-limits "$rel" "unsupported version '$(mj_yget "$flat" version)' (want 1)" "grep -n '^version:' $rel"
+    rm -f "$flat"; return 0
+  fi
+  # file, limit, function: each function under lib/ with the marker lines directly above it
+  tagged="$(awk '
+    FNR == 1 { n = 0 }
+    /^# majordomus-limit: / { t[n++] = $3; next }
+    /^#/ { next }
+    /^[a-z_][a-z0-9_]*\(\) *\{/ { f = $0; sub(/\(.*/, "", f); for (k = 0; k < n; k++) print FILENAME, t[k], f; n = 0; next }
+    { n = 0 }' "$MJ_LIB_DIR"/*.sh)"
+  i=0
+  while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
+    axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+    adapter="$(mj_yget "$flat" "limits.$i.adapter")"; ids="$ids $id"
+    case "$derive" in
+      count|duration_seconds) ;;
+      *) mj_doctrine_fail profile-limits "$id" "derive '$derive' is not count or duration_seconds" "grep -n -A4 'id: $id' $rel" ;;
+    esac
+    printf '%s\n' "$tagged" | awk -v l="$id" -v f="$adapter" '$2 == l && $3 == f { ok = 1 } END { exit ok ? 0 : 1 }' \
+      || mj_doctrine_fail profile-limits "$id" "declares adapter $adapter, and no function $adapter under lib/ carries '# majordomus-limit: $id'" \
+        "grep -rn -A1 'majordomus-limit: $id' lib/"
+    i=$((i+1))
+  done
+  while read -r line; do
+    [ -n "$line" ] || continue
+    set -- $line
+    case " $ids " in *" $2 "*) ;;
+      *) mj_doctrine_fail profile-limits "$2" "$(mj_rel "$1"): $3 applies limit '$2', which $rel does not declare" "grep -n 'majordomus-limit: $2' $(mj_rel "$1")" ;;
+    esac
+  done <<EOF
+$tagged
+EOF
+  for pf in "$MJ_PROFILES_DIR"/*.yaml; do
+    [ -f "$pf" ] || continue; n="$(basename "$pf" .yaml)"
+    mj_load_profile "$n" 2>/dev/null || continue
+    vals=""; bad=0; i=0
+    while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
+      axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+      v="$(mj_pro "$axis")"
+      if [ -z "$v" ]; then
+        mj_doctrine_fail profile-limits "$n" "does not set $axis, from which $rel derives $id" "cat $(mj_rel "$pf")"; bad=1
+      else
+        case "$derive" in
+          duration_seconds) v="$(mj_duration_secs "$v")" || v="" ;;
+          count) case "$v" in *[!0-9]*) v="" ;; esac ;;
+        esac
+        if [ -z "$v" ]; then
+          mj_doctrine_fail profile-limits "$n" "$axis: '$(mj_pro "$axis")' is not a $derive value" "grep -n '$(printf '%s' "$axis" | sed 's/.*\.//'):' $(mj_rel "$pf")"; bad=1
+        else vals="$vals $id=$v"; fi
+      fi
+      i=$((i+1))
+    done
+    [ "$bad" = 1 ] || mj_doctrine_ok profile-limits "$n" "limits${vals}"
+  done
+  rm -f "$flat"
 }
 
 # A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the
@@ -494,6 +566,15 @@ mj_validate_budget() {
     "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
+  # In the commit hook the builder is proved only when the commit can change what it reads
+  # (I4265): it composes the whole context, about a quarter of an adopter's doctor run, and a
+  # commit that stages nothing under .ai/ or in a provider file cannot break it. Said by name,
+  # with the command that runs it, because an absent check must not read as a passing one.
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ] \
+     && ! mj_git diff --cached --name-only 2>/dev/null | grep -qE '^(\.ai/|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$)'; then
+    mj_info context "builder" "not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit): nothing staged under .ai/ or in a provider file can change it; run doctor on its own" "majordomus doctor"
+    return 0
+  fi
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
   #    A directory full of records that no command reads is the failure mode this whole
   #    tool exists to catch, so doctor proves each store is readable by the command that
@@ -668,8 +749,152 @@ mj_report_clone() {
       "ls $(mj_rel "$(mj_outbox_dir)")/*/"
   fi
   mj_report_uncommitted
+  mj_report_install_currency
   mj_report_trunk_distance
   mj_report_release_currency
+}
+
+# Whether each checkout's dependency install matches its lockfile (I4595). On 2026-11-14 an
+# adopter's linked worktree installed and committed a new esbuild; the primary checkout's
+# pre-push then died halfway through its build with ERR_MODULE_NOT_FOUND, because that
+# checkout's node_modules predated the new package-lock.json, and nothing had said so.
+#
+# Read, never installed: doctor names the checkout, the manifest and the command that brings
+# it current, and runs none of it. Every checkout of the repository is read, the primary and
+# each linked worktree; under MAJORDOMUS_DOCTOR_CONTEXT=commit only this one, and a line says
+# so, as the uncommitted-work reading does.
+#
+#   npm  package-lock.json with node_modules/ beside it. The install's own record of itself,
+#        node_modules/.package-lock.json (npm 7 and later), is compared with the lockfile: an
+#        entry the lockfile holds that the install lacks, holds at another version, or whose
+#        directory is gone is behind. Optional entries (another platform's binaries) are
+#        judged only when installed, and dev entries not at all in an install that omitted
+#        every one of them. jq reads both files; npm itself is not run, so its absence
+#        changes nothing here.  A lockfileVersion 1 lock (npm 6) has no "packages" map to compare
+#        with, so it is INFO, not judged, rather than read as current.
+#   mix  mix.lock and mix.exs with deps/ beside them. When every locked dependency has a
+#        directory under deps/ written after mix.lock last changed, the install is current
+#        without asking; otherwise `mix deps.loadpaths --no-compile` decides, which checks
+#        every dependency against the lock and compiles nothing. (`mix deps.check`, the name
+#        the issue gave, is no task of Elixir 1.16 to 1.19: Mix loads and compiles every
+#        dependency, then fails to find the task.) A mix that does not start is INFO.
+#
+# A checkout with no lockfile, or with no install beside it, is not judged: an install that
+# was never made is not behind, and most worktrees never make one. Silent when nothing is
+# judged, so a repository with no lockfile reads as it did before this reading existed.
+mj_report_install_currency() {
+  local here checkouts d judged=0 behind=0 unread=0 others_left=0 line keys n lacking first lv
+  here="$(cd "$MJ_ROOT" && pwd -P)"
+  if [ "${MAJORDOMUS_DOCTOR_CONTEXT:-}" = commit ]; then
+    checkouts="$here"
+    [ "$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | grep -c '^worktree ')" -le 1 ] || others_left=1
+  else
+    checkouts="$(git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')"
+    [ -n "$checkouts" ] || checkouts="$here"
+  fi
+  # The list of checkouts is this loop's stdin, so every child below that could read stdin
+  # runs with </dev/null: a mix with Hex missing asks "Shall I install Hex? [Yn]" (rebar3
+  # likewise), and with the loop's stdin it took the rest of the list as its answer, leaving
+  # every checkout after the mix one silently unread (#3090).
+  while IFS= read -r d; do
+    [ -n "$d" ] && [ -d "$d" ] || continue
+    # ---- npm
+    if [ -f "$d/package-lock.json" ] && [ -d "$d/node_modules" ]; then
+      if ! mj_has jq; then
+        unread=$((unread + 1))
+        mj_info clone "$d" "package-lock.json has an install beside it, but jq is absent, so whether node_modules matches it is not read" "cd '$d' && npm ls --depth=0"
+      elif lv="$(jq -r 'if type == "object" and (has("packages") | not)
+          then (.lockfileVersion // "?" | tostring) else empty end' "$d/package-lock.json" 2>/dev/null </dev/null)" \
+          && [ -n "$lv" ]; then
+        # lockfileVersion 1 (npm 6) locks its tree under "dependencies", nested, with no
+        # "packages" map: there is nothing here to compare the install with, and an empty
+        # wanted set would read as current whatever node_modules holds
+        unread=$((unread + 1))
+        # build-cache: a remedy the doctor prints for the owner to run, never runs itself
+        mj_info clone "$d" "package-lock.json is lockfileVersion $lv, with no \"packages\" map, so whether node_modules matches it is not judged; npm 7 and later rewrite it in the current format" "cd '$d' && npm install --package-lock-only"
+      elif [ ! -f "$d/node_modules/.package-lock.json" ]; then
+        unread=$((unread + 1))
+        mj_info clone "$d" "package-lock.json: node_modules holds no .package-lock.json (npm 7 and later write one), so whether the install matches the lockfile is not read" "cd '$d' && npm ci"
+      else
+        # one line per entry the lockfile wants: "lacks <key>" when the install's record
+        # does not hold it at that version, "holds <key>" when it does, and then its
+        # directory must still be there — unless it is optional: the record keeps another
+        # platform's binaries that were never unpacked
+        if ! keys="$(jq -r --slurpfile lock "$d/package-lock.json" '
+          def entries: (.packages // {}) | to_entries
+            | map(select(.key | test("(^|/)node_modules/")))
+            | map({key, value: {v: (.value.version // .value.resolved // ""),
+                                 o: (.value.optional == true or .value.devOptional == true),
+                                 dev: (.value.dev == true)}})
+            | from_entries;
+          (entries) as $have | ($lock[0] | entries) as $want
+          | ([$have[] | select(.dev)] | length) as $devs
+          | $want | to_entries[]
+          | select((.value.dev and $devs == 0) | not)
+          | if $have[.key] == null then (if .value.o then empty else "lacks \(.key)" end)
+            elif $have[.key].v != .value.v then "lacks \(.key)"
+            elif .value.o then empty
+            else "holds \(.key)" end' "$d/node_modules/.package-lock.json" 2>/dev/null </dev/null)"; then
+          unread=$((unread + 1))
+          mj_info clone "$d" "package-lock.json or node_modules/.package-lock.json does not parse, so whether the install matches the lockfile is not read" "cd '$d' && npm ci"
+        else
+          judged=$((judged + 1)); n=0; lacking=""
+          while IFS= read -r line; do
+            case "$line" in
+              "lacks "*) ;;
+              "holds "*) [ -e "$d/${line#holds }" ] && continue ;;
+              *) continue ;;
+            esac
+            n=$((n + 1))
+            if [ "$n" -le 3 ]; then
+              first="${line#* }"; first="${first##*node_modules/}"
+              lacking="${lacking:+$lacking, }$first"
+            fi
+          done <<EOF
+$keys
+EOF
+          if [ "$n" -gt 0 ]; then
+            behind=$((behind + 1))
+            [ "$n" -le 3 ] || lacking="$lacking, ..."
+            mj_warn clone "$d" "package-lock.json is ahead of node_modules: $n package(s) it locks are missing or at another version ($lacking); a build or hook run here uses the old install" "cd '$d' && npm ci"
+          fi
+        fi
+      fi
+    fi
+    # ---- mix
+    if [ -f "$d/mix.lock" ] && [ -f "$d/mix.exs" ] && [ -d "$d/deps" ]; then
+      lacking="$(awk '/^  "[^"]+": / { k = $1; gsub(/[":]/, "", k); print k }' "$d/mix.lock" \
+        | while IFS= read -r line; do
+            { [ -d "$d/deps/$line" ] && [ "$d/deps/$line" -nt "$d/mix.lock" ]; } || { echo ask; break; }
+          done)"
+      if [ -z "$lacking" ]; then
+        judged=$((judged + 1))
+      else
+        # shellcheck source=runnable.sh
+        . "$MJ_LIB_DIR/runnable.sh"
+        if ! (cd "$d" && mj_runs mix) </dev/null; then
+          unread=$((unread + 1))
+          mj_info clone "$d" "mix.lock: $(cd "$d" && mj_runs_why mix </dev/null), so whether deps/ matches the lock is not read" "cd '$d' && mix deps.get"
+        else
+          judged=$((judged + 1))
+          if ! line="$(cd "$d" && mix deps.loadpaths --no-compile 2>&1 </dev/null)"; then
+            behind=$((behind + 1))
+            first="$(printf '%s\n' "$line" | sed -n 's/^\* \([^ ]*\).*/\1/p' | head -n 3 | paste -s -d, - | sed 's/,/, /g')"
+            mj_warn clone "$d" "mix.lock is ahead of deps/: mix deps.loadpaths --no-compile refuses${first:+ ($first)}; a build or hook run here uses the old deps" "cd '$d' && mix deps.get"
+          fi
+        fi
+      fi
+    fi
+  done <<EOF
+$checkouts
+EOF
+  if [ "$others_left" = 1 ]; then
+    mj_info clone "install" "other checkouts' installs are not read in the commit hook (MAJORDOMUS_DOCTOR_CONTEXT=commit), only this one's; run doctor on its own" "majordomus doctor"
+  fi
+  if [ "$judged" -gt 0 ] && [ "$behind" = 0 ] && [ "$unread" = 0 ]; then
+    mj_ok clone "install" "every checkout's dependency install matches its lockfile ($judged install(s) read)"
+  fi
+  return 0
 }
 
 # Whether the trunk's landed work is released (release.currency, I3070; the owner's order of
@@ -870,7 +1095,8 @@ mj_validate_policy_defaults() {
   for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
              | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | LC_ALL=C sort -u); do
     n=$((n + 1))
-    if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
+    # declared is a line for the key, an empty value included (`ui.kit: ""` declares no kit)
+    if ! grep -qE "^$(printf '%s' "$k" | sed 's/\./\\./g')(=|\.)" "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
     fi
   done
@@ -1151,6 +1377,8 @@ mj_validate_rule_package() {
   if [ -f "$MJ_STD_RULES_DIR/manifest.yaml" ] && ! diff -rq "$vend" "$MJ_STD_RULES_DIR" >/dev/null 2>&1; then
     mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
   fi
+  # the fleet pack beside the baseline: its stamp, and its lag behind the pack on this machine
+  mj_fleet_report
   mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
   # A verdict states what it is a verdict about. "122 rule(s) resolve in one deterministic
   # order" is true and is read as covering the whole set, while the doctrine check below

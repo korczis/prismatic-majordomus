@@ -60,6 +60,9 @@ site_paths() {
   [ -d site/content ] && find site/content -mindepth 1 -maxdepth 1 -type d | sed 's#$#/**#' | LC_ALL=C sort
   # The three documents its publish block copies into docs/, named by that block.
   grep -oE 'cp "\$STAGE/[A-Z_]+\.md" "\$ROOT/docs/[A-Z_]+\.md' "$GEN" | sed 's#.*\$ROOT/##'
+  # And the directories it publishes whole under docs/ (the plan status's milestone pages,
+  # I4512), named by the same block's publish_dir lines.
+  grep -oE '^ *publish_dir "[^"]+" "\$ROOT/docs/[a-z-]+"' "$GEN" | sed 's#.*\$ROOT/##; s#"$#/**#'
   printf 'site/content/*.md\nsite/data/generated/**\n'
 }
 

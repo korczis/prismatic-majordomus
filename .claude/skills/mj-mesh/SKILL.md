@@ -5,7 +5,7 @@ argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:mesh; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.2.0 -->
 
 # Majordomus `mesh`
 
@@ -30,6 +30,8 @@ $ARGUMENTS
 | `mesh.nodes` | The discovered nodes | `majordomus_mesh_nodes` | — | reads |
 | `mesh.peer` | One runtime | `majordomus_mesh_peer` | — | reads |
 | `mesh.peers` | Who cooperates, machine by machine | `majordomus_mesh_peers` | — | reads |
+| `mesh.record.write` | Write a typed coordination record to the mesh | `majordomus_mesh_record_write` | — | changes |
+| `mesh.records` | The typed coordination records of the mesh | `majordomus_mesh_records` | — | reads |
 | `mesh.register` | Register with this node's mesh | `majordomus_mesh_register` | — | changes |
 | `mesh.release` | Release a claim | `majordomus_mesh_release` | — | changes |
 | `mesh.review.answer` | Answer a review request | `majordomus_mesh_review_answer` | — | changes |
@@ -40,6 +42,7 @@ $ARGUMENTS
 | `mesh.state` | The state every linked runtime converges on | `majordomus_mesh_state` | — | reads |
 | `mesh.status` | The mesh, at a glance | `majordomus_mesh` | — | reads |
 | `mesh.verify` | Prove cooperation now | `majordomus_mesh_verify` | — | changes |
+| `mesh.who` | Who runs this | `majordomus_mesh_who` | `majordomus mesh who` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

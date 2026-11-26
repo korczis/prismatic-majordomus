@@ -1,0 +1,53 @@
+id: I4413
+milestone: a-second-adopter-is-served
+title: "A failed verification is run again over the trunk commit the work is built on, and its refusal says which failures were already there, so one red test of the trunk does not read as every task's defect"
+slug: a-failed-verification-says-whether-the-trunk-fails-too
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Two changes to mj_validate_verification in lib/finish.sh, none of which changes a repository that declares nothing. First, a policy key verification.failure_pattern (an extended regular expression with one group, absent: none): when it is declared, the verify command's output is written to a temporary file instead of /dev/null, the group's text on every matching line is a failure id, and the sorted, unique ids (at most 50, with their count) go into the refusal line and into a verify object that task.refused now carries (verify.failures); the output file is removed afterwards. Second, a policy key verification.base_rerun (boolean, absent: false), overridable per invocation by `finish --no-base-rerun`: when the verify command failed, finish exports the base commit with `git archive` into a temporary directory (never a linked worktree, so no worktree is registered and no hook runs), runs verification.base_prepare there when declared (for example `npm ci`), runs the same verify command there with the same environment, and removes the directory on every exit path. The base is the merge base of HEAD and the trunk's remote-tracking branch (mj_git_trunk_ref, lib/common.sh:540-549), and the task's start head (mj_cur head) when no trunk is known; the record says which (base_source: trunk or start). The verification is classified in the vocabulary I3313 defines for session records: introduced when the base run passes, or when a failure id of this run is absent from the base run's ids (only those ids are listed as introduced); pre-existing only when the base run fails, a failure_pattern is declared and every failure id of this run is among the base run's; unknown when the base run fails with no failure_pattern declared, or the base could not be exported, prepared or resolved (a shallow clone, a missing object), with the reason. unknown is never shown as pre-existing. The classification never accepts the task: a red verification stays a refusal whatever its class, as majordomus.verification-integrity requires. A pre-existing refusal reads `npm test — exit 1, 412s; pre-existing at 3e89654 (trunk): 1 of 1 failure fails there too: studio perf budget`, and its remedy names re-running finish once the trunk's failure is fixed and `finish --outcome blocked` with that reason, instead of a re-run of the same command over the same tree. task.refused records verify.origin with base, base_source, base_exit, base_seconds, class, failures, base_failures and, for unknown, reason. The rule majordomus.verification-integrity states that the base run classifies a refusal and never turns it into a pass."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-29 by session oscilla-b0, filed from oscilla-b0's upstream candidates (item 12 of the 2026-10-29 evening list, which extends item 6, filed as I4415). The tasks of five pull requests (#282, #283, #284, #286 and #291) were refused by `majordomus finish --verify-command` at about the same time, each for the same wall-clock Studio performance test of OSCILLA's suite and for nothing in their own changes. Each refusal said only `<cmd> — exit 1, <n>s`, so each worker read it as a defect of its own work and diagnosed it again, and the five task.refused lines are what I3131's aggregate of caught false dones would count as five. Nothing in finish records which tests failed (the output goes to /dev/null) or whether the commit the work is built on fails the same way. I3313 answers that question for a closed session record from the evidence ledger at the task's base and explicitly does not run the verification again; in an adopting repository the ledger holds no execution for its own suite, so I3313 answers unknown for every failure there, and the five refusals would still look like five defects. I4415 says how loaded the machine was and retries a failure above a declared load bound; it does not tell a failure the change introduced from one the trunk already had, which is what made all five refusals the same refusal. OSCILLA is making its own test load-robust; this issue is the tool's side."
+current_state: "Measured at origin/master 51b38035a71: lib/finish.sh:199 runs the verify command once in the repository root with stdout and stderr sent to /dev/null; lib/finish.sh:203 fails the line as `<cmd> — exit <n>, <s>s`; the verify object (lib/finish.sh:129) carries command, exit, seconds and tree and is written only into task.finished (lib/finish.sh:131); task.refused (lib/finish.sh:108, share/events.yaml:56-62) records unmet, refused and contract, not the run. Nothing in lib/finish.sh, lib/check.sh or apps/majordomus-cli/src/session reads or runs anything at the task's base: `git grep -n -iE 'pre-existing|introduced' lib/finish.sh` finds nothing. The policy key verification admits only required_for_changes and finish_requires (share/allow/policy.txt, generated from share/schemas/majordomus/policy/policy.v1.schema.json:57). The task record carries its start head (lib/start.sh:155, read as mj_cur head at lib/finish.sh:237)."
+desired_state: "A refused verification names the failures it saw, when the repository declares how to read them, and, when the repository asks for it, says whether the trunk commit the work is built on fails the same way: introduced failures are the change's, pre-existing ones are inherited and say so, and anything that cannot be decided is unknown with its reason. A red verification is still never accepted. Five tasks refused by one red test of the trunk read as one inherited failure five times, in the line and in the ledger. With no key declared, finish behaves as today. Enforced by case 4413, case 06 and the amended rule."
+scope:
+  - ".ai/repo/project/issues/I4413.yaml"
+  - "lib/finish.sh"
+  - "lib/common.sh"
+  - "share/allow/policy.txt"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/events.yaml"
+  - "share/standard/majordomus/rules/verification-integrity.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md"
+  - "docs/CLI.md"
+  - "docs/SCHEMAS.md"
+  - "test/cases/06_finish.sh"
+  - "test/cases/4413_a_failed_verification_says_whether_the_trunk_fails_too.sh"
+non_scope:
+  - "Reading the evidence ledger at the task's base and carrying the origin of each failure into the closed session record and the next brief: I3313, whose vocabulary (pre-existing, introduced, unknown) this issue uses"
+  - "The load the verification ran under, waiting below a declared bound and retrying a failure under load: I4415, which edits the same function and is merged around, not absorbed"
+  - "Keeping the tail of the verify command's output in the ledger and admitting verify commands by policy: I3123"
+  - "Counting refusals as caught, unanswered or downgraded: I3131, which may read verify.origin.class"
+  - "Accepting a task whose verification failed, whatever its class, or closing the episodes of refused tasks: open episodes no session owns are OSCILLA candidate 13"
+  - "Parsing any particular test runner's output: the failure ids are only what the declared pattern extracts"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4413, in a fixture repository with a bare origin whose refs/remotes/origin/HEAD names main, origin/main carrying a test that fails with `not ok 1 - perf`: with verification.failure_pattern `^not ok [0-9]+ - (.*)$` and verification.base_rerun true, a task whose change touches nothing the test reads is refused, the line names the merge base by short id with (trunk), `pre-existing`, `1 of 1` and `perf`, and task.refused carries verify.failures [\"perf\"] and verify.origin.class pre-existing with base_failures [\"perf\"]"
+  - "Case 4413: a task whose change makes a second test fail (`not ok 2 - parse`) over that base is refused with class introduced, and the line lists `parse` as introduced and `perf` as pre-existing"
+  - "Case 4413: over a base whose suite passes, a failing change is refused with class introduced and verify.origin.base_exit 0"
+  - "Case 4413: with base_rerun true and no failure_pattern, a base that fails too yields class unknown with a reason naming the absent pattern, and the line never says pre-existing"
+  - "Case 4413: a shallow clone, a repository with no refs/remotes/<remote>/HEAD and no task start head, and a verification.base_prepare that exits non-zero each yield class unknown with a reason naming why, and the task is refused"
+  - "Case 4413: in every class finish exits 15 (contract) and task.finished is not written; `git worktree list` is the same before and after, and no temporary export directory is left behind, including when the base run is interrupted"
+  - "Case 4413: without verification.base_rerun, or with `--no-base-rerun`, the verify command runs once, exactly as before"
+  - "Case 06 passes unchanged for a policy that declares none of the new keys"
+  - "doctor admits verification.failure_pattern, verification.base_rerun and verification.base_prepare through share/allow/policy.txt, regenerated by `majordomus generate`, and the policy schema refuses a failure_pattern that is not a string"
+  - "Before the change, case 4413 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4413_a_failed_verification_says_whether_the_trunk_fails_too 06_finish 572_verification_records_the_tree_it_proved"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "failed_verification_origin_case"
+created_at: 2026-10-29
+updated_at: 2026-10-29

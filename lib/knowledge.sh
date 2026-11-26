@@ -158,7 +158,7 @@ mj_kdisc_state() {
 MJ_KNOWLEDGE_OBSERVATION_KINDS='friction workaround defect drift repetition'
 
 mj_knowledge_observe_cmd() {
-  local kind="" subject="" statement="" evidence="" ev_json="" ref task_id=none
+  local kind="" subject="" statement="" evidence="" ev_json="" ref
   while [ $# -gt 0 ]; do case "$1" in
     --kind) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--kind needs a value"; kind="$2"; shift 2 ;;
     --kind=*) kind="${1#--kind=}"; shift ;;
@@ -192,16 +192,48 @@ $evidence
 EOF_EV
   mj_require_installed
   # The deriver selects an observation by its episode stamp, and the ledger stamps a line only
-  # while an episode is open: an observation without one would be written and never derived.
-  # Its task is the caller's or none (ADR 0164), never the checkout's active one by proximity.
+  # while an episode is open: an observation without one would be written and never derived,
+  # so ADR 0118 refuses it, with the command that gives the caller an episode of its own.
+  # Its task is the caller's or none (ADR 0164), never the checkout's active one by proximity,
+  # and none is an omitted task_id, never the literal `none`.
   mj_record_attribution
-  [ -n "$MJ_RECORD_SESSION" ] \
-    || mj_die "$MJ_EX_CONTRACT" "knowledge observe: no episode is open in this checkout for this caller, so the observation would never be derived; open one first: majordomus session start"
-  [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ] && task_id="$MJ_RECORD_TASK"
-  mj_ledger_append observation.recorded \
-    "\"task_id\":\"$task_id\",\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\",\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]" \
-    "$MJ_RECORD_SESSION"
+  [ -n "$MJ_RECORD_SESSION" ] || mj_knowledge_observe_refuse_unstamped "$kind" "$subject"
+  local task_field=""
+  [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ] \
+    && task_field="\"task_id\":\"$MJ_RECORD_TASK\","
+  local payload
+  payload="$task_field\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\""
+  payload="$payload,\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]"
+  mj_ledger_append observation.recorded "$payload" "$MJ_RECORD_SESSION"
   printf 'observed: %s %s — %s\n' "$kind" "$subject" "$statement"
+}
+
+# The refusal of an observation no episode would derive, with the remedy that works for this
+# caller. `session start` alone is not always it: a caller that names a provider session
+# needs that session's episode, and with several open a caller that names none is still
+# nobody after another one opens (ADR 0164 decision 2).
+mj_knowledge_observe_refuse_unstamped() {
+  local kind="$1" subject="$2" k f w n=0 keys="" fix
+  k="${MJ_SESSION_KEY:-}"; [ -n "$k" ] || k="$(mj_provider_session_env)"
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    n=$((n + 1)); keys="$keys${keys:+, }$(basename "$f" .yaml)"
+  done
+  if [ -n "$k" ]; then
+    fix="this caller is provider session $k, which has no episode open here; open it:"
+    fix="$fix majordomus session start --provider-session $k"
+  elif [ "$n" = 0 ]; then
+    fix="no episode is open in this checkout; open one: majordomus session start"
+  else
+    fix="$n episodes are open here, keyed $keys, and this caller names none of them; name"
+    fix="$fix yours: MJ_SESSION_KEY=<key> majordomus knowledge observe --kind $kind"
+    fix="$fix --subject $subject \"<statement>\""
+  fi
+  mj_die "$MJ_EX_CONTRACT" \
+    "knowledge observe: refused by adr-0118 (an observation is derived from its episode's" \
+    "stamp, and this one would carry none, so it would never be derived): $fix"
 }
 
 # Which owner should look first at an observation about $1, from its structure alone, in

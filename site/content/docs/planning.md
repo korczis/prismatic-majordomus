@@ -75,7 +75,8 @@ is the part of the event a clone can check. A stamp without its seal moves no st
 `stamp_without_event` failure of `plan validate`; the stamps recorded before seals existed
 are named in each record's `unsealed_stamps`, a list that only shrinks
 (`project.no-plan-stamp-without-its-event`, ADR 0097). `done` is refused unless the issue is
-ACTIVE or VERIFY.
+ACTIVE or VERIFY, and it is decided and written in one place: `majordomus plan done` runs the
+`plan.transition` capability rather than stamping the record itself (I1504, ADR 0040).
 
 A milestone's status follows from its issues and its own evidence:
 
@@ -544,6 +545,33 @@ published (`majordomus served forge` records it). Releases come from the records
 tags: a record names the commit it released and is a file of the tree, while a tag is a ref
 that can appear on any day.
 
+The pointer is read where the deployment published it (I4315, ADR 0227). A Pages deployment
+is a commit `scripts/site-deploy` pushed to `gh-pages`, whose tree is the built site, so the
+pointer authored at `site/static/releases/latest.json` is `releases/latest.json` there; the
+reader tries that path first and the authored path second, for a deployment of a source
+commit, and an unread reason names both. Until I4315 it read only the authored path, which no
+deployment had ever carried, and `deployed` was proved for no issue.
+
+<pre class="mermaid">
+flowchart LR
+  R["release record&lt;br/&gt;one per version under .ai/repo/releases/"] --&gt;|generate| S["site/static/releases/latest.json"]
+  S --&gt;|site build| P["gh-pages commit&lt;br/&gt;releases/latest.json"]
+  P --&gt;|Pages deployment| O["deployment observation&lt;br/&gt;(majordomus served forge)"]
+  O --&gt; D["plan delivery&lt;br/&gt;deployed"]
+  M["merge on the trunk"] --&gt; L["released&lt;br/&gt;(first record containing it)"]
+  L --&gt; D
+</pre>
+
+
+Deployments are observed only by `majordomus served forge`, not by `prs refresh` (since
+3e8225a4329). A checkout that never ran it reads `publication` unread with that command in the
+reason. The Pages workflow's `ui-snapshot` job runs it and then fails when `plan delivery`
+still reads no publication for any reason other than "no successful deployment", so a reader
+that stops matching the deploy turns that run red instead of publishing `released` forever.
+The red is for a forge that answered: when `served forge` itself could not read the
+deployments in time (an outage, I4380), the step reports the deployed stage unknown with a
+warning and the publication goes on, because an outage says nothing about the reader.
+
 Committed derived data is a function of the commit alone, or every tag, push, pull request
 and deployment would turn `scripts/generate-site-data --check` red on every open branch. So
 `--at <rev>` reads only that commit's merges and the tree's release records: it proves
@@ -656,8 +684,9 @@ hash as `<!-- majordomus:record I0001 -->`. A GitHub number is GitHub's to assig
 title is a person's to edit, so neither can be the key: matching on a title means a rename
 orphans the record and the next `--apply` creates a second one for work that already exists.
 
-Every finding about a body is one of six states, from two independent questions — has a
-person rewritten the region since it was posted, and has the canonical record moved since?
+Every finding about a body is one of these states, from two independent questions — has a
+person rewritten the region since it was posted, and has the canonical record moved since? —
+and, for a record GitHub does not serve, whether GitHub ever carried it (I4290):
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -668,13 +697,24 @@ person rewritten the region since it was posted, and has the canonical record mo
 | `edited` | a person rewrote the region | refuses without `--force` |
 | `conflict` | a person rewrote it and the record has moved | refuses without `--force` |
 | `adopt` | no identity marker; matched by title, this once | writes one |
-| `missing` | no counterpart on GitHub | creates |
+| `never-created` | no counterpart on GitHub, and GitHub never carried one | creates |
+| `deleted-remotely` | GitHub carried it and a person deleted it there | refuses until a person names it in `MJ_GH_RECREATE` (exit 15) |
 
 </div>
 
 
 and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 canonical id this repository does not have.
+
+The two absences are told apart from what both sides already record, so nothing is stored
+for it. GitHub says when it created each projected record (an issue carrying an identity
+marker, a milestone titled `<id> — `), and the newest of those dates the last apply that
+created anything: an apply creates every record it finds missing, so a record whose file
+reached the trunk before that moment (read from the trunk's first-parent history) was
+created and then deleted. A record that reached the trunk later, a remote with no projected
+record yet (an adopter's first apply) and a record a shallow clone cannot date are
+`never-created`. A record an apply failed to create while later ones were created reads
+`deleted-remotely` and is refused rather than guessed at; naming it creates it.
 
 A title GitHub would refuse is refused before it merges. GitHub caps a milestone title at
 255 characters and an issue title at 256, and the projected title is `<id> — <title>`.
@@ -688,11 +728,11 @@ Applying is a consequence of landing; agreement is a gate. Every push to the def
 starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is
 owed, then the gate (`project.the-projection-is-applied-at-landing@2`); a person's `--apply`
 from the trunk is the fallback when that run fails. `scripts/ci/github-check` reads the
-remote on every change that can move either side, refuses the first six states outright,
-and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
-may fall and may never rise. It exists because the detector was written, never called, and
-the projection decayed to a tenth of the model over five days with every build green
-(`project.github-projection-gated@1`).
+remote on every change that can move either side, refuses every state outright
+except the two it ratchets, `never-created` and `adopt`, which it holds against
+`.ai/repo/ci/github-drift-baseline.txt`, a ceiling that may fall and may never rise. It
+exists because the detector was written, never called, and the projection decayed to a
+tenth of the model over five days with every build green (`project.github-projection-gated@1`).
 
 A head is judged against what it changes. GitHub shows the trunk's plan and nothing else,
 so a record a pull request edits is `behind` there until the pull request has merged and

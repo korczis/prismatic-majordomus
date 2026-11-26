@@ -30,4 +30,18 @@ evidence_required:
   - "a_departed_peer_that_a_later_announce_repeats_is_not_kept_test"
 risk: "A departed row is dropped only when a newer row of the same client and address holds every claim it held under the same names, so nothing it said is lost; the newer row carries the current text of those claims."
 created_at: 2026-10-25
-updated_at: 2026-10-25
+updated_at: 2026-10-28T12:16:51Z
+started_at: 2026-10-28T12:16:01Z
+started_event: sha256:e539fba86c382af10099bbc97bd9d47713d1b4dd289381dcd015d4dd880dc187
+verified_at: 2026-10-28T12:16:22Z
+verified_event: sha256:ab6ac90188a37f7d9b183cda8b6dbc5a9450873ebd44c0317f427b3b062bfb1e
+completed_at: 2026-10-28T12:16:51Z
+completed_event: sha256:ed639f529dbb71b00d8c65b6fc2fb547fe61a2c63874b3feb79d60dbead5714f
+evidence:
+  - covers: a_departed_peer_that_a_later_announce_repeats_is_not_kept_test
+    type: ci
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib peers::tests::a_departed_peer_that_a_later_announce_repeats_is_not_kept"
+    result: "ok in master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf, job rust (2) 122655219231 (lib suite 4188 passed, 0 failed); the test departs a session, reconnects RETAINED+4 times and asserts the departed announcement is kept, the re-attached client is listed once, and an unnamed-claim slot and a different-address slot are kept; landed with train 8 (9215178a53b)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939/job/122655219231"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:16:41Z

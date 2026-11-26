@@ -1,7 +1,7 @@
 +++
 title = "majordomus machine slot status"
 description = "Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk"
-weight = 255
+weight = 267
 [extra]
 route = "/docs/cli/machine/slot/status/"
 command = "majordomus machine slot status"

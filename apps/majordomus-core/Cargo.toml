@@ -9,8 +9,14 @@ publish = false
 
 [lib]
 name = "majordomus_core"
-# rlib for the executable that depends on it; cdylib for the wasm32 module a browser loads
-crate-type = ["rlib", "cdylib"]
+# rlib only, for the executable that depends on it. The wasm32 module a browser loads is the
+# cdylib `scripts/rust-check --portable-core` asks for (`cargo rustc --crate-type cdylib`).
+# With a cdylib here too, cargo names the rlib without a hash. Every worktree's builds share
+# one build directory (.cargo/config.toml), so a standalone build of this crate against its
+# own Cargo.lock then replaced the rlib the executable links, and the next executable build
+# anywhere failed at canonical_json (2026-10-24, 2026-10-25; I4232). An rlib alone is named
+# by its hash, so the two builds keep two rlibs.
+crate-type = ["rlib"]
 
 [dependencies]
 # The same two crates the executable already takes, with the same features, so that a value

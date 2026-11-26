@@ -26,4 +26,16 @@ validation:
 evidence_required:
   - "the_mcp_reference_repeats_no_registry_entry_case"
 created_at: 2026-10-15
-updated_at: 2026-10-15
+updated_at: 2026-10-25T23:41:38Z
+started_at: 2026-10-25T23:41:14Z
+started_event: sha256:d50212bf219e03ae636f5662b32ff1e5f1080eb2b3a82161804ef34ff39e11b3
+completed_at: 2026-10-25T23:41:38Z
+completed_event: sha256:bcc6d0e3b24483f46ef87d18122070d7c0659917acd4e6ade5488db9170a2369
+evidence:
+  - covers: the_mcp_reference_repeats_no_registry_entry_case
+    type: test
+    command: "MJ_TEST_JOBS=2 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3062_the_mcp_reference_repeats_no_registry_entry"
+    result: "at master 2efeacea031: case 3062 ok (C1: no tracked document under docs/ outside docs/generated/ has a table row whose first cell is a backticked majordomus_ tool name). C2 by mutation: with docs/MCP.md as it was before 5b2c2813ca8 (git show 5b2c2813ca8^:docs/MCP.md), case 3062 fails naming 29 hand-written tool rows (docs/MCP.md:394 onwards); restored, the file is identical to master. Master validate run 40196303175 suite-shard (4) job 121182964713: case 3062 ok. Landed 5b2c2813ca8 (2026-10-15)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: cb4741a60d9a1e6e57bb2c60c91ccf7f5806a847
+    recorded_at: 2026-10-25T23:40:46Z

@@ -30,6 +30,21 @@
 //! environment of the child, and over an alias file, which would put a secret on disk for the
 //! length of the call.
 //!
+//! The build host is also the mesh's CI runner host (I4352). On 2026-10-28 `/` on lundra
+//! filled with the runners' cargo build directories, under homes the disk guard did not
+//! search, and the guard itself had never been installed. The runner units stayed active the
+//! whole time: inside each one `runsvc.sh` relaunched a crashing listener every five seconds,
+//! so systemd had nothing to restart while GitHub showed the runners offline. The policy
+//! therefore declares the runners' homes, which the disk guard reads from a file the plan
+//! renders, so that it reclaims their idle cargo output between jobs. It also declares the
+//! runners' unit name patterns. Every observed unit that matches one and is not masked gets a
+//! drop-in that restarts it always, without a start limit. That drop-in covers only
+//! `runsvc.sh` itself exiting. It does not recover a listener that crash-loops inside an
+//! active unit (I4345's watchdog does that), and it does not bound a build directory during a
+//! job (I4344). [`doctor_check`] reports what the host still owes in `mesh doctor`, as a
+//! warning. The check that fails while the guard is not observed live is I4343, and the rule
+//! that keeps CI off such a host is I4359.
+//!
 
 use std::collections::BTreeMap;
 use std::io::Write;
@@ -38,6 +53,8 @@ use std::process::Command;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use super::doctor::DoctorCheck;
 
 /// The declared policy, embedded from `assets/mesh-cache-provider/policy.json` in the package.
 const POLICY: &str = include_str!("../../assets/mesh-cache-provider/policy.json");
@@ -49,6 +66,25 @@ const GUARD_SERVICE: &str = include_str!("../../assets/mesh-cache-provider/disk-
 const GUARD_TIMER: &str = include_str!("../../assets/mesh-cache-provider/disk-guard.timer");
 const RW_POLICY: &str = include_str!("../../assets/mesh-cache-provider/mesh-build-cache-rw.json");
 const WRAPPER: &str = include_str!("../../assets/mesh-cache-provider/sccache-mesh");
+const RUNNER: &str = include_str!("../../assets/mesh-cache-provider/runner.conf");
+
+/// The file the disk guard reads its homes from (`HOMES_FILE` in the script), rendered from
+/// the policy.
+const GUARD_HOMES: &str = "/etc/majordomus/disk-guard.homes";
+
+/// Where the drop-in that keeps a CI runner serving goes, under `<unit>.d/`. It is not the
+/// critical services' `50-build-host.conf`, whose `OOMScoreAdjust` a runner's jobs would
+/// inherit. A unit that is both (gitlab-runner) keeps both; this one is read after it, so its
+/// `RestartSec=10` overrides the critical `RestartSec=3` and the rest is the same.
+const RUNNER_DROP_IN: &str = "majordomus-runner.conf";
+
+/// Where systemd unit files are observed: the administrator's directory, then the packages'.
+/// A drop-in always goes under the first.
+const UNIT_DIRS: [&str; 3] = [
+    "/etc/systemd/system",
+    "/lib/systemd/system",
+    "/usr/lib/systemd/system",
+];
 
 /// Where the per-node credentials and environments live on the provider, outside any
 /// repository and readable by root alone.
@@ -89,6 +125,12 @@ pub struct Policy {
     pub nodes: Vec<String>,
     /// The services that restart always and are the last the OOM killer takes.
     pub critical_services: Vec<String>,
+    /// The homes of the CI runners' users: the disk guard reclaims the cargo build output
+    /// anywhere under them, with the same safety as under `home`.
+    pub runner_homes: Vec<String>,
+    /// The CI runner services, as unit name patterns (`*` matches any run of characters):
+    /// every observed unit that matches one restarts always, without a start limit.
+    pub runner_units: Vec<String>,
 }
 
 impl Policy {
@@ -130,6 +172,69 @@ impl Policy {
     fn new_wrapper(&self) -> String {
         format!("rustc-wrapper = \"{}/.local/bin/sccache-mesh\"", self.home)
     }
+
+    /// The disk guard's homes as the script sources them: the build user's, and the runners'.
+    fn guard_homes(&self) -> String {
+        let words = |v: &[String]| {
+            v.iter()
+                .map(|h| shell_word(h))
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        format!(
+            "# The disk guard's homes, rendered from the declared policy by\n\
+             # `majordomus mesh build-cache provision`; the next apply undoes an edit here.\n\
+             HOMES=({})\nRUNNER_HOMES=({})\n",
+            words(std::slice::from_ref(&self.home)),
+            words(&self.runner_homes)
+        )
+    }
+
+    /// A unit is a runner's when its name matches a declared pattern, whether or not it is
+    /// also a critical service: the two drop-ins have their own names.
+    fn is_runner_unit(&self, unit: &str) -> bool {
+        self.runner_units.iter().any(|p| wildcard(p, unit))
+    }
+}
+
+/// `s` single-quoted for a shell.
+fn shell_word(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
+/// Whether `name` matches `pattern`, where `*` matches any run of characters and every other
+/// character matches itself.
+fn wildcard(pattern: &str, name: &str) -> bool {
+    let parts: Vec<&str> = pattern.split('*').collect();
+    let (first, rest) = parts.split_first().expect("split yields one part at least");
+    let Some(mut tail) = name.strip_prefix(first) else {
+        return false;
+    };
+    let Some((last, middle)) = rest.split_last() else {
+        return tail.is_empty();
+    };
+    for part in middle {
+        match tail.find(part) {
+            Some(i) => tail = &tail[i + part.len()..],
+            None => return false,
+        }
+    }
+    tail.len() >= last.len() && tail.ends_with(last)
+}
+
+/// The runner units among the observed unit files, by name, once each.
+fn runner_units(policy: &Policy, observed: &BTreeMap<String, Observed>) -> Vec<String> {
+    let mut units: Vec<String> = observed
+        .iter()
+        .filter(|(_, o)| o.exists)
+        .filter_map(|(path, _)| {
+            let (dir, name) = path.rsplit_once('/')?;
+            (UNIT_DIRS.contains(&dir) && policy.is_runner_unit(name)).then(|| name.to_string())
+        })
+        .collect();
+    crate::order::canonical(&mut units);
+    units.dedup();
+    units
 }
 
 /// What a file's content is.
@@ -233,13 +338,15 @@ pub struct Plan {
     pub edits: Vec<EditAction>,
     /// The commands, in the order they run.
     pub steps: Vec<Step>,
+    /// The CI runner units observed on the host, each owed its drop-in and started.
+    pub runners: Vec<String>,
     /// How many files are missing, different or of the wrong mode, plus edits owed.
     pub changes: usize,
     /// How many files this process could not observe.
     pub unobservable: usize,
 }
 
-fn wants(policy: &Policy) -> Vec<Want> {
+fn wants(policy: &Policy, runners: &[String]) -> Vec<Want> {
     let declared = |path: String, mode: u32, text: &str, src: &str| Want {
         path,
         mode,
@@ -284,6 +391,13 @@ fn wants(policy: &Policy) -> Vec<Want> {
             RW_POLICY,
             "mesh-build-cache-rw.json",
         ),
+        Want {
+            path: GUARD_HOMES.into(),
+            mode: 0o644,
+            owner: None,
+            content: Content::Text(policy.guard_homes()),
+            source: "declared:policy".into(),
+        },
     ];
     for unit in &policy.critical_services {
         out.push(declared(
@@ -291,6 +405,14 @@ fn wants(policy: &Policy) -> Vec<Want> {
             0o644,
             CRITICAL,
             "critical.conf",
+        ));
+    }
+    for unit in runners {
+        out.push(declared(
+            format!("/etc/systemd/system/{unit}.d/{RUNNER_DROP_IN}"),
+            0o644,
+            RUNNER,
+            "runner.conf",
         ));
     }
     for node in &policy.nodes {
@@ -364,8 +486,9 @@ fn state_of(want: &Want, seen: Option<&Observed>) -> FileState {
 /// a missing file; a file the process could not look at is `unobservable`, counted apart and
 /// never as a change.
 pub fn plan(policy: &Policy, observed: &BTreeMap<String, Observed>) -> Plan {
+    let runners = runner_units(policy, observed);
     let mut files = Vec::new();
-    for w in wants(policy) {
+    for w in wants(policy, &runners) {
         let state = state_of(&w, observed.get(&w.path));
         files.push(FileAction {
             path: w.path,
@@ -403,17 +526,156 @@ pub fn plan(policy: &Policy, observed: &BTreeMap<String, Observed>) -> Plan {
     Plan {
         files,
         edits,
-        steps: steps(policy),
+        steps: steps(policy, &runners),
+        runners,
         changes,
         unobservable,
     }
+}
+
+/// This host's name up to its first dot, when the system tells it.
+fn host_name() -> Option<String> {
+    let mut buf = [0u8; 256];
+    // SAFETY: the buffer is valid for writes of its whole length, which is the length passed;
+    // gethostname writes at most that many bytes and the result is read up to its first NUL.
+    let rc = unsafe { libc::gethostname(buf.as_mut_ptr().cast(), buf.len()) };
+    short_host_name((rc == 0).then_some(&buf[..]))
+}
+
+/// The name in `raw`, the buffer gethostname filled (`None` when it failed), read up to its
+/// first NUL and then up to its first dot; `None` when nothing is left.
+fn short_host_name(raw: Option<&[u8]>) -> Option<String> {
+    let raw = raw?;
+    let end = raw.iter().position(|b| *b == 0).unwrap_or(raw.len());
+    let name = String::from_utf8_lossy(&raw[..end]);
+    let short = name.split('.').next().unwrap_or("").trim().to_string();
+    (!short.is_empty()).then_some(short)
+}
+
+/// The command that brings this host to the policy, as root: the executable by its own path
+/// (the installer's launcher when this process was started through it), because `sudo`
+/// does not search a user's PATH.
+fn apply_command() -> String {
+    apply_command_for(
+        std::env::var("MAJORDOMUS_LAUNCHER").ok(),
+        std::env::current_exe().ok(),
+    )
+}
+
+/// [`apply_command`] for a given launcher variable and executable path: a non-empty launcher
+/// first, then the executable, and the bare name only when neither is known.
+fn apply_command_for(launcher: Option<String>, exe: Option<PathBuf>) -> String {
+    let exe = launcher
+        .filter(|l| !l.is_empty())
+        .or_else(|| exe.map(|p| p.display().to_string()))
+        .unwrap_or_else(|| "majordomus".into());
+    format!(
+        "sudo {} mesh build-cache provision --apply",
+        shell_word(&exe)
+    )
+}
+
+/// The `build_host` check of `mesh doctor` (I4352), asked only on the host the policy names
+/// as its local node (`None` anywhere else): a plan that owes nothing passes, and one that
+/// owes a change passes with a remediation, which the report shows as a warning, naming how
+/// many changes, the first of them, and `command`, the one to run.
+pub(crate) fn doctor_check(
+    host: &str,
+    policy: &Policy,
+    plan: &Plan,
+    command: &str,
+) -> Option<DoctorCheck> {
+    if host != policy.local_node {
+        return None;
+    }
+    let runners = if plan.runners.is_empty() {
+        "no CI runner unit observed".to_string()
+    } else {
+        format!("CI runner unit(s) {}", plan.runners.join(", "))
+    };
+    let unseen = if plan.unobservable == 0 {
+        String::new()
+    } else {
+        format!(
+            "; {} file(s) this process may not read, judged by an apply as root",
+            plan.unobservable
+        )
+    };
+    if plan.changes == 0 {
+        return Some(DoctorCheck {
+            check: "build_host".into(),
+            ok: true,
+            detail: format!("{host} holds the build host's provisioning; {runners}{unseen}"),
+            impact: None,
+            remediation: None,
+        });
+    }
+    let owed: Vec<&str> = plan
+        .files
+        .iter()
+        .filter(|f| {
+            matches!(
+                f.state,
+                FileState::Missing | FileState::Different | FileState::Mode
+            )
+        })
+        .map(|f| f.path.as_str())
+        .chain(
+            plan.edits
+                .iter()
+                .filter(|e| e.owed)
+                .map(|e| e.path.as_str()),
+        )
+        .collect();
+    let first: Vec<&str> = owed.iter().take(4).copied().collect();
+    let more = owed.len().saturating_sub(first.len());
+    Some(DoctorCheck {
+        check: "build_host".into(),
+        ok: true,
+        detail: format!(
+            "{host} owes {} provisioning change(s): {}{}; {runners}{unseen}",
+            plan.changes,
+            first.join(", "),
+            if more > 0 {
+                format!(" and {more} more")
+            } else {
+                String::new()
+            }
+        ),
+        impact: Some(
+            "a build host without its provisioning has no disk guard over its CI runners' idle \
+             build output: on 2026-10-28 / filled under the runners' homes and every lundra \
+             runner's listener crash-looped offline"
+                .into(),
+        ),
+        remediation: Some(format!(
+            "run `{command}` in a checkout of this repository (without --apply it only plans)"
+        )),
+    })
+}
+
+/// [`doctor_check`] for this host, read under `/`.
+pub(crate) fn this_host_check() -> Option<DoctorCheck> {
+    host_check(host_name(), Path::new("/"))
+}
+
+/// [`doctor_check`] for the host named `host` (`None` when it could not be told), read under
+/// `root`. A host other than the policy's local node is never observed.
+fn host_check(host: Option<String>, root: &Path) -> Option<DoctorCheck> {
+    let policy = Policy::declared();
+    let host = host?;
+    if host != policy.local_node {
+        return None;
+    }
+    let planned = plan(&policy, &observe(&policy, root));
+    doctor_check(&host, &policy, &planned, &apply_command())
 }
 
 fn mc(policy: &Policy, rest: &str) -> String {
     format!("runuser -u {} -- mc --quiet {rest}", policy.user)
 }
 
-fn steps(policy: &Policy) -> Vec<Step> {
+fn steps(policy: &Policy, runners: &[String]) -> Vec<Step> {
     let a = &policy.alias;
     let b = &policy.bucket;
     let s = |id: &str, line: String, when: &str| Step {
@@ -447,6 +709,17 @@ fn steps(policy: &Policy) -> Vec<Step> {
             "systemctl enable --now disk-guard.timer".into(),
             "always",
         ),
+    ];
+    // a runner unit that has stopped stays stopped when only its restart policy changes, so
+    // start it; on an active unit this does nothing
+    if !runners.is_empty() {
+        v.push(s(
+            "runners-start",
+            format!("systemctl start {}", runners.join(" ")),
+            "always",
+        ));
+    }
+    v.extend([
         s(
             "ci-cache-quota",
             mc(
@@ -493,7 +766,7 @@ fn steps(policy: &Policy) -> Vec<Step> {
             ),
             "always",
         ),
-    ];
+    ]);
     for node in &policy.nodes {
         let id = Policy::identity(node);
         v.push(s(
@@ -532,11 +805,48 @@ fn mode_of(path: &Path) -> Option<u32> {
         .map(|m| m.permissions().mode() & 0o777)
 }
 
-/// Read the host under `root` for every path of the policy. A secret file's content is never
-/// kept; a copy is compared in this process and only the verdict is returned.
+/// The unit files under `root` whose names match a runner pattern, each as an observation
+/// that exists. A directory the process cannot read holds none it can name. A unit masked
+/// in any unit directory (a link to `/dev/null`) is left out under every directory, so the
+/// apply never tries to start it and never reports a failure for it.
+fn observe_units(policy: &Policy, root: &Path) -> BTreeMap<String, Observed> {
+    let mut found = Vec::new();
+    let mut masked = std::collections::BTreeSet::new();
+    for dir in UNIT_DIRS {
+        let Ok(entries) = std::fs::read_dir(physical(root, dir)) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if !policy.is_runner_unit(&name) {
+                continue;
+            }
+            if std::fs::read_link(entry.path()).is_ok_and(|t| t == Path::new("/dev/null")) {
+                masked.insert(name);
+            } else if !entry.file_type().is_ok_and(|t| t.is_dir()) {
+                found.push((dir, name));
+            }
+        }
+    }
+    found
+        .into_iter()
+        .filter(|(_, name)| !masked.contains(name))
+        .map(|(dir, name)| {
+            let o = Observed {
+                exists: true,
+                ..Observed::default()
+            };
+            (format!("{dir}/{name}"), o)
+        })
+        .collect()
+}
+
+/// Read the host under `root` for every path of the policy, and every runner unit it holds.
+/// A secret file's content is never kept; a copy is compared in this process and only the
+/// verdict is returned.
 pub fn observe(policy: &Policy, root: &Path) -> BTreeMap<String, Observed> {
-    let mut seen = BTreeMap::new();
-    let all = wants(policy);
+    let mut seen = observe_units(policy, root);
+    let all = wants(policy, &runner_units(policy, &seen));
     for w in &all {
         let p = physical(root, &w.path);
         let mut o = Observed::default();
@@ -739,7 +1049,7 @@ fn apply_in(
     };
     let before = observe(policy, root);
     let mut groups: Vec<&str> = Vec::new();
-    for w in wants(policy) {
+    for w in wants(policy, &runner_units(policy, &before)) {
         let state = state_of(&w, before.get(&w.path));
         if state == FileState::Current {
             continue;
@@ -886,7 +1196,8 @@ fn run_steps(
         v.extend(sh(rest));
         v
     };
-    for step in steps(policy) {
+    let runners = runner_units(policy, &observe_units(policy, root));
+    for step in steps(policy, &runners) {
         let due = step.when == "always" || groups.contains(&step.when.as_str());
         if !due {
             report
@@ -1031,7 +1342,7 @@ mod tests {
     #[test]
     fn a_wrong_mode_on_a_credential_is_a_change() {
         let p = Policy::declared();
-        let w = wants(&p)
+        let w = wants(&p, &[])
             .into_iter()
             .find(|w| w.content == Content::Generated)
             .unwrap();
@@ -1197,7 +1508,7 @@ mod tests {
             .filter(|(argv, _)| !argv.iter().any(|a| a == "add"))
             .all(|(_, stdin)| stdin.is_none()));
         // and the plan says where the secret goes, by name only
-        let step = steps(&p)
+        let step = steps(&p, &[])
             .into_iter()
             .find(|s| s.id == "identity-mbp")
             .unwrap();
@@ -1562,6 +1873,411 @@ mod tests {
         assert!(r.ran.iter().any(|x| x.line.starts_with("chown ") && !x.ok));
     }
 
+    fn unit(observed: &mut BTreeMap<String, Observed>, path: &str) {
+        observed.insert(
+            path.to_string(),
+            Observed {
+                exists: true,
+                ..Observed::default()
+            },
+        );
+    }
+
+    /// I4352: a unit is a runner's by a declared pattern, a critical service too; a drop-in
+    /// directory and an unrelated unit are not.
+    #[test]
+    fn a_runner_unit_is_named_by_a_declared_pattern() {
+        let p = Policy::declared();
+        assert!(p.is_runner_unit("actions.runner.korczis-prismatic-majordomus.lundra-1.service"));
+        assert!(!p.is_runner_unit("actions.runner.korczis-prismatic-majordomus.lundra-1.service.d"));
+        assert!(p.is_runner_unit("gitlab-runner.service"));
+        assert!(!p.is_runner_unit("minio.service"));
+        assert_ne!(
+            RUNNER_DROP_IN, "50-build-host.conf",
+            "the runner drop-in is not the critical one"
+        );
+        assert!(wildcard("a*b*c", "a-b-c") && wildcard("a*", "a") && wildcard("*", ""));
+        assert!(!wildcard("a*b", "ab-") && !wildcard("ab", "abc") && !wildcard("a*bb", "ab"));
+        assert!(wildcard("a*ba", "aba") && !wildcard("a*aa", "aa"));
+    }
+
+    /// I4352: an observed runner unit is owed its drop-in, under the administrator's unit
+    /// directory whichever directory holds the unit, and a start after the timer.
+    #[test]
+    fn the_plan_names_the_drop_in_for_an_observed_runner_unit() {
+        let p = Policy::declared();
+        let mut seen = BTreeMap::new();
+        let one = "actions.runner.korczis-prismatic-majordomus.lundra-1.service";
+        let two = "actions.runner.korczis-prismatic-majordomus.lundra-2.service";
+        unit(&mut seen, &format!("/etc/systemd/system/{one}"));
+        unit(&mut seen, &format!("/usr/lib/systemd/system/{two}"));
+        let gitlab = "gitlab-runner.service";
+        unit(&mut seen, &format!("/etc/systemd/system/{gitlab}"));
+        let planned = plan(&p, &seen);
+        assert_eq!(
+            planned.runners,
+            vec![one.to_string(), two.to_string(), gitlab.to_string()]
+        );
+        for u in [one, two, gitlab] {
+            let f = planned
+                .files
+                .iter()
+                .find(|f| f.path == format!("/etc/systemd/system/{u}.d/majordomus-runner.conf"))
+                .unwrap_or_else(|| panic!("no drop-in for {u}: {:?}", planned.files.len()));
+            assert_eq!(f.state, FileState::Missing);
+            assert_eq!(f.source, "declared:runner.conf");
+        }
+        // a GitHub runner never gets the critical drop-in; gitlab-runner keeps its own
+        assert!(!planned
+            .files
+            .iter()
+            .any(|f| f.path.contains("actions.runner.") && f.source == "declared:critical.conf"));
+        assert!(planned.files.iter().any(|f| f.path
+            == format!("/etc/systemd/system/{gitlab}.d/50-build-host.conf")
+            && f.source == "declared:critical.conf"));
+        let ids: Vec<&str> = planned.steps.iter().map(|s| s.id.as_str()).collect();
+        let start = ids.iter().position(|i| *i == "runners-start").unwrap();
+        assert!(ids.iter().position(|i| *i == "systemd-reload").unwrap() < start);
+        assert_eq!(
+            planned.steps[start].line,
+            format!("systemctl start {one} {two} {gitlab}")
+        );
+        // no runner, no start step and no drop-in
+        let bare = plan(&p, &BTreeMap::new());
+        assert!(bare.runners.is_empty() && !bare.steps.iter().any(|s| s.id == "runners-start"));
+        // the runner drop-in restarts always without a limit and adjusts no OOM score
+        assert!(RUNNER.contains("Restart=always") && RUNNER.contains("StartLimitIntervalSec=0"));
+        assert!(!RUNNER
+            .lines()
+            .any(|l| l.trim_start().starts_with("OOMScoreAdjust")));
+    }
+
+    /// I4352: the guard's homes come from the policy and carry the runner homes, in the file
+    /// the script reads, as shell the script can source.
+    #[test]
+    fn the_guard_homes_carry_the_runner_homes() {
+        let p = Policy::declared();
+        assert!(p.runner_homes.iter().any(|h| h == "/home/ghrunner"));
+        assert!(p.runner_homes.iter().any(|h| h == "/home/gitlab-runner"));
+        let planned = plan(&p, &BTreeMap::new());
+        let f = planned
+            .files
+            .iter()
+            .find(|f| f.path == GUARD_HOMES)
+            .unwrap();
+        assert_eq!(
+            (f.mode.as_str(), f.source.as_str()),
+            ("0644", "declared:policy")
+        );
+        let text = p.guard_homes();
+        assert!(text.contains("HOMES=('/home/korczis')"), "{text}");
+        assert!(
+            text.contains("RUNNER_HOMES=('/home/ghrunner' '/home/gitlab-runner')"),
+            "{text}"
+        );
+        assert!(GUARD.contains(&format!("HOMES_FILE:={GUARD_HOMES}")));
+        assert_eq!(shell_word("it's"), "'it'\\''s'");
+        // bash parses the guard, and sourcing the rendered file yields both lists
+        let dir = scratch("homes");
+        let file = dir.join("disk-guard.homes");
+        std::fs::write(&file, &text).unwrap();
+        let guard = dir.join("disk-guard");
+        std::fs::write(&guard, GUARD).unwrap();
+        let out = Command::new("bash")
+            .arg("-c")
+            .arg(r#"bash -n "$2" || exit 9; . "$1"; printf '%s|' "${HOMES[@]}" "${RUNNER_HOMES[@]}""#)
+            .arg("bash")
+            .arg(&file)
+            .arg(&guard)
+            .output()
+            .expect("bash reads the homes file the guard sources");
+        assert!(out.status.success(), "{out:?}");
+        assert_eq!(
+            String::from_utf8_lossy(&out.stdout),
+            "/home/korczis|/home/ghrunner|/home/gitlab-runner|"
+        );
+    }
+
+    /// The guard sourced into bash, which then defines its functions and changes nothing,
+    /// followed by `script` with `$1` the guard and `$2..` `args`. Every tree under `$2` is
+    /// aged past every idle window first. Shims stand in for what a host may lack: GNU's
+    /// `rm --one-file-system` (BSD), `timeout` (macOS) and lsof. As root, the privilege drop
+    /// is no part of these tests, so it is a pass-through. Every host the tests run on has
+    /// bash, so a missing one fails the test rather than skipping it.
+    fn run_guard(dir: &Path, script: &str, args: &[&Path]) -> std::process::Output {
+        let guard = dir.join("disk-guard");
+        std::fs::write(&guard, GUARD).unwrap();
+        let preamble = r#"
+            find "$2" -exec touch -h -t 202001010000 {} + 2>/dev/null
+            . "$1" || exit 9
+            declare -F reap >/dev/null || exit 9
+            command -v timeout >/dev/null || timeout() { shift; "$@"; }
+            command -v lsof >/dev/null || lsof() { return 1; }
+            rm() { command rm -rf -- "${@: -1}"; }
+            size_gib() { echo 1; }
+            [ "$(id -u)" -ne 0 ] || as_owner_of() { shift; "$@"; }
+        "#;
+        let mut cmd = Command::new("bash");
+        cmd.arg("-c")
+            .arg(format!("{preamble}\n{script}"))
+            .arg("bash")
+            .arg(&guard);
+        for a in args {
+            cmd.arg(a);
+        }
+        cmd.output().expect("bash runs the disk guard")
+    }
+
+    /// The names left in `dir`, sorted.
+    fn names_in(dir: &Path) -> Vec<String> {
+        let mut left: Vec<String> = std::fs::read_dir(dir)
+            .unwrap()
+            .flatten()
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .collect();
+        left.sort();
+        left
+    }
+
+    /// I4352: the guard renames an idle build directory aside, checks the aside again and
+    /// only then deletes it, so a job that starts after the rename finds a fresh path. It also
+    /// removes an idle aside that an interrupted run left behind, and it touches nothing next
+    /// to the directory.
+    #[test]
+    fn the_guard_renames_a_build_directory_aside_before_deleting_it() {
+        let dir = scratch("reap");
+        let target = dir.join("build-shared");
+        std::fs::create_dir_all(target.join("debug")).unwrap();
+        std::fs::write(target.join("CACHEDIR.TAG"), "created by cargo").unwrap();
+        let stale = dir.join("build-shared.reaping.1");
+        std::fs::create_dir_all(stale.join("debug")).unwrap();
+        std::fs::write(dir.join("keep"), "a neighbour").unwrap();
+        // the rename leaves the old path free before anything is deleted
+        let script = r#"
+            mv() { command mv "$@" && [ ! -e "$2" ] && [ -d "$3" ] && echo renamed; }
+            reap "$3"
+        "#;
+        // the whole directory is aged, the stale aside with it
+        let out = run_guard(&dir, script, &[&dir, &target]);
+        assert!(out.status.success(), "{out:?}");
+        assert!(
+            String::from_utf8_lossy(&out.stdout).contains("renamed"),
+            "{out:?}"
+        );
+        assert_eq!(
+            names_in(&dir),
+            vec!["disk-guard".to_string(), "keep".to_string()]
+        );
+    }
+
+    /// I4352 (review): a job that started between the idle check and the rename keeps writing
+    /// into the aside. The guard sees that, gives the directory back at its path and deletes
+    /// nothing.
+    #[test]
+    fn the_guard_gives_back_a_build_directory_that_came_into_use_while_it_was_reaped() {
+        let dir = scratch("reap-busy");
+        let target = dir.join("target");
+        std::fs::create_dir_all(target.join("debug")).unwrap();
+        std::fs::write(target.join("CACHEDIR.TAG"), "created by cargo").unwrap();
+        // a running job writes into the directory it already holds, right after the rename
+        let script = r#"
+            mv() { command mv "$@" || return; [ -d "$3/debug" ] && : > "$3/debug/by-a-job"; }
+            reap "$3" && exit 7
+            printf '%s\n' "${actions[@]}"
+        "#;
+        let out = run_guard(&dir, script, &[&target, &target]);
+        assert!(out.status.success(), "{out:?}");
+        assert!(
+            String::from_utf8_lossy(&out.stdout).contains("gave back"),
+            "{out:?}"
+        );
+        assert!(target.join("debug/by-a-job").is_file());
+        assert!(target.join("CACHEDIR.TAG").is_file());
+        assert_eq!(
+            names_in(&dir),
+            vec!["disk-guard".to_string(), "target".to_string()]
+        );
+    }
+
+    /// I4352 (review): a runner home is written by the CI jobs it runs, so a tag planted
+    /// there must never make the guard take the runner or anything outside cargo output: not
+    /// the home itself, not a directory directly in it, not a runner's installation or a
+    /// source tree, and not a directory reached through a symlinked parent. Real build output
+    /// deeper in the home is still removed.
+    #[test]
+    fn a_tag_planted_in_a_runner_home_takes_nothing_but_cargo_output() {
+        let dir = scratch("planted");
+        let home = dir.join("home");
+        let outside = dir.join("outside");
+        let tag = "Signature: 8a477f597d28d172789f06886806bc55\n# created by cargo\n";
+        for d in [
+            "",
+            "home-2",
+            "actions-runner-1",
+            "a/b",
+            "src/crate",
+            "runner-1/_work/r/r/target/debug",
+            "home-3/.cargo/build-shared/x",
+        ] {
+            std::fs::create_dir_all(home.join(d)).unwrap();
+        }
+        for d in [
+            "",
+            "home-2",
+            "actions-runner-1",
+            "a/b",
+            "src/crate",
+            "runner-1/_work/r/r/target",
+            "home-3/.cargo/build-shared",
+        ] {
+            std::fs::write(home.join(d).join("CACHEDIR.TAG"), tag).unwrap();
+        }
+        std::fs::write(home.join("actions-runner-1/.runner"), "{}").unwrap();
+        std::fs::write(home.join("a/b/.credentials"), "{}").unwrap();
+        std::fs::write(home.join("src/crate/Cargo.toml"), "[package]").unwrap();
+        std::fs::create_dir_all(outside.join("lib")).unwrap();
+        std::fs::write(outside.join("lib/CACHEDIR.TAG"), tag).unwrap();
+        std::fs::write(outside.join("lib/libc.so"), "a system file").unwrap();
+        std::os::unix::fs::symlink(&outside, home.join("link")).unwrap();
+        let script = r#"
+            HOMES=(); RUNNER_HOMES=("$3")
+            # the symlinked parent, as if swapped in after the search found x/lib
+            printf '%s\n' "$3/link/lib/CACHEDIR.TAG" | cargo_of | grep . && exit 7
+            reap "$3/link/lib" && exit 8
+            reap "$3" && exit 6
+            reclaim_cargo 0
+            printf '%s\n' "${actions[@]}"
+        "#;
+        let out = run_guard(&dir, script, &[&dir, &home]);
+        assert!(out.status.success(), "{out:?}");
+        let said = String::from_utf8_lossy(&out.stdout);
+        // each removal is one journal line (and its echo in the run's actions)
+        assert_eq!(said.matches("<6>removed cargo output").count(), 2, "{said}");
+        // the two build directories went, and nothing else did
+        assert!(!home.join("runner-1/_work/r/r/target").exists(), "{said}");
+        assert!(!home.join("home-3/.cargo/build-shared").exists(), "{said}");
+        assert!(home.join("runner-1/_work/r/r").is_dir());
+        for kept in [
+            "CACHEDIR.TAG",
+            "home-2/CACHEDIR.TAG",
+            "actions-runner-1/.runner",
+            "a/b/.credentials",
+            "src/crate/Cargo.toml",
+        ] {
+            assert!(home.join(kept).is_file(), "{kept} was taken: {said}");
+        }
+        assert!(outside.join("lib/libc.so").is_file(), "{said}");
+        assert!(outside.join("lib/CACHEDIR.TAG").is_file(), "{said}");
+        assert_eq!(names_in(&outside), vec!["lib".to_string()]);
+    }
+
+    /// I4352: on a runner host the first apply installs every runner's drop-in and the guard's
+    /// homes, the plan after it owes nothing, a second apply writes nothing, and the steps on
+    /// the host start the runners.
+    #[test]
+    fn a_runner_host_applied_twice_changes_nothing_the_second_time() {
+        let root = scratch("runners");
+        let p = Policy::declared();
+        let units = physical(&root, "/etc/systemd/system");
+        std::fs::create_dir_all(&units).unwrap();
+        let one = "actions.runner.korczis-prismatic-majordomus.lundra-1.service";
+        std::fs::write(units.join(one), "[Service]\nRestart=no\n").unwrap();
+        std::fs::write(units.join("gitlab-runner.service"), "[Service]\n").unwrap();
+        // a runner masked in /etc is left out even though its vendor unit file exists
+        let masked = "actions.runner.korczis-prismatic-majordomus.lundra-9.service";
+        let vendor = physical(&root, "/usr/lib/systemd/system");
+        std::fs::create_dir_all(&vendor).unwrap();
+        std::fs::write(vendor.join(masked), "[Service]\n").unwrap();
+        std::os::unix::fs::symlink("/dev/null", units.join(masked)).unwrap();
+        let before = plan(&p, &observe(&p, &root));
+        let gitlab = "gitlab-runner.service";
+        assert_eq!(before.runners, vec![one.to_string(), gitlab.to_string()]);
+        assert!(!before.files.iter().any(|f| f.path.contains(masked)));
+        let first = apply(&p, &root);
+        assert!(first.ok, "{first:?}");
+        let drop_in = format!("/etc/systemd/system/{one}.d/majordomus-runner.conf");
+        assert!(first.written.contains(&drop_in), "{first:?}");
+        let gitlab_drop_in = format!("/etc/systemd/system/{gitlab}.d/majordomus-runner.conf");
+        assert!(first.written.contains(&gitlab_drop_in), "{first:?}");
+        assert!(first.written.contains(&GUARD_HOMES.to_string()));
+        assert_eq!(
+            std::fs::read_to_string(physical(&root, &drop_in)).unwrap(),
+            RUNNER
+        );
+        assert_eq!(first.after.as_ref().unwrap().changes, 0);
+        let second = apply(&p, &root);
+        assert!(
+            second.ok && second.written.is_empty() && second.generated.is_empty(),
+            "{second:?}"
+        );
+        assert_eq!(second.after.unwrap().changes, 0);
+        // a drifted drop-in is one change, and put back
+        std::fs::write(physical(&root, &drop_in), "[Service]\nRestart=no\n").unwrap();
+        assert_eq!(plan(&p, &observe(&p, &root)).changes, 1);
+        assert_eq!(apply(&p, &root).written, vec![drop_in]);
+        // on the host itself the runners are started
+        let (_, lines) = run_all(&root, &p, &["systemd"], |_, _| (true, String::new()));
+        let reload = lines
+            .iter()
+            .position(|l| l == "systemctl daemon-reload")
+            .unwrap();
+        let start = lines
+            .iter()
+            .position(|l| l == &format!("systemctl start {one} {gitlab}"))
+            .unwrap();
+        assert!(reload < start, "{lines:?}");
+    }
+
+    /// I4352: `mesh doctor` asks only on the policy's build host; there a plan that owes
+    /// changes is a warning naming how many and the command, and one that owes none passes.
+    #[test]
+    fn the_doctor_warns_on_the_build_host_while_provisioning_is_owed() {
+        let p = Policy::declared();
+        let owed = plan(&p, &BTreeMap::new());
+        assert!(doctor_check("mbp", &p, &owed, "cmd").is_none());
+        let warn = doctor_check(&p.local_node, &p, &owed, &apply_command()).unwrap();
+        assert!(warn.ok && warn.check == "build_host");
+        assert!(
+            warn.detail.starts_with(&format!(
+                "{} owes {} provisioning change(s): ",
+                p.local_node, owed.changes
+            )),
+            "{}",
+            warn.detail
+        );
+        assert!(warn.detail.contains("more"), "{}", warn.detail);
+        assert!(warn
+            .remediation
+            .as_deref()
+            .unwrap()
+            .contains("mesh build-cache provision --apply"));
+        let root = scratch("doctor");
+        std::fs::create_dir_all(physical(&root, "/etc/systemd/system")).unwrap();
+        std::fs::write(
+            physical(
+                &root,
+                "/etc/systemd/system/actions.runner.r.lundra-3.service",
+            ),
+            "",
+        )
+        .unwrap();
+        apply(&p, &root);
+        let held = plan(&p, &observe(&p, &root));
+        let pass = doctor_check(&p.local_node, &p, &held, "cmd").unwrap();
+        assert!(pass.ok && pass.remediation.is_none() && pass.impact.is_none());
+        assert!(
+            pass.detail.contains("actions.runner.r.lundra-3.service"),
+            "{}",
+            pass.detail
+        );
+        // this machine is asked the same way, and only on the build host does it answer
+        let here = this_host_check();
+        assert_eq!(
+            here.is_some(),
+            host_name().as_deref() == Some(p.local_node.as_str())
+        );
+    }
+
     #[test]
     fn a_cargo_config_that_cannot_be_rewritten_is_reported() {
         let (root, p) = staged("cargofail");
@@ -1596,5 +2312,154 @@ mod tests {
             .iter()
             .any(|s| s.starts_with(&p.cargo_config())));
         assert!(report.written.is_empty());
+    }
+
+    /// I4352: a runner is a unit file that exists under a unit directory. A name observed
+    /// without a directory, a unit under a directory systemd is not read from here, an absent
+    /// file and a directory named like a unit are none, and a pattern's middle must match.
+    #[test]
+    fn only_a_unit_file_under_a_unit_directory_is_a_runner() {
+        let p = Policy::declared();
+        let mut seen = BTreeMap::new();
+        unit(&mut seen, "gitlab-runner.service");
+        unit(
+            &mut seen,
+            "/run/systemd/system/actions.runner.r.lundra-5.service",
+        );
+        seen.insert(
+            "/etc/systemd/system/actions.runner.r.lundra-6.service".into(),
+            Observed::default(),
+        );
+        let planned = plan(&p, &seen);
+        assert!(planned.runners.is_empty(), "{:?}", planned.runners);
+        assert!(!planned.steps.iter().any(|s| s.id == "runners-start"));
+        assert!(!planned
+            .files
+            .iter()
+            .any(|f| f.path.ends_with(RUNNER_DROP_IN)));
+        assert!(wildcard("a*b*c*d", "a-b-c-d"));
+        assert!(!wildcard("a*x*d", "a-b-c-d") && !wildcard("a*b*x*d", "a-b-c-d"));
+        // on disk: a directory with a runner's name is not a unit, the file beside it is
+        let root = scratch("unit-dirs");
+        let units = physical(&root, "/etc/systemd/system");
+        std::fs::create_dir_all(units.join("gitlab-runner.service")).unwrap();
+        let four = "actions.runner.r.lundra-4.service";
+        std::fs::write(units.join(four), "[Service]\n").unwrap();
+        let found = observe_units(&p, &root);
+        assert_eq!(
+            found.keys().cloned().collect::<Vec<_>>(),
+            vec![format!("/etc/systemd/system/{four}")]
+        );
+        assert_eq!(
+            plan(&p, &observe(&p, &root)).runners,
+            vec![four.to_string()]
+        );
+    }
+
+    /// I4352: the host's name is the buffer up to its first NUL and its first dot, and a
+    /// failed call or an empty name is no name, so `mesh doctor` asks no host.
+    #[test]
+    fn a_host_name_is_read_up_to_its_first_nul_and_its_first_dot() {
+        assert_eq!(short_host_name(None), None);
+        assert_eq!(
+            short_host_name(Some(b"lundra.tail1234.ts.net\0mbp.local")).as_deref(),
+            Some("lundra")
+        );
+        assert_eq!(short_host_name(Some(b"mb2")).as_deref(), Some("mb2"));
+        assert_eq!(short_host_name(Some(b"\0lundra")), None);
+        assert_eq!(short_host_name(Some(b" .lundra\0")), None);
+        let here = host_name();
+        assert!(here
+            .as_deref()
+            .is_none_or(|h| !h.is_empty() && !h.contains('.')));
+    }
+
+    /// I4352: the remediation names a non-empty launcher before the executable, the bare name
+    /// only when neither is known, and each as one shell word.
+    #[test]
+    fn the_apply_command_names_the_launcher_then_the_executable() {
+        let exe = Some(PathBuf::from("/opt/it's/majordomus"));
+        assert_eq!(
+            apply_command_for(Some("/home/u/.local/bin/majordomus".into()), exe.clone()),
+            "sudo '/home/u/.local/bin/majordomus' mesh build-cache provision --apply"
+        );
+        assert_eq!(
+            apply_command_for(Some(String::new()), exe),
+            "sudo '/opt/it'\\''s/majordomus' mesh build-cache provision --apply"
+        );
+        assert_eq!(
+            apply_command_for(None, None),
+            "sudo 'majordomus' mesh build-cache provision --apply"
+        );
+    }
+
+    /// I4352: on the build host, a plan owing a file and the cargo edit names both and no
+    /// more, says no runner was observed, and counts what this process could not read.
+    #[test]
+    fn the_doctor_names_every_owed_change_and_what_it_could_not_read() {
+        let (root, p) = staged("doctor-few");
+        let mut seen = observe(&p, &root);
+        assert_eq!(plan(&p, &seen).changes, 0, "a staged root owes nothing");
+        let cfg = p.cargo_config();
+        seen.insert(
+            cfg.clone(),
+            Observed {
+                exists: true,
+                mode: Some(0o644),
+                text: Some(format!("[build]\n{}\n", p.old_wrapper())),
+                ..Observed::default()
+            },
+        );
+        seen.get_mut(GUARD_HOMES).unwrap().text = Some("HOMES=()\n".into());
+        seen.insert(
+            format!("{NODE_DIR}/lundra/credentials"),
+            Observed {
+                unreadable: true,
+                ..Observed::default()
+            },
+        );
+        let planned = plan(&p, &seen);
+        assert_eq!((planned.changes, planned.unobservable), (2, 1));
+        let warn = doctor_check(&p.local_node, &p, &planned, "cmd").unwrap();
+        assert_eq!(
+            warn.detail,
+            format!(
+                "{} owes 2 provisioning change(s): {GUARD_HOMES}, {cfg}; no CI runner unit \
+                 observed; 1 file(s) this process may not read, judged by an apply as root",
+                p.local_node
+            )
+        );
+        assert!(warn.ok && warn.impact.is_some());
+        assert_eq!(
+            warn.remediation.as_deref(),
+            Some("run `cmd` in a checkout of this repository (without --apply it only plans)")
+        );
+    }
+
+    /// I4352: the host check observes only the policy's build host, or none when the name is
+    /// unknown; there it passes on a provisioned root and warns on a bare one.
+    #[test]
+    fn the_host_check_asks_only_the_build_host() {
+        let (root, p) = staged("host-check");
+        assert!(host_check(None, &root).is_none());
+        assert!(host_check(Some("mbp".into()), &root).is_none());
+        let pass = host_check(Some(p.local_node.clone()), &root).unwrap();
+        assert!(pass.ok && pass.remediation.is_none(), "{pass:?}");
+        assert!(
+            pass.detail.starts_with(&format!(
+                "{} holds the build host's provisioning",
+                p.local_node
+            )),
+            "{}",
+            pass.detail
+        );
+        let bare = scratch("host-check-bare");
+        let warn = host_check(Some(p.local_node.clone()), &bare).unwrap();
+        assert!(
+            warn.remediation
+                .as_deref()
+                .is_some_and(|r| r.contains("mesh build-cache provision --apply")),
+            "{warn:?}"
+        );
     }
 }

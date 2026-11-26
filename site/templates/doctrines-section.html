@@ -12,7 +12,7 @@
 
   <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.declared }}</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.blocking }}</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd data-figure="rules-blocking" class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.blocking }}</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ doc.counts.advisory }}</dd></div>
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="{{ <source_tree path="share/standard/majordomus/" /> }}" class="text-fg-brand underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p>

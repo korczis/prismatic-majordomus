@@ -22,6 +22,7 @@ non_scope:
   - "Rewriting notes automatically"
   - "Lowering devcontext selector confidence for a stale note"
   - "Failing knowledge validate because a cited file moved"
+  - "Blocking on needs-review, until promoted: the owner decided on 2026-10-30 (P00 question Q-H1) that needs-review starts advisory, and promoting it to blocking is a later, separate decision"
 serves:
   - "the-layer-evolves-when-it-is-due#a-moved-source-is-flagged"
 acceptance_criteria:
@@ -31,6 +32,7 @@ acceptance_criteria:
   - "A note without recorded hashes reads unanchored, not needs-review; the first reading over the curated notes is recorded with how many are flagged"
   - "A person clears needs-review with one ledger-recorded re-review act that re-stamps the hashes"
   - "knowledge validate reports needs-review as a WARN and keeps its exit status; case 3075 stays green when a cited file moves"
+  - "needs-review is advisory first (owner decision 2026-10-30, P00 question Q-H1): every reader that shows it (knowledge validate, knowledge check, devcontext, the briefing, /ui/knowledge) reports it as a WARN and none changes its exit status because of it; the case allocated here asserts the exit status of knowledge validate and knowledge check is the same with a moved source as without one, so promoting it to blocking is a visible change of that case"
   - "devcontext reports needs-review in its own field with the reason; selector confidence keeps its meaning (devcontext/select.rs, model.rs)"
   - "needs-review is shown on /ui/knowledge and in the briefing's knowledge pointers (mj_context_pointers)"
   - "The criterion a-moved-source-is-flagged is rewritten to evidence: test with the allocated case path, and that case runs in this issue's validation"
@@ -39,4 +41,4 @@ validation:
 evidence_required:
   - "case_note_source_moved"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

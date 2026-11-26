@@ -25,6 +25,8 @@
 #     bounded, and evicts once the stand-in build lets go, without the build waiting for it;
 #   - scripts/reap-orphans, over the bound while a build runs, evicts stale units instead of
 #     keeping the whole directory.
+#   - and over the bound without cargo's CACHEDIR.TAG, as cargo leaves a build-dir apart from its
+#     target-dir, it evicts stale units with nobody building instead of skipping it (I4340).
 . "$ROOT/test/lib.sh"
 
 LIB="$ROOT/lib/rust_bin.sh"
@@ -114,7 +116,8 @@ $D/libmajordomus_cli-1111111111111111.rlib $D/libmajordomus_cli-eeeeeeeeeeeeeeee
 bound() {
   mode="$1"; shift
   RC=0
-  LAST_OUT="$(env MAJORDOMUS_SHARED_BUILD_CAP_MB="$CAP" MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=60 "$@" \
+  LAST_OUT="$(env MAJORDOMUS_SHARED_BUILD_CAP_MB="$CAP" MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=60 \
+    MAJORDOMUS_RECLAIM_BELOW_MB=0 "$@" \
     sh -c '. "$1"; mj_rust_bound_build_dir "$2" "$3" "$4"' sh "$LIB" "$B" "$CRATE" "$mode" 2>&1)" || RC=$?
 }
 kept() {
@@ -323,4 +326,62 @@ expect_grep 'evicting stale units under cargo.s lock'
 expect_grep 'evicted 5 unit\(s\)'
 cleanup_pids
 
-echo "    ok: over its bound the build directory loses its stale units oldest first until it is under it, under cargo's lock, from the build path and the reaper; held, named, open, recent and named-by-a-Cargo.lock units stay"
+# ---------------------------------------------------------------- the volume is under pressure
+# Below the reclaim mark a unit idle for the pressure age is stale, not only one idle for the
+# hour (I4230): on 2026-10-25 ten worktrees built inside an hour and every generation was
+# younger than it, so each pass ended over the bound while the volume fell to 16 GiB.
+mins_ago() {  # mins_ago <n> -- a touch -t stamp n minutes ago, BSD date or GNU date
+  date -v-"$1"M +%Y%m%d%H%M 2>/dev/null || date -d "$1 minutes ago" +%Y%m%d%H%M
+}
+fixture
+blob "$D/libmajordomus_cli-3333333333333333.rlib" "$(mins_ago 30)"
+blob "$D/libmajordomus_cli-4444444444444444.rlib" "$(mins_ago 2)"
+PRESSED="$D/libmajordomus_cli-3333333333333333.rlib"
+FRESH="$D/libmajordomus_cli-4444444444444444.rlib"
+# with room on the volume the hour holds: the 30-minute generation stays, and the bound says so
+bound evict MAJORDOMUS_SHARED_BUILD_CAP_MB=1
+kept "$PRESSED" "$FRESH"
+expect_grep 'stays over its bound: every other unit was written within 60 min'
+expect_no_grep 'is stale, not 60'
+# under the mark the pressure age holds: the 30-minute generation goes, the 2-minute one stays
+bound evict MAJORDOMUS_SHARED_BUILD_CAP_MB=1 MAJORDOMUS_RECLAIM_BELOW_MB=99999999
+gone "$PRESSED"
+kept "$FRESH" "$D/libmajordomus_cli-cccccccccccccccc.rlib" "$D/libserde-dddddddddddddddd.rlib" "$B/CACHEDIR.TAG"
+expect_grep 'its volume has [0-9]+MB free, below 99999999MB: a unit idle for 10 min is stale, not 60'
+expect_grep 'stays over its bound: every other unit was written within 10 min'
+# a pressure age of 0 keeps the hour, under the mark too
+fixture
+blob "$PRESSED" "$(mins_ago 30)"
+bound evict MAJORDOMUS_SHARED_BUILD_CAP_MB=1 MAJORDOMUS_RECLAIM_BELOW_MB=99999999 \
+  MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN=0
+kept "$PRESSED"
+expect_no_grep 'is stale, not 60'
+# and the runner's switch stays the switch: an idle age of 0 evicts nothing, pressure or not
+bound evict MAJORDOMUS_SHARED_BUILD_CAP_MB=1 MAJORDOMUS_RECLAIM_BELOW_MB=99999999 \
+  MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0
+kept "$PRESSED"
+expect_grep 'eviction is off'
+
+# ---------------------------------------------------------------- the reaper, on cargo's build-dir
+# as cargo really leaves a build-dir apart from its target-dir: no CACHEDIR.TAG, its
+# .rustc_info.json. The reaper skipped it whole for want of the tag, so the bound never applied
+# from there (I4340); nobody is building, and its units are evicted, never the directory.
+printf '#!/bin/sh\necho "/bin/sleep 1"\n' > "$T/stub/ps"
+fixture
+rm -f "$B/CACHEDIR.TAG"; echo '{}' > "$B/.rustc_info.json"
+hold "$D/libmajordomus_cli-eeeeeeeeeeeeeeee.rlib"
+RC=0
+LAST_OUT="$(MJ_ROOT="$R" PATH="$T/stub:$PATH" MAJORDOMUS_SHARED_BUILD_DIR="$B" MAJORDOMUS_SHARED_BUILD_CAP_MB="$CAP" \
+  MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=60 MAJORDOMUS_RECLAIM_BELOW_MB=0 \
+  "$ROOT/scripts/reap-orphans" --targets --reclaim 2>&1)" || RC=$?
+[ "$RC" = 0 ] || { echo "    the reaper's --reclaim on an untagged build-dir exited $RC"; printf '%s\n' "$LAST_OUT"; exit 1; }
+# shellcheck disable=SC2086
+gone $EVICTED
+kept "$D/libmajordomus_cli-cccccccccccccccc.rlib" "$INC/s-new-2def-working" "$D/libserde-dddddddddddddddd.rlib" \
+  "$D/libmajordomus_cli-1111111111111111.rlib" "$D/libmajordomus_cli-eeeeeeeeeeeeeeee.rlib" "$B/.rustc_info.json"
+expect_grep 'no CACHEDIR.TAG of cargo.s, so it is not removed whole: evicting stale units under cargo.s lock'
+expect_grep 'evicted 5 unit\(s\)'
+expect_no_grep 'not provably the build directory cargo named'
+cleanup_pids
+
+echo "    ok: over its bound the build directory loses its stale units oldest first until it is under it, under cargo's lock, from the build path and the reaper; held, named, open, recent and named-by-a-Cargo.lock units stay; below the reclaim mark a unit idle for the pressure age is stale; the reaper bounds cargo's untagged build-dir too"

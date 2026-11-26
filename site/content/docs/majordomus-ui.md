@@ -1,7 +1,7 @@
 +++
 title = "`majordomus ui`"
 description = "`majordomus ui`, the primary surface: how it differs from the Cockpit, where every value on it comes from and how a missing one reads, how the first screen stays fast with slow panels on routes of their own, the page without JavaScript, the assets and gates that hold it, and how a screen is added"
-weight = 52
+weight = 54
 [extra]
 source = "docs/MAJORDOMUS_UI.md"
 +++
@@ -192,7 +192,10 @@ What the forge recorded is read from one observation, taken by `majordomus serve
 kept beside the pull-request observation, which `majordomus prs refresh` takes. A checkout
 that has never asked says so, with that command, instead of drawing empty tables; the
 published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
-empty.
+empty. It then asks `plan delivery` and fails when the publication is still unread for any
+reason but "no successful deployment" (I4315, ADR 0227): the roadmap and delivery screens
+were published reading `deployed` for no issue, because the reader looked for the release
+pointer at its authored path in a gh-pages commit that carries it at `releases/latest.json`.
 
 A list a screen cuts short says so: "The first 8 of 31; 23 more not shown here", with a link
 to the screen that shows them all when there is one. Case 1091 and

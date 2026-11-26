@@ -1,0 +1,43 @@
+id: I4492
+milestone: repository-automation-is-typed
+title: "An exemption for shell that is to be migrated names the issue that removes it, and the number that name none does not rise"
+slug: an-exemption-names-the-issue-that-removes-it
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add an optional issue field to an exemption, have shell check verify that it names an issue of the plan, report how many exemptions of disposition A, B and D carry none, and refuse a head with more of them than its base."
+why: "campaigns/majordomus-shellfall/05-remove-shell-legacy.md asks that each shell surface that remains sit on a narrow, machine-checked exception list with an owner, a reason and an expiry or a review policy, and that the list not become a loophole; 07-enforcement-rollout.md asks that exceptions be governed by review rather than by a permanent allowlist. The inventory's exemptions have a why and a removal condition, and the 157 of them hold 14 distinct removal texts: 93 share one sentence that the unit is not yet migrated and one removal sentence that a typed capability will own the behaviour, and 21 share another pair. A condition that is the same for 93 files and names no work is not something a reviewer can hold anyone to, and no command answers which units have a plan."
+current_state: "Measured at 51b38035a71. automation/mod.rs Exemption has why and removal only, under deny_unknown_fields. shell check reports 157 units, all exempt (A 96, B 21, C 13, D 1, E 5, F 21), over 243 records with 0 findings; the exemptions hold 14 distinct removal texts, 93 sharing that a typed capability of the executable will own the behaviour and 21 the ADR 0069 one. 118 exemptions are on units of disposition A, B or D. No exemption names an issue. I3155 (planned) adds per-class counts and a class-A ratchet against the merge base."
+desired_state: "An exemption may carry issue with a plan issue id. shell check resolves it against .ai/repo/project/issues and reports an unknown id as a finding. The report counts, for dispositions A, B and D, the exemptions with and without an issue, and --against a revision refuses a head where the count without one is higher. The six lifecycle units name I4490 and the units I1804 migrates name it, so the count starts below 118. Dispositions C, E and F need no issue, because their removal condition is outside this repository's control."
+scope:
+  - "apps/majordomus-cli/src/automation/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/shell.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+  - ".ai/repo/automation/README.md"
+  - "docs/SHELL.md"
+  - "test/cases/365_new_shell_is_refused.sh"
+  - ".ai/repo/project/issues/I4492.yaml"
+non_scope:
+  - "Writing an issue for each of the 118 units: a unit gets one when someone plans its removal, and the count shows how many have none"
+  - "An expiry date on an exemption: a date nobody enforces is a second stale field, and the base comparison is what holds the list"
+  - "An owner field: the plan issue carries who works on it"
+depends_on:
+  - I3155
+acceptance_criteria:
+  - "An exemption whose issue names an id with no file under .ai/repo/project/issues fails shell check and names the record"
+  - "A record with issue on a unit of disposition C, E or F is accepted and not counted"
+  - "The report prints planned and unplanned counts for A, B and D, and their sum equals the number of exemptions of those dispositions"
+  - "A fixture head that adds an A exemption with no issue fails --against its base, and the same exemption with a valid issue passes"
+  - "shell check --canonical preserves the field and its position"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 365_new_shell_is_refused 366_automation_inventory_agrees_with_the_tree"
+evidence_required:
+  - "exemptions_name_issues"
+  - "unplanned_count_never_rises"
+serves:
+  - repository-automation-is-typed#domain-shell-ratchet
+created_at: 2026-10-30
+updated_at: 2026-10-30

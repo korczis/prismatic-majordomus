@@ -34,4 +34,18 @@ validation:
 evidence_required:
   - "case_the_plan_page_fits_the_audit_budget"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-29T00:48:53Z
+started_at: 2026-10-29T00:46:53Z
+started_event: sha256:72093d2b8e4a9556f8a18cc63562b822d2b4727a192b7bf77f3dc4241afbf253
+verified_at: 2026-10-29T00:47:13Z
+verified_event: sha256:ebc02a4c88209e5240d9563caa283d2308ad767c71f4759d0985f49bab576d0a
+completed_at: 2026-10-29T00:48:53Z
+completed_event: sha256:07910411cbb8a3ac7d3ebe25251cd158e3cbb1c1170da24c442a1841bfd251be
+evidence:
+  - covers: case_the_plan_page_fits_the_audit_budget
+    type: ci
+    command: "bash test/run.sh 3848_the_plan_page_fits_the_audit_budget (validate site) and scripts/ui audit (validate ui)"
+    result: "ok in master validate: site job 3848_the_plan_page_fits_the_audit_budget ok (the built /plan/ within its declared element ceiling, findings counted by level and code); ui, ui-checks and ui-shard (1)-(4) success, the audit visiting every declared width within its deadline. validate 40676150754 ran at 81ef931a3e1; master 5370ee63d19 differs from it only in plan records (#2653), no code. The run is red only on 103_release_projection (alpha.9 release record, #2626) and pages, neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754/job/122783064647"
+    commit: 5370ee63d19b71b16e9431bb2edd86236338ca42
+    recorded_at: 2026-10-29T00:48:17Z

@@ -60,6 +60,7 @@ pub mod multicast;
 pub mod page;
 pub mod protocol;
 pub mod provider;
+pub mod records;
 pub mod registry;
 pub mod rendezvous;
 pub mod repository;
@@ -67,6 +68,7 @@ pub mod root;
 pub mod state;
 pub mod tailscale;
 pub mod trust;
+pub(crate) mod who;
 
 #[cfg(test)]
 pub(crate) mod testing;

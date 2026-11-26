@@ -1,0 +1,40 @@
+{#- The guaranteed claims the recorded run supports, as one figure: the same element, the same
+    attributes and the same words on the homepage's proof band and on /guarantees/ (I4317). The
+    run is data/evidence.json, the one /evidence/ reads, and what the figure may say is the word
+    partials/run-figure.html derives; /evidence/ says the same thing in its own detail.
+
+    The caller sets, before the include:
+      ci          data/evidence.json (load_data required=false)
+      ci_figure   the captured word of partials/run-figure.html
+      sf_tag      the element: "dd" in a definition list, "p" in a block, "span" inside a line
+      sf_class    its classes
+      sf_links    true to link the run's commit and the evidence page; false inside a link
+
+    Only a run that confirms its report shows its count as a plain count. A run of an older
+    commit shows its count marked stale and with its distance, as what held there. A run whose
+    own state is stale or unknown (failures, a dirty tree, a refused or absent report) shows no
+    count, in the words /evidence/ uses, and no run shows no number. `data-supported` is the
+    count or the word, `data-supported-state` the run's state, and scripts/ci/homepage-check
+    `declared` holds every page that shows it to the run. -#}
+{%- set sf_links = sf_links | default(value=true) -%}{%- set status_label = "" -%}
+{%- set sf_state = "unmeasured" -%}{%- if ci_figure != "unmeasured" -%}{%- set sf_state = ci.state | default(value="unknown") -%}{%- endif -%}
+{%- set sf_value = ci.claims.supported if ci_figure in ["current", "behind"] else ci_figure -%}
+{%- set sf_short = ci.commit | truncate(length=7, end="") if ci_figure != "unmeasured" else "" -%}
+{%- set sf_behind = ci.behind | default(value=0) if ci_figure != "unmeasured" else 0 -%}
+<{{ sf_tag }} class="{{ sf_class }}" data-supported="{{ sf_value }}" data-supported-state="{{ sf_state }}">
+{%- if ci_figure == "unmeasured" -%}
+{%- set status = "unknown" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %} supported by a recorded run: not yet measured
+{%- else -%}
+{%- if ci_figure != "current" -%}{%- set status = sf_state -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %} {% endif -%}
+{%- if ci_figure == "unconfirmed" %}supported by a recorded run: not confirmed. {% endif -%}
+{%- if ci_figure in ["current", "behind"] %}<span class="font-mono font-bold text-heading">{{ ci.claims.supported }}</span> supported by the recorded run of {% elif sf_behind > 0 %}The newest run CI recorded, of {% elif sf_state == "stale" %}CI's run of {% else %}CI ran {% endif -%}
+{%- if sf_links and ci.commit_url %}<a href="{{ ci.commit_url }}" class="font-mono underline" data-supported-commit="{{ ci.commit }}">{{ sf_short }}</a>{% else %}<span class="font-mono" data-supported-commit="{{ ci.commit }}">{{ sf_short }}</span>{% endif -%}
+{%- if sf_behind > 0 %}, <span data-supported-behind="{{ sf_behind }}">{{ sf_behind }} commit(s) behind</span> the one this page was built from{% else %}, the commit this page was built from{% endif -%}
+{%- if ci_figure == "behind" %}: it says what held there, not what holds here
+{%- elif ci_figure == "unconfirmed" and sf_behind > 0 %}, does not confirm a count
+{%- elif ci_figure == "unconfirmed" and sf_state == "stale" %}, recorded failures, so it does not confirm a count
+{%- elif ci_figure == "unconfirmed" %}, but its run cannot confirm a count
+{%- endif -%}
+{%- endif -%}
+{%- if sf_links %} · <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">the evidence</a>{% endif -%}
+</{{ sf_tag }}>

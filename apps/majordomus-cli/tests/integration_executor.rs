@@ -74,7 +74,8 @@ case "$1 $2" in
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
   "api graphql")
-    # the forge's deployments and releases, which `prs refresh` observes beside the queue
+    # the forge's deployments and releases, which `served forge` observes (since 3e8225a4329
+    # not `prs refresh`; I4315)
     # (deploy::observed): none here, and no test of this file is about them
     case "$*" in *"deployments(last"*)
       echo '{"data":{"repository":{"url":"https://example.invalid/o/r","deployments":{"nodes":[]},"releases":{"nodes":[]}}}}'

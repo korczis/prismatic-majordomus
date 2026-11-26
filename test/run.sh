@@ -57,6 +57,8 @@
 # `git status` of the checkout changed, the run fails naming the paths.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../lib/runnable.sh
+. "$ROOT/lib/runnable.sh"; mj_node_env "$ROOT" || true
 
 # A case builds repositories of its own, and git tells a hook which repository it is in
 # through the environment: a pre-push hook run from a linked worktree gets GIT_DIR. A fixture
@@ -81,6 +83,18 @@ unset mj_git_local
 # and fails what it measures about the default (case 85). A case that wants another
 # interface states it itself.
 unset MAJORDOMUS_HTTP_HOST
+# Nor is the provider session the suite runs under a case's. A suite started from inside an
+# agent inherits that agent's session id, and ADR 0164 reads it as an identity the caller
+# supplied: with no episode keyed by it in the fixture, every ledger line a case writes is
+# stamped with no session, and case 61's closed episode named no task. The names are the
+# lifecycle adapters' own column (lib/capture.sh), so a provider added there is dropped here
+# too. A case that needs a provider session sets one itself, as cases 111 and 3049 do.
+# shellcheck source=../lib/capture.sh
+for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION MJ_SESSION_KEY \
+    $( (. "$ROOT/lib/capture.sh" && mj_lifecycle_session_vars) 2>/dev/null); do
+  unset "$mj_provider_var"
+done
+unset mj_provider_var
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 # A case must not act on the machine it measures: a build a case starts on a machine below the
 # reclaim mark would otherwise run the reaper over this machine's real worktrees
@@ -92,6 +106,10 @@ MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB
 # eviction (mj_rust_bound_build_dir) by case 3959, which sets its own.
 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0; MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0
 export MAJORDOMUS_INCREMENTAL_IDLE_MIN MAJORDOMUS_DEPS_IDLE_MIN MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN
+# Nor may a case's verdict depend on how many cargo builds other sessions run on this machine
+# (lib/rust_bin.sh mj_rust_builders_check, I3825): case 3825 proves the count against a stub
+# process table and unsets this itself.
+MAJORDOMUS_MAX_BUILDERS=0; export MAJORDOMUS_MAX_BUILDERS
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one

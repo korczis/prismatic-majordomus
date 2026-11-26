@@ -31,4 +31,18 @@ validation:
 evidence_required:
   - "foreign_adoption_workflow"
 created_at: 2026-10-19
-updated_at: 2026-10-19
+updated_at: 2026-10-28T18:16:14Z
+started_at: 2026-10-28T18:12:30Z
+started_event: sha256:55730888aa71a60522d1942e9ed76958468aaf6cc3cc042e0a9da2174322591a
+verified_at: 2026-10-28T18:14:02Z
+verified_event: sha256:04c7a6b6a18f2626132697a44f4376b641a579446ce7f9a0f16da21f827b0ad1
+completed_at: 2026-10-28T18:16:14Z
+completed_event: sha256:22e679f3c9dc639b77aa1b1e3c20ed1dd2960da314ecdf81b4f886d4257d42f7
+evidence:
+  - covers: foreign_adoption_workflow
+    type: test
+    command: "bash test/run.sh 33_event_registry"
+    result: "ok on 81ef931a3e1 plus this change: the workflow's section 4 and 5 now name the ledger's own time field ts (share/events.yaml, ledger.rs) for each ledger step, and case 33 holds every time source and event the workflow names against the registry; with master's workflow text (at) the case fails. The step list matches docs/ADOPTION.md (criteria 1-2, audited 2026-10-28)."
+    artifact: "test/cases/33_event_registry.sh"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T18:15:11Z

@@ -1,0 +1,39 @@
+id: I4320
+milestone: a-second-adopter-is-served
+title: "An evidence commit recorded on a branch is resolved to the commit that landed it, and is re-stamped with it"
+slug: an-evidence-commit-is-resolved-through-its-landing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "plan validate judges the commit of every evidence entry on issues and milestones. A commit in the trunk's history (mj_commit_in_history, lib/common.sh:761-769) is fine, as today. For a commit outside it, plan validate asks the landed predicate of I4333 which trunk commit landed the branch that held it: the merge commit of the merged pull request whose commits include it, or the trunk commit with the same combined patch-id. When one is found, plan validate prints `INFO evidence_commit_landed <id> <covers> <sha> — landed as <trunk sha> (#<pr>|patch-id); re-stamp: majordomus plan evidence --restamp <id>`. When none is found, it prints `WARN evidence_commit_off_trunk <id> <covers> <sha> — not in <trunk>'s history and no landing found`. When the clone cannot decide (exit 2: shallow, or the object is missing), it prints `INFO evidence_commit_not_judged`. `majordomus plan evidence --restamp [<id>]` rewrites each resolved entry's commit: to its landing commit. It keeps recorded_at and the rest of the entry, and adds the landing to the ledger event, so the record holds a trunk commit after one follow-up commit on the trunk. Under `landing: squash`, plan evidence on a branch says that the commit will be resolved through its pull request once the branch lands."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. OSCILLA PR #238 recorded plan evidence at branch commits 9135c8f and dcb28f2 and was squash-merged as 508bd3d, so neither commit is in main's history. Main then failed OSCILLA's own tests/unit/plan-evidence-commits.test.mjs (V272 D4), and so did every PR updated from main. The repair was a hand-kept OFF_HISTORY map in that test (#246). It pairs each such branch commit with its pull request and the squash that landed it, checked with `gh api repos/korczis/oscilla/pulls/<n>/commits`: the resolution this issue asks Majordomus to make. The test also records why a clone cannot do this alone. Once the branch is deleted after its merge, GitHub keeps the commit only under refs/pull/<n>/head, which no clone fetches, so offline the object is missing and only the forge can resolve it. Majordomus said nothing at any point: not at evidence time, not at plan validate, not at check or finish. A warning at evidence time would not have helped either. Under a squash landing every branch commit leaves the trunk's history by construction, and the squash commit does not exist until the branch lands, so the record can only be corrected after landing, from what landed it. On master 81ef931a3e1, mj_plan_evidence writes mj_git_head into commit: (lib/plan.sh:576), and plan validate accepts any text there. mj_commit_in_history comes from I3007 and is defined and called nowhere (`git grep` finds only its definition). The 'producer side' I3050 it is written for has no issue record. I3007's own check, scripts/ci/link-check --sources (around :320-360), is this repository's CI and decides commit links in its pages and data, not the commit: of an adopter's evidence. That check holds only because this repository lands by merge commit (ADR 0101)."
+current_state: "On master 81ef931a3e1, mj_plan_evidence (lib/plan.sh:552-582) stamps the branch HEAD. No adopter command (plan validate, check, finish, doctor) asks whether an evidence commit is in the trunk or what landed it, and nothing can rewrite the commit once it is known."
+desired_state: "After a squash merge, plan validate names every branch-stamped evidence entry with the commit that landed it. `plan evidence --restamp` rewrites those entries to the landing commit, and the next plan validate is silent for them. An entry whose landing cannot be found is a WARN naming it. A repository that lands by merge commit sees no new output once its branches have landed."
+scope:
+  - "lib/plan.sh"
+  - "lib/common.sh"
+  - "docs/PLANNING.md"
+  - "docs/EVIDENCE.md"
+  - "test/cases"
+non_scope:
+  - "The landed predicate itself, forge and patch-id rules included: I4333"
+  - "Refusing (FAIL) an off-trunk commit: it stays a WARN until adopters with existing off-trunk entries have re-stamped them"
+  - "Re-stamping automatically from a hook or at merge time: the re-stamp is a command a person or the landing lane runs"
+  - "scripts/ci/link-check's own rule for this repository's pages"
+depends_on:
+  - "I4333"
+acceptance_criteria:
+  - "In a fixture repository with `landing: squash`, evidence recorded on a branch that is then squash-merged makes plan validate print evidence_commit_landed, naming the issue, the covers token, the branch commit and the squash commit"
+  - "`plan evidence --restamp <id>` then rewrites commit: to the squash commit, keeps recorded_at, and a second plan validate prints nothing for the entry"
+  - "With the branch deleted and its commits absent from the clone, a recorded forge observation of the merged pull request still resolves the entry; without one the entry prints evidence_commit_not_judged"
+  - "An off-trunk commit that no landing explains prints evidence_commit_off_trunk, and a shallow clone prints evidence_commit_not_judged"
+  - "The same evidence after a merge-commit landing prints nothing new"
+  - "Before the change the new case fails at its first assertion"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "evidence_commit_resolved_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28
