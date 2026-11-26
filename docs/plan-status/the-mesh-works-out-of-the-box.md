@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-mesh-works-out-of-the-box](https://majordomus.dev/plan/the-mesh-works-out-of-the-box/) | ACTIVE | 5/14 | 9 | 0 | 0 | 0 | 0 | A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer. |
+| [the-mesh-works-out-of-the-box](https://majordomus.dev/plan/the-mesh-works-out-of-the-box/) | ACTIVE | 5/15 | 9 | 1 | 0 | 0 | 0 | A trusted machine that starts any Majordomus surface in a repository with the mesh declared is linked to every other trusted machine on the LAN or tailnet without a hand-written address, every worktree takes part, and what the mesh holds can be read in one tool answer. |
 
 ## Issues
 
@@ -25,6 +25,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3835](https://majordomus.dev/plan/i3835/) | READY | 0 | — | A node the mesh lists as trusted and present but cannot link is said so, with why, on every surface that names it |
 | [I3837](https://majordomus.dev/plan/i3837/) | READY | 1 | I2410 | A case that enables the mesh declares its tailnet provider off, so it stays hermetic on a machine that runs Tailscale |
 | [I4327](https://majordomus.dev/plan/i4327/) | READY | 0 | — | A session can declare that it takes reviews, an open review request lists who may answer it, and a repository with no eligible reviewer is a finding |
+| [I4553](https://majordomus.dev/plan/i4553/) | BLOCKED | 1 | I4327 | A review request addressed to a session answers the route that wakes it, and the answer wakes the requester the same way |
 | [I4571](https://majordomus.dev/plan/i4571/) | READY | 0 | — | A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart |
 | [I4572](https://majordomus.dev/plan/i4572/) | READY | 0 | — | mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause |
 | [I4577](https://majordomus.dev/plan/i4577/) | READY | 0 | — | `offload probe` says, per build host, which toolchains it has and whether it can judge a train top |
@@ -193,6 +194,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I2411` | shares test/cases with I4551; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares docs/MESH.md with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares docs/MESH.md with I4572; they may not run concurrently |
@@ -292,6 +294,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/ui with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/ui with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/ui with I4547; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/capability/builtin with I4568; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares docs/MESH.md with I4572; they may not run concurrently |

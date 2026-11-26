@@ -1,0 +1,37 @@
+id: I4552
+milestone: a-provider-carries-the-contract-natively
+title: "Claude Code's UserPromptSubmit hook answers bounded context from the running server, and nothing when nothing changed"
+slug: a-prompt-turn-carries-its-context
+priority: p2
+profile: implementation
+objective: "Add a hook command in the Rust executable, following mesh beat --hook and guard hook, that answers Claude Code's UserPromptSubmit with hookSpecificOutput.additionalContext composed by the brief module: the active task and its scope, the issue and intent it is bound to, this session's claims, and 'match: not computed' until I3408 lands, bounded by session.briefing_budget_lines; wired by capture install only."
+why: "The owner's pack of 2026-11-07 asks that every prompt be enriched with what the repository already knows (campaigns/majordomus-nexus-pack-20261107/prompts/03_CLAUDE_CODE_LIFECYCLE_BRIDGE.md). Measured on master: no code emits additionalContext or hookSpecificOutput; SessionStart injects a plain briefing and UserPromptSubmit only captures. ADR 0217 (proposed) keeps business logic out of the hook and requires that a match be derived on read, never stored."
+current_state: ".claude/settings.json wires UserPromptSubmit to capture only; brief.session composes the session brief; capture install (lib/capture.sh) writes the hook entries, and #2836 (I3322) edits the same installer."
+desired_state: "Every prompt turn of a supervised Claude Code session carries the bounded context; an unchanged state answers nothing; a failure answers nothing and never blocks the prompt."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "lib/capture.sh"
+  - ".claude/hooks"
+  - "apps/majordomus-cli/tests/prompt_context_hook.rs"
+depends_on:
+  - "I3322"
+non_scope:
+  - "Reading .ai/local/prompts, or any prompt text, to compose the context"
+  - "Calling a model from the hook"
+  - "Storing a match or a route beside the prompt"
+serves:
+  - "a-provider-carries-the-contract-natively#a-prompt-turn-carries-its-context"
+acceptance_criteria:
+  - "Given a UserPromptSubmit payload, the hook command prints JSON whose hookSpecificOutput.additionalContext names the active task, its scope and its bound issue, within session.briefing_budget_lines"
+  - "A second turn over unchanged state prints nothing, as I4250 asks of the brief"
+  - "The hook never exits 2 and answers nothing when the server cannot be asked"
+  - "The shell side carries no logic but relaying the payload (ADR 0217), and capture install writes the entry"
+  - "The hook stays within the latency budget the hooks-within-budget criterion declares"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test prompt_context_hook"
+  - "bash test/run.sh 29_prompt_capture"
+evidence_required:
+  - "test_a_prompt_turn_carries_its_context"
+created_at: 2026-11-07
+updated_at: 2026-11-07

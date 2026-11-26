@@ -123,6 +123,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares share with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I4547; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares lib with I4551; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4581; they may not run concurrently |

@@ -37,6 +37,10 @@ satisfaction:
     criterion: The workspace reads in the order a person asks, every id and chip on it is a link, its headline numbers are the chosen intent's, its record texts render as prose, it offers one primary action, and the ui audit of /ui/idd finds nothing at any width with the bare-issue-id and raw-markdown rules on
     evidence: test
     ref: test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh
+  - id: a-draft-is-composed-from-the-workspace
+    criterion: "From the workspace the owner opens a new draft on /ui/idd/draft, writes what must become true, saves it on this machine as immutable revisions and resumes it by its id, and reads a deterministic prompt preview of a revision; no request of that screen writes a tracked record, a remote caller is refused, and a published snapshot carries none of it (planned proof: test_a_draft_is_opened_from_the_workspace and test_a_draft_is_kept_on_this_machine in apps/majordomus-cli/tests/ui_idd_draft.rs written by I4547 and I4548, and test_a_draft_previews_its_prompt written by I4549)"
+    evidence: command
+    ref: "majordomus intent explain the-owner-directs-work-from-the-ui"
 governance:
   - rule:project.work-serves-a-declared-intent
   - rule:project.derived-once

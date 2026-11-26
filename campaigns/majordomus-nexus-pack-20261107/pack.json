@@ -1,0 +1,256 @@
+{
+  "pack": "majordomus-nexus",
+  "schema_version": "1.0.0",
+  "generated_on": "2026-11-07",
+  "master": "MASTER_CLAUDE_CODE_PROMPT.md",
+  "intent": "implement and deliver universal context-aware prompt ingress and coordination across existing Majordomus",
+  "lanes": [
+    {
+      "id": "foundation",
+      "title": "Capture and canonical ingress",
+      "preferred_prs": 1
+    },
+    {
+      "id": "intelligence",
+      "title": "Context, intent, mesh and durable governance",
+      "preferred_prs": 1
+    },
+    {
+      "id": "experience",
+      "title": "Intent workspace, derived surfaces and telemetry",
+      "preferred_prs": 1
+    },
+    {
+      "id": "hardening",
+      "title": "Security, end-to-end proof and release",
+      "preferred_prs": 1
+    }
+  ],
+  "tasks": [
+    {
+      "id": "00",
+      "name": "Baseline And Reconciliation",
+      "file": "prompts/00_BASELINE_AND_RECONCILIATION.md",
+      "lane": "foundation",
+      "dependencies": [],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "01",
+      "name": "Canonical Ownership And Contracts",
+      "file": "prompts/01_CANONICAL_OWNERSHIP_AND_CONTRACTS.md",
+      "lane": "foundation",
+      "dependencies": [
+        "00"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "02",
+      "name": "Prompt Capture And Ingress",
+      "file": "prompts/02_PROMPT_CAPTURE_AND_INGRESS.md",
+      "lane": "foundation",
+      "dependencies": [
+        "01"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "03",
+      "name": "Claude Code Lifecycle Bridge",
+      "file": "prompts/03_CLAUDE_CODE_LIFECYCLE_BRIDGE.md",
+      "lane": "foundation",
+      "dependencies": [
+        "02"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "04",
+      "name": "Provider Adapters And Ingress Conformance",
+      "file": "prompts/04_PROVIDER_ADAPTERS_AND_INGRESS_CONFORMANCE.md",
+      "lane": "foundation",
+      "dependencies": [
+        "02",
+        "03"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "05",
+      "name": "Evidence Aware Context Compiler",
+      "file": "prompts/05_EVIDENCE_AWARE_CONTEXT_COMPILER.md",
+      "lane": "intelligence",
+      "dependencies": [
+        "01",
+        "02"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "06",
+      "name": "Intent Resolution And Semantic Dedup",
+      "file": "prompts/06_INTENT_RESOLUTION_AND_SEMANTIC_DEDUP.md",
+      "lane": "intelligence",
+      "dependencies": [
+        "02",
+        "05"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "07",
+      "name": "Proceed Idd Execution Unification",
+      "file": "prompts/07_PROCEED_IDD_EXECUTION_UNIFICATION.md",
+      "lane": "intelligence",
+      "dependencies": [
+        "01",
+        "06"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "08",
+      "name": "Mesh Council And Collision Avoidance",
+      "file": "prompts/08_MESH_COUNCIL_AND_COLLISION_AVOIDANCE.md",
+      "lane": "intelligence",
+      "dependencies": [
+        "07"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "09",
+      "name": "Durable Execution And Recovery",
+      "file": "prompts/09_DURABLE_EXECUTION_AND_RECOVERY.md",
+      "lane": "intelligence",
+      "dependencies": [
+        "02",
+        "07"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "10",
+      "name": "Ai Governance Reconciliation",
+      "file": "prompts/10_AI_GOVERNANCE_RECONCILIATION.md",
+      "lane": "intelligence",
+      "dependencies": [
+        "05",
+        "09"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "11",
+      "name": "Persistent Intent Composer And Prompt Preview",
+      "file": "prompts/11_PERSISTENT_INTENT_COMPOSER_AND_PROMPT_PREVIEW.md",
+      "lane": "experience",
+      "dependencies": [
+        "06",
+        "09",
+        "10"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "12",
+      "name": "Cli Api Mcp Schema And Projections",
+      "file": "prompts/12_CLI_API_MCP_SCHEMA_AND_PROJECTIONS.md",
+      "lane": "experience",
+      "dependencies": [
+        "01",
+        "09",
+        "10"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "13",
+      "name": "Cockpit Blackboard And Live State",
+      "file": "prompts/13_COCKPIT_BLACKBOARD_AND_LIVE_STATE.md",
+      "lane": "experience",
+      "dependencies": [
+        "11",
+        "12"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "14",
+      "name": "Ai Telemetry Economics And Adaptation",
+      "file": "prompts/14_AI_TELEMETRY_ECONOMICS_AND_ADAPTATION.md",
+      "lane": "experience",
+      "dependencies": [
+        "02",
+        "09"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "15",
+      "name": "Security Performance And Fault Injection",
+      "file": "prompts/15_SECURITY_PERFORMANCE_AND_FAULT_INJECTION.md",
+      "lane": "hardening",
+      "dependencies": [
+        "03",
+        "04",
+        "08",
+        "09",
+        "10"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "16",
+      "name": "End To End Dogfooding And Coverage",
+      "file": "prompts/16_END_TO_END_DOGFOODING_AND_COVERAGE.md",
+      "lane": "hardening",
+      "dependencies": [
+        "13",
+        "14",
+        "15"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "17",
+      "name": "Ci Delivery And Release Train",
+      "file": "prompts/17_CI_DELIVERY_AND_RELEASE_TRAIN.md",
+      "lane": "hardening",
+      "dependencies": [
+        "16"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    },
+    {
+      "id": "18",
+      "name": "Cleanup Evolution And Operability",
+      "file": "prompts/18_CLEANUP_EVOLUTION_AND_OPERABILITY.md",
+      "lane": "hardening",
+      "dependencies": [
+        "17"
+      ],
+      "required": true,
+      "completion": "verified code or evidence-backed already-satisfied result; gated integration"
+    }
+  ]
+}

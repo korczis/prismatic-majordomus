@@ -1,0 +1,35 @@
+id: I4550
+milestone: idd-reads-at-a-glance
+title: "A draft is assisted by a model only as the recorded decision allows, a reply that does not parse is refused, and an absent provider is said to be absent"
+slug: a-draft-is-assisted-and-never-decided
+priority: p2
+profile: implementation
+objective: "Record first, through majordomus reasoning, whether and how the runtime may ask a model about a draft: model.rs asserts that no handler reaches beyond the machine, rule project.advisors-are-optional keeps model credentials out of CI, and ADR 0191 (proposed) says a model may author a draft and never decides. Then carry that decision: the suggestions are labelled inferred, a reply that does not parse is refused with its reason, and with no provider the screen says so and the draft stays usable."
+why: "The owner's pack of 2026-11-07 asks for genuine provider-assisted synthesis with an honest unavailable fallback (campaigns/majordomus-intent-workbench-pack-20261107/prompts/04-P04-REAL-ASSISTED-SYNTHESIS.md). The milestone's criterion 'An advisor-written draft that does not parse is refused with the reason' is carried by no issue until this one."
+current_state: "scripts/advisor-consult and the adapters in scripts/lib/advisors serve engineering uncertainty, selected by reasoning.plan; no Rust capability calls a model; models.route only routes."
+desired_state: "As the recorded decision says, with the suggestions never written as evidence or as records."
+scope:
+  - ".ai/repo/reasoning"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/ui/draft.rs"
+  - "scripts/lib/advisors"
+  - "apps/majordomus-cli/tests/ui_idd_draft.rs"
+depends_on:
+  - "I4548"
+non_scope:
+  - "A model deciding a status, a verdict or a write"
+  - "Requiring a provider: without one the draft is written by hand and checked the same"
+serves:
+  - "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+acceptance_criteria:
+  - "A reasoning record decides whether the runtime may call a model for a draft, with its evidence, before any call is added"
+  - "An advisor-written draft that does not parse is refused with the reason"
+  - "With no provider available the answer says unavailable with the reason, and the draft is still saved and previewed"
+  - "Every suggestion is labelled inferred and nothing it says is written as evidence or as a record"
+validation:
+  - "majordomus reasoning check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft"
+evidence_required:
+  - "malformed_advisor_draft_refused"
+created_at: 2026-11-07
+updated_at: 2026-11-07

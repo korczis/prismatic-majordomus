@@ -149,6 +149,148 @@ value; a form mints one key per render; `docs/EXECUTIONS.md` says a key is forgo
 execution; and two concurrent starts answer one id. I3260's ask that a repeated start of
 plan.transition answer the first id would add a dependency on I4000 and waits for it.
 
+## The packs of 2026-11-07, mapped onto master
+
+Three packs arrived on 2026-11-07 and were measured against master on that day. Most of what
+they ask for is already planned by records written from earlier briefs. Those asks are folded
+into the records that carry them, and only the gaps became new issues.
+
+### `campaigns/majordomus-intent-workbench-pack-20261107`
+
+The pack asks for a live intent editor on the existing workspace. Nothing of it was on
+master: no draft store, no `intents.draft_check`, no compose route. Its backend is planned by
+the milestone `an-outcome-becomes-a-reviewed-plan` (ADR 0191, proposed). Its screen belongs to
+the workspace milestone `idd-reads-at-a-glance`, under the new criterion
+`the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace`.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| prompt | carried as | folded into or delivered by | not carried, and why |
+|---|---|---|---|
+| P00 entrypoint | I4547 `/ui/idd/draft`, writes nothing | none | the never-landed I2807 form wrote tracked records; this route writes none |
+| P01 private draft and revisions | I4548 `intents.draft_save` / `intents.draft_get` under `.ai/local/state/drafts` | none | unconfirmed debounced autosave: every command is confirmed and no effect fits a checkout-local write, so it waits for a reasoning record or an ADR |
+| P02 evidence-backed context | none | I3251: revision binding, coverage per source class, stale answers discarded | none |
+| P03 prompt and pack preview | I4549, never named pack or intake | none | the name: `a-brief-is-reconciled-into-the-plan` forbids pack and intake nouns |
+| P04 assisted synthesis | I4550, behind a recorded reasoning decision | carries the milestone's unparsed-advisor-draft criterion | a model deciding anything (ADR 0191) |
+| P05 questions and discussion | none | I3253: bounded, prioritised, revision-bound questions | a stored discussion thread (`project.never-store-transcripts`) |
+| P06 reconcile and dedupe | none | I3254: a first-party draft requirement classified against `intents.record` | none |
+| P07 draft check | none | I3252: fingerprint and stale reading | none |
+| P08 materialisation | none | I3252: idempotency key, approval bound to the draft digest, refusal on a moved HEAD, a proposal the index cannot see | waits for the owner to accept ADR 0191 |
+| P09 execution and feedback | none | I3225, I4483, and the records of PR #2520 (I3984) | none |
+| P10 security, performance and end to end | none | I3260: draft attack cases; I3432 and I3434 already plan the private-read and publication halves | none |
+| P11 dogfood and release | none | evidence for I3260 | a process, not a record |
+
+</div>
+
+
+### `campaigns/majordomus-nexus-pack-20261107`
+
+The pack asks for one ingress for every prompt. Its intent is already recorded as
+`a-change-reconciles-what-it-affects`, and its first vertical slice as the milestone
+`a-prompt-reaches-the-work-it-serves` (I3406, I3408, I3409, I3411, I3430-I3435). Nothing in
+it is carried under the name Nexus. Rule `project.no-new-nouns` and ADR 0217 (proposed) keep
+hooks to sensing, derive a match on read and never store it, and map routing levels onto the
+existing plan outcomes (I3423). They also add no stored receipt, resolution or decision record
+and no route enum beside the ledger, `intents.binding`, executions and `proceed.step`.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| prompt | carried as | folded into or delivered by |
+|---|---|---|
+| 00 baseline, 01 ownership | this section | the owners are capture (`lib/capture.sh`, ADR 0009), `devcontext`, `intents.*`, `proceed.*`, `mesh.*`, `executions.*`, `reasoning.*` |
+| 02 prompt capture | I4551: a synthetic message is never archived as the person's prompt | I3406 (idempotent capture), I3143 (the Rust session domain), I3304 |
+| 03 Claude Code lifecycle | I4552: UserPromptSubmit answers bounded context | I3322 and PR #2836 (PreToolUse), I3323, I3992 (Stop and Notification), I3301, I3296 |
+| 04 provider adapters | none | I3303 and I3410 (Codex); the matrix is `share/providers.yaml` and `capture status` |
+| 05 context compiler | none | delivered as `devcontext.compile`; a prompt-keyed compile is I3251 and I3408 |
+| 06 intent resolution | none | I3251, I3254, I3408, I3409 |
+| 07 proceed and IDD | none | delivered as `proceed.step` → `devtask.implement` (ADR 0177) |
+| 08 mesh council | none | delivered as mesh claims, review requests, `reasoning` advisors and `scripts/collision-check` |
+| 09 durable execution | none | ADR 0225 and I3980-I3986 on PR #2520 |
+| 10 governance reconciliation | none | the evolve skill, the knowledge outbox, I3272-I3275 |
+| 11 intent composer | none | the Workbench records above |
+| 12 projections | none | delivered by the capability registry (ADR 0004) |
+| 13 cockpit and live state | none | I3220, I3430, I3431, PR #2583 |
+| 14 telemetry and economics | none | the milestone `every-sessions-usage-is-observed` (ADR 0213) |
+| 15 security and fault injection | none | I3304, I3424, I3432-I3435 |
+| 16-18 dogfood, delivery, cleanup | none | the integrator, the landing seat and evolve |
+
+</div>
+
+
+Not carried: a Gemini adapter, which the intent `a-provider-carries-the-contract-natively`
+defers until I3303 settles the adapter shape, and PostToolUse and Subagent hooks, for which no
+use is declared.
+
+### `campaigns/majordomus-mesh-fabric-pack-20261107`
+
+The pack's snapshot is of 2026-09-11, and master's mesh has moved since: the journal, its
+claims, handovers and review requests, and the peer board stamped with each worker's provider
+address. Its first milestone, two live AI peers exchanging a request and an answer without
+polling a board, is partly true: a review request is already a signed, correlated request and
+answer, and the board already records each provider's socket, but nothing wakes the
+addressee.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| phase | carried as | folded into or delivered by | not carried |
+|---|---|---|---|
+| 01 discovery and owners | none | the mesh modules and `peers.rs` are the single owners (ADR 0067) | |
+| 02 typed envelope | none | `MeshEvent` is the envelope: origin-signed, sequenced, stamped, bounded; a deadline is I3608 | not planned: the owner decided on 2026-11-08 "Repo decision holds (Recommended)" (AskUserQuestion, session 60a880b1-999a-4666-90c8-925623cc29b4, 2026-11-08T00:43:36Z): `MeshEvent` stays the envelope and no second bus is built |
+| 03 local direct routing | I4553: a review request addressed to a session answers the route that wakes it | I4327 (who may answer) comes first | a listener or socket of Majordomus's own (ADR 0003) |
+| 04 durable delivery | none | the journal: synced appends, idempotent apply, replay by cursor; I3174, I3444, I3608 | carried since the owner's "nezuzuj" (2026-11-08, below): per-message acknowledgement, retry and dead letters are planned on the Mesh Fabric lead's branch, and the phase opens with its written assessment |
+| 05 runtime adapters | I4553: a `messaging` offer in `share/providers.yaml` | the provider matrix and capture adapters | |
+| 06 remote QUIC | none | | carried since the owner's "hned" (2026-11-08, below), which superseded the earlier "Keep HTTP for now": planned on the Mesh Fabric lead's branch, with an ADR of its own, because ADR 0067 point 4 and ADR 0032 keep the mesh on the crate's HTTP client |
+| 07 adaptive routing | none | link path choice is I3187 and I3772 | carried since the owner's "nezuzuj" (2026-11-08, below): routing of messages is planned on the Mesh Fabric lead's branch, and the phase opens with its written assessment |
+| 08 surfaces and governance | none | delivered by the capability registry and `majordomus generate` (ADR 0004) | |
+| 09 hardening and delivery | none | after the slices; `tests/mesh_cooperation.rs` and the mesh lab are the base | |
+
+</div>
+
+
+### What the owner must decide
+
+- ADR 0191 is proposed. I3252, which materialises a checked draft, must not land before the
+  owner accepts it.
+
+Resolved since the packs were measured:
+
+- The milestone `a-prompt-reaches-the-work-it-serves` holds its wave-0 issues (I3406, I3432,
+  I3434) behind three unfinished milestones, although none of them depends on an issue. This
+  is not the owner's to decide and the milestone is not edited: the plan already carries the
+  way out, I3757 (a blocked milestone names what holds it) and then I3972 (`milestone_gate:
+  own`), after which those three issues opt out of the gate. I3972's non_scope forbids
+  changing a milestone's depends_on instead.
+- The Mesh Fabric pack's own envelope and delivery states: the owner decided on 2026-11-08,
+  asked "The Mesh Fabric pack asks for its own typed envelope plus per-message ACK, retry and
+  dead-letter. The repository has already decided otherwise: MeshEvent is the signed
+  envelope, rule project.no-new-nouns applies, and the journal is at-least-once with
+  idempotent apply. p11's intake (PR #2978) records "a second message envelope: not
+  planned". Which decision holds?", and answered "Repo decision holds (Recommended)". The
+  pack continues through I4553, I4327 and I3608; per-message acknowledgement and dead
+  letters get a written assessment first. This answer still stands: the later "nezuzuj"
+  (below) superseded the narrowing of the pack, not the envelope.
+- The Mesh Fabric pack's QUIC transport, first answer (superseded the same day, below): the
+  owner decided on 2026-11-08, asked "Phase 06 of
+  the pack wants an encrypted remote QUIC transport. The repository holds plain HTTP between
+  nodes (ADR 0067, ADR 0032), and I3189 records the transport choice as yours. Nothing is
+  planned until you decide. What should happen?", and answered "Keep HTTP for now
+  (Recommended)": phase 06 stays unplanned until there is evidence of need (cross-host
+  latency or security); the first milestone is local and runs over the provider's socket.
+- Both answers were given through AskUserQuestion in session
+  60a880b1-999a-4666-90c8-925623cc29b4 at 2026-11-08T00:43:36Z.
+- Later on 2026-11-08 the owner answered three Mesh Fabric questions in one message, after a
+  report in session 8e226cf8-e383-4936-afd0-7cd6f4227ccd (the session that now leads the
+  pack). Asked "QUIC (faze 06, I3189): delat ho ted, nebo ho odlozit, dokud nepobezi lokalni
+  vymena?", answered "hned" (now): phase 06 is planned, superseding "Keep HTTP for now".
+  Asked "Zuzeni packu: ma transportem zustat journal plus socket providera, jak pise
+  OWNER_PACKS.md?", answered "nezuzuj" (do not narrow): every phase is planned, phases 04
+  and 07 each opening with its written assessment, while `MeshEvent` stays the envelope and
+  no second bus is built. Asked "Vedeni MMF: kdo ho vede?", answered "ty vybrt" (sic, you
+  choose): that session took the lead as the exclusive mesh claim `seat/mesh-fabric-lead`,
+  and its branch carries the transport's ADR and the QUIC slice.
+  The Czech of the three questions is quoted without its diacritics, because rule
+  `project.english-only` and its gate refuse those letters here; nothing else of them is changed.
+
 ## What was not planned, and why
 
 Each pack was read as a brief, and a brief can ask for what the repository has decided
@@ -169,9 +311,9 @@ against. These are recorded so that nobody plans them again by accident.
 | every recipe generated, shell removed at once | the shell half is what the installer ships and what the hooks run | an ordered migration with counts that cannot rise (I3155, I4488, I4492) |
 | peer scheduling and provider-side enforcement of a profile | the tool starts no worker and invokes no model (ADR 0032, ADR 0044) | one refusal at the capability executor (I4506) |
 | every mesh command offered on a node's inspector | one cooperation action, under a resolved identity (I3139, I3192) | nothing beyond those |
+| a message bus with its own envelope, inbox and delivery states | the journal's signed event is the envelope, and the tool gains no new nouns (project.no-new-nouns); the owner confirmed on 2026-11-08 "Repo decision holds" | a review request that names its session and the provider's own route (I4553) |
 
 </div>
-
 
 ## Starting
 
