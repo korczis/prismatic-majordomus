@@ -1,0 +1,38 @@
+id: I4595
+milestone: a-second-adopter-is-served
+title: "doctor reports a checkout whose dependency install is behind its lockfile"
+slug: doctor-reports-an-install-behind-its-lockfile
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "doctor's clone section reads every checkout of the repository, the primary and each linked worktree, and names any whose dependency install is behind its lockfile: an npm project whose node_modules does not satisfy package-lock.json (npm ls state, or node_modules/.package-lock.json older than or differing from package-lock.json), and a mix project whose deps fail `mix deps.check` where mix is installed. Each finding names the checkout, the manifest and the fix (`npm ci` or `mix deps.get` in that checkout). Doctor reads; it installs nothing."
+why: "Reported by dev-87 from the korczis.github.io adopter on 2026-11-14 (filed against I3952 with the note that a new id is cleaner). esbuild 0.28.2 was installed and committed in a linked worktree. The primary checkout's pre-push (npm run verify -- --fast) then died halfway through its build with ERR_MODULE_NOT_FOUND, esbuild imported from scripts/vendor.mjs, because that checkout's node_modules predated the new package-lock.json; npm ci there made the same push pass. The adopter now runs npm ls --depth=0 as verify's first step (its commit ca94192), and its negative control, esbuild removed, exits 1. Nothing in Majordomus would have said so first: I3952 restores an install by its key only when its ensure command runs, and a checkout that never runs it drifts anyway; I4324 reads the node_modules of finished worktrees for reclaim, not for currency."
+current_state: "Measured at origin/master defd88e5896. lib/doctor.sh mj_report_clone (:697) reports unpushed commits, the outbox, uncommitted work in linked worktrees (mj_report_uncommitted, which already walks `git worktree list` and is left out under MAJORDOMUS_DOCTOR_CONTEXT=commit), trunk distance and release currency. No reading of doctor compares a checkout's installed dependencies with its lockfile, in this checkout or another. Measured 2026-11-17 while implementing: `mix deps.check` is no task of Elixir 1.16 to 1.19 (Mix loads and compiles every dependency, then fails to find the task), so the mix reading asks `mix deps.loadpaths --no-compile`, which checks every dependency against mix.lock and compiles nothing."
+desired_state: "On a repository with a lockfile, `majordomus doctor` prints one WARN clone line per checkout whose install is behind it, naming the checkout's path, the manifest and the command that brings it current, and one OK line when every checkout is current. A checkout with no lockfile, no node_modules and no deps is not judged. A missing npm or mix makes that reading INFO, never a failure. Under the commit context the reading of other checkouts is left out, as mj_report_uncommitted's is, so the hook stays within its budget."
+scope:
+  - ".ai/repo/project/issues/I4595.yaml"
+  - "lib/doctor.sh"
+  - "docs/WORKTREES.md"
+  - "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
+non_scope:
+  - "Installing or restoring anything (I3952's `mesh build-cache ensure` restores by key)"
+  - "Reclaiming node_modules or target/ of finished worktrees (I4324)"
+  - "Package managers other than npm and mix (pnpm, yarn, cargo): a later list, once an adopter asks for it"
+  - "The adopter's own verify step"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "In a fixture repository whose package-lock.json gained a dependency in a linked worktree while the primary checkout's node_modules predates it, `majordomus doctor` prints a WARN clone line naming the primary checkout's path and `npm ci` as the fix; after `npm ci` there the line is gone and an OK line says every checkout is current"
+  - "The same holds with the roles swapped: a linked worktree behind its lockfile is named by doctor run in the primary checkout"
+  - "Where mix is installed, a fixture mix project whose deps fail `mix deps.check` is named with `mix deps.get` as the fix; where it is not, the reading is INFO"
+  - "A checkout with no lockfile is not judged, and MAJORDOMUS_DOCTOR_CONTEXT=commit leaves the other checkouts unread"
+  - "Negative: the case fails against lib/doctor.sh at defd88e5896, which prints no such line"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053)"
+validation:
+  - "bash test/run.sh 4595_doctor_names_an_install_behind_its_lockfile"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "doctor_names_an_install_behind_its_lockfile_case"
+created_at: 2026-11-15
+updated_at: 2026-11-18

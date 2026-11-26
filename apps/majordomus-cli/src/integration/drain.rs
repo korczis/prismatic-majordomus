@@ -360,9 +360,12 @@ fn names_file(path: &Path, file: &fs::File) -> bool {
 pub const KEEP_ALIVE_EVERY: Duration = Duration::from_secs(60);
 /// How promptly a keep-alive notices it was asked to stop.
 const KEEP_ALIVE_POLL: Duration = Duration::from_millis(200);
-/// How many times an observer reads a record that does not read as a holder, and how long
-/// it waits between: a renewal rewrites the record in two steps.
-const LEASE_READ_ATTEMPTS: u32 = 5;
+/// How long an observer keeps reading a record that does not read as a holder, and how long
+/// it waits between two reads. `write_record` leaves no state a reader can meet that is not
+/// a whole record, so this covers what it cannot: a record another program wrote, or one a
+/// reader met torn mid-copy. A bound in time and not in attempts: five reads 2 ms apart gave
+/// up within 10 ms, which a loaded machine spends between two steps of one write (I4576).
+const LEASE_READ_PATIENCE: Duration = Duration::from_millis(250);
 const LEASE_READ_RETRY: Duration = Duration::from_millis(2);
 
 /// Replace the holder record through the locked file, never the path: a path written to
@@ -373,8 +376,18 @@ fn write_record(file: &fs::File, token: &str) -> std::io::Result<()> {
     if let Some(why) = injected_failure() {
         return Err(std::io::Error::other(why));
     }
-    file.set_len(0)
-        .and_then(|()| file.write_all_at(token.as_bytes(), 0))
+    // Never empty and never a prefix of a record: the new record is written over the old one,
+    // padded with spaces to the old one's length, and only then are the spaces cut off. Every
+    // state a reader can meet is a whole record with trailing whitespace, which `read` trims.
+    // Emptying the file first, as this did, left a window in which a reader met no holder at
+    // all, and a loaded machine held it open for longer than the reader's patience (I4576).
+    // One fallible expression and no early return: a file whose length cannot be read is
+    // treated as empty (nothing to pad), and the cut runs only after the write succeeded.
+    let old = file.metadata().map_or(0, |m| m.len());
+    let mut bytes = token.as_bytes().to_vec();
+    bytes.resize(bytes.len().max(old as usize), b' ');
+    file.write_all_at(&bytes, 0)
+        .and_then(|()| file.set_len(token.len() as u64))
 }
 
 /// A lease's record kept fresh by a thread, until this is dropped.
@@ -605,19 +618,19 @@ impl IntegrationLease {
     /// `None` when nobody does.
     pub fn read(root: &Path, base: &str) -> Result<Option<IntegrationLeaseState>, String> {
         let path = Self::path_for(&common_dir(root)?, base);
-        // `write_record` empties the file before it writes, so a read can meet the record
-        // empty or half written while its holder renews it: such a read reads it again
-        let mut holder = None;
-        for attempt in 1..=LEASE_READ_ATTEMPTS {
+        // a record that does not read as a holder is read again, for up to the patience
+        // (`write_record` never leaves one, but another writer, or a torn copy, may)
+        let deadline = std::time::Instant::now() + LEASE_READ_PATIENCE;
+        let holder = loop {
             let Ok(text) = fs::read_to_string(&path) else {
                 return Ok(None);
             };
-            holder = serde_json::from_str(text.trim()).ok();
-            if holder.is_some() || attempt == LEASE_READ_ATTEMPTS {
-                break;
+            let holder: Option<LeaseHolder> = serde_json::from_str(text.trim()).ok();
+            if holder.is_some() || std::time::Instant::now() >= deadline {
+                break holder;
             }
             std::thread::sleep(LEASE_READ_RETRY);
-        }
+        };
         let age = fs::metadata(&path)
             .and_then(|m| m.modified())
             .ok()
@@ -3240,6 +3253,41 @@ pub fn report_left_branches(root: &Path) -> Result<Option<LeftBranchReport>, Str
 pub fn recorded_left_branches(root: &Path) -> Option<LeftBranchReport> {
     let text = fs::read_to_string(super::state_path(root, LEFT_BRANCHES_FILE)).ok()?;
     serde_json::from_str(&text).ok()
+}
+
+#[cfg(test)]
+mod lease_record_tests {
+    //! The holder record is replaced in place without an empty or a partial state (I4576).
+
+    use super::*;
+
+    /// A shorter record written over a longer one is padded while it is written and cut to
+    /// itself after: the file ends exactly with the shorter record, and a longer one written
+    /// next replaces it whole.
+    #[test]
+    fn a_shorter_record_over_a_longer_one_ends_exactly_with_itself() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("lease");
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)
+            .unwrap();
+        let long = r#"{"holder":"a much longer record than the next"}"#;
+        let short = r#"{"holder":"short"}"#;
+        write_record(&file, long).unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), long);
+        write_record(&file, short).unwrap();
+        assert_eq!(
+            fs::read_to_string(&path).unwrap(),
+            short,
+            "no padding is left behind"
+        );
+        write_record(&file, long).unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), long);
+    }
 }
 
 #[cfg(test)]
