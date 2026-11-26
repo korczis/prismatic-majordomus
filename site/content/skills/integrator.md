@@ -5,7 +5,7 @@ weight = 5
 [extra]
 id = "integrator"
 status = "active"
-version = 6
+version = 7
 source = ".ai/repo/skills/integrator/SKILL.md"
 +++
 {% raw %}
@@ -97,8 +97,14 @@ when its own pre-push judgement passed, not when it is committed:
   --manifest-path apps/majordomus-cli/Cargo.toml` in the worktree), then for each member
   `git merge --no-ff --no-commit <member>`, `scripts/derive` while the merge is staged,
   `git add -A`, `git commit`: the pre-commit pages gate refuses a merge commit whose derived
-  data is stale (candidate s-20261028115702-2cb6-c77d6b5c9317, met again the same day), and a
-  derive after the commit only adds a second commit. Rebuild between members only when a
+  data is stale (candidate s-20261028115702-2cb6-c77d6b5c9317, met again the same day). Then,
+  once after the last member's merge commit, derive again and commit what it changes on its
+  own. `site/data/generated/delivery.json` observes HEAD by design (I3836), and a staged merge
+  has not moved it, so the derive before the commit observed the pre-merge head and missed
+  what the merges brought in (curated note s-20261106212411-be2e-16bd427c8946); the site check
+  then refuses a homepage that counts more merged issues than the committed projection. This
+  holds for `majordomus offload derive .` as for `scripts/derive`, and on 2026-11-10 it cost
+  two pull requests (#2994, #2998) a full validate each. Rebuild between members only when a
   member changes the crate.
 - **A build host is not a judging host.** The host that builds, derives and commits a top may
   not carry CI's tools: on 2026-11-05 lundra refused train 25b's top at pre-push with

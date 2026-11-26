@@ -55,3 +55,10 @@ serves:
   - "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
 created_at: 2026-10-22
 updated_at: 2026-10-22
+evidence:
+  - covers: install-behind-lockfile-in-another-checkout
+    type: manual
+    command: "git -C <primary checkout> push origin master  # pre-push: npm run verify -- --fast"
+    result: "esbuild 0.28.2 was installed and committed in the worktree. The primary checkout's pre-push then died halfway through its build with ERR_MODULE_NOT_FOUND (esbuild imported from scripts/vendor.mjs), because its node_modules predated package-lock.json; npm ci there made the same push pass. The adopter now runs npm ls --depth=0 as verify's first step (ca94192), and its negative control (esbuild removed) exits 1. Candidate acceptance line: doctor's clone section reports a checkout whose dependency install is behind its lockfile (npm ls, mix deps.check), naming the checkout and the fix. Fit: weak. I3952 restores an install by key when the ensure command runs; a checkout that never runs it drifts anyway. A new id is probably cleaner."
+    url: "https://github.com/korczis/korczis.github.io/commit/ca94192a260443ab53264d9aa76a5267b2ceb6ed"
+    recorded_at: 2026-11-14T18:24:21Z
