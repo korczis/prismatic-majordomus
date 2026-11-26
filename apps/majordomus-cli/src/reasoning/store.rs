@@ -44,6 +44,7 @@
 //!     version: RECORD_VERSION,
 //!     id: mint_id(body.kind(), at),
 //!     task: store.current_task(),
+//!     session: None,
 //!     recorded_at: at.into(),
 //!     head: None,
 //!     redacted,
@@ -143,6 +144,7 @@ impl Loaded {
     ///     version: RECORD_VERSION,
     ///     id: "assessment-1".into(),
     ///     task: "t".into(),
+    ///     session: None,
     ///     recorded_at: "2026-10-01T00:00:01Z".into(),
     ///     head: None,
     ///     redacted: vec![],
@@ -238,6 +240,35 @@ impl Store {
             .unwrap_or_else(|| UNTASKED.to_string())
     }
 
+    /// The task and the episode a record the caller writes here names (ADR 0164, I4291):
+    /// the caller's own episode — `caller`'s provider session when the caller knows it, else
+    /// the environment's, else the only one open — and the active task unless another
+    /// episode that is still open opened it, in which case the record is [`UNTASKED`].
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::store::{Store, UNTASKED};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let state = dir.path().join(".ai/local/state");
+    /// std::fs::create_dir_all(state.join("sessions-open")).unwrap();
+    /// for (key, id) in [("worker-a", "s-a"), ("worker-b", "s-b")] {
+    ///     std::fs::write(state.join(format!("sessions-open/{key}.yaml")),
+    ///                    format!("session_id: {id}\n")).unwrap();
+    /// }
+    /// std::fs::write(state.join("ledger.jsonl"),
+    ///     "{\"event\":\"task.started\",\"task_id\":\"t-1\",\"session\":\"s-a\"}\n").unwrap();
+    /// std::fs::write(state.join("current.yaml"), "id: t-1\n").unwrap();
+    ///
+    /// let store = Store::at(dir.path());
+    /// assert_eq!(store.attribution(Some("worker-a")), ("t-1".into(), Some("s-a".into())));
+    /// // B's record names B, and not the task A — still open — opened
+    /// assert_eq!(store.attribution(Some("worker-b")), (UNTASKED.into(), Some("s-b".into())));
+    /// ```
+    pub fn attribution(&self, caller: Option<&str>) -> (String, Option<String>) {
+        let a = crate::session::attribution::record_attribution(&self.root, caller);
+        (a.task.unwrap_or_else(|| UNTASKED.to_string()), a.session)
+    }
+
     /// Every record of every task, in canonical order.
     ///
     /// Only `.json` files are read, so a temporary file of a write in progress is never
@@ -256,6 +287,7 @@ impl Store {
     ///         version: RECORD_VERSION,
     ///         id: id.into(),
     ///         task: "t".into(),
+    ///         session: None,
     ///         recorded_at: at.into(),
     ///         head: None,
     ///         redacted: vec![],
@@ -323,6 +355,7 @@ impl Store {
     ///     version: RECORD_VERSION,
     ///     id: "assessment-1".into(),
     ///     task: "t".into(),
+    ///     session: None,
     ///     recorded_at: "2026-10-01T00:00:01Z".into(),
     ///     head: None,
     ///     redacted: vec![],
@@ -401,6 +434,7 @@ fn subject_key(s: &str) -> String {
 ///         version: RECORD_VERSION,
 ///         id: id.into(),
 ///         task: "t".into(),
+///         session: None,
 ///         recorded_at: at.into(),
 ///         head: None,
 ///         redacted: vec![],
@@ -460,6 +494,7 @@ pub fn standing_conclusion<'a>(
 ///         version: RECORD_VERSION,
 ///         id: id.into(),
 ///         task: "t".into(),
+///         session: None,
 ///         recorded_at: at.into(),
 ///         head: None,
 ///         redacted: vec![],
@@ -542,6 +577,7 @@ fn nonempty(field: &str, value: &str) -> Result<(), Refusal> {
 ///         version: RECORD_VERSION,
 ///         id: id.into(),
 ///         task: "t".into(),
+///         session: None,
 ///         recorded_at: "2026-10-01T00:00:00Z".into(),
 ///         head: None,
 ///         redacted: vec![],
@@ -878,6 +914,7 @@ pub fn admit(
 ///     version: RECORD_VERSION,
 ///     id: "resolution-1".into(),
 ///     task: "t".into(),
+///     session: None,
 ///     recorded_at: "2026-10-01T00:00:01Z".into(),
 ///     head: None,
 ///     redacted: vec![],
@@ -1025,6 +1062,37 @@ pub fn redact(body: ReasoningBody) -> (ReasoningBody, Vec<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// I4291: a record is attributed to its writer's episode, and to the task only when no
+    /// other episode that is still open opened it.
+    #[test]
+    fn a_record_is_attributed_to_its_writers_episode_and_task() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = dir.path().join(".ai/local/state");
+        std::fs::create_dir_all(state.join("sessions-open")).unwrap();
+        for (key, id) in [("worker-a", "s-a"), ("worker-b", "s-b")] {
+            std::fs::write(
+                state.join(format!("sessions-open/{key}.yaml")),
+                format!("session_id: {id}\n"),
+            )
+            .unwrap();
+        }
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            "{\"event\":\"task.started\",\"task_id\":\"t-1\",\"session\":\"s-a\"}\n",
+        )
+        .unwrap();
+        std::fs::write(state.join("current.yaml"), "id: t-1\n").unwrap();
+        let store = Store::at(dir.path());
+        assert_eq!(
+            store.attribution(Some("worker-a")),
+            ("t-1".to_string(), Some("s-a".to_string()))
+        );
+        assert_eq!(
+            store.attribution(Some("worker-b")),
+            (UNTASKED.to_string(), Some("s-b".to_string()))
+        );
+    }
     use crate::reasoning::availability::{AdvisorStatus, ReasoningMode};
     use crate::reasoning::catalogue::AdvisorTransport;
 
@@ -1083,6 +1151,7 @@ mod tests {
                 version: RECORD_VERSION,
                 id: id.clone(),
                 task: "t".into(),
+                session: None,
                 recorded_at: at,
                 head: None,
                 redacted: vec![],

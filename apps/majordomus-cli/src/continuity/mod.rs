@@ -611,10 +611,25 @@ pub fn locate_handover(root: &Path, name: Option<&str>) -> Result<std::path::Pat
     }
 }
 
+/// [`publish_by`] with the caller resolved from the environment, which is what the tests of
+/// a publish want; the capability passes its connection's episode.
+#[cfg(test)]
+pub fn publish(machine: &Machine<'_>, request: &PublishRequest) -> Result<Published, String> {
+    publish_by(machine, request, None)
+}
+
 /// `continuity publish`: project the newest handover into a signed record, refuse it if it
 /// carries anything that must not leave this machine, and add it to the local store.
 /// Offline by design: it touches no remote.
-pub fn publish(machine: &Machine<'_>, request: &PublishRequest) -> Result<Published, String> {
+///
+/// The record names the episode of the caller whose provider session is `caller` (a
+/// capability call passes its connection's), never the checkout's pointer; `None` resolves
+/// the caller from the environment (I4291).
+pub fn publish_by(
+    machine: &Machine<'_>,
+    request: &PublishRequest,
+    caller: Option<&str>,
+) -> Result<Published, String> {
     let root = machine.root;
     let path = locate_handover(root, request.handover.as_deref())?;
     let (front, _) = crate::mesh::handover::read(&path)?;
@@ -685,7 +700,7 @@ pub fn publish(machine: &Machine<'_>, request: &PublishRequest) -> Result<Publis
         .as_deref()
         .map(|id| local::decisions(root, id))
         .unwrap_or_default();
-    let (session, episode) = local::episode_at_publish(root);
+    let (session, episode) = local::episode_at_publish(root, caller);
     let record = Record {
         schema: record::SCHEMA.into(),
         repository: machine.repository.clone(),

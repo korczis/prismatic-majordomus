@@ -25,7 +25,7 @@ use super::record::{
     CarriedDecision, EpisodeAtPublish, SourceState, TaskRef, WorkingTree, MAX_CHANGED,
     MAX_DECISIONS, MAX_DECISION_BYTES,
 };
-use crate::capability::builtin::continuity::{document, read_task};
+use crate::capability::builtin::continuity::read_task;
 
 /// The local state directory, relative to the checkout.
 pub const STATE_DIR: &str = ".ai/local/state";
@@ -275,22 +275,16 @@ fn changed_paths(status: &[u8]) -> (Vec<String>, Vec<String>) {
     (changed, untracked)
 }
 
-/// The episode open in this checkout, when its record is this checkout's.
-pub fn open_episode(root: &Path) -> Option<String> {
-    let f = document(&root.join(STATE_DIR).join("session-current.yaml"))?;
-    let worktree = f.get("worktree").cloned().unwrap_or_default();
-    if !worktree.is_empty() && Path::new(&worktree) != root {
-        let same = std::fs::canonicalize(&worktree).ok() == std::fs::canonicalize(root).ok();
-        if !same {
-            return None;
-        }
-    }
-    f.get("session_id").cloned().filter(|s| !s.is_empty())
+/// The caller's episode open in this checkout (ADR 0164): the one `caller`'s provider session
+/// names, or the environment's, or the only open episode — never the pointer, which names
+/// whichever episode opened last (I4291).
+pub fn open_episode(root: &Path, caller: Option<&str>) -> Option<String> {
+    crate::session::attribution::open_session_id(root, caller)
 }
 
-/// Whether an episode is open here.
-pub fn episode_at_publish(root: &Path) -> (Option<String>, EpisodeAtPublish) {
-    match open_episode(root) {
+/// Whether the caller's episode is open here.
+pub fn episode_at_publish(root: &Path, caller: Option<&str>) -> (Option<String>, EpisodeAtPublish) {
+    match open_episode(root, caller) {
         Some(id) => (Some(id), EpisodeAtPublish::Open),
         None => (None, EpisodeAtPublish::None),
     }
@@ -633,32 +627,43 @@ mod tests {
     }
 
     #[test]
-    fn an_episode_is_open_here_only_when_its_record_is_this_checkouts() {
+    fn an_episode_is_the_callers_own_and_only_when_its_record_is_this_checkouts() {
         let dir = repo();
         let root = dir.path();
         let state = state(&dir);
-        assert_eq!(episode_at_publish(root), (None, EpisodeAtPublish::None));
+        let me = Some("worker-a");
+        assert_eq!(episode_at_publish(root, me), (None, EpisodeAtPublish::None));
+        let open = state.join("sessions-open");
+        std::fs::create_dir_all(&open).unwrap();
         let write = |worktree: &str, id: &str| {
             std::fs::write(
-                state.join("session-current.yaml"),
+                open.join("worker-a.yaml"),
                 format!("session_id: {id}\nworktree: {worktree}\n"),
             )
             .unwrap()
         };
         write(&root.display().to_string(), "s-1");
         assert_eq!(
-            episode_at_publish(root),
+            episode_at_publish(root, me),
             (Some("s-1".into()), EpisodeAtPublish::Open)
+        );
+        // the pointer names another worker's episode, opened last; it is never the caller's
+        std::fs::write(state.join("session-current.yaml"), "session_id: s-b\n").unwrap();
+        assert_eq!(open_episode(root, me).as_deref(), Some("s-1"));
+        assert_eq!(
+            open_episode(root, Some("worker-b")),
+            None,
+            "B's key opened nothing"
         );
         // the same directory under another spelling is still this checkout
         write(&format!("{}/lib/..", root.display()), "s-2");
         std::fs::create_dir_all(root.join("lib")).unwrap();
-        assert_eq!(open_episode(root).as_deref(), Some("s-2"));
+        assert_eq!(open_episode(root, me).as_deref(), Some("s-2"));
         // another checkout's episode is not open here, and an empty id is no episode
         write("/srv/elsewhere", "s-3");
-        assert_eq!(open_episode(root), None);
+        assert_eq!(open_episode(root, me), None);
         write(&root.display().to_string(), "");
-        assert_eq!(open_episode(root), None);
+        assert_eq!(open_episode(root, me), None);
     }
 
     #[test]
