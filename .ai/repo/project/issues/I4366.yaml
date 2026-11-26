@@ -49,3 +49,10 @@ depends_on:
 serves: []
 created_at: 2026-10-29
 updated_at: 2026-10-29
+evidence:
+  - covers: third-adopter-drift-misses-commit-subjects
+    type: manual
+    command: "majordomus plan drift  # on korczis/oscilla main 474ce9c3; compare git log origin/main --format=%s"
+    result: "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). plan drift printed 426 findings, every one done_without_trace with the source merged_titles unread. The real drift was 40 READY issues that feat/fix/test commit subjects on the trunk already name (C024, K225, K246 and others), found only by grepping git log origin/main --format=%s; 19 were stamped after an audit in PR 562. The trunk's commit subjects named the records, and drift read none of them."
+    url: "https://github.com/korczis/oscilla/pull/562"
+    recorded_at: 2026-11-15T19:10:56Z
