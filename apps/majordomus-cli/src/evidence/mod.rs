@@ -167,7 +167,7 @@ pub use provenance::{
 };
 pub use record::{
     parse_crate_binaries, read_crate_output, record, CrateBinary, CrateRead, RecordOutcome,
-    RecordRequest,
+    RecordRequest, SuiteCoverage,
 };
 pub use run::{
     run_id, weaken_by_records, weakened_by_records, EvidenceAbsent, EvidenceDropped,
