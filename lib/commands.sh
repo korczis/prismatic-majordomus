@@ -98,24 +98,29 @@ mj_validate_command_surface() {
     bad=1
   fi
 
-  # A here-string rather than `printf | grep -q`: grep exits at the first match and closes
-  # the pipe, and the printf behind it then writes to a closed descriptor. The EPIPE
-  # diagnostic that bash prints is harmless, appears only when the timing is unlucky, and
-  # lands in the middle of doctor's output — which is recorded as evidence, so a committed
-  # artifact ended up differing between machines by whether the race happened to fire.
+  # Membership is a pattern match in this shell against each list joined once, not a grep
+  # per command: three greps for each of seventy commands were this validator's whole cost
+  # (I0820). The usage text is read once for the words its command lines open with — a
+  # line of two spaces, then the word, then a space or the end, which is what
+  # `grep -qE "^  $c( |\$)"` asked of it one command at a time. No pipe is written into,
+  # so the closed-descriptor race a `printf | grep -q` had cannot fire either.
+  local nl='
+' usage
+  usage="$(awk 'substr($0, 1, 2) == "  " && substr($0, 3, 1) != " " && substr($0, 3, 1) != "" {
+      w = substr($0, 3); sp = index(w, " "); if (sp) w = substr(w, 1, sp - 1); print w }' "$MJ_BIN_DIR/majordomus")"
   for c in $dispatched; do
-    grep -Fxq "$c" <<<"$ids" || {
-      mj_doctrine_fail command "$c" "dispatched by bin/majordomus but absent from share/commands.yaml" "grep -n 'id: $c' share/commands.yaml"; bad=1; }
+    case "$nl$ids$nl" in *"$nl$c$nl"*) ;; *)
+      mj_doctrine_fail command "$c" "dispatched by bin/majordomus but absent from share/commands.yaml" "grep -n 'id: $c' share/commands.yaml"; bad=1 ;; esac
   done
   for c in $public; do
     [ "$c" = version ] && continue      # dispatched ahead of the option parser
-    grep -Fxq "$c" <<<"$dispatched" || {
-      mj_doctrine_fail command "$c" "declared public but bin/majordomus does not dispatch it" "grep -n '$c)' bin/majordomus"; bad=1; }
+    case "$nl$dispatched$nl" in *"$nl$c$nl"*) ;; *)
+      mj_doctrine_fail command "$c" "declared public but bin/majordomus does not dispatch it" "grep -n '$c)' bin/majordomus"; bad=1 ;; esac
   done
   # a command is public exactly when the usage text lists it, in both directions
   for c in $public; do
-    grep -qE "^  $c( |\$)" "$MJ_BIN_DIR/majordomus" || {
-      mj_doctrine_fail command "$c" "declared public but the usage text does not list it" "bin/majordomus --help"; bad=1; }
+    case "$nl$usage$nl" in *"$nl$c$nl"*) ;; *)
+      mj_doctrine_fail command "$c" "declared public but the usage text does not list it" "bin/majordomus --help"; bad=1 ;; esac
   done
 
   # An effect names something the command takes and a class the registry knows. A subcommand

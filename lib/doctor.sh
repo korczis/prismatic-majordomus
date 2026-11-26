@@ -1682,16 +1682,43 @@ mj_validate_roadmap() {
 }
 
 mj_validate_dag() {
-  local lvl subj msg n
+  local lvl subj msg n flv
   mj_project_doctrine_load || return 0
-  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
-    case "$lvl" in
-      FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
-      *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
-    esac
-  done
-  n="$(mj_pj_fail_count)"
-  [ "$n" = 0 ] && mj_doctrine_ok dag "$(mj_pj_rows W | wc -l | tr -d ' ') wave(s)" "acyclic, every edge resolves, nothing running ahead of a dependency"
+  if [ "$MJ_JSON" = 1 ]; then
+    mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
+      case "$lvl" in
+        FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
+        *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
+      esac
+    done
+  else
+    # The same lines mj_doctrine_fail and mj_warn print, written by one awk over the model
+    # rather than by a shell loop of one call per finding: a plan of a thousand issues has
+    # ten thousand findings, and printing them one call at a time was most of this
+    # validator (I0820). The row is split the way `IFS=<tab> read -r _ lvl _ subj msg`
+    # splits it — runs of tabs are one separator, the last field keeps the rest of the line
+    # — so the lines are the loop's, byte for byte; JSON keeps the loop and its escaping.
+    flv=FAIL
+    if [ "$MJ_DOCTRINE_CMD" = watch ]; then flv=DRIFT
+    elif [ "$MJ_DOCTRINE_CLASS" = advisory ]; then flv=WARN; fi
+    awk -v flv="$flv" '
+      function field(   f) {
+        if (match(line, /\t+/)) { f = substr(line, 1, RSTART - 1); line = substr(line, RSTART + RLENGTH) }
+        else { f = line; line = "" }
+        return f
+      }
+      $1 == "V" {
+        line = $0; sub(/^\t+/, "", line)
+        field(); lvl = field(); field(); subj = field()
+        msg = line; sub(/\t+$/, "", msg)
+        if (lvl == "FAIL") printf "%-4s %-11s %s \342\200\224 %s  [reproduce: %s]\n", flv, "dag", subj, msg, "majordomus plan validate"
+        else printf "%-4s %-11s %s \342\200\224 %s  [reproduce: majordomus plan show %s]\n", "WARN", "dag", subj, msg, subj
+      }' FS='\t' "$MJ_PJ/model.tsv"
+  fi
+  # the failures and the waves in one pass: mj_pj_fail_count's and mj_pj_rows W's counts
+  local w
+  read -r n w < <(awk -F'\t' '$1 == "V" && $2 == "FAIL" { f++ } $1 == "W" { w++ } END { print f + 0, w + 0 }' "$MJ_PJ/model.tsv")
+  [ "$n" = 0 ] && mj_doctrine_ok dag "$w wave(s)" "acyclic, every edge resolves, nothing running ahead of a dependency"
   # The findings above were printed in a subshell, so the failure has to be raised here.
   [ "$n" = 0 ] || mj_doctrine_fail dag "graph" "$n dependency-graph failure(s)" "majordomus plan validate"
   return 0

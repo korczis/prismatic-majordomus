@@ -12630,14 +12630,16 @@
         "lib/doctor.sh",
         "lib/context_docs.sh",
         "lib/commands.sh",
+        "lib/usecase.sh",
         "test/cases/28_catalogue.sh",
         "test/cases/42_dag_waves.sh",
-        "test/cases/69_context_documents.sh"
+        "test/cases/69_context_documents.sh",
+        "test/cases/4660_validators_read_their_inputs_once.sh"
       ],
       "non_scope": [],
       "objective": "Rewrite the remaining validators that loop mj_yget or mj_git per item so that each reads its inputs with one pass.",
       "why": "Together they cost 2.3 s of doctor after the two largest validators are fixed.",
-      "current_state": "validate:catalogue 0.8 s, validate:context 0.6 s, validate:dag 0.5 s, validate:command_surface 0.35 s.",
+      "current_state": "Measured 2026-11-22 on this repository (49 use cases, 39 context documents, 1272 issues): validate:catalogue 3.9 s, validate:context 2.6 s, validate:dag 1.2 s past the project-model load it is the first to pay, validate:command_surface 0.3 s. The catalogue validator now lives in lib/usecase.sh (mj_uc_validate_all), so that file is in scope.",
       "desired_state": "Each of the four under 150 ms on this repository, with identical findings.",
       "acceptance_criteria": [
         "Each validator's phase under 150 ms",

@@ -26750,7 +26750,6 @@
             "The cases that mutate their inputs still fail on the mutation"
           ],
           "created_at": "2026-09-05",
-          "current_state": "validate:catalogue 0.8 s, validate:context 0.6 s, validate:dag 0.5 s, validate:command_surface 0.35 s.",
           "depends_on": [
             "I0818",
             "I0819"
@@ -26770,9 +26769,11 @@
             "lib/doctor.sh",
             "lib/context_docs.sh",
             "lib/commands.sh",
+            "lib/usecase.sh",
             "test/cases/28_catalogue.sh",
             "test/cases/42_dag_waves.sh",
-            "test/cases/69_context_documents.sh"
+            "test/cases/69_context_documents.sh",
+            "test/cases/4660_validators_read_their_inputs_once.sh"
           ],
           "slug": "validators-batch-reads",
           "updated_at": "2026-09-05",
@@ -110810,6 +110811,13 @@
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4660_validators_read_their_inputs_once.sh",
+        "kind": "test",
+        "label": "test/cases/4660_validators_read_their_inputs_once.sh",
+        "route": "/cockpit/objects/test/test-cases-4660-validators-read-their-inputs-once-sh",
+        "source": "test/cases/4660_validators_read_their_inputs_once.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "label": "test/cases/46_cross_surface.sh",
@@ -160868,6 +160876,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4660_validators_read_their_inputs_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165999,8 +166012,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4542,
+      "edges": 10230,
       "acyclic": false,
       "truncated": false
     }

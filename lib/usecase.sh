@@ -113,44 +113,126 @@ mj_uc_flat() {
 
 # load every use case and application once: MJ_UC_FILE_<i>, MJ_UC_FLAT_<i>, MJ_UC_ID_<i>;
 # same for applications with AP. Order is the sorted file order, which is stable.
+#
+# Every file of a section is read by one pipeline rather than by a dozen processes each
+# (I0820): one awk splits each file into its front matter and its scenario block, exactly
+# as mj_record_front and mj_uc_scenario_yaml cut them; one flattener parses every front
+# matter and one every scenario; one awk joins each pair into the flat record mj_uc_flat
+# would have written; one awk turns every kept record into variables. A front matter that
+# does not parse leaves its file with no record, as mj_uc_flat's failure did, and a context
+# document beside the use cases is still no use case.
 mj_uc_load() {
   [ "$MJ_UC_LOADED" = 1 ] && return 0
   mj_uc_paths
-  local f i=0 j=0 flat
-  MJ_UC_IDS=""; MJ_AP_IDS=""
-  if [ -n "$MJ_UC_DIR" ] && [ -d "$MJ_UC_DIR" ]; then
-    for f in "$MJ_UC_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      flat="$(mj_uc_flat "$f")" || flat=""
-      # a context document beside the use cases (the section's README) is not a use case
-      [ -n "$flat" ] && [ "$(mj_yget "$flat" kind)" = context ] && { rm -f "$flat"; continue; }
-      printf -v "MJ_UC_FILE_$i" '%s' "$f"; printf -v "MJ_UC_FLAT_$i" '%s' "$flat"
-      # every field becomes a variable once; the readers below are expansions, not processes
-      [ -n "$flat" ] && mj_yload "$flat" "MJUC$i"
-      MJ_UC_IDS="$MJ_UC_IDS $(mj_uc_v "$i" id)"
-      i=$((i+1))
-    done
-  fi
-  MJ_UC_N=$i
-  if [ -n "$MJ_AP_DIR" ] && [ -d "$MJ_AP_DIR" ]; then
-    for f in "$MJ_AP_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      flat="$(mj_uc_flat "$f")" || flat=""
-      [ -n "$flat" ] && [ "$(mj_yget "$flat" kind)" = context ] && { rm -f "$flat"; continue; }
-      printf -v "MJ_AP_FILE_$j" '%s' "$f"; printf -v "MJ_AP_FLAT_$j" '%s' "$flat"
-      [ -n "$flat" ] && mj_yload "$flat" "MJAP$j"
-      MJ_AP_IDS="$MJ_AP_IDS $(mj_ap_v "$j" id)"
-      j=$((j+1))
-    done
-  fi
-  MJ_AP_N=$j
+  MJ_UC_IDS=""; MJ_AP_IDS=""; MJ_UC_N=0; MJ_AP_N=0
+  if [ -n "$MJ_UC_DIR" ] && [ -d "$MJ_UC_DIR" ]; then mj_uc_load_section "$MJ_UC_DIR" UC; fi
+  if [ -n "$MJ_AP_DIR" ] && [ -d "$MJ_AP_DIR" ]; then mj_uc_load_section "$MJ_AP_DIR" AP; fi
   MJ_UC_LOADED=1
+}
+mj_uc_load_section() { # dir UC|AP
+  local dir="$1" sec="$2" f a i=0 work files=() st kind line nm pre ids="" pairs=()
+  for f in "$dir"/*.md; do [ -f "$f" ] && files+=("$f"); done
+  [ "${#files[@]}" -gt 0 ] || { printf -v "MJ_${sec}_N" '%s' 0; return 0; }
+  work="$(mktemp -d "${TMPDIR:-/tmp}/mj.ucl.XXXXXX")"
+  mkdir -p "$work/front" "$work/scen" "$work/ff" "$work/sf" "$work/flat"
+  # 1. the halves: <a>.yaml under front/ when the file has front matter that is not blank,
+  # under scen/ when its `# Scenario` section holds a fenced yaml block that is not blank
+  awk -v w="$work" 'BEGIN {
+    for (a = 1; a < ARGC; a++) {
+      nf = 0; fm = ""; closed = 0; ok = 1; sec = 0; fence = 0; sc = ""; sdone = 0; fblank = 1; sblank = 1
+      while ((getline l < ARGV[a]) > 0) {
+        nf++
+        if (nf == 1 && l != "---") ok = 0
+        else if (nf > 1 && ok && !closed) { if (l == "---") closed = 1; else { fm = fm l "\n"; if (l != "") fblank = 0 } }
+        if (sdone) continue
+        if (l ~ /^# Scenario[ \t]*$/) { sec = 1; continue }
+        if (sec && l ~ /^```yaml[ \t]*$/) { fence = 1; continue }
+        if (sec && fence && l ~ /^```[ \t]*$/) { sdone = 1; continue }
+        if (sec && fence) { sc = sc l "\n"; if (l != "") sblank = 0; continue }
+        if (sec && l ~ /^# /) sdone = 1
+      }
+      close(ARGV[a])
+      if (nf == 0) ok = 0
+      if (ok && !fblank) { f = w "/front/" a ".yaml"; printf "%s", fm > f; close(f) }
+      if (!sblank) { f = w "/scen/" a ".yaml"; printf "%s", sc > f; close(f) }
+    }
+    exit }' "${files[@]}"
+  set -- ; for f in "$work/front"/*.yaml; do [ -f "$f" ] && set -- "$@" "$f"; done
+  [ $# -eq 0 ] || mj_yaml_flatten_many "$work/ff" "$@"
+  set -- ; for f in "$work/scen"/*.yaml; do [ -f "$f" ] && set -- "$@" "$f"; done
+  [ $# -eq 0 ] || mj_yaml_flatten_many "$work/sf" "$@"
+  # 2. the records: the front matter's flat lines, then the scenario's under `scenario.`;
+  # a front matter that failed has none. Each line says the file, whether it has a record,
+  # and its kind.
+  while IFS="$MJ_TAB" read -r a st kind; do
+    f="${files[$((a - 1))]}"
+    if [ "$st" = 1 ]; then
+      [ "$kind" = context ] && continue
+      nm="$work/flat/$a"
+    else
+      nm=""
+    fi
+    printf -v "MJ_${sec}_FILE_$i" '%s' "$f"; printf -v "MJ_${sec}_FLAT_$i" '%s' "$nm"
+    [ -z "$nm" ] || pairs+=("$nm" "MJ$sec$i")
+    i=$((i + 1))
+  done < <(awk -v w="$work" -v n="${#files[@]}" -v OFS="$MJ_TAB" 'BEGIN {
+    while ((getline l < (w "/ff/.errors")) > 0) { split(l, e, "\t"); bad[e[1]] = 1 }
+    for (a = 1; a <= n; a++) {
+      ff = w "/ff/" a; kind = ""
+      if (a in bad) { print a, 0, ""; continue }
+      r = (getline l < ff)
+      if (r < 0) { print a, 0, ""; continue }
+      out = w "/flat/" a
+      while (r > 0) { print l > out; if (kind == "" && substr(l, 1, 5) == "kind=") kind = substr(l, 6); r = (getline l < ff) }
+      close(ff)
+      sf = w "/sf/" a
+      while ((getline l < sf) > 0) print "scenario." l > out
+      close(sf)
+      printf "" >> out; close(out)
+      print a, 1, kind
+    } exit }')
+  printf -v "MJ_${sec}_N" '%s' "$i"
+  # 3. every field of every record becomes a variable, as mj_yload makes them
+  if [ "${#pairs[@]}" -gt 0 ]; then
+    mj_yassign < <(awk -F= 'BEGIN { for (a = 1; a < ARGC; a += 2) { pre[ARGV[a]] = ARGV[a + 1]; ARGV[a + 1] = "" } }
+      FNR == 1 { p = pre[FILENAME] }
+      { k = $1; if (k !~ /^[A-Za-z0-9_.-]+$/) next
+        gsub(/-/, "___", k); gsub(/\./, "__", k)
+        v = $0; sub(/^[^=]*=/, "", v)
+        printf "%s__%s\t%s\n", p, k, v }' "${pairs[@]}")
+  fi
+  i=0; local cnt="MJ_${sec}_N"
+  while [ "$i" -lt "${!cnt}" ]; do
+    pre="MJ${sec}${i}__id"
+    ids="$ids ${!pre:-}"
+    i=$((i + 1))
+  done
+  printf -v "MJ_${sec}_IDS" '%s' "$ids"
 }
 mj_uc_v()    { mj_yv "MJUC$1" "$2"; }
 # the same value without a process: MJ_V is set, empty when absent
 mj_uc_get()  { local k="${2//-/___}"; k="${k//./__}"; k="MJUC${1}__$k"; MJ_V="${!k:-}"; }
 mj_ap_get()  { local k="${2//-/___}"; k="${k//./__}"; k="MJAP${1}__$k"; MJ_V="${!k:-}"; }
 mj_uc_list() { mj_yvlist "MJUC$1" "$2"; }
+# a list's values one per line in MJ_W, without a process: what `$(mj_uc_list ...)` and
+# `$(mj_ap_list ...)` print, for the loops that visit every use case (I0820)
+mj_uc_words() { mj_uc_wlist "MJUC$1" "$2"; }
+mj_ap_words() { mj_uc_wlist "MJAP$1" "$2"; }
+mj_uc_wlist() {
+  local i=0 k n nl='
+'
+  k="${2//-/___}"; k="${k//./__}"; MJ_W=""
+  while n="$1__${k}__$i"; [ -n "${!n:-}" ]; do MJ_W="$MJ_W${MJ_W:+$nl}${!n}"; i=$((i + 1)); done
+}
+# does a rule declare doctrine $1? mj_doc_index walks every rule, and a catalogue names the
+# same few doctrines many times, so each answer is kept for the rest of the run
+MJ_UC_DOCTRINE_YES=" "; MJ_UC_DOCTRINE_NO=" "
+mj_uc_doctrine_known() {
+  case "$MJ_UC_DOCTRINE_YES" in *" $1 "*) return 0 ;; esac
+  case "$MJ_UC_DOCTRINE_NO" in *" $1 "*) return 1 ;; esac
+  if mj_doc_index "$1" >/dev/null; then MJ_UC_DOCTRINE_YES="$MJ_UC_DOCTRINE_YES$1 "; return 0; fi
+  MJ_UC_DOCTRINE_NO="$MJ_UC_DOCTRINE_NO$1 "; return 1
+}
 # membership without a process: the list is joined once per use case and field, then
 # every test is a pattern match in this shell
 mj_uc_has() { # index field value
@@ -287,11 +369,72 @@ mj_uc_cmd_show() {
 # Every finding is a doctrine finding under the category use-case, so that doctor and this
 # command print the same lines. Returns the number of failures in MJ_UC_BAD.
 MJ_UC_BAD=0
+# Two questions the validator asks of every use case, answered for all of them at once
+# rather than with a few processes per use case (I0820): MJ_UC_UNK_<i> holds the front-matter
+# keys the schema's allow-list does not declare, one per line, as mj_yaml_unknown_keys
+# would print them for that use case's flat file less its `scenario.` keys; MJ_UC_NOHEAD_<i>
+# holds the headings among Situation, Scenario and Outcome its body (what mj_record_body
+# prints) does not contain, in that order, one per line.
+mj_uc_batch_reads() {
+  local i=0 n tmp files=() idx=() line num key acc nl='
+'
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.ucb.XXXXXX")"
+  while [ "$i" -lt "$MJ_UC_N" ]; do
+    printf -v "MJ_UC_UNK_$i" '%s' ""; printf -v "MJ_UC_NOHEAD_$i" '%s' ""
+    n="MJ_UC_FLAT_$i"; [ -n "${!n}" ] && [ -f "${!n}" ] && { files+=("${!n}"); idx+=("$i"); }
+    i=$((i + 1))
+  done
+  if [ "${#files[@]}" -gt 0 ]; then
+    # every key, in file order, beside the index of the use case it belongs to; the files
+    # are read by getline so that an empty one still counts as one
+    awk -v ids="${idx[*]}" -v map="$tmp/map" 'BEGIN { split(ids, ix, " ")
+      for (a = 1; a < ARGC; a++) {
+        while ((getline l < ARGV[a]) > 0) {
+          if (l ~ /^scenario\./) continue
+          k = l; p = index(k, "="); if (p) k = substr(k, 1, p - 1); print k; print ix[a] > map
+        }
+        close(ARGV[a])
+      }
+      exit }' "${files[@]}" > "$tmp/keys"
+    if [ -s "$tmp/keys" ]; then
+      while IFS= read -r line; do
+        num="${line%%:*}"; key="${line#*:}"
+        i="$(sed -n "${num}p" "$tmp/map")"
+        n="MJ_UC_UNK_$i"; printf -v "$n" '%s' "${!n}${!n:+$nl}$key"
+      done < <(grep -vnE -f <(grep -v '^#' "$MJ_ALLOW_DIR/use-case.txt") "$tmp/keys" || true)
+    fi
+  fi
+  # the headings: the body is every line after the second `---`, and a heading is asked for
+  # as a substring of it, which no line break can be part of
+  set -- ; i=0
+  while [ "$i" -lt "$MJ_UC_N" ]; do n="MJ_UC_FILE_$i"; set -- "$@" "${!n}"; i=$((i + 1)); done
+  if [ $# -gt 0 ]; then
+    while IFS="$MJ_TAB" read -r i acc; do
+      printf -v "MJ_UC_NOHEAD_$i" '%s' "${acc//|/$nl}"
+    done < <(awk -v OFS="$MJ_TAB" 'BEGIN {
+      for (a = 1; a < ARGC; a++) {
+        d = 0; s = 0; c = 0; o = 0
+        while ((getline l < ARGV[a]) > 0) {
+          if (d >= 2) { if (index(l, "# Situation")) s = 1; if (index(l, "# Scenario")) c = 1; if (index(l, "# Outcome")) o = 1 }
+          if (l == "---") d++
+        }
+        close(ARGV[a]); m = ""
+        if (!s) m = m (m == "" ? "" : "|") "# Situation"
+        if (!c) m = m (m == "" ? "" : "|") "# Scenario"
+        if (!o) m = m (m == "" ? "" : "|") "# Outcome"
+        if (m != "") print a - 1, m
+      }
+      exit }' "$@")
+  fi
+  rm -rf "$tmp"
+}
 mj_uc_bad() { mj_doctrine_fail use-case "$1" "$2" "${3:-}"; MJ_UC_BAD=$((MJ_UC_BAD+1)); }
 mj_uc_validate_all() {
   local i j id f base ref k cats cmds dispatch fix stdin_dir body claims resp sid seen="" cmd_list found cmd unk flatn sids st
-  MJ_UC_BAD=0
+  local cmd_words MJ_W n
+  MJ_UC_BAD=0; MJ_UC_DOCTRINE_YES=" "; MJ_UC_DOCTRINE_NO=" "
   mj_uc_load
+  mj_uc_batch_reads
   # the universes a reference may name, each one string tested with a pattern, no process
   cats=" $(mj_uc_categories | tr '\n' ' ') "
   dispatch=" $(grep -oE '^  [a-z|-]+\)$' "$MJ_BIN_DIR/majordomus" | tr -d ' )' | tr '|\n' '  ') "
@@ -303,7 +446,7 @@ mj_uc_validate_all() {
   [ -f "$MJ_UC_DIR/taxonomy.yaml" ] || mj_uc_bad "$(mj_rel "$MJ_UC_DIR")/taxonomy.yaml" "absent; the categories use cases are filed under are declared there" "majordomus init --extend"
   i=0
   while [ "$i" -lt "$MJ_UC_N" ]; do
-    f="$(mj_uc_file "$i")"; base="${f##*/}"; base="${base%.md}"; mj_uc_get "$i" id; id="$MJ_V"
+    n="MJ_UC_FILE_$i"; f="${!n}"; base="${f##*/}"; base="${base%.md}"; mj_uc_get "$i" id; id="$MJ_V"
     if [ -z "$id" ]; then mj_uc_bad "$(mj_rel "$f")" "front matter does not parse or declares no id" "majordomus usecase validate"; i=$((i+1)); continue; fi
     [ "$id" = "$base" ] || mj_uc_bad "$(mj_rel "$f")" "id '$id' is not the file name" "mv $(mj_rel "$f") $(mj_rel "$MJ_UC_DIR")/$id.md"
     case " $seen " in *" $id "*) mj_uc_bad "$id" "declared twice" "majordomus usecase list" ;; esac; seen="$seen $id"
@@ -315,26 +458,34 @@ mj_uc_validate_all() {
     # covers the front matter only. The scenario the loader folded in under `scenario.`
     # came from the body, where the section list is what governs it, so it is dropped here
     # rather than measured against a list that deliberately no longer mentions it.
-    flatn="MJ_UC_FLAT_$i"
-    unk="$(grep -v '^scenario\.' "${!flatn}" 2>/dev/null | mj_yaml_unknown_keys /dev/stdin "$MJ_ALLOW_DIR/use-case.txt" || true)"
+    flatn="MJ_UC_UNK_$i"; unk="${!flatn}"
     [ -z "$unk" ] || mj_uc_bad "$id" "unknown key(s): $(printf '%s' "$unk" | tr '\n' ' ')" "share/schemas/majordomus/use-case/use-case.v1.proto"
     mj_uc_get "$i" category; case "$cats" in *" $MJ_V "*) ;; *) mj_uc_bad "$id" "category '$MJ_V' is not in taxonomy.yaml" "$(mj_rel "$MJ_UC_DIR")/taxonomy.yaml" ;; esac
-    cmd_list="$(mj_uc_list "$i" commands)"
+    mj_uc_words "$i" commands; cmd_list="$MJ_W"; cmd_words=" ${cmd_list//$'\n'/ } "
     [ -n "$cmd_list" ] || mj_uc_bad "$id" "names no command; a use case that runs nothing is a description" ""
     for ref in $cmd_list; do case "$dispatch" in *" $ref "*) ;; *) mj_uc_bad "$id" "names command '$ref', which bin/majordomus does not dispatch" "majordomus --help" ;; esac; done
-    for ref in $(mj_uc_list "$i" doctrines); do mj_doc_index "$ref" >/dev/null || mj_uc_bad "$id" "names doctrine '$ref', which no rule declares" "majordomus doctrine list"; done
-    for ref in $(mj_uc_list "$i" claims); do case "$claims" in *" $ref "*) ;; *) mj_uc_bad "$id" "names claim '$ref', which docs/CLAIMS.yaml does not have" "grep -n 'id: ' docs/CLAIMS.yaml" ;; esac; done
-    for ref in $(mj_uc_list "$i" responsibilities); do case "$resp" in *" $ref "*) ;; *) mj_uc_bad "$id" "names responsibility '$ref', which docs/RESPONSIBILITIES.yaml does not have" "" ;; esac; done
-    for ref in $(mj_uc_list "$i" applications); do
+    mj_uc_words "$i" doctrines
+    for ref in $MJ_W; do mj_uc_doctrine_known "$ref" || mj_uc_bad "$id" "names doctrine '$ref', which no rule declares" "majordomus doctrine list"; done
+    mj_uc_words "$i" claims
+    for ref in $MJ_W; do case "$claims" in *" $ref "*) ;; *) mj_uc_bad "$id" "names claim '$ref', which docs/CLAIMS.yaml does not have" "grep -n 'id: ' docs/CLAIMS.yaml" ;; esac; done
+    mj_uc_words "$i" responsibilities
+    for ref in $MJ_W; do case "$resp" in *" $ref "*) ;; *) mj_uc_bad "$id" "names responsibility '$ref', which docs/RESPONSIBILITIES.yaml does not have" "" ;; esac; done
+    mj_uc_words "$i" applications
+    for ref in $MJ_W; do
       j="$(mj_ap_index "$ref")" || { mj_uc_bad "$id" "names application '$ref', which does not exist" "ls $(mj_rel "$MJ_AP_DIR")"; continue; }
-      case " $(mj_ap_list "$j" use_cases | tr '\n' ' ') " in *" $id "*) ;; *) mj_uc_bad "$id" "names application '$ref', which does not name it back" "$(mj_rel "$(mj_ap_file "$j")")" ;; esac
+      n="MJ_UC_APUC_$j"
+      [ -n "${!n+x}" ] || { mj_ap_words "$j" use_cases; printf -v "$n" '%s' " ${MJ_W//$'\n'/ } "; }
+      case "${!n}" in *" $id "*) ;; *) mj_uc_bad "$id" "names application '$ref', which does not name it back" "$(mj_rel "$(mj_ap_file "$j")")" ;; esac
     done
     if [ -n "$tools" ]; then
-      for ref in $(mj_uc_list "$i" mcp_tools); do case "$tools" in *" $ref "*) ;; *) mj_uc_bad "$id" "names MCP tool '$ref', which the registry does not project" "docs/generated/registry.json" ;; esac; done
+      mj_uc_words "$i" mcp_tools
+      for ref in $MJ_W; do case "$tools" in *" $ref "*) ;; *) mj_uc_bad "$id" "names MCP tool '$ref', which the registry does not project" "docs/generated/registry.json" ;; esac; done
     fi
     # the body carries the sections a reader expects
-    body="$(mj_record_body "$f")"
-    for k in "# Situation" "# Scenario" "# Outcome"; do case "$body" in *"$k"*) ;; *) mj_uc_bad "$id" "body has no '$k' heading" "" ;; esac; done
+    n="MJ_UC_NOHEAD_$i"
+    while IFS= read -r k; do [ -z "$k" ] || mj_uc_bad "$id" "body has no '$k' heading" ""; done <<EOF
+${!n}
+EOF
     # the scenario: setup exists, stdin bodies exist, every step names a declared command,
     # step ids are unique, every step expects an exit code
     if mj_uc_has_scenario "$i"; then
@@ -375,7 +526,7 @@ mj_uc_validate_all() {
           mj_obligation_known "$obl" || mj_uc_bad "$id" "step '$sid' asserts obligation '$obl', which share/obligations.yaml does not declare" "majordomus evidence --help"
         else
           [ -n "$cmd" ] || mj_uc_bad "$id" "step '$sid' runs nothing" ""
-          case " $(printf '%s' "$cmd_list" | tr '\n' ' ') " in *" $cmd "*) ;; *) mj_uc_bad "$id" "step '$sid' runs '$cmd', which the use case does not list under commands" "" ;; esac
+          case "$cmd_words" in *" $cmd "*) ;; *) mj_uc_bad "$id" "step '$sid' runs '$cmd', which the use case does not list under commands" "" ;; esac
           mj_uc_get "$i" "scenario.steps.$k.expect.exit"; case "$MJ_V" in ''|*[!0-9]*) mj_uc_bad "$id" "step '$sid' expects no exit code" "" ;; esac
           mj_uc_get "$i" "scenario.steps.$k.stdin"; found="$MJ_V"
           [ -z "$found" ] || [ -f "$stdin_dir/$found" ] || mj_uc_bad "$id" "step '$sid' names stdin '$found', which $(mj_rel "$stdin_dir")/ does not have" ""
@@ -410,11 +561,13 @@ mj_uc_validate_all() {
     base="${f##*/}"; [ "$id" = "${base%.md}" ] || mj_uc_bad "$id" "application id is not the file name" ""
     mj_ap_get "$j" fits_when.0; [ -n "$MJ_V" ] || mj_uc_bad "$id" "application declares no fits_when" ""
     mj_ap_get "$j" does_not_fit_when.0; [ -n "$MJ_V" ] || mj_uc_bad "$id" "application declares no does_not_fit_when; a catalogue that only lists fits is marketing" ""
-    for ref in $(mj_ap_list "$j" use_cases); do
+    mj_ap_words "$j" use_cases
+    for ref in $MJ_W; do
       k="$(mj_uc_index "$ref")" || { mj_uc_bad "$id" "application names use case '$ref', which does not exist" ""; continue; }
       mj_uc_has "$k" applications "$id" || mj_uc_bad "$id" "application names use case '$ref', which does not name it back" ""
     done
-    for ref in $(mj_ap_list "$j" doctrines); do mj_doc_index "$ref" >/dev/null || mj_uc_bad "$id" "application names doctrine '$ref', which no rule declares" ""; done
+    mj_ap_words "$j" doctrines
+    for ref in $MJ_W; do mj_uc_doctrine_known "$ref" || mj_uc_bad "$id" "application names doctrine '$ref', which no rule declares" ""; done
     case "$(mj_record_body "$f")" in *"# Context"*) ;; *) mj_uc_bad "$id" "application body has no '# Context' heading" "" ;; esac
     j=$((j+1))
   done
