@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0199
 kind: adr
 title: "A hub is a declared host service; a working checkout's server stays a client's child"
-status: proposed
+status: accepted
 date: 2026-10-18
 tags:
   - mesh-runtime
@@ -25,8 +25,9 @@ related:
   - file:.ai/repo/project/milestones/the-runtime-supervises-itself.yaml
   - file:.ai/repo/knowledge/curated/lundra-is-the-always-on-hub.md
 provenance:
-  origin: extracted
+  origin: authored
   derived_from:
+    - session:9ae82e7a-b0e4-44c0-a305-9c69cd1acf6a
     - issue:I3100
     - file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md
     - file:.ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md
@@ -63,7 +64,7 @@ ADR 0003 is narrowed, not reversed; README's 'not a daemon' gains its exception;
 
 ## Sources
 
-Promoted on 2026-10-18 from the owner's ChatGPT project (workspace `chatgpt-majordomus`, issue I3100). The owner has not accepted it; it is proposed for the owner's decision.
+Promoted on 2026-10-18 from the owner's ChatGPT project (workspace `chatgpt-majordomus`, issue I3100). Accepted by the owner on 2026-11-25, with the amendment below, answering the gate-G0 question recorded verbatim in the knowledge record `fabric-starts-with-p00-s00-s01` ("Accept, set accepted (Recommended)").
 
 - `chatgpt-majordomus:c240#2`
 - `chatgpt-majordomus:c118#3`
@@ -76,8 +77,8 @@ decision rather than a new one (the owner's answers are recorded verbatim in the
 record `fabric-starts-with-p00-s00-s01`, pull request #3121). The decision above left a door
 open: "a host-level resident, if ever built, is the same executable in a declared role with a
 minimal dependency closure and user-only IPC, never a second server, registry, discovery or
-update system". This amendment decides what walks through that door. It remains **proposed**
-until the owner accepts it, and no host-agent code lands before then.
+update system". This amendment decides what walks through that door. The owner accepted it on
+2026-11-25 (gate G0). Host-agent code lands from then on, in the order of the gates below.
 
 **What runs.** At most one *host agent* per OS user and machine, and only when that user opts
 in with an explicit service install (a systemd user unit or a launchd agent written by one typed
