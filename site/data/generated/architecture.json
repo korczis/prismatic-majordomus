@@ -530,6 +530,16 @@
       "external": false
     },
     {
+      "id": "lib/runnable.sh",
+      "kind": "module",
+      "label": "runnable",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/README.md",
       "kind": "artifact",
       "label": "README.md",
@@ -853,16 +863,6 @@
       "id": ".ai/local/state/archive",
       "kind": "artifact",
       "label": "local/state/archive",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "lib/runnable.sh",
-      "kind": "module",
-      "label": "runnable",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1564,6 +1564,11 @@
     {
       "source": "lib/doctor.sh",
       "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/runnable.sh",
       "kind": "sources"
     },
     {
