@@ -126,6 +126,59 @@ grep -q "owes a publication" "$T/owed.out" || {
 grep -q "cancelled by the next push" "$T/owed.out" || {
   echo "    the refusal names no cause a reader could act on:"; cat "$T/owed.out"; exit 1; }
 
+# --- an abbreviation that is ambiguous in this clone is still the commit it names
+#
+# The deploy subject names its source abbreviated, and an abbreviation is unique only in the
+# clone that wrote it. On 2026-11-22 the subject named 636acc8, the trunk's own merge, and the
+# checkout reading it also held a blob 636acc8f878: git refused the bare prefix, so the gate
+# said "NOT on master" of master's head and refused a finish (I4685), and the owed range
+# `636acc8..origin/master` read nothing and said "no publication is owed" of any trunk. Here
+# the subject names a four-digit prefix of the merged commit and a blob is planted that shares
+# it, which is the same ambiguity without searching for a seven-digit collision.
+mj_runs python3 || skip "$(mj_runs_why python3), which plants a colliding blob"
+fixture "$T/ambiguous" merged
+(
+  cd "$T/ambiguous" || exit 1
+  full="$(git rev-parse master)"
+  prefix="${full:0:4}"
+  content="$(python3 -I -c '
+import hashlib, sys
+prefix = sys.argv[1]
+n = 0
+while True:
+    body = ("collision %d\n" % n).encode()
+    if hashlib.sha1(b"blob %d\0" % len(body) + body).hexdigest().startswith(prefix):
+        sys.stdout.write("collision %d" % n)
+        break
+    n += 1
+' "$prefix")"
+  printf '%s\n' "$content" | git hash-object -w --stdin >/dev/null
+  # the planted blob makes the prefix ambiguous, which is the whole precondition
+  if git rev-parse --verify -q "$prefix" >/dev/null 2>&1; then
+    echo "    the fixture failed to make $prefix ambiguous"; exit 1
+  fi
+  git checkout -q gh-pages
+  git commit -q --allow-empty -m "deploy: site from $prefix (registry deadbeefcafe), 800 routes"
+  git checkout -q master
+  git fetch -q origin 'refs/heads/*:refs/remotes/origin/*'
+) || exit 1
+if ( cd "$T/ambiguous" && ./scripts/ci/pages-check --offline > "$T/ambiguous.out" 2>&1 ); then rc=0; else rc=$?; fi
+[ "$rc" = 0 ] || {
+  echo "    the gate refused a publication from master because its abbreviation is ambiguous (exit $rc):"
+  cat "$T/ambiguous.out"; exit 1; }
+grep -q "is on master" "$T/ambiguous.out" || {
+  echo "    the gate did not say the ambiguous abbreviation's commit is on master:"
+  cat "$T/ambiguous.out"; exit 1; }
+
+# and the converse over the same ambiguity: the trunk moves past it, and the publication is owed
+advance "$T/ambiguous"
+if ( cd "$T/ambiguous" && ./scripts/ci/pages-check --offline --owed-after 0 > "$T/ambiguous-owed.out" 2>&1 ); then rc=0; else rc=$?; fi
+[ "$rc" = 10 ] || {
+  echo "    with an ambiguous abbreviation the gate accepted a site the trunk had moved past (exit $rc):"
+  cat "$T/ambiguous-owed.out"; exit 1; }
+grep -q "owes a publication" "$T/ambiguous-owed.out" || {
+  echo "    the refusal does not say the publication is owed:"; cat "$T/ambiguous-owed.out"; exit 1; }
+
 # --- a check that could not be made is never reported as a check that passed
 #
 # The fixture has no publication model and no scripts/pages, so the trigger paths cannot be
