@@ -406,11 +406,11 @@ pub fn acquire_through(
         Reach::Repository(claim) => {
             let lease = IntegrationLease::acquire_holding(root, base, Some(claim))?;
             // the lease holds the claim it was given, so this releases exactly once
-            if let Some(claim) = lease.mesh_claim() {
+            lease.mesh_claim().into_iter().for_each(|claim| {
                 claim.release_leftovers();
                 // from its first beat the claim lives by the executor's progress (I3991)
                 claim.beat("took the integration lease");
-            }
+            });
             Ok(lease)
         }
         Reach::CloneOnly => IntegrationLease::acquire(root, base),
@@ -821,6 +821,28 @@ mod tests {
         assert_eq!(mesh.asked().pop().unwrap().1, "/api/v1/mesh/claims/release");
     }
 
+    /// A lease that holds a mesh claim is held as far as the claim is: asked of the mesh,
+    /// with the act, before the act.
+    #[test]
+    fn a_lease_holding_a_claim_is_held_as_far_as_the_mesh_says() {
+        let repo = repository();
+        let mesh = Scripted::new(vec![
+            Ok((200, json!({ "key": "s1/c-1" }))),
+            state(json!([])),
+            Ok((200, json!({}))),
+            Ok((200, json!({}))),
+            state(json!([{ "key": "s1/c-1", "state": { "state": "held" } }])),
+            Ok((200, json!({}))),
+            state(json!([{ "key": "s1/c-1", "state": { "state": "suspended" } }])),
+        ]);
+        let lease = acquire_through(repo.path(), "master", Some(Box::new(mesh.clone()))).unwrap();
+        lease.holds("merging #1").expect("held on the mesh");
+        assert_eq!(beats(&mesh).last().unwrap()["phase"], "merging #1");
+        let e = lease.holds("merging #2").unwrap_err();
+        assert!(e.contains("is suspended on the mesh"), "{e}");
+        drop(lease);
+    }
+
     #[test]
     fn a_claim_read_suspended_or_released_is_not_held() {
         let ok = || Ok((200, json!({})));
@@ -929,6 +951,25 @@ mod tests {
             assert_eq!(beats(&mesh).len(), 2);
             drop(lease);
         }
+    }
+
+    /// A beat refused again is asked again and not said again: the refusal was said once.
+    #[test]
+    fn a_beat_refused_again_is_asked_and_not_said_again() {
+        let mesh = Scripted::new(vec![
+            Err("connection reset".into()),
+            Ok((404, json!({ "error": "no such route" }))),
+        ]);
+        let held = MeshClaim::of(Box::new(mesh.clone()), "s1/c-1".into(), "integration-me");
+        held.beat("selected #1");
+        assert!(held.beat_refusal_said.load(Ordering::SeqCst), "said once");
+        held.beat("merge_attempted #1");
+        assert!(held.beat_refusal_said.load(Ordering::SeqCst));
+        let phases: Vec<Value> = beats(&mesh)
+            .into_iter()
+            .map(|b| b["phase"].clone())
+            .collect();
+        assert_eq!(phases, [json!("selected #1"), json!("merge_attempted #1")]);
     }
 
     /// The server half answers over a real socket: a JSON answer, a body that is not JSON,
