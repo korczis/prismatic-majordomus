@@ -36,7 +36,13 @@
 #     --structure-durations`) are at most MJ_PUSH_GATE_SECONDS (default 15), cheapest first,
 #     while their sum stays within MJ_PUSH_GATE_BUDGET (default 120);
 #   - the cases .ai/repo/ci/suite-durations.tsv records at most MJ_PUSH_CASE_SECONDS (default
-#     5), four at a time.
+#     5), four at a time;
+#   - for a change to the crate, the two Rust gates of CI's rust job that take seconds
+#     (I4570): `cargo fmt --check` when the plan selects rust-check, and version-surface when
+#     it selects that gate. On 2026-11-09 #2983 and #2995 passed this step and were refused by
+#     the rust job on exactly these two, at about two hours of validate each. A failure names
+#     its fix (`cargo fmt`, `majordomus release bump`); a host with no cargo leaves the
+#     formatter to CI and says so.
 #
 # Every gate left out prints one line naming it and why. The step reports its measured time
 # against MJ_PUSH_BOUND (default 180) seconds. A plan that cannot be computed, or a durations
@@ -201,10 +207,10 @@ if [ "$before_push" = 1 ]; then
     done < <(LC_ALL=C sort -n "$plan.cand"); rm -f "$plan.cand"
   fi
   gate_executable
-  # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list
-  for g in $(jq -r '.gates[] | select((.job == "structure" or .job == "structure-b") and .selected) | .id' "$plan"); do
-    case " $chosen " in *" $g "*) ;; *) continue ;; esac
-    cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
+  # one gate, with stdin closed (a hook's stdin is the ref list): ok, NOT JUDGED for the
+  # launcher's refusal, or FAILED with its log and, when it has one, the command that fixes it
+  push_gate() {
+    local g="$1" cmd="$2" fix="${3:-}" t0 g_rc
     t0="$(date +%s)"
     if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
     elif g_rc=$?; [ "$g_rc" = 12 ] && [ "$no_exe" = 1 ] && grep -qF 'run: just build   (cargo build --locked' "$plan.$g.log"; then
@@ -212,9 +218,31 @@ if [ "$before_push" = 1 ]; then
         "$g" "$(( $(date +%s) - t0 ))"; sed 's/^/         | /' "$plan.$g.log" | tail -n 5
       unjudged="$unjudged $g"
     else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
+      [ -z "$fix" ] || printf '         | fix: %s\n' "$fix"
       failed="$failed $g"; fi
     rm -f "$plan.$g.log"
+  }
+  # the chosen gates, in the plan's order
+  for g in $(jq -r '.gates[] | select((.job == "structure" or .job == "structure-b") and .selected) | .id' "$plan"); do
+    case " $chosen " in *" $g "*) ;; *) continue ;; esac
+    push_gate "$g" "$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
   done
+  # The crate's two Rust gates that take seconds, which CI's rust job refuses a push on
+  # (I4570): the formatter when the plan selects rust-check, version-surface when it selects
+  # that gate. Each is the rust job's own check, run here before the push instead of two
+  # hours into validate.
+  if jq -e '.gates[] | select(.id == "rust-check" and .selected)' "$plan" > /dev/null; then
+    if command -v cargo > /dev/null 2>&1; then
+      chosen="$chosen rust-fmt"
+      push_gate rust-fmt 'cargo fmt --check --manifest-path apps/majordomus-cli/Cargo.toml' \
+        'cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml'
+    else printf '  left out rust-fmt: no cargo on this host; CI runs it\n'; fi
+  fi
+  if jq -e '.gates[] | select(.id == "version-surface" and .selected)' "$plan" > /dev/null; then
+    chosen="$chosen version-surface"
+    push_gate version-surface "$(jq -r '.gates[] | select(.id == "version-surface") | .runs' "$plan")" \
+      'majordomus release bump'
+  fi
   # the fast cases, four at a time. Fast is what CI recorded; local is what the case does. A
   # case that starts a server (serve_up, mcp_shared, serve ensure or start, the MCP launcher)
   # or declares that it runs alone measures timing and ports: on a machine nine sessions share

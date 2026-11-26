@@ -1,0 +1,29 @@
+id: I4583
+milestone: a-claim-stands-only-on-its-evidence
+title: "An outbound message that cites repository facts carries locators re-verified against the trunk when it is sent"
+slug: an-outbound-message-verifies-its-locators
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus evidence claim --verify <draft>` reads a draft message (a pull request body, an issue comment, a report to the owner or a peer) and resolves every repository locator it cites, a path with or without a line, a commit, an issue id, a case, a run id, against the trunk at the moment of sending: each resolves, moved (with where it now is) or missing, and the command exits non-zero on a missing one, so a message is sent only with locators that hold at the commit it names."
+why: "Intake from the flight-agent-empty-legs-fc session (2026-11-11 about 20:00Z, the owner's order to port everything and keep it generic; evidence in that repository's pull requests 194-197 and 219-222), item F4: a message sent outside the repository (to the owner, a peer or a forge) cites repository facts by locators, and nothing re-verifies them against the trunk when it is sent, so a locator written earlier in a session can be stale by the time it is read. Near evidence.claim, which answers one claim id of docs/CLAIMS.yaml against its recorded evidence; nothing reads a free-text draft for its locators."
+current_state: "At origin/master d34f159439f: `evidence claim <ID>` takes a claim id as docs/CLAIMS.yaml spells it; no command extracts and resolves the locators of a draft."
+desired_state: "A draft citing one path:line that holds, one that moved and one file that is gone reads resolves, moved to its new line, and missing, with a non-zero exit; the same draft with the missing one removed exits 0."
+scope:
+  - ".ai/repo/project/issues/I4583.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+  - "docs/EVIDENCE.md"
+  - "test/cases/4583_an_outbound_message_verifies_its_locators.sh"
+non_scope:
+  - "Sending the message; the command reads a draft and answers"
+  - "Judging the truth of the prose around a locator"
+depends_on: []
+acceptance_criteria:
+  - "A case verifies a fixture draft with a holding, a moved and a missing locator and reads the three verdicts and a non-zero exit"
+validation:
+  - "bash test/run.sh 4583_an_outbound_message_verifies_its_locators"
+evidence_required:
+  - test
+serves:
+  - a-claim-stands-only-on-its-evidence#public-text-true
+created_at: 2026-11-12
