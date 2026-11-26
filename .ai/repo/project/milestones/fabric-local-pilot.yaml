@@ -1,0 +1,48 @@
+id: fabric-local-pilot
+title: "One opt-in host agent serves 2 repositories, 10 worktrees and 20 MCP sessions on one host, with standalone fallback (gates G2-G5)"
+slug: fabric-local-pilot
+order: 178
+priority: p1
+problem: "Today every checkout runs its own shared server (ADR 0003, 0044): at L3 the legacy baseline counts 30 processes and 10 TCP listeners for 2 repositories, 10 worktrees and 20 MCP sessions (PR #3122). A loopback caller of one checkout can reach and mutate every other checkout whose port it finds (PR #3124 pins it). The owner decided on 2026-11-24 that Fabric's local trust boundary is one OS user, checked by peer credentials on a 0600 Unix socket, with every request authorised against the context it names, and that the first useful milestone is the corrected DAG's G5, the local pilot."
+outcome: "A developer with 2 unrelated repositories, 10 worktrees and 20 MCP sessions opts in to one user-scoped host agent, enters each directory with no build or network call, attaches with the existing MCP configuration, runs only the capabilities authorised for that context, sees each identity, and stops or uninstalls the agent while the standalone fallback stays correct. No remote mutation and no automatic update. The process, RSS and listener differences are measured against the G1 baseline."
+current_state: "Observed 2026-11-25: G0 passed (owner acceptance of ADR 0199 as amended, PR #3123). P02, the IPC contract, is in flight on branch feature/fabric-p02-ipc-contract (apps/majordomus-cli/src/fabric, not yet pushed). The G4 legacy baseline is PR #3124. Nothing of P03-P09 exists."
+desired_state: "The corrected DAG to G5 is walked in order: P02 (I4723), P03 (I4724, also after G1), P04 (I4725), P05 (I4726), then S02, S03 and S04 (I4727), then P06, P07, P09 and S05. S02, S03, P06, P07, P09 and S05 are issued when P05 lands, so that each is written against the contract P02-P05 actually shipped."
+scope:
+  - "apps/majordomus-cli/src/fabric"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/mesh/identity.rs"
+  - "apps/majordomus-cli/src/mesh/repository.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/commands/env.rs"
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - "docs/MCP.md"
+  - "docs/MESH.md"
+non_scope:
+  - "Remote routing and remote mutation (P08, S06, S07 and gates G6 and G7)"
+  - "Managed or unattended update (P10, gate G8); the follower's provenance requirement is I4728 under safe-self-update"
+  - "Retiring the per-checkout server (P11 retirement, S08, gate G9); the standalone mode stays supported"
+  - "A second capability registry, discovery or update system (ADR 0050, ADR 0161)"
+  - "The host's read-only runtime inventory, which is I3184 under the-host-knows-its-runtimes"
+acceptance_criteria:
+  - "G2: a context active under a legacy owner is proxy-only, and a new host owner cannot coexist with an uncooperative legacy owner of the same context (an independent competing-process test)"
+  - "G3: one hung or crashed context does not starve the host's control channel or the other contexts (a kill and stress isolation test)"
+  - "G4: a client of the same OS user cannot use a capability of an unrelated context by misbinding a root, a context id or a session handle (real path and IPC negative tests; the PR #3124 baseline inverts)"
+  - "G5: the 2 repositories, 10 worktrees and 20 MCP sessions demonstration passes reproducibly end to end, including opt-in, restart, stop, uninstall and the standalone fallback, and its process, RSS and listener counts are reported beside the G1 baseline"
+  - "env enter stays one bounded call with no build, network or service installation, and a missing host agent never breaks cd"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "no_second_mutator_test"
+  - "hung_context_isolation_test"
+  - "scoped_authority_negative_tests"
+  - "local_pilot_e2e"
+depends_on:
+  - "fabric-is-decided-and-the-legacy-is-measured"
+risks:
+  - "A file lock or fencing epoch does not stop a running legacy binary that never checks it; ownership cutover must be proved against the old binary, never assumed (MASTER_ADDENDUM, S02)"
+  - "Same OS user is necessary but not sufficient: authorisation per context is the gate, not the socket's permissions"
+  - "Scope creep: each phase is one vertically complete, independently validated change"
+created_at: 2026-11-25
+updated_at: 2026-11-25
