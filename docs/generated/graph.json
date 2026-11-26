@@ -80485,7 +80485,7 @@
             ".ai/repo/project/issues/I4524.yaml",
             ".github/workflows/telemetry.yml",
             ".ai/repo/ci/telemetry.yaml",
-            "test/cases/4524_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+            "test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
             "docs/CI.md",
             "site/content/plan/I4524.md"
           ],
@@ -80493,9 +80493,9 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "telemetry-does-not-run-for-a-cancelled-validate-run",
-          "updated_at": "2026-10-30",
+          "updated_at": "2026-11-18",
           "validation": [
-            "bash test/run.sh 4524_telemetry_does_not_run_for_a_cancelled_validate_run",
+            "bash test/run.sh 4653_telemetry_does_not_run_for_a_cancelled_validate_run",
             "actionlint .github/workflows/telemetry.yml",
             "bin/majordomus plan validate"
           ]
@@ -110808,6 +110808,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+        "kind": "test",
+        "label": "test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+        "route": "/cockpit/objects/test/test-cases-4653-telemetry-does-not-run-for-a-cancelled-validate-run-sh",
+        "source": "test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -160868,6 +160875,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165999,8 +166011,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4542,
+      "edges": 10230,
       "acyclic": false,
       "truncated": false
     }

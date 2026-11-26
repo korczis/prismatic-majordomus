@@ -1,5 +1,6 @@
-# A completed validate run, exported as one OpenTelemetry trace: a span per job and per step,
-# with its queued time, its run time and its conclusion. Docs: docs/CI.md, "Telemetry".
+# A completed validate run that was not cancelled, exported as one OpenTelemetry trace: a span
+# per job and per step, with its queued time, its run time and its conclusion. Docs:
+# docs/CI.md, "Telemetry".
 # The model is .ai/repo/ci/telemetry.yaml.
 #
 # Why it exists: queueing across overlapping runs cost up to 774 summed job-minutes on master
@@ -28,6 +29,12 @@ concurrency:
 
 jobs:
   export:
+    # A cancelled validate run is not exported (I4524). A job-level `if` is decided before a
+    # runner is requested, so the skipped job takes no runner; without it every cancel of a
+    # superseded run freed one hosted runner and took it back for this job (36 telemetry runs
+    # on 2026-10-30, 13:30Z-15:00Z, while train 12c's validate waited). The model's
+    # trigger.skip_conclusions names the same conclusions; case 4653 holds the two together.
+    if: github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

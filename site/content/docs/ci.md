@@ -642,10 +642,24 @@ written here would be stale the day after.
 ## Telemetry
 
 When the repository configures an OTLP endpoint, `.github/workflows/telemetry.yml` exports every
-completed `validate` run as one OpenTelemetry trace: a span per job and per step, with its
-queued time, its run time and its conclusion (service name `majordomus-ci`). It exists because
-queueing across overlapping runs cost up to 774 summed job-minutes on master run 39784979979
-and nothing measured it continuously.
+completed `validate` run that was not cancelled as one OpenTelemetry trace: a span per job and
+per step, with its queued time, its run time and its conclusion (service name `majordomus-ci`).
+It exists because queueing across overlapping runs cost up to 774 summed job-minutes on master
+run 39784979979 and nothing measured it continuously.
+
+A cancelled `validate` run is not exported, and a cancel costs no runner. The export job's
+`if: github.event.workflow_run.conclusion != 'cancelled'` is decided before a runner is
+requested, so the telemetry run of a cancelled validate run concludes skipped with no runner
+assigned; a run that concluded success, failure or timed out is exported as before. Without
+it, every cancel started an export job on a hosted runner: on 2026-10-30, from 13:30Z to
+15:00Z, the landing seat cancelled superseded and hold-member runs so that train 12c's validate
+could take the runners, 33 of the 34 validate runs that completed in that window were
+cancelled, and 35 telemetry runs were created in it, each taking a runner back to trace a run
+whose jobs mostly never started. The traces of the runs that completed still show the queue
+those runs waited in. The model, `.ai/repo/ci/telemetry.yaml`, names the skipped conclusions
+in `trigger.skip_conclusions`, and
+`test/cases/4653_telemetry_does_not_run_for_a_cancelled_validate_run.sh` refuses a workflow
+whose job condition excludes anything else, or nothing (I4524).
 
 The owner sets two repository secrets: `OTEL_EXPORTER_OTLP_ENDPOINT` (the OTLP/HTTP base URL)
 and `OTEL_EXPORTER_OTLP_HEADERS` (the authentication headers, for example `Authorization=Bearer
