@@ -22,7 +22,7 @@ RB="$(rust_bin)" || rust_bin_exit $?
 if [ -n "${CI:-}" ] && [ "${MAJORDOMUS_RUNS_IN:-}" != ui ]; then
   skip "a copy is pressed in the ui job (--runs-in ui), not in this CI run"
 fi
-command -v node >/dev/null 2>&1 || skip "node is absent, so no copy was pressed"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] \
   || skip "playwright is not installed (npm ci), so no copy was pressed"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE

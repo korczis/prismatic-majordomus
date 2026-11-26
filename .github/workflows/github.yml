@@ -56,11 +56,20 @@ jobs:
       # The tip of the default branch, whatever commit or branch started the run: the adapter
       # projects the trunk's current plan and refuses anything else. The whole history,
       # because the gate reads the age of a landing from it and says so of a shallow clone.
+      # Blobless (I4592): what is read of that history is commits and trees (rev-list
+      # --min-age, merge-base, log --name-only), and HEAD's blobs come with the checkout; a
+      # blob of an older commit (github-check's `git archive` of its reference) is fetched on
+      # demand, which the token checkout leaves configured. The full fetch of every blob timed
+      # out at 5 minutes on master runs 43338034433, 43626240578, 43657141312 and
+      # 43673907137, and while apply has not run every open head's github-check fails with
+      # never-created; a blobless full-history checkout took 18 s in validate run 42367964807
+      # (I3241). 10 minutes, still below the job's 60, so a stalled fetch fails by name.
       - uses: actions/checkout@v4
-        timeout-minutes: 5
+        timeout-minutes: 10
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
+          filter: blob:none
 
       # `--apply` finds the trunk through refs/remotes/origin/HEAD, which a runner's clone
       # does not carry.

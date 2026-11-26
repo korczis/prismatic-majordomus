@@ -30,7 +30,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I2402` | shares test/cases/1050_the_monitor_folds_the_noise.sh with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I2402` | shares test/cases/1050_the_monitor_folds_the_noise.sh with I2488; they may not run concurrently |
+| WARN | `scope_conflict` | `I2402` | shares test/cases/1050_the_monitor_folds_the_noise.sh with I4493; they may not run concurrently |
 | WARN | `scope_conflict` | `I2404` | shares test/cases/1053_the_cockpit_follows_the_stream.sh with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I2404` | shares test/cases/1053_the_cockpit_follows_the_stream.sh with I2488; they may not run concurrently |
+| WARN | `scope_conflict` | `I2404` | shares test/cases/1053_the_cockpit_follows_the_stream.sh with I4493; they may not run concurrently |
+| WARN | `scope_conflict` | `I2404` | shares apps/majordomus-cli/src/cockpit with I4499; they may not run concurrently |
 | WARN | `scope_conflict` | `I2405` | shares test/cases/1054_every_session_is_told_the_stream.sh with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I2405` | shares test/cases/1054_every_session_is_told_the_stream.sh with I2488; they may not run concurrently |
+| WARN | `scope_conflict` | `I2405` | shares test/cases/1054_every_session_is_told_the_stream.sh with I4493; they may not run concurrently |
+| WARN | `scope_conflict` | `I2405` | shares apps/majordomus-cli/src/capability/builtin with I4496; they may not run concurrently |

@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-intent-loop-is-proved-end-to-end](https://majordomus.dev/plan/the-intent-loop-is-proved-end-to-end/) | BLOCKED | 0/2 | 0 | 2 | 0 | 0 | 0 | One fixture asserts the same intent id, verdict, criterion states, binding standing, disposition and remains on the command line, HTTP, MCP and the Cockpit page. A test tries every bypass the owner packs name and each is refused or exempted by policy, never passed. One case carries a desired outcome through draft, check, opposition, bound start, recorded evidence, a refused and then accepted finish, the GitHub body, a moved revision that stales the evidence and fresh evidence that restores it. The documents and the claims say what the loop does and nothing more. |
+| [the-intent-loop-is-proved-end-to-end](https://majordomus.dev/plan/the-intent-loop-is-proved-end-to-end/) | BLOCKED | 0/3 | 0 | 3 | 0 | 0 | 0 | One fixture asserts the same intent id, verdict, criterion states, binding standing, disposition and remains on the command line, HTTP, MCP and the Cockpit page. A test tries every bypass the owner packs name and each is refused or exempted by policy, never passed. One case carries a desired outcome through draft, check, opposition, bound start, recorded evidence, a refused and then accepted finish, the GitHub body, a moved revision that stales the evidence and fresh evidence that restores it. The documents and the claims say what the loop does and nothing more. |
 
 ## Issues
 
@@ -17,6 +17,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|---|
 | [I3260](https://majordomus.dev/plan/i3260/) | BLOCKED | 3 | I3252, I3247, I3255 | One intent is carried in a disposable repository from a sentence through a failing criterion to a satisfied verdict, across two providers and a handover |
 | [I3261](https://majordomus.dev/plan/i3261/) | BLOCKED | 2 | I3259, I2001 | Every bypass of the intent loop is tried by a test and is refused or exempted by policy, never passed |
+| [I4482](https://majordomus.dev/plan/i4482/) | BLOCKED | 4 | I4480, I3256, I3257, I3260 | The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart |
 
 ## Findings
 

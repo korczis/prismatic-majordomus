@@ -119,14 +119,20 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints
+    Design(DesignArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
     /// What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
     Brief(BriefArgs),
+    /// What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)
+    Proceed(ProceedArgs),
     /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
     Blackboard(BlackboardArgs),
+    /// The delivery board's documents, derived: meta, milestones, intents, the pull request queue and the open issues of each lane share/board.yaml declares, with a digest that is equal for equal state; an open milestone in no lane is refused by name
+    Board(BoardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -274,6 +280,54 @@ pub struct DashboardArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus board`: the `board` capabilities on the command line (I4294).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BoardArgs, BoardCommand, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "board", "snapshot", "--by", "s1", "--format", "json"]).unwrap();
+/// let Command::Board(args) = cli.command else { panic!("not the board command") };
+/// let args: BoardArgs = args;
+/// let BoardCommand::Snapshot { by } = args.command;
+/// assert_eq!(by.as_deref(), Some("s1"));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct BoardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `snapshot`. Required: the group runs nothing of its own.
+    pub command: BoardCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus board`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BoardCommand, Cli, Command};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "board", "snapshot"]).unwrap();
+/// let Command::Board(args) = cli.command else { panic!("not the board command") };
+/// assert!(matches!(args.command, BoardCommand::Snapshot { by: None }));
+/// ```
+pub enum BoardCommand {
+    /// Every document of the delivery board by id, each under 250000 bytes, and the digest over them without meta.syncedAt and meta.syncedBy; refused, naming it, when an open milestone is in no lane
+    Snapshot {
+        /// Who takes the snapshot, as meta.syncedBy names it (default: board.snapshot)
+        #[arg(long)]
+        by: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus blackboard`: the `blackboard.snapshot` capability on the command line (ADR 0176).
 /// # Example
 ///
@@ -347,6 +401,86 @@ pub struct BriefArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus proceed`: the `proceed` module on the command line (ADR 0177). The output
+/// shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ProceedArgs, ProceedCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "proceed", "plan", "--milestone", "m", "--session", "s", "--format", "json",
+/// ])
+/// .unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// let args: ProceedArgs = args;
+/// let ProceedCommand::Plan { milestone, session } = args.command else { panic!("not plan") };
+/// assert_eq!((milestone.as_deref(), session.as_deref()), (Some("m"), Some("s")));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ProceedArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan` or `take`. Required: the group runs nothing of its own.
+    pub command: ProceedCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus proceed`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ProceedCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "proceed", "plan"]).unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// assert!(matches!(args.command, ProceedCommand::Plan { milestone: None, session: None }));
+///
+/// // `proceed take` is retired (ADR 0177, decision 3 amended): the step's order acts
+/// assert!(Cli::try_parse_from(["majordomus", "proceed", "take", "--session", "s1"]).is_err());
+///
+/// // a step takes the intent it serves and the moment it is taken at, both optional
+/// let cli = Cli::try_parse_from(["majordomus", "proceed", "step", "--intent", "i",
+///     "--at", "2026-10-23T10:00:00Z"]).unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// assert!(matches!(args.command,
+///     ProceedCommand::Step { intent: Some(ref i), at: Some(_), .. } if i == "i"));
+/// ```
+pub enum ProceedCommand {
+    /// The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read
+    Plan {
+        /// The milestone whose READY issues come first; the active one when absent
+        #[arg(long, value_name = "ID")]
+        milestone: Option<String>,
+        /// The mesh session the decision is for, whose own claims are not held against it
+        #[arg(long, value_name = "ID")]
+        session: Option<String>,
+    },
+    /// One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits
+    Step {
+        /// The intent the session realises: only issues serving its unmet criteria are ordered, and the order is done when it is met. The whole plan when absent
+        #[arg(long, value_name = "ID")]
+        intent: Option<String>,
+        /// The milestone whose READY issues come first; the active one when absent
+        #[arg(long, value_name = "ID")]
+        milestone: Option<String>,
+        /// The mesh session the step is for, whose own claims are not held against it
+        #[arg(long, value_name = "ID")]
+        session: Option<String>,
+        /// The moment the step is taken at, RFC 3339 in UTC to the second; the clock when absent
+        #[arg(long, value_name = "TIME")]
+        at: Option<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -520,6 +654,178 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignArgs, DesignCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "--check", "--format", "json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let args: DesignArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert!(kit.check && kit.action.is_none());
+/// // the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "design"]).is_err());
+/// ```
+pub struct DesignArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read. `--repo` may name a repository Majordomus does
+    /// not supervise: `design kit` judges any tree.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `kit` or `licence`. Required: the group runs nothing of its own.
+    pub command: DesignCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus design`: `kit` judges the repository's user interface
+/// against the kit profile its policy names, and `kit adopt` declares a profile in it;
+/// `licence` judges whether a public tree holds a licensed kit's files.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, KitAction, KitProfileArg};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "flowbite-pro", "--dry-run"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: true })));
+/// assert_eq!(KitProfileArg::FlowbitePro.name(), "flowbite-pro");
+/// assert!(Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "bootstrap"]).is_err());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--evidence", "ev.tsv", "--json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// assert_eq!(licence.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// assert!(licence.json);
+/// ```
+pub enum DesignCommand {
+    /// Whether the interface is built on the kit: every finding with its signal, path, evidence and remedy; exit 0 when clean or when there is no interface, 10 on a finding under --check, 2 for a policy that cannot be read
+    Kit(KitArgs),
+    /// Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed
+    Licence(LicenceArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design kit`: the judgement, or with `adopt` the declaration.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, KitArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// let kit: KitArgs = kit;
+/// assert!(!kit.check, "without --check the findings are reported and the exit is 0");
+/// assert!(kit.evidence.is_none(), "without --evidence the policy's ui.evidence is read");
+///
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "--check", "--evidence", "ev.tsv"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert_eq!(kit.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// ```
+pub struct KitArgs {
+    #[command(subcommand)]
+    /// `adopt`; none judges the repository.
+    pub action: Option<KitAction>,
+
+    /// Exit 10 when a finding stands, so CI and the pre-push hook refuse it
+    #[arg(long)]
+    pub check: bool,
+
+    /// The kit-evidence/v1 file the design licence judges a licensed marker by (in CI the launcher decodes an exported `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into a private file and passes it here); absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+}
+
+#[derive(Debug, Subcommand)]
+/// What `majordomus design kit` does besides judging.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, KitAction, KitProfileArg};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "flowbite-pro"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
+/// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: false })));
+/// ```
+pub enum KitAction {
+    /// Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing
+    Adopt {
+        /// The kit profile, from share/design/kits/
+        #[arg(value_enum)]
+        profile: KitProfileArg,
+        /// Report what would be written, and write nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+/// The kit profiles the distribution ships (`share/design/kits/<name>.yaml`).
+///
+/// ```
+/// use clap::ValueEnum;
+/// use majordomus_cli::cli::KitProfileArg;
+/// let names: Vec<String> = KitProfileArg::value_variants()
+///     .iter()
+///     .map(|p| p.to_possible_value().unwrap().get_name().to_string())
+///     .collect();
+/// assert_eq!(names, ["flowbite-pro"]);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum KitProfileArg {
+    /// The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0230)
+    FlowbitePro,
+}
+
+impl KitProfileArg {
+    /// The profile's id, its file stem.
+    ///
+    /// ```
+    /// use majordomus_cli::cli::KitProfileArg;
+    /// assert_eq!(KitProfileArg::FlowbitePro.name(), "flowbite-pro");
+    /// ```
+    pub fn name(self) -> &'static str {
+        match self {
+            KitProfileArg::FlowbitePro => "flowbite-pro",
+        }
+    }
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design licence`: the never-publish gate.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, LicenceArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// let licence: LicenceArgs = licence;
+/// // without --evidence the policy's ui.evidence entries are read
+/// assert!(licence.evidence.is_none() && !licence.json);
+/// ```
+pub struct LicenceArgs {
+    /// A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+
+    /// The same as --format json
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]
@@ -773,7 +1079,7 @@ pub struct GuardArgs {
 /// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
 /// ```
 pub enum GuardCommand {
-    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    /// Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise
     Hook(GuardHookArgs),
 }
 
@@ -834,6 +1140,8 @@ pub enum MeshCommand {
     Verify(MeshQueryArgs),
     /// Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them
     Claim(MeshClaimArgs),
+    /// Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh
+    Allocate(MeshAllocateArgs),
     /// Release a claim this server's current run holds
     Release(MeshReleaseArgs),
     /// Say a session is making progress, and what it is doing, so its exclusive claims keep excluding
@@ -846,6 +1154,34 @@ pub enum MeshCommand {
     Review(MeshReviewArgs),
     /// The mesh build cache: what each dependency install and build directory is cached under
     BuildCache(MeshBuildCacheArgs),
+    /// Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one
+    Who(MeshWhoArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh who`: the session behind a subject. The subject is positional and required: a pid,
+/// `host:pid` on a declared offload host, a run tag, `host:tag`, an issue (`I<digits>`) or a
+/// path, because "who runs this" without a "this" is `mesh peers`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshWhoArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "who", "lundra:24025"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Who(who) = mesh.command else { panic!("expected `who`") };
+/// let who: MeshWhoArgs = who;
+/// assert_eq!(who.subject, "lundra:24025");
+///
+/// // the subject is the whole question
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "who"]).is_err());
+/// ```
+pub struct MeshWhoArgs {
+    /// A pid, host:pid, run tag, host:tag, issue (I3956) or path
+    pub subject: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -1352,6 +1688,43 @@ pub struct MeshClaimArgs {
 }
 
 #[derive(Debug, Args)]
+/// `mesh allocate`: `plan.allocate` on the command line, asked of the server whose mesh makes
+/// the reservation atomic. `--session` is required because a reservation belongs to a session
+/// and ends with it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::capability::builtin::allocate::IdKind;
+/// use majordomus_cli::cli::{Cli, Command, MeshAllocateArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "allocate", "case", "--session", "s1", "--at-least", "3440",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Allocate(a) = mesh.command else { panic!("expected `allocate`") };
+/// let a: MeshAllocateArgs = a;
+/// assert_eq!((a.kind, a.session.as_str(), a.at_least), (IdKind::Case, "s1", Some(3440)));
+///
+/// // a reservation belongs to a session, so there is none without one
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "allocate", "case"]).is_err());
+/// ```
+pub struct MeshAllocateArgs {
+    /// The kind of identifier
+    #[arg(value_enum)]
+    pub kind: crate::capability::builtin::allocate::IdKind,
+    /// The mesh session the number is reserved for
+    #[arg(long)]
+    pub session: String,
+    /// The lowest number to take: a survey run elsewhere, or a block a seat was given
+    #[arg(long, value_name = "N")]
+    pub at_least: Option<u32>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
 /// `mesh release`: the one claim to give back, by the `<stream>/<claim>` key `mesh claim`
 /// printed when it took it. The key names the stream that made the claim as well as the
 /// claim itself, so a runtime can only release what it holds, and a person who kept the
@@ -1384,6 +1757,11 @@ pub struct MeshReleaseArgs {
 /// suspended, refusing nobody, once no beat arrives within the declared progress ttl — so a
 /// lander waiting on a CI run beats with `--phase "waiting on CI run 123"` while it waits.
 ///
+/// `--hook <provider>` is what a provider's hook runs instead (I3992): the session and the
+/// phase are read from the hook payload on stdin — a permission dialog or the end of a turn
+/// marks the session `blocked: …`, a prompt or a tool call clears it — and the command
+/// prints nothing and exits 0 whatever happens, because a hook must never stop the session.
+///
 /// ```
 /// use clap::Parser;
 /// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshBeatArgs};
@@ -1392,23 +1770,33 @@ pub struct MeshReleaseArgs {
 ///     "--phase", "waiting on CI", "--pid", "4242"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
-/// assert_eq!(beat.session, "lander");
+/// assert_eq!(beat.session.as_deref(), Some("lander"));
 /// assert_eq!(beat.phase.as_deref(), Some("waiting on CI"));
 /// assert_eq!(beat.pid, Some(4242));
+/// assert_eq!(beat.hook, None);
 ///
-/// // a beat speaks for a named session
+/// // a beat speaks for a named session, or for the one a hook payload names
 /// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat"]).is_err());
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "beat", "--hook", "claude-code"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
+/// assert_eq!((beat.hook.as_deref(), beat.session), (Some("claude-code"), None));
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat", "--hook", "claude-code",
+///     "--session", "lander"]).is_err(), "the payload names the session");
 /// ```
 pub struct MeshBeatArgs {
     /// The session making progress, as it was claimed under
-    #[arg(long)]
-    pub session: String,
-    /// What it is doing, one line: `waiting on CI run 123`
+    #[arg(long, required_unless_present = "hook")]
+    pub session: Option<String>,
+    /// What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person
     #[arg(long)]
     pub phase: Option<String>,
     /// The running process of this machine the beat speaks for
     #[arg(long)]
     pub pid: Option<u32>,
+    /// Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0
+    #[arg(long, value_name = "PROVIDER", conflicts_with_all = ["session", "phase", "pid"])]
+    pub hook: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -2771,6 +3159,12 @@ pub struct RunArgs {
     /// Its input, as one JSON object; the capability's input schema is what validates it
     #[arg(long, value_name = "JSON")]
     pub input: Option<String>,
+
+    /// The execution's idempotency key (executions.start's `idempotency_key`): a repeated
+    /// start with it is the execution it started. A run executes in its own process, so
+    /// the key is held there; a server's start is where repeated sends meet (I4000)
+    #[arg(long, value_name = "KEY")]
+    pub idempotency_key: Option<String>,
 
     /// Print the events as they arrive on stderr; on by default when stderr is a terminal
     #[arg(long)]
@@ -4252,6 +4646,12 @@ pub struct OffloadArgs {
 /// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
 /// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
 /// assert_eq!((worktree.to_str(), host.as_deref(), keep), (Some("../wt"), Some("lundra"), true));
+///
+/// // a run is stopped by its tag, as a group, after a grace period
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "stop", "0123456789", "--host", "lundra"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Stop { tag, host, force, grace } = offload.command else { panic!() };
+/// assert_eq!((tag.as_str(), host.as_deref(), force, grace), ("0123456789", Some("lundra"), false, 10));
 /// ```
 pub enum OffloadCommand {
     /// The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0
@@ -4269,6 +4669,20 @@ pub enum OffloadCommand {
         /// Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)
         #[arg(long)]
         keep: bool,
+    },
+    /// Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session
+    Stop {
+        /// The run's tag, as `offload derive` printed it
+        tag: String,
+        /// A declared host, by id or address; the declaration's only host when absent
+        #[arg(long, value_name = "HOST")]
+        host: Option<String>,
+        /// Stop it although its record names another session, or none
+        #[arg(long)]
+        force: bool,
+        /// Seconds between TERM and KILL
+        #[arg(long, value_name = "SECONDS", default_value_t = 10)]
+        grace: u64,
     },
 }
 
@@ -5942,6 +6356,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "board snapshot",
+        examples: &[ExampleDoc {
+            id: "board-snapshot-refused",
+            title: "An open milestone in no lane is refused by name",
+            description: "The same answer `GET /api/v1/board/snapshot` and the MCP tool `majordomus_board_snapshot` return: the delivery board's documents by id (`meta`, `milestones`, `intents`, `prs`, and `issues-<lane>` for each lane with open work), each document's size under the 250000-byte bound, and a digest over them that leaves out `meta.syncedAt` and `meta.syncedBy`. The lanes are declared once, in share/board.yaml, and a milestone that is not DONE and is in no lane is refused rather than filed under other. This fixture's milestone is in no lane of the distribution's declaration, so the snapshot is refused, naming it, and the exit code is 10: a verdict not satisfied.",
+            argv: &["board", "snapshot", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "brief",
         examples: &[ExampleDoc {
             id: "brief-line",
@@ -5950,6 +6375,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["brief", "--line", "--this-checkout"],
             setup: &[],
             expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "proceed plan",
+        examples: &[ExampleDoc {
+            id: "proceed-plan-json",
+            title: "What to proceed with, and why",
+            description: "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server and declares no mesh, so the decision is composed here and reads the mesh as undeclared rather than unread; its plan has one READY issue, I0001, which nothing refuses, so it is selected with the commands that take it, and the command exits 0.",
+            argv: &["proceed", "plan", "--format", "json"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "proceed step",
+        examples: &[ExampleDoc {
+            id: "proceed-step-json",
+            title: "One step as one work order, when nothing is left to do",
+            description: "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0; with nothing scheduled, the moment changes nothing it decides.",
+            argv: &["proceed", "step", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
         }],
     },
     CommandExamples {
@@ -6016,6 +6463,46 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["layout", "check", "--format", "json"],
             setup: &[],
             expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
+        }],
+    },
+    CommandExamples {
+        command: "design kit",
+        examples: &[ExampleDoc {
+            id: "design-kit-json",
+            title: "The interface against the kit profile",
+            description: "The same answer the MCP tool `majordomus_design_kit` returns (there is no HTTP route: the input names a file this process opens): the profile judged, whether the repository has a user interface and what showed it under `/ui` and `/ui_evidence`, every finding with its signal, path, evidence and remedy under `/findings`, every exemption the policy declares under `/exemptions`, and `/verdict`. This repository has no user interface, so the rule holds vacuously: the verdict is `no_ui` and the exit is 0, as it is for `--check`. A finding under `--check` exits 10, and a policy that cannot be read exits 2.",
+            argv: &["design", "kit", "--check", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/ui", "/findings", "/exemptions", "/verdict", "/passes"]),
+        }, ExampleDoc {
+            id: "design-kit-evidence",
+            title: "The kit judged with the licence evidence CI decoded",
+            description: "`--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the launcher does it: `majordomus design kit` or `design licence` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge` (lib/fleet.sh), which decodes the variable of the kit `ui.kit` names into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose first line says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened.",
+            argv: &["design", "kit", "--check", "--evidence", "kit-evidence.tsv", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/licence/state", "/licence/reason", "/verdict", "/passes"]),
+        }],
+    },
+    CommandExamples {
+        command: "design kit adopt",
+        examples: &[ExampleDoc {
+            id: "design-kit-adopt-dry-run",
+            title: "What adopting Flowbite Pro would write, before anything is written",
+            description: "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with `ui.kit: flowbite-pro` (set in its `ui:` block, or the block appended when there is none) and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). Exemptions under `ui.exempt` are the repository's to declare, and adoption writes none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
+            argv: &["design", "kit", "adopt", "flowbite-pro", "--dry-run", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/writes", "/notes", "/dry_run"]),
+        }],
+    },
+    CommandExamples {
+        command: "design licence",
+        examples: &[ExampleDoc {
+            id: "design-licence-json",
+            title: "Whether a public tree holds a licensed kit's files",
+            description: "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+            argv: &["design", "licence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/verdict", "/fails", "/kit", "/visibility", "/matches"]),
         }],
     },
     CommandExamples {
@@ -7794,11 +8281,22 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "offload stop",
+        examples: &[ExampleDoc {
+            id: "offload-stop-undeclared",
+            title: "A stop with no declared host signals nothing",
+            description: "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything.",
+            argv: &["offload", "stop", "0123456789"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "guard hook",
         examples: &[ExampleDoc {
             id: "guard-hook",
             title: "Judge the edit a provider's pre-tool payload names",
-            description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+            description: "What a provider's pre-tool hook runs before an edit or a shell command: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, or when its command starts a build over ssh on a host the offload declaration names (the way is `majordomus offload derive`), 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
             argv: &["guard", "hook", "--provider", "claude-code"],
             setup: &[],
             expect: Expect::Success,
@@ -7857,6 +8355,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
             setup: &[],
             expect: Expect::StdoutContains(&["platform"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh who",
+        examples: &[ExampleDoc {
+            id: "mesh-who-issue",
+            title: "Who works on an issue, and what says so",
+            description: "Every live mesh claim, board announcement and run record that names the issue, each owner with its board peer, issue and address and the facts that named it. A pid is read where it runs — its parent chain up to the provider's process and socket, its directory and the owner variables of its environment — and `host:pid` reads a declared offload host through its ssh path. Here nobody names the issue, so the answer is unknown, lists the evidence it lacked, and exits 10.",
+            argv: &["mesh", "who", "I1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {
@@ -8015,6 +8524,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Claim paths for a session across the mesh",
             description: "An exclusive claim that meets a live exclusive claim on any linked runtime exits 10 with claim_conflict naming it. A claim needs the running server that replicates it; without one the command exits 10 and says so.",
             argv: &["mesh", "claim", "docs", "--session", "s1", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh allocate",
+        examples: &[ExampleDoc {
+            id: "mesh-allocate",
+            title: "Reserve the next case number for a session",
+            description: "The number is reserved by one exclusive claim on `id:case/<n>` in the mesh of the server holding this checkout's lease, after surveying the tree, the sibling worktrees, every ref and every reservation the journal remembers. A reservation needs the running server that makes it atomic; without one the command exits 10 and says so.",
+            argv: &["mesh", "allocate", "case", "--session", "s1"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

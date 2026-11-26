@@ -1,0 +1,51 @@
+id: I4336
+milestone: adopter-upgrades
+title: "Every adopter the owner's fleet pack applies to receives its kit, rules and skills, and no licensed source reaches a public tree"
+slug: the-fleet-pack-delivers-the-kit-and-keeps-licensed-sources-private
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Where the owner holds a kit licence, every repository Majordomus supervises that the owner's fleet pack applies to receives the pack's kit profile, rules and skills through init, migrate, rules vendor update and update, kept current; a never-publish gate refuses a licensed source file in a public tree or a committed bundle; public CI judges both never-publish and kit use from a licence-evidence secret and fails closed without it. The product names no real kit."
+why: "Owner orders of 2026-10-28: every one of the owner's projects uses Flowbite Pro, enforced, always, at the latest version, automatically in every repository with Majordomus, wherever the licence is held; and (relayed by oscilla-b0) public CI enforces kit use too, from a secret. A rule copied by hand met five different gates in ten repositories (catharsis doctor, prismatic-platform precommit, progresus-ark-orchest uncommitted .ai, progresus-isir commit format, oscilla worktree guard). I4334 judges a declared kit; nothing yet delivers the kit to adopters, keeps licensed sources out of public trees, or gives CI the licence evidence. This record folds in oscilla-b0's fleet-pack draft (input, not filed as I4335; p2's allocation) and its skeptic's findings."
+current_state: "Measured on origin/master 81ef931a3e1: the vendored baseline is the only package init and vendor update carry (lib/rules.sh:503-547 copies with cp -R, lib/init.sh:102-105, lib/migrate.sh:246-248); mj_rules_sources reads only vendor/majordomus and project/ (lib/rules.sh:134-152); update is deterministic and reads no home directory (lib/update.sh:4); generate editors projects .ai/repo/skills into .claude/skills (editors/claude.rs:28), and skill-integrity refuses a skill that is not skill/v1 or that no test names; no check compares a repository's bytes with a licensed set; the policy is closed and has no ui key (policy.v1.schema.json:9)."
+desired_state: "(a) design/licence.rs answers active, inactive, refused (file, licensed source, exact or normalised) or not-judged, from kit-evidence/v1 evidence, over the raw bytes of every tracked file, committed bundles included, compared whole; not-judged in a public tree with a declared kit is a FAIL. (b) The fleet pack (MAJORDOMUS_FLEET_PACK, else XDG_CONFIG_HOME/majordomus/fleet, ai-fleet-pack/v1 manifest with applies_to) installs only its listed files under .ai/repo/rules/vendor/fleet and .ai/repo/skills/fleet-*, refuses any file the gate or an absolute-path scan rejects for a public tree, honours visibility: private entries, and reports lag in doctor, watch and context; update is byte-identical without a pack. (c) Fleet skills are skill/v1, pass skills check, are proved by the pack and projected by generate editors. (d) MAJORDOMUS_KIT_EVIDENCE_<KIT> carries kit-evidence/v1 to CI; I4334's kit-use verdict reads the same evidence. (e) The JOBL adopters and oscilla are exercised as fixtures. Parts (a)-(c) stand on master; (d) joins I4334's judge through its evidence seam once I4334 lands, and then this record depends on it."
+scope:
+  - "apps/majordomus-cli/src/design/licence.rs"
+  - "lib/rules.sh"
+  - "lib/init.sh"
+  - "lib/migrate.sh"
+  - "lib/update.sh"
+  - "lib/doctor.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "share/kinds.yaml"
+  - "share/skeleton/ai/repo/rules/README.md"
+  - "share/skeleton/ai/repo/skills/README.md"
+  - "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh"
+  - "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh"
+  - "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh"
+  - "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh"
+  - ".ai/repo/project/issues/I4336.yaml"
+non_scope:
+  - "The judge, the design kit capability, adopt and the kit profile format (I4334, p2)"
+  - "Shipping any licensed source: only manifests, rule text, skill/v1 text and hash prefixes travel"
+  - "Near-copies and licensed fragments inlined inside a larger bundle: the evidence holds whole-file fingerprints only (stated in the usage text)"
+  - "Migrating any adopter's UI onto a kit"
+  - "Majordomus's own design surfaces (ADR 0031, ADR 0036)"
+depends_on: []
+acceptance_criteria:
+  - "(a) A public fixture with one licensed file, byte-identical or reformatted, including a committed bundle file copied whole, is refused naming the file and the licensed source; the same fixture declared private is active; public with a declared kit and no evidence fails as not judged; private without evidence is inactive with one INFO line; a repository with no UI file is skipped with INFO; given a publish root (ui.publish, or the upload-pages-artifact path), the gate also hashes the untracked files there and the vendor files a build copies into it, so a whole licensed file shipped from node_modules into a published artifact is refused"
+  - "(b) init on an empty fixture and rules vendor update on an adopter, with a pack whose applies_to matches, install exactly the listed files; an unlisted file is never copied; a pack file carrying a licensed fingerprint or an absolute or home path is refused for a public fixture; a visibility: private entry is skipped for a public fixture; a lagging copy is a doctor WARN and a watch DRIFT; update without a pack is byte-identical to before"
+  - "(c) After install, doctor reports no new skill-integrity FAIL; a pack skill failing skills check is refused naming the reason"
+  - "(d) With MAJORDOMUS_KIT_EVIDENCE_EXAMPLEKIT set to a kit-evidence/v1 value, a public fixture judges both never-publish and kit use; unset, it fails closed; a malformed value fails naming the variable, never printing it"
+  - "(e) adopt and check on the JOBL fixtures and oscilla match the interim verify.mjs verdicts, differences explained"
+validation:
+  - "bash test/run.sh <the new licence, fleet-pack, projection and evidence cases>"
+  - "bash test/run.sh 08_no_forbidden_constructs"
+  - "bash test/run.sh 28_no_hardcoded_values"
+  - "bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral"
+  - "majordomus doctor"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-10-28

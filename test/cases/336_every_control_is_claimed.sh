@@ -12,7 +12,7 @@
 # clean site still passes; the same page under a mount the topology does not compose is judged and fails; with no
 # topology the check refuses to decide (12) rather than guess which pages are the site's.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 CHECK="$ROOT/scripts/ci/interaction-check"
 
 F="$PWD/site-fixture"; mkdir -p "$F/site/public/tools" "$F/site/public/ref/api" "$F/docs/generated" specs

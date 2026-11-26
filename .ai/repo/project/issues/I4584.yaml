@@ -1,0 +1,28 @@
+id: I4584
+milestone: failure-is-visible
+title: "A long-lived shell wait loop on a shared machine is a finding doctor names with its size, and an agent brief forbids one"
+slug: a-shell-wait-loop-is-a-finding
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus doctor` (and the machine check a heavy step runs under) lists every shell process of the account that has run a `while`/`until` loop with a sleep for longer than a stated bound (default 30 minutes), with its pid, age, resident size and the command it waits on, as a finding naming rule project.every-wait-is-bounded and the remedy (a bounded single wait or a completion notification); the delegation brief a session gives a subagent says the same in one line."
+why: "Intake from the kompendium-epistemicke-anihilace-2e session (2026-11-11 about 20:05Z, the owner's /evolve, principle 29), item K1: background zsh wait loops of the form `until grep ...; do sleep ...; done` grew to about 49 GB on a shared machine. This repository already holds the lesson (curated s-20261028132518-6330-51679dda646b: such loops grew to 11-12 GB each and drove swap to 18-23 GB twice in one night) and the rule (project.every-wait-is-bounded), but nothing decides it on a running machine: case 122 (the liveness gate) scans scripts, not processes, so the next loop is found only when the disk is already full."
+current_state: "At origin/master d34f159439f: rule project.every-wait-is-bounded is proved by test/cases/122_liveness_gate.sh and 121_liveness_doctrine.sh over the tree; doctor reads no process; no brief template names wait loops."
+desired_state: "On a machine holding a shell wait loop older than the bound, doctor prints one finding per loop with pid, age and size; on a machine holding none it prints nothing new; the brief template carries the line."
+scope:
+  - ".ai/repo/project/issues/I4584.yaml"
+  - "lib/doctor.sh"
+  - ".ai/repo/rules/project/every-wait-is-bounded.v2.md"
+  - "docs/DOCTRINE.md"
+  - "test/cases/4584_a_shell_wait_loop_is_a_finding.sh"
+non_scope:
+  - "Killing a loop; the finding names it and its owner decides"
+depends_on: []
+acceptance_criteria:
+  - "A case starts a `until false; do sleep 1; done` loop under a fake clock past the bound and reads doctor's finding naming its pid; with the loop stopped the finding is gone"
+validation:
+  - "bash test/run.sh 4584_a_shell_wait_loop_is_a_finding"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-12

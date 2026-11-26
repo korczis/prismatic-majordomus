@@ -72,6 +72,12 @@ fields:
   EventBody.BuildCacheOffered.offer: clear
   # a reason from the fixed vocabulary of mesh::build_cache::offer::current, one line
   EventBody.BuildCacheWithdrawn.reason: clear
+  # a typed coordination record (I4665, mesh/records.rs): mesh::cooperation::write_record
+  # passes its free text — title, body, a handoff's objective, current_state, evidence,
+  # blockers and next_action, a tool source's command and result — through redact_secrets
+  # before admission and signing; its other fields are identifiers, repository paths,
+  # commits, RFC 3339 times and words of closed vocabularies, refused out of those bounds
+  EventBody.RecordWritten.record: redacted
   # ------------------------------------------------------------- SessionInfo (session_opened)
   SessionInfo.session: clear
   SessionInfo.client: clear

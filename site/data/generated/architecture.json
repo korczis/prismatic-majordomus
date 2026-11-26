@@ -30,6 +30,16 @@
       "external": false
     },
     {
+      "id": "lib/fleet.sh",
+      "kind": "module",
+      "label": "fleet",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/adr.sh",
       "kind": "module",
       "label": "adr",
@@ -520,6 +530,16 @@
       "external": false
     },
     {
+      "id": "lib/runnable.sh",
+      "kind": "module",
+      "label": "runnable",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/README.md",
       "kind": "artifact",
       "label": "README.md",
@@ -553,6 +573,16 @@
       "id": ".ai/local/state/completed",
       "kind": "artifact",
       "label": "local/state/completed",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/skills",
+      "kind": "artifact",
+      "label": "repo/skills",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -643,16 +673,6 @@
       "id": ".ai/repo/workflows",
       "kind": "artifact",
       "label": "repo/workflows",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/repo/skills",
-      "kind": "artifact",
-      "label": "repo/skills",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1052,6 +1072,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/fleet.sh",
+      "target": ".ai/repo/policy.yaml",
+      "kind": "reads"
+    },
+    {
       "source": "lib/init.sh",
       "target": ".ai/local/state/decisions.md",
       "kind": "reads"
@@ -1199,6 +1224,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/finish.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/fleet.sh",
       "kind": "sources"
     },
     {
@@ -1538,6 +1568,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": "lib/runnable.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
@@ -1579,6 +1614,21 @@
     {
       "source": "lib/finish.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": "lib/rules.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": "lib/skills.sh",
       "kind": "sources"
     },
     {
@@ -1642,6 +1692,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/plan.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/prompt.sh",
       "target": "lib/context.sh",
       "kind": "sources"
@@ -1664,6 +1719,11 @@
     {
       "source": "lib/recover.sh",
       "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/rules.sh",
+      "target": "lib/fleet.sh",
       "kind": "sources"
     },
     {
@@ -1703,6 +1763,11 @@
     },
     {
       "source": "lib/skills.sh",
+      "target": "lib/fleet.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/skills.sh",
       "target": "lib/knowledge.sh",
       "kind": "sources"
     },
@@ -1729,6 +1794,11 @@
     {
       "source": "lib/start.sh",
       "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": "lib/fleet.sh",
       "kind": "sources"
     },
     {
@@ -1909,6 +1979,16 @@
     {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": ".ai/repo/rules/vendor",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": ".ai/repo/skills",
       "kind": "uses"
     },
     {

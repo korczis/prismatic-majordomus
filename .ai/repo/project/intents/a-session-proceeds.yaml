@@ -1,0 +1,34 @@
+id: a-session-proceeds
+title: Any session becomes a productive worker of the repository with one word
+statement: "A person who opens any session on any machine and says /proceed gets a worker that has resolved the repository's context, read every board and the mesh, chosen the most valuable work no one else holds and that it may take, explained that choice, claimed it, executed it under the task lifecycle, proved it, and handed it to the landing seat — and the same word said again, with nothing changed, creates nothing."
+invariants:
+  - The decision is one capability answered from the existing capabilities; the skill, the command line, MCP and the UI are its projections and hold no rule, workflow step or issue list of their own
+  - A choice is explained term by term and refuses a candidate another worker claims, whose scope another worker holds, or whose binding is refused
+  - Proceeding never merges, tags or releases; delivery stays with the landing and release seats
+  - Exclusivity across machines is the mesh's claim, not a lock of this feature's own
+satisfaction:
+  - id: a-session-is-told-what-to-take
+    criterion: proceed.plan names the READY issue a session should take, every READY issue it passed over with the claim or exclusive scope that refused it and the hold that did, and every term of the order, as one capability on the command line, MCP and HTTP that writes nothing
+    evidence: test
+    ref: test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh
+  - id: an-id-is-reserved-once
+    criterion: plan.allocate reserves an issue, case or ADR number for one session with one exclusive mesh claim on id:<kind>/<n> after surveying the tree, the sibling worktrees, every ref and the mesh journal, so that allocations at once on one runtime answer different numbers and no number on a ref or in the journal is handed out again
+    evidence: test
+    ref: test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh
+  - id: the-choice-ranks-by-what-it-unblocks
+    criterion: Among READY issues equal in milestone, wave and priority, the one that unblocks more unfinished issues (transitively, each counted once) is handed out first by plan.next, majordomus plan next and proceed.plan alike, and adding a dependency changes that order with no list edited
+    evidence: test
+    ref: test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh
+milestones:
+  - a-session-proceeds
+governance:
+  - adr:adr-0177
+  - adr:adr-0167
+  - adr:adr-0004
+  - rule:project.work-is-claimed-before-it-is-built
+non_goals:
+  - Proceeding without a person's word (event-driven reassignment); a later decision once this is measured
+  - A weighted portfolio optimiser over several workers at once
+  - Releasing on every landing
+created_at: 2026-10-18
+updated_at: 2026-10-18
