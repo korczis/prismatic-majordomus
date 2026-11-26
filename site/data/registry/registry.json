@@ -6,23 +6,23 @@
     "version": "1.2.0"
   },
   "registry": {
-    "fingerprint": "ba0f32c313cbe4df0fb8c49f890d65fa26215c8bffcc2290e25987083568a142",
+    "fingerprint": "1e82236c468642936a9bd1a399cb32cfa3039845aa26f06d9a3129e527195f9d",
     "summary": {
-      "total": 4063,
+      "total": 4069,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3836,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3836
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3846
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3893,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -99233,7 +99233,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1282,
         "capability_ids": []
       },
       {
@@ -99941,7 +99941,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2cb0fc6522a412613b025fc62bc73df5974c841387cdc3159572029477d13c8c",
+    "fingerprint": "f43189655f26b629f5463e6623bf28806945d8ead55f0258558b2594f4f1b6f6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99981,7 +99981,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1276,
+      "issue": 1282,
       "knowledge": 221,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -107594,7 +107594,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 140847
+        "bytes": 141705
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114502,7 +114502,7 @@
         "path": ".ai/repo/project/issues/I1997.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2517
+        "bytes": 3130
       },
       {
         "uri": "majordomus://issue/I1998",
@@ -125613,6 +125613,72 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3298
+      },
+      {
+        "uri": "majordomus://issue/I4701",
+        "kind": "issue",
+        "identity": "I4701",
+        "title": "A commit that adds an issue's record is that issue's creation, never its delivery, whatever else the commit changes",
+        "description": "plan.delivery passes over, for one issue, every naming commit or merge whose change against its first parent adds that issue's record (`.ai/repo/project/issues/<id>.yaml` absent before, present after). The commit created the issue, so it cannot have delivered it. The rule is per issue: other issues the same commit names are judged as before, and a commit that only plans stays planning by I2749's path rule. The newest commit passed over this way is reported in the issue's `planned` proof with `via: created`, so a reader sees why the commit that names the issue did not make it merged.",
+        "path": ".ai/repo/project/issues/I4701.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4789
+      },
+      {
+        "uri": "majordomus://issue/I4702",
+        "kind": "issue",
+        "identity": "I4702",
+        "title": "An issue whose work is its records declares `delivery: record`, and drift reads it as delivered by its evidence, not as done without trace",
+        "description": "Add an optional `delivery` field to the issue schema, with the values `change` (the default) and `record`. An issue that declares `delivery: record` is delivered by its own stamps and evidence: its work is a record, a decision or an observation, and no merge will name it. plan delivery reports its stage as `record` once it is DONE. plan drift never classes it as done_without_trace. Its delivery is a merge only if a commit outside the plan's records names it, and then drift reports that commit as a contradiction of the declaration. plan validate, in both plan engines, refuses `delivery: record` on an issue whose scope names a path outside `.ai/repo/` and the projections derived from it. The remedy of done_without_trace names the field.",
+        "path": ".ai/repo/project/issues/I4702.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3992
+      },
+      {
+        "uri": "majordomus://issue/I4703",
+        "kind": "issue",
+        "identity": "I4703",
+        "title": "A task another session opened is closed only when the liveness predicate says its worktree is reclaimable; otherwise finish refuses and names the evidence of life",
+        "description": "When the caller of `finish` (any outcome) or `handover` is not the episode that opened the active task, the runtime asks the one liveness predicate of I4346 (worktree.liveness) about the task's worktree before it writes anything. It proceeds only on `reclaim`. On `keep`, it refuses with exit 15 and names each piece of evidence of life: a process whose working directory is inside the worktree (other than the caller and the server), a file in the worktree's index or work tree changed since the task's last checkpoint and not in a commit, a mtime newer than the policy's session.stranded_after, or a mesh claim or board announcement that names the worktree. A predicate that cannot read its input refuses, as every destructive sweep does (project.destructive-sweeps-fail-closed). The caller's own task, judged by the ADR 0164 attribution as today, is never asked. The same check guards `recover tasks` (I4416). A refused close is a ledger event, task.close_refused, carrying the evidence.",
+        "path": ".ai/repo/project/issues/I4703.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4929
+      },
+      {
+        "uri": "majordomus://issue/I4704",
+        "kind": "issue",
+        "identity": "I4704",
+        "title": "plan.findings derives every open finding from the layer: what is blocked, left out of scope with no follow-up, handed to another repository, not run, partial or drifting, each with its locator",
+        "description": "A read-only capability plan.findings (CLI `majordomus plan findings [--json] [--live]`, MCP majordomus_plan_findings, GET /api/v1/plan/findings) answers one list of findings computed from the layer and written by nobody. Each finding has `kind`, `text`, `path`, `line`, `record`, `follow_up` (the open issue ids that take it over, empty when none does) and `label`. The label is OBSERVED when a record states the open status itself, and DERIVED when the answer computed it from several records. Built-in kinds: `blocked` (an open issue with a dependency that is not done, naming the blocker), `out-of-scope` (a non_scope entry of a DONE issue that no open issue cites), `not-run` and `partial` (an evidence result or a task outcome carrying a status the policy declares open, such as NOT RUN, PARTIAL or FAIL), `outbound` (an intent, critique or proposal addressed to another repository with no recorded answer), and `drift` (plan.drift's non-advisory findings, read only with `--live`, since they depend on the moment). A repository adds its own vocabulary under a policy key `findings:` (open statuses, Markdown table columns, front-matter fields and an in-document marker). The output carries the same fields as a repository-local generator that an adopter already runs, so that generator can become a thin projection of this capability. A derived page under docs/ is regenerated by the existing derive step and checked fresh by it.",
+        "path": ".ai/repo/project/issues/I4704.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5347
+      },
+      {
+        "uri": "majordomus://issue/I4705",
+        "kind": "issue",
+        "identity": "I4705",
+        "title": "Every source reference in a tracked document resolves, checked by one capability, and a document declared live refuses a commit that leaves one of its references dangling",
+        "description": "A read-only capability refs (CLI `majordomus refs check|index|impact`, MCP majordomus_refs_check, GET /api/v1/refs) reads the source references in tracked Markdown and judges each against the tree. A reference is an inline code span whose first segment is a tracked top-level entry, in one of the forms `path`, `path/`, `path:Symbol` or `path:line[-line]`, or a pathspec in a front-matter `tracks:` list. A file must be tracked. A directory must hold tracked files. A symbol must occur as a whole word in its file. A line must exist in the file, and a line reference whose document also quotes the cited text is judged against that text. A pathspec must match at least one file. `check` names each dangling reference with its document and line and exits 10. `index` answers the reverse index from each cited file to the documents that cite it. `impact <rev-range>` names the documents citing a file the range changed. The policy key `references.live` declares the documents, such as a capability matrix or a status table, whose references must always resolve. The derive step and the pre-commit doctor refuse a change that leaves one of them dangling, while any other document is reported only. A document whose front matter says `status: superseded` or `deprecated` is history and is not judged. The resolver is the one I4583 uses for outbound drafts, not a second one.",
+        "path": ".ai/repo/project/issues/I4705.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5141
+      },
+      {
+        "uri": "majordomus://issue/I4706",
+        "kind": "issue",
+        "identity": "I4706",
+        "title": "A dependency the policy declares consumed from outside changes only by a pin bump to a commit its upstream holds, and every other change to it is refused at commit and at push",
+        "description": "A policy key `dependencies.consumed` lists the paths of dependencies that the repository consumes and must never edit. Each entry is a git submodule, or a vendored directory with a declared sync command, and names its upstream (a remote URL and optionally a branch). commit.validate, run by the commit-msg hook, and `finish --check`, run by the pre-push hook, judge each commit that touches such a path. For a submodule, the only allowed change is its gitlink, moving to a commit that is reachable from the declared upstream branch or tag at the time of the check. A gitlink that points at a commit the upstream does not hold is refused, because that commit was made by editing the dependency locally. For a vendored directory, a change is allowed only when the commit's trailer names the declared sync command and the tree equals what that command produces. doctor names a declared submodule whose checkout is dirty or detached from its pinned commit. A refusal names the path, the commit and the remedy: change the dependency upstream, then bump the pin.",
+        "path": ".ai/repo/project/issues/I4706.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4623
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -142242,7 +142308,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1282
     },
     {
       "name": "knowledge",

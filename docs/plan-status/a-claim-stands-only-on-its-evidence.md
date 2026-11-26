@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-claim-stands-only-on-its-evidence](https://majordomus.dev/plan/a-claim-stands-only-on-its-evidence/) | ACTIVE | 1/23 | 17 | 5 | 0 | 0 | 0 | The owner wants every rule, guarantee and delivered feature that Majordomus states to be backed by a recorded execution at the revision being shown. For a blocking rule, that execution shows a violation being refused. Every way around a gate (an override, a disabled protection, a proposed decision cited as law) must be visible. Any statement that lacks this evidence reads as not proven on every surface, never as done. |
+| [a-claim-stands-only-on-its-evidence](https://majordomus.dev/plan/a-claim-stands-only-on-its-evidence/) | ACTIVE | 1/24 | 17 | 6 | 0 | 0 | 0 | The owner wants every rule, guarantee and delivered feature that Majordomus states to be backed by a recorded execution at the revision being shown. For a blocking rule, that execution shows a violation being refused. Every way around a gate (an override, a disabled protection, a proposed decision cited as law) must be visible. Any statement that lacks this evidence reads as not proven on every surface, never as done. |
 
 ## Issues
 
@@ -38,6 +38,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4372](https://majordomus.dev/plan/i4372/) | BLOCKED | 3 | I3113, I3200, I4370 | A repository's merge methods, merge-commit message settings and required checks are compared with a declared block, and a drift is a report that names the command that repairs it |
 | [I4583](https://majordomus.dev/plan/i4583/) | READY | 0 | — | An outbound message that cites repository facts carries locators re-verified against the trunk when it is sent |
 | [I4585](https://majordomus.dev/plan/i4585/) | READY | 0 | — | A claim sourced outside the repository records where it came from and whether that source is official, and an unofficial one reads unverified |
+| [I4705](https://majordomus.dev/plan/i4705/) | BLOCKED | 1 | I4583 | Every source reference in a tracked document resolves, checked by one capability, and a document declared live refuses a commit that leaves one of its references dangling |
 
 ## Findings
 
@@ -90,6 +91,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3087` | shares docs/CLI.md with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares docs/CLI.md with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares docs/CLI.md with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I3087` | shares docs/CLI.md with I4704; they may not run concurrently |
+| WARN | `scope_conflict` | `I3087` | shares docs/CLI.md with I4706; they may not run concurrently |
 | WARN | `scope_conflict` | `I3089` | shares .ai/repo/automation/README.md with I3155; they may not run concurrently |
 | WARN | `scope_conflict` | `I3089` | shares .ai/repo/project/issues/I3089.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3089` | shares .ai/repo/project/issues/I3089.yaml with I3373; they may not run concurrently |
@@ -202,6 +205,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4706; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares .ai/repo/project/intents with I3119; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares .ai/repo/project/intents with I3229; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares docs/CLAIMS.yaml with I3352; they may not run concurrently |
@@ -262,6 +266,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I3123` | shares docs/SCHEMAS.md with I4702; they may not run concurrently |
+| WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4706; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/economics with I3298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/economics with I3366; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/ledger.rs with I4291; they may not run concurrently |

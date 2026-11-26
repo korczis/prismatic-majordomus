@@ -1,0 +1,42 @@
+id: I4702
+milestone: truthful-plan-surfaces
+title: "An issue whose work is its records declares `delivery: record`, and drift reads it as delivered by its evidence, not as done without trace"
+slug: a-record-only-issue-is-declared
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add an optional `delivery` field to the issue schema, with the values `change` (the default) and `record`. An issue that declares `delivery: record` is delivered by its own stamps and evidence: its work is a record, a decision or an observation, and no merge will name it. plan delivery reports its stage as `record` once it is DONE. plan drift never classes it as done_without_trace. Its delivery is a merge only if a commit outside the plan's records names it, and then drift reports that commit as a contradiction of the declaration. plan validate, in both plan engines, refuses `delivery: record` on an issue whose scope names a path outside `.ai/repo/` and the projections derived from it. The remedy of done_without_trace names the field."
+why: "Observed on 2026-11-22 in an adopter repository. plan drift reported 72 issues done_without_trace. The class is advisory and its remedy already says `nothing if <id> is record-only`. A reader still cannot tell, from the answer or the record, which of the 72 are record-only and which lost their trace. Nothing in the layer lets an issue say so. The hint therefore has to be judged again by a person on every read, and a growing advisory count stops being read."
+current_state: "Measured at origin/master 636acc8c845 on 2026-11-22. apps/majordomus-cli/src/plan/drift.rs documents done_without_trace as `advisory: record-only issues exist` (drift.rs:12, :67) and prints the remedy `nothing if {id} is record-only; else name {id} in its pull request's title` (drift.rs:280). share/schemas/majordomus/issue/issue.v1.schema.json has no field that declares how an issue is delivered. Its properties are acceptance_criteria, cancelled, completion, depends_on, evidence, scope, serves, traces and the stamps. No convention in docs/PLANNING.md names record-only work."
+desired_state: "A record-only issue says so once, in its record. plan drift's done_without_trace then lists only issues whose trace is actually missing, and an issue declared record-only whose work turns out to be code is named as a contradiction."
+scope:
+  - "share/schemas/majordomus/issue/issue.v1.schema.json"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/plan/drift.rs"
+  - "apps/majordomus-cli/tests/plan_drift.rs"
+  - "lib/plan.sh"
+  - "lib/plan_json.awk"
+  - "docs/PLANNING.md"
+  - "docs/SCHEMAS.md"
+  - "test/cases/4702_a_record_only_issue_is_declared.sh"
+  - ".ai/repo/project/issues/I4702.yaml"
+  - "site/content/plan/I4702.md"
+non_scope:
+  - "Backfilling `delivery: record` onto this repository's or any adopter's existing DONE issues. That is each owner's record to write"
+  - "Inferring record-only from an issue's scope without the declaration"
+  - "Making done_without_trace blocking"
+depends_on: []
+acceptance_criteria:
+  - "A DONE issue with `delivery: record` and no naming merge is absent from plan drift's findings and reads stage `record` in plan delivery"
+  - "A DONE issue without the field and no naming merge is still done_without_trace, and its remedy names `delivery: record`"
+  - "plan validate (both engines) refuses `delivery: record` with a scope entry outside `.ai/repo/` and the derived projections, naming the entry"
+  - "A `delivery: record` issue named by a commit that changes code is reported by drift with that commit as its proof"
+  - "Negative control: on master, the first fixture is reported done_without_trace"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_drift"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4702_a_record_only_issue_is_declared"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_record_only_issue_is_declared"
+serves: []
+created_at: 2026-11-22

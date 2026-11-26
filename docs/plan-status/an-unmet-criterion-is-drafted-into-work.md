@@ -196,3 +196,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4669; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4685; they may not run concurrently |
+| WARN | `scope_conflict` | `I3246` | shares docs/PLANNING.md with I4702; they may not run concurrently |
+| WARN | `scope_conflict` | `I3246` | shares docs/PLANNING.md with I4704; they may not run concurrently |
+| WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4706; they may not run concurrently |
