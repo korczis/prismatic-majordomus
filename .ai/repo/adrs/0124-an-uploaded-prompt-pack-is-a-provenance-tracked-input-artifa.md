@@ -13,7 +13,7 @@ provenance:
   origin: authored
 ---
 
-# 121. An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model
+# 124. An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model
 
 ## Context
 
