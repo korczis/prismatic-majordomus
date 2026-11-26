@@ -81789,12 +81789,14 @@
           "scope": [
             ".ai/repo/project/issues/I4595.yaml",
             "lib/doctor.sh",
-            "docs/WORKTREES.md"
+            "docs/WORKTREES.md",
+            "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
           ],
           "serves": [],
           "slug": "doctor-reports-an-install-behind-its-lockfile",
-          "updated_at": "2026-11-15",
+          "updated_at": "2026-11-18",
           "validation": [
+            "bash test/run.sh 4595_doctor_names_an_install_behind_its_lockfile",
             "bin/majordomus doctor",
             "bin/majordomus plan validate"
           ]
@@ -82627,6 +82629,197 @@
         }
       },
       {
+        "id": "majordomus://issue/I4668",
+        "kind": "issue",
+        "label": "I4668",
+        "summary": "doctor names every heavy process group that no session, claim, run record or declared service accounts for, with the inbound SSH peer that started it, and the owner pauses one through a governed command",
+        "route": "/cockpit/objects/issue/i4668",
+        "source": ".ai/repo/project/issues/I4668.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "an_unattributed_heavy_process_is_named"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "Killing a process, or changing a file's mode or contents to stop it: pause and resume are signals to a process group and nothing else",
+            "Reading another machine's process table: the inbound peer is named, never contacted",
+            "Refusing an untraced remote run the tool itself starts: I3956",
+            "Supervising a service a session declares: I4622, whose declarations this sweep reads once they exist and does not wait for",
+            "Reclaiming disk or swap"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/who.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/MESH.md",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4668_an_unattributed_heavy_process_is_named.sh",
+            ".ai/repo/project/issues/I4668.yaml",
+            "site/content/plan/I4668.md"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
+          ],
+          "slug": "an-unattributed-heavy-process-is-named",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4668_an_unattributed_heavy_process_is_named"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4669",
+        "kind": "issue",
+        "label": "I4669",
+        "summary": "An owner's answer is a typed, committed record with its provenance, so a session that receives it relayed cites it by id and a validator proves where it came from",
+        "route": "/cockpit/objects/issue/i4669",
+        "source": ".ai/repo/project/issues/I4669.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "an_owner_answer_carries_its_provenance"
+          ],
+          "milestone": "M002",
+          "non_scope": [
+            "Asking the owner: the provider's question tool or the terminal asks, and this records what was asked and answered",
+            "Typed coordination records in the mesh journal: I4665",
+            "Attributing a record to the session that wrote it: the other issues of M002",
+            "Rewriting the existing prose answers in issue records: a later change cites them once the kind exists"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/schemas/majordomus/owner-answer/owner-answer.v1.schema.json",
+            "share/allow/owner-answer.txt",
+            "lib/answer.sh",
+            "lib/commands.sh",
+            "lib/doctor.sh",
+            "lib/project.awk",
+            "docs/CLI.md",
+            "test/cases/4669_an_owner_answer_carries_its_provenance.sh",
+            ".ai/repo/project/issues/I4669.yaml",
+            "site/content/plan/I4669.md"
+          ],
+          "serves": [],
+          "slug": "an-owner-answer-carries-its-provenance",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4669_an_owner_answer_carries_its_provenance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4670",
+        "kind": "issue",
+        "label": "I4670",
+        "summary": "A machine slot's holder is a typed record: one command hands it to another session, it is given back when no build of its holder is alive, and doctor names a slot held idle",
+        "route": "/cockpit/objects/issue/i4670",
+        "source": ".ai/repo/project/issues/I4670.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [
+            "I4006"
+          ],
+          "evidence_required": [
+            "a_machine_slot_is_handed_over_and_never_held_idle"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "The slot itself, its count, its bounded wait and its dead-holder release: I4006",
+            "The derive lock's one-derive-at-a-time semantics and its owner line, which scripts/reap-orphans and case 1018 read unchanged",
+            "A slot on another machine"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/machine_lock.sh",
+            "lib/doctor.sh",
+            "lib/rust_bin.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/OFFLOAD.md",
+            "test/cases/4670_a_machine_slot_is_handed_over_and_never_held_idle.sh",
+            ".ai/repo/project/issues/I4670.yaml",
+            "site/content/plan/I4670.md"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
+          ],
+          "slug": "a-machine-slot-is-handed-over-and-never-held-idle",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4670_a_machine_slot_is_handed_over_and_never_held_idle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4671",
+        "kind": "issue",
+        "label": "I4671",
+        "summary": "A push hook judges every cheap precondition before its first heavy gate, runs each heavy gate within a declared budget, and reuses a commit's review verdict unless the commit changed",
+        "route": "/cockpit/objects/issue/i4671",
+        "source": ".ai/repo/project/issues/I4671.yaml",
+        "facts": {
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "a_push_refuses_early_and_reviews_a_commit_once"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "This repository's own .githooks/pre-push and scripts/ci/run-plan: they may adopt `hook run` later, as a change of their own",
+            "What a review judges, or which model or provider runs it",
+            "Making a local gate refuse what CI decides (I3830): the policy states which heavy entries refuse",
+            "The pre-commit composition of I3161"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/init.sh",
+            "lib/finish.sh",
+            "lib/evidence.sh",
+            "lib/commands.sh",
+            "lib/hook.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/CLI.md",
+            "test/cases/4671_a_push_refuses_early_and_reviews_a_commit_once.sh",
+            ".ai/repo/project/issues/I4671.yaml",
+            "site/content/plan/I4671.md"
+          ],
+          "serves": [
+            "a-change-is-judged-in-minutes#a-regression-fails-its-budget"
+          ],
+          "slug": "a-push-refuses-early-and-reviews-a-commit-once",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4671_a_push_refuses_early_and_reviews_a_commit_once"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4685",
         "kind": "issue",
         "label": "I4685",
@@ -82840,6 +83033,25 @@
           "tags": [
             "context-knowledge",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/a-push-may-start-at-35-gib-free",
+        "kind": "knowledge",
+        "label": "a-push-may-start-at-35-gib-free",
+        "summary": "Owner decision 2026-11-19 (~04:00 local, ~03:00Z): a Majordomus push may start at 35 GiB free, the build floor, instead of the 45 GiB pre-push floor sessions kept; the owner also asked the session to free disk",
+        "route": "/cockpit/objects/knowledge/a-push-may-start-at-35-gib-free",
+        "source": ".ai/repo/knowledge/curated/a-push-may-start-at-35-gib-free.md",
+        "status": "verified",
+        "facts": {
+          "class": "fact",
+          "date": "2026-11-19",
+          "epistemics": "decided",
+          "tags": [
+            "decision",
+            "disk",
+            "owner-answer"
           ]
         }
       },
@@ -83196,7 +83408,7 @@
         "id": "majordomus://knowledge/fabric-starts-with-p00-s00-s01",
         "kind": "knowledge",
         "label": "fabric-starts-with-p00-s00-s01",
-        "summary": "Owner decisions 2026-11-24: Majordomus Fabric starts with P00, S00 and S01; ADR 0199 is amended into its decision; #3108 is held; an unattended follower requires provenance; one OS user locally, encrypted between hosts",
+        "summary": "Owner decisions 2026-11-24/25: Majordomus Fabric starts with P00, S00 and S01; ADR 0199 is amended and accepted (G0); #3108 is held; an unattended follower requires provenance; one OS user locally, encrypted between hosts; I3184 is unblocked",
         "route": "/cockpit/objects/knowledge/fabric-starts-with-p00-s00-s01",
         "source": ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md",
         "status": "verified",
@@ -110573,6 +110785,13 @@
         "label": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
         "route": "/cockpit/objects/test/test-cases-4592-the-projection-apply-checkout-is-blobless-and-bounded-sh",
         "source": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "kind": "test",
+        "label": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "route": "/cockpit/objects/test/test-cases-4595-doctor-names-an-install-behind-its-lockfile-sh",
+        "source": "test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh"
       },
       {
         "id": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
@@ -152808,6 +153027,51 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4668",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4668",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4669",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4669",
+        "target": "majordomus://milestone/M002",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4670",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4670",
+        "target": "majordomus://issue/I4006",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4670",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4671",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4671",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4685",
         "target": "kind:issue",
         "kind": "is_a"
@@ -152864,6 +153128,11 @@
       },
       {
         "source": "majordomus://knowledge/a-prompt-pack-in-the-owners-word",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/a-push-may-start-at-35-gib-free",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -160593,6 +160862,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -165749,8 +166023,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4536,
-      "edges": 10219,
+      "nodes": 4542,
+      "edges": 10230,
       "acyclic": false,
       "truncated": false
     }
