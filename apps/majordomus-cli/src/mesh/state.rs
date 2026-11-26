@@ -778,6 +778,9 @@ pub fn fold_with(
             // not a verdict every runtime shares, so it stays out of the state two runtimes
             // compare: mesh::build_cache::offer reads it.
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {}
+            // A build host's own word on itself (I4343): not folded, read by `mesh events`
+            // and `monitor` as the host's latest observation, the same as the offer above.
+            EventBody::BuildHostObserved { .. } => {}
             EventBody::RecordWritten { record } => records.apply(event, record, &closed_at),
         }
     }

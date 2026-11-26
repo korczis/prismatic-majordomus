@@ -72,6 +72,10 @@ fields:
   EventBody.BuildCacheOffered.offer: clear
   # a reason from the fixed vocabulary of mesh::build_cache::offer::current, one line
   EventBody.BuildCacheWithdrawn.reason: clear
+  EventBody.BuildHostObserved.ok: clear
+  # lines composed by mesh::cache_provision::BuildHostObserved::failing from fixed text,
+  # the declared policy's unit names, tenant names and host paths, and measured sizes (I4343)
+  EventBody.BuildHostObserved.failing: clear
   # a typed coordination record (I4665, mesh/records.rs): mesh::cooperation::write_record
   # passes its free text — title, body, a handoff's objective, current_state, evidence,
   # blockers and next_action, a tool source's command and result — through redact_secrets
