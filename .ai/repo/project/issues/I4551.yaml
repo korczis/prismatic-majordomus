@@ -1,0 +1,29 @@
+id: I4551
+milestone: a-provider-carries-the-contract-natively
+title: "A message one session sends another is never archived as the person's prompt"
+slug: a-synthetic-message-is-not-the-persons
+priority: p1
+profile: implementation
+objective: "Make mj_capture_is_person in lib/capture.sh recognise the injected marker by its prefix: the adapter's marker list holds the literal '<cross-session-message>', while real messages arrive as '<cross-session-message from=\"...\">', so the prefix never matches and every such message is archived as a person prompt."
+why: "The owner's pack of 2026-11-07 asks that human and synthetic prompts be told apart at capture (campaigns/majordomus-nexus-pack-20261107/prompts/02_PROMPT_CAPTURE_AND_INGRESS.md). Measured on this machine on 2026-11-07: 9,464 of 25,972 archived prompt records are cross-session messages, and 1,078 of 1,914 in November, each stored as a person prompt with no source."
+current_state: "MJ_CAPTURE_ADAPTERS field 10 lists the bare tag; mj_capture_is_person compares the payload's opening with it."
+desired_state: "A payload that opens with the cross-session tag, with or without attributes, is not archived as the person's prompt, and capture status counts it apart."
+scope:
+  - "lib/capture.sh"
+  - "test/cases/29_prompt_capture.sh"
+non_scope:
+  - "Rewriting or deleting records already archived"
+  - "Moving capture to the Rust session domain (I3143)"
+serves:
+  - "a-provider-carries-the-contract-natively#a-synthetic-message-is-not-the-persons"
+acceptance_criteria:
+  - "A payload opening with '<cross-session-message from=\"uds:x\">' writes no person prompt record, and one opening with the bare tag still writes none"
+  - "A person's prompt that mentions the tag later in its text is still archived"
+  - "capture status reports the synthetic deliveries it skipped as their own count"
+validation:
+  - "bash test/run.sh 29_prompt_capture"
+  - "majordomus shell check"
+evidence_required:
+  - "case_a_synthetic_message_is_not_the_persons"
+created_at: 2026-11-07
+updated_at: 2026-11-07

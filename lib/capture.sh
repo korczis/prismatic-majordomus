@@ -241,6 +241,8 @@ mj_capture_episode_of() {
 # and not by the doctrine, because a skip is normal operation rather than a failure: it
 # writes no record and no log line. Both tests are declared as data so that a provider
 # growing another kind of injected message is one string, not a change to the writer.
+# Each field-10 entry names a tag, `<name>`, and matches that tag with or without
+# attributes (`<name from="...">`) but never a longer tag name; mj_capture_is_person says how.
 #
 # The list is what has been observed or documented, not a closed set: the provider owns it
 # and can add to it without telling anyone. A marker that arrives and is not listed becomes
@@ -1040,8 +1042,16 @@ mj_capture_render() {
 
 # Did a person write this? False for a payload whose declared origin is not one the adapter
 # calls a person, and for one whose text opens with a marker the provider injects.
+#
+# A marker is declared as `<name>` but names a tag, not a string: the provider writes the
+# same tag with attributes — `<cross-session-message from="uds:...">` — and a literal
+# prefix test let every one of those through as the person's prompt (I4551). So the test is
+# on the tag name: the text opens with `<name` and the name ends there, at `>`, `/` or
+# whitespace. Whitespace in the raw JSON string is a space or an escape (`\n`, `\t`, `\r`).
+# The end of the name is part of the test because a prefix alone is not a tag: a marker
+# `<bash-input>` must not swallow `<bash-input-history>`, which nobody declared.
 mj_capture_is_person() {
-  local p="$1" src="$2" text="$3" who mark
+  local p="$1" src="$2" text="$3" who mark tag
   who="$(mj_capture_field "$p" 9)"
   if [ "$src" != null ] && [ -n "$who" ]; then
     src="${src#\"}"; src="${src%\"}"
@@ -1049,7 +1059,10 @@ mj_capture_is_person() {
   fi
   text="${text#\"}"
   for mark in $(mj_capture_field "$p" 10 | tr ',' ' '); do
-    case "$text" in "$mark"*) return 1 ;; esac
+    tag="${mark%>}"
+    case "$text" in
+      "$tag>"* | "$tag "* | "$tag/"* | "$tag\\n"* | "$tag\\t"* | "$tag\\r"*) return 1 ;;
+    esac
   done
   return 0
 }

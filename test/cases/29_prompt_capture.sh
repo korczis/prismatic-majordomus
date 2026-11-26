@@ -253,6 +253,32 @@ printf '{"prompt":"injected by something","prompt_id":"n2","prompt_source":"hook
 printf '{"prompt":"no origin declared","prompt_id":"n3"}' | ./.claude/hooks/majordomus-capture
 [ "$(records)" = "$((was + 1))" ] || { echo "    a payload with no declared origin was dropped"; exit 1; }
 
+# A marker names a tag, and the provider writes tags with attributes: a cross-session
+# message arrives as `<cross-session-message from="uds:...">`, which a literal prefix test on
+# `<cross-session-message>` never matched, so thousands of them were archived as the
+# person's prompts (I4551). Payloads go through '%s' so printf does not eat the JSON escapes.
+was="$(records)"
+printf '%s' '{"prompt":"<cross-session-message from=\"uds:/tmp/x.sock\">hi</cross-session-message>","prompt_id":"n4"}' \
+  | ./.claude/hooks/majordomus-capture
+[ "$(records)" = "$was" ] || { echo "    a cross-session message with attributes was captured as a prompt"; exit 1; }
+printf '%s' '{"prompt":"<subagent-notification id=\"a1\">done</subagent-notification>","prompt_id":"n5"}' \
+  | ./.claude/hooks/majordomus-capture
+[ "$(records)" = "$was" ] || { echo "    a subagent notification with attributes was captured as a prompt"; exit 1; }
+printf '%s' '{"prompt":"<system-reminder\nx>body</system-reminder>","prompt_id":"n6"}' \
+  | ./.claude/hooks/majordomus-capture
+[ "$(records)" = "$was" ] || { echo "    a marker ended by escaped whitespace was captured as a prompt"; exit 1; }
+[ "$(logsize)" = "$logwas" ] || { echo "    a skip was logged as a failure"; tail -n 2 .ai/local/prompts/.capture.log; exit 1; }
+# ...but the match is on the tag name, not on a prefix of it: a longer tag nobody declared
+# is not the declared one, and a person who mentions a marker mid-text wrote a prompt
+printf '%s' '{"prompt":"<bash-input-history>a tag nobody declared","prompt_id":"n7"}' \
+  | ./.claude/hooks/majordomus-capture
+[ "$(records)" = "$((was + 1))" ] || { echo "    a longer tag name was taken for a declared marker"; exit 1; }
+printf '%s' '{"prompt":"why is <cross-session-message from=\"x\"> archived","prompt_id":"n8"}' \
+  | ./.claude/hooks/majordomus-capture
+[ "$(records)" = "$((was + 2))" ] || { echo "    a prompt that mentions a marker mid-text was dropped"; exit 1; }
+[ -n "$(find .ai/local/prompts -maxdepth 1 -name '*-why-is-cross-session-message-from-x-archived.json')" ] \
+  || { echo "    the prompt that mentions a marker is not named for its text"; ls -1 .ai/local/prompts; exit 1; }
+
 # ---------------------------------------------------------------- capture deletes nothing
 # Capturing must leave every earlier record exactly where it was: a record is written once
 # and no write path touches another one.
