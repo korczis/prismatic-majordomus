@@ -120,10 +120,9 @@ kind = "release-record"
 projection = "section"
 route = "/changelog/"
 
-[[kinds]]
-kind = "session"
-projection = "section"
-route = "/sessions/"
+# `session` is not declared here: a closed session is operational scope (I0813), so the
+# repository's index holds no object of it, and /sessions/ is written by
+# scripts/generate-site-data from the tracked records themselves, not from the index.
 
 [[kinds]]
 kind = "skill"

@@ -13,7 +13,7 @@ featured: true
 areas: [context, coordination]
 modules: [continuity, lifecycle, session_domain, recover, brief, episodes]
 commands: [context, checkpoint, handover, session, capture, prompt, recover]
-kinds: [session, prompt]
+kinds: [prompt]
 rules: [majordomus.handover-integrity, majordomus.session-lifecycle, majordomus.session-records, majordomus.prompt-capture, majordomus.task-continuity, majordomus.checkpoint-freshness, project.never-store-transcripts, majordomus.handovers-carry-state]
 docs: [docs/CONTINUITY.md, docs/CONTEXT.md]
 adrs: [adr-0009, adr-0014, adr-0015, adr-0017]
