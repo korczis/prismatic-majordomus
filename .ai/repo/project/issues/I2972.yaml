@@ -1,0 +1,30 @@
+id: I2972
+milestone: "a-session-proceeds"
+title: "One query decides what a session proceeds with, and says why"
+slug: proceed-plan-decides-and-explains
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare proceed.plan (a query, capability!) that composes the plan's hand-out order, the repository's board (peers.list) and the live mesh claims (mesh.state) into one decision: the selected issue, every READY candidate with the hard constraint it failed (claimed, named, scope_held) and the hold that failed it, provisional when the board or a declared mesh could not be read, each term of the order, what the selection unblocks, the evidence that finishes it and the commands that take it; projected as `majordomus proceed plan`, MCP majordomus_proceed_plan and GET /api/v1/proceed/plan."
+why: "ADR 0177. A worker's start is composed by hand today; plan.next gives one id with no reason and no view of the board or the mesh."
+current_state: "No capability composes the start; plan.next is the nearest and answers one id."
+desired_state: "proceed.plan answers the decision on every projection, writes nothing, and a case holds its shape on a fixture repository with a board and claims."
+serves:
+  - a-session-proceeds#a-session-is-told-what-to-take
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh"
+depends_on: []
+acceptance_criteria:
+  - "The decision names the selected issue, each rejected candidate with its failed constraint, and each ranking term"
+  - "It is one capability projected on the command line, MCP and HTTP, and writes nothing"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why"
+evidence_required:
+  - "case_a_session_is_told_what_to_proceed_with_and_why"
+created_at: 2026-10-18
+updated_at: 2026-10-18

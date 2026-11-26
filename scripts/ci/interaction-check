@@ -9,8 +9,11 @@
 # Exit 0 clean, 10 findings, 12 site/public missing or node absent.
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/../.." && pwd)" || true
 LIB="$(cd "$(dirname "$0")/../lib" && pwd)"
-command -v node >/dev/null 2>&1 || { echo "interaction-check: node is required" >&2; exit 12; }
+mj_runs node || { echo "interaction-check: node is required: $(mj_runs_why node)" >&2; exit 12; }
 [ -d "$ROOT/site/public" ] || { echo "interaction-check: site/public missing; run scripts/site-build" >&2; exit 12; }
 MODE=check
 for a in "$@"; do case "$a" in --inventory) MODE=inventory ;; *) echo "interaction-check: unknown option $a" >&2; exit 2 ;; esac; done

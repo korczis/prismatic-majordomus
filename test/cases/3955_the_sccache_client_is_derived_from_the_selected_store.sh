@@ -23,7 +23,7 @@
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "    jq is not installed"; exit 1; }
-command -v python3 >/dev/null 2>&1 || skip "no python3 to stub the store"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj-3955.XXXXXX")"

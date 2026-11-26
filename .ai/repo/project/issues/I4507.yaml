@@ -1,0 +1,39 @@
+id: I4507
+milestone: a-profile-is-resolved-once-and-enforced
+title: "Every axis says how far it is enforced: enforced, observed, requested or unobservable, declared once and shown wherever a profile is"
+slug: every-axis-says-how-far-it-is-enforced
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Declare, beside each axis of the typed profile, how far the tool enforces it, show that standing in every answer of the resolver, and hold each stronger standing to a test that proves it."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, invariant 6 and PROMPT 06 item 4, ask for a truthfulness matrix per axis (configured, passed to the worker, accepted, instrumented, verified, unknown) and forbid presenting an instruction to a worker as a runtime guarantee or a model's self-report as evidence. docs/claims/profile-axes.md already says in prose that the axes are advisory, in one paragraph for all of them, while verification.* is in fact enforced by finish and context.* in fact decides what the briefing holds. The distinction exists in the code and nowhere a reader or a client can ask for it."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. finish enforces verification.* (lib/finish.sh; case 16_profiles); context.* decides the briefing (lib/context.sh); check reports checkpoint_interval (lib/check.sh). capability, effort, verbosity, presentation, reasoning and output_contract are printed into the briefing and nothing observes them. docs/claims/profile-axes.md, held by docs/CLAIMS.yaml, says every axis is advisory."
+desired_state: "Each axis of the typed Profile has a standing of a closed enum: enforced (the tool refuses otherwise), observed (the tool measures and reports, without refusing), requested (written into the worker's instructions) or unobservable (requested, and no surface of this repository can see the outcome). The standing is declared on the type and is part of every resolved field and every explain row. An enforced or observed standing names the test that proves it, and a test fails when the named test does not exist. docs/PROFILES.md prints the table from the type, and docs/claims/profile-axes.md states per axis what the table states."
+scope:
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/tests"
+  - "docs/PROFILES.md"
+  - "docs/claims/profile-axes.md"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/project/issues/I4507.yaml"
+non_scope:
+  - "Making any axis more enforced than it is: this states the standing, and I4506 and runtime-adapters change it"
+  - "Reading a provider's usage or a model's report of its own effort"
+depends_on:
+  - I4502
+acceptance_criteria:
+  - "Every axis of the type has exactly one standing, and adding an axis without one does not compile or fails a test"
+  - "verification.* and, after I4506, grants.effects are enforced; context.* is enforced; checkpoint_interval is observed; effort, capability, verbosity, presentation, reasoning and output_contract are requested or unobservable, and none of those reads enforced"
+  - "An enforced or observed axis whose named test is absent fails the build"
+  - "profile.resolve and profile.explain carry the standing of each field, and the table in docs/PROFILES.md is generated and held by generate --check"
+  - "If I3123 has landed, verification.verify_commands has its row, stated enforced with the test that proves it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "axis_standing_table"
+  - "standing_names_its_proof_test"
+created_at: 2026-10-30
+updated_at: 2026-10-30

@@ -6,7 +6,7 @@ priority: p0
 profile: implementation
 parallel_safe: false
 objective: "The one next-issue function I3754 builds (plan.rs ranking, then delivery at the trunk) gains a second, observed pass: a READY candidate whose delivery stage is pr_open (plan/delivery.rs, from the recorded forge observation) or branch with a live claim on the mesh board (read from mesh/state.rs) is passed over as taken and listed with the pull request or claim that put it there and the time of that observation. Taken is a readiness refinement inside READY (devtask/readiness.rs TaskReadiness::Taken), neither a seventh canonical status nor TaskReadiness::Review, which already means VERIFY (readiness.rs:25-27): ISSUE_STATUSES and lib/project.awk stay byte-equal, and readiness.rs's note that no record field can distinguish such a word is amended to say that delivery, an observation, now does. plan next, plan ready and plan.status's next_ready answer the same. The shell's plan next (mj_pj_next_ready, lib/plan.sh:230, 262, 337) cannot read the forge cache or the board, so it asks the executable for the observed pass, and when the executable is absent answers the stamps-only pick labelled as such. plan next --at <rev> keeps I3754's answer that depends on the commit alone."
-why: "Sessions on 2026-10-22 were handed issues whose work was already in an open pull request (I3910 and I3916 were each announced taken while plan next still offered them), so two workers started the same work; the plan reads only stamps, and delivery, which knows of the pull request, is not consulted."
+why: "Sessions on 2026-10-22 were handed issues whose work was already in an open pull request (I3910 and I3916 were each announced taken while plan next still offered them), so two workers started the same work; the plan reads only stamps, and delivery, which knows of the pull request, is not consulted. The owner's pack asks for the same in campaigns/majordomus-autonomous-idd-maximal/10_SCHEDULER_WORKER_RUNTIME.md and campaigns/majordomus-autonomous-idd-maximal/02_ORCHESTRATOR_MESH.md; PR #1058 planned it as I2502, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "Verified at 355a0cee79a: plan.rs:567-580 ranks READY issues by wave, priority and id; plan/delivery.rs derives pr_open from the forge cache (delivery.rs:487-529); devtask/readiness.rs:32 states there is no in_review; ISSUE_STATUSES is plan.rs:51, held to lib/project.awk by case 99_plan_capabilities. I3754 (one next function reading delivery at the trunk only) is BLOCKED and not started."
 desired_state: "plan next never names an issue with an open pull request or a live branch claim; plan ready lists it as taken with its evidence; the canonical six statuses are unchanged."
 scope:
@@ -29,6 +29,10 @@ acceptance_criteria:
   - "The shell's plan next answers the same through the executable, and labels a stamps-only answer when the executable is absent"
   - "plan next --at <rev> answers from the commit alone, as I3754 defines"
   - "ISSUE_STATUSES and lib/project.awk are unchanged and case 99_plan_capabilities passes"
+  - "An exclusive claim whose scope meets the issue's scope passes the issue over even when the claim names no issue (mesh::state::admission_conflicts, peers::claims_meet); an advisory claim is reported and passes nothing over"
+  - "A ready issue whose scope overlaps an active issue that is not parallel_safe is passed over, naming that issue"
+  - "When the gathered board reports complete false, an issue that would otherwise be the answer reads unknown and names the checkout that could not be asked"
+  - "Two calls over one unchanged snapshot answer byte-identical output, and a call appends nothing to the ledger"
 validation:
   - "bin/majordomus plan validate"
   - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::"
@@ -41,4 +45,4 @@ depends_on:
 serves:
   - "merging-and-referencing-are-enforced#work-in-review-is-not-next"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-30

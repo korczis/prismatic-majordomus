@@ -20,9 +20,10 @@
 #   3. it installs, into a prefix and an install directory of this run's own, with the
 #      home directory of this run — nothing outside the temporary tree is touched;
 #   4. the installed tool reports the version the metadata resolved;
-#   5. the installed MCP launcher runs with no toolchain present, because an archive
-#      missing a launcher passes every check that only reads the archive's file list;
-#   6. the installed tool initialises a repository that has none;
+#   5. the installed tool initialises a repository that has none;
+#   6. the installed MCP launcher runs with no toolchain present on that repository's layer,
+#      because an archive missing a launcher passes every check that only reads the
+#      archive's file list;
 #   7. and serves it: the installed MCP launcher, started in that repository without
 #      --standalone, answers initialize and tools/list over stdio, starts the shared server,
 #      and the server reports itself ready and names that repository — not this one.
@@ -205,19 +206,7 @@ if [ -x "$BIN/majordomus" ]; then
     || fail "the installed tool reports '$reported', not 'majordomus $version'"
 fi
 
-# ---------------------------------------------------------------- 5. no toolchain needed
-# The check the archive's own file list cannot make. An installed tree has no crate, so a
-# launcher whose executable was left out of the archive fails here and nowhere earlier.
-if [ -x "$BIN/majordomus-mcp" ]; then
-  if printf '' | env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --standalone --repo "$ROOT" >/dev/null 2>"$WORK/mcp.err"; then
-    ok "the installed MCP launcher runs with no toolchain"
-  else
-    fail "the installed MCP launcher needs a toolchain, or is missing what it runs"
-    sed 's/^/                    /' "$WORK/mcp.err" >&2
-  fi
-fi
-
-# ---------------------------------------------------------------- 6. it supervises a repository
+# ---------------------------------------------------------------- 5. it supervises a repository
 if [ -x "$BIN/majordomus" ] && command -v git >/dev/null 2>&1; then
   repo="$WORK/foreign"; mkdir -p "$repo"
   ( cd "$repo" && git init -q . && git config user.email ci@example.invalid && git config user.name ci ) >/dev/null 2>&1
@@ -226,6 +215,24 @@ if [ -x "$BIN/majordomus" ] && command -v git >/dev/null 2>&1; then
   else
     fail "the installed tool could not initialise a repository"
     tail -n 5 "$WORK/init.log" | sed 's/^/                    /' >&2
+  fi
+fi
+
+# ---------------------------------------------------------------- 6. no toolchain needed
+# The check the archive's own file list cannot make. An installed tree has no crate, so a
+# launcher whose executable was left out of the archive fails here and nowhere earlier.
+# It runs on the layer the release itself just wrote, never on this checkout: the checkout
+# is the source tree, whose layer may already carry keys a published release cannot know
+# (`lifecycle` in .ai/manifest.yaml failed the stable 0.30.2 here on 2026-10-31), and
+# whether a release reads a newer layer is version skew, not a missing executable (I4527).
+if [ -x "$BIN/majordomus-mcp" ]; then
+  if [ ! -f "${repo:-}/.ai/repo/policy.yaml" ]; then
+    fail "the installed MCP launcher was not run: the release wrote no layer to run it on"
+  elif printf '' | env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --standalone --repo "$repo" >/dev/null 2>"$WORK/mcp.err"; then
+    ok "the installed MCP launcher runs with no toolchain"
+  else
+    fail "the installed MCP launcher needs a toolchain, or is missing what it runs"
+    sed 's/^/                    /' "$WORK/mcp.err" >&2
   fi
 fi
 

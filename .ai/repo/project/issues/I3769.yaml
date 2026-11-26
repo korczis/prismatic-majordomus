@@ -37,6 +37,8 @@ validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 51_derived_artifacts_committed 333_homepage_narrative"
   - "scripts/generate-site-data --check && scripts/site-build && scripts/ci/homepage-check"
 evidence_required:
-  - "a_built_page_reads_delivery_at_its_build_commit"
-  - "a_render_without_a_build_record_falls_back_to_committed_delivery"
+  - "a_published_page_reads_delivery_at_its_build_commit"
 depends_on: []
+started_at: 2026-11-06T19:08:17Z
+started_event: sha256:b6ac8681f723293565feebb032941bd58c7fa2baeb63bce1228c5f110d2da20c
+updated_at: 2026-11-06T19:08:17Z

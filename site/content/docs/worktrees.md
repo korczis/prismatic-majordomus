@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 60
+weight = 62
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -205,7 +205,7 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree guard [--quiet]` | may a commit proceed from here | no |
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
-| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
+| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, or (checked out) whose content is already there, whose worktree is clean, holds only changes the trunk has, or is absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
 | `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
 | `worktree trunk` | how far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against `checkout.trunk_distance`, with the commands that bring it current; fetches nothing | the checkout is stale |
@@ -219,6 +219,20 @@ typed answer the human form renders. A **selector** for `remove` is exact — a 
 a path — and nothing is matched by prefix or similarity. There is no `worktree cd`: a child
 process cannot change its parent shell's directory, so `path` prints one and the shell does
 the rest.
+
+`worktree ensure` is the command-line projection of the one typed capability that writes
+the topology, `worktree.create` (I4002): MCP `majordomus_worktree_create`, HTTP
+`POST /api/v1/worktrees/create`, input `{branch, base?}`. It is the service's `ensure` and
+nothing else, so an executor that needs an isolated worktree asks the same question a person
+types: the path is derived, the canonical worktree already holding the branch is the answer
+(`existed: true`, nothing created), a branch checked out elsewhere or a canonical path
+occupied by something else is refused with the service's reason and nothing changed, and
+`git worktree add` runs under the worktree lock with a deadline (`WORKTREE_ADD_TIMEOUT`,
+600 s) past which it is killed and refused with `git worktree prune` as the remedy. The
+answer carries the branch, the path, the `head` read back from the worktree, and where a new
+branch started. It declares the repository-mutation effect, so every surface asks before it
+runs; migrating, repairing and removing stay command-line operations. `worktree create`
+keeps its own contract and refuses a worktree that is already there.
 
 `worktree create --issue I0042` names the branch `feature/I0042-<slug>` from the issue's
 own record, and the topology reads the issue back from any branch that carries an issue id
@@ -484,10 +498,25 @@ topology changes outside the process.
 
 ## Reclaiming
 
-`majordomus worktree cleanup` lists what is spare: every branch merged into the trunk whose
-worktree is clean or absent. `--remove` removes those worktrees, and nothing else — branches
-are never deleted, because the disk is what runs out and a branch is the only durable name a
-piece of work has.
+`majordomus worktree cleanup` lists what is spare: every branch that has landed in the trunk
+whose worktree is clean, holds only changes the trunk already has, or is absent. `--remove`
+removes those worktrees, and nothing else — branches are never deleted, because the disk is
+what runs out and a branch is the only durable name a piece of work has.
+
+A branch has landed when it is merged into the trunk (its tip is an ancestor), or, for a
+checked-out branch, when its content is there: `git merge-tree --write-tree <trunk> <branch>`
+writes the trunk's own tree, so merging it would change nothing (`landed_by_content`). That
+covers a squash merge, a train and a cherry-pick, none of which leaves the tip an ancestor. A
+worktree whose `git status` is not empty is still spare when every path it reports holds,
+blob and mode, exactly what the trunk holds there, or is absent from both, and every staged
+version among them is the trunk's too (`uncommitted_in_trunk`): records that landed through
+another branch. A symbolic link, a nested repository, an unresolved conflict or a path the
+file system will not describe is never judged equal. Both readings are taken
+against the trunk's remote-tracking branch, by `apps/majordomus-cli/src/worktree/landed.rs`,
+and both are exact: one byte the trunk lacks, committed or not, keeps the worktree. On
+2026-11-16 205 worktrees (about 44 GiB) on one machine were finished in exactly these ways and
+offered by nothing; `test/cases/4324_a_worktree_whose_work_is_in_trunk_is_finished.sh` is the
+fixture of that day.
 
 The listing and the removal are two moments, and everything that makes a worktree safe to
 remove can change between them, so the listing only nominates: `--remove` reads the branch's
@@ -498,9 +527,11 @@ again for each candidate immediately before it goes, and names what it refuses:
 
 | refusal | why it is not covered by "merged and clean" |
 |---|---|
-| ahead of its remote, no upstream, or upstream gone | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
+| ahead of its remote, or no upstream | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
+| upstream gone, and the trunk's remote-tracking branch neither contains its head nor holds its content | a branch merged on the forge and deleted there is removed, because every commit or every byte it holds is on the remote through the trunk; one deleted while it carried a commit the trunk lacks is refused |
 | a process has its working directory inside | mtime lies: two worktrees swept on 2026-09-15 looked untouched since the 12th and had live processes in them |
-| uncommitted work | read again at the moment of removal, not taken from the listing |
+| uncommitted work the trunk does not already hold | read again at the moment of removal, not taken from the listing; changes the trunk already holds are removed with `--force`, and only then |
+| a locked worktree | a lock is a person's word, and the `--force` above is never what passes over it |
 | `lsof` is missing, or git could not compare with the upstream | not knowing is not the same as nothing being there |
 
 </div>
@@ -616,6 +647,45 @@ runs under `GIT_OPTIONAL_LOCKS=0`, so no index is refreshed, and another worktre
 `.ai/local/` is read, never written. `test/cases/3025_abandoned_work_in_a_worktree_is_named.sh`
 plants an abandoned worktree, a held one and a recent one, and holds `git status` of every
 worktree byte-identical across the reading, the MCP tool and doctor.
+
+## An install behind its lockfile
+
+Each checkout installs its own dependencies, so a lockfile one worktree changes reaches the
+others through a merge and leaves their installs where they were. On 2026-11-14 an adopter
+installed and committed a new esbuild in a linked worktree; the primary checkout's pre-push
+then died halfway through its build with `ERR_MODULE_NOT_FOUND`, because that checkout's
+`node_modules` predated the new `package-lock.json`, and `npm ci` there made the same push
+pass (I4595).
+
+`majordomus doctor` reads every checkout, the primary and each linked worktree, and prints
+one `WARN clone <path>` per checkout whose install is behind its lockfile, naming the
+lockfile and, as the remedy, the command that brings that checkout current. When every
+install it read is current, one `OK clone install` line says so. It installs nothing.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| ecosystem | judged when | behind when | remedy |
+|---|---|---|---|
+| npm | `package-lock.json` with `node_modules/` beside it | an entry of the lockfile that `node_modules/.package-lock.json`, the install's own record, lacks or holds at another version, or whose directory is gone; an optional entry (another platform's binary) only when installed, dev entries not at all in an install that omitted every one | `npm ci` |
+| mix | `mix.lock` and `mix.exs` with `deps/` beside them | a locked dependency with no directory under `deps/`, or one older than `mix.lock`, sends the question to `mix deps.loadpaths --no-compile`, and it refuses | `mix deps.get` |
+
+</div>
+
+
+The npm reading is two files read by jq; npm itself never runs. The mix reading asks mix only
+when the directories under `deps/` do not already answer, and asks with `--no-compile`, so
+nothing is built: `mix deps.check`, the name the issue gave, is no task of Elixir 1.16 to 1.19,
+and Mix compiles every dependency before saying so. A mix that does not start in that checkout
+makes the reading `INFO`, as does an install with no `.package-lock.json` (npm before 7) or
+jq absent; none of them is a failure. A checkout with no lockfile, or with a lockfile and no
+install beside it, is not judged: an install never made is not behind, and most worktrees never
+make one. With nothing judged the reading prints nothing.
+
+Under `MAJORDOMUS_DOCTOR_CONTEXT=commit` only the committing checkout is read, and an
+`INFO clone install` line says the others were left out. pnpm, yarn and cargo are not read yet.
+`test/cases/4595_doctor_names_an_install_behind_its_lockfile.sh` holds both directions, the
+fix, the commit context, the checkout with no lockfile and the mix reading, and that none of
+it writes.
 
 ## A build behind another worktree's lock
 

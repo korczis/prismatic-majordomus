@@ -26,6 +26,7 @@ use super::error::{Result, WorktreeError};
 use super::git;
 use super::hooks::{self, HooksPath};
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
+use super::landed;
 use super::lock::WorktreeLock;
 use super::model::{
     BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
@@ -213,8 +214,13 @@ pub struct CreateReport {
     pub container: String,
     /// Whether the container was created by this command.
     pub container_created: bool,
-    /// The worktree already existed at its canonical path and nothing was created.
+    /// The worktree already existed at its canonical path and nothing was created: the
+    /// `existing` answer of an idempotent create, where `false` is `created`.
     pub existed: bool,
+    /// The commit the worktree's HEAD names now, read back from it after the create or the
+    /// find, whichever this was; `None` when git cannot say (an unborn branch).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head: Option<String>,
     /// What became of its `.envrc` under direnv: the primary checkout's approval carried to
     /// this path, or why it was not. A worktree that starts blocked is the recurring
     /// "direnv does not work again"; this says so before the first `cd` does.
@@ -826,23 +832,77 @@ impl WorktreeService {
 
         let by_path: BTreeMap<String, &WorktreeState> =
             worktrees.iter().map(|w| (w.path.clone(), w)).collect();
-        let mut branch_states: Vec<BranchState> = branch_refs
+        // What git proves offline about a checked-out branch that the ancestry does not
+        // cover: its content already in the trunk (a squash merge, a train, a cherry-pick),
+        // and its uncommitted changes already in the trunk (records that landed through
+        // another branch). Read only for the full topology `worktree cleanup` asks for, only
+        // where the answer can change eligibility, and against the trunk every other
+        // checkout sees (its remote-tracking branch). 205 worktrees, about 44 GiB, were
+        // finished in exactly these two ways on 2026-11-16 and offered by nothing.
+        let trunk_ref = trunk
+            .branch
+            .as_deref()
+            .filter(|_| detail == Detail::Full)
+            .map(|t| landed::trunk_reference(primary, t));
+        let probes: Vec<Option<&Path>> = branch_refs
             .iter()
             .map(|b| {
+                trunk_ref.as_ref()?;
+                if trunk.is(&b.name) {
+                    return None;
+                }
+                let path = b.worktree.as_deref()?;
+                let h = by_path.get(&display(path))?;
+                if h.standing == Standing::Ephemeral || h.dirty.is_none() {
+                    return None;
+                }
+                let merged = merged.as_ref().is_some_and(|m| m.contains(&b.name));
+                let clean = h.dirty.as_ref().is_some_and(|d| d.clean);
+                (!merged || !clean).then_some(path)
+            })
+            .collect();
+        let readings: Vec<Option<(Option<bool>, Option<bool>)>> = match &trunk_ref {
+            Some(tr) => state::probe_all(&probes, |p| {
+                Some((
+                    landed::content_in(p, "HEAD", tr),
+                    landed::uncommitted_in(p, tr),
+                ))
+            }),
+            None => vec![None; branch_refs.len()],
+        };
+        let mut branch_states: Vec<BranchState> = branch_refs
+            .iter()
+            .zip(readings)
+            .map(|(b, reading)| {
                 let is_trunk = trunk.is(&b.name);
                 let worktree_path = b.worktree.as_deref().map(display);
                 let holder = worktree_path.as_deref().and_then(|p| by_path.get(p));
                 let merged_into_trunk = merged.as_ref().map(|m| m.contains(&b.name));
+                let (content, uncommitted) = reading.unwrap_or((None, None));
+                let landed_by_content = if merged_into_trunk == Some(true) {
+                    None
+                } else {
+                    content
+                };
+                let dirty = holder.and_then(|h| h.dirty.as_ref());
+                let uncommitted_in_trunk = dirty.filter(|d| !d.clean).and(uncommitted);
+                let landed = merged_into_trunk == Some(true) || landed_by_content == Some(true);
                 // A session's scratch checkout is never cleanup-eligible however merged and
                 // clean: the harness that made it removes it, and a listing that offered it
-                // would offer another session's floor.
+                // would offer another session's floor. A branch landed only by content has no
+                // worktree-less form here: `git branch -d` refuses it, and it is kept.
                 let cleanup_eligible = !is_trunk
-                    && merged_into_trunk == Some(true)
+                    && landed
                     && match holder {
-                        None => true,
+                        None => merged_into_trunk == Some(true),
                         Some(h) => {
                             h.standing != Standing::Ephemeral
-                                && h.dirty.as_ref().is_some_and(|d| d.clean)
+                                && dirty.is_some_and(|d| {
+                                    d.clean
+                                        || (d.in_progress.is_none()
+                                            && d.conflicted == 0
+                                            && uncommitted_in_trunk == Some(true))
+                                })
                         }
                     };
                 BranchState {
@@ -857,6 +917,8 @@ impl WorktreeService {
                     worktree: worktree_path,
                     upstream: b.upstream.clone(),
                     merged_into_trunk,
+                    landed_by_content,
+                    uncommitted_in_trunk,
                     cleanup_eligible,
                     issue: state::issue_of(&b.name, &self.issue_ids),
                 }
@@ -1125,6 +1187,7 @@ impl WorktreeService {
                         container: display(&self.container.path),
                         container_created: false,
                         existed: true,
+                        head: git::head_of(&existing.path).ok().flatten(),
                         envrc,
                         envrc_local,
                         hooks,
@@ -1200,7 +1263,9 @@ impl WorktreeService {
                 args.push(base.clone());
             }
         }
-        git::run(&primary, &args)?;
+        // Bounded: a checkout that hangs (a filter, a filesystem gone away) is refused at
+        // the deadline instead of holding the worktree lock, and every create behind it.
+        git::run_bounded(&primary, &args, git::WORKTREE_ADD_TIMEOUT)?;
 
         // Verify rather than assume: the answer is what the topology says.
         identity.refresh()?;
@@ -1218,11 +1283,9 @@ impl WorktreeService {
         let envrc_local = direnv::link_local(&primary, &registered.path);
         // And the moment it is bound to the hooks of its own tree, before its first commit.
         let hooks = hooks::carry_hooks_path(&primary, &registered.path);
-        let start_commit = match start {
-            // The worktree is made; a commit git cannot read back is not a reason to say not.
-            Some(_) => git::head_of(&registered.path).ok().flatten(),
-            None => None,
-        };
+        // The worktree is made; a commit git cannot read back is not a reason to say not.
+        let head = git::head_of(&registered.path).ok().flatten();
+        let start_commit = start.as_ref().and(head.clone());
         Ok(CreateReport {
             path: display(&registered.path),
             branch: name.as_str().to_string(),
@@ -1233,6 +1296,7 @@ impl WorktreeService {
             container: display(&self.container.path),
             container_created,
             existed: false,
+            head,
             envrc,
             envrc_local,
             hooks,
@@ -1871,6 +1935,29 @@ mod tests {
         CreateRequest {
             branch: branch.into(),
             base: base.map(str::to_string),
+        }
+    }
+
+    /// A `git worktree add` that git itself refuses, here through a post-checkout hook that
+    /// fails, is refused with what git said rather than read back as made.
+    #[test]
+    fn a_worktree_add_git_refuses_is_refused_with_what_git_said() {
+        use std::os::unix::fs::PermissionsExt;
+        let repo = Repo::new();
+        let hooks = repo.primary.parent().unwrap().join("refusing-hooks");
+        std::fs::create_dir_all(&hooks).unwrap();
+        let hook = hooks.join("post-checkout");
+        std::fs::write(&hook, "#!/bin/sh\necho the hook refuses >&2\nexit 1\n").unwrap();
+        std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+        repo.git(&["config", "core.hooksPath", &hooks.to_string_lossy()]);
+        match repo
+            .service()
+            .create(&request("feature/hooked", Some("master")))
+        {
+            Err(WorktreeError::GitCommandFailed { stderr, .. }) => {
+                assert!(stderr.contains("the hook refuses"), "{stderr}")
+            }
+            other => panic!("{other:?}"),
         }
     }
 

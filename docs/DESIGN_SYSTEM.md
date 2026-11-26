@@ -295,7 +295,7 @@ always shows the word beside it.
 
 | surface | how |
 |---|---|
-| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`; resource `majordomus://design` |
+| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`, `majordomus_design_kit`; resource `majordomus://design` |
 | HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast` |
 | OpenAPI, Swagger | the same four operations, from the registry |
 | Cockpit | `/cockpit/design`: every role with both themes' swatches, every status with its words as badges, the type scale at its own sizes, the projections — and the badge that says whether the stylesheet the page loaded agrees with the executable |
@@ -312,6 +312,98 @@ majordomus_design_explain {"token": "--mj-ok"}
   aliases: --color-fg-success-strong --color-success-soft --color-success-subtle,
   projections: share/design/theme.css share/design/surface.css …
 ```
+
+## The UI kit of a supervised repository
+
+Everything above is this tool's own design. `majordomus design kit` asks a different
+question, about the repository Majordomus supervises: is its user interface built on the
+kit the owner licenses? The answer comes from a kit profile the distribution ships,
+[`share/design/kits/flowbite-pro.yaml`](../share/design/kits/flowbite-pro.yaml). The
+profile holds markers only: attributes, class lists, package names and file shapes. It
+never holds a line of Flowbite Pro itself. The decision is
+[ADR 0230](../.ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md): Pro's
+structure is adapted onto Tailwind 4 and Flowbite 4, and a brand's colour is declared as
+Tailwind's `primary` scale.
+
+| signal | holds when |
+|---|---|
+| S0 | there is no user interface at all, and the rule then holds vacuously. Otherwise an interface was found, and cut into surfaces: the root's `package.json` (or the one in `assets`), every workspace the root declares (`workspaces`, or `pnpm-workspace.yaml`), and every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv. Phoenix LiveView in `mix.exs`, `*.heex`, `templates/*.html`, a Next.js `app/layout.tsx` and published pages (a root `index.html`; pages under `site`, `www` or `public`, under a directory a Pages workflow or a deploy script publishes, and under `docs` when it is published) count too. A manifest with UI packages that is no surface is a notice, never a finding, and nothing under examples or fixtures counts, a Mix project included. A Git submodule or a nested repository is judged in its own repository: a notice names it |
+| S1 | each surface declares `flowbite`, or `flowbite-react` for React and Next.js, and uses it in its own files: an attribute Flowbite's JavaScript drives, a `flowbite-react` component or a call of its API. Wiring alone passes none of S1 to S3 |
+| S2 | under Tailwind 4, `@plugin "flowbite/plugin"` and an `@source` over Flowbite; under Tailwind 3, `require('flowbite/plugin')` and a content glob, or `.plugin()` and `.content()` called on the identifier bound to `flowbite-react/tailwind`. A Play CDN or a CDN-only Flowbite is a finding |
+| S3 | every `data-drawer-*`, `data-dropdown-*`, `data-modal-*`, `data-tabs-*`, `data-collapse-*` and `data-tooltip-*` attribute is driven by Flowbite's JavaScript, and no script reads those attributes itself |
+| S4 | no daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui or Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation or Materialize. Alpine.js is reported, not refused |
+| S5 | every root layout carries a fixed top navbar, an `aside[aria-label="Sidebar"]` that both `data-drawer-target` and `data-drawer-toggle` name, a breadcrumb, and the page, surface and border roles; a published site's layout (under `site`, `www` or `docs`) a navbar and a footer. The layouts and the role aliases are the profile's; a Phoenix `layouts.ex` is judged with the app and root templates it embeds |
+
+```console
+majordomus design kit                    # findings with their remedies; exit 0
+majordomus design kit --check            # exit 10 on a finding (CI, pre-push)
+majordomus design kit --repo ../other    # any tree, supervised or not
+majordomus design kit adopt flowbite-pro [--dry-run]
+```
+
+Each finding names its signal, path, evidence and remedy. Exit 0 means clean or no
+interface, 10 a finding under `--check`, and 2 a policy that cannot be read.
+
+The profile's markers come in two kinds. Wiring markers (`wiring:`) connect the kit to a
+build, and usage markers (`usage:`) show it in use. Flowbite Pro is licensed, so the profile
+also declares its licensed markers (`licence:`): what in a tree is the licensed distribution
+itself rather than markup adapted from it, such as a Pro distribution directory or a
+dependency on a Pro package. Where a tree carries one, the design licence
+(`majordomus design licence`, I4336) decides: the judge asks its library function and reads
+its verdict as `active`, `inactive`, `refused` or `not_judged`. Only `active` passes;
+`inactive` and `refused` make the marker unlicensed, and `not_judged` (a public tree with a
+UI and no evidence on this machine) is undecided, a finding that no exemption moves. The
+same answer is the MCP tool `majordomus_design_kit`. There is no HTTP route, as there is
+none for the design licence: the input `evidence` names a file the process opens, and a
+query parameter naming a file on the server would let any HTTP caller probe its files.
+
+The evidence is a kit-evidence/v1 file. `--evidence <file>` names it (the input `evidence`
+over MCP). Without it, the judge reads the policy's `~`-relative `ui.evidence`
+entries. The executable reads a file and never the environment. In CI the secret
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` holds base64(gzip(kit-evidence/v1)). For flowbite-pro the
+name is `MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO`. The launcher handles it: where a
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported, `majordomus design kit` and
+`majordomus design licence` (not `design kit adopt`) run through the shell's
+`mj_fleet_design_judge` (`lib/fleet.sh`), and anywhere else the command is the
+executable's, unchanged. The seam decodes the secret of
+the kit `ui.kit` names into a private temporary file, passes that file as `--evidence`, and
+removes it after the run. A value that is not kit-evidence/v1 exits 2 and names the
+variable, never its value. If the secret is unset, empty or for another kit, nothing is
+handed over, and a public tree that owes a judgement fails closed. A file whose first
+line `# kit: <id>` names another kit is `not_judged`. `licence.reason` says why the
+licence answered as it did. It names a file and a line at most, never what the evidence
+holds. A policy that still carries the retired top-level `design_kit:` block gets a notice
+naming `ui.kit` as its replacement.
+
+`adopt` writes the rule `project.ui-uses-flowbite-pro` from
+[the template](../share/design/kits/flowbite-pro.rule.md). It sets `ui.kit: flowbite-pro` in
+the `ui:` block of `.ai/repo/policy.yaml`, the block the design licence declares and the
+skeleton seeds with no kit (or appends the block when there is none; a `ui.kit` naming
+another profile is refused, and with no kit adopted flowbite-pro is the profile judged), and
+two enforcement entries that run `design kit --check`:
+`design-kit-on-push` (the pre-push hook) and `design-kit` (the CI workflow, when there is
+one). It writes nothing that is already there, so a second run changes nothing. The rule ends
+with a section `In this repository` that is the repository's own: a later adoption brings
+the rest of the rule up to the template and keeps that section as the repository wrote it.
+`majordomus doctor` names each entry until the hook and the workflow invoke it.
+
+An exemption is the repository's own entry under `ui.exempt`, exactly a path and its
+reason, and is never silent: it moves every finding at its path to the exempted list, and
+every answer lists it with the number of findings it covered. A licensed marker's finding
+is never exempted.
+
+```yaml
+ui:
+  kit: flowbite-pro                 # written by adopt; "" adopts none
+  visibility: public                # the design licence's, as are publish and evidence
+  exempt:
+    - path: reel.html
+      because: a render canvas, captured headless and never navigated
+```
+
+This repository has not adopted the rule yet. Its site's navigation is `site/nav.js`, a
+hand-written drawer that S3 refuses, and the site, the Cockpit and `/ui` move onto the Pro
+shell in a later slice (ADR 0230, Consequences).
 
 ## Troubleshooting
 
