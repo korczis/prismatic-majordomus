@@ -929,8 +929,8 @@ pub const BUILD_HOST_STATE_MAX_AGE: Duration = Duration::from_secs(15 * 60);
 
 /// What a build host's own guard was observed to be, as far as this process could tell: the
 /// timer's own activity, the ballast, the age of its last state, every declared drop-in, and
-/// every declared tenant's size against its bound. Pure data: [`build_host_verdict`] (in
-/// [`super::doctor`]) is what judges it.
+/// every declared tenant's size against its bound. Pure data:
+/// [`build_host_check`](super::doctor::build_host_check) is what judges it.
 ///
 /// ```
 /// use std::time::Duration;
