@@ -1,0 +1,27 @@
+id: I4602
+milestone: adopter-upgrades
+title: "A test that builds a repository under a hook never inherits the hook's repository"
+slug: a-test-repository-never-inherits-the-hooks-git
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "An adopter is told, before a push does the damage, when a test script it runs from a hook builds its own git repository without first dropping the variables git names as repository-local (`git rev-parse --local-env-vars`)."
+why: "Inside a hook of a linked worktree, git exports an absolute GIT_DIR (a primary checkout exports none, so the defect never shows there). A test that then runs `git init`, `git commit` or `git -C <tmp>` in a scratch directory writes into the real repository instead. Majordomus met this on 2026-10-10: a pre-push run renamed a feature branch to master, made about eighty commits and wrote core.bare into the shared config (3c415b1468c). It guards its own runner since then (test/run.sh drops every local variable; case 1030 proves it; scripts/ci/run-plan does the same). On 2026-11-15 an adopter hit the identical class. sonic-playground's pre-push verify ran its cases 65 and 66, which re-initialised the repository: core.bare=true, core.hooksPath into a deleted temp directory so no hook ran anywhere, and local main on a fixture commit. Its runner had been modelled on Majordomus's and had lost the guard. A peer session restored it within 80 s, and nothing reached the forge. The fix there (sonic-playground a6e76bf2, case 67) is the same unset plus a decoy-GIT_DIR proof. The class recurs because the guard lives only in Majordomus's own tree, and nothing the tool ships checks it in an adopter."
+current_state: "Measured at origin/master 3fcaafac355: the guard exists in test/run.sh and scripts/ci/run-plan, for this tree only. `shell check` judges Majordomus's own shell inventory, not an adopter's test scripts, and doctor's wiring checks confirm that a hook calls verify, not what that call inherits."
+desired_state: "Candidate, to be decided before it is built. Either is enough, and the first is cheaper: (a) a vendored rule with a validator. A script under the repository's declared test directories that runs `git init`, or git with `-C` or `--git-dir` against a temporary path, must drop `$(git rev-parse --local-env-vars)` (or run under `env -u GIT_DIR ...`) first, and doctor names the file and line. (b) Doctor's verify-on-push wiring check runs the hook's verify command once with a decoy GIT_DIR and fails if the decoy's config, HEAD or refs changed. That is the proof sonic-playground's case 67 makes, generalised."
+scope:
+  - ".ai/repo/project/issues/I4602.yaml"
+non_scope:
+  - "Majordomus's own runner, which is guarded (3c415b1468c, case 1030)"
+  - "Wrapping every hook in a cleared environment: a hook's own git commands need the repository git hands them"
+acceptance_criteria:
+  - "A decision between (a) and (b), recorded on this issue before it is built"
+  - "Built: an adopter fixture whose test runs `git init` in a temporary directory without the unset is reported by name, and the same fixture with the unset is not"
+  - "Negative: the report fires on sonic-playground's cases 65 and 66 as they were before a6e76bf2"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test_repository_never_inherits_the_hooks_git"
+depends_on: []
+serves: []
+created_at: 2026-11-15

@@ -1,0 +1,29 @@
+id: I4571
+milestone: the-mesh-works-out-of-the-box
+title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+slug: a-closed-runtime-opens-when-its-key-is-trusted
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The server re-reads the mesh declaration from the trust root (the default branch, I2135) with each new generation of the repository it reads, as I2134 does for keys withdrawn, and when the runtime is closed because this machine's own key is absent from trust.allow and the new declaration lists it, the runtime opens (links, discovery, the board's mesh line) without `serve stop` and `serve ensure`."
+why: "Reported from an adopting repository's session (2026-11-10, majordomus 1.0.1). Its server, running since 00:27:46Z, kept answering `closed: this machine's key ... is not in trust.allow` after the enrol commit that adds the key reached main at 04:50Z, the trust root being local main. Only `serve stop` then `serve ensure` opened it: at once udp_multicast running, 5 nodes trusted and present, and `mesh verify` reported cooperation verified. I2134 (done 2026-10-14) made a retrust end the links of a withdrawn key; it gave the opposite transition, closed to open on this machine's own key, nothing."
+current_state: "At origin/master dd377e11c35: Cooperation::retrust replaces the trust of an open runtime with each new generation; a runtime that started closed for its own key stays closed until the process is replaced."
+desired_state: "Adding this machine's key to the trunk's trust.allow opens the running server's mesh within one generation of the repository read; removing it closes it the same way; `serve status` never needs a restart to tell the two apart."
+scope:
+  - ".ai/repo/project/issues/I4571.yaml"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/live.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "The listen address beyond loopback, which is I2411"
+depends_on: []
+acceptance_criteria:
+  - "A case starts a server whose key is not in trust.allow (closed), commits the enrol on the trunk, and reads the runtime open without a restart, then withdraws the key and reads it closed"
+validation:
+  - "bash test/run.sh <the new case>"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10

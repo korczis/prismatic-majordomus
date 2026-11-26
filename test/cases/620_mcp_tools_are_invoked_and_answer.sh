@@ -120,6 +120,23 @@ jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/withdraw.j
 jq -e '.result._meta.majordomus.error.code == "refused"' "$S/withdraw.json" >/dev/null \
   || bad "the refusal carries no typed code:" "$S/withdraw.json"
 
+# ---------------------------------------------------------------- 4c. mesh.record.write, mesh.records
+# The typed coordination records of the journal (I4665): a write and a read, asked where no
+# shared server activated the mesh. The write refuses as a result that names why, never as a
+# transport error; the read answers, saying the mesh is not active and why, as mesh.state
+# does; and a record naming an author is refused as input.
+call majordomus_mesh_record_write '{"session":"case620","kind":"observation","task":"I4665","scope":["docs"],"title":"seen"}' > "$S/record_write.json"
+jq -e '.result.isError == true and (.error | not)' "$S/record_write.json" >/dev/null \
+  || bad "majordomus_mesh_record_write does not refuse as a result where the mesh is not active:" "$S/record_write.json"
+jq -e '[.result.content[].text] | join(" ") | test("not_active")' "$S/record_write.json" >/dev/null \
+  || bad "majordomus_mesh_record_write's refusal does not say the mesh is not active:" "$S/record_write.json"
+answer majordomus_mesh_records '{"kind":"decision","live":true}' "$S/records.json"
+jq -e '.active == false and (.reason | length) > 0 and (.records | length) == 0' "$S/records.json" >/dev/null \
+  || bad "majordomus_mesh_records does not answer that the mesh is not active, and why:" "$S/records.json"
+call majordomus_mesh_record_write '{"author":"someone-else","kind":"plan","task":"I4665","scope":["docs"],"title":"t"}' > "$S/forged.json"
+jq -e '.result.isError == true or .error' "$S/forged.json" >/dev/null \
+  || bad "majordomus_mesh_record_write accepts an author in its input:" "$S/forged.json"
+
 # ---------------------------------------------------------------- 5. distribution.status
 # The version is the crate's, the stable channel resolves to a release this tree records,
 # and the required targets are that record's own.
@@ -331,6 +348,7 @@ rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 for tool in majordomus_artifacts majordomus_completion_policy majordomus_deployment \
             majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
+            majordomus_mesh_record_write majordomus_mesh_records \
             majordomus_plan_issues majordomus_product_domains majordomus_product_validate majordomus_rules \
             majordomus_skill_explain majordomus_web_surfaces; do
   if grep -qE "^[[:space:]]*${tool}[[:space:]]*$" "$ROOT/.ai/repo/mcp-tool-run-baseline.txt"; then

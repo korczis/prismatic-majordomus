@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [one-kit-on-every-surface](https://majordomus.dev/plan/one-kit-on-every-surface/) | PLANNED | 0/10 | 4 | 6 | 0 | 0 | 0 | A reader meets one code block, one chart, one copy control, one tab control and one shell block, whichever surface they are on: the site, /ui, the Cockpit or the docs. Each is declared once in the design book with its tokens, and a gate fails the change that renders one another way, so the kit stays one as the surfaces grow. |
+| [one-kit-on-every-surface](https://majordomus.dev/plan/one-kit-on-every-surface/) | PLANNED | 0/11 | 5 | 6 | 0 | 0 | 0 | A reader meets one code block, one chart, one copy control, one tab control and one shell block, whichever surface they are on: the site, /ui, the Cockpit or the docs. Each is declared once in the design book with its tokens, and a gate fails the change that renders one another way, so the kit stays one as the surfaces grow. |
 
 ## Issues
 
@@ -25,6 +25,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3797](https://majordomus.dev/plan/i3797/) | BLOCKED | 2 | I3796 | A command shown outside the shell block is refused by the audit |
 | [I4334](https://majordomus.dev/plan/i4334/) | READY | 0 | — | The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it |
 | [I4377](https://majordomus.dev/plan/i4377/) | READY | 0 | — | Every graph and chart reads at a glance and answers the hand, in one visual and interaction language |
+| [I4594](https://majordomus.dev/plan/i4594/) | READY | 0 | — | design.kit S5 accepts a localised landmark when the Flowbite Pro structure is present |
 
 ## Findings
 
@@ -40,6 +41,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3793` | shares share/ui with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4400; they may not run concurrently |
+| WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4594; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares share/design/kits with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently |
@@ -47,6 +49,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4334` | shares .ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/capability/builtin/design.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares .ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4565; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/kit.rs with I4594; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4606; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/capability/builtin/design.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares site/charts.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/src/ui.css with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/ui.js with I4494; they may not run concurrently |
