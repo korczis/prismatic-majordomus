@@ -9,6 +9,10 @@ Current version: **1.2.0**
 
 ## v1.2.0 — 2026-11-22
 
+### Decisions
+
+- **ADR-0232** One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins _(proposed)_
+
 ### Added
 
 - **mesh**: typed coordination records live in the mesh journal (I4665) (`92b817cab`)
@@ -318,7 +322,9 @@ Current version: **1.2.0**
 
 ### Decisions
 
+- **ADR-0230** Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it _(proposed)_
 - **ADR-0227** The deployed stage reads the pointer where Pages published it _(proposed)_
+- **ADR-0177** A session proceeds through one entrypoint that composes the capabilities the repository already has _(proposed)_
 
 ### Added
 
