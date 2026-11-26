@@ -191,9 +191,13 @@ The key is looked up and the execution recorded under one hold of the store's lo
 starts sent at the same instant with one key are one execution. A key is held exactly as
 long as the store holds the execution it started — the bound below forgets the oldest
 finished one, and the server's memory ends with the server — and since `majordomus run`
-executes in its own process, a key given to it is held there. The input is matched by the
-digest of its canonical JSON, so the order a client wrote the keys in does not matter; the
-digest never leaves the store. Without a key every start starts an execution, as before.
+executes in its own process, a key given to it is held there. The guarantee is therefore
+one server's retention and no longer: a key sent again after the server restarted, or after
+its execution was forgotten, starts a new execution. Across a restart what refuses a second
+run of one issue is that issue's exclusive mesh claim (I4004, below), for as long as the
+first run's claim stands, not the key. The input is matched by the digest of its canonical
+JSON, so the order a client wrote the keys in does not matter; the digest never leaves the
+store. Without a key every start starts an execution, as before.
 
 ### An execution for an issue holds its claim
 

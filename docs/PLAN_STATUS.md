@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `3842f50a9dd4`.
+Generated from canonical inputs `f2d5f8d28868`.
 
 ## Milestones
 
@@ -41,7 +41,7 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/46 | 35 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. | [`plan-status/a-second-adopter-is-served.md`](plan-status/a-second-adopter-is-served.md) |
 | [a-session-leaves-what-it-observed](https://majordomus.dev/plan/a-session-leaves-what-it-observed/) | DONE | 3/3 | 0 | 0 | 0 | 0 | 0 | Any worker records an observation in one command; the episode boundary derives a candidate that says what it is about and who should look; reading groups recurrence by subject; an episode with nothing to say records that it found nothing. | [`plan-status/a-session-leaves-what-it-observed.md`](plan-status/a-session-leaves-what-it-observed.md) |
 | [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/5 | 2 | 3 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. | [`plan-status/a-session-proceeds.md`](plan-status/a-session-proceeds.md) |
-| [a-session-proceeds-through-the-mesh](https://majordomus.dev/plan/a-session-proceeds-through-the-mesh/) | PLANNED | 0/12 | 6 | 6 | 0 | 0 | 0 | A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot. | [`plan-status/a-session-proceeds-through-the-mesh.md`](plan-status/a-session-proceeds-through-the-mesh.md) |
+| [a-session-proceeds-through-the-mesh](https://majordomus.dev/plan/a-session-proceeds-through-the-mesh/) | ACTIVE | 1/12 | 7 | 4 | 0 | 0 | 0 | A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot. | [`plan-status/a-session-proceeds-through-the-mesh.md`](plan-status/a-session-proceeds-through-the-mesh.md) |
 | [a-stranger-adopts-it-unaided](https://majordomus.dev/plan/a-stranger-adopts-it-unaided/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | The stranger's first ten minutes are one measured gate, init tells an adopter something true about their own repository, and each real outside run is recorded unedited and turned into cases. | [`plan-status/a-stranger-adopts-it-unaided.md`](plan-status/a-stranger-adopts-it-unaided.md) |
 | [a-test-fails-when-the-code-is-wrong](https://majordomus.dev/plan/a-test-fails-when-the-code-is-wrong/) | PLANNED | 0/3 | 3 | 0 | 0 | 0 | 0 | Declared critical predicates carry a scheduled mutation run with published survivors, and the compatibility analyzer's algebraic invariants are property tests. | [`plan-status/a-test-fails-when-the-code-is-wrong.md`](plan-status/a-test-fails-when-the-code-is-wrong.md) |
 | [a-version-follows-the-work](https://majordomus.dev/plan/a-version-follows-the-work/) | ACTIVE | 1/6 | 4 | 1 | 0 | 0 | 0 | One capability, release.currency, answers how much landed work the trunk holds past the last release, since when, and which version the contract requires for it. The brief, doctor and /ui/delivery read it. A task holding the release seat cannot finish completed once that work has waited past its threshold. project.land-and-publish names the capability's case as its proof. | [`plan-status/a-version-follows-the-work.md`](plan-status/a-version-follows-the-work.md) |
@@ -394,8 +394,9 @@ Generated from canonical inputs `3842f50a9dd4`.
 - `I3992` (mcp-transports-are-reliable, wave 1) — A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh
 - `I3993` (mcp-transports-are-reliable, wave 1) — Every wait on a peer is bounded and says what it waited for when the bound is reached
 - `I3994` (mcp-transports-are-reliable, wave 1) — Superseded session beats are compacted, so liveness never spends a node's event quota
-- `I4000` (a-session-proceeds-through-the-mesh, wave 0) — A repeated executions.start with the same key answers one execution
+- `I4001` (a-session-proceeds-through-the-mesh, wave 1) — The execution state machine has Authorizing, Claimed, Verifying, Refused and UnknownOutcome
 - `I4002` (a-session-proceeds-through-the-mesh, wave 0) — Worktree.create is a typed writing capability
+- `I4004` (a-session-proceeds-through-the-mesh, wave 1) — The executor takes the issue's mesh claim in the handler and releases it when the run ends
 - `I4006` (a-session-proceeds-through-the-mesh, wave 0) — Machine.slot is a counting machine-wide slot for heavy work
 - `I4007` (a-session-proceeds-through-the-mesh, wave 0) — An idle serve exits by itself after a bound
 - `I4008` (a-session-proceeds-through-the-mesh, wave 0) — A push that only deletes refs runs no plan in the pre-push hook
@@ -539,7 +540,7 @@ Generated from canonical inputs `3842f50a9dd4`.
 
 ## Findings
 
-11541 finding(s), each on the page of the milestone its subject is or belongs to:
+11522 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -555,58 +556,58 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 18 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 21 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 71 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 160 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 159 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 46 |
 | [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 4 |
 | [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 279 |
-| [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 141 |
-| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 87 |
+| [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 139 |
+| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 82 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 50 |
-| [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 25 |
+| [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 26 |
 | [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 4 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 712 |
-| [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 711 |
+| [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 15 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 18 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 171 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 170 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
-| [`automation`](plan-status/automation.md) | 75 |
+| [`automation`](plan-status/automation.md) | 77 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 27 |
 | [`capability-graph`](plan-status/capability-graph.md) | 14 |
 | [`ci-critical-path`](plan-status/ci-critical-path.md) | 424 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 7 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 39 |
-| [`development-runtime`](plan-status/development-runtime.md) | 1023 |
+| [`development-runtime`](plan-status/development-runtime.md) | 1019 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 25 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 62 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 21 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 8 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 11 |
-| [`external-workspaces`](plan-status/external-workspaces.md) | 35 |
+| [`external-workspaces`](plan-status/external-workspaces.md) | 37 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 46 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3896 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3880 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 65 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 100 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 14 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 235 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 237 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 18 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 49 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 183 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 27 |
-| [`peer-blackboard`](plan-status/peer-blackboard.md) | 10 |
+| [`peer-blackboard`](plan-status/peer-blackboard.md) | 11 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
 | [`public-proof`](plan-status/public-proof.md) | 134 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 35 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 121 |
-| [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 56 |
-| [`runtime-trust`](plan-status/runtime-trust.md) | 42 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 582 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 430 |
+| [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 58 |
+| [`runtime-trust`](plan-status/runtime-trust.md) | 43 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 579 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 428 |
 | [`test-evidence`](plan-status/test-evidence.md) | 29 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 285 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 286 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 29 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 2 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
@@ -614,5 +615,5 @@ Generated from canonical inputs `3842f50a9dd4`.
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 19 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
 | [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 323 |
-| [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
+| [`two-folder-integration`](plan-status/two-folder-integration.md) | 10 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 42 |
