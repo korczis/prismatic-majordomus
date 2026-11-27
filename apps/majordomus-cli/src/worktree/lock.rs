@@ -221,13 +221,26 @@ impl Owner {
 
     /// Whether the process that wrote the lock cannot be holding it: it wrote it in another
     /// boot of this machine, or no process with its pid is alive.
+    ///
+    /// A boot named by the time macOS booted at (`<seconds>.<microseconds>`, what an earlier
+    /// build wrote) is not compared: that time moves when the clock is stepped, so a mismatch
+    /// proves nothing, and only the pid is asked. A live holder running that build keeps its
+    /// lock.
     pub fn is_gone(&self) -> bool {
         let other_boot = match (&self.boot, crate::process::boot_id()) {
-            (Some(theirs), Some(ours)) => *theirs != ours,
+            (Some(theirs), Some(ours)) => !is_boot_time(theirs) && *theirs != ours,
             _ => false,
         };
         other_boot || !crate::lease::alive(self.pid)
     }
+}
+
+/// Whether `boot` names a boot by the time macOS booted at, as `<seconds>.<microseconds>`:
+/// the unsteady name an earlier build wrote ([`crate::process::boot_id`]).
+fn is_boot_time(boot: &str) -> bool {
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    boot.split_once('.')
+        .is_some_and(|(secs, micros)| digits(secs) && digits(micros))
 }
 
 impl Drop for WorktreeLock {
@@ -378,6 +391,38 @@ mod tests {
         plant(dir.path(), &earlier.token());
         let taken = WorktreeLock::acquire_with(dir.path(), Duration::from_millis(120));
         assert_eq!(taken.is_ok(), expected, "{taken:?}");
+    }
+
+    /// A lock an earlier build wrote, naming its boot by the time macOS booted at, is held
+    /// while its pid lives: that time moves when the clock steps, so its mismatch is not
+    /// another boot. Its dead owner's lock is still taken.
+    #[test]
+    fn a_lock_naming_its_boot_by_the_boot_time_is_judged_by_its_pid() {
+        let live = Owner {
+            pid: std::process::id(),
+            at: 1,
+            boot: Some("1795649441.674041".into()),
+        };
+        let dir = tempfile::tempdir().unwrap();
+        plant(dir.path(), &live.token());
+        let e = WorktreeLock::acquire_with(dir.path(), Duration::from_millis(120))
+            .expect_err("a live holder keeps its lock whatever the clock did");
+        assert_eq!(e.code(), "LockUnavailable");
+        let dead = Owner {
+            pid: dead_pid(),
+            ..live
+        };
+        assert!(dead.is_gone(), "a dead owner is gone in any boot");
+        assert!(is_boot_time("1.0"));
+        for not in [
+            "another-boot",
+            "1.",
+            ".1",
+            "1.2.3",
+            "C8410C43-F4FD-4EE0-9407-950042F3A780",
+        ] {
+            assert!(!is_boot_time(not), "{not}");
+        }
     }
 
     /// A lock whose owner lives, and a fresh one that names no owner, are held.
