@@ -2122,6 +2122,15 @@
         "status": "query"
       },
       {
+        "id": "capability:worktree.liveness",
+        "kind": "capability",
+        "label": "worktree.liveness",
+        "summary": "Whether anybody uses a tree or build directory: keep or reclaim",
+        "route": "/cockpit/capabilities/worktree.liveness",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:worktree.migration_plan",
         "kind": "capability",
         "label": "worktree.migration_plan",
@@ -76179,7 +76188,7 @@
           ],
           "serves": [],
           "slug": "every-deleting-sweep-asks-one-liveness-predicate",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-07",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::liveness",
             "bash test/run.sh 611_the_reclaim_refuses_what_it_cannot_prove 276_disk_is_bounded",
@@ -101052,7 +101061,7 @@
             "project.worktree-topology@1",
             "project.work-is-claimed-before-it-is-built@1",
             "project.destructive-sweeps-fail-closed@1",
-            "project.reclaim-only-what-you-own@1",
+            "project.reclaim-only-what-you-own@2",
             "project.every-wait-is-bounded@2"
           ],
           "tags": [
@@ -102500,22 +102509,23 @@
         }
       },
       {
-        "id": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "id": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "rule",
-        "label": "project.reclaim-only-what-you-own@1",
-        "summary": "A worker reclaims only what it owns",
-        "route": "/cockpit/objects/rule/project-reclaim-only-what-you-own-1",
-        "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+        "label": "project.reclaim-only-what-you-own@2",
+        "summary": "A worker reclaims only what it owns, and every deleting sweep asks one liveness predicate",
+        "route": "/cockpit/objects/rule/project-reclaim-only-what-you-own-2",
+        "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
-            "project.worktree-topology@1"
+            "project.worktree-topology@1",
+            "project.destructive-sweeps-fail-closed@1"
           ],
-          "statement": "A worker removes build output only from the worktree it is working in, and never from the primary checkout or another branch's; disk pressure is reported, not resolved by taking someone else's tools.",
           "tags": [
             "process",
-            "worktrees"
+            "worktrees",
+            "reclamation"
           ]
         }
       },
@@ -103378,7 +103388,7 @@
           "class": "blocking",
           "depends_on": [
             "project.worktree-topology@1",
-            "project.reclaim-only-what-you-own@1",
+            "project.reclaim-only-what-you-own@2",
             "project.accumulation-is-measured@2",
             "project.destructive-sweeps-fail-closed@1"
           ],
@@ -121438,6 +121448,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:worktree.liveness",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:worktree.migration_plan",
         "target": "projection:cli",
         "kind": "projects"
@@ -123229,7 +123259,7 @@
       },
       {
         "source": "majordomus://adr/adr-0055",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "put_in_force"
       },
       {
@@ -127829,7 +127859,7 @@
       },
       {
         "source": "majordomus://adr/adr-0200",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "put_in_force"
       },
       {
@@ -159649,7 +159679,7 @@
       },
       {
         "source": "majordomus://rule/project.accumulation-is-measured@2",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "depends_on"
       },
       {
@@ -160513,12 +160543,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@2",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
@@ -161079,7 +161114,7 @@
       },
       {
         "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "depends_on"
       },
       {
@@ -169334,6 +169369,11 @@
       },
       {
         "source": "module:worktree",
+        "target": "capability:worktree.liveness",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
         "target": "capability:worktree.migration_plan",
         "kind": "composes"
       },
@@ -169359,8 +169399,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4601,
-      "edges": 10363,
+      "nodes": 4602,
+      "edges": 10369,
       "acyclic": false,
       "truncated": false
     }

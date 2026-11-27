@@ -34,11 +34,34 @@
 # a pushed, clean, unattended worktree's build output is reclaimed like a merged one's (an
 # unpushed one is still kept), and a build that starts below the reclaim mark runs the sweep
 # itself before the floor decides.
+#
+# On 2026-10-28 (I4346) the reaper removed a live worktree's build output anyway: liveness was a
+# substring match against `ps` and working directories, and a session working through absolute
+# paths showed in neither. Liveness is now one typed capability, `majordomus worktree liveness`,
+# which both the reaper and the build host's disk-guard ask. So this case also holds that the
+# guard keeps a hard-tier build directory idle for longer than its window when the worktree's
+# HEAD moved within it, and removes no build directory at all when the executable its service
+# names is not there. Every fixture worktree's git state is aged past the window first: a tree
+# made a second ago is, to the predicate, somebody's work in progress. The rule is
+# project.reclaim-only-what-you-own v2.
 . "$ROOT/test/lib.sh"
+RB="$(rust_bin)" || rust_bin_exit $?
+[ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
+# the reaper asks this executable, here and in the fixture's own copy of it below
+MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
 
 REAPER="$ROOT/scripts/reap-orphans"
 expect_file "$REAPER"
 [ -x "$REAPER" ] || { echo "    scripts/reap-orphans is not executable"; exit 1; }
+
+# A worktree's index, HEAD and HEAD reflog, aged past any idle window.
+age_git() {
+  local gd
+  gd="$(git -C "$1" rev-parse --absolute-git-dir)" || return 1
+  touch -t 202001010000 "$gd/HEAD"
+  [ ! -e "$gd/index" ] || touch -t 202001010000 "$gd/index"
+  [ ! -e "$gd/logs/HEAD" ] || touch -t 202001010000 "$gd/logs/HEAD"
+}
 
 # ---------------------------------------------------------------- a fixture repository
 # Its own repository, its own worktrees: nothing here touches the checkout the suite runs in.
@@ -92,6 +115,10 @@ done
     && git update-ref refs/remotes/origin/pushed HEAD
 ) >/dev/null
 
+for w in idle dirty live-by-command live-by-cwd ahead pushed symlinked unmarked; do
+  age_git "$WTS/$w" || { echo "    could not age the $w worktree's git state"; exit 2; }
+done
+
 # dirty: authored work that was never committed. Merged-ness says nothing about it.
 echo 'unfinished' > "$WTS/dirty/draft.rs"
 
@@ -122,8 +149,8 @@ LAST_OUT="$(cat "$T/report.txt")"
 
 expect_grep 'idle.*would reclaim'
 expect_grep 'dirty.*keep — 1 uncommitted or untracked'
-expect_grep 'live-by-command.*keep — merged, but somebody is working in it'
-expect_grep 'live-by-cwd.*keep — merged, but somebody is working in it'
+expect_grep 'live-by-command.*keep — merged, but somebody is working in it: process_arguments'
+expect_grep 'live-by-cwd.*keep — merged, but somebody is working in it: process_directory'
 expect_grep 'ahead.*keep — .* is neither on origin/master nor on any remote'
 expect_grep 'pushed.*would reclaim — published on origin/pushed, nobody in it'
 expect_grep 'idle.*would reclaim — merged, nobody in it'
@@ -329,4 +356,53 @@ else
   echo "    (a release executable is already built: the launcher's refusal is not exercised)"
 fi
 
-echo "    ok: the reaper refuses six ways, reclaims landed and pushed build output only, a build below the mark reclaims first, and below the floor a build does not start, from a person or from a hook"
+# ---------------------------------------------------------------- the build host's guard
+# disk-guard, sourced (it then only defines its functions), over a home of the fixture's own:
+# a worktree under its dev/ whose build output has been idle for years while the worktree's
+# HEAD moved a moment ago, and a build directory under .cache that nothing names. The shims
+# stand in for what a Mac lacks: GNU's `rm --one-file-system`, `du -B` and `timeout`.
+GUARD="$ROOT/apps/majordomus-cli/assets/mesh-cache-provider/disk-guard"
+expect_file "$GUARD"
+LIVE_PATH="$(sed -n 's/^Environment=LIVENESS_BIN=//p' "$GUARD.service")"
+[ -n "$LIVE_PATH" ] || { echo "    disk-guard.service names no LIVENESS_BIN for the guard to ask"; exit 1; }
+GH="$T/guard-home"
+mkdir -p "$GH/dev" "$GH/.cache/spare/target/debug"
+git -C "$FIX" worktree add -q -b guard-busy "$GH/dev/busy" >/dev/null 2>&1 \
+  || { echo "    could not add the guard's worktree"; exit 2; }
+mkdir -p "$GH/dev/busy/target/debug"
+for d in "$GH/dev/busy/target" "$GH/.cache/spare/target"; do
+  printf 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n' > "$d/CACHEDIR.TAG"
+done
+find "$GH" -exec touch -h -t 202001010000 {} + 2>/dev/null
+age_git "$GH/dev/busy" || { echo "    could not age the guard's worktree"; exit 2; }
+# the case's own directory is a repository the runner made a moment ago, and .cache/ is inside it
+age_git "$T" || { echo "    could not age the case directory's git state"; exit 2; }
+touch "$(git -C "$GH/dev/busy" rev-parse --absolute-git-dir)/HEAD"
+
+guard() {  # <LIVENESS_BIN> — the hard tier's reclaim of idle cargo output, and what it said
+  (
+    . "$GUARD"
+    set +e  # the guard runs without errexit, and its idle check counts on lsof's exit 1
+    HOMES=("$GH"); RUNNER_HOMES=(); LIVENESS_BIN="$1"
+    command -v timeout >/dev/null 2>&1 || timeout() { shift; "$@"; }
+    rm() { command rm -rf -- "${@: -1}"; }
+    size_gib() { echo 1; }
+    reclaim_cargo "$HARD_IDLE_MIN"
+    printf '%s\n' "${actions[@]+"${actions[@]}"}"
+  ) 2>&1
+}
+
+# no executable at the path the service names: no build directory is removed, and it says so
+LAST_OUT="$(guard "$T/root$LIVE_PATH")"
+expect_grep 'no liveness executable'
+expect_file "$GH/.cache/spare/target/CACHEDIR.TAG"
+expect_file "$GH/dev/busy/target/CACHEDIR.TAG"
+
+# with it, the directory nothing names goes and the one whose worktree moved stays
+LAST_OUT="$(guard "$RB")"
+[ -e "$GH/.cache/spare/target" ] && { echo "    the guard kept a build directory nothing names:"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+expect_grep 'removed cargo output idle'
+expect_file "$GH/dev/busy/target/CACHEDIR.TAG"
+expect_grep 'kept .*busy/target: git_activity'
+
+echo "    ok: the reaper refuses six ways, reclaims landed and pushed build output only, a build below the mark reclaims first, below the floor a build does not start, from a person or from a hook, and the build host's guard keeps a build directory whose worktree moved within its window and removes none without the liveness executable"

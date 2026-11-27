@@ -4,7 +4,7 @@ description = "The delivery board's documents, derived: meta, milestones, intent
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 247
+weight = 248
 [extra]
 route = "/docs/cli/board/"
 command = "majordomus board"
