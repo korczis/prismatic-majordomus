@@ -381,13 +381,23 @@ touch "$(git -C "$GH/dev/busy" rev-parse --absolute-git-dir)/HEAD"
 
 guard() {  # <LIVENESS_BIN> — the hard tier's reclaim of idle cargo output, and what it said
   (
+    # the guard is the asset this case tests, sourced from $ROOT
+    # shellcheck disable=SC1090
     . "$GUARD"
     set +e  # the guard runs without errexit, and its idle check counts on lsof's exit 1
-    HOMES=("$GH"); RUNNER_HOMES=(); LIVENESS_BIN="$1"
+    # read by the sourced guard's reclaim_cargo
+    # shellcheck disable=SC2034
+    HOMES=("$GH")
+    # shellcheck disable=SC2034
+    RUNNER_HOMES=()
+    # shellcheck disable=SC2034
+    LIVENESS_BIN="$1"
     command -v timeout >/dev/null 2>&1 || timeout() { shift; "$@"; }
     rm() { command rm -rf -- "${@: -1}"; }
     size_gib() { echo 1; }
     reclaim_cargo "$HARD_IDLE_MIN"
+    # actions is the sourced guard's record of what it did
+    # shellcheck disable=SC2154
     printf '%s\n' "${actions[@]+"${actions[@]}"}"
   ) 2>&1
 }

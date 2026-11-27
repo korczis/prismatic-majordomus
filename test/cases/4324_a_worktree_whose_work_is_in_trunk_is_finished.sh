@@ -104,6 +104,19 @@ done
 echo "    a byte the trunk lacks, committed or not, keeps a worktree off the list"
 
 # --- the reclaim
+# Every fixture worktree was written a moment ago, and a removal asks the one liveness predicate
+# (I4346), which holds git state written within its idle window as somebody's work: age each
+# worktree's index, HEAD and HEAD reflog past it, so what keeps a worktree is the work it holds.
+age_git() {
+  local gd
+  gd="$(git -C "$1" rev-parse --absolute-git-dir)" || return 1
+  touch -t 202001010000 "$gd/HEAD"
+  [ ! -e "$gd/index" ] || touch -t 202001010000 "$gd/index"
+  [ ! -e "$gd/logs/HEAD" ] || touch -t 202001010000 "$gd/logs/HEAD"
+}
+for b in squashed held gone-merged real-work gone-open open; do
+  age_git "$("$RB" worktree path "$b")" || { echo "    could not age the git state of $b"; exit 1; }
+done
 "$RB" worktree cleanup --remove --format json > "$T/out.json" 2>"$T/out.err" \
   || { echo "    cleanup --remove exited non-zero:"; tail -3 "$T/out.err" | sed 's/^/      /'; exit 1; }
 removed() { jq -r --arg b "$1" '[.removed[] | select(. == $b)] | length' "$T/out.json"; }

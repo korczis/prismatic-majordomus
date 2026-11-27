@@ -36,10 +36,6 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
     let mut out = stdout.lock();
     let format = args.format;
     let svc = || WorktreeService::open(&start).map_err(refuse);
-    // asked about paths, not about this repository: no service, and no repository needed
-    if let Some(WorktreeCommand::Liveness { paths, idle }) = &args.command {
-        return liveness(&start, paths, idle.as_deref(), format, &mut out);
-    }
     match args.command {
         None | Some(WorktreeCommand::Status) => status(&svc()?, format, &mut out),
         Some(WorktreeCommand::List) => list(&svc()?, format, &mut out),
@@ -102,7 +98,10 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
             uncommitted(svc()?.uncommitted(&threshold), &threshold, format, &mut out)
         }
         Some(WorktreeCommand::Trunk) => trunk(&svc()?, format, &mut out),
-        Some(WorktreeCommand::Liveness { .. }) => unreachable!("answered above"),
+        // asked about paths, not about this repository: no service, and no repository needed
+        Some(WorktreeCommand::Liveness { paths, idle }) => {
+            liveness(&start, &paths, idle.as_deref(), format, &mut out)
+        }
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }

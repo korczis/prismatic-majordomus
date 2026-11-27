@@ -251,28 +251,39 @@ impl Places {
         Places {
             offload_runs: PathBuf::from(crate::offload::owner::runs_directory(&q.directory)),
             offload_lock: PathBuf::from(q.lock),
-            derive_lock: std::env::var_os("MAJORDOMUS_DERIVE_LOCK")
-                .filter(|v| !v.is_empty())
-                .map(PathBuf::from),
+            derive_lock: derive_lock_at(std::env::var_os("MAJORDOMUS_DERIVE_LOCK")),
         }
     }
 }
 
+/// The derive lock a `MAJORDOMUS_DERIVE_LOCK` value names; an empty one names none.
+fn derive_lock_at(value: Option<std::ffi::OsString>) -> Option<PathBuf> {
+    value.filter(|v| !v.is_empty()).map(PathBuf::from)
+}
+
 /// The servers a board or the mesh is read from. A trait so that a test hands in its answers.
 pub(crate) trait Servers {
-    /// `GET <url><path>`, its JSON body, or why there is none.
-    fn get(&self, url: &str, path: &str) -> Result<Value, String>;
+    /// `GET` the HTTP route of `capability` at `url`, with `query` when it is not empty: its
+    /// JSON body, or why there is none.
+    fn get(&self, url: &str, capability: &str, query: &str) -> Result<Value, String>;
 }
 
 /// The loopback servers of this machine, asked over HTTP within the probe timeout.
 pub(crate) struct Http;
 
 impl Servers for Http {
-    fn get(&self, url: &str, path: &str) -> Result<Value, String> {
+    fn get(&self, url: &str, capability: &str, query: &str) -> Result<Value, String> {
+        let route =
+            route(capability).ok_or_else(|| format!("{capability} declares no HTTP route"))?;
+        let path = if query.is_empty() {
+            route
+        } else {
+            format!("{route}?{query}")
+        };
         let reply = crate::mcp::bridge::request(
             url,
             "GET",
-            path,
+            &path,
             &[],
             None,
             crate::lease::timings().probe_timeout,
@@ -299,13 +310,19 @@ fn route(id: &str) -> Option<String> {
 /// and the environments of this user's processes from the kernel. Each reading that comes
 /// back empty is an error, never an empty machine.
 pub(crate) fn read_machine() -> Machine {
-    let me = std::process::id();
-    let mut processes = list_processes();
+    machine_of(std::process::id(), list_processes("ps"), "lsof")
+}
+
+/// The machine around a process table already listed, its working directories read with the
+/// `lsof` named.
+fn machine_of(me: u32, mut processes: Result<Vec<Process>, String>, lsof: &str) -> Machine {
     let mut directories = Err("the process table was not read".to_string());
     let mut environments = Err("the process table was not read".to_string());
     if let Ok(procs) = processes.as_mut() {
-        directories = read_directories(procs);
-        environments = read_environments(procs, me);
+        directories = read_directories(lsof, procs);
+        // SAFETY: geteuid has no preconditions and cannot fail.
+        let uid = unsafe { libc::geteuid() };
+        environments = read_environments(procs, me, uid, environment_of);
     }
     Machine {
         me,
@@ -315,17 +332,17 @@ pub(crate) fn read_machine() -> Machine {
     }
 }
 
-/// `ps` over every process: pid, parent, owner, command line.
-fn list_processes() -> Result<Vec<Process>, String> {
-    let out = std::process::Command::new("ps")
+/// `ps` (the program named) over every process: pid, parent, owner, command line.
+fn list_processes(ps: &str) -> Result<Vec<Process>, String> {
+    let out = std::process::Command::new(ps)
         .args([
             "-A", "-ww", "-o", "pid=", "-o", "ppid=", "-o", "uid=", "-o", "args=",
         ])
         .output()
-        .map_err(|e| format!("ps could not be run ({e})"))?;
+        .map_err(|e| format!("{ps} could not be run ({e})"))?;
     let procs = parse_ps(&String::from_utf8_lossy(&out.stdout));
     if procs.is_empty() {
-        return Err("ps listed no process".into());
+        return Err(format!("{ps} listed no process"));
     }
     Ok(procs)
 }
@@ -351,15 +368,15 @@ fn parse_ps(text: &str) -> Vec<Process> {
         .collect()
 }
 
-/// One `lsof` for every working directory it may read.
-fn read_directories(procs: &mut [Process]) -> Result<(), String> {
-    let out = std::process::Command::new("lsof")
+/// One `lsof` (the program named) for every working directory it may read.
+fn read_directories(lsof: &str, procs: &mut [Process]) -> Result<(), String> {
+    let out = std::process::Command::new(lsof)
         .args(["-n", "-P", "-w", "-a", "-d", "cwd", "-Fpn"])
         .output()
-        .map_err(|e| format!("lsof could not be run ({e})"))?;
+        .map_err(|e| format!("{lsof} could not be run ({e})"))?;
     let cwds = parse_lsof(&String::from_utf8_lossy(&out.stdout));
     if cwds.is_empty() {
-        return Err("lsof read no working directory".into());
+        return Err(format!("{lsof} read no working directory"));
     }
     for p in procs.iter_mut() {
         p.cwd = cwds.get(&p.pid).cloned();
@@ -395,12 +412,16 @@ fn variables<'a>(entries: impl Iterator<Item = &'a str>) -> Vec<(String, String)
         .collect()
 }
 
-/// Read the environment of every process this one may read: its user's, or all when it is
-/// root. A process gone since the table was listed is no failure; a readable process whose
-/// environment could not be read is, and when every one failed the reading is an error.
-fn read_environments(procs: &mut [Process], me: u32) -> Result<(), String> {
-    // SAFETY: geteuid has no preconditions and cannot fail.
-    let uid = unsafe { libc::geteuid() };
+/// Read, with `environment_of`, the environment of every process a process of user `uid` may
+/// read: its user's, or all when it is root. A process gone since the table was listed is no
+/// failure; a readable process whose environment could not be read is, and when every one
+/// failed the reading is an error.
+fn read_environments(
+    procs: &mut [Process],
+    me: u32,
+    uid: u32,
+    environment_of: impl Fn(u32) -> Option<Vec<String>>,
+) -> Result<(), String> {
     let (mut tried, mut read) = (0usize, 0usize);
     for p in procs.iter_mut().filter(|p| p.pid != me) {
         if uid != 0 && p.uid != uid {
@@ -494,7 +515,7 @@ fn nul_strings(bytes: &[u8]) -> Vec<String> {
 /// string or the end.
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn procargs_environment(buf: &[u8]) -> Option<Vec<String>> {
-    let argc = i32::from_ne_bytes(buf.get(..4)?.try_into().ok()?);
+    let argc = i32::from_ne_bytes(*buf.first_chunk::<4>()?);
     let argc = usize::try_from(argc).ok()?;
     let mut rest = &buf[4..];
     // the executable's path, then the padding after it
@@ -649,7 +670,7 @@ impl Tree {
 /// followed by `-` or nothing.
 fn issue_of_branch(branch: &str) -> Option<String> {
     branch.split('/').find_map(|seg| {
-        let head = seg.split('-').next()?;
+        let head = seg.split_once('-').map_or(seg, |(head, _)| head);
         let digits = head.strip_prefix('I')?;
         (!digits.is_empty() && digits.chars().all(|c| c.is_ascii_digit())).then(|| head.to_string())
     })
@@ -1056,11 +1077,7 @@ impl<'a> Judge<'a> {
                 return;
             }
         };
-        let Some(path) = route("peers.list") else {
-            reasons.push(unreadable("peers.list declares no HTTP route"));
-            return;
-        };
-        let peers = match self.servers.get(&url, &format!("{path}?checkouts=this")) {
+        let peers = match self.servers.get(&url, "peers.list", "checkouts=this") {
             Ok(v) => v,
             Err(why) => {
                 reasons.push(unreadable(&format!("its board could not be read: {why}")));
@@ -1156,12 +1173,11 @@ impl<'a> Judge<'a> {
         let mut why = Vec::new();
         let mut checkouts = vec![t.root.as_path()];
         checkouts.extend(primary.filter(|p| *p != t.root));
-        let path = route("mesh.state").ok_or("mesh.state declares no HTTP route")?;
         for c in checkouts {
             match server_of(c) {
                 Ok(Some(url)) => match self
                     .servers
-                    .get(&url, &format!("{path}?view=full"))
+                    .get(&url, "mesh.state", "view=full")
                     .and_then(|v| mesh_of_answer(&v))
                 {
                     Ok(m) => return Ok(Some(m)),
@@ -1360,16 +1376,16 @@ mod tests {
     /// A server that is never there: every question about a board or the mesh fails.
     struct Nobody;
     impl Servers for Nobody {
-        fn get(&self, url: &str, _: &str) -> Result<Value, String> {
+        fn get(&self, url: &str, _: &str, _: &str) -> Result<Value, String> {
             Err(format!("{url} is not there"))
         }
     }
 
-    /// Servers that answer from a table keyed by the route's capability.
+    /// Servers that answer `mesh.state` with the first value and anything else with the second.
     struct Answering(Value, Value);
     impl Servers for Answering {
-        fn get(&self, _: &str, path: &str) -> Result<Value, String> {
-            if path.starts_with(&route("mesh.state").unwrap()) {
+        fn get(&self, _: &str, capability: &str, _: &str) -> Result<Value, String> {
+            if capability == "mesh.state" {
                 Ok(self.0.clone())
             } else {
                 Ok(self.1.clone())
@@ -1906,27 +1922,46 @@ mod tests {
         let server = tiny_http::Server::http("127.0.0.1:0").unwrap();
         let url = format!("http://{}", server.server_addr().to_ip().unwrap());
         let serve = std::thread::spawn(move || {
+            let mut asked = Vec::new();
             for (i, body) in ["{\"peers\":[]}", "not json", "gone"]
                 .into_iter()
                 .enumerate()
             {
                 let rq = server.recv().unwrap();
+                asked.push(rq.url().to_string());
                 let code: u16 = if i == 2 { 404 } else { 200 };
                 rq.respond(tiny_http::Response::from_string(body).with_status_code(code))
                     .unwrap();
             }
+            asked
         });
+        let peers = route("peers.list").unwrap();
         assert_eq!(
-            Http.get(&url, "/x").unwrap()["peers"],
+            Http.get(&url, "peers.list", "checkouts=this").unwrap()["peers"],
             serde_json::json!([])
         );
-        assert!(Http.get(&url, "/x").unwrap_err().contains("no JSON"));
-        assert!(Http.get(&url, "/x").unwrap_err().contains("404"));
-        serve.join().unwrap();
         assert!(Http
-            .get("http://127.0.0.1:1", "/x")
+            .get(&url, "peers.list", "")
+            .unwrap_err()
+            .contains("no JSON"));
+        assert!(Http
+            .get(&url, "peers.list", "")
+            .unwrap_err()
+            .contains("404"));
+        // the route is the registry's, with the query only when there is one
+        assert_eq!(
+            serve.join().unwrap(),
+            vec![format!("{peers}?checkouts=this"), peers.clone(), peers]
+        );
+        assert!(Http
+            .get("http://127.0.0.1:1", "peers.list", "")
             .unwrap_err()
             .contains("did not answer"));
+        // a capability with no HTTP route is asked nothing, and that is an error
+        assert_eq!(
+            Http.get(&url, "no.such.capability", "").unwrap_err(),
+            "no.such.capability declares no HTTP route"
+        );
     }
 
     #[test]
@@ -2077,5 +2112,486 @@ mod tests {
                 Value::String(s.as_str().into())
             );
         }
+    }
+
+    /// Write a lease for `checkout` with the document given, or with the text given.
+    fn lease(checkout: &Path, body: &str) {
+        let lease = crate::lease::lease_file(checkout, ".ai/local");
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        std::fs::write(&lease, body).unwrap();
+    }
+
+    fn lease_document(checkout: &Path, pid: u32, url: Option<&str>) -> String {
+        let mut d = serde_json::json!({
+            "schema": crate::lease::SCHEMA, "pid": pid, "token": "t", "root": checkout,
+        });
+        if let Some(u) = url {
+            d["url"] = Value::String(u.into());
+        }
+        d.to_string()
+    }
+
+    /// Declare an enabled mesh in the fixture's primary checkout.
+    fn declare_mesh(f: &Fixture) -> PathBuf {
+        let repo = f.root.join("repo");
+        std::fs::create_dir_all(repo.join(".ai/repo/mesh")).unwrap();
+        std::fs::write(
+            repo.join(".ai/repo/mesh/m.yaml"),
+            "kind: mesh\nenabled: true\n",
+        )
+        .unwrap();
+        repo
+    }
+
+    #[test]
+    fn a_tool_that_is_missing_or_silent_is_a_blind_reading() {
+        let missing = "/nonexistent/mj-liveness-tool";
+        let e = list_processes(missing).unwrap_err();
+        assert!(e.contains("could not be run"), "{e}");
+        // `true` ignores the arguments and prints nothing: no process is no machine
+        assert_eq!(
+            list_processes("true").unwrap_err(),
+            "true listed no process"
+        );
+        let mut procs = vec![other(12)];
+        let e = read_directories(missing, &mut procs).unwrap_err();
+        assert!(e.contains("could not be run"), "{e}");
+        assert_eq!(
+            read_directories("true", &mut procs).unwrap_err(),
+            "true read no working directory"
+        );
+        assert_eq!(procs[0].cwd, None);
+
+        // a table that could not be listed reads nothing else
+        let m = machine_of(1, Err("ps listed no process".into()), "lsof");
+        assert_eq!(m.askers(), BTreeSet::from([1]));
+        assert_eq!(
+            (m.directories, m.environments),
+            (
+                Err("the process table was not read".to_string()),
+                Err("the process table was not read".to_string())
+            )
+        );
+        // a table that was listed is read further, and a silent lsof is said to be
+        let m = machine_of(1, Ok(vec![other(999_999)]), "true");
+        assert_eq!(
+            m.directories,
+            Err("true read no working directory".to_string())
+        );
+    }
+
+    #[test]
+    fn the_environments_are_read_for_the_processes_this_user_may_read() {
+        let me = std::process::id();
+        let mine = |pid: u32| Process {
+            pid,
+            uid: 501,
+            ..Process::default()
+        };
+        // a live process of this user whose environment cannot be read: none could be
+        let mut procs = vec![mine(me)];
+        assert_eq!(
+            read_environments(&mut procs, 1, 501, |_| None).unwrap_err(),
+            "the environment of none of 1 process(es) of this user could be read"
+        );
+        // one gone since the table was listed is no failure
+        let mut procs = vec![mine(4_000_000_000)];
+        assert_eq!(read_environments(&mut procs, 1, 501, |_| None), Ok(()));
+        // the asker itself and another user's processes are not read; the rest keep only
+        // the variables a sweep asks about
+        let mut procs = vec![
+            mine(me),
+            Process {
+                pid: 7,
+                uid: 0,
+                ..Process::default()
+            },
+            mine(1),
+        ];
+        let read = |pid: u32| {
+            assert_ne!(pid, 7, "another user's process is not read");
+            Some(vec![
+                "CARGO_TARGET_DIR=/t".to_string(),
+                "PATH=/bin".to_string(),
+            ])
+        };
+        assert_eq!(read_environments(&mut procs, 1, 501, read), Ok(()));
+        assert_eq!(
+            procs[0].env,
+            Some(vec![("CARGO_TARGET_DIR".to_string(), "/t".to_string())])
+        );
+        assert_eq!((procs[1].env.as_ref(), procs[2].env.as_ref()), (None, None));
+        // root reads every user's
+        let mut procs = vec![Process {
+            pid: me,
+            uid: 501,
+            ..Process::default()
+        }];
+        assert_eq!(
+            read_environments(&mut procs, 1, 0, |_| Some(vec!["HOME=/h".into()])),
+            Ok(())
+        );
+        assert_eq!(
+            procs[0].env,
+            Some(vec![("HOME".to_string(), "/h".to_string())])
+        );
+
+        // the derive lock the environment names, and an empty value that names none
+        assert_eq!(derive_lock_at(None), None);
+        assert_eq!(derive_lock_at(Some("".into())), None);
+        assert_eq!(
+            derive_lock_at(Some("/l/.derive.lock".into())),
+            Some(PathBuf::from("/l/.derive.lock"))
+        );
+    }
+
+    #[test]
+    fn a_reading_cut_short_is_no_process_and_no_environment() {
+        let ps = parse_ps("\n12\n12 1\n12 x 0 a\n12 1 y a\n  7 1 0\n");
+        assert_eq!(ps.len(), 1, "{ps:?}");
+        assert_eq!((ps[0].pid, ps[0].ppid, ps[0].uid), (7, 1, 0));
+        assert_eq!(ps[0].args, "");
+        // a negative argc, an executable path with no end, fewer arguments than argc
+        assert_eq!(procargs_environment(&(-1i32).to_ne_bytes()), None);
+        let mut buf = 1i32.to_ne_bytes().to_vec();
+        buf.extend_from_slice(b"/bin/sleep");
+        assert_eq!(procargs_environment(&buf), None);
+        let mut buf = 3i32.to_ne_bytes().to_vec();
+        buf.extend_from_slice(b"/bin/x\0\0a\0");
+        assert_eq!(procargs_environment(&buf), None);
+        // a segment without a `-` is the issue as a whole
+        assert_eq!(issue_of_branch("fix/I77"), Some("I77".into()));
+        assert_eq!(Tree::default().issue(), None);
+    }
+
+    #[test]
+    fn the_tree_of_a_path_reads_its_git_directory_and_its_primary_checkout() {
+        let f = Fixture::new();
+        let repo = f.root.join("repo");
+        // the primary checkout is its own primary: it has no commondir
+        let t = Tree::of(&repo).unwrap();
+        assert_eq!(t.primary.as_deref(), Some(repo.as_path()));
+        assert_eq!(t.branch.as_deref(), Some("master"));
+
+        // a linked tree whose commondir is absolute
+        let linked = f.root.join("linked");
+        let gitdir = f.root.join("linked.git");
+        std::fs::create_dir_all(&linked).unwrap();
+        std::fs::create_dir_all(&gitdir).unwrap();
+        std::fs::write(
+            linked.join(".git"),
+            format!("gitdir: {}\n", gitdir.display()),
+        )
+        .unwrap();
+        std::fs::write(gitdir.join("HEAD"), "ref: refs/heads/I7-y\n").unwrap();
+        std::fs::write(
+            gitdir.join("commondir"),
+            format!("{}\n", repo.join(".git").display()),
+        )
+        .unwrap();
+        let t = Tree::of(&linked).unwrap();
+        assert_eq!(t.primary.as_deref(), Some(repo.as_path()));
+        assert_eq!(t.issue().as_deref(), Some("I7"));
+
+        // a link to a git directory that is not there: no HEAD, no branch, and not knowing
+        // whether git is active keeps it; its primary is `/`, which has no derive lock
+        let broken = f.root.join("broken");
+        std::fs::create_dir_all(&broken).unwrap();
+        std::fs::write(broken.join(".git"), "gitdir: /nonexistent-mj-liveness\n").unwrap();
+        let t = Tree::of(&broken).unwrap();
+        assert_eq!(
+            (t.branch.as_deref(), t.primary.as_deref()),
+            (None, Some(Path::new("/")))
+        );
+        let p = judge(
+            &[broken.to_string_lossy().into_owned()],
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &Nobody,
+            &f.places,
+            SystemTime::now(),
+        )
+        .paths
+        .remove(0);
+        assert_eq!(signals(&p), vec![LivenessSignal::Unreadable], "{p:?}");
+        assert!(
+            p.reasons[0].detail.contains("HEAD could not be stat'ed"),
+            "{p:?}"
+        );
+
+        // a `.git` that names no git directory at all
+        let stray = f.root.join("stray");
+        std::fs::create_dir_all(&stray).unwrap();
+        std::fs::write(stray.join(".git"), "not a link\n").unwrap();
+        let p = judge(
+            &[stray.to_string_lossy().into_owned()],
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &Nobody,
+            &f.places,
+            SystemTime::now(),
+        )
+        .paths
+        .remove(0);
+        assert_eq!(signals(&p), vec![LivenessSignal::Unreadable], "{p:?}");
+        assert!(p.reasons[0].detail.contains("git directory of"), "{p:?}");
+        assert_eq!(p.tree.as_deref(), Some(stray.to_str().unwrap()));
+    }
+
+    #[test]
+    fn a_missing_index_is_no_activity_and_an_unreadable_task_record_is_not_knowing() {
+        let f = Fixture::new();
+        std::fs::remove_file(f.gitdir().join("index")).unwrap();
+        let p = f.ask(&machine(Vec::new()), &Nobody);
+        assert_eq!(p.verdict, LivenessVerdict::Reclaim, "{p:?}");
+        // an empty task record is no task
+        let state = f.wt.join(".ai/local/state");
+        std::fs::create_dir_all(&state).unwrap();
+        std::fs::write(state.join("current.yaml"), "  \n").unwrap();
+        assert_eq!(
+            f.ask(&machine(Vec::new()), &Nobody).verdict,
+            LivenessVerdict::Reclaim
+        );
+        // one that cannot be read keeps it
+        std::fs::remove_file(state.join("current.yaml")).unwrap();
+        std::fs::create_dir_all(state.join("current.yaml")).unwrap();
+        let p = f.ask(&machine(Vec::new()), &Nobody);
+        assert_eq!(signals(&p), vec![LivenessSignal::Unreadable]);
+        assert!(p.reasons[0].detail.contains("could not be read"), "{p:?}");
+    }
+
+    #[test]
+    fn a_lease_that_cannot_name_a_live_address_is_said_to_be_so() {
+        let f = Fixture::new();
+        assert_eq!(server_of(&f.wt), Ok(None));
+        lease(&f.wt, "");
+        assert!(server_of(&f.wt).unwrap_err().contains("is being written"));
+        lease(&f.wt, "garbage");
+        assert!(server_of(&f.wt).unwrap_err().contains("not JSON"));
+        lease(
+            &f.wt,
+            &lease_document(&f.wt, 4_000_000_000, Some("http://x")),
+        );
+        assert_eq!(server_of(&f.wt), Ok(None), "a dead server is none");
+        lease(&f.wt, &lease_document(&f.wt, std::process::id(), None));
+        assert!(server_of(&f.wt).unwrap_err().contains("still binding"));
+        // a board whose server is starting cannot be read, which keeps it
+        lease(&f.wt, "");
+        let p = f.ask(&machine(Vec::new()), &Nobody);
+        assert_eq!(signals(&p), vec![LivenessSignal::Unreadable]);
+        assert!(
+            p.reasons[0].detail.contains("its board could not be read"),
+            "{p:?}"
+        );
+    }
+
+    #[test]
+    fn only_a_peer_that_is_attached_or_announced_holds_the_board() {
+        let f = Fixture::new();
+        lease(
+            &f.wt,
+            &lease_document(&f.wt, std::process::id(), Some("http://127.0.0.1:9")),
+        );
+        let board = serde_json::json!({"peers": [
+            {"id": "p1", "client": {"name": "a"}, "attached": false, "claims": ["c"]},
+            {"id": "p2", "client": {"name": "b"}, "attached": false, "claims": [],
+             "announcement": {"intent": "x"}},
+            {"id": "p3", "client": {"name": "c"}, "attached": false, "claims": []},
+        ]});
+        let p = f.ask(&machine(Vec::new()), &Answering(Value::Null, board));
+        assert_eq!(signals(&p), vec![LivenessSignal::BoardClaim]);
+        let d = &p.reasons[0].detail;
+        assert!(
+            d.contains("p1 (a) announced work here") && d.contains("p2 (b) announced work here"),
+            "{d}"
+        );
+        assert!(!d.contains("p3"), "{d}");
+        // a board of peers that only look is no claim
+        let idle = serde_json::json!({"peers": [
+            {"id": "p3", "client": {"name": "c"}, "attached": false, "claims": []},
+        ]});
+        assert_eq!(
+            f.ask(&machine(Vec::new()), &Answering(Value::Null, idle))
+                .verdict,
+            LivenessVerdict::Reclaim
+        );
+    }
+
+    #[test]
+    fn the_mesh_is_read_once_per_repository_and_only_what_names_the_tree_keeps_it() {
+        let f = Fixture::new();
+        let repo = declare_mesh(&f);
+        lease(
+            &repo,
+            &lease_document(&repo, std::process::id(), Some("http://127.0.0.1:9")),
+        );
+        let mesh = serde_json::json!({"active": true, "state": {
+            "claims": [
+                {"key": "s/other", "issue": "I1", "scope": ["/elsewhere"],
+                 "state": {"state": "held"}},
+            ],
+            "sessions": [
+                {"key": "s/closed", "state": "closed", "info": {"branch": "feature/I4346-x"}},
+                {"key": "s/by-issue", "state": "active",
+                 "info": {"branch": "fix/I4346-y", "issue": "I4346"}},
+                {"key": "s/unrelated", "state": "active", "info": {"branch": "fix/z"}},
+            ],
+        }});
+        // two paths of one repository: its mesh is asked once and answers for both
+        struct Counting(Value, std::cell::Cell<usize>);
+        impl Servers for Counting {
+            fn get(&self, _: &str, capability: &str, _: &str) -> Result<Value, String> {
+                if capability == "mesh.state" {
+                    self.1.set(self.1.get() + 1);
+                    Ok(self.0.clone())
+                } else {
+                    Ok(Value::Null)
+                }
+            }
+        }
+        let servers = Counting(mesh, std::cell::Cell::new(0));
+        let r = judge(
+            &[
+                f.target.to_string_lossy().into_owned(),
+                f.wt.to_string_lossy().into_owned(),
+            ],
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &servers,
+            &f.places,
+            SystemTime::now(),
+        );
+        assert!(r.complete, "{:?}", r.blind);
+        assert_eq!(servers.1.get(), 1, "the mesh is read once");
+        for p in &r.paths {
+            assert_eq!(signals(p), vec![LivenessSignal::MeshClaim], "{p:?}");
+            let d = &p.reasons[0].detail;
+            assert_eq!(d, "session s/by-issue works on I4346");
+        }
+
+        // the worktree's own server is starting: that reading fails, and the primary's
+        // missing server is said too
+        std::fs::remove_file(crate::lease::lease_file(&repo, ".ai/local")).unwrap();
+        lease(&f.wt, "");
+        let r = judge(
+            &[f.target.to_string_lossy().into_owned()],
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &Nobody,
+            &f.places,
+            SystemTime::now(),
+        );
+        assert!(!r.complete);
+        let blind = r.blind.join("; ");
+        assert!(
+            blind.contains("is being written") && blind.contains("no server of"),
+            "{blind}"
+        );
+
+        // a mesh switched off in its declaration is not declared
+        std::fs::write(
+            repo.join(".ai/repo/mesh/m.yaml"),
+            "kind: mesh\nenabled: false\n",
+        )
+        .unwrap();
+        assert!(!declares_mesh(&repo));
+        std::fs::write(
+            repo.join(".ai/repo/mesh/m.yaml"),
+            "kind: mesh\nenabled: \"true\"\n",
+        )
+        .unwrap();
+        assert!(declares_mesh(&repo));
+    }
+
+    #[test]
+    fn a_variable_that_names_no_absolute_directory_names_nothing() {
+        let f = Fixture::new();
+        let mut p = other(999_993);
+        p.env = Some(vec![
+            (
+                "CARGO_TARGET_DIR".into(),
+                "apps/majordomus-cli/target".into(),
+            ),
+            (MAJORDOMUS_BIN.into(), "/".into()),
+        ]);
+        let answer = f.ask(&machine(vec![p]), &Nobody);
+        assert_eq!(answer.verdict, LivenessVerdict::Reclaim, "{answer:?}");
+    }
+
+    #[test]
+    fn the_offload_queue_keeps_only_what_a_live_run_works_in() {
+        let f = Fixture::new();
+        let me = std::process::id();
+        // a live run elsewhere, a file that is not a run record
+        std::fs::create_dir_all(&f.places.offload_runs).unwrap();
+        std::fs::write(
+            f.places.offload_runs.join("abc.run"),
+            format!(
+                "{}\ntag abc\npid {me}\nhost h\ncwd {}\n",
+                crate::offload::owner::RUN_SCHEMA,
+                f.root.join("elsewhere").display()
+            ),
+        )
+        .unwrap();
+        std::fs::write(f.places.offload_runs.join("README"), "not a run\n").unwrap();
+        // the offload lock: a dead pid, this process (not in the table, then naming the
+        // target, then working elsewhere)
+        std::fs::create_dir_all(&f.places.offload_lock).unwrap();
+        std::fs::write(f.places.offload_lock.join("4000000000"), "").unwrap();
+        std::fs::write(f.places.offload_lock.join(me.to_string()), "").unwrap();
+        let ask = |procs: Vec<Process>| {
+            let m = Machine {
+                me: 1,
+                ..machine(procs)
+            };
+            f.ask(&m, &Nobody)
+        };
+        assert_eq!(ask(Vec::new()).verdict, LivenessVerdict::Reclaim);
+        let mut derive = other(me);
+        derive.cwd = Some(f.root.to_string_lossy().into_owned());
+        derive.args = format!("cargo build --target-dir {}", f.target.display());
+        let p = ask(vec![derive.clone()]);
+        let queued: Vec<_> = p
+            .reasons
+            .iter()
+            .filter(|r| r.signal == LivenessSignal::QueuePidFile)
+            .collect();
+        assert_eq!(queued.len(), 1, "{p:?}");
+        assert!(queued[0].detail.contains("which works in it"), "{p:?}");
+        derive.args = "cargo build".into();
+        assert_eq!(ask(vec![derive]).verdict, LivenessVerdict::Reclaim);
+
+        // a run record that is a directory cannot be read
+        std::fs::create_dir_all(f.places.offload_runs.join("dir.run")).unwrap();
+        let r = judge(
+            &[f.target.to_string_lossy().into_owned()],
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &Nobody,
+            &f.places,
+            SystemTime::now(),
+        );
+        assert!(
+            !r.complete && r.blind[0].contains("dir.run"),
+            "{:?}",
+            r.blind
+        );
+        // and a records directory that is a file cannot be listed
+        let mut places = f.places.clone();
+        places.offload_runs = f.root.join("runs-file");
+        std::fs::write(&places.offload_runs, "").unwrap();
+        let r = judge(
+            &[f.target.to_string_lossy().into_owned()],
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &Nobody,
+            &places,
+            SystemTime::now(),
+        );
+        assert!(
+            !r.complete && r.blind[0].contains("runs-file"),
+            "{:?}",
+            r.blind
+        );
     }
 }
