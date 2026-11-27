@@ -96,7 +96,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4740; they may not run concurrently |
+| WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4753; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4778; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4780; they may not run concurrently |
 | WARN | `scope_conflict` | `I4486` | shares apps/majordomus-cli/src/capability/builtin with I4781; they may not run concurrently |
@@ -107,3 +112,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4634; they may not run concurrently |
+| WARN | `scope_conflict` | `I4488` | shares .ai/repo/ci with I4674; they may not run concurrently |

@@ -1132,7 +1132,7 @@ Current version: **1.3.0**
 - **ADR-0202** The mesh routes work to an identity, never an address, and selects among proven transports instead of implementing NAT traversal _(proposed)_
 - **ADR-0201** The persistent runtime is the authority; every operator surface, Lumen included, is a client of it _(proposed)_
 - **ADR-0200** Supervision repairs only what is idempotent, owned and verified, and never restarts blindly _(proposed)_
-- **ADR-0199** A hub is a declared host service; a working checkout's server stays a client's child _(proposed)_
+- **ADR-0199** A hub is a declared host service; a working checkout's server stays a client's child _(accepted)_
 - **ADR-0198** Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions _(proposed)_
 - **ADR-0197** The backlog is bounded by a declared bound that every session reads at start, and the bound reports rather than refuses _(proposed)_
 - **ADR-0196** Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own _(proposed)_

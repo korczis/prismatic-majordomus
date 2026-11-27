@@ -57,7 +57,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4581; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I4673; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I4677; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4678; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4683; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4740; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4753; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4485; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/capability/builtin/capabilities.rs with I4486; they may not run concurrently |
@@ -71,5 +77,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4633; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/policy.rs with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/policy.rs with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4684; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares .ai/repo/adrs with I4721; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares .ai/repo/policy.yaml with I4741; they may not run concurrently |
