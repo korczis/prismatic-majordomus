@@ -1,0 +1,32 @@
+id: I4810
+title: "homepage-check holds the hero's delivery counts to the delivery the page renders: the build's reading when the build carries one, the committed projection otherwise"
+milestone: truthful-plan-surfaces
+slug: homepage-check-compares-the-delivery-the-page-renders
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "scripts/ci/homepage-check takes the expected delivery tallies of the hero's product view from the source site/templates/index.html renders, under the template's own rule: build.delivery when site/data/build.json carries one, site/data/generated/delivery.json otherwise. Every failure message keeps its shape and names the source it was compared with (the build's delivery reading, or the committed projection, with the commit it was observed at)."
+why: "Since 2026-11-25 every pages run on master failed in job deploy, step check, on one finding, and majordomus.publication-currency then refused every finish --outcome completed in the repository. The template switched to the build's own reading in I3769 (c69372ff42f); the count check of I2851 kept reading the committed projection alone, so the checker judged a page against a source the page does not render, and failed whenever trunk's delivery moved after the committed observation."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. Pages runs 45538902097 (created 03:17Z), 45562941508 (06:45Z) and 45614492427 (12:30Z), all on 46775282570, failed with 'FAIL product the product view counts the delivery as [merged 4, released 252], and the inferred delivery gives [merged 2, released 252]'. site/templates/index.html:38 loads data/generated/delivery.json (committed, observed at 4354b754239: merged 2, released 252) and :45 replaces it with build.delivery when the build carries one, so the hero rendered scripts/site-build's reading at 46775282570 (merged 4). scripts/ci/homepage-check:1288-1301 compared the hero's data-delivery counts with site/data/generated/delivery.json only, while its I3769 block (:1326-1342) already judges build.delivery's commit. I2851, the owner of the count check, is DONE. Open PR #3092 (I4634) stops merges that move delivery without the committed projection, the cause on the merge side; it does not change the checker."
+desired_state: "A built homepage whose hero renders build.delivery passes the product check while the committed projection differs; a hero that renders other counts than build.delivery is refused, naming the build's delivery reading; with no build.json, no build.delivery, or delivery null, the committed projection is compared exactly as before and named; a build reading with no committed projection is not refused for the missing file. test/cases/4779 holds each, and its mutant of the checker that reads the committed projection alone fails."
+scope:
+  - "scripts/ci/homepage-check"
+  - "test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh"
+  - ".ai/repo/project/issues/I4810.yaml"
+non_scope:
+  - "The merge-side guard that keeps the committed projection current (I4634, PR #3092: apps/majordomus-cli/src/plan/delivery.rs, scripts/ci/merge-delivery-check)"
+  - "The templates and scripts/site-build, which already render the build's reading (I3769)"
+  - "The I3769 block of homepage-check that judges the commit build.delivery names"
+acceptance_criteria:
+  - "A hero rendering build.delivery whose tallies differ from the committed projection passes the product check"
+  - "A hero rendering the committed tallies while build.delivery differs is refused with a finding naming the build's delivery reading"
+  - "Without build.json, without build.delivery, or with delivery null, the committed projection is compared and named in the finding"
+  - "test/cases/4779 fails at its first assertion against scripts/ci/homepage-check as it was at 46775282570, and its mutant of the fixed checker fails situation 1"
+  - "test/cases/333, 3742 and every other case that runs scripts/ci/homepage-check pass unchanged"
+validation:
+  - "bash test/run.sh 4779_homepage_check_compares_the_delivery_the_page_renders"
+  - "bash test/run.sh 333_homepage_narrative 3742_a_published_page_reads_delivery_at_its_build_commit"
+evidence_required:
+  - "homepage_check_compares_the_delivery_the_page_renders"
+depends_on: []
+created_at: 2026-11-25

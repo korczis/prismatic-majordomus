@@ -47,4 +47,16 @@ depends_on:
 serves:
   - "merging-and-referencing-are-enforced#pr-metadata-projected"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-11-26T13:59:05Z
+started_at: 2026-11-26T13:57:49Z
+started_event: sha256:8b9d67fb7f49e954eb6d306a25a91ab3714429fd44ab1c2870105da54544ee20
+completed_at: 2026-11-26T13:59:05Z
+completed_event: sha256:27d1320f2abd46dd64350088bf5a5668a7a12ce959dbe943ab0e352b15a25242
+evidence:
+  - covers: "pr_metadata_projected"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3970_a_pull_request_carries_its_metadata 45_github_projection 894_github_sync_applies_only_the_trunk 1097_the_projection_is_applied_at_landing"
+    result: "delivered by 9f231f212f8 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 45_github_projection ok in suite-shard (1) job 138971458450; 894_github_sync_applies_only_the_trunk, 1097_the_projection_is_applied_at_landing ok in suite-shard (3) job 138971458403; 3970_a_pull_request_carries_its_metadata ok in suite-shard (4) job 138971458386"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T13:58:50Z
