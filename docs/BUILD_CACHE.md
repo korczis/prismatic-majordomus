@@ -49,7 +49,7 @@ disk-guard's state is older than 15 minutes, a declared critical-service drop-in
 declared tenant (`build_host_tenants` in the policy) is over its bound. The verdict is written to
 `/var/lib/majordomus/build-host.json` and, where a shared server runs, journaled as
 `build_host_observed` for `mesh events` and `monitor`. See
-[MESH.md](MESH.md#the-build-hosts-own-guard) for the mechanism.
+[MESH.md](MESH.md#the-guard-on-the-build-host) for the mechanism.
 
 ## CI runner host
 
