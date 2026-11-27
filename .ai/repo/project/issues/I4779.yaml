@@ -1,0 +1,39 @@
+id: I4779
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "A local runtime's model is classified by where it runs: an Ollama `:cloud` model leaves the machine, and a local adapter picks a chat model whose weights are present"
+slug: a-local-runtimes-model-is-classified-by-where-it-runs
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Classify each model a local runtime lists before it is used: a model the runtime forwards to a remote service (an Ollama model whose tag ends in `:cloud` or `-cloud`, or one the runtime's metadata marks remote) is `leaves_machine` and is refused by the offline mode and by any plan that requires local review; a model without a chat capability (an embedding model) is not a chat candidate; a model whose weights are missing is not a candidate. The Ollama and LM Studio adapters choose the first candidate that passes all three instead of the first model listed, and the probe of I4778 records which model answered."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), Ollama listed `:cloud` models beside local ones, and the offline mode would have admitted them as staying on the machine because the advisor is declared local_runtime; the same runtime listed models whose blobs were gone, and LM Studio listed only an embedding model. The adapters take the first model listed, so the advisor's answer depended on listing order and could send the prompt off the machine under a mode that promised it would not."
+current_state: "Measured at origin/master 46775282570. share/advisors.yaml declares ollama and lmstudio as transport local_runtime with the note 'Stays on the machine, so the offline mode admits it'. scripts/lib/advisors/ollama-chat.mjs takes OLLAMA_MODEL or `tags.models[0].name` from /api/tags; scripts/lib/advisors/lmstudio-chat.mjs takes LMSTUDIO_MODEL or `data[0].id` from /models. Nothing reads a model's tag, family, capability or weight presence."
+desired_state: "One classification function in scripts/lib/advisors/ (shared by both adapters and their probes) returns local, leaves_machine, not_chat or weights_missing for each listed model with the evidence it read; the offline mode refuses a leaves_machine model even under a local_runtime advisor; an explicit OLLAMA_MODEL or LMSTUDIO_MODEL naming a leaves_machine model is refused under offline with a message that says why; docs/REASONING.md and the advisor notes say a local runtime can forward to a remote service."
+scope:
+  - ".ai/repo/project/issues/I4779.yaml"
+  - "scripts/lib/advisors/ollama-chat.mjs"
+  - "scripts/lib/advisors/lmstudio-chat.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "share/advisors.yaml"
+  - "docs/REASONING.md"
+  - "test/cases/4779_a_cloud_model_is_not_local.sh"
+non_scope:
+  - "The probe command and its record (I4778)"
+  - "Pulling, repairing or deleting a runtime's models"
+depends_on:
+  - "I4778"
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#advisors-are-reported-by-what-answers"
+acceptance_criteria:
+  - "A fake Ollama listing `llama:cloud` first and a local model second sends the chat to the local model"
+  - "Under the offline mode, a fake Ollama listing only `:cloud` models answers unavailable with leaves_machine and no request reaches its chat endpoint"
+  - "A fake LM Studio listing only an embedding model answers unavailable with no_chat_model"
+  - "A listed model whose show call reports missing weights is skipped with weights_missing"
+validation:
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "bash test/run.sh 4779_a_cloud_model_is_not_local"
+evidence_required:
+  - "case_4779"
+risk: "Low. A runtime that marks remote models in a way this classification does not know is still admitted; the classification names what it read so a new marker is one declared pattern away."
+created_at: 2026-11-25
+updated_at: 2026-11-25

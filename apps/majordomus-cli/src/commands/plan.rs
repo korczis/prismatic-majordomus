@@ -20,13 +20,28 @@ use crate::error::{Error, Result};
 pub fn run(args: PlanArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let v = match &args.command {
-        PlanCommand::Delivery { issue, at } => {
+        PlanCommand::Delivery {
+            issue,
+            at,
+            merge_title,
+            merge_branch,
+            merge_number,
+        } => {
             let mut input = json!({});
             if let Some(i) = issue {
                 input["issue"] = json!(i);
             }
             if let Some(a) = at {
                 input["at"] = json!(a);
+            }
+            if let Some(t) = merge_title {
+                input["merge_title"] = json!(t);
+            }
+            if let Some(b) = merge_branch {
+                input["merge_branch"] = json!(b);
+            }
+            if let Some(n) = merge_number {
+                input["merge_number"] = json!(n);
             }
             execute(&app.context, &["plan", "delivery"], input)?
         }

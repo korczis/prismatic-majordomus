@@ -1,0 +1,31 @@
+id: I4721
+milestone: fabric-is-decided-and-the-legacy-is-measured
+title: "ADR 0199 carries Majordomus Fabric's decision and the owner has accepted it (S00 and P01, gate G0)"
+slug: 0199-fabric-host-agent
+priority: p1
+profile: docs
+objective: "Amend ADR 0199 into Fabric's decision (one opt-in, user-scoped host agent; a 0600 Unix socket checked by peer credentials; per-context authorisation; ADR 0001, 0003 and 0044 narrowed only for the opt-in host mode; the standalone mode unchanged), record the owner's answers that decided it, and land both on master with the ADR's status accepted."
+why: "Corrected DAG: S00 reconciles the ADRs before P01 decides and before any host-agent code (G0). The owner chose on 2026-11-24 to amend ADR 0199 rather than write a new ADR, and on 2026-11-25 accepted the amendment (AskUserQuestion, session 9ae82e7a-b0e4-44c0-a305-9c69cd1acf6a, answer verbatim: 'Accept, set accepted (Recommended)'). Recorded in the knowledge record fabric-starts-with-p00-s00-s01."
+current_state: "Observed 2026-11-25: PR #3123 (branch adr/0199-fabric-host-agent) amends ADR 0199; PR #3121 (branch decision/fabric-starts-with-p00-20261124) records the owner's decisions. Both are open. On origin/master ADR 0199 reads proposed."
+desired_state: "ADR 0199 on master reads accepted with its amendment; the knowledge record is on master; this issue carries both merges as evidence."
+scope:
+  - ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md"
+  - ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md"
+non_scope:
+  - "Editing the text of an accepted ADR other than 0199; ADR 0001, 0003 and 0044 are narrowed by 0199, not rewritten"
+  - "Any host-agent code"
+traces:
+  - "https://github.com/korczis/prismatic-majordomus/pull/3123"
+  - "https://github.com/korczis/prismatic-majordomus/pull/3121"
+acceptance_criteria:
+  - "ADR 0199 on master has status accepted and states the opt-in host agent, the 0600 socket with peer credentials, per-context authorisation, and which parts of ADR 0001, 0003 and 0044 it narrows for the opt-in host mode only"
+  - "The owner's answers of 2026-11-24 and 2026-11-25 are on master verbatim, with the session id and the date"
+validation:
+  - "majordomus plan validate"
+  - "bin/majordomus knowledge check"
+evidence_required:
+  - "adr_0199_accepted"
+created_at: 2026-11-25
+updated_at: 2026-11-25T04:10:33Z
+started_at: 2026-11-25T04:10:33Z
+started_event: sha256:4128d83f6831da85bf1f465072dc7d7c1ae756dcf7f37d1bc264c0ef615a0e55

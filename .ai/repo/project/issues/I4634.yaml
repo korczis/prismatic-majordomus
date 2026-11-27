@@ -1,0 +1,43 @@
+id: I4634
+milestone: "truthful-plan-surfaces"
+title: "A pull request does not land a merge whose delivery differs from the committed projection: plan.delivery reads an anticipated merge and a combined top's member merges, and the gate merge-delivery refuses the rest"
+slug: a-merge-does-not-move-the-committed-delivery
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus plan delivery --at <commit> --merge-title <t> --merge-branch <b>` reads the commit as the merge into the trunk of a pull request with that title and head branch, as the forge's merge commit will name it, and its source `anticipated_merge` says so. Without `at` the inputs are refused. The merge subject the landing seat writes for a member of a combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names that pull request and branch, so a top's head proves its members before it merges. The gate merge-delivery (scripts/ci/merge-delivery-check, job structure, every plan) reads the pull request's title, head branch and base from the runner's event, asks the executable for the delivery at the checked-out test merge with and without the anticipated merge, and refuses (exit 10) when its merged or released tally differs from site/data/generated/delivery.json. It names each issue that would move, with its cause and remedy: the title or branch (retitle, then re-run, because a retitle starts no validate run) or a trunk or head that moved (merge the trunk, run scripts/derive)."
+why: "The trunk's site infers delivery at its own commit (I3769), and scripts/ci/homepage-check refuses a product view whose counts differ from it. The committed projection is observed before the merge exists. On 2026-11-17 the title of combined top #3077 named I4627, I4628 and I4324, and its merge ae13be1bd13 proved two issues its head 41904d87959 did not. One of them was I4324, named only by the member merge 'Merge #3062 (feature/I4324-...) into the combined top on 7222b343dc', whose subject the delivery reader did not parse. Master's validate failed in site, site-probe, interactions and cases 486 and 489 ('the product view counts the delivery as [merged 15, released 234], and the inferred delivery gives [merged 13, released 234]'). #3084 repaired it. Between 2026-11-01 and 2026-11-17, 19 commits of the kind 'derive delivery observed at the merge of ...' landed on master. The landing seat's answer, that future top titles name only their member pull requests, is a convention that nothing checked."
+current_state: "Measured at origin/master ae13be1bd13. merge_subject (apps/majordomus-cli/src/plan/delivery.rs) parsed 'Merge pull request #N from o/b', 'Merge remote-tracking branch' and 'Merge branch', and nothing else. A combined top's member merge named no pull request and no branch. plan.delivery took `issue` and `at` and had no notion of a merge that has not happened. No gate compared a pull request's merge with the committed projection. validate.yml's pull_request trigger is opened, synchronize, reopened and labeled, so a retitle starts no run, while pr-meta.yml also runs on edited. Owner decision, 2026-11-20T02:08Z, session f40e17d5-7a97-44af-bb2f-32d3e215f08e (AskUserQuestion), question: 'PR #3092 (I4634) is ready to push, head e228f95, and its gate passes. Your rule says 45 GiB free for pre-push; disk has sat at 32-38 GiB for a day. You chose 'Lower push floor to 35' in another session, but the landing seat can't relay that to me. May I push #3092 when free disk is at 35 GiB or more? My guard stops my own cargo builds below 35, so the rustdoc step may only report, and CI judges it.' Answer: 'Yes, push at 35 GiB (Recommended)'. Owner decision, 2026-11-22T16:11Z, session f40e17d5-7a97-44af-bb2f-32d3e215f08e (AskUserQuestion), question: 'PR #3092 (I4634) is pushed at 30473d8 and contains master 636acc8 (v1.2.0 record). Its pre-push passed 46 of 47 gates; the one failure is version-surface. #3092 adds merge_title, merge_branch and merge_number to plan.delivery, which changes the public contract, so it requires a minor release, 1.2.0 -> 1.3.0 (`majordomus release bump --dry-run`). You were asked before the last such declaration (#3101's 1.2.0, I4665). Declare 1.3.0 on this branch (release bump, rebuild, derive, push), so #3092 can go green and enter the lander queue?' Answer: 'Declare 1.3.0 (Recommended)'."
+desired_state: "A pull request whose merge would prove a delivery the committed projection does not say is refused before it lands, with the issue, the cause and the remedy named. A combined top whose title names only its members proves at its head what it proves at its merge."
+scope:
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/plan/flight.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/tests/plan_delivery.rs"
+  - "scripts/ci/merge-delivery-check"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh"
+  - "docs/PLANNING.md"
+  - ".ai/repo/project/issues/I4634.yaml"
+non_scope:
+  - "Starting validate on `edited`. Every body edit pr-meta writes would then start the whole pipeline. The refusal says to re-run instead."
+  - "Deriving the projection at the anticipated merge. A derived file cannot name the commit it lands in (case 51), and the forge's merge commit does not exist before the merge."
+  - "The trunk's own check, which homepage-check already makes at the merge."
+acceptance_criteria:
+  - "Library test in plan::delivery: parse_history reads 'Merge #3062 (feature/I0003-x) into the combined top on 7222b343dc' as pull request 3062 on branch feature/I0003-x with no title, and reads 'Merge #30 (no closing paren' and 'Merge #x (feature/y)' as naming nothing."
+  - "Integration test a_pull_request_is_judged_by_the_merge_it_will_be (tests/plan_delivery.rs): at a test merge whose subject names nothing, an issue is none without an anticipated merge and merged via title_or_branch with `--merge-title`, with source anticipated_merge read and naming the title, branch and commit. A branch alone names its slug's issue via slug. A member merged into a combined top proves its slug's issue at the top's head. `--merge-title` without `--at` is refused, naming the anticipated merge."
+  - "Review of #3092 (progresus-isir-6c): an anticipated merge at a head that is not a merge is judged against the merge base with the trunk, never the head's own first parent, so a head whose last commit only plans still proves the issue (integration test, the plan-only last commit); the gate reads the live title, head and base with `gh api .../pulls/<n>` and the event file only as a fallback, because a re-run replays the original event; `--merge-number` carries the pull request into the answer; an issue only the projection has is named (case 4634); merged_at of a member merge is the top's build time (docs/PLANNING.md)."
+  - "Case 4634: the gate is OK for a test merge whose title names nothing new. It refuses (10) the same merge titled with an issue its head lacks, naming the issue, the title and the retitle remedy and no derive. It refuses a trunk that moved after the projection was observed, naming the issue as moved and the derive remedy. It judges the runner's pull_request event. It has nothing to judge (0, NOTE) for a pull request into another branch, a push, or a tree with no projection. An argument is a usage error."
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery"
+  - "bash test/run.sh 4634_a_merge_does_not_move_the_committed_delivery"
+evidence_required:
+  - "a_pull_request_is_judged_by_the_merge_it_will_be"
+depends_on: []
+serves: []
+created_at: 2026-11-17

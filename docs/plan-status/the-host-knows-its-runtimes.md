@@ -9,15 +9,46 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-host-knows-its-runtimes](https://majordomus.dev/plan/the-host-knows-its-runtimes/) | BLOCKED | 0/2 | 0 | 2 | 0 | 0 | 0 | A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and no host-level resident is built. |
+| [the-host-knows-its-runtimes](https://majordomus.dev/plan/the-host-knows-its-runtimes/) | PLANNED | 0/2 | 1 | 1 | 0 | 0 | 0 | A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric's opt-in host agent is fabric-local-pilot's, and this inventory needs no process of its own. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I3184](https://majordomus.dev/plan/i3184/) | BLOCKED | 0 | — | One command lists every Majordomus runtime of this user on this host, with no checkout open |
+| [I3184](https://majordomus.dev/plan/i3184/) | READY | 0 | — | One command lists every Majordomus runtime of this user on this host, with no checkout open |
 | [I3185](https://majordomus.dev/plan/i3185/) | BLOCKED | 2 | I3184, I3177 | A request on a host with two Majordomus versions reaches the one whose protocol satisfies it, or is refused with a reason |
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I3184` | shares docs/MCP.md with I3307; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3322; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3444; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3606; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I3607; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3608; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3770; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3771; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3772; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3774; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I3810; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/mesh/identity.rs with I3835; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I4002; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I4006; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/lease.rs with I4007; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MCP.md with I4306; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MCP.md with I4323; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4343; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4466; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4572; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4581; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4587; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares apps/majordomus-cli/src/capability/builtin/server.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4665; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4740; they may not run concurrently |

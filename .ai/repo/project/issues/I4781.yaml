@@ -1,0 +1,43 @@
+id: I4781
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "A project rule proved by its tests is in the registry: gated mode (`x-majordomus: tests: [...]`) is counted as enforced, and doctor resolves every named test in the adopter's tree"
+slug: a-gated-project-rule-is-in-the-registry
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make gated mode a supported mode of the tool, not of this repository's scripts: a rule whose x-majordomus block names `tests` and no validator is a gated doctrine. The doctrine summary and `rules list` count it as enforced (gated) beside dispatched ones; doctor resolves each named test path against the adopter's tree (a file, or a declared test id the adopter's CI model names) and fails a dangling one; and the summary's 'blocking rules with no validator, outside this registry' line counts only rules that name neither a validator nor a test nor a written reason. The semantics are scripts/ci/rule-proof-check's, moved into lib/doctrine.sh and the rules capability so that an installed release carries them."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), every project rule named its proof only in prose, and the doctrine summary reported 13 blocking rules 'outside the registry'. The tool offers no supported way for an adopter to say 'this rule is proved by these tests' and have doctor check it: gated mode exists only as this repository's own CI script, which an adopter does not have."
+current_state: "Measured at origin/master 46775282570. lib/doctrine.sh's loader passes over a rule whose block names tests and no validator (header lines 6-8: 'gated rather than dispatched ... the loader passes over it'); the summary (lib/doctrine.sh:254-279) counts the registry as the rules with a validator and names scripts/ci/rule-proof-check for the rest; rule-proof-check (dangling and unproven findings, a ratcheted baseline .ai/repo/rule-proof-baseline.txt) is a repository script under scripts/ci/ and is not shipped in share/."
+desired_state: "lib/doctrine.sh builds gated doctrines beside dispatched ones; `rules list` shows a mode column (dispatched, gated, documented); doctor fails a dangling test path in any repository; the unproven ratchet is a declared policy key with its baseline path, so an adopter adopts it with one line; scripts/ci/rule-proof-check calls the tool rather than carrying its own reader; docs/DOCTRINE.md documents the three modes and the skeleton rule README shows a gated example."
+scope:
+  - ".ai/repo/project/issues/I4781.yaml"
+  - "lib/doctrine.sh"
+  - "lib/rules.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/capability/builtin/rules.rs"
+  - "scripts/ci/rule-proof-check"
+  - "share/skeleton/ai/repo/rules/README.md"
+  - "share/skeleton/policy.yaml"
+  - "docs/DOCTRINE.md"
+  - "test/cases/4781_a_gated_project_rule_is_in_the_registry.sh"
+non_scope:
+  - "A project rule enforced by a command the repository names (I4255): that is the dispatched mode for adopters, and this issue leaves it alone"
+  - "The principle coverage check (I4782)"
+  - "Converting the downstream repository's prose to blocks: the adopter does that once the mode exists"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-projects-proofs-are-registered"
+acceptance_criteria:
+  - "In a fixture adopter, a blocking project rule with `x-majordomus: {tests: [test/rule_x.sh]}` is listed by `rules list` as gated and counted as enforced by the doctrine summary"
+  - "Renaming test/rule_x.sh makes doctor fail with the rule id and the dangling path"
+  - "A rule naming only prose is counted under the documented mode, and the summary's outside-the-registry count equals the documented blocking rules"
+  - "scripts/ci/rule-proof-check gives the same findings on this repository before and after, now through the tool"
+validation:
+  - "bash test/run.sh 4781_a_gated_project_rule_is_in_the_registry"
+  - "scripts/ci/rule-proof-check"
+  - "bin/majordomus doctor"
+evidence_required:
+  - "case_4781"
+risk: "Medium. Every repository's doctrine summary changes its numbers; the change is the denominator becoming truthful, and the summary says which mode each count is."
+created_at: 2026-11-25
+updated_at: 2026-11-25

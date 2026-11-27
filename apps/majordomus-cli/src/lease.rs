@@ -1235,10 +1235,12 @@ pub(crate) fn answer_stop_requests() {
 }
 
 /// End the process the way the signal would have: release the lease if it is still this
-/// process's, restore the signal's default disposition and send it again, so that the exit
-/// status still names the signal.
+/// process's, end the process groups it leads (a bounded `git` and what that started, which
+/// would otherwise outlive it), restore the signal's default disposition and send it again,
+/// so that the exit status still names the signal.
 pub(crate) fn end_by_signal(signal: i32) -> ! {
     release_held();
+    crate::process::kill_registered_groups();
     #[cfg(unix)]
     // SAFETY: restoring a default disposition and signalling this process; no memory is
     // touched.
