@@ -1,0 +1,42 @@
+id: I4754
+milestone: a-session-proceeds-through-the-mesh
+title: "Overlapping pull requests of different sessions get a proposed landing order, sent to each owning session for agreement, and the lander keeps an agreed order"
+slug: overlapping-pull-requests-get-a-landing-order
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "When open PRs held by different sessions overlap (the same files, and where measurable the same functions), `majordomus prs` proposes a landing order with its reasons and sends each owning session a mesh review request naming the order and the overlap; the lander refuses to land out of an agreed order."
+why: "Observed on 2026-11-25 in an adopter repository. Three pull requests from three sessions changed the same functions of one C++ source file. The order they had to land in (a security fix first, then the feature, then a follow-up carrying an integration of the two) was agreed by hand, in about ten messages between the sessions, with a deadline. While the order was being agreed, master moved, and the security fix's branch went stale twice and had to be brought current again. The tool already knew that the three pull requests overlapped and which of them was the most contended, and it said so to nobody who owned them."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. apps/majordomus-cli/src/integration/classify.rs:631 (overlaps) computes, for each open pull request, the authored paths it shares with every other, a version or release overlap where it applies, and nothing finer than a path. apps/majordomus-cli/src/integration/mod.rs:386-410 (rank_factors) ranks the queue by lane, disposition, risk, then contention: the number of ready or refreshable pull requests it overlaps (:400-404, the contenders set built at :439), fewest first. A combined top admits only heads that conflict with nothing in authored paths (clause 2 of the rule project.the-cooperation-model-is-the-owners-word). Nothing sends the ranking, the overlap or a proposed order to the sessions that own the overlapping pull requests, nothing records an order as agreed, there is no deadline after which an unanswered order stands, and the guarded lander (integration/drain.rs) lands in rank order with no notion of an agreed one. The mesh already carries review requests between sessions (mesh/cooperation.rs:4690, request_review), and a mesh session names the branch it works on."
+desired_state: "`prs` names, for each set of open pull requests whose owning sessions differ and whose authored paths overlap, a proposed landing order with a reason per position (a security or fix lane before a feature, a smaller change before a larger one that contains it, a pull request others depend on before its dependents), and the overlap itself: the shared paths and, where a diff's hunk context names them, the shared functions. Each owning session (the live mesh session whose branch is the pull request's head) receives one mesh review request naming the order, the overlap and a deadline. The order is agreed when every owner accepts it, or when the deadline passes with no owner refusing. The guarded lander refuses to land a member of an agreed order before the members ahead of it, naming the order and the member it waits on, and an order nobody agreed constrains nothing."
+scope:
+  - ".ai/repo/project/issues/I4754.yaml"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "docs/INTEGRATION.md"
+  - "test/cases/4754_overlapping_pull_requests_get_a_landing_order.sh"
+  - "site/content/plan/I4754.md"
+non_scope:
+  - "Resolving the conflict between the overlapping pull requests: their owners and the repair lanes do that"
+  - "Composing a combined top: the landing seat's, under the cooperation rule"
+  - "Recomputed lines and regenerated regions, which are not authored overlaps: I4597"
+  - "Pull requests of one session, which that session orders itself"
+depends_on: []
+acceptance_criteria:
+  - "Case 4754: with three open fixture pull requests owned by three mesh sessions, all changing one function of one file, one of them in the fix lane, `prs --format json` lists one proposed order with the fix first, a reason per position, the shared path and the shared function"
+  - "Case 4754: each of the three owning sessions holds exactly one mesh review request naming the order, the overlap and the deadline, and running `prs` again over the same snapshot sends no second request"
+  - "Case 4754: once every owner accepts, or the deadline passes with no refusal, the order is recorded as agreed; one refusal leaves it proposed and names the refusing session"
+  - "Case 4754: the guarded lander refuses to land the second member of an agreed order before the first, naming the order and the first member, and lands it after the first has merged"
+  - "Negative control: two overlapping pull requests of one session, or of sessions none of which is live, get no request, and an order nobody agreed does not change what the lander lands"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::classify integration::drain"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4754_overlapping_pull_requests_get_a_landing_order"
+evidence_required:
+  - "overlapping_pull_requests_get_a_landing_order"
+serves:
+  - "a-session-proceeds-through-the-mesh#two-sessions-never-share-an-item"
+created_at: 2026-11-25

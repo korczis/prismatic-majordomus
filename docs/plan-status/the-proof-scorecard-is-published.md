@@ -24,7 +24,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 ## Findings
 
-| level | code | subject | message |
-|---|---|---|---|
-| WARN | `scope_conflict` | `I3350` | shares site/data/homepage.toml with I4294; they may not run concurrently |
-| WARN | `scope_conflict` | `I3350` | shares site/data/homepage.toml with I4400; they may not run concurrently |
+None about this milestone or its issues.

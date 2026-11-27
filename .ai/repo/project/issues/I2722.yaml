@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Make a hub that has installed a newer release restart onto it through its systemd user unit or launchd agent when no session is attached or after a bounded grace, pass a readiness and mesh verify check, and otherwise rename the launcher back, keep serving the previous version and put a rollout failed entry on the board."
 why: "ADR 0161. Hubs run unattended (docs/MESH.md, The hubs as services); the launchd agent is the operator's to install and an installer that writes either unit is owed as a typed capability (ADR 0059)."
-current_state: "Updating a hub is a fetch, a build and a service restart by hand; the macOS hub is started by hand."
+current_state: "Updating a hub is a fetch, a build and a service restart by hand; the macOS hub is started by hand. Owner-ordered interim step, 2026-11-22: the owner answered an AskUserQuestion in korczis.github.io session 722683c2 (relayed by korczis-github-io-91, recorded verbatim in that repository's curated knowledge, owner-decisions-2026-11-22.md, PR #46). The answer was 'Interim timer via I2722 (Recommended)', whose option text read: 'Landing seat records it as a declared interim step of I2722; then a daily launchd/systemd user timer per machine runs the verified installer and restarts the hub only when no session is attached. I2722 replaces it later.' The interim step is per machine and daily: it runs the verified installer (sha256 and gh attestation, keeping trees in use), restarts majordomus-hub only when no session is attached, claims no health check and no rollback, and is removed when this issue's service-manager activation lands."
 desired_state: "A typed capability writes the hub's systemd user unit or launchd agent from the mesh declaration; after self update installs a newer version the hub restarts onto it under the rules above; the previous versioned tree is kept until the health check passes; a failed version is not retried on that node until a newer one is published."
 scope:
   - "apps/majordomus-cli/src/mesh"
@@ -24,6 +24,7 @@ acceptance_criteria:
   - "A hub with a newer installed version ends serving it, with no session lost that was attached before the grace"
   - "A version whose readiness or mesh verify fails is rolled back within the grace and the board names node, version and failed check"
   - "The hub service unit is written by a capability, not by hand"
+  - "When the service-manager activation lands, the interim daily installer timer of 2026-11-22 is removed from every machine that carries it"
 validation:
   - "bin/majordomus plan validate"
   - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -31,4 +32,4 @@ evidence_required:
   - "hub_activates_new_version_test"
   - "hub_rolls_back_failed_version_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-11-22

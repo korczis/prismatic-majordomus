@@ -1,0 +1,31 @@
+id: I4679
+milestone: a-second-adopter-is-served
+title: "plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn>"
+slug: allocate-reads-the-declared-id-pattern
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "plan.allocate reads the repository's declared issue-id pattern and reserves the next free id for the prefix it is asked for (letter plus digits, as in K247 or G030), surveying the same sources it surveys for I<nnnn>. A repository that declares no pattern keeps I<nnnn>."
+why: "Reported twice from OSCILLA. oscilla-d9, 2026-11-18, majordomus 1.0.2: plan.allocate kind issue returned I0001 and reported '0 file(s) under .ai/repo/project/issues' over about 980 issues named a letter plus 3 digits per line (K247, G030, ...), as OSCILLA's project README declares under 'Issue identifiers'. The workaround was a hand max-per-prefix survey over main, remote refs and worktrees. oscilla-e5, 2026-11-20 (received 2026-11-22): filing U121 needed a hand survey of git log --all, every worktree and the open PRs, then the next free number, and nothing reserved it against a parallel seat."
+current_state: "Observed as above. apps/majordomus-cli/src/capability/builtin/allocate.rs holds plan.allocate (I3040). The nearest records, I4357 and I4616, cover I<nnnn> only."
+desired_state: "In a repository that declares prefixed ids, `plan.allocate` for a prefix returns the next free id of that prefix across the trunk, remote refs, worktrees and the mesh's reservations, and reserves it like any other id."
+scope:
+  - ".ai/repo/project/issues/I4679.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/allocate.rs"
+  - "test/cases/4679_allocate_reads_the_declared_id_pattern.sh"
+non_scope:
+  - "Refusing locally an id the allocator reserved for another session: I4616"
+  - "The command-line allocate path failing with os error 35: I4675"
+  - "Renaming an adopter's existing ids"
+depends_on: []
+acceptance_criteria:
+  - "Case 4679 builds a repository that declares a letter-plus-3-digits pattern and holds K247 and G030: allocating for K returns K248 and for G returns G031, and a second allocation for K returns K249"
+  - "A repository with no declared pattern still receives I<nnnn>"
+  - "Negative control: the case fails against master, where the allocation returns I0001"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4679_allocate_reads_the_declared_id_pattern"
+evidence_required:
+  - "allocate_reads_the_declared_id_pattern"
+serves: []
+created_at: 2026-11-22

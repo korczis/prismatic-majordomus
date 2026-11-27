@@ -43,4 +43,23 @@ evidence_required:
   - ci
 risk: "A run of the built commit whose only reason is one the producer adds later (a new entry of evidence.json `unconfirmed`) withholds the count until it is resolved; that is the intended reading, and /evidence/ lists the reason."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-26T14:27:43Z
+started_at: 2026-11-26T14:26:25Z
+started_event: sha256:0e07962515ce644d09aa5198c1d15f6557104e7ecd32c6ad9d915bcfbd883952
+completed_at: 2026-11-26T14:27:43Z
+completed_event: sha256:f4fd7a56c8c4c617571f6de4bc8989c497e90a6c354bd32de166c7d40f67bc91
+evidence:
+  - covers: "test"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read 12_site_build"
+    result: "delivered by fb33dafbb5b on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 3105_the_homepage_states_no_present_it_does_not_read, 12_site_build ok in suite-shard (2) job 138971458506; 333_homepage_narrative ok in suite-shard (3) job 138971458403; 544_the_homepage_counts_declared_apart_from_supported ok in suite-shard (4) job 138971458386"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:27:09Z
+  - covers: "ci"
+    type: ci
+    command: "scripts/site-build && scripts/ci/homepage-check"
+    result: "at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002, site job 138970179875: homepage-check 'OK declared the proof band says 232 declared guaranteed and, with no recorded run measured, not yet measured supported, never a number' (the job's one failure is the product view's delivery count, not this check)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:27:27Z
