@@ -1055,7 +1055,13 @@ impl BuildHostObserved {
 /// Whether a systemd unit is active, shelled to `systemctl is-active --quiet`. The default
 /// the live observation uses; a test injects a closure instead, so no fixture needs systemd.
 pub fn systemctl_is_active(unit: &str) -> bool {
-    Command::new("systemctl")
+    is_active_by("systemctl", unit)
+}
+
+/// [`systemctl_is_active`] with the program named: one that cannot be started, or that
+/// exits non-zero, says the unit is not active.
+fn is_active_by(program: &str, unit: &str) -> bool {
+    Command::new(program)
         .args(["is-active", "--quiet", unit])
         .status()
         .map(|s| s.success())
@@ -1065,10 +1071,16 @@ pub fn systemctl_is_active(unit: &str) -> bool {
 /// A path's size, in GiB, shelled to `du -sx`; `None` when the path does not exist or `du`
 /// could not read it. The default the live observation uses; a test injects a closure.
 pub fn du_gib(path: &Path) -> Option<u64> {
+    du_gib_by("du", path)
+}
+
+/// [`du_gib`] with the program named: one that cannot be started, exits non-zero or prints
+/// no size is no size.
+fn du_gib_by(program: &str, path: &Path) -> Option<u64> {
     if !path.exists() {
         return None;
     }
-    let out = Command::new("du")
+    let out = Command::new(program)
         .args(["-sx", "-BG"])
         .arg(path)
         .output()
@@ -1076,8 +1088,12 @@ pub fn du_gib(path: &Path) -> Option<u64> {
     if !out.status.success() {
         return None;
     }
-    String::from_utf8_lossy(&out.stdout)
-        .split_whitespace()
+    gib_of_du(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// The size `du -sx -BG` prints first, `<n>G<tab><path>`, as a number of GiB.
+fn gib_of_du(text: &str) -> Option<u64> {
+    text.split_whitespace()
         .next()?
         .trim_end_matches('G')
         .parse()
@@ -1137,11 +1153,15 @@ pub fn observe_build_host(
     }
 }
 
-/// Write the build host's own verdict to `/var/lib/majordomus/build-host.json`: the time,
-/// whether the check held, and what failed, each one line — mirroring disk-guard's own
-/// `$STATE` write so both files share a reader (I4343). Never a secret; nothing it reads is
-/// one.
-pub fn write_build_host_state(observed: &BuildHostObserved, ok: bool) -> std::io::Result<()> {
+/// Write the build host's own verdict to `/var/lib/majordomus/build-host.json` under `root`
+/// (the live host is `/`, as for [`observe_build_host`]): the time, whether the check held,
+/// and what failed, each one line — mirroring disk-guard's own `$STATE` write so both files
+/// share a reader (I4343). Never a secret; nothing it reads is one.
+pub fn write_build_host_state(
+    root: &Path,
+    observed: &BuildHostObserved,
+    ok: bool,
+) -> std::io::Result<()> {
     let failing = observed.failing(BUILD_HOST_STATE_MAX_AGE);
     let at = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1149,7 +1169,7 @@ pub fn write_build_host_state(observed: &BuildHostObserved, ok: bool) -> std::io
         .unwrap_or(0);
     let body = serde_json::json!({ "at": at, "ok": ok, "failing": failing });
     write_file(
-        Path::new("/var/lib/majordomus/build-host.json"),
+        &physical(root, "/var/lib/majordomus/build-host.json"),
         serde_json::to_string(&body).unwrap_or_default().as_bytes(),
         0o644,
     )
@@ -2717,6 +2737,81 @@ mod tests {
             0,
             "a second apply owes nothing: {second:?}"
         );
+    }
+
+    /// A declared critical-service drop-in that is not in place fails alone and names its
+    /// unit.
+    #[test]
+    fn a_missing_drop_in_fails_alone_and_names_its_unit() {
+        let root = scratch("build-host-drop-in");
+        let p = whole_build_host_policy();
+        std::fs::create_dir_all(root.join("var/lib/majordomus")).unwrap();
+        std::fs::write(root.join("var/lib/majordomus/disk-guard.json"), b"{}").unwrap();
+        std::fs::write(root.join("var/lib/majordomus/ballast"), b"").unwrap();
+        let observed = observe_build_host(&p, &root, &always, &no_size);
+        assert_eq!(observed.missing_drop_ins, vec!["minio".to_string()]);
+        assert!(!observed.ok(BUILD_HOST_STATE_MAX_AGE));
+        assert_eq!(
+            observed.failing(BUILD_HOST_STATE_MAX_AGE),
+            vec!["the drop-in of minio is missing".to_string()]
+        );
+    }
+
+    /// The host's own verdict is written under the root it is given, as one JSON document
+    /// with the time, the verdict and every failing item; a root that cannot hold it is an
+    /// error, not a silent success.
+    #[test]
+    fn the_build_host_state_is_written_under_its_root() {
+        let root = scratch("build-host-state");
+        let observed = BuildHostObserved {
+            guard_timer_active: true,
+            observe_timer_active: true,
+            state_age: Some(Duration::from_secs(60)),
+            ..Default::default()
+        };
+        write_build_host_state(&root, &observed, false).unwrap();
+        let path = root.join("var/lib/majordomus/build-host.json");
+        let written: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(written["ok"], serde_json::json!(false));
+        assert_eq!(
+            written["failing"],
+            serde_json::json!(["the ballast is missing"])
+        );
+        assert!(written["at"].as_u64().is_some_and(|at| at > 0), "{written}");
+        assert_eq!(mode_of(&path), Some(0o644));
+        let plain = root.join("plain");
+        std::fs::write(&plain, b"").unwrap();
+        assert!(write_build_host_state(&plain, &observed, true).is_err());
+    }
+
+    /// The live readers say "not active" and "no size" for whatever they cannot read: a
+    /// unit no host has, a program that cannot start or fails, an output that is no size.
+    #[test]
+    fn the_live_readers_answer_nothing_for_what_they_cannot_read() {
+        assert!(!systemctl_is_active("mj-no-such-unit-i4343.timer"));
+        assert!(is_active_by("true", "disk-guard.timer"));
+        assert!(!is_active_by("false", "disk-guard.timer"));
+        assert!(!is_active_by(
+            "/nonexistent/mj-systemctl",
+            "disk-guard.timer"
+        ));
+        let root = scratch("build-host-du");
+        assert_eq!(du_gib(&root.join("absent")), None);
+        assert_eq!(du_gib_by("/nonexistent/mj-du", &root), None);
+        assert_eq!(du_gib_by("false", &root), None);
+        // echo succeeds and prints its arguments, which are no size
+        assert_eq!(du_gib_by("echo", &root), None);
+        assert_eq!(gib_of_du("12G\t/home/korczis\n"), Some(12));
+        assert_eq!(gib_of_du(""), None);
+        // GNU du rounds up to whole GiB; a du without -BG (BSD's) reads as no size
+        let live = du_gib(&root);
+        if cfg!(target_os = "linux") {
+            assert!(
+                live.is_some_and(|gib| gib <= 1),
+                "an almost empty directory is at most 1G rounded up: {live:?}"
+            );
+        }
     }
 
     /// I4352: a runner is a unit file that exists under a unit directory. A name observed

@@ -1829,6 +1829,20 @@ mod tests {
             doctor.to_string().contains("/api/v1/mesh/doctor"),
             "{doctor}"
         );
+        let build_host = doctor_through(
+            Some(serving()),
+            MeshDoctorArgs {
+                query: query(None, OutputFormat::Json),
+                build_host: true,
+            },
+        )
+        .expect_err("nothing answers");
+        assert!(
+            build_host
+                .to_string()
+                .contains("/api/v1/mesh/doctor?build_host=true"),
+            "{build_host}"
+        );
     }
 
     #[test]

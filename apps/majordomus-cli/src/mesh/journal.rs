@@ -5797,5 +5797,12 @@ mod tests {
             failing: (0..17).map(|i| format!("item {i}")).collect(),
         };
         assert!(too_many.validate().is_err());
+        let not_a_line = EventBody::BuildHostObserved {
+            ok: false,
+            failing: vec!["the ballast\nis missing".into()],
+        };
+        assert!(not_a_line
+            .validate()
+            .is_err_and(|e| e.contains("failing is over 256 bytes or is not a single line")));
     }
 }

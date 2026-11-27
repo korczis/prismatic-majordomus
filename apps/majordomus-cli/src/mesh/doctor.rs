@@ -883,6 +883,50 @@ fn link_probe() -> Result<String, String> {
 mod tests {
     use super::*;
 
+    /// A build host whose guard holds passes; one whose guard does not fails, naming every
+    /// missing item in its detail, and says what it risks and how to reinstall the guard.
+    #[test]
+    fn the_build_host_check_passes_a_held_guard_and_names_what_a_broken_one_lacks() {
+        use super::super::cache_provision::BuildHostObserved;
+        let max_age = std::time::Duration::from_secs(15 * 60);
+        let held = BuildHostObserved {
+            guard_timer_active: true,
+            observe_timer_active: true,
+            ballast_present: true,
+            state_age: Some(std::time::Duration::from_secs(60)),
+            ..Default::default()
+        };
+        let pass = build_host_check(&held, max_age);
+        assert_eq!(pass.check, "build_host");
+        assert!(pass.ok, "{pass:?}");
+        assert!(pass.remediation.is_none(), "{pass:?}");
+
+        let broken = BuildHostObserved {
+            ballast_present: false,
+            missing_drop_ins: vec!["sshd".into()],
+            ..held
+        };
+        let fail = build_host_check(&broken, max_age);
+        assert_eq!(fail.check, "build_host");
+        assert!(!fail.ok);
+        assert_eq!(
+            fail.detail,
+            "the ballast is missing; the drop-in of sshd is missing"
+        );
+        assert!(
+            fail.impact
+                .as_deref()
+                .is_some_and(|i| i.contains("incident 1")),
+            "{fail:?}"
+        );
+        assert!(
+            fail.remediation
+                .as_deref()
+                .is_some_and(|r| r.contains("mesh build-cache provision --apply")),
+            "{fail:?}"
+        );
+    }
+
     #[test]
     fn the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {
         let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
