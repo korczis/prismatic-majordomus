@@ -404,7 +404,16 @@ mj_plan_body_issue() {
   mj_plan_seclist 'Out of Scope' "$id" non_scope
   printf '## Dependencies\n\n'
   dep="$(mj_pj_i_deps "$id")"
-  if [ -z "$dep" ]; then printf 'None. This issue is a root of the graph.\n\n'
+  if [ -z "$dep" ]; then
+    # A root of the issue graph can still wait: on its milestone, which waits on the
+    # milestones it depends on (I4266). Say so rather than call a BLOCKED issue a root.
+    local ms mwait
+    ms="$(mj_pj_col I "$id" 3)"; mwait="$(mj_pj_col M "$ms" 12)"
+    if [ "$st" = BLOCKED ] && [ -n "$mwait" ]; then
+      printf 'None in the issue graph. It waits on its milestone %s, which waits on %s.\n\n' "$ms" "$(printf '%s' "$mwait" | sed 's/,/, /g')"
+    else
+      printf 'None. This issue is a root of the graph.\n\n'
+    fi
   else
     for d in $(printf '%s' "$dep" | tr ',' ' '); do
       printf -- '- %s %s — %s\n' "$d" "$(mj_pj_i_status "$d")" "$(mj_pj_i_title "$d")"
@@ -426,10 +435,16 @@ mj_plan_body_milestone() {
   printf '# %s — %s\n\n' "$id" "$(mj_pj_m_title "$id")"
   printf '| field | value |\n|---|---|\n'
   printf '| status | **%s** (derived) |\n' "$(printf '%s' "$row" | cut -f3)"
-  printf '| issues | %s done of %s |\n' "$(printf '%s' "$row" | cut -f9)" "$(printf '%s' "$row" | cut -f8)"
+  # Field 8 is the milestone's counts as key=value pairs (total, required, one per status);
+  # 11 the milestones it depends on, 12 those it waits on (I4266: read by name, not position).
+  local counts kv
+  counts="$(printf '%s' "$row" | cut -f8)"
+  kv() { printf '%s' "$counts" | tr ',' '\n' | sed -n "s/^$1=//p" | head -n 1; }
+  printf '| issues | %s done of %s |\n' "$(kv DONE)" "$(kv total)"
   printf '| ready / blocked / active / verify | %s / %s / %s / %s |\n' \
-    "$(printf '%s' "$row" | cut -f10)" "$(printf '%s' "$row" | cut -f11)" \
-    "$(printf '%s' "$row" | cut -f12)" "$(printf '%s' "$row" | cut -f13)"
+    "$(kv READY)" "$(kv BLOCKED)" "$(kv ACTIVE)" "$(kv VERIFY)"
+  [ -z "$(printf '%s' "$row" | cut -f11)" ] || printf '| depends on | %s |\n' "$(printf '%s' "$row" | cut -f11 | sed 's/,/, /g')"
+  [ -z "$(printf '%s' "$row" | cut -f12)" ] || printf '| waits on | %s |\n' "$(printf '%s' "$row" | cut -f12 | sed 's/,/, /g')"
   # a declared date is shown, never read: the status above is derived from evidence alone
   due="$(mj_pj_get "$id" due_on 2>/dev/null || true)"
   [ -z "$due" ] || printf '| due | %s (declared) |\n' "$due"
