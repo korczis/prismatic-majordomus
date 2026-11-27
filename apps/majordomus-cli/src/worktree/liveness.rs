@@ -2594,4 +2594,48 @@ mod tests {
             r.blind
         );
     }
+
+    #[test]
+    fn a_path_no_work_tree_holds_is_judged_by_the_machine_alone() {
+        let tmp = tempfile::tempdir().unwrap();
+        let plain = tmp.path().canonicalize().unwrap().join("loose");
+        std::fs::create_dir_all(&plain).unwrap();
+        assert!(Tree::of(&plain).is_none());
+        let places = Places {
+            offload_runs: plain.join("runs"),
+            offload_lock: plain.join("lock"),
+            derive_lock: None,
+        };
+        let asked = [plain.to_string_lossy().into_owned()];
+        let r = judge(
+            &asked,
+            DEFAULT_IDLE_SECONDS,
+            &machine(Vec::new()),
+            &Nobody,
+            &places,
+            SystemTime::now(),
+        );
+        assert_eq!(r.paths[0].tree, None);
+        assert_eq!(r.paths[0].verdict, LivenessVerdict::Reclaim);
+        assert_eq!(r.paths[0].verdict.as_str(), "reclaim");
+        // a path that is there is judged against this machine as it is now
+        let now = answer(&asked, 60);
+        assert_eq!((now.idle_seconds, now.paths.len()), (60, 1));
+        assert_eq!(now.paths[0].path, asked[0]);
+        // a pid no process can have has no environment to read
+        assert_eq!(environment_of(4_000_000_000), None);
+    }
+
+    #[test]
+    fn a_mesh_that_names_nothing_of_the_tree_does_not_keep_it() {
+        let f = Fixture::new();
+        let repo = declare_mesh(&f);
+        lease(
+            &repo,
+            &lease_document(&repo, std::process::id(), Some("http://127.0.0.1:9")),
+        );
+        let quiet = serde_json::json!({"active": true, "state": {"claims": [], "sessions": []}});
+        let p = f.ask(&machine(Vec::new()), &Answering(quiet, Value::Null));
+        assert_eq!(p.verdict, LivenessVerdict::Reclaim, "{p:?}");
+    }
 }
