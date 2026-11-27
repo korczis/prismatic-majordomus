@@ -6,7 +6,7 @@ priority: p2
 profile: implementation
 parallel_safe: true
 objective: "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy."
-why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the projection refuses closing keywords and derives served issues from commit subjects, but nothing shipped checks an adopter's commit messages; the adopter wrote its own commit-msg hook for issue ids, tracker keys and closing keywords."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the projection refuses closing keywords and derives served issues from commit subjects, but nothing shipped checks an adopter's commit messages; the adopter wrote its own commit-msg hook for issue ids, tracker keys and closing keywords. Observed again on 2026-11-25 in an adopter repository: its CI commit checker, which enforces the upstream project's `<Keyword>: [Section] Details` subject format, refused a commit subject that the local hooks had passed. init installs no commit-msg hook, so the local hooks never ran the adopter's own checker and the refusal came only from CI."
 current_state: "commit.validate judges this repository's own policy."
 desired_state: "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy."
 scope:
@@ -22,9 +22,10 @@ depends_on: []
 acceptance_criteria:
   - "A subject without an issue id is refused when the policy requires one"
   - "A closing keyword is refused"
+  - "An adopter-declared external commit-message validator (an argv) is run by the commit-msg hook init installs"
 validation:
   - "bash test/run.sh 4262_an_adopter_commit_is_judged"
 evidence_required:
   - "case_a_commit_message_guard_ships_for_adopter"
 created_at: 2026-10-27
-updated_at: 2026-10-27
+updated_at: 2026-11-25
