@@ -33,6 +33,14 @@
 //! required for it, so an intent whose criteria all hold while a milestone is open reads a
 //! `satisfied` verdict at stage `executing` — a disagreement the realization reports as drift.
 //!
+//! A `test` or `command` criterion whose reference is `verify:<name>` cites a verification the
+//! effective profile (the one the policy's `profiles.default` names) declares under
+//! `verification.commands` (I3395). `majordomus evidence record --verify <name>` runs it and
+//! records its exit, duration, tree digest and time; the criterion is current while the
+//! newest run passed at the tree there is now, the ledger settles it like a test, and a name
+//! the profile does not declare is unresolved. So a repository whose tests live anywhere —
+//! pytest files, a Makefile target — can settle an intent with its own check.
+//!
 //! ```
 //! use majordomus_cli::intent::{IntentStage, IntentVerdictState};
 //! assert_eq!(IntentStage::Satisfied.as_str(), "satisfied");
@@ -164,7 +172,8 @@ pub enum IntentEvidenceState {
     /// declined to run (a skip), or the claim names no test a runner drives.
     NotRun,
     /// The reference resolves, and this kind of evidence (`command`, `deployment`) is not
-    /// derivable from the ledger, so it never meets a criterion by itself.
+    /// derivable from the ledger, so it never meets a criterion by itself. A `command` that
+    /// cites a declared verification (`verify:<name>`) is derivable, and is never this.
     NotDerivable,
     /// The reference is empty or names nothing this repository holds.
     Unresolved,
@@ -303,6 +312,12 @@ fn ledger_settles(evidence: &str) -> bool {
     matches!(evidence, "test" | "claim")
 }
 
+/// Whether the ledger can settle this criterion: its kind is one it settles, or it cites a
+/// declared verification (`verify:<name>`), whose recorded runs the ledger holds (I3395).
+fn settled_by_ledger(c: &IntentCriterion) -> bool {
+    ledger_settles(&c.evidence) || verify_name(&c.evidence, c.reference.trim()).is_some()
+}
+
 /// The verdict of an intent from its criteria alone. Pure: no plan, no index, no ledger — the
 /// criteria already carry what the evidence said.
 ///
@@ -338,7 +353,7 @@ pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
         IntentVerdictState::Unknown
     } else if reasons.is_empty() {
         IntentVerdictState::Satisfied
-    } else if reasons.iter().any(|r| ledger_settles(&r.evidence)) {
+    } else if criteria.iter().filter(|c| !c.met).any(settled_by_ledger) {
         IntentVerdictState::Unsatisfied
     } else {
         IntentVerdictState::Unknown
@@ -633,6 +648,23 @@ pub trait EvidenceLookup {
     /// # }
     /// ```
     fn file(&self, path: &str) -> bool;
+    /// What the ledger says of a verification the effective profile declares under
+    /// `verification.commands`, which a criterion cites as `verify:<name>` (I3395): `current`
+    /// when the newest recorded run of it passed at the tree there is now, `stale` when it
+    /// passed at another tree or ran a command the profile no longer declares, `failing`
+    /// when it failed, `not_run` when none is recorded. `None` when the profile declares no
+    /// verification by that name — a refusal, not an unrun check. A lookup that knows no
+    /// profile declares none.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// assert!(ev.verification("no-such-verification").is_none());
+    /// # }
+    /// ```
+    fn verification(&self, _name: &str) -> Option<IntentEvidenceState> {
+        None
+    }
 }
 
 /// The evidence of a real repository: its ledger, its claim matrix joined to that ledger,
@@ -657,6 +689,8 @@ pub struct RepositoryEvidence<'a> {
     ledger: Ledger,
     claims: std::cell::OnceCell<EvidenceReport>,
     comparisons: std::cell::RefCell<BTreeMap<String, Comparison>>,
+    verifications: std::cell::OnceCell<evidence::record::DeclaredVerifications>,
+    tree: std::cell::OnceCell<Option<String>>,
 }
 
 impl<'a> RepositoryEvidence<'a> {
@@ -682,6 +716,8 @@ impl<'a> RepositoryEvidence<'a> {
             ledger,
             claims: std::cell::OnceCell::new(),
             comparisons: std::cell::RefCell::new(BTreeMap::new()),
+            verifications: std::cell::OnceCell::new(),
+            tree: std::cell::OnceCell::new(),
         })
     }
 
@@ -821,6 +857,34 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
 
     fn file(&self, path: &str) -> bool {
         !path.contains("..") && self.root().join(path).exists()
+    }
+
+    fn verification(&self, name: &str) -> Option<IntentEvidenceState> {
+        // a profile that cannot be read declares nothing here; `evidence record --verify`
+        // is where its error is reported, and a criterion citing it reads unresolved
+        let declared = self.verifications.get_or_init(|| {
+            evidence::record::declared_verifications(self.root()).unwrap_or_default()
+        });
+        let command = declared.command(name)?;
+        let Some(run) = self.ledger.verification(name) else {
+            return Some(IntentEvidenceState::NotRun);
+        };
+        Some(match run.outcome {
+            evidence::Outcome::Pass => {
+                let tree = self
+                    .tree
+                    .get_or_init(|| evidence::record::tree_digest(self.root()));
+                if run.command == command && tree.as_deref() == Some(run.tree.as_str()) {
+                    IntentEvidenceState::Current
+                } else {
+                    IntentEvidenceState::Stale
+                }
+            }
+            evidence::Outcome::Skip => IntentEvidenceState::NotRun,
+            evidence::Outcome::Fail | evidence::Outcome::Timeout | evidence::Outcome::Error => {
+                IntentEvidenceState::Failing
+            }
+        })
     }
 }
 
@@ -1093,6 +1157,29 @@ fn criterion_of(
             ),
         );
         IntentEvidenceState::Unresolved
+    } else if let Some(name) = verify_name(&c.evidence, r) {
+        match ev.verification(name).filter(|_| !name.is_empty()) {
+            None => unresolved(
+                findings,
+                format!(
+                    "`{r}` names no verification the effective profile declares: declare \
+                     `{name}` under verification.commands of the profile the policy's \
+                     profiles.default names"
+                ),
+            ),
+            Some(state) => {
+                reproduce = Some(format!("majordomus evidence record --verify {name}"));
+                // the run measured exactly the tree it names, so a current one is proof at
+                // this tree and never an inputs-unchanged reading
+                proof = Some(match state {
+                    IntentEvidenceState::Current => ProofState::Proven,
+                    IntentEvidenceState::Stale => ProofState::Stale,
+                    IntentEvidenceState::Failing => ProofState::Failing,
+                    _ => ProofState::NotRun,
+                });
+                state
+            }
+        }
     } else {
         match c.evidence.as_str() {
             "test" => match test_id(r) {
@@ -1183,6 +1270,15 @@ fn within(path: &str, scope: &str) -> bool {
         || path
             .strip_prefix(scope)
             .is_some_and(|rest| rest.starts_with('/'))
+}
+
+/// The verification a `test` or `command` criterion cites as `verify:<name>`, trimmed; `None`
+/// for any other reference or kind. An empty name is `Some("")`, which resolves to nothing.
+fn verify_name<'r>(kind: &str, r: &'r str) -> Option<&'r str> {
+    matches!(kind, "test" | "command")
+        .then(|| r.strip_prefix(evidence::record::VERIFY_REF))
+        .flatten()
+        .map(str::trim)
 }
 
 fn test_id(r: &str) -> Option<TestId> {
@@ -2824,6 +2920,70 @@ mod tests {
             .all(|c| c.state == IntentEvidenceState::NotDerivable && !c.met));
         assert_eq!(v.stage, IntentStage::Verifying);
         assert_eq!(i.failures(), 0, "{:?}", i.findings);
+    }
+
+    /// A lookup whose profile declares the verifications in `0`, each in the state given.
+    struct Declaring(BTreeMap<String, IntentEvidenceState>);
+
+    impl EvidenceLookup for Declaring {
+        fn test(&self, id: &TestId, scope: &[String]) -> TestStanding {
+            Table::new().test(id, scope)
+        }
+        fn claim(&self, _: &str) -> Option<ClaimStanding> {
+            None
+        }
+        fn deployment(&self, _: &str) -> bool {
+            false
+        }
+        fn object(&self, _: &str, _: &str) -> bool {
+            false
+        }
+        fn file(&self, _: &str) -> bool {
+            false
+        }
+        fn verification(&self, name: &str) -> Option<IntentEvidenceState> {
+            self.0.get(name).copied()
+        }
+    }
+
+    #[test]
+    fn a_verify_reference_is_met_only_by_a_current_run_of_a_declared_verification() {
+        use IntentEvidenceState as S;
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        for (state, verdict) in [
+            (S::Current, IntentVerdictState::Satisfied),
+            (S::Stale, IntentVerdictState::Unsatisfied),
+            (S::Failing, IntentVerdictState::Unsatisfied),
+            (S::NotRun, IntentVerdictState::Unsatisfied),
+        ] {
+            let ev = Declaring(BTreeMap::from([("tests".to_string(), state)]));
+            for kind in ["command", "test"] {
+                let i = Intents::derive(
+                    vec![record("x", &["m"], &[("c", kind, "verify:tests")])],
+                    &p,
+                    &ev,
+                );
+                let c = &i.intents[0].satisfaction[0];
+                assert_eq!(c.state, state, "{kind} {state:?}");
+                assert_eq!(c.met, state == S::Current, "{kind} {state:?}");
+                assert_eq!(
+                    c.reproduce.as_deref(),
+                    Some("majordomus evidence record --verify tests")
+                );
+                assert_eq!(i.intents[0].verdict.state, verdict, "{kind} {state:?}");
+                assert_eq!(i.failures(), 0, "{:?}", i.findings);
+            }
+        }
+        // a name the profile does not declare, or no name, resolves to nothing, named
+        let ev = Declaring(BTreeMap::new());
+        for r in ["verify:tests", "verify:"] {
+            let i = Intents::derive(vec![record("x", &["m"], &[("c", "command", r)])], &p, &ev);
+            assert_eq!(i.intents[0].satisfaction[0].state, S::Unresolved, "{r}");
+            assert_eq!(codes(&i), ["unresolved_evidence_ref"], "{r}");
+            assert!(i.findings[0].message.contains(r), "{:?}", i.findings);
+        }
+        // a lookup that knows no profile declares nothing: the default answers so
+        assert!(Table::new().verification("tests").is_none());
     }
 
     #[test]

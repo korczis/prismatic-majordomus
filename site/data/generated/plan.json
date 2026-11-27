@@ -57178,6 +57178,11 @@
         "apps/majordomus-cli/src/evidence/record.rs",
         "apps/majordomus-cli/src/evidence/ledger.rs",
         "apps/majordomus-cli/src/commands/evidence.rs",
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "share/schemas/majordomus/profile/profile.v1.schema.json",
+        "share/schemas/majordomus/intent/intent.v1.schema.json",
+        "share/allow/profile.txt",
         "apps/majordomus-cli/tests/intent.rs",
         "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "docs/generated/cli.json",
@@ -91435,6 +91440,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1201",
+      "message": "shares share/schemas with I3395; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1201",
       "message": "shares share/schemas with I3763; they may not run concurrently"
     },
     {
@@ -93079,7 +93090,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I3395; they may not run concurrently"
+      "message": "shares share/schemas with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -95665,7 +95676,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1997",
-      "message": "shares test/cases with I3395; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -104737,7 +104748,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2411",
-      "message": "shares test/cases with I3395; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -106856,6 +106867,12 @@
       "code": "scope_conflict",
       "subject": "I2690",
       "message": "shares .ai/repo/policy.yaml with I3322; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2690",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/ with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -110407,7 +110424,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2720",
-      "message": "shares test/cases with I3395; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -139075,6 +139092,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3040",
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I3395; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3040",
       "message": "shares apps/majordomus-cli/src/capability/builtin with I3442; they may not run concurrently"
     },
     {
@@ -141055,6 +141078,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3123",
+      "message": "shares share/allow/profile.txt with I3395; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3123",
       "message": "shares test/cases/06_finish.sh with I3448; they may not run concurrently"
     },
     {
@@ -142190,6 +142219,12 @@
       "code": "scope_conflict",
       "subject": "I3167",
       "message": "shares test/cases/340_a_brief_is_kept_as_received.sh with I3318; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3167",
+      "message": "shares share/allow with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -144445,7 +144480,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3251",
-      "message": "shares apps/majordomus-cli/tests/intent.rs with I3395; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -144746,6 +144781,12 @@
       "code": "scope_conflict",
       "subject": "I3280",
       "message": "shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3318; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3280",
+      "message": "shares share/schemas/majordomus/intent/intent.v1.schema.json with I3395; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -148357,7 +148398,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
-      "message": "shares test/cases/367_an_intent_is_satisfied_only_by_evidence.sh with I3607; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I3607; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -148381,13 +148422,19 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
-      "message": "shares docs/generated/cli.json with I3810; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I3810; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
       "message": "shares docs/generated/cli.json with I3841; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4002; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -148411,7 +148458,13 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
-      "message": "shares docs/generated/cli.json with I4418; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4327; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -148423,7 +148476,25 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4468; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
       "message": "shares apps/majordomus-cli/tests/intent.rs with I4481; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4486; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4583; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -148435,19 +148506,31 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
-      "message": "shares docs/generated/cli.json with I4668; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
-      "message": "shares docs/generated/cli.json with I4674; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I4634; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3395",
-      "message": "shares docs/generated/cli.json with I4680; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/cli.rs with I4674; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3395",
+      "message": "shares apps/majordomus-cli/src/cli.rs with I4680; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -161480,7 +161563,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 11726,
+      "count": 11739,
       "examples": [
         {
           "level": "WARN",

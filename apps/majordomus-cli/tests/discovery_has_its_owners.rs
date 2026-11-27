@@ -93,6 +93,11 @@ const OWNERS: &[(&str, usize, &str)] = &[
         1,
         "the synthetic repository a test builds",
     ),
+    (
+        "src/evidence/record.rs",
+        1,
+        "declared_verifications: the profile of a root an index or a request names (I3395)",
+    ),
 ];
 
 /// Every `.rs` file under `dir`, in a stable order.
