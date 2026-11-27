@@ -3724,6 +3724,23 @@
       "tool": "majordomus_served"
     },
     {
+      "api_anchor": "/docs/api/server/#op-server-runtimes",
+      "claims": [],
+      "cli": "majordomus runtimes",
+      "id": "server.runtimes",
+      "kind": "query",
+      "module": "server",
+      "module_route": "/registry/modules/server/",
+      "resource": "majordomus://runtimes",
+      "route": "/registry/capabilities/server-runtimes/",
+      "slug": "server-runtimes",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/server.rs",
+      "tests": [],
+      "title": "Every Majordomus runtime of this user on this host",
+      "tool": "majordomus_runtimes"
+    },
+    {
       "api_anchor": "/docs/api/server/#op-server-status",
       "claims": [],
       "cli": "majordomus serve status",
@@ -4768,7 +4785,7 @@
     ]
   },
   "counts": {
-    "capabilities": 233,
+    "capabilities": 234,
     "claims": 93,
     "modules": 62
   },
@@ -6447,6 +6464,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "server.runtimes",
+          "route": "/registry/capabilities/server-runtimes/",
+          "slug": "server-runtimes"
+        },
         {
           "id": "server.status",
           "route": "/registry/capabilities/server-status/",

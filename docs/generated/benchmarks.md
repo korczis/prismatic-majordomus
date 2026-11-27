@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 233 | 187 | 0 | 46 |
-| http | 221 | 185 | 0 | 36 |
-| mcp | 217 | 182 | 0 | 35 |
+| direct | 234 | 188 | 0 | 46 |
+| http | 222 | 186 | 0 | 36 |
+| mcp | 218 | 183 | 0 | 35 |
 | system | 14 | 14 | 0 | 0 |
-| total | 685 | 568 | 0 | 117 |
+| total | 688 | 571 | 0 | 117 |
 
 ## Capabilities
 
@@ -228,6 +228,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `served.forge` | served | command | — | waived | — | — | — |
 | `served.observe` | served | command | — | waived | — | — | — |
 | `served.show` | served | query | — | covered | covered | covered | `head`, `pages-against-head` |
+| `server.runtimes` | server | query | — | covered | covered | covered | `default` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |

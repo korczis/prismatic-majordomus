@@ -198,6 +198,12 @@
           "route": "/docs/cli/served/"
         },
         {
+          "about": "Every Majordomus runtime of this user on this host, from any directory and with no server: each checkout's server as its lease says, with version, repository, port and node, found through the host index and the process table",
+          "command": "majordomus runtimes",
+          "name": "runtimes",
+          "route": "/docs/cli/runtimes/"
+        },
+        {
           "about": "The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit",
           "command": "majordomus deploy",
           "name": "deploy",
@@ -31607,6 +31613,84 @@
       "usage": "majordomus served show [OPTIONS]"
     },
     {
+      "about": "Every Majordomus runtime of this user on this host, from any directory and with no server: each checkout's server as its lease says, with version, repository, port and node, found through the host index and the process table",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Every runtime of the host — the only scope there is today; one repository's servers are `serve status`",
+          "long": "host",
+          "name": "host",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": false,
+          "value_name": "HOST"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus runtimes",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "runtimes",
+            "--host",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus runtimes --host --format json",
+          "description": "Asked from any directory, with no server and no checkout open: every checkout whose server this user runs, found through the host index of checkout roots beside node.json and through the process table, each row re-read from that checkout's lease — where its server stands, its port, the version it runs, its repository and the `serve` and `mcp` processes working on it. A host where nothing runs answers with no row and exits 0; the reader writes nothing, not even the index.",
+          "expectation": "exits 0; prints one JSON document carrying /runtimes, /index",
+          "id": "runtimes-host",
+          "setup": [],
+          "title": "Every Majordomus runtime of this user on this host"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "runtimes",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "runtimes"
+      ],
+      "route": "/docs/cli/runtimes/",
+      "usage": "majordomus runtimes [OPTIONS]"
+    },
+    {
       "about": "The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit",
       "ancestors": [
         {
@@ -41997,10 +42081,10 @@
     }
   ],
   "counts": {
-    "arguments": 1822,
-    "commands": 264,
-    "examples": 263,
-    "runnable": 229
+    "arguments": 1824,
+    "commands": 265,
+    "examples": 264,
+    "runnable": 230
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.3.0",
