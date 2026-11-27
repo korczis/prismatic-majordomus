@@ -207,6 +207,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus served observe`](#majordomus-served-observe) | `/docs/cli/served/observe/` | Probe the build identity a deployment serves, judge it against a commit and record it |
 | [`majordomus served forge`](#majordomus-served-forge) | `/docs/cli/served/forge/` | Ask the forge which deployments and releases it recorded, and keep the answer for the readers |
 | [`majordomus served show`](#majordomus-served-show) | `/docs/cli/served/show/` | Each deployment's newest record, re-judged against a commit |
+| [`majordomus runtimes`](#majordomus-runtimes) | `/docs/cli/runtimes/` | Every Majordomus runtime of this user on this host, from any directory and with no server: each checkout's server as its lease says, with version, repository, port and node, found through the host index and the process table |
 | [`majordomus deploy`](#majordomus-deploy) | `/docs/cli/deploy/` | The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit |
 | [`majordomus deploy slug`](#majordomus-deploy-slug) | `/docs/cli/deploy/slug/` | Assemble the tree a provider receives into a directory outside the checkout |
 | [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
@@ -284,7 +285,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus ui`](#majordomus-ui), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus deploy`](#majordomus-deploy), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus layout`](#majordomus-layout), [`majordomus design`](#majordomus-design), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus proceed`](#majordomus-proceed), [`majordomus blackboard`](#majordomus-blackboard), [`majordomus board`](#majordomus-board), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus ui`](#majordomus-ui), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus runtimes`](#majordomus-runtimes), [`majordomus deploy`](#majordomus-deploy), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus layout`](#majordomus-layout), [`majordomus design`](#majordomus-design), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus proceed`](#majordomus-proceed), [`majordomus blackboard`](#majordomus-blackboard), [`majordomus board`](#majordomus-board), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -5987,6 +5988,30 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /expected, /observations, /unreadable, /deployments.
+
+<a id="majordomus-runtimes"></a>
+## `majordomus runtimes`
+
+Every Majordomus runtime of this user on this host, from any directory and with no server: each checkout's server as its lease says, with version, repository, port and node, found through the host index and the process table
+
+```text
+majordomus runtimes [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--host` | flag | required | Every runtime of the host — the only scope there is today; one repository's servers are `serve status` |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every Majordomus runtime of this user on this host** — Asked from any directory, with no server and no checkout open: every checkout whose server this user runs, found through the host index of checkout roots beside node.json and through the process table, each row re-read from that checkout's lease — where its server stands, its port, the version it runs, its repository and the `serve` and `mcp` processes working on it. A host where nothing runs answers with no row and exits 0; the reader writes nothing, not even the index.
+
+  ```console
+  $ majordomus runtimes --host --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /runtimes, /index.
 
 <a id="majordomus-deploy"></a>
 ## `majordomus deploy`

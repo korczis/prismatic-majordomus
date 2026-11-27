@@ -63,7 +63,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `served` | Served deployments | behaviorally_verified | 3 | [`modules/served.md`](modules/served.md) |
-| `server` | Server | behaviorally_verified | 1 | [`modules/server.md`](modules/server.md) |
+| `server` | Server | behaviorally_verified | 2 | [`modules/server.md`](modules/server.md) |
 | `session_domain` | The session domain | behaviorally_verified | 2 | [`modules/session_domain.md`](modules/session_domain.md) |
 | `shell` | Shell automation | behaviorally_verified | 1 | [`modules/shell.md`](modules/shell.md) |
 | `skills` | Skills | behaviorally_verified | 3 | [`modules/skills.md`](modules/skills.md) |
@@ -285,6 +285,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `served.forge` | `served` | command | behaviorally_verified | — | — | — | `majordomus served forge` | — | waived (external_dependency) |
 | `served.observe` | `served` | command | behaviorally_verified | — | — | — | `majordomus served observe` | — | waived (external_dependency) |
 | `served.show` | `served` | query | behaviorally_verified | `majordomus_served` | `majordomus://served` | `GET /api/v1/served` | `majordomus served show` | — | required |
+| `server.runtimes` | `server` | query | behaviorally_verified | `majordomus_runtimes` | `majordomus://runtimes` | `GET /api/v1/runtimes` | `majordomus runtimes` | — | required |
 | `server.status` | `server` | query | behaviorally_verified | `majordomus_server` | `majordomus://server` | `GET /api/v1/server` | `majordomus serve status` | — | required |
 | `session_domain.identity` | `session_domain` | query | behaviorally_verified | `majordomus_session_identity` | `majordomus://session/identity` | `GET /api/v1/session/identity` | — | process, 2 entries, 2s | required |
 | `session_domain.machine` | `session_domain` | query | behaviorally_verified | `majordomus_session_machine` | `majordomus://session/machine` | `GET /api/v1/session/machine` | — | process, 1 entries, 600s | required |

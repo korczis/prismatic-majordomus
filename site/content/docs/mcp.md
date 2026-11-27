@@ -160,6 +160,39 @@ through the same reading, and it carries the server's `version` beside the execu
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
 
+### Every runtime of the host
+
+`server.status` answers for one repository. `GET /api/v1/runtimes` — the tool
+`majordomus_runtimes`, the resource `majordomus://runtimes`, and on the command line
+`majordomus runtimes --host`, which runs from any directory and needs no checkout and no
+server — answers for the host: every Majordomus runtime of this user on this machine,
+whatever repository it serves (I3184). Each entry is a checkout with its root and
+`checkout_id`, the git repository it belongs to (`git`), its `standing` in the five words
+above (measured against the executable that answers), `live` (true only for `ready` and
+`outdated`: a lease whose process is gone is `stale` and never live), the `port` its lease
+names, the `version` it runs with `version_source` (`lease`, else `executable`: what
+`<executable> --version` reports, for a lease too old to carry a version), its `lease`, and
+the `serve` and `mcp` `processes` working on it, each saying whether it `holds_lease`. The
+answer carries this host's `node` id, read from `node.json` and never created by asking.
+
+The checkouts come from two places, and neither is believed. A server that publishes its
+lease adds its root to `checkout-roots`, beside `node.json` in the user's state directory
+(`$XDG_STATE_HOME/majordomus`, else `~/.local/state/majordomus`); the reader re-reads every
+root's lease, so the file is a disposable cache — deleting it loses nothing but speed — and a
+root whose server stopped cleanly is counted under `not_running` and not listed. The process
+table is the other: every `majordomus serve` and `majordomus mcp` of the machine, found by
+executable path and subcommand the way `scripts/reap-orphans` finds them, never by a bare
+name, its checkout from `--repo` or its working directory. That is how a runtime older than
+the index (0.29.0 and earlier), or one started with another state directory, is listed; a
+process whose checkout cannot be found is listed under `unplaced`. A reading that could not
+read either source says so (`index.problem`, `process_table.problem`) rather than calling the
+host empty.
+
+It is a read and nothing else: no process of its own, no registry of servers (the index is a
+cache of roots, never of runtimes), nothing started, stopped or taken over, and the peers
+stay the mesh registry's (ADR 0199, amendment of 2026-11-24). Case 4665 proves it with two
+servers of two repositories, one of which never writes to the reader's index.
+
 ### The server that is no longer the one
 
 A lease can be taken over while the process that held it is still running and still healthy

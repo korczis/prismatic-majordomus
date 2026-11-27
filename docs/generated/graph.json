@@ -1951,6 +1951,15 @@
         "status": "query"
       },
       {
+        "id": "capability:server.runtimes",
+        "kind": "capability",
+        "label": "server.runtimes",
+        "summary": "Every Majordomus runtime of this user on this host",
+        "route": "/cockpit/capabilities/server.runtimes",
+        "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:server.status",
         "kind": "capability",
         "label": "server.status",
@@ -113513,6 +113522,13 @@
         "source": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4665_a_host_lists_its_runtimes.sh",
+        "kind": "test",
+        "label": "test/cases/4665_a_host_lists_its_runtimes.sh",
+        "route": "/cockpit/objects/test/test-cases-4665-a-host-lists-its-runtimes-sh",
+        "source": "test/cases/4665_a_host_lists_its_runtimes.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "label": "test/cases/46_cross_surface.sh",
@@ -121104,6 +121120,26 @@
       },
       {
         "source": "capability:served.show",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -164248,6 +164284,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4665_a_host_lists_its_runtimes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -169264,6 +169305,11 @@
       },
       {
         "source": "module:server",
+        "target": "capability:server.runtimes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:server",
         "target": "capability:server.status",
         "kind": "composes"
       },
@@ -169384,8 +169430,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4604,
+      "edges": 10370,
       "acyclic": false,
       "truncated": false
     }

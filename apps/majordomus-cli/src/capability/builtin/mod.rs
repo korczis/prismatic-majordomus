@@ -165,8 +165,9 @@ pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
 pub use server::{
-    Checkouts, Desired, LeaseView, ServerStanding, ServerStatus, ServerStatusInput, ServerView,
-    SERVER_URI,
+    Checkouts, Desired, FoundBy, HostIndexView, HostProcessView, HostRuntime, HostRuntimes,
+    LeaseView, ProcessTableView, ServerStanding, ServerStatus, ServerStatusInput, ServerView,
+    VersionSource, RUNTIMES_URI, SERVER_URI,
 };
 pub use session_domain::{IdentityReport, MachineReport, IDENTITY_URI, MACHINE_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};

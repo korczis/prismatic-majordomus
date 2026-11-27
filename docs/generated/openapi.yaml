@@ -130,7 +130,7 @@ tags:
   - name: served
     description: "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface."
   - name: server
-    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds."
+    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds; and every Majordomus runtime of this user on this host, read from leases with no checkout open."
   - name: session_domain
     description: "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so."
   - name: shell
@@ -13188,6 +13188,62 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_rule
       x-majordomus-cli: rules show
+  "/api/v1/runtimes":
+    get:
+      operationId: server.runtimes
+      summary: Every Majordomus runtime of this user on this host
+      description: "Every Majordomus runtime of this user on this host, whatever repository it serves, with no checkout open: each checkout with its root and identity, the git repository it belongs to, where its server stands (the same five words as `server.status`, measured against the answering executable, and `live` only when a server answers — a lease whose process is gone is `stale`), the port its lease names, the version it runs (the lease's, else what its executable reports to `--version`), the `serve` and `mcp` processes working on it and whether each holds the lease, and this host's node id. The checkouts come from two places and neither is believed: the disposable index of checkout roots each server adds itself to beside `node.json` (`checkout-roots` in `$XDG_STATE_HOME/majordomus`, else `~/.local/state/majordomus`), and the process table, where every `majordomus serve` and `majordomus mcp` is found by executable path — which is how a runtime older than the index, or one with another state directory, is listed. Every row is re-read from its checkout's lease, so deleting the index loses nothing but speed. Read-only: no process of its own, no registry, nothing started or stopped; peers stay the mesh registry's. The command line answers it without a server (`majordomus runtimes --host`, from any directory), and any running server answers the same reading here."
+      tags:
+        - server
+      parameters: []
+      responses:
+        "200":
+          description: "Every Majordomus runtime of this user on this host: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/HostRuntimes"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: server.runtimes
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::server
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_runtimes
+        resource:
+          uri: majordomus://runtimes
+          name: runtimes
+      x-majordomus-cli: runtimes
   "/api/v1/scope":
     get:
       operationId: repository.scope
@@ -27902,6 +27958,15 @@ components:
         - sans
         - mono
       description: The two type stacks.
+    FoundBy:
+      oneOf:
+        - type: string
+          const: index
+          description: "The host index of checkout roots: its server published a lease and added its root."
+        - type: string
+          const: process_table
+          description: "The process table: a `majordomus serve` or `majordomus mcp` works on this checkout."
+      description: "Where a checkout of the host inventory was found. Neither source is believed: each only\nsays which lease to read.\n\n```\nuse majordomus_cli::capability::builtin::server::FoundBy;\nassert_eq!(serde_json::to_value(FoundBy::ProcessTable).unwrap(), \"process_table\");\n```"
     Freshness:
       oneOf:
         - type: string
@@ -29211,6 +29276,156 @@ components:
             - message
           description: "Git was asked and refused, or could not be run; the message is its own."
       description: "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```"
+    HostIndexView:
+      type: object
+      properties:
+        path:
+          type:
+            - string
+            - "null"
+          description: "Where it is: `checkout-roots` beside `node.json`; absent when this user has no state\ndirectory."
+        entries:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many checkout roots it lists.
+        problem:
+          type:
+            - string
+            - "null"
+          description: "Why it could not be read, when it could not."
+      required:
+        - entries
+      description: "The host index as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostIndexView;\nlet v = serde_json::to_value(HostIndexView { path: None, entries: 0, problem: None }).unwrap();\nassert_eq!(v[\"entries\"], 0);\n```"
+    HostProcessView:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process id.
+        subcommand:
+          "$ref": "#/components/schemas/Subcommand"
+          description: "`serve` or `mcp`."
+        executable:
+          type: string
+          description: "The executable, as the process table names it."
+        holds_lease:
+          type: boolean
+          description: "Whether the checkout's lease names this process: the server, rather than a client\nattached to it or a server superseded by another."
+      required:
+        - pid
+        - subcommand
+        - executable
+        - holds_lease
+      description: "A `majordomus serve` or `majordomus mcp` process of a checkout, as the process table\nshows it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostProcessView;\nuse majordomus_cli::lease::host::Subcommand;\nlet p = HostProcessView { pid: 7, subcommand: Subcommand::Mcp, executable: \"/bin/majordomus\".into(), holds_lease: false };\nassert_eq!(serde_json::to_value(&p).unwrap()[\"subcommand\"], \"mcp\");\n```"
+    HostRuntime:
+      type: object
+      properties:
+        checkout:
+          type: string
+          description: "The checkout, absolute and canonical where it still exists."
+        checkout_id:
+          type: string
+          description: "The checkout's identity: what its server answers as `repository_id`."
+        git:
+          anyOf:
+            - "$ref": "#/components/schemas/GitIdentity"
+            - type: "null"
+          description: "The git repository the checkout belongs to: one id for every worktree of it, so two\nruntimes of one repository are told from runtimes of two. Absent where git cannot be\nasked."
+        found_by:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FoundBy"
+          description: "Where the checkout was found: the index, the process table, or both."
+        standing:
+          "$ref": "#/components/schemas/ServerStanding"
+          description: "Where its server stands, as `server.status` would say it: measured against this\nexecutable, from the lease and one probe of the address it names."
+        live:
+          type: boolean
+          description: "Whether a server answers for the checkout: `ready` or `outdated`. A lease whose\nprocess is gone is `stale` and never live."
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when the standing is not `ready`."
+        lease:
+          anyOf:
+            - "$ref": "#/components/schemas/LeaseView"
+            - type: "null"
+          description: "The lease, when the file holds one."
+        port:
+          type:
+            - integer
+            - "null"
+          format: uint16
+          minimum: 0
+          maximum: 65535
+          description: The port of the address the lease names.
+        version:
+          type:
+            - string
+            - "null"
+          description: "The version the runtime runs: the lease's, else what its executable reports."
+        version_source:
+          anyOf:
+            - "$ref": "#/components/schemas/VersionSource"
+            - type: "null"
+          description: "Where `version` was read."
+        processes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/HostProcessView"
+          description: "The `serve` and `mcp` processes the process table shows working on the checkout."
+      required:
+        - checkout
+        - checkout_id
+        - found_by
+        - standing
+        - live
+        - processes
+      description: "One checkout of the host, and the runtime its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{FoundBy, HostRuntime, ServerStanding};\nlet r = HostRuntime { checkout: \"/r\".into(), checkout_id: \"c\".into(), git: None,\n    found_by: vec![FoundBy::Index], standing: ServerStanding::Stale, live: false,\n    reason: Some(\"gone\".into()), lease: None, port: None, version: None, version_source: None,\n    processes: Vec::new() };\nlet v = serde_json::to_value(&r).unwrap();\nassert_eq!(v[\"standing\"], \"stale\");\nassert_eq!(v[\"live\"], false);\nassert!(v.get(\"port\").is_none() && v.get(\"version\").is_none(), \"what there is not is not written\");\n```"
+    HostRuntimes:
+      type: object
+      properties:
+        version:
+          type: string
+          description: "The version of the executable that answered, which every `standing` is measured\nagainst."
+        node:
+          type:
+            - string
+            - "null"
+          description: "This host's node id, read from this user's `node.json` and never created by asking.\nEvery runtime of the user on the host shares it unless it was started with another\nstate directory."
+        index:
+          "$ref": "#/components/schemas/HostIndexView"
+          description: The host index this reading started from.
+        process_table:
+          "$ref": "#/components/schemas/ProcessTableView"
+          description: The process table this reading started from.
+        runtimes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/HostRuntime"
+          description: "Every checkout with a lease or a Majordomus process, in path order."
+        not_running:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many checkouts the index lists that have neither a lease nor a process: their\nservers stopped cleanly, and they are not listed."
+        unplaced:
+          type: array
+          items:
+            "$ref": "#/components/schemas/HostProcessView"
+          description: "The `serve` and `mcp` processes whose checkout could not be found: no working\ndirectory the system would say, or one inside no repository of the layer."
+      required:
+        - version
+        - index
+        - process_table
+        - runtimes
+        - not_running
+        - unplaced
+      description: "Every Majordomus runtime of this user on this host.\n\n```\nuse majordomus_cli::capability::builtin::server::{HostIndexView, HostRuntimes, ProcessTableView};\nlet r = HostRuntimes { version: \"1.0.0\".into(), node: None,\n    index: HostIndexView { path: None, entries: 0, problem: None },\n    process_table: ProcessTableView { read: true, processes: 0, problem: None },\n    runtimes: Vec::new(), not_running: 0, unplaced: Vec::new() };\nlet text = serde_json::to_string(&r).unwrap();\nassert_eq!(serde_json::from_str::<HostRuntimes>(&text).unwrap(), r);\n```"
     HttpExposure:
       type: object
       properties:
@@ -38341,6 +38556,26 @@ components:
         - pgid
         - cwd_gone
       description: "One process of a parent chain, as its host reports it."
+    ProcessTableView:
+      type: object
+      properties:
+        read:
+          type: boolean
+          description: "Whether it was read. A table that could not be read lists nothing, and the\ninventory then holds only what the index found."
+        processes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many `serve` and `mcp` processes it holds."
+        problem:
+          type:
+            - string
+            - "null"
+          description: "Why it could not be read, when it could not."
+      required:
+        - read
+        - processes
+      description: "The process table as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::ProcessTableView;\nlet v = serde_json::to_value(ProcessTableView { read: true, processes: 2, problem: None }).unwrap();\nassert_eq!(v[\"processes\"], 2);\n```"
     ProductCounts:
       type: object
       properties:
@@ -47229,6 +47464,15 @@ components:
         - stream
         - liveness
       description: "One stream's liveness."
+    Subcommand:
+      oneOf:
+        - type: string
+          const: serve
+          description: "`majordomus serve`: a server and nothing else."
+        - type: string
+          const: mcp
+          description: "`majordomus mcp`: a client's session, which serves its checkout when it won the\nelection and attaches to the server that did otherwise."
+      description: "Which Majordomus process a row of the process table is.\n\n```\nuse majordomus_cli::lease::host::Subcommand;\nassert_eq!(serde_json::to_value(Subcommand::Serve).unwrap(), \"serve\");\n```"
     Summary:
       type: object
       properties:
@@ -49821,6 +50065,15 @@ components:
         - index_is_current
         - findings
       description: "The answer of `objects.verify`."
+    VersionSource:
+      oneOf:
+        - type: string
+          const: lease
+          description: "The lease: what the server wrote about itself when it started."
+        - type: string
+          const: executable
+          description: "`<executable> --version`: a lease too old to carry a version, or no lease at all."
+      description: "Where a runtime's version was read.\n\n```\nuse majordomus_cli::capability::builtin::server::VersionSource;\nassert_eq!(serde_json::to_value(VersionSource::Executable).unwrap(), \"executable\");\n```"
     Via:
       oneOf:
         - type: string

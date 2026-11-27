@@ -1,6 +1,6 @@
 ---
 name: mj-server
-description: "Majordomus server: The shared server, and every server of the repository."
+description: "Majordomus server: Every Majordomus runtime of this user on this host; The shared server, and every server of the repository."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `server.runtimes` | Every Majordomus runtime of this user on this host | `majordomus_runtimes` | `majordomus runtimes` | reads |
 | `server.status` | The shared server, and every server of the repository | `majordomus_server` | `majordomus serve status` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.

@@ -1089,6 +1089,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:server.runtimes",
+      "path": "/evidence/capabilities/server-runtimes/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:server.status",
       "path": "/evidence/capabilities/server-status/"
     },
@@ -3456,6 +3461,11 @@
       "kind": "command",
       "subject": "command:run",
       "path": "/evidence/commands/run/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:runtimes",
+      "path": "/evidence/commands/runtimes/"
     },
     {
       "kind": "command",
@@ -6643,6 +6653,18 @@
           "category": "e2e"
         }
       ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:server.runtimes": {
+      "kind": "capability",
+      "id": "server.runtimes",
+      "page": "/evidence/capabilities/server-runtimes/",
+      "programs": [],
+      "members": [
+        "command:runtimes"
+      ],
+      "routes": [],
       "mechanisms": [],
       "findings": []
     },
@@ -18556,6 +18578,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:runtimes": {
+      "kind": "command",
+      "id": "runtimes",
+      "page": "/evidence/commands/runtimes/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:scope": {
       "kind": "command",
       "id": "scope",
@@ -23224,6 +23265,18 @@
       "programs": [],
       "members": [
         "capability:rules.report"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_runtimes": {
+      "kind": "mcp",
+      "id": "majordomus_runtimes",
+      "alias_of": "capability:server.runtimes",
+      "programs": [],
+      "members": [
+        "capability:server.runtimes"
       ],
       "routes": [],
       "mechanisms": [],
@@ -30320,6 +30373,7 @@
     "crate:generated_documents",
     "crate:guard_hook",
     "crate:health_server",
+    "crate:host_runtimes",
     "crate:hot_path",
     "crate:http_busy_probe",
     "crate:http_host",
@@ -30615,6 +30669,7 @@
     "suite:4592_the_projection_apply_checkout_is_blobless_and_bounded",
     "suite:4618_the_resolver_borrows_a_sibling_executable",
     "suite:4627_a_merge_does_not_borrow_a_foreign_executable",
+    "suite:4665_a_host_lists_its_runtimes",
     "suite:46_cross_surface",
     "suite:4779_homepage_check_compares_the_delivery_the_page_renders",
     "suite:47_mutation",

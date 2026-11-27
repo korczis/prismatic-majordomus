@@ -71,6 +71,7 @@ pub(crate) mod quality;
 pub(crate) mod reasoning;
 pub(crate) mod release;
 pub(crate) mod rules;
+pub(crate) mod runtimes;
 pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod served;
@@ -119,6 +120,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
+        Command::Runtimes(args) => runtimes::run(args),
         Command::Deploy(args) => deploy::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Intent(args) => intent::run(args),
@@ -155,6 +157,9 @@ mod tests {
         type Case = (&'static [&'static str], fn(&Command) -> bool);
         let cases: &[Case] = &[
             (&["majordomus", "mcp"], |c| matches!(c, Command::Mcp(_))),
+            (&["majordomus", "runtimes", "--host"], |c| {
+                matches!(c, Command::Runtimes(_))
+            }),
             (&["majordomus", "monitor", "--follow"], |c| {
                 matches!(c, Command::Monitor(_))
             }),
