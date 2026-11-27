@@ -34,4 +34,16 @@ evidence_required:
 depends_on:
   - "I3990"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-11-26T14:00:31Z
+started_at: 2026-11-26T13:59:34Z
+started_event: sha256:0b2695d1e22751759475556446ba4cdae82bd27f64ce13720172e11ac0d04962
+completed_at: 2026-11-26T14:00:31Z
+completed_event: sha256:100f51b0f2c5850aad8bc1ab5f821ea3fa8670aefd85ea875f5d66acaa851cc5
+evidence:
+  - covers: "the_integration_lease_lives_by_queue_progress"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3991_the_integration_lease_lives_by_queue_progress"
+    result: "delivered by da88e980ecd on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 3991_the_integration_lease_lives_by_queue_progress ok in suite-shard (1) job 138971458450; integration:: 405 lib tests and commands::prs:: 24 ok 0 failed in rust (2) job 138952668919"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:00:14Z

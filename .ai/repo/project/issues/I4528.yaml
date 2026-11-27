@@ -26,6 +26,16 @@ evidence_required:
   - suite
 risk: "None for the product: a test-only change that makes one scenario set what the others already set."
 created_at: 2026-11-01
-updated_at: 2026-11-01T08:20:49Z
+updated_at: 2026-11-26T14:41:41Z
 started_at: 2026-11-01T08:20:49Z
 started_event: sha256:f80a2305ea807a1a4aec5caf5e803be3cd3bd316743146e1df5bceb255d27c83
+completed_at: 2026-11-26T14:41:41Z
+completed_event: sha256:834f38bc4651ca828a480da10574fa76c54aac70bbf132149e88489d21e64a39
+evidence:
+  - covers: "suite"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3002_a_build_never_waits_in_silence"
+    result: "delivered by eed6aea5ae6 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 3002_a_build_never_waits_in_silence ok in suite-shard (4) job 138971458386; suite-shard (4) job 138971458386 concluded success on master"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:41:24Z

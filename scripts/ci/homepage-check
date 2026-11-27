@@ -1284,21 +1284,35 @@ else:
                           + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
     # how far the work travelled is the inferred delivery's count, stage by stage in its order
     # (plan.delivery, ADR 0166): a stage the history proves no issue reached is not drawn, and
-    # `none` is the absence of a stage, never one; once the projection exists the view shows it
+    # `none` is the absence of a stage, never one; once the projection exists the view shows it.
+    # The counts are held to the delivery the page renders, under site/templates/index.html's
+    # own rule (I3769): the build's reading when build.json carries one, the committed
+    # projection otherwise. Holding them to the committed projection alone refused every
+    # master deploy whose trunk had moved past that projection's observation (I4810: pages
+    # runs 45538902097, 45562941508 and 45614492427, merged 4 rendered and 2 expected).
     shown_d = [(k, int(n)) for k, n in re.findall(r'\bdata-delivery="([^"]+)"[^>]*>\s*(?:<a\b[^>]*>\s*)?([0-9]+)', hero)]
     delivery_path = os.path.join(root, "site", "data", "generated", "delivery.json")
-    if shown_d and not os.path.exists(delivery_path):
-        pp.append("the product view counts delivery stages, and site/data/generated/delivery.json is missing (regenerate: scripts/generate-site-data)")
-    elif os.path.exists(delivery_path) and views:
+    delivery, d_source = None, ""
+    if build and build.get("delivery"):
+        delivery, d_source = build["delivery"], "the build's delivery reading"
+    elif os.path.exists(delivery_path):
         with open(delivery_path) as f:
             delivery = json.load(f)
+        d_source = "the committed projection"
+    if delivery is not None:
+        d_at = ((delivery.get("observed") or {}).get("commit") or "")[:11]
+        d_source += f" at {d_at}" if d_at else ""
+    if shown_d and delivery is None:
+        pp.append("the product view counts delivery stages, and site/data/generated/delivery.json is missing (regenerate: scripts/generate-site-data)")
+    elif delivery is not None and views:
         tallies = delivery.get("tallies") or {}
         want_d = [(k, tallies[k]) for k in delivery.get("stages") or [] if k != "none" and tallies.get(k)]
         if want_d and not shown_d:
-            pp.append("the product view counts no delivery stage, and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + "]")
+            pp.append("the product view counts no delivery stage, and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d)
+                      + f"] ({d_source})")
         elif shown_d != want_d:
             pp.append("the product view counts the delivery as [" + ", ".join(f"{k} {n}" for k, n in shown_d)
-                      + "], and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + "]")
+                      + "], and the inferred delivery gives [" + ", ".join(f"{k} {n}" for k, n in want_d) + f"] ({d_source})")
     # what the newest release carried is the changelog's count, group by group, in its order:
     # the release records are the account of what landed, and the view reads them rather than
     # a sentence about how the work stands (ADR 0166)
