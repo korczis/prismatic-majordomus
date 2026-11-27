@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -16594,6 +16594,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "kind": "critique",
+        "label": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "summary": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "route": "/cockpit/objects/critique/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "source": ".ai/repo/project/critiques/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs.yaml",
+        "facts": {
+          "intent": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+          "reviewed_at": "46775282570"
+        }
+      },
+      {
         "id": "majordomus://critique/a-person-runs-majordomus-from-a-phone",
         "kind": "critique",
         "label": "a-person-runs-majordomus-from-a-phone",
@@ -21929,6 +21941,24 @@
         }
       },
       {
+        "id": "majordomus://gap/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "kind": "gap",
+        "label": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "summary": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "route": "/cockpit/objects/gap/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "source": ".ai/repo/project/gaps/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs.yaml",
+        "facts": {
+          "intent": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+          "observed_at": "46775282570",
+          "recorded_at": "2026-11-25",
+          "recorded_by": "claude-code (an /evolve subagent of a session in a downstream supervised repository; worktree plan/lessons-from-a-downstream-adopter-20261125; read-only over the tree, no build)",
+          "risks": [
+            "The downstream measurements were taken on one workstation under heavy load (load average above 70 the same morning); I4793 re-measures before it changes a budget",
+            "Several sessions planned lessons into this repository on the same morning; ids were allocated through the mesh and the scopes checked against the open plan worktrees"
+          ]
+        }
+      },
+      {
         "id": "majordomus://gap/a-session-leaves-what-it-observed",
         "kind": "gap",
         "label": "a-session-leaves-what-it-observed",
@@ -22540,6 +22570,39 @@
             "Blocking every change on mutation testing"
           ],
           "updated_at": "2026-10-18"
+        }
+      },
+      {
+        "id": "majordomus://intent/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "kind": "intent",
+        "label": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "summary": "A repository that adopts Majordomus is told what really answers, keeps its own proofs in the tool's registry, and is not stalled by its own plan, its owner's commits or its doctor",
+        "route": "/cockpit/objects/intent/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "source": ".ai/repo/project/intents/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "invariants": [
+            "Nothing in the tool decides by the identity of the repository it runs in; every fix is a declaration, a derivation or a default an adopter can state",
+            "A credential's value is never printed, logged, recorded or sent anywhere except to the endpoint it belongs to; a probe reports a status, the source it read and when",
+            "Availability stays a pure function of declarations, recorded outcomes and the clock (ADR 0032): a probe is a recorded outcome, never a network call made while availability is derived",
+            "A model or advisor whose request leaves the machine is never admitted by the offline reasoning mode, whatever its runtime is called",
+            "GitHub and any other tracker are projections: no record stores a tracker's comment id or issue number as a field, and a progress comment is found again by a marker it carries, never by a stored number",
+            "A plan check that compares a change with its base reads the base from git; it never reads a previous run of itself",
+            "The person's word outranks the agent's scope: finish never refuses a change because the person made it, and the record says whose it was",
+            "Every new reading carries a case that fails without it, against a fixture repository that is not this one"
+          ],
+          "milestones": [
+            "a-downstream-adopters-findings-are-fixed-in-the-tool"
+          ],
+          "non_goals": [
+            "Fixing the downstream repository itself: it is the evidence, read only, and it is never named",
+            "A network call while availability, doctor or plan validate is derived; a probe is an explicit command whose outcome is recorded",
+            "A credential store, a secret manager or rotation of any credential",
+            "Deciding which advisor is right; advisors are consulted under ADR 0098 and settled by an experiment",
+            "Two-way tracker synchronisation: a tracker never writes the plan",
+            "Replacing the existing adopter work of a-second-adopter-is-served; this intent depends on I4255 and I4261 and widens neither"
+          ],
+          "updated_at": "2026-11-25"
         }
       },
       {
@@ -43961,7 +44024,8 @@
           "created_at": "2026-10-14",
           "current_state": "No process reads releases/latest.json except install.sh run by a person.",
           "depends_on": [
-            "I2720"
+            "I2720",
+            "I4728"
           ],
           "evidence_required": [
             "node_follows_stable_pointer_test",
@@ -60024,7 +60088,6 @@
         "source": ".ai/repo/project/issues/I3322.yaml",
         "facts": {
           "created_at": "2026-10-18",
-          "current_state": ".claude/hooks/majordomus-edit-guard exists and case 3069 pipes payloads into it directly; capture install writes no PreToolUse entry and mj_lifecycle_state does not cover the guard.",
           "evidence_required": [
             "case_the_edit_guard_is_wired_in_the_generated_settings"
           ],
@@ -68844,7 +68907,6 @@
             "No member order is read from a session cache"
           ],
           "created_at": "2026-10-22",
-          "current_state": "train.rs reads stacked pull requests and refs/prep only; prs compose was planned in ADR 0167 and never landed; train member order lives in session caches.",
           "depends_on": [
             "I3910"
           ],
@@ -73210,7 +73272,6 @@
             "The ledger names the widening"
           ],
           "created_at": "2026-10-27",
-          "current_state": "start fixes the scope for the task's life.",
           "depends_on": [],
           "desired_state": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
           "evidence_required": [
@@ -82740,6 +82801,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4634",
+        "kind": "issue",
+        "label": "I4634",
+        "summary": "A pull request does not land a merge whose delivery differs from the committed projection: plan.delivery reads an anticipated merge and a combined top's member merges, and the gate merge-delivery refuses the rest",
+        "route": "/cockpit/objects/issue/i4634",
+        "source": ".ai/repo/project/issues/I4634.yaml",
+        "facts": {
+          "created_at": "2026-11-17",
+          "depends_on": [],
+          "evidence_required": [
+            "a_pull_request_is_judged_by_the_merge_it_will_be"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Starting validate on `edited`. Every body edit pr-meta writes would then start the whole pipeline. The refusal says to re-run instead.",
+            "Deriving the projection at the anticipated merge. A derived file cannot name the commit it lands in (case 51), and the forge's merge commit does not exist before the merge.",
+            "The trunk's own check, which homepage-check already makes at the merge."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/plan/flight.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "scripts/ci/merge-delivery-check",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4634.yaml"
+          ],
+          "serves": [],
+          "slug": "a-merge-does-not-move-the-committed-delivery",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "bash test/run.sh 4634_a_merge_does_not_move_the_committed_delivery"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4665",
         "kind": "issue",
         "label": "I4665",
@@ -83023,6 +83130,1598 @@
           "updated_at": "2026-11-26T13:46:54Z",
           "validation": [
             "bash test/run.sh 104_published_site"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4712",
+        "kind": "issue",
+        "label": "I4712",
+        "summary": "A bounded subprocess ends with everything it started, and the worktree lock is taken at once from an owner that is gone",
+        "route": "/cockpit/objects/issue/i4712",
+        "source": ".ai/repo/project/issues/I4712.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A bounded command whose child left a program holding its output returns at its bound, and that program is gone",
+            "A process ended by SIGTERM ends the groups it leads first and still dies of the signal; an ignored signal stays ignored",
+            "A worktree lock whose owner is dead, or was written in another boot, is taken at once; one whose owner lives, or that names no owner, is held",
+            "A holder killed with SIGKILL while holding the worktree lock leaves a file the next caller takes at once"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [],
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "The serve daemon's own lifecycle (idle exit, lease election), which I4007 and I2127 already bound",
+            "A sweep that kills processes this process did not start",
+            "Locks other than the worktree lock"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/process.rs",
+            "apps/majordomus-cli/src/worktree/git.rs",
+            "apps/majordomus-cli/src/worktree/lock.rs",
+            "apps/majordomus-cli/src/monitor/github.rs",
+            "apps/majordomus-cli/src/mesh/tailscale.rs",
+            "apps/majordomus-cli/src/environment/probe.rs",
+            "apps/majordomus-cli/src/economics/runner.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            ".ai/repo/project/issues/I4712.yaml"
+          ],
+          "serves": [
+            "nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded"
+          ],
+          "slug": "bounded-subprocesses-end-their-group-and-dead-lock-owners-are-reclaimed",
+          "validation": [
+            "cargo test --lib process::",
+            "cargo test --lib worktree::",
+            "cargo test --lib environment::probe",
+            "cargo test --lib monitor::github",
+            "cargo test --lib mesh::tailscale",
+            "cargo test --lib economics::runner"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4713",
+        "kind": "issue",
+        "label": "I4713",
+        "summary": "A bounded subprocess's output is read while it runs, so a long answer is answered and not timed out",
+        "route": "/cockpit/objects/issue/i4713",
+        "source": ".ai/repo/project/issues/I4713.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A program that writes more than a pipe holds on both pipes and exits is answered at once with its status and all of its output",
+            "A program that writes more than a pipe holds and then never finishes is ended with what it started at its bound, and what it wrote until then is answered",
+            "A program that exits but leaves a program of its own holding a pipe is not answered as finished, and what it left is ended at the bound",
+            "A gh answer and a tailscale status longer than a pipe holds are read within their budgets"
+          ],
+          "created_at": "2026-11-22",
+          "depends_on": [
+            "I4712"
+          ],
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "worktree/git.rs and economics/runner.rs, which already drain while they wait",
+            "The process-group and lock-owner work of I4712, which this builds on"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/process.rs",
+            "apps/majordomus-cli/src/monitor/github.rs",
+            "apps/majordomus-cli/src/mesh/tailscale.rs",
+            "apps/majordomus-cli/src/environment/probe.rs",
+            ".ai/repo/project/issues/I4713.yaml"
+          ],
+          "serves": [
+            "nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded"
+          ],
+          "slug": "bounded-runs-drain-their-pipes-while-they-wait",
+          "validation": [
+            "cargo test --lib process::",
+            "cargo test --lib monitor::github",
+            "cargo test --lib mesh::tailscale",
+            "cargo test --lib environment::probe"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4718",
+        "kind": "issue",
+        "label": "I4718",
+        "summary": "A derived delivery.json whose observed commit is not an ancestor of the tree it ships in is refused before the commit, with its remedy named, so an offloaded derive's throwaway input commit never reaches CI",
+        "route": "/cockpit/objects/issue/i4718",
+        "source": ".ai/repo/project/issues/I4718.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4718"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "~/dev/.derive-offload-v2.sh and any other machine-local offload script: it lives outside this repository, and its owner migrates it to `majordomus offload derive` or sets MJ_DERIVE_OBSERVE",
+            "How scripts/generate-site-data chooses the observed commit (I3836)",
+            "CI's whole-file comparison of the derived data, which stays as it is"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive-check",
+            "scripts/pages",
+            "test/cases/4718_a_delivery_observing_a_throwaway_commit_is_refused_locally.sh",
+            ".ai/repo/project/issues/I4718.yaml",
+            "site/content/plan/I4718.md"
+          ],
+          "slug": "a-delivery-observing-a-throwaway-commit-is-refused-locally",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 4718_a_delivery_observing_a_throwaway_commit_is_refused_locally 3846_an_offload_derive_observes_its_base_commit"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4721",
+        "kind": "issue",
+        "label": "I4721",
+        "summary": "ADR 0199 carries Majordomus Fabric's decision and the owner has accepted it (S00 and P01, gate G0)",
+        "route": "/cockpit/objects/issue/i4721",
+        "source": ".ai/repo/project/issues/I4721.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "desired_state": "ADR 0199 on master reads accepted with its amendment; the knowledge record is on master; this issue carries both merges as evidence.",
+          "evidence_required": [
+            "adr_0199_accepted"
+          ],
+          "milestone": "fabric-is-decided-and-the-legacy-is-measured",
+          "non_scope": [
+            "Editing the text of an accepted ADR other than 0199; ADR 0001, 0003 and 0044 are narrowed by 0199, not rewritten",
+            "Any host-agent code"
+          ],
+          "priority": "p1",
+          "profile": "docs",
+          "scope": [
+            ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
+            ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md"
+          ],
+          "slug": "0199-fabric-host-agent",
+          "started_at": "2026-11-25T04:10:33Z",
+          "started_event": "sha256:4128d83f6831da85bf1f465072dc7d7c1ae756dcf7f37d1bc264c0ef615a0e55",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3123",
+            "https://github.com/korczis/prismatic-majordomus/pull/3121"
+          ],
+          "updated_at": "2026-11-25T04:10:33Z",
+          "validation": [
+            "majordomus plan validate",
+            "bin/majordomus knowledge check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4722",
+        "kind": "issue",
+        "label": "I4722",
+        "summary": "The legacy per-checkout runtime is measured at L1, L2 and L3 before Fabric changes it (S01, gate G1)",
+        "route": "/cockpit/objects/issue/i4722",
+        "source": ".ai/repo/project/issues/I4722.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/fabric-baseline runs L1, L2 and L3 only in a fixture it made and refuses a non-empty unmarked directory and one inside a git work tree",
+            "Every run reports samples plus failures equal to attempts, and a server killed before its clients attach is counted, not dropped",
+            "Case 4663 proves the L1 positive with a real MCP answer, both refusals and the killed-server count"
+          ],
+          "created_at": "2026-11-25",
+          "desired_state": "PR #3122 is merged; the baseline output (majordomus-fabric-baseline/v1) with host metadata is attached as this issue's evidence; the fabric-local-pilot milestone is measured with the same script.",
+          "evidence_required": [
+            "legacy_baseline_measured"
+          ],
+          "milestone": "fabric-is-decided-and-the-legacy-is-measured",
+          "non_scope": [
+            "Changing production runtime behaviour",
+            "Turning one machine's numbers into a budget; the policy's entry budgets are printed, never changed",
+            "L4 (two hosts), which needs Fabric's networking first"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/fabric-baseline",
+            "test/cases/4663_fabric_legacy_baseline.sh",
+            "docs/PERFORMANCE.md",
+            ".ai/repo/automation/inventory.jsonl"
+          ],
+          "slug": "fabric-s01-legacy-baseline",
+          "started_at": "2026-11-25T04:15:28Z",
+          "started_event": "sha256:017c09767d5535f1804493584c39d31aa7e235182b78e99a6ee4e4d0bf411587",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3122"
+          ],
+          "updated_at": "2026-11-25T04:22:59Z",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 4663_fabric_legacy_baseline"
+          ],
+          "verified_at": "2026-11-25T04:22:59Z",
+          "verified_event": "sha256:f7be2dd43121c88e135c0da2cf6476d84797178291c11a622ab3b7fef5a027ea"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4723",
+        "kind": "issue",
+        "label": "I4723",
+        "summary": "Fabric's typed identities and local IPC contract exist, with no service side effect (P02)",
+        "route": "/cockpit/objects/issue/i4723",
+        "source": ".ai/repo/project/issues/I4723.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An incompatible protocol range is refused with a typed reason, an unknown optional field is ignored and an unknown required feature is refused",
+            "A malformed, truncated or overlong frame is refused before it is parsed into a request",
+            "A write whose outcome is unknown is reported as such and never resent; a test fails when the contract would resend it",
+            "Two worktrees of one repository get distinct context ids and one MeshRepositoryId"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: in flight on branch feature/fabric-p02-ipc-contract (apps/majordomus-cli/src/fabric, uncommitted, not pushed). No IPC contract exists on master.",
+          "depends_on": [
+            "I4721"
+          ],
+          "evidence_required": [
+            "ipc_contract_refusals_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "A listener, a socket or any process (P03)",
+            "A second identity scheme beside mesh::identity and mesh::repository",
+            "A copy of the types in the UI, the OpenAPI document or the docs"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/mesh/repository.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "share/schemas"
+          ],
+          "slug": "fabric-p02-ipc-contract",
+          "traces": [
+            "branch feature/fabric-p02-ipc-contract"
+          ],
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib fabric"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4724",
+        "kind": "issue",
+        "label": "I4724",
+        "summary": "A user-scoped host agent starts by hand, holds one local socket as a singleton and stops cleanly (P03)",
+        "route": "/cockpit/objects/issue/i4724",
+        "source": ".ai/repo/project/issues/I4724.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Ten or more simultaneous starts end with one owner; a live but slow owner is never silently replaced; a stale socket of a dead owner is recovered",
+            "A connection from another OS user, a planted symlink and an incompatible hello are refused",
+            "env enter and mcp --standalone behave exactly as before when no host agent runs",
+            "The host agent's idle process, RSS and descriptor count are reported beside the I4722 baseline"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: no host agent exists; every server is one checkout's (ADR 0035).",
+          "depends_on": [
+            "I4723",
+            "I4722"
+          ],
+          "desired_state": "A manually started host agent, with no service installation, no automatic start from env enter, no mesh socket opened by starting it, and no scan of the home directory for projects.",
+          "evidence_required": [
+            "host_singleton_race_test",
+            "wrong_uid_refused_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Service units and installers (P09)",
+            "Moving any legacy MCP owner (P05, S02)",
+            "A separate binary without footprint evidence"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "fabric-p03-host-singleton",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test fabric_host"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4725",
+        "kind": "issue",
+        "label": "I4725",
+        "summary": "Entering a checkout registers its logical context with the host agent in one bounded call (P04)",
+        "route": "/cockpit/objects/issue/i4725",
+        "source": ".ai/repo/project/issues/I4725.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Registration is idempotent by the derived context id, and two worktrees of one repository are two contexts of one repository",
+            "A deleted, moved or symlink-swapped root and a tampered context id are revalidated or refused, never registered as another context",
+            "With no host agent, env enter stays within the policy's entry budgets and its output is unchanged"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: env enter resolves the checkout's environment and starts no server (ADR 0043); nothing registers a context anywhere.",
+          "depends_on": [
+            "I4724"
+          ],
+          "desired_state": "env enter returns the same exports and banner as today, registers the context when an agent answers, and reports the agent unavailable otherwise, without waiting on it.",
+          "evidence_required": [
+            "context_registration_test",
+            "entry_without_agent_unchanged_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Enrolling a repository into the mesh or granting it access to another project",
+            "A session created by cd alone",
+            "Scanning every project on the host"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/environment",
+            "apps/majordomus-cli/src/mesh/repository.rs",
+            "test/cases"
+          ],
+          "slug": "fabric-p04-context-registry",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "Corrected DAG: P04 follows P03 (I4724). BASE_PACK_MAP: a context entry is not a live session and not a mutable owner (S02, S04)."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4726",
+        "kind": "issue",
+        "label": "I4726",
+        "summary": "The MCP stdio bridge prefers a compatible host agent and falls back to today's path (P05)",
+        "route": "/cockpit/objects/issue/i4726",
+        "source": ".ai/repo/project/issues/I4726.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two sessions of two contexts on one host never see each other's requests or tools",
+            "A host crash during a read reconnects with bounded backoff; a host crash after a write was sent reports the outcome unknown and never replays it",
+            "With no host agent, mcp, mcp --standalone and mcp --inspect behave as before"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: mcp::bridge attaches to the checkout's shared server through its lease and refuses to resend an uncertain write (BridgeError::may_resend).",
+          "depends_on": [
+            "I4725"
+          ],
+          "desired_state": "One bridge, two routes (host proxy, legacy lease), the same stdout framing and initialisation semantics, and tool visibility derived from the capability registry for the authorised context only.",
+          "evidence_required": [
+            "bridge_host_route_test",
+            "bridge_fallback_test"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Transferring mutable ownership of a live legacy context (S02, P11)",
+            "Starting a host agent from inside a client",
+            "A hand-written MCP tool list per frontend"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/tests",
+            "docs/MCP.md"
+          ],
+          "slug": "fabric-p05-mcp-bridge",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test mcp_shared"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4727",
+        "kind": "issue",
+        "label": "I4727",
+        "summary": "Every capability call is authorised against the caller's own context, not only its OS user (S04, gate G4)",
+        "route": "/cockpit/objects/issue/i4727",
+        "source": ".ai/repo/project/issues/I4727.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of A calling B's capabilities by a guessed id is refused a write always, and a read unless an existing policy grants it",
+            "A forged uid, branch, root, checkout id or context id in a frame loses to the identity the host derived",
+            "A session handle replayed after detach, and a root swapped after registration, are refused",
+            "The fabric_cross_context baseline cases of PR #3124 assert the refusal"
+          ],
+          "created_at": "2026-11-25",
+          "current_state": "Observed 2026-11-25: PR #3124 adds apps/majordomus-cli/tests/fabric_cross_context.rs, two cases in which a client of checkout A moves an issue in checkout B over HTTP and over MCP; open, as a draft.",
+          "depends_on": [
+            "I4723",
+            "I4725",
+            "I4726"
+          ],
+          "desired_state": "The two baseline cases of PR #3124 invert: the cross-context write is refused with a stable reason and redacted host-side evidence, and S04's security matrix passes.",
+          "evidence_required": [
+            "scoped_authority_negative_tests"
+          ],
+          "milestone": "fabric-local-pilot",
+          "non_scope": [
+            "Cross-host admission (S06, gate G6)",
+            "Arbitrary cross-context delegation; any delegation is a separate typed decision with audit",
+            "A per-frontend tool-name allowlist: rights come from the capability's typed effect and the repository's policy"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/capability/model.rs",
+            "apps/majordomus-cli/src/mcp/surface.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/tests/fabric_cross_context.rs",
+            "docs/MCP.md"
+          ],
+          "slug": "fabric-s04-scoped-authority",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3124"
+          ],
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test fabric_cross_context"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4728",
+        "kind": "issue",
+        "label": "I4728",
+        "summary": "An unattended follower installs only a release whose provenance it verified, and refuses otherwise",
+        "route": "/cockpit/objects/issue/i4728",
+        "source": ".ai/repo/project/issues/I4728.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A following node with gh absent or signed out refuses the update, keeps its version and records the provenance refusal in its round",
+            "An environment that sets MAJORDOMUS_REQUIRE_PROVENANCE=0 does not weaken the follower",
+            "A manual self update without verifiable provenance installs and says it verified the checksum only"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I2720",
+            "I2165"
+          ],
+          "evidence_required": [
+            "follower_refuses_unverified_provenance_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Changing what a person's manual install.sh or self update verifies, beyond the warning",
+            "A second installer or verifier; install.sh stays the one path (ADR 0161)"
+          ],
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+            "site/static/install.sh",
+            "test/cases",
+            "docs/DISTRIBUTION.md"
+          ],
+          "slug": "an-unattended-follower-requires-provenance",
+          "traces": [
+            "https://github.com/korczis/prismatic-majordomus/pull/3110"
+          ],
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4740",
+        "kind": "issue",
+        "label": "I4740",
+        "summary": "A refused mesh record write is counted and shown, and a long-running service's session can claim its record scope",
+        "route": "/cockpit/objects/issue/i4740",
+        "source": ".ai/repo/project/issues/I4740.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record write outside the session's claims is refused as before and leaves one refusal entry in the journal",
+            "mesh doctor names a session with refusals in the last hour, the count, the first refused path and a claim reproduce",
+            "After an advisory claim of that path by the same session, the same write is admitted and no new refusal is counted",
+            "Negative: the case fails against origin/master before this change (no refusal entry, doctor silent)"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "a_refused_mesh_write_is_counted_and_shown"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "A new claim mode for services; advisory claims suffice",
+            "Widening a task's scope in place (I4260)",
+            "The adopter's own launcher, which must claim its helpers' scope itself"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/records.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I4740.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
+          "slug": "a-refused-mesh-write-is-counted-and-shown",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml mesh::records"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4741",
+        "kind": "issue",
+        "label": "I4741",
+        "summary": "No majordomus command waits without a bound: a stdin read refuses a terminal and every command has a deadline",
+        "route": "/cockpit/objects/issue/i4741",
+        "source": ".ai/repo/project/issues/I4741.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "no_command_waits_without_a_bound"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "Making context fast (I0840); this only bounds it",
+            "The typed program runner for tools Majordomus starts (I4486)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus",
+            "lib/handover.sh",
+            "lib/common.sh",
+            ".ai/repo/policy.yaml",
+            "test/cases/4741_no_command_waits_without_a_bound.sh",
+            ".ai/repo/project/issues/I4741.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
+          "slug": "no-command-waits-without-a-bound",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4741_no_command_waits_without_a_bound"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4742",
+        "kind": "issue",
+        "label": "I4742",
+        "summary": "Who runs a long-lived service is a mesh record, and a helper whose launcher died is named an orphan",
+        "route": "/cockpit/objects/issue/i4742",
+        "source": ".ai/repo/project/issues/I4742.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4006",
+            "I4670"
+          ],
+          "evidence_required": [
+            "who_runs_a_service_is_a_mesh_record"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "non_scope": [
+            "The owner record type itself (majordomus-owner/v1), which the build-slot work owns",
+            "Stopping or reaping a service automatically; the record names the stop command and a person or its owner runs it"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/records.rs",
+            "apps/majordomus-cli/src/mesh/who.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I4742.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-dead-loop-resumes",
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
+          "slug": "who-runs-a-service-is-a-mesh-record",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml mesh::who"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4778",
+        "kind": "issue",
+        "label": "I4778",
+        "summary": "An advisor is reported answering only after a cheap real call answered: `reasoning probe` records each advisor's liveness with a time-to-live, and availability reads it",
+        "route": "/cockpit/objects/issue/i4778",
+        "source": ".ai/repo/project/issues/I4778.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An advisor whose fake executable answers the probe reads answering until the time-to-live passes, then present-unprobed again",
+            "A fake CLI that prints 'client no longer supported' and exits non-zero reads unavailable with refused_client after one probe",
+            "A fake API answering 401 reads unavailable with credential_rejected, and the probe's record carries no credential value",
+            "An advisor never probed is listed as present-unprobed, and `reasoning plan` still selects it, saying it is unprobed",
+            "derive_availability makes no network call: its unit tests run with the network unreachable"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4778"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Classifying remote models and choosing a chat-capable local model (I4779)",
+            "Probing credentials of services that are not advisors (I4780)",
+            "Probing on every availability read: a probe is an explicit command, or a step a plan asks for, never part of a derivation"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. A probe spends a little of each vendor's quota; the time-to-live bounds it, and a plan with no consultation never probes.",
+          "scope": [
+            ".ai/repo/project/issues/I4778.yaml",
+            "apps/majordomus-cli/src/reasoning/availability.rs",
+            "apps/majordomus-cli/src/reasoning/record.rs",
+            "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+            "scripts/advisor-consult",
+            "scripts/lib/advisors/contract.mjs",
+            "scripts/lib/advisors/driver.mjs",
+            "scripts/lib/advisors/contract.test.mjs",
+            "share/advisors.yaml",
+            "docs/REASONING.md",
+            "test/cases/4778_an_advisor_answers_before_it_is_available.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#advisors-are-reported-by-what-answers"
+          ],
+          "slug": "an-advisor-is-answering-only-when-a-probe-answered",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::",
+            "node --test scripts/lib/advisors/contract.test.mjs",
+            "bash test/run.sh 4778_an_advisor_answers_before_it_is_available"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4779",
+        "kind": "issue",
+        "label": "I4779",
+        "summary": "A local runtime's model is classified by where it runs: an Ollama `:cloud` model leaves the machine, and a local adapter picks a chat model whose weights are present",
+        "route": "/cockpit/objects/issue/i4779",
+        "source": ".ai/repo/project/issues/I4779.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fake Ollama listing `llama:cloud` first and a local model second sends the chat to the local model",
+            "Under the offline mode, a fake Ollama listing only `:cloud` models answers unavailable with leaves_machine and no request reaches its chat endpoint",
+            "A fake LM Studio listing only an embedding model answers unavailable with no_chat_model",
+            "A listed model whose show call reports missing weights is skipped with weights_missing"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4778"
+          ],
+          "evidence_required": [
+            "case_4779"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "The probe command and its record (I4778)",
+            "Pulling, repairing or deleting a runtime's models"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. A runtime that marks remote models in a way this classification does not know is still admitted; the classification names what it read so a new marker is one declared pattern away.",
+          "scope": [
+            ".ai/repo/project/issues/I4779.yaml",
+            "scripts/lib/advisors/ollama-chat.mjs",
+            "scripts/lib/advisors/lmstudio-chat.mjs",
+            "scripts/lib/advisors/contract.test.mjs",
+            "share/advisors.yaml",
+            "docs/REASONING.md",
+            "test/cases/4779_a_cloud_model_is_not_local.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#advisors-are-reported-by-what-answers"
+          ],
+          "slug": "a-local-runtimes-model-is-classified-by-where-it-runs",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "node --test scripts/lib/advisors/contract.test.mjs",
+            "bash test/run.sh 4779_a_cloud_model_is_not_local"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4780",
+        "kind": "issue",
+        "label": "I4780",
+        "summary": "`majordomus credential probe <service>` asks every declared source of one credential whether the service accepts it, and reports a status per source without ever printing the value",
+        "route": "/cockpit/objects/issue/i4780",
+        "source": ".ai/repo/project/issues/I4780.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Against a local fake service, a source holding the accepted value reads answered and a source holding a stale one reads rejected",
+            "Two sources holding one value read duplicate-of with a digest prefix, and neither value appears in stdout, stderr, the ledger or any file the case can grep",
+            "A declared source that does not exist reads absent; an unreachable endpoint reads unreachable and the probe exits non-zero without a retry storm",
+            "`credential sources` reads no file content: the case replaces each file with one that is unreadable and the listing still answers"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4780"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Storing, rotating, copying or repairing a credential",
+            "Any endpoint not declared for the service: the value goes to one URL and nowhere else",
+            "Probing advisors, which I4778 does through their adapters"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium: it handles secrets. The value lives only in the process that sends it, is never formatted into a string that reaches output, and the case greps every output channel for the planted value.",
+          "scope": [
+            ".ai/repo/project/issues/I4780.yaml",
+            "apps/majordomus-cli/src/capability/builtin/credential.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "share/schemas/majordomus/credential/credential.v1.schema.json",
+            "share/credentials.yaml",
+            "docs/ENVIRONMENT.md",
+            "test/cases/4780_a_credential_is_probed_not_read.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#credentials-are-probed-without-being-read"
+          ],
+          "slug": "a-credential-source-is-probed-not-read",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::credential",
+            "bash test/run.sh 4780_a_credential_is_probed_not_read"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4781",
+        "kind": "issue",
+        "label": "I4781",
+        "summary": "A project rule proved by its tests is in the registry: gated mode (`x-majordomus: tests: [...]`) is counted as enforced, and doctor resolves every named test in the adopter's tree",
+        "route": "/cockpit/objects/issue/i4781",
+        "source": ".ai/repo/project/issues/I4781.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fixture adopter, a blocking project rule with `x-majordomus: {tests: [test/rule_x.sh]}` is listed by `rules list` as gated and counted as enforced by the doctrine summary",
+            "Renaming test/rule_x.sh makes doctor fail with the rule id and the dangling path",
+            "A rule naming only prose is counted under the documented mode, and the summary's outside-the-registry count equals the documented blocking rules",
+            "scripts/ci/rule-proof-check gives the same findings on this repository before and after, now through the tool"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4781"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "A project rule enforced by a command the repository names (I4255): that is the dispatched mode for adopters, and this issue leaves it alone",
+            "The principle coverage check (I4782)",
+            "Converting the downstream repository's prose to blocks: the adopter does that once the mode exists"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. Every repository's doctrine summary changes its numbers; the change is the denominator becoming truthful, and the summary says which mode each count is.",
+          "scope": [
+            ".ai/repo/project/issues/I4781.yaml",
+            "lib/doctrine.sh",
+            "lib/rules.sh",
+            "lib/doctor.sh",
+            "apps/majordomus-cli/src/capability/builtin/rules.rs",
+            "scripts/ci/rule-proof-check",
+            "share/skeleton/ai/repo/rules/README.md",
+            "share/skeleton/policy.yaml",
+            "docs/DOCTRINE.md",
+            "test/cases/4781_a_gated_project_rule_is_in_the_registry.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-projects-proofs-are-registered"
+          ],
+          "slug": "a-gated-project-rule-is-in-the-registry",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4781_a_gated_project_rule_is_in_the_registry",
+            "scripts/ci/rule-proof-check",
+            "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4782",
+        "kind": "issue",
+        "label": "I4782",
+        "summary": "Every project rule reaches a declared principle and every principle is refined by a rule: a generic coverage check over the rule dependency graph",
+        "route": "/cockpit/objects/issue/i4782",
+        "source": ".ai/repo/project/issues/I4782.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture with principle P, rule A depending on P and rule B depending on nothing reports B as rule_without_principle and nothing for A",
+            "A second principle Q that no rule depends on and that names no proof is reported principle_without_rule",
+            "A fixture that declares no principle prints that the check is off and exits as before"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4781"
+          ],
+          "evidence_required": [
+            "case_4782"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Declaring this repository's own principles: the owner's act, recorded as a decision when made",
+            "Gated mode itself (I4781)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. Advisory by default; it reads a graph the loader already resolves.",
+          "scope": [
+            ".ai/repo/project/issues/I4782.yaml",
+            "lib/rules.sh",
+            "lib/doctor.sh",
+            "apps/majordomus-cli/src/capability/builtin/rules.rs",
+            "share/schemas/majordomus/rule/rule.v1.schema.json",
+            "share/skeleton/ai/repo/rules/README.md",
+            "docs/DOCTRINE.md",
+            "test/cases/4782_every_rule_reaches_a_principle.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-projects-proofs-are-registered"
+          ],
+          "slug": "every-rule-reaches-a-principle",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4782_every_rule_reaches_a_principle"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4783",
+        "kind": "issue",
+        "label": "I4783",
+        "summary": "An enforcement entry with `args: []` is proved wired by a hook line that invokes its path alone",
+        "route": "/cockpit/objects/issue/i4783",
+        "source": ".ai/repo/project/issues/I4783.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An entry `{path: scripts/gate, args: [], wired_by: git-hook:pre-push}` with a hook line `scripts/gate` is reported wired",
+            "The same with `scripts/gate || exit $?` is reported wired, and with `scripts/gate || true` reported as swallowing the exit code",
+            "A hook whose only mention is `# scripts/gate` is reported unwired",
+            "The case fails against lib/doctor.sh as it is at 46775282570"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4783"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Hook phases, costs and budgets (I4671)",
+            "Shipping hooks in the skeleton (I4784)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. A wider pattern could call a comment wired; the comment shape is one of the case's four.",
+          "scope": [
+            ".ai/repo/project/issues/I4783.yaml",
+            "lib/doctor.sh",
+            "test/cases/4783_a_path_only_invocation_is_wired.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-projects-proofs-are-registered"
+          ],
+          "slug": "a-path-only-invocation-is-wired",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4783_a_path_only_invocation_is_wired"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4784",
+        "kind": "issue",
+        "label": "I4784",
+        "summary": "init offers versioned hooks: tracked `.githooks/` with the two tool lines and a slot for repository gates, `core.hooksPath` set for the clone, and every line an enforcement entry doctor proves",
+        "route": "/cockpit/objects/issue/i4784",
+        "source": ".ai/repo/project/issues/I4784.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init --hooks versioned in a fresh repository leaves .githooks/pre-commit and .githooks/pre-push executable and tracked-ready, core.hooksPath set, and doctor reporting both entries wired",
+            "`hooks add pre-push scripts/e2e-gate` writes the dispatcher entry and the enforcement entry; doctor proves it wired; a gate that exits 1 refuses `git push` to a local bare remote",
+            "A second clone without core.hooksPath set is reported by doctor with the command that sets it",
+            "init without the option behaves as at 46775282570"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4783"
+          ],
+          "evidence_required": [
+            "case_4784"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Hook phases, costs and budgets (I4671), which this issue's dispatchers leave room for",
+            "The commit-message guard (I4262)",
+            "Changing this repository's own .githooks"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. Writing hooks into a repository is a change every contributor meets; the mode is opt-in and the dispatcher runs nothing the policy does not declare.",
+          "scope": [
+            ".ai/repo/project/issues/I4784.yaml",
+            "lib/init.sh",
+            "lib/update.sh",
+            "lib/doctor.sh",
+            "share/skeleton/policy.yaml",
+            "share/skeleton/githooks/pre-commit",
+            "share/skeleton/githooks/pre-push",
+            "docs/ADOPTION.md",
+            "test/cases/4784_init_offers_versioned_hooks.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#the-skeleton-ships-versioned-hooks-and-a-ratchet"
+          ],
+          "slug": "init-offers-versioned-hooks",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4784_init_offers_versioned_hooks"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4786",
+        "kind": "issue",
+        "label": "I4786",
+        "summary": "`majordomus campsite` leaves every branch no worse than its merge base: declared metrics measured on both sides, a grown one refused, wired into pre-push and CI",
+        "route": "/cockpit/objects/issue/i4786",
+        "source": ".ai/repo/project/issues/I4786.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture branch adding `it.skip(` and a declared placeholder marker is refused with both metrics, their base and head values and the adding files",
+            "A branch that removes one skipped test and adds another passes the skipped-tests metric (equal is not worse)",
+            "A metric marked report prints its growth and does not refuse",
+            "A repository command metric that exits non-zero is reported as unmeasured, never as zero",
+            "The base is measured in a temporary worktree that is removed afterwards, and the head's work tree is untouched"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4784"
+          ],
+          "evidence_required": [
+            "case_4786"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Folding this repository's existing baseline files into campsite: a later issue, once the capability has run here",
+            "Any metric that needs a build or a network call; a repository command may, at its own cost"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. Measuring the base costs a worktree checkout per run; the capability reuses one per base commit and says what it cost.",
+          "scope": [
+            ".ai/repo/project/issues/I4786.yaml",
+            "apps/majordomus-cli/src/capability/builtin/campsite.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/skeleton/policy.yaml",
+            "docs/QUALITY.md",
+            "test/cases/4786_the_campsite_ratchet_is_a_capability.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#the-skeleton-ships-versioned-hooks-and-a-ratchet"
+          ],
+          "slug": "the-campsite-ratchet-is-a-capability",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::campsite",
+            "bash test/run.sh 4786_the_campsite_ratchet_is_a_capability"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4787",
+        "kind": "issue",
+        "label": "I4787",
+        "summary": "A plan declares its requirement sources, and plan validate names every requirement no issue traces and every trace no source holds",
+        "route": "/cockpit/objects/issue/i4787",
+        "source": ".ai/repo/project/issues/I4787.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A source with R1, R2 and R3 and issues tracing R1 and R2 reports requirement_untraced for R3 and coverage 2/3",
+            "An issue tracing R4 is reported trace_unknown_requirement naming the source",
+            "A trace to a cancelled issue does not count as coverage",
+            "With `coverage: required`, plan validate exits 10 on the untraced requirement; without it, exits 0 and warns"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4261"
+          ],
+          "evidence_required": [
+            "case_4787"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Reading a requirement source over the network (an external tracker's requirement list): a source is a file in the repository; a tracker export committed to the repository is one",
+            "Projecting traces to the forge, which I4261 did"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. A pattern that matches prose by accident reports false requirements; the finding names the line it read so the pattern can be narrowed.",
+          "scope": [
+            ".ai/repo/project/issues/I4787.yaml",
+            "lib/plan.sh",
+            "lib/project.sh",
+            "lib/project.awk",
+            "share/allow/project.txt",
+            "share/schemas/majordomus/project/project.v1.schema.json",
+            "docs/PLANNING.md",
+            "test/cases/4787_every_requirement_is_traced.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#every-requirement-is-traced"
+          ],
+          "slug": "every-requirement-of-a-declared-source-is-traced",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4787_every_requirement_is_traced",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4788",
+        "kind": "issue",
+        "label": "I4788",
+        "summary": "plan validate against a base revision names every milestone a change re-opens and every issue it moves from READY to BLOCKED, with the edit that did it",
+        "route": "/cockpit/objects/issue/i4788",
+        "source": ".ai/repo/project/issues/I4788.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4788"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Explaining an existing BLOCKED status (I4266)",
+            "Refusing the change by default: a re-opened milestone is sometimes the truth, and the owner decides"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. Deriving the plan twice doubles validate's cost on a large plan; the base derivation is cached by the base commit's tree id.",
+          "scope": [
+            ".ai/repo/project/issues/I4788.yaml",
+            "lib/plan.sh",
+            "lib/project.sh",
+            ".githooks/pre-commit",
+            "share/skeleton/policy.yaml",
+            "docs/PLANNING.md",
+            "test/cases/4788_a_plan_change_says_what_it_reopens.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-plan-change-says-what-it-reopens"
+          ],
+          "slug": "a-plan-change-says-what-it-reopens",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4788_a_plan_change_says_what_it_reopens",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4789",
+        "kind": "issue",
+        "label": "I4789",
+        "summary": "finish tells the person's commit from the agent's: a commit the person authored outside the task's scope is recorded as theirs and does not refuse the task",
+        "route": "/cockpit/objects/issue/i4789",
+        "source": ".ai/repo/project/issues/I4789.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4789"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4789.yaml",
+            "lib/common.sh",
+            "lib/check.sh",
+            "lib/finish.sh",
+            ".githooks/commit-msg",
+            "share/skeleton/policy.yaml",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "test/cases/4789_an_owners_commit_is_not_the_agents_scope.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#an-owners-commit-is-not-the-agents-scope"
+          ],
+          "slug": "an-owners-commit-is-not-the-agents-scope",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4789_an_owners_commit_is_not_the_agents_scope"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4790",
+        "kind": "issue",
+        "label": "I4790",
+        "summary": "A pushed commit that names an issue leaves one progress comment on that issue's tracker projection, on GitHub and on Jira through provider adapters, found again by a marker and never written twice",
+        "route": "/cockpit/objects/issue/i4790",
+        "source": ".ai/repo/project/issues/I4790.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Over a range of three commits naming I1, I1 and I2, the GitHub fixture receives three comments and the Jira fixture (I1 traces PROJ-7) one per commit naming I1",
+            "A second run over the same range lists the comments, finds every marker and writes nothing",
+            "A commit naming an id the plan does not hold writes nothing and is reported",
+            "An unreachable tracker is reported with the adapter's name and the command exits 0 under the pre-push wiring",
+            "No output or fixture request log contains the credential value"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "I4261"
+          ],
+          "evidence_required": [
+            "case_4790"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "A tracker writing back into the plan, or closing an issue from a comment",
+            "Storing a tracker comment id or issue number in any record (rule project.the-projection-is-applied-at-landing and the intent's invariant)",
+            "Shipping the issue and milestone projection itself (I4254, I4370)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. Comments are visible to people outside the repository; --dry-run is the first step of the documented setup, and the comment carries only the subject, the branch and the pinned link.",
+          "scope": [
+            ".ai/repo/project/issues/I4790.yaml",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan/progress.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "share/skeleton/policy.yaml",
+            "docs/INTEGRATION.md",
+            "test/cases/4790_progress_reaches_the_tracker_once.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#progress-reaches-the-tracker-once"
+          ],
+          "slug": "progress-reaches-the-tracker-once",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::progress",
+            "bash test/run.sh 4790_progress_reaches_the_tracker_once"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4791",
+        "kind": "issue",
+        "label": "I4791",
+        "summary": "A derived mention index answers, for every rule, ADR, knowledge record, issue, milestone and requirement, which records name it and which it names, and doctor's prose-link finding names each dangling mention",
+        "route": "/cockpit/objects/issue/i4791",
+        "source": ".ai/repo/project/issues/I4791.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture knowledge note naming rule project.x@1 and issue I0002 is listed in `entity show rule/project-x-1` under mentioned_by with its line, and the note's own answer lists both under mentions",
+            "A note naming I9999, which the plan lacks, is named by doctor's prose-link finding with its file and line",
+            "The index is derived on read: deleting the mention and asking again answers without it, with no file to regenerate"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4791"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "The /ui screens (I3318) and entity.affected's declared references (I3412)",
+            "Rewriting prose mentions into links in any record",
+            "Mentions of things outside the layer (URLs, forge numbers)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. Scanning every record's text costs time on a large layer; the extractor runs once per index build, which already reads every file.",
+          "scope": [
+            ".ai/repo/project/issues/I4791.yaml",
+            "apps/majordomus-cli/src/capability/builtin/entity.rs",
+            "apps/majordomus-cli/src/graph.rs",
+            "share/kinds.yaml",
+            "lib/knowledge.sh",
+            "docs/KNOWLEDGE.md",
+            "test/cases/4791_every_mention_is_a_link_both_ways.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#every-mention-is-a-link-both-ways"
+          ],
+          "slug": "every-mention-is-a-link-both-ways",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib graph::",
+            "bash test/run.sh 4791_every_mention_is_a_link_both_ways"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4792",
+        "kind": "issue",
+        "label": "I4792",
+        "summary": "Optional plan fields are a stated contract: every machine-readable plan answer carries an absent `due_on` (and every other optional milestone field) as an explicit null, and every shipped consumer renders both",
+        "route": "/cockpit/objects/issue/i4792",
+        "source": ".ai/repo/project/issues/I4792.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`plan show <milestone> --json` of a milestone without due_on carries `\\\"due_on\\\": null`, and the same keys as one with it",
+            "The roadmap, the forge projection's dry run and the site's milestone page render both fixture milestones without error",
+            "The schema validates both records and refuses a due_on that is not a date"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4792"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "Adding due_on to any milestone of this repository",
+            "Deriving any status or order from a date"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. A consumer that tests for key presence rather than value changes its reading; the change makes that consumer correct, and the changelog names it.",
+          "scope": [
+            ".ai/repo/project/issues/I4792.yaml",
+            "lib/plan.sh",
+            "lib/plan_json.awk",
+            "share/schemas/majordomus/milestone/milestone.v1.schema.json",
+            "docs/SCHEMAS.md",
+            "docs/PLANNING.md",
+            "test/cases/4792_optional_plan_fields_are_a_stated_contract.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#optional-fields-are-a-stated-contract"
+          ],
+          "slug": "optional-plan-fields-are-a-stated-contract",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4792_optional_plan_fields_are_a_stated_contract",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4793",
+        "kind": "issue",
+        "label": "I4793",
+        "summary": "doctor keeps its 20 s budget in a small adopter on a busy workstation: it reports time per section, and a section whose cost grows with the machine rather than the repository is bounded",
+        "route": "/cockpit/objects/issue/i4793",
+        "source": ".ai/repo/project/issues/I4793.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "doctor --json carries a timings object with one entry per section, and the entries sum to within 5 percent of the reported wall time",
+            "A budget breach prints the three slowest sections with their times",
+            "In the populated-machine fixture, doctor in a small adopter runs within the skeleton budget, and the case records the measured time",
+            "Every section the measurement named as machine-scaled declares its bound or its cache key in its comment and in docs/PERFORMANCE.md"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "case_4793"
+          ],
+          "milestone": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "non_scope": [
+            "This repository's own doctor budget (100 s), which its own corpus justifies",
+            "Per-operation overhead budgets across every command (I3299)",
+            "Dropping a check to save time: a section is bounded or cached, never removed for cost"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. A cache can hide a finding that changed; each cache is keyed by the inputs it read and the case changes one input and sees the finding move.",
+          "scope": [
+            ".ai/repo/project/issues/I4793.yaml",
+            "lib/doctor.sh",
+            "lib/bench.sh",
+            "share/skeleton/policy.yaml",
+            "docs/PERFORMANCE.md",
+            "test/cases/4793_doctor_keeps_its_budget_in_a_small_repository.sh"
+          ],
+          "serves": [
+            "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#doctor-keeps-its-budget-in-a-small-repository"
+          ],
+          "slug": "doctor-keeps-its-budget-in-a-small-repository",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bash test/run.sh 4793_doctor_keeps_its_budget_in_a_small_repository",
+            "bin/majordomus bench doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4803",
+        "kind": "issue",
+        "label": "I4803",
+        "summary": "A read-only workspace survey lists every repository under a directory with its layer state, its work and whether this session can reach origin",
+        "route": "/cockpit/objects/issue/i4803",
+        "source": ".ai/repo/project/issues/I4803.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "a_workspace_survey_lists_every_repository"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Adopting a repository: I4804",
+            "Probing push access itself: I4805, which this command reuses",
+            "The synced-vendor workspace kind of I1301"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/workspace.sh",
+            "lib/commands.sh",
+            "docs/CLI.md",
+            "test/cases/4803_a_workspace_survey_lists_every_repository.sh"
+          ],
+          "serves": [],
+          "slug": "a-workspace-survey-lists-every-repository",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4803_a_workspace_survey_lists_every_repository"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4804",
+        "kind": "issue",
+        "label": "I4804",
+        "summary": "init adopts a repository on a new canonical worktree branch, never in a dirty primary checkout, and carries a personal layer's tracked half across",
+        "route": "/cockpit/objects/issue/i4804",
+        "source": ".ai/repo/project/issues/I4804.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "init_adopts_on_a_worktree_branch"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Pushing the branch or opening the pull request: the adopter's forge flow",
+            "Surveying a workspace: I4803",
+            "Personal and shared covers: I2491"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/init.sh",
+            "lib/worktree.sh",
+            "docs/CLI.md",
+            "test/cases/4804_init_adopts_on_a_worktree_branch.sh"
+          ],
+          "serves": [],
+          "slug": "init-adopts-on-a-worktree-branch",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4804_init_adopts_on_a_worktree_branch"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4805",
+        "kind": "issue",
+        "label": "I4805",
+        "summary": "doctor and start say when this session cannot push to origin, and a task then plans a local-only delivery",
+        "route": "/cockpit/objects/issue/i4805",
+        "source": ".ai/repo/project/issues/I4805.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "Before a task plans its delivery, it knows whether this session can reach origin, and its report never calls unpushed commits delivered.",
+          "evidence_required": [
+            "a_session_knows_it_cannot_push"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Repairing credentials or choosing another key: the owner's act",
+            "Counting unpushed work across branches: I2993"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/start.sh",
+            "lib/finish.sh",
+            "docs/CLI.md",
+            "test/cases/4805_a_session_knows_it_cannot_push.sh"
+          ],
+          "serves": [],
+          "slug": "a-session-knows-it-cannot-push",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4805_a_session_knows_it_cannot_push"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4806",
+        "kind": "issue",
+        "label": "I4806",
+        "summary": "A declared append-only path refuses, at commit, any change to an entry it already holds",
+        "route": "/cockpit/objects/issue/i4806",
+        "source": ".ai/repo/project/issues/I4806.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4806: a fixture declares a JSON array path and a text path append-only; an appended entry commits; an edited entry, a removed entry and a swapped pair are each refused with the path and the index",
+            "A merge whose result keeps both parents' entries and appends commits; a merge that rewrites an entry of either parent is refused",
+            "Negative control: with the check removed, the case finds the edited entry committed"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "A file the repository declares append-only cannot have an existing entry edited, removed or reordered by any commit, merges included.",
+          "evidence_required": [
+            "an_append_only_path_refuses_an_edit"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Majordomus's own record writers, already append-only",
+            "Deriving a ledger instead of keeping one: the adopter's choice"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "lib/append_only.sh",
+            "lib/hooks.sh",
+            "docs/POLICY.md",
+            "test/cases/4806_an_append_only_path_refuses_an_edit.sh"
+          ],
+          "serves": [],
+          "slug": "an-append-only-path-refuses-an-edit",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4806_an_append_only_path_refuses_an_edit"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4807",
+        "kind": "issue",
+        "label": "I4807",
+        "summary": "A merge=table-rows driver merges hand-written Markdown tables by row and cell, and conflicts only where both sides changed one cell",
+        "route": "/cockpit/objects/issue/i4807",
+        "source": ".ai/repo/project/issues/I4807.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4807: two branches each add a different row and each change a different cell of a third row; the driver merges with no conflict and the result holds both rows and both cells",
+            "Both branches change the same cell differently: the merge conflicts on that row only, and the rest of the file merges",
+            "Negative control: with the driver unassigned, the same fixture conflicts on the changed row"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "Parallel additions to a hand-written table merge without conflict, and a true conflict is reported as one row with the cell named.",
+          "evidence_required": [
+            "a_table_merges_by_row"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Derived files: merge=derived",
+            "Tables other than Markdown pipe tables"
+          ],
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "lib/merge_table.sh",
+            "lib/init.sh",
+            "docs/MERGE.md",
+            "test/cases/4807_a_table_merges_by_row.sh"
+          ],
+          "serves": [],
+          "slug": "a-table-merges-by-row",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4807_a_table_merges_by_row"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4808",
+        "kind": "issue",
+        "label": "I4808",
+        "summary": "The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares",
+        "route": "/cockpit/objects/issue/i4808",
+        "source": ".ai/repo/project/issues/I4808.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4808: a fixture plan declaring prefixes U and Q with U120 on a branch gets U121 from `allocate issue --prefix U`, and a second allocation gets U122",
+            "A record named with a prefixed id reserved for another session is refused by plan validate and the commit hook",
+            "An undeclared prefix is refused, naming the declared ones",
+            "Negative control: with the prefix survey removed, the case finds U120 handed out again"
+          ],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "desired_state": "An adopter with prefixed ids takes them from the allocator like any other number, and a hand-numbered collision is refused locally.",
+          "evidence_required": [
+            "the_allocator_reserves_prefixed_ids"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Atomic reservation at origin: I4357",
+            "Renaming existing prefixed records"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/allocate.rs",
+            "apps/majordomus-cli/src/capability/builtin/allocate.rs",
+            "share/schemas/majordomus/project/project.v1.schema.json",
+            "docs/CLI.md",
+            "test/cases/4808_the_allocator_reserves_prefixed_ids.sh"
+          ],
+          "serves": [],
+          "slug": "the-allocator-reserves-prefixed-ids",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 4808_the_allocator_reserves_prefixed_ids"
           ]
         }
       },
@@ -87900,6 +89599,64 @@
         }
       },
       {
+        "id": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "milestone",
+        "label": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "summary": "What a downstream adopter met on 1.2.0 is fixed in the tool: truthful advisors, registered proofs, versioned hooks, an honest plan and doctor",
+        "route": "/cockpit/objects/milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "source": ".ai/repo/project/milestones/a-downstream-adopters-findings-are-fixed-in-the-tool.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every satisfaction criterion of intent a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs carries its evidence",
+            "Every issue of this milestone is DONE or CANCELLED with its reason",
+            "No fix decides by the identity of the repository it runs in; each case runs against a fixture repository that is not this one",
+            "No credential value appears in any output, record, fixture log or commit of any issue here"
+          ],
+          "claims": [],
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "findings_fixed"
+          ],
+          "non_scope": [
+            "The downstream repository itself: it is the evidence, read only, and never named in any record",
+            "The issues of a-second-adopter-is-served, which stay where they are; this milestone depends on I4261 through two issues and widens none",
+            "Accepting any ADR an issue proposes: acceptance is the owner's act"
+          ],
+          "order": 560,
+          "priority": "p1",
+          "risks": [
+            "I4789 changes a refusal surface (scope); the session trailer, never the author, is what proves agency, and the case holds the direction where an agent commits under the person's identity",
+            "I4778 and I4790 reach vendors and trackers; both are explicit commands with a dry run, bounded by a time-to-live or a marker, and never part of a derivation",
+            "I4787 and I4790 stay BLOCKED until I4261 is recorded DONE; recording it is a records-seat task, not this milestone's",
+            "I4793's target is a measurement on a busy workstation; the fixture declares the machine it simulates so the number is reproducible"
+          ],
+          "scope": [
+            ".ai/repo/project/issues/I4778.yaml",
+            ".ai/repo/project/issues/I4779.yaml",
+            ".ai/repo/project/issues/I4780.yaml",
+            ".ai/repo/project/issues/I4781.yaml",
+            ".ai/repo/project/issues/I4782.yaml",
+            ".ai/repo/project/issues/I4783.yaml",
+            ".ai/repo/project/issues/I4784.yaml",
+            ".ai/repo/project/issues/I4786.yaml",
+            ".ai/repo/project/issues/I4787.yaml",
+            ".ai/repo/project/issues/I4788.yaml",
+            ".ai/repo/project/issues/I4789.yaml",
+            ".ai/repo/project/issues/I4790.yaml",
+            ".ai/repo/project/issues/I4791.yaml",
+            ".ai/repo/project/issues/I4792.yaml",
+            ".ai/repo/project/issues/I4793.yaml"
+          ],
+          "slug": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
         "kind": "milestone",
         "label": "a-finding-is-tracked-to-its-issue",
@@ -90330,6 +92087,96 @@
         }
       },
       {
+        "id": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "milestone",
+        "label": "fabric-is-decided-and-the-legacy-is-measured",
+        "summary": "Majordomus Fabric is decided and the legacy runtime is measured before anything changes it (gates G0 and G1)",
+        "route": "/cockpit/objects/milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "source": ".ai/repo/project/milestones/fabric-is-decided-and-the-legacy-is-measured.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [],
+          "evidence_required": [
+            "adr_0199_accepted",
+            "legacy_baseline_measured"
+          ],
+          "non_scope": [
+            "Host-agent code of any kind: fabric-local-pilot",
+            "Changing accepted ADR 0001, 0003 or 0044 for the standalone mode, which stays as it is",
+            "A performance budget derived from one machine's baseline: the numbers are evidence, not a budget"
+          ],
+          "order": 177,
+          "priority": "p1",
+          "risks": [
+            "A baseline taken on a loaded machine (the first run saw load average 12-14) overstates latency; the pilot must be compared on the same host under the same load, not against these numbers alone"
+          ],
+          "scope": [
+            ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
+            ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md",
+            "scripts/fabric-baseline",
+            "test/cases",
+            "docs/PERFORMANCE.md"
+          ],
+          "slug": "fabric-is-decided-and-the-legacy-is-measured",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/fabric-local-pilot",
+        "kind": "milestone",
+        "label": "fabric-local-pilot",
+        "summary": "One opt-in host agent serves 2 repositories, 10 worktrees and 20 MCP sessions on one host, with standalone fallback (gates G2-G5)",
+        "route": "/cockpit/objects/milestone/fabric-local-pilot",
+        "source": ".ai/repo/project/milestones/fabric-local-pilot.yaml",
+        "facts": {
+          "created_at": "2026-11-25",
+          "depends_on": [
+            "fabric-is-decided-and-the-legacy-is-measured"
+          ],
+          "evidence_required": [
+            "no_second_mutator_test",
+            "hung_context_isolation_test",
+            "scoped_authority_negative_tests",
+            "local_pilot_e2e"
+          ],
+          "non_scope": [
+            "Remote routing and remote mutation (P08, S06, S07 and gates G6 and G7)",
+            "Managed or unattended update (P10, gate G8); the follower's provenance requirement is I4728 under safe-self-update",
+            "Retiring the per-checkout server (P11 retirement, S08, gate G9); the standalone mode stays supported",
+            "A second capability registry, discovery or update system (ADR 0050, ADR 0161)",
+            "The host's read-only runtime inventory, which is I3184 under the-host-knows-its-runtimes"
+          ],
+          "order": 178,
+          "priority": "p1",
+          "risks": [
+            "A file lock or fencing epoch does not stop a running legacy binary that never checks it; ownership cutover must be proved against the old binary, never assumed (MASTER_ADDENDUM, S02)",
+            "Same OS user is necessary but not sufficient: authorisation per context is the gate, not the socket's permissions",
+            "Scope creep: each phase is one vertically complete, independently validated change"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/fabric",
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/mesh/repository.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/tests",
+            "test/cases",
+            "docs/MCP.md",
+            "docs/MESH.md"
+          ],
+          "slug": "fabric-local-pilot",
+          "updated_at": "2026-11-25",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/failure-is-visible",
         "kind": "milestone",
         "label": "failure-is-visible",
@@ -92096,10 +93943,7 @@
             "Two versions on one host are both listed and an incompatible request is refused with a typed reason"
           ],
           "created_at": "2026-10-18",
-          "depends_on": [
-            "runtime-lifecycle",
-            "safe-self-update"
-          ],
+          "depends_on": [],
           "desired_state": "majordomus runtimes (host scope) answers with no checkout open; side-by-side versions are routed by negotiated capability; a resident exists only by decision.",
           "evidence_required": [],
           "non_scope": [
@@ -92119,7 +93963,7 @@
             "docs/MCP.md"
           ],
           "slug": "the-host-knows-its-runtimes",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-25",
           "validation": [
             "majordomus plan validate"
           ]
@@ -110982,6 +112826,13 @@
         "label": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh",
         "route": "/cockpit/objects/test/test-cases-4627-a-merge-does-not-borrow-a-foreign-executable-sh",
         "source": "test/cases/4627_a_merge_does_not_borrow_a_foreign_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "kind": "test",
+        "label": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "route": "/cockpit/objects/test/test-cases-4634-a-merge-does-not-move-the-committed-delivery-sh",
+        "source": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -132592,6 +134443,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-person-runs-majordomus-from-a-phone",
         "target": "kind:critique",
         "kind": "is_a"
@@ -134767,6 +136623,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://gap/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://gap/a-session-leaves-what-it-observed",
         "target": "kind:gap",
         "kind": "is_a"
@@ -135083,6 +136944,11 @@
       },
       {
         "source": "majordomus://intent/a-claim-stands-only-on-its-evidence",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -141619,6 +143485,11 @@
       {
         "source": "majordomus://issue/I2721",
         "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2721",
+        "target": "majordomus://issue/I4728",
         "kind": "depends_on"
       },
       {
@@ -153172,6 +155043,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4634",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4634",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4665",
         "target": "kind:issue",
         "kind": "is_a"
@@ -153234,6 +155115,451 @@
       {
         "source": "majordomus://issue/I4685",
         "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4712",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4712",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4713",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4713",
+        "target": "majordomus://issue/I4712",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4713",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4718",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4718",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4721",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4721",
+        "target": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4722",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4722",
+        "target": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4723",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4723",
+        "target": "majordomus://issue/I4721",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4723",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "majordomus://issue/I4722",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "majordomus://issue/I4723",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4724",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4725",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4725",
+        "target": "majordomus://issue/I4724",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4725",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4726",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4726",
+        "target": "majordomus://issue/I4725",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4726",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://issue/I4723",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://issue/I4725",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://issue/I4726",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4727",
+        "target": "majordomus://milestone/fabric-local-pilot",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "majordomus://issue/I2165",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "majordomus://issue/I2720",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4728",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4740",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4740",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4741",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4741",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4742",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4742",
+        "target": "majordomus://issue/I4006",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4742",
+        "target": "majordomus://issue/I4670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4742",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4778",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4778",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4779",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4779",
+        "target": "majordomus://issue/I4778",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4779",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4780",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4780",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4781",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4781",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4782",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4782",
+        "target": "majordomus://issue/I4781",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4782",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4783",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4783",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4784",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4784",
+        "target": "majordomus://issue/I4783",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4784",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4786",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4786",
+        "target": "majordomus://issue/I4784",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4786",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4787",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4787",
+        "target": "majordomus://issue/I4261",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4787",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4788",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4788",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4789",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4789",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4790",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4790",
+        "target": "majordomus://issue/I4261",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4790",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4791",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4791",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4792",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4792",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4793",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4793",
+        "target": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4803",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4803",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4804",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4804",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4805",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4805",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4806",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4806",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4807",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4807",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4808",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4808",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
       {
@@ -154407,6 +156733,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -154742,6 +157073,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/fabric-local-pilot",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/fabric-local-pilot",
+        "target": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://milestone/failure-is-visible",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -155015,16 +157361,6 @@
         "source": "majordomus://milestone/the-host-knows-its-runtimes",
         "target": "kind:milestone",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://milestone/the-host-knows-its-runtimes",
-        "target": "majordomus://milestone/runtime-lifecycle",
-        "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://milestone/the-host-knows-its-runtimes",
-        "target": "majordomus://milestone/safe-self-update",
-        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/the-hub-is-reached-from-any-device",
@@ -161042,6 +163378,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -166173,8 +168514,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4541,
-      "edges": 10229,
+      "nodes": 4584,
+      "edges": 10327,
       "acyclic": false,
       "truncated": false
     }

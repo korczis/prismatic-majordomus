@@ -1,0 +1,32 @@
+id: I4806
+milestone: a-second-adopter-is-served
+title: "A declared append-only path refuses, at commit, any change to an entry it already holds"
+slug: an-append-only-path-refuses-an-edit
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The policy declares append-only paths, each with its unit: `lines` for text, or a JSON pointer to an array for JSON. The commit hook compares the staged blob with HEAD's. Every existing unit must survive unchanged and in order, and new units may only follow them. A modified, removed or reordered unit is refused, naming the path, the unit's index and the first differing text. A merge commit is judged against each parent's units. The remedy names the append the change should have been."
+why: "Reported by an adopter's reconstruction lane on 2026-11-24/25. A ratchet ledger whose rule says raises are appended only (a size-baseline JSON) was edited in place during a merge. The edit changed an existing entry instead of appending one. Only the builder's own re-read caught it, and the entry was restored and a new one appended. Ratchet ledgers, decision logs and release-raise journals are all append-only by rule and enforced by nothing."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. Majordomus's own records are append-only through their writers (decision, handover), and nothing judges an adopter's declared file. The commit hook knows derived files (`merge=derived`) and scope, not append-only content."
+desired_state: "A file the repository declares append-only cannot have an existing entry edited, removed or reordered by any commit, merges included."
+scope:
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "lib/append_only.sh"
+  - "lib/hooks.sh"
+  - "docs/POLICY.md"
+  - "test/cases/4806_an_append_only_path_refuses_an_edit.sh"
+non_scope:
+  - "Majordomus's own record writers, already append-only"
+  - "Deriving a ledger instead of keeping one: the adopter's choice"
+depends_on: []
+acceptance_criteria:
+  - "Case 4806: a fixture declares a JSON array path and a text path append-only; an appended entry commits; an edited entry, a removed entry and a swapped pair are each refused with the path and the index"
+  - "A merge whose result keeps both parents' entries and appends commits; a merge that rewrites an entry of either parent is refused"
+  - "Negative control: with the check removed, the case finds the edited entry committed"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4806_an_append_only_path_refuses_an_edit"
+evidence_required:
+  - "an_append_only_path_refuses_an_edit"
+serves: []
+created_at: 2026-11-25

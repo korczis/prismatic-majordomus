@@ -1,0 +1,37 @@
+id: I4713
+milestone: the-runtime-supervises-itself
+title: "A bounded subprocess's output is read while it runs, so a long answer is answered and not timed out"
+slug: bounded-runs-drain-their-pipes-while-they-wait
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "crate::process holds one bounded run (run_bounded) that starts the program as the leader of a process group of its own, drains its stdout and stderr on threads of their own while it waits, ends the group at the bound and reaps the child, and ends a group member the program left holding a pipe once the bound is spent. The monitor's gh call, the tailscale status read and the environment probe's bounded_output run through it."
+why: "I4712 (PR #3111) found that monitor/github.rs reads gh's output only after gh exits: a program that writes more than a pipe buffer (64 KiB on macOS and Linux) blocks on its write, so a gh run list that would have answered is reported as having timed out and spends its whole budget. mesh/tailscale.rs read_status has the same shape for a large tailnet's status. environment/probe.rs, worktree/git.rs and the benchmark verify each drained correctly with a copy of their own."
+current_state: "Measured on fix/subprocess-groups-and-dead-lock-owners at 836436e0cbc on 2026-11-22. monitor/github.rs run and mesh/tailscale.rs read_status poll try_wait and read both pipes after the exit. environment/probe.rs bounded_output waits on a thread with wait_with_output and signals the group itself on expiry. worktree/git.rs wait_bounded drains on threads and reports a failed wait apart from expiry; economics/runner.rs writes the harness's stdout to a file and drains the verify's stderr on a thread."
+desired_state: "crate::process::run_bounded is the bounded run that reads a program's output; github.rs, tailscale.rs and probe.rs call it. worktree/git.rs keeps its own wait because it reports a failed wait apart from the bound, and the benchmark runner keeps its file and its null stdout, because neither reads a pipe after the exit."
+scope:
+  - "apps/majordomus-cli/src/process.rs"
+  - "apps/majordomus-cli/src/monitor/github.rs"
+  - "apps/majordomus-cli/src/mesh/tailscale.rs"
+  - "apps/majordomus-cli/src/environment/probe.rs"
+  - ".ai/repo/project/issues/I4713.yaml"
+non_scope:
+  - "worktree/git.rs and economics/runner.rs, which already drain while they wait"
+  - "The process-group and lock-owner work of I4712, which this builds on"
+depends_on:
+  - I4712
+acceptance_criteria:
+  - "A program that writes more than a pipe holds on both pipes and exits is answered at once with its status and all of its output"
+  - "A program that writes more than a pipe holds and then never finishes is ended with what it started at its bound, and what it wrote until then is answered"
+  - "A program that exits but leaves a program of its own holding a pipe is not answered as finished, and what it left is ended at the bound"
+  - "A gh answer and a tailscale status longer than a pipe holds are read within their budgets"
+validation:
+  - "cargo test --lib process::"
+  - "cargo test --lib monitor::github"
+  - "cargo test --lib mesh::tailscale"
+  - "cargo test --lib environment::probe"
+evidence_required:
+  - rust
+serves:
+  - nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded
+created_at: 2026-11-22

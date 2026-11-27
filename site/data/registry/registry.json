@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "registry": {
-    "fingerprint": "2f0adbb3fbf10d2904a3f869bef3c609d5b4d8f23641d9f0ef9c3a91b94c5970",
+    "fingerprint": "a8148ffaa3795bbdce40f1d08fed784373518a78dfe9bb155870939f21fc0013",
     "summary": {
-      "total": 4063,
+      "total": 4106,
       "builtin": 233,
-      "declarative": 3830,
+      "declarative": 3873,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3830
+        "resource": 3873
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3840
+        "implemented": 3883
       },
       "mcp_tools": 217,
-      "mcp_resources": 3887,
+      "mcp_resources": 3930,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -69077,7 +69077,7 @@
         "module": "plan",
         "kind": "query",
         "title": "How far each issue's work has travelled",
-        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. With `at` and `merge_title`, `merge_branch` or `merge_number`, that commit is read as the merge into the trunk of that pull request, as the forge's merge commit will name it, judged against its first parent when it is a merge (a test merge) and against where it leaves the trunk otherwise (a head), and the source `anticipated_merge` says so: a pull request is judged by what its merge will prove before it lands (I4634). A merge subject of the landing seat's combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names its member's pull request and branch. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
         "input": {
           "name": "PlanDeliveryInput",
           "schema": {
@@ -69097,6 +69097,29 @@
                   "null"
                 ],
                 "description": "Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live."
+              },
+              "merge_title": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "With `at`: read that commit as the merge into the trunk of a pull request with this\ntitle (I4634), named as the forge's merge commit will name it, so a pull request is\njudged by what its merge will prove before it lands. Refused without `at`."
+              },
+              "merge_branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "With `at`: the anticipated merge's head branch, without its owner, as `merge_title`."
+              },
+              "merge_number": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "With `at`: the anticipated merge's pull request number, as `merge_title`."
               }
             },
             "description": "Which issues, and as of when: the input of `plan.delivery`.\n\nBoth fields are optional, and an unknown one is refused rather than ignored, so a caller\nwho misspells `at` is not silently answered live.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanDeliveryInput;\n\nlet every: PlanDeliveryInput = serde_json::from_str(\"{}\").unwrap();\nassert!(every.issue.is_none() && every.at.is_none(), \"live, every issue\");\nlet one: PlanDeliveryInput =\n    serde_json::from_value(serde_json::json!({ \"issue\": \"I2740\", \"at\": \"HEAD\" })).unwrap();\nassert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some(\"I2740\"), Some(\"HEAD\")));\nassert!(serde_json::from_str::<PlanDeliveryInput>(r#\"{\"commit\":\"HEAD\"}\"#).is_err());\n```",
@@ -98774,7 +98797,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 40,
+        "capabilities": 41,
         "capability_ids": []
       },
       {
@@ -99086,7 +99109,7 @@
         "title": "gap",
         "description": "Declarative objects of kind 'gap' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": []
       },
       {
@@ -99184,7 +99207,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 45,
+        "capabilities": 46,
         "capability_ids": []
       },
       {
@@ -99233,7 +99256,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1276,
+        "capabilities": 1312,
         "capability_ids": []
       },
       {
@@ -99375,7 +99398,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 117,
+        "capabilities": 120,
         "capability_ids": []
       },
       {
@@ -99848,7 +99871,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 708,
+        "capabilities": 709,
         "capability_ids": []
       },
       {
@@ -99941,7 +99964,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b678b59cbe2625bb198050a6be0b663789d2a9d0b80bcc017ab67c8d23693836",
+    "fingerprint": "2aa940eb29bb5ebff259a752c70464512542940f505976b11754be21a4c6a727",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99971,20 +99994,20 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 40,
+      "critique": 41,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
       "document": 362,
       "domain": 6,
       "feature": 29,
-      "gap": 5,
+      "gap": 6,
       "implementation": 54,
-      "intent": 45,
-      "issue": 1276,
+      "intent": 46,
+      "issue": 1312,
       "knowledge": 221,
       "mesh-declaration": 1,
-      "milestone": 117,
+      "milestone": 120,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -99995,7 +100018,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 708,
+      "test": 709,
       "use-case": 49,
       "workspace": 1
     },
@@ -106359,6 +106382,17 @@
         "bytes": 19632
       },
       {
+        "uri": "majordomus://critique/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "kind": "critique",
+        "identity": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "title": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "description": "46775282570",
+        "path": ".ai/repo/project/critiques/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 5862
+      },
+      {
         "uri": "majordomus://critique/a-person-runs-majordomus-from-a-phone",
         "kind": "critique",
         "identity": "a-person-runs-majordomus-from-a-phone",
@@ -107585,7 +107619,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 47895
+        "bytes": 50132
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -107594,7 +107628,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136070
+        "bytes": 143618
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -110608,6 +110642,17 @@
         "bytes": 1376
       },
       {
+        "uri": "majordomus://gap/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "kind": "gap",
+        "identity": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "title": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "description": "46775282570",
+        "path": ".ai/repo/project/gaps/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs.yaml",
+        "section": "project",
+        "source_class": "gap",
+        "bytes": 9089
+      },
+      {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
         "kind": "gap",
         "identity": "a-session-leaves-what-it-observed",
@@ -111148,6 +111193,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 5223
+      },
+      {
+        "uri": "majordomus://intent/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "kind": "intent",
+        "identity": "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs",
+        "title": "A repository that adopts Majordomus is told what really answers, keeps its own proofs in the tool's registry, and is not stalled by its own plan, its owner's commits or its doctor",
+        "description": "A downstream repository supervised by an installed release gets readings it can act on without a second investigation. An advisor or a credential is reported as answering only when a cheap real call answered within a recorded time-to-live, and a model that sends data off the machine is never classified as local. A project rule that names its proof (the tests that prove it, or the command that enforces it) is counted by the doctrine registry, its proofs are resolved in the adopter's tree, every project rule reaches a declared principle, and every principle is refined by a rule. The skeleton ships versioned hooks with enforcement entries that doctor proves wired, a path-only invocation included, and a campsite ratchet that compares a branch with its merge base on the trunk. The plan says which requirements of a declared specification no issue traces and which change re-opens a completed milestone or blocks ready work, before the change lands. finish tells a commit the person made from one the agent made. Commits that name an issue reach its tracker as one idempotent progress comment each. Every identifier named in a record's text is a link in both directions. Optional fields are a stated contract that consumers are shown. doctor keeps its budget in a small repository.",
+        "path": ".ai/repo/project/intents/a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 9427
       },
       {
         "uri": "majordomus://intent/a-person-runs-majordomus-from-a-phone",
@@ -116262,7 +116318,7 @@
         "path": ".ai/repo/project/issues/I2721.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2152
+        "bytes": 2164
       },
       {
         "uri": "majordomus://issue/I2722",
@@ -120222,7 +120278,7 @@
         "path": ".ai/repo/project/issues/I3322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3953
       },
       {
         "uri": "majordomus://issue/I3323",
@@ -122268,7 +122324,7 @@
         "path": ".ai/repo/project/issues/I3915.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2378
+        "bytes": 2817
       },
       {
         "uri": "majordomus://issue/I3916",
@@ -123335,7 +123391,7 @@
         "path": ".ai/repo/project/issues/I4260.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2918
+        "bytes": 3247
       },
       {
         "uri": "majordomus://issue/I4261",
@@ -123808,7 +123864,7 @@
         "path": ".ai/repo/project/issues/I4327.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5324
+        "bytes": 5575
       },
       {
         "uri": "majordomus://issue/I4328",
@@ -123896,7 +123952,7 @@
         "path": ".ai/repo/project/issues/I4336.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6778
+        "bytes": 7424
       },
       {
         "uri": "majordomus://issue/I4337",
@@ -124270,7 +124326,7 @@
         "path": ".ai/repo/project/issues/I4371.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 13931
+        "bytes": 14335
       },
       {
         "uri": "majordomus://issue/I4372",
@@ -124413,7 +124469,7 @@
         "path": ".ai/repo/project/issues/I4415.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7625
+        "bytes": 8091
       },
       {
         "uri": "majordomus://issue/I4416",
@@ -125549,6 +125605,17 @@
         "bytes": 7854
       },
       {
+        "uri": "majordomus://issue/I4634",
+        "kind": "issue",
+        "identity": "I4634",
+        "title": "A pull request does not land a merge whose delivery differs from the committed projection: plan.delivery reads an anticipated merge and a combined top's member merges, and the gate merge-delivery refuses the rest",
+        "description": "`majordomus plan delivery --at <commit> --merge-title <t> --merge-branch <b>` reads the commit as the merge into the trunk of a pull request with that title and head branch, as the forge's merge commit will name it, and its source `anticipated_merge` says so. Without `at` the inputs are refused. The merge subject the landing seat writes for a member of a combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names that pull request and branch, so a top's head proves its members before it merges. The gate merge-delivery (scripts/ci/merge-delivery-check, job structure, every plan) reads the pull request's title, head branch and base from the runner's event, asks the executable for the delivery at the checked-out test merge with and without the anticipated merge, and refuses (exit 10) when its merged or released tally differs from site/data/generated/delivery.json. It names each issue that would move, with its cause and remedy: the title or branch (retitle, then re-run, because a retitle starts no validate run) or a trunk or head that moved (merge the trunk, run scripts/derive).",
+        "path": ".ai/repo/project/issues/I4634.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7944
+      },
+      {
         "uri": "majordomus://issue/I4665",
         "kind": "issue",
         "identity": "I4665",
@@ -125613,6 +125680,391 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4172
+      },
+      {
+        "uri": "majordomus://issue/I4712",
+        "kind": "issue",
+        "identity": "I4712",
+        "title": "A bounded subprocess ends with everything it started, and the worktree lock is taken at once from an owner that is gone",
+        "description": "Every bounded subprocess the executable runs (worktree git fetch and git runs, gh for the monitor, the tailscale status read, the environment probe) leads a process group of its own, and its bound ends the group and reaps the child; the groups this process leads are ended when it dies of SIGTERM, SIGINT or SIGHUP, through one primitive in crate::process that the benchmark runner uses too. The worktree lock names its owner with its pid and this boot's identity, and a caller takes a lock whose owner is dead, or that was written in another boot, at once instead of after the 900-second staleness bound.",
+        "path": ".ai/repo/project/issues/I4712.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4080
+      },
+      {
+        "uri": "majordomus://issue/I4713",
+        "kind": "issue",
+        "identity": "I4713",
+        "title": "A bounded subprocess's output is read while it runs, so a long answer is answered and not timed out",
+        "description": "crate::process holds one bounded run (run_bounded) that starts the program as the leader of a process group of its own, drains its stdout and stderr on threads of their own while it waits, ends the group at the bound and reaps the child, and ends a group member the program left holding a pipe once the bound is spent. The monitor's gh call, the tailscale status read and the environment probe's bounded_output run through it.",
+        "path": ".ai/repo/project/issues/I4713.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3315
+      },
+      {
+        "uri": "majordomus://issue/I4718",
+        "kind": "issue",
+        "identity": "I4718",
+        "title": "A derived delivery.json whose observed commit is not an ancestor of the tree it ships in is refused before the commit, with its remedy named, so an offloaded derive's throwaway input commit never reaches CI",
+        "description": "The derived-data check that the pre-commit hook and scripts/derive-check already run reads `observed.commit` and `observed.trunk` from site/data/generated/delivery.json and refuses (exit 10) when the commit is neither HEAD nor an ancestor of HEAD. In a merge in progress it is checked against the commit the merge will be. The refusal names the commit it found, says that an offloaded derive's throwaway input commit is the usual cause, and names the remedy: `MAJORDOMUS_BIN_COMMIT=<HEAD> bin/majordomus --json plan delivery --at <HEAD>`, written to delivery.json and committed, or a rerun through `majordomus offload derive`, which sets MJ_DERIVE_OBSERVE.",
+        "path": ".ai/repo/project/issues/I4718.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4463
+      },
+      {
+        "uri": "majordomus://issue/I4721",
+        "kind": "issue",
+        "identity": "I4721",
+        "title": "ADR 0199 carries Majordomus Fabric's decision and the owner has accepted it (S00 and P01, gate G0)",
+        "description": "Amend ADR 0199 into Fabric's decision (one opt-in, user-scoped host agent; a 0600 Unix socket checked by peer credentials; per-context authorisation; ADR 0001, 0003 and 0044 narrowed only for the opt-in host mode; the standalone mode unchanged), record the owner's answers that decided it, and land both on master with the ADR's status accepted.",
+        "path": ".ai/repo/project/issues/I4721.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2511
+      },
+      {
+        "uri": "majordomus://issue/I4722",
+        "kind": "issue",
+        "identity": "I4722",
+        "title": "The legacy per-checkout runtime is measured at L1, L2 and L3 before Fabric changes it (S01, gate G1)",
+        "description": "Measure today's model (one shared server per checkout, ADR 0003 and 0044) reproducibly in disposable fixtures at L1 (one checkout, one entry, one MCP client), L2 (one repository, two worktrees, four clients) and L3 (two repositories, ten worktrees, twenty concurrent MCP sessions): every Majordomus process and listener, RSS and descriptors, cold and warm env enter, readiness and MCP attach latencies, and every failure beside its attempts.",
+        "path": ".ai/repo/project/issues/I4722.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2827
+      },
+      {
+        "uri": "majordomus://issue/I4723",
+        "kind": "issue",
+        "identity": "I4723",
+        "title": "Fabric's typed identities and local IPC contract exist, with no service side effect (P02)",
+        "description": "Define the typed identities (NodeId and MeshRepositoryId reused from mesh, a checkout context id distinct from both, a host instance generation, a session id) and the local IPC contract (hello and welcome with protocol ranges, context register, session attach and detach, capability call, subscribe and ack, health, typed errors) beside their owners, with size-bounded framing, deadlines, and a delivery contract that never resends an uncertain write, as mcp::bridge already refuses to.",
+        "path": ".ai/repo/project/issues/I4723.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2580
+      },
+      {
+        "uri": "majordomus://issue/I4724",
+        "kind": "issue",
+        "identity": "I4724",
+        "title": "A user-scoped host agent starts by hand, holds one local socket as a singleton and stops cleanly (P03)",
+        "description": "Add a host mode to the existing executable that a person starts, queries and stops: one user-owned runtime directory and one 0600 Unix socket (a named pipe on a supported Windows target), an atomic singleton claim, peer-credential checks, bounded startup and teardown that removes only what this instance owns, and a typed status with version, instance and uptime.",
+        "path": ".ai/repo/project/issues/I4724.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2148
+      },
+      {
+        "uri": "majordomus://issue/I4725",
+        "kind": "issue",
+        "identity": "I4725",
+        "title": "Entering a checkout registers its logical context with the host agent in one bounded call (P04)",
+        "description": "When a shell enters a checkout, register or revalidate its logical context with a running host agent in one bounded IPC call, derived from the manifest, git, the checkout identity and mesh::repository, with its authority mode (legacy_proxy, host_owned or unavailable); keep registering a context distinct from attaching a live session; change no checkout server's ownership.",
+        "path": ".ai/repo/project/issues/I4725.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2114
+      },
+      {
+        "uri": "majordomus://issue/I4726",
+        "kind": "issue",
+        "identity": "I4726",
+        "title": "The MCP stdio bridge prefers a compatible host agent and falls back to today's path (P05)",
+        "description": "Make the existing MCP stdio launcher attach a long-lived session to a compatible host agent for the caller's context, route each request to that context's current legacy owner (host proxy) without changing who owns it, and fall back to the lease and standalone path with a useful diagnostic when the agent is absent, incompatible or another user's.",
+        "path": ".ai/repo/project/issues/I4726.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2048
+      },
+      {
+        "uri": "majordomus://issue/I4727",
+        "kind": "issue",
+        "identity": "I4727",
+        "title": "Every capability call is authorised against the caller's own context, not only its OS user (S04, gate G4)",
+        "description": "Bind each authenticated IPC peer to a validated root, checkout identity, session and scoped authorisation, and check caller, context, capability effect and ownership on every call, so that a client of repository A cannot read or write repository B by guessing an id, forging a frame field, swapping a symlinked root or replaying a detached session handle.",
+        "path": ".ai/repo/project/issues/I4727.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2733
+      },
+      {
+        "uri": "majordomus://issue/I4728",
+        "kind": "issue",
+        "identity": "I4728",
+        "title": "An unattended follower installs only a release whose provenance it verified, and refuses otherwise",
+        "description": "Make every update a follower applies without a person (follow: stable) run the installer with provenance required, so that an archive whose provenance cannot be verified (gh missing, signed out, or the attestation failing) is refused and the round records why; a manual self update keeps today's behaviour and warns when it installed on the checksum alone.",
+        "path": ".ai/repo/project/issues/I4728.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2713
+      },
+      {
+        "uri": "majordomus://issue/I4740",
+        "kind": "issue",
+        "identity": "I4740",
+        "title": "A refused mesh record write is counted and shown, and a long-running service's session can claim its record scope",
+        "description": "A mesh record write refused for a scope outside the writer's live claims (out_of_scope, HTTP 422) is journalled and counted per session, and mesh doctor and the board name the session, the refused scope and the claim that would admit it. A long-running helper that writes under a task's session can claim its own record scope in advisory mode, documented as the remedy.",
+        "path": ".ai/repo/project/issues/I4740.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3293
+      },
+      {
+        "uri": "majordomus://issue/I4741",
+        "kind": "issue",
+        "identity": "I4741",
+        "title": "No majordomus command waits without a bound: a stdin read refuses a terminal and every command has a deadline",
+        "description": "A command that reads its body from stdin (handover, and every other `< body` command) refuses at once when stdin is a terminal and names the non-interactive form (a file, a pipe or --derive). Every command run by the dispatcher has a deadline (MAJORDOMUS_DEADLINE, default from policy), after which it stops its process group, prints what it was waiting on, and exits with a distinct code.",
+        "path": ".ai/repo/project/issues/I4741.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4718
+      },
+      {
+        "uri": "majordomus://issue/I4742",
+        "kind": "issue",
+        "identity": "I4742",
+        "title": "Who runs a long-lived service is a mesh record, and a helper whose launcher died is named an orphan",
+        "description": "A long-lived service an adopter runs (a game server, a panel, a daemon on a port) is announced as a mesh record of kind service built on the shared owner record majordomus-owner/v1 (resource name, pid and start time, launcher pid, process group, session, worktree, command, stop command, heartbeat). `mesh who <resource>` answers who runs it, and a holder whose launcher pid is dead while it lives is reported as an orphan with its stop command.",
+        "path": ".ai/repo/project/issues/I4742.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3722
+      },
+      {
+        "uri": "majordomus://issue/I4778",
+        "kind": "issue",
+        "identity": "I4778",
+        "title": "An advisor is reported answering only after a cheap real call answered: `reasoning probe` records each advisor's liveness with a time-to-live, and availability reads it",
+        "description": "Add `majordomus reasoning probe [<advisor>...]`: for each declared advisor it makes the cheapest real call its adapter supports (a one-token exchange, or the runtime's model listing plus a one-token chat for a local runtime) under a short deadline, and records the outcome as a consultation outcome of kind probe with its status (answered, refused_client, credential_rejected, model_missing, no_chat_model, unreachable, timeout). Availability keeps deriving from presence, mode and recorded outcomes alone: a probe outcome younger than the declared time-to-live is what turns `present` into `answering`, a failed one opens the circuit with the status it carries, and an advisor never probed is reported `present, unprobed`, never as available without qualification.",
+        "path": ".ai/repo/project/issues/I4778.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4859
+      },
+      {
+        "uri": "majordomus://issue/I4779",
+        "kind": "issue",
+        "identity": "I4779",
+        "title": "A local runtime's model is classified by where it runs: an Ollama `:cloud` model leaves the machine, and a local adapter picks a chat model whose weights are present",
+        "description": "Classify each model a local runtime lists before it is used: a model the runtime forwards to a remote service (an Ollama model whose tag ends in `:cloud` or `-cloud`, or one the runtime's metadata marks remote) is `leaves_machine` and is refused by the offline mode and by any plan that requires local review; a model without a chat capability (an embedding model) is not a chat candidate; a model whose weights are missing is not a candidate. The Ollama and LM Studio adapters choose the first candidate that passes all three instead of the first model listed, and the probe of I4778 records which model answered.",
+        "path": ".ai/repo/project/issues/I4779.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3888
+      },
+      {
+        "uri": "majordomus://issue/I4780",
+        "kind": "issue",
+        "identity": "I4780",
+        "title": "`majordomus credential probe <service>` asks every declared source of one credential whether the service accepts it, and reports a status per source without ever printing the value",
+        "description": "A repository (or the tool's own share/) declares a service's credential: the variable names it may be held under, the files that may hold them (a dotenv file, an .envrc.local), an optional credential helper, and one cheap authenticated endpoint with the status that means accepted. `credential probe <service>` reads each source in turn, sends that source's value only to the declared endpoint, and reports per source: answered, rejected (401 or 403), unreachable, absent, or duplicate-of (when two sources hold the same value, named by a digest prefix, never the value). `credential sources` lists what is declared and which sources exist, reading no value at all.",
+        "path": ".ai/repo/project/issues/I4780.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3986
+      },
+      {
+        "uri": "majordomus://issue/I4781",
+        "kind": "issue",
+        "identity": "I4781",
+        "title": "A project rule proved by its tests is in the registry: gated mode (`x-majordomus: tests: [...]`) is counted as enforced, and doctor resolves every named test in the adopter's tree",
+        "description": "Make gated mode a supported mode of the tool, not of this repository's scripts: a rule whose x-majordomus block names `tests` and no validator is a gated doctrine. The doctrine summary and `rules list` count it as enforced (gated) beside dispatched ones; doctor resolves each named test path against the adopter's tree (a file, or a declared test id the adopter's CI model names) and fails a dangling one; and the summary's 'blocking rules with no validator, outside this registry' line counts only rules that name neither a validator nor a test nor a written reason. The semantics are scripts/ci/rule-proof-check's, moved into lib/doctrine.sh and the rules capability so that an installed release carries them.",
+        "path": ".ai/repo/project/issues/I4781.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4260
+      },
+      {
+        "uri": "majordomus://issue/I4782",
+        "kind": "issue",
+        "identity": "I4782",
+        "title": "Every project rule reaches a declared principle and every principle is refined by a rule: a generic coverage check over the rule dependency graph",
+        "description": "Let a repository declare which rules are its principles (policy `rules.principles`, a list of rule ids or a front-matter marker `x-majordomus: {principle: true}`), and have doctor report two findings over the resolved `depends_on` graph: a project rule whose dependency chain reaches no principle (`rule_without_principle`), and a principle no rule depends on and that names no proof of its own (`principle_without_rule`). Advisory by default, blocking when the policy says so; a repository that declares no principles is told the check is off, never passed silently.",
+        "path": ".ai/repo/project/issues/I4782.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3183
+      },
+      {
+        "uri": "majordomus://issue/I4783",
+        "kind": "issue",
+        "identity": "I4783",
+        "title": "An enforcement entry with `args: []` is proved wired by a hook line that invokes its path alone",
+        "description": "mj_validate_wiring matches a hook line that invokes the entry's program with no argument: when the entry declares no arguments, the pattern is the program followed by end of line, a shell separator (`;`, `&&`, `||`, `|`, `)`) or whitespace, never 'program, whitespace, first argument'. The same fix reaches the swallowed-exit-code check and the remedy text, which today print a trailing space and an empty argument.",
+        "path": ".ai/repo/project/issues/I4783.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2992
+      },
+      {
+        "uri": "majordomus://issue/I4784",
+        "kind": "issue",
+        "identity": "I4784",
+        "title": "init offers versioned hooks: tracked `.githooks/` with the two tool lines and a slot for repository gates, `core.hooksPath` set for the clone, and every line an enforcement entry doctor proves",
+        "description": "`majordomus init --hooks versioned` (and the same choice in `majordomus update` for a layer that already exists) writes `.githooks/pre-commit` and `.githooks/pre-push` as dispatchers that run the tool's line and then every executable of `<hook>.d/`, sets `core.hooksPath .githooks` in the clone (and says how each new clone sets it), and adds an enforcement entry to the policy for each tool line. A repository gate added as `.githooks/pre-push.d/<name>` is declared with `majordomus hooks add <hook> <path> [args...]`, which writes the file and its enforcement entry together, so the gate (for example a pre-push 'the whole solution is tested locally end to end') is proved wired by doctor from its first commit. doctor reports a clone whose `core.hooksPath` is not the tracked directory the policy declares.",
+        "path": ".ai/repo/project/issues/I4784.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4106
+      },
+      {
+        "uri": "majordomus://issue/I4786",
+        "kind": "issue",
+        "identity": "I4786",
+        "title": "`majordomus campsite` leaves every branch no worse than its merge base: declared metrics measured on both sides, a grown one refused, wired into pre-push and CI",
+        "description": "A capability that measures declared metrics at the branch head and at its merge base with the trunk, in one temporary worktree of the base, and refuses when a metric grew. The policy declares the metrics under `campsite.metrics`, each a built-in measure with its parameters or a repository command that prints one number: built-ins for placeholder markers in tracked text (patterns declared), skipped or focused tests (patterns per test framework), coverage exemptions (a declared file or pattern), open assumptions and questions in the layer, decisions no issue owns, and commit subjects in the range that name an issue id the plan does not hold. The answer lists each metric with its base value, its head value and the files that added to it; `--explain <metric>` shows the lines. A metric may be marked `report` instead of `refuse`.",
+        "path": ".ai/repo/project/issues/I4786.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4324
+      },
+      {
+        "uri": "majordomus://issue/I4787",
+        "kind": "issue",
+        "identity": "I4787",
+        "title": "A plan declares its requirement sources, and plan validate names every requirement no issue traces and every trace no source holds",
+        "description": "project.yaml (or the policy's `plan.requirements`) declares requirement sources: a repository path (a file or a glob) and an identifier pattern (for example `REQ-[0-9]+` or `^#+ (R[0-9.]+)`), optionally a label. plan validate extracts the identifiers of every source and judges them against the issues' `traces`: `requirement_untraced` for an identifier no live issue traces (a CANCELLED issue does not count), `trace_unknown_requirement` for a trace that matches a source's pattern and is in none of its identifiers, and a coverage line (traced of declared, per source). Advisory by default and blocking when the source says `coverage: required`. `plan show <requirement id>` lists the issues that trace it.",
+        "path": ".ai/repo/project/issues/I4787.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3614
+      },
+      {
+        "uri": "majordomus://issue/I4788",
+        "kind": "issue",
+        "identity": "I4788",
+        "title": "plan validate against a base revision names every milestone a change re-opens and every issue it moves from READY to BLOCKED, with the edit that did it",
+        "description": "`plan validate --against <rev>` (default: the merge base with the trunk when the tree differs from it) derives the status of every milestone and issue at the base, read from git, and at the work tree, and reports `milestone_reopened` for each milestone that was DONE at the base and is not now, and `ready_now_blocked` for each issue READY at the base and BLOCKED now, each naming the record whose edit caused it (an issue moved into the milestone, a dependency added, an evidence entry removed). Warnings by default; the commit hook and CI run it, and a policy key makes `milestone_reopened` refuse.",
+        "path": ".ai/repo/project/issues/I4788.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3476
+      },
+      {
+        "uri": "majordomus://issue/I4789",
+        "kind": "issue",
+        "identity": "I4789",
+        "title": "finish tells the person's commit from the agent's: a commit the person authored outside the task's scope is recorded as theirs and does not refuse the task",
+        "description": "When check and finish compute what a task touched, attribute each commit of the range: a commit is the agent's when the process that made it carried the agent session's identity (the commit-msg hook stamps a trailer naming the task and the provider session when the committing environment carries that session's marker, the same marker capture already reads), and the person's when it carries no such trailer and its author is a declared person identity of the policy (`people` or the owner identities). The author field alone never decides, because an agent commits under the person's git identity on most machines. Paths only the person's commits touched are reported as `scope: <n> path(s) changed by <person> in <commit>, not this task's` and never refuse; paths an agent commit touched are judged as before. A person may also record an exception for a path with `majordomus scope admit <path> --because <text>`, written to the ledger with who admitted it, which finish honours.",
+        "path": ".ai/repo/project/issues/I4789.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4728
+      },
+      {
+        "uri": "majordomus://issue/I4790",
+        "kind": "issue",
+        "identity": "I4790",
+        "title": "A pushed commit that names an issue leaves one progress comment on that issue's tracker projection, on GitHub and on Jira through provider adapters, found again by a marker and never written twice",
+        "description": "`majordomus plan progress <range>` (for a push: the range the push adds to the remote branch) reads every commit of the range, the issue ids its message names and the tracker keys those issues trace (I4261), and for each (issue, commit) pair ensures one comment on the issue's projection carrying a hidden marker `majordomus:progress <commit sha>` with the commit's subject, its branch and a link pinned to the commit. Before writing it lists the projection's comments and skips a pair whose marker is already there, so a rerun, a retried push or a second machine writes nothing. A provider adapter does the forge's part: GitHub (issue comments over the REST API through `gh`) and Jira (comments over the REST API with the repository's declared credential source); a repository declares which adapters are on and where each one's issues are. `--dry-run` prints the comments it would write. The pre-push hook or the trunk workflow may run it; failure to reach a tracker is reported and never refuses a push.",
+        "path": ".ai/repo/project/issues/I4790.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4562
+      },
+      {
+        "uri": "majordomus://issue/I4791",
+        "kind": "issue",
+        "identity": "I4791",
+        "title": "A derived mention index answers, for every rule, ADR, knowledge record, issue, milestone and requirement, which records name it and which it names, and doctor's prose-link finding names each dangling mention",
+        "description": "Derive, on read and never stored as a second truth, a mention index over the text of every record the index discovers: each typed identifier the layer declares (rule ids with or without @version, ADR numbers, knowledge ids, issue ids, milestone and intent ids, and the requirement identifiers of I4787's sources when declared) found in a record's body or fields, with the file and line. `entity show` gains `mentioned_by` and `mentions` beside the declared relations; `entity mentions <identity>` lists both directions; doctor's knowledge finding stops saying only how many prose links resolve to nothing and names each one with its file, line and the identifier read, so the count it prints is a list a person can fix.",
+        "path": ".ai/repo/project/issues/I4791.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4064
+      },
+      {
+        "uri": "majordomus://issue/I4792",
+        "kind": "issue",
+        "identity": "I4792",
+        "title": "Optional plan fields are a stated contract: every machine-readable plan answer carries an absent `due_on` (and every other optional milestone field) as an explicit null, and every shipped consumer renders both",
+        "description": "Make the absence of an optional milestone field visible to a consumer: plan show, list, roadmap and status in JSON, the published plan data and the MCP answers carry every optional key the milestone schema declares, `due_on` first, with null when the record omits it; the schema marks the field nullable and documents that no status is derived from it; and the shipped consumers (roadmap, the forge projection, the site templates, docs/PLAN_STATUS.md) are each held by a fixture plan with one milestone that has due_on and one that has not.",
+        "path": ".ai/repo/project/issues/I4792.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3241
+      },
+      {
+        "uri": "majordomus://issue/I4793",
+        "kind": "issue",
+        "identity": "I4793",
+        "title": "doctor keeps its 20 s budget in a small adopter on a busy workstation: it reports time per section, and a section whose cost grows with the machine rather than the repository is bounded",
+        "description": "Measure where doctor's time goes in a small adopting repository on a machine that holds many other checkouts and servers: doctor reports each section's wall time (text with `--timings`, always in JSON), the budget breach names the three slowest sections, and every section whose cost scales with the machine (sibling worktrees, other repositories' servers and leases, the mesh, the peer board, process scans, the git object store of a shared clone) is bounded by a declared limit or a cache keyed by what it read. Then fix the sections the measurement names until the fixture adopter runs doctor within the skeleton's 20 s budget, and record the measurement beside the budget as the skeleton asks.",
+        "path": ".ai/repo/project/issues/I4793.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3965
+      },
+      {
+        "uri": "majordomus://issue/I4803",
+        "kind": "issue",
+        "identity": "I4803",
+        "title": "A read-only workspace survey lists every repository under a directory with its layer state, its work and whether this session can reach origin",
+        "description": "`majordomus workspace survey <dir> [--json]` walks every git repository directly under a directory (worktree parents `<repo>-wt/` grouped with their primary) and prints one row per repository: the layer state (tracked on the trunk, tracked only on a branch, personal under info/exclude, present but untracked, absent), the trunk and its remote, the primary checkout's branch and dirty count, the number of linked worktrees, every active Majordomus task in any of its worktrees with its owner session, and whether this session can reach origin non-interactively (I4805). It writes nothing, runs no hook and starts no server. Each state names the command that moves it on (init, init --worktree, init --shared, a push the owner runs).",
+        "path": ".ai/repo/project/issues/I4803.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3634
+      },
+      {
+        "uri": "majordomus://issue/I4804",
+        "kind": "issue",
+        "identity": "I4804",
+        "title": "init adopts a repository on a new canonical worktree branch, never in a dirty primary checkout, and carries a personal layer's tracked half across",
+        "description": "`majordomus init --worktree <branch> [--from <ref>] [--extend]` works in an unsupervised repository too. It creates the canonical worktree `<repository>-wt/<branch>` from the remote trunk as last fetched, or from `--from` when the remote cannot be reached, runs init (or init --extend) and update inside it, and leaves the primary checkout byte-identical. When the primary checkout holds a personal or untracked layer, its `.ai/repo/` is copied into the new worktree as the shared layer's starting content, `.ai/local/` is never copied, and the command lists what it carried. It refuses (15) when another session holds an active task in any worktree of the repository, naming the task and its session, unless `--beside <task>` records that the owner allowed it.",
+        "path": ".ai/repo/project/issues/I4804.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3771
+      },
+      {
+        "uri": "majordomus://issue/I4805",
+        "kind": "issue",
+        "identity": "I4805",
+        "title": "doctor and start say when this session cannot push to origin, and a task then plans a local-only delivery",
+        "description": "A bounded, non-interactive probe of origin (`git ls-remote --exit-code origin HEAD` under `GIT_TERMINAL_PROMPT=0` and `ssh -o BatchMode=yes`, at most 15 s) runs in `doctor` and at `start`, with its result cached per checkout for the session. When origin cannot be reached, doctor reports `origin: unreachable from this session (<reason>)` as INFO, `start` prints that a push will be the owner's, and `finish` names the delivery as `local commits, not pushed: <n> ahead of <remote>/<branch>`, never as delivered. The probe sends no credential the session does not already hold and never retries with another key.",
+        "path": ".ai/repo/project/issues/I4805.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3034
+      },
+      {
+        "uri": "majordomus://issue/I4806",
+        "kind": "issue",
+        "identity": "I4806",
+        "title": "A declared append-only path refuses, at commit, any change to an entry it already holds",
+        "description": "The policy declares append-only paths, each with its unit: `lines` for text, or a JSON pointer to an array for JSON. The commit hook compares the staged blob with HEAD's. Every existing unit must survive unchanged and in order, and new units may only follow them. A modified, removed or reordered unit is refused, naming the path, the unit's index and the first differing text. A merge commit is judged against each parent's units. The remedy names the append the change should have been.",
+        "path": ".ai/repo/project/issues/I4806.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2662
+      },
+      {
+        "uri": "majordomus://issue/I4807",
+        "kind": "issue",
+        "identity": "I4807",
+        "title": "A merge=table-rows driver merges hand-written Markdown tables by row and cell, and conflicts only where both sides changed one cell",
+        "description": "`init` and `update` can install a `table-rows` merge driver that an adopter assigns in `.gitattributes`. Outside tables it is git's own three-way merge. Inside a Markdown pipe table it keys rows by their first cell: rows either side added are unioned in base order, a row both sides changed is merged three-way per cell, and only a cell both sides changed differently conflicts, with standard markers around that row. When the table is one the repository could derive, `doctor` names that as the better remedy (derive the table, then mark the file `merge=derived`).",
+        "path": ".ai/repo/project/issues/I4807.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2406
+      },
+      {
+        "uri": "majordomus://issue/I4808",
+        "kind": "issue",
+        "identity": "I4808",
+        "title": "The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares",
+        "description": "An adopter's plan declares the id prefixes it uses (for example U, Q, E, K), each with its digit width. `mesh allocate issue --prefix <P>` surveys the tree, the worktrees, every ref and the journal for that prefix, exactly as it does for `I<nnnn>`, and reserves the next number with one exclusive claim. `plan validate` and the commit hook (I4616) judge a prefixed id against the allocator's reservations, and an undeclared prefix is refused with the declared list.",
+        "path": ".ai/repo/project/issues/I4808.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2636
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -129078,6 +129530,17 @@
         "bytes": 6789
       },
       {
+        "uri": "majordomus://milestone/a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "kind": "milestone",
+        "identity": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+        "title": "What a downstream adopter met on 1.2.0 is fixed in the tool: truthful advisors, registered proofs, versioned hooks, an honest plan and doctor",
+        "description": "An adopter on the next release gets each of those readings right without a local workaround: what answers is reported as answering, its proofs count, its hooks and ratchet come from the skeleton, its plan says what a change re-opens and which requirement is untraced, its owner's commits are the owner's, its tracker hears about progress once, every mention is a link both ways, optional fields are explicit, and doctor stays inside its budget.",
+        "path": ".ai/repo/project/milestones/a-downstream-adopters-findings-are-fixed-in-the-tool.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5574
+      },
+      {
         "uri": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
         "kind": "milestone",
         "identity": "a-finding-is-tracked-to-its-issue",
@@ -129628,6 +130091,28 @@
         "bytes": 6152
       },
       {
+        "uri": "majordomus://milestone/fabric-is-decided-and-the-legacy-is-measured",
+        "kind": "milestone",
+        "identity": "fabric-is-decided-and-the-legacy-is-measured",
+        "title": "Majordomus Fabric is decided and the legacy runtime is measured before anything changes it (gates G0 and G1)",
+        "description": "ADR 0199, amended into Fabric's decision, is accepted by the owner and narrows ADR 0001, 0003 and 0044 only for the opt-in host mode (G0); a reproducible script measures the legacy per-checkout runtime at L1, L2 and L3 in disposable fixtures and its first baseline is attached as evidence (G1). No host-agent code lands before G0, and no efficiency claim is made before G1.",
+        "path": ".ai/repo/project/milestones/fabric-is-decided-and-the-legacy-is-measured.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3566
+      },
+      {
+        "uri": "majordomus://milestone/fabric-local-pilot",
+        "kind": "milestone",
+        "identity": "fabric-local-pilot",
+        "title": "One opt-in host agent serves 2 repositories, 10 worktrees and 20 MCP sessions on one host, with standalone fallback (gates G2-G5)",
+        "description": "A developer with 2 unrelated repositories, 10 worktrees and 20 MCP sessions opts in to one user-scoped host agent, enters each directory with no build or network call, attaches with the existing MCP configuration, runs only the capabilities authorised for that context, sees each identity, and stops or uninstalls the agent while the standalone fallback stays correct. No remote mutation and no automatic update. The process, RSS and listener differences are measured against the G1 baseline.",
+        "path": ".ai/repo/project/milestones/fabric-local-pilot.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4450
+      },
+      {
         "uri": "majordomus://milestone/failure-is-visible",
         "kind": "milestone",
         "identity": "failure-is-visible",
@@ -130028,11 +130513,11 @@
         "kind": "milestone",
         "identity": "the-host-knows-its-runtimes",
         "title": "A host knows every Majordomus runtime it runs, with no project open",
-        "description": "A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and no host-level resident is built.",
+        "description": "A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub's service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric's opt-in host agent is fabric-local-pilot's, and this inventory needs no process of its own.",
         "path": ".ai/repo/project/milestones/the-host-knows-its-runtimes.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2239
+        "bytes": 3190
       },
       {
         "uri": "majordomus://milestone/the-hub-is-reached-from-any-device",
@@ -139728,6 +140213,14 @@
         "bytes": 7104
       },
       {
+        "uri": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "kind": "test",
+        "identity": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "path": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "source_class": "case",
+        "bytes": 7591
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -142149,7 +142642,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 40
+      "objects": 41
     },
     {
       "name": "deployment",
@@ -142215,7 +142708,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 5
+      "objects": 6
     },
     {
       "name": "implementation",
@@ -142232,7 +142725,7 @@
       "identity": [
         "id"
       ],
-      "objects": 45
+      "objects": 46
     },
     {
       "name": "issue",
@@ -142242,7 +142735,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1276
+      "objects": 1312
     },
     {
       "name": "knowledge",
@@ -142272,7 +142765,7 @@
       "identity": [
         "id"
       ],
-      "objects": 117
+      "objects": 120
     },
     {
       "name": "moment",
@@ -142404,7 +142897,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 708
+      "objects": 709
     },
     {
       "name": "use-case",
@@ -172208,6 +172701,42 @@
                 "defaults": []
               },
               {
+                "name": "merge_title",
+                "long": "merge-title",
+                "positional": false,
+                "help": "With --at: read that commit as the merge into the trunk of a pull request with this title, as the forge's merge commit will name it (I4634)",
+                "value_name": "TITLE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "merge_branch",
+                "long": "merge-branch",
+                "positional": false,
+                "help": "With --at: the anticipated merge's head branch, without its owner",
+                "value_name": "BRANCH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "merge_number",
+                "long": "merge-number",
+                "positional": false,
+                "help": "With --at: the anticipated merge's pull request number",
+                "value_name": "N",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
                 "name": "repo",
                 "long": "repo",
                 "positional": false,
@@ -181120,7 +181649,7 @@
         "name": "majordomus_plan_delivery",
         "id": "plan.delivery",
         "title": "How far each issue's work has travelled",
-        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+        "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. With `at` and `merge_title`, `merge_branch` or `merge_number`, that commit is read as the merge into the trunk of that pull request, as the forge's merge commit will name it, judged against its first parent when it is a merge (a test merge) and against where it leaves the trunk otherwise (a head), and the source `anticipated_merge` says so: a pull request is judged by what its merge will prove before it lands (I4634). A merge subject of the landing seat's combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names its member's pull request and branch. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
