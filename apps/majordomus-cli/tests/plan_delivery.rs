@@ -406,6 +406,140 @@ fn plan_delivery_at_a_commit_reads_the_history_and_nothing_live() {
     assert!(err.contains("no-such-rev"), "{err}");
 }
 
+/// I4634: a pull request is judged by what its merge into the trunk will prove. At its test
+/// merge, the title and branch the forge's merge commit will carry move an issue they name to
+/// merged; without them the same commit proves nothing for it. A member merged into a combined
+/// top is read by its branch at the top's head, before the top merges, and an anticipated
+/// merge with no `at` is refused.
+#[test]
+fn a_pull_request_is_judged_by_the_merge_it_will_be() {
+    let (f, _) = fixture();
+    let trunk = f
+        .git(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .trim()
+        .to_string();
+    // a pull request's test merge: the forge's own subject names nothing
+    f.git(&["checkout", "-q", "-b", "feature/a-later-piece"]);
+    f.write("lib/later.sh", "echo later\n");
+    f.commit("feat: a later piece");
+    // the head's last commit only plans: the anticipated merge is judged against where the
+    // branch leaves the trunk, never against that one commit, which would read as planning
+    f.write(
+        ".ai/repo/project/issues/I0004.yaml",
+        &format!(
+            "{}# planned with the later piece\n",
+            issue("I0004", "an-untouched-piece")
+        ),
+    );
+    f.commit("plan: note I0004");
+    let title = "feat: a later piece (I0004)";
+    let (code, h, err) = cli(
+        &f,
+        &[
+            "--at",
+            "HEAD",
+            "--merge-title",
+            title,
+            "--merge-number",
+            "12",
+        ],
+    );
+    assert_eq!(code, 0, "{err}");
+    let at_head = by_id(&h, "I0004");
+    assert_eq!(
+        at_head["stage"], "merged",
+        "a plan-only last commit hid the merge: {at_head}"
+    );
+    assert_eq!(at_head["merged"]["pull_request"], 12);
+    assert!(source(&h, "anticipated_merge")["detail"]
+        .as_str()
+        .is_some_and(|d| d.contains("a merge of #12 titled")));
+    f.git(&["checkout", "-q", &trunk]);
+    f.git(&[
+        "merge",
+        "-q",
+        "--no-ff",
+        "feature/a-later-piece",
+        "-m",
+        "Merge 1111111 into 2222222",
+    ]);
+    let test_merge = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+
+    let (code, plain, err) = cli(&f, &["--at", &test_merge]);
+    assert_eq!(code, 0, "{err}");
+    assert_eq!(by_id(&plain, "I0004")["stage"], "none");
+    assert!(
+        plain["sources"]
+            .as_array()
+            .is_some_and(|a| a.iter().all(|s| s["name"] != "anticipated_merge")),
+        "no anticipated merge is named when none is asked: {plain}"
+    );
+
+    let (code, v, err) = cli(
+        &f,
+        &[
+            "--at",
+            &test_merge,
+            "--merge-title",
+            title,
+            "--merge-branch",
+            "feature/a-later-piece",
+        ],
+    );
+    assert_eq!(code, 0, "{err}");
+    let i4 = by_id(&v, "I0004");
+    assert_eq!(i4["stage"], "merged", "the title names it: {i4}");
+    assert_eq!(i4["merged"]["commit"], test_merge.as_str());
+    assert_eq!(i4["merged"]["via"], "title_or_branch");
+    let s = source(&v, "anticipated_merge");
+    assert_eq!(s["state"], "read");
+    let detail = s["detail"].as_str().unwrap_or_default();
+    assert!(
+        detail.contains(title)
+            && detail.contains("feature/a-later-piece")
+            && detail.contains(&test_merge),
+        "{detail}"
+    );
+    assert_eq!(
+        by_id(&v, "I0001")["stage"],
+        by_id(&plain, "I0001")["stage"],
+        "an issue proved before keeps its stage"
+    );
+
+    // a branch alone names its slug's issue
+    let (code, b, err) = cli(
+        &f,
+        &["--at", &test_merge, "--merge-branch", "fix/an-open-piece"],
+    );
+    assert_eq!(code, 0, "{err}");
+    assert_eq!(by_id(&b, "I0003")["merged"]["via"], "slug");
+    assert!(source(&b, "anticipated_merge")["detail"]
+        .as_str()
+        .is_some_and(|d| d.contains("titled nothing")));
+
+    // a combined top's member merge names its branch at the top's head
+    f.git(&["checkout", "-q", "-b", "integration/top"]);
+    f.git(&[
+        "merge",
+        "-q",
+        "--no-ff",
+        "fix/a-slugged-piece",
+        "-m",
+        "Merge #7 (fix/a-slugged-piece) into the combined top on 2222222",
+    ]);
+    let (code, top, err) = cli(&f, &["--at", "HEAD"]);
+    assert_eq!(code, 0, "{err}");
+    let i2 = by_id(&top, "I0002");
+    assert_eq!(i2["stage"], "merged", "{i2}");
+    assert_eq!(i2["merged"]["via"], "slug");
+    f.git(&["checkout", "-q", &trunk]);
+
+    // an anticipated merge is read at a commit, never live
+    let (code, _, err) = cli(&f, &["--merge-title", title]);
+    assert_ne!(code, 0);
+    assert!(err.contains("anticipated merge"), "{err}");
+}
+
 /// I2749: a commit or merge that names an issue while changing only plan records and the
 /// projections `.gitattributes` marks `merge=derived` planned it and delivered nothing; the
 /// first commit that changes anything else is its merge.

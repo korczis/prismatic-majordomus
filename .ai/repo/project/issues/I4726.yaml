@@ -1,0 +1,33 @@
+id: I4726
+milestone: fabric-local-pilot
+title: "The MCP stdio bridge prefers a compatible host agent and falls back to today's path (P05)"
+slug: fabric-p05-mcp-bridge
+priority: p1
+profile: implementation
+objective: "Make the existing MCP stdio launcher attach a long-lived session to a compatible host agent for the caller's context, route each request to that context's current legacy owner (host proxy) without changing who owns it, and fall back to the lease and standalone path with a useful diagnostic when the agent is absent, incompatible or another user's."
+why: "Corrected DAG: P05 follows P04 (I4725) and precedes S02, S03 and S04. Existing client configuration (.mcp.json, .codex/config.toml, .gemini/settings.json, bin/majordomus-mcp) must keep working with no new port."
+current_state: "Observed 2026-11-25: mcp::bridge attaches to the checkout's shared server through its lease and refuses to resend an uncertain write (BridgeError::may_resend)."
+desired_state: "One bridge, two routes (host proxy, legacy lease), the same stdout framing and initialisation semantics, and tool visibility derived from the capability registry for the authorised context only."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/fabric"
+  - "apps/majordomus-cli/tests"
+  - "docs/MCP.md"
+non_scope:
+  - "Transferring mutable ownership of a live legacy context (S02, P11)"
+  - "Starting a host agent from inside a client"
+  - "A hand-written MCP tool list per frontend"
+depends_on:
+  - "I4725"
+acceptance_criteria:
+  - "Two sessions of two contexts on one host never see each other's requests or tools"
+  - "A host crash during a read reconnects with bounded backoff; a host crash after a write was sent reports the outcome unknown and never replays it"
+  - "With no host agent, mcp, mcp --standalone and mcp --inspect behave as before"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test mcp_shared"
+evidence_required:
+  - "bridge_host_route_test"
+  - "bridge_fallback_test"
+created_at: 2026-11-25
+updated_at: 2026-11-25

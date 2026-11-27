@@ -1,0 +1,38 @@
+id: I4789
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "finish tells the person's commit from the agent's: a commit the person authored outside the task's scope is recorded as theirs and does not refuse the task"
+slug: an-owners-commit-is-not-the-agents-scope
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "When check and finish compute what a task touched, attribute each commit of the range: a commit is the agent's when the process that made it carried the agent session's identity (the commit-msg hook stamps a trailer naming the task and the provider session when the committing environment carries that session's marker, the same marker capture already reads), and the person's when it carries no such trailer and its author is a declared person identity of the policy (`people` or the owner identities). The author field alone never decides, because an agent commits under the person's git identity on most machines. Paths only the person's commits touched are reported as `scope: <n> path(s) changed by <person> in <commit>, not this task's` and never refuse; paths an agent commit touched are judged as before. A person may also record an exception for a path with `majordomus scope admit <path> --because <text>`, written to the ledger with who admitted it, which finish honours."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), `finish --outcome completed` refused a task because a commit the owner made in the same checkout, while the agent's task was open, touched a path outside the task's scope. The only way through was `finish --outcome partial` and a new task with a wider scope, which records the agent as having done the owner's work and leaves an unfinished record that never was."
+current_state: "Measured at origin/master 46775282570. lib/common.sh mj_git_touched lists every path of every first-parent commit in start..HEAD, leaving out only commits the trunk already holds and this checkout did not make; 'made here' is the HEAD reflog's commit, cherry-pick, revert, am and rebase-pick entries (mj_git_made_here), so a commit the person made in the same checkout counts as the task's. lib/check.sh judges each path against the scope and names `finish --outcome partial` and the planned in-place widening (I4260) as the ways out."
+desired_state: "The attribution is one function beside mj_git_touched, used by check, finish and the pre-push finish --check; the policy declares person identities (an email list, reusing what the owner identity already declares where one exists); the commit-msg hook stamps the task trailer on agent commits; finish's record lists the person's commits with their author; docs/CONTINUITY.md or the task-lifecycle workflow says how a person's commit is treated; a case holds both directions."
+scope:
+  - ".ai/repo/project/issues/I4789.yaml"
+  - "lib/common.sh"
+  - "lib/check.sh"
+  - "lib/finish.sh"
+  - ".githooks/commit-msg"
+  - "share/skeleton/policy.yaml"
+  - ".ai/repo/workflows/task-lifecycle.md"
+  - "test/cases/4789_an_owners_commit_is_not_the_agents_scope.sh"
+non_scope:
+  - "Widening a task's scope in place (I4260): a different remedy for a different cause, the agent's own work growing"
+  - "Trusting an author field alone: an agent usually commits under the person's git identity, so an agent commit is recognised by the session trailer the hook stamps from the committing environment, and a commit with no trailer and a non-person author is judged as the agent's"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#an-owners-commit-is-not-the-agents-scope"
+acceptance_criteria:
+  - "In a fixture task scoped to src/a, a commit authored by a declared person touching docs/b, made in the same checkout without a task trailer, lets finish --outcome completed pass and names the commit as the person's"
+  - "The same path changed in a commit made from an environment carrying the agent session's marker, and so stamped with the trailer, is refused outside claimed scope even though its author is the declared person"
+  - "A commit authored by an undeclared identity without a trailer is judged as the agent's"
+  - "`scope admit docs/c --because ...` lets a later finish pass for docs/c and the ledger names who admitted it"
+validation:
+  - "bash test/run.sh 4789_an_owners_commit_is_not_the_agents_scope"
+evidence_required:
+  - "case_4789"
+risk: "High. Scope is a refusal surface; a mistake here lets an agent's out-of-scope change through. The session trailer is the positive proof of agency, the author alone never exempts, and the case holds the direction where the agent commits under the person's identity."
+created_at: 2026-11-25
+updated_at: 2026-11-25

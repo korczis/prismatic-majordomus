@@ -1,0 +1,68 @@
+id: a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs
+title: "A repository that adopts Majordomus is told what really answers, keeps its own proofs in the tool's registry, and is not stalled by its own plan, its owner's commits or its doctor"
+statement: "A downstream repository supervised by an installed release gets readings it can act on without a second investigation. An advisor or a credential is reported as answering only when a cheap real call answered within a recorded time-to-live, and a model that sends data off the machine is never classified as local. A project rule that names its proof (the tests that prove it, or the command that enforces it) is counted by the doctrine registry, its proofs are resolved in the adopter's tree, every project rule reaches a declared principle, and every principle is refined by a rule. The skeleton ships versioned hooks with enforcement entries that doctor proves wired, a path-only invocation included, and a campsite ratchet that compares a branch with its merge base on the trunk. The plan says which requirements of a declared specification no issue traces and which change re-opens a completed milestone or blocks ready work, before the change lands. finish tells a commit the person made from one the agent made. Commits that name an issue reach its tracker as one idempotent progress comment each. Every identifier named in a record's text is a link in both directions. Optional fields are a stated contract that consumers are shown. doctor keeps its budget in a small repository."
+invariants:
+  - "Nothing in the tool decides by the identity of the repository it runs in; every fix is a declaration, a derivation or a default an adopter can state"
+  - "A credential's value is never printed, logged, recorded or sent anywhere except to the endpoint it belongs to; a probe reports a status, the source it read and when"
+  - "Availability stays a pure function of declarations, recorded outcomes and the clock (ADR 0032): a probe is a recorded outcome, never a network call made while availability is derived"
+  - "A model or advisor whose request leaves the machine is never admitted by the offline reasoning mode, whatever its runtime is called"
+  - "GitHub and any other tracker are projections: no record stores a tracker's comment id or issue number as a field, and a progress comment is found again by a marker it carries, never by a stored number"
+  - "A plan check that compares a change with its base reads the base from git; it never reads a previous run of itself"
+  - "The person's word outranks the agent's scope: finish never refuses a change because the person made it, and the record says whose it was"
+  - "Every new reading carries a case that fails without it, against a fixture repository that is not this one"
+non_goals:
+  - "Fixing the downstream repository itself: it is the evidence, read only, and it is never named"
+  - "A network call while availability, doctor or plan validate is derived; a probe is an explicit command whose outcome is recorded"
+  - "A credential store, a secret manager or rotation of any credential"
+  - "Deciding which advisor is right; advisors are consulted under ADR 0098 and settled by an experiment"
+  - "Two-way tracker synchronisation: a tracker never writes the plan"
+  - "Replacing the existing adopter work of a-second-adopter-is-served; this intent depends on I4255 and I4261 and widens neither"
+milestones:
+  - "a-downstream-adopters-findings-are-fixed-in-the-tool"
+satisfaction:
+  - id: advisors-are-reported-by-what-answers
+    criterion: "reasoning advisors reports an advisor whose executable or credential is present but whose last probe failed as unavailable with the probe's status (refused client, rejected credential, missing model blob, no chat-capable model), reports one never probed as present and unprobed rather than available, and a model whose name or declaration says it runs remotely (an Ollama `:cloud` model) is classified as leaving the machine and refused by the offline mode (planned proof: the fixture cases of I4778 and I4779)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: credentials-are-probed-without-being-read
+    criterion: "One command probes every declared source of one service's credential (environment variable, dotenv file, credential helper) against the service's declared cheap endpoint and reports, per source, answered, rejected, unreachable or absent with the time it was asked, and no output, record or log line of the case contains the planted value (planned proof: the case of I4780)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: a-projects-proofs-are-registered
+    criterion: "In a fixture adopter, a project rule whose x-majordomus block names only tests is counted by rules list and the doctrine summary as enforced in gated mode, a named test path that does not exist fails doctor, a project rule that reaches no declared principle and a principle no rule refines are each a finding, and an enforcement entry with args [] is proved wired by a hook line that invokes the path alone (planned proof: the cases of I4781, I4782 and I4783)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: the-skeleton-ships-versioned-hooks-and-a-ratchet
+    criterion: "majordomus init in a fresh repository writes tracked hooks under .githooks, sets core.hooksPath for the clone, declares an enforcement entry per hook that doctor proves wired, and declares a campsite ratchet whose metrics the policy names; `majordomus campsite` compares the branch with its merge base on the trunk and refuses a metric that grew (planned proof: the cases of I4784 and I4786)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: every-requirement-is-traced
+    criterion: "A plan that declares a requirement source (a path and an identifier pattern) is reported by plan validate with every requirement of that source that no issue traces, and an issue trace naming an identifier the source does not hold is a failure (planned proof: the case of I4787)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: a-plan-change-says-what-it-reopens
+    criterion: "plan validate with a base revision names every milestone the change moves from DONE to not DONE and every issue it moves from READY to BLOCKED, each with the edit that did it, before the change is committed (planned proof: the case of I4788)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: an-owners-commit-is-not-the-agents-scope
+    criterion: "finish --outcome completed over a range holding a commit the person authored outside the task's scope completes and records that commit as the person's, while the same path in a commit of the agent's session is refused as before (planned proof: the case of I4789)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: progress-reaches-the-tracker-once
+    criterion: "Over a push range, every commit naming an issue or a tracker key the issue traces leaves exactly one progress comment carrying its commit's marker on that issue's projection, on GitHub and on a Jira issue through a provider adapter, and a second run over the same range writes nothing (planned proof: the case of I4790 against recorded provider fixtures)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: every-mention-is-a-link-both-ways
+    criterion: "A derived mention index lists, for every rule, ADR, knowledge record, issue, milestone and requirement, the records whose text names it and the records it names; entity show answers both directions; and doctor's prose-link finding names each identifier that resolves to nothing with its file and line (planned proof: the case of I4791)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: optional-fields-are-a-stated-contract
+    criterion: "Every machine-readable plan answer carries each optional milestone field the schema declares, due_on included, as an explicit null when it is absent, the schema and docs/SCHEMAS.md say so, and the roadmap, the forge projection and the site render a milestone with and without due_on (planned proof: the case of I4792)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+  - id: doctor-keeps-its-budget-in-a-small-repository
+    criterion: "doctor reports its time per section, a fixture adopter of a few hundred files on a workstation with many checkouts of other repositories runs doctor within its declared budget, and a section whose cost scales with the machine rather than the repository is named when the budget is exceeded (planned proof: the measurement case of I4793)"
+    evidence: command
+    ref: "majordomus intent explain a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs"
+created_at: 2026-11-25
+updated_at: 2026-11-25

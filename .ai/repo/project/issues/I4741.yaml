@@ -1,0 +1,36 @@
+id: I4741
+milestone: a-session-proceeds-through-the-mesh
+title: "No majordomus command waits without a bound: a stdin read refuses a terminal and every command has a deadline"
+slug: no-command-waits-without-a-bound
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A command that reads its body from stdin (handover, and every other `< body` command) refuses at once when stdin is a terminal and names the non-interactive form (a file, a pipe or --derive). Every command run by the dispatcher has a deadline (MAJORDOMUS_DEADLINE, default from policy), after which it stops its process group, prints what it was waiting on, and exits with a distinct code."
+why: "Measured in the adopter OpenTTD (2026-11-22..25): a `majordomus handover` launched from an agent's shell kept running for about seven hours in the background, holding the shell, before it was found and killed; `majordomus context --json` took about six minutes under load ~90 and was bypassed by hand; `majordomus plan list` hung for more than 180 s at load ~90 during this issue's research and had to be killed. The converse bound fails good work: on 2026-11-25 `majordomus mesh allocate` failed twice with os error 35 (EAGAIN, a socket read timeout) after about 17 s, while the same POST through `curl -m 300` answered in 13 s, and another session saw 9 of 9 failures at load 78-84: the CLI's read timeout toward its own server is shorter than the server's work under load, and the client gives up on an answer that is coming. The pre-commit hook of this issue's own commit ran `majordomus doctor` for 4096 s (68 min, budget 100 s; load 46-75) and then refused on stale derived site data, so a plan-only commit waited more than an hour to learn it needed a derive. The project rules every-wait-is-bounded.v2 and commands-run-non-interactively.v2 say this must not happen, but they are not enforced by the dispatcher and not shipped to adopters."
+current_state: "Measured at origin/master 46775282570: lib/handover.sh:51 reads the body with a bare `cat > \"$body\"`: no `[ -t 0 ]` check and no read deadline. lib/context.sh:650 bounds only the board fetch (curl --max-time 2); the Rust report it runs (:332) is unbounded. bin/majordomus has no global deadline; only `served observe` and `monitor` take a timeout (cli.rs:2313,3662). I0840 (context under a second), I4486 (typed runner with stdin spec and deadline) and I2840 (cancelled MCP call stops) are open."
+desired_state: "lib/handover.sh, and every command that reads a body from stdin, refuses with the usage code when stdin is a terminal and --derive was not given, naming `< body.md` and --derive. bin/majordomus runs the command under a deadline (policy key commands.deadline_seconds, override MAJORDOMUS_DEADLINE, 0 = none) that, when it expires, signals the command's process group, prints the elapsed time and the subcommand, and exits with a dedicated code; a long-running subcommand (serve, monitor --follow, mcp) declares itself exempt. A call the CLI makes to its own server waits as long as the command's deadline allows (its read timeout is derived from the remaining deadline, not a fixed constant), and a read that times out says so (the endpoint, the seconds waited, the remaining deadline) instead of a bare os error."
+scope:
+  - "bin/majordomus"
+  - "lib/handover.sh"
+  - "lib/common.sh"
+  - ".ai/repo/policy.yaml"
+  - "test/cases/4741_no_command_waits_without_a_bound.sh"
+  - ".ai/repo/project/issues/I4741.yaml"
+non_scope:
+  - "Making context fast (I0840); this only bounds it"
+  - "The typed program runner for tools Majordomus starts (I4486)"
+acceptance_criteria:
+  - "`majordomus handover` with stdin on a terminal exits at once with the usage code and names `< body.md` and --derive"
+  - "`majordomus handover < body.md` and `--derive` behave as before"
+  - "A command that sleeps past MAJORDOMUS_DEADLINE=2 is stopped within a second of the deadline, with its process group, and exits with the dedicated code and a line naming the subcommand and the elapsed time"
+  - "serve, monitor --follow and mcp run past the deadline"
+  - "A server answer slower than the old fixed read timeout but within MAJORDOMUS_DEADLINE is received (a stub server that answers after 20 s, deadline 60); one past the deadline is reported with the endpoint and the seconds waited, never as a bare os error 35"
+  - "Negative: the case fails against origin/master before this change"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4741_no_command_waits_without_a_bound"
+evidence_required:
+  - "no_command_waits_without_a_bound"
+depends_on: []
+serves:
+  - a-session-proceeds-through-the-mesh#a-stall-is-signalled
+created_at: 2026-11-25

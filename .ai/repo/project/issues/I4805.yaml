@@ -1,0 +1,33 @@
+id: I4805
+milestone: a-second-adopter-is-served
+title: "doctor and start say when this session cannot push to origin, and a task then plans a local-only delivery"
+slug: a-session-knows-it-cannot-push
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A bounded, non-interactive probe of origin (`git ls-remote --exit-code origin HEAD` under `GIT_TERMINAL_PROMPT=0` and `ssh -o BatchMode=yes`, at most 15 s) runs in `doctor` and at `start`, with its result cached per checkout for the session. When origin cannot be reached, doctor reports `origin: unreachable from this session (<reason>)` as INFO, `start` prints that a push will be the owner's, and `finish` names the delivery as `local commits, not pushed: <n> ahead of <remote>/<branch>`, never as delivered. The probe sends no credential the session does not already hold and never retries with another key."
+why: "Observed on 2026-11-25 in one adopter workspace. 12 of 22 repositories live on a forge whose SSH key the agents' sessions could not use (`Permission denied (publickey)`). That was found only when a push failed, after the work had been planned around a pull request. A trunk with 5 unpushed commits had been reported as integrated, and trying other keys was refused by the provider's permission classifier, correctly. A task that knows at start that it cannot push plans a local commit and hands the push to the owner."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. doctor counts the work no remote holds (I2993) and finish reads `ls-remote` only after a push. Nothing probes whether a push from this session can succeed before the work is planned, and finish has no delivery state for 'committed, the owner pushes'."
+desired_state: "Before a task plans its delivery, it knows whether this session can reach origin, and its report never calls unpushed commits delivered."
+scope:
+  - "lib/doctor.sh"
+  - "lib/start.sh"
+  - "lib/finish.sh"
+  - "docs/CLI.md"
+  - "test/cases/4805_a_session_knows_it_cannot_push.sh"
+non_scope:
+  - "Repairing credentials or choosing another key: the owner's act"
+  - "Counting unpushed work across branches: I2993"
+depends_on: []
+acceptance_criteria:
+  - "Case 4805: a fixture whose origin is a path that refuses reads (or an ssh URL to a closed port) makes doctor report `origin: unreachable` with the reason within 15 s, and a reachable fixture origin reports nothing"
+  - "start in the unreachable fixture prints that the push is the owner's, and finish --outcome completed over a committed tree names `local commits, not pushed`"
+  - "The probe runs with `GIT_TERMINAL_PROMPT=0` and BatchMode, proven by a fixture whose remote would prompt: the probe ends within its bound"
+  - "Negative control: with the probe removed, the case finds finish calling the unpushed work delivered"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4805_a_session_knows_it_cannot_push"
+evidence_required:
+  - "a_session_knows_it_cannot_push"
+serves: []
+created_at: 2026-11-25

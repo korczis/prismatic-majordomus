@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.2.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -6553,6 +6553,9 @@ majordomus plan delivery [OPTIONS] [ISSUE]
 |---|---|---|---|
 | `<ISSUE>` | `<ISSUE>` | — | One issue; default every issue of the plan |
 | `--at` | `<REV>` | — | Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock) |
+| `--merge-title` | `<TITLE>` | — | With --at: read that commit as the merge into the trunk of a pull request with this title, as the forge's merge commit will name it (I4634) |
+| `--merge-branch` | `<BRANCH>` | — | With --at: the anticipated merge's head branch, without its owner |
+| `--merge-number` | `<N>` | — | With --at: the anticipated merge's pull request number |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

@@ -1,0 +1,35 @@
+id: I4724
+milestone: fabric-local-pilot
+title: "A user-scoped host agent starts by hand, holds one local socket as a singleton and stops cleanly (P03)"
+slug: fabric-p03-host-singleton
+priority: p1
+profile: implementation
+objective: "Add a host mode to the existing executable that a person starts, queries and stops: one user-owned runtime directory and one 0600 Unix socket (a named pipe on a supported Windows target), an atomic singleton claim, peer-credential checks, bounded startup and teardown that removes only what this instance owns, and a typed status with version, instance and uptime."
+why: "Corrected DAG: P03 follows P02 (I4723) and S01 (I4722), so its overhead is compared with the measured legacy baseline. The owner's trust boundary of 2026-11-24: locally only the same OS user, through a 0600 socket checked by peer credentials."
+current_state: "Observed 2026-11-25: no host agent exists; every server is one checkout's (ADR 0035)."
+desired_state: "A manually started host agent, with no service installation, no automatic start from env enter, no mesh socket opened by starting it, and no scan of the home directory for projects."
+scope:
+  - "apps/majordomus-cli/src/fabric"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/tests"
+non_scope:
+  - "Service units and installers (P09)"
+  - "Moving any legacy MCP owner (P05, S02)"
+  - "A separate binary without footprint evidence"
+depends_on:
+  - "I4723"
+  - "I4722"
+acceptance_criteria:
+  - "Ten or more simultaneous starts end with one owner; a live but slow owner is never silently replaced; a stale socket of a dead owner is recovered"
+  - "A connection from another OS user, a planted symlink and an incompatible hello are refused"
+  - "env enter and mcp --standalone behave exactly as before when no host agent runs"
+  - "The host agent's idle process, RSS and descriptor count are reported beside the I4722 baseline"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test fabric_host"
+evidence_required:
+  - "host_singleton_race_test"
+  - "wrong_uid_refused_test"
+created_at: 2026-11-25
+updated_at: 2026-11-25

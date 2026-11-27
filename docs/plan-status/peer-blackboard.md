@@ -40,3 +40,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/peers.rs with I3992; they may not run concurrently |
 | WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/mesh/journal.rs with I3994; they may not run concurrently |
 | WARN | `scope_conflict` | `I4665` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4665` | shares apps/majordomus-cli/src/mesh/records.rs with I4740; they may not run concurrently |

@@ -244,14 +244,18 @@ struct Finished {
     stderr: String,
 }
 
-/// Run a prepared git command with no stdin, both outputs captured, and kill it at the
+/// Run a prepared git command with no stdin, both outputs captured, and end it at the
 /// deadline. The one wait-and-kill loop of this module: the bounded fetch and the bounded
 /// run are this, read two ways.
+///
+/// The command leads a process group of its own, and the deadline ends the group: a `git
+/// fetch` killed alone left its `git-remote-https` behind with no parent, holding the pipes
+/// the drains below read to their end, so the deadline did not end the call either.
 fn wait_bounded(cmd: &mut Command, timeout: Duration) -> std::io::Result<Finished> {
     cmd.stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    let mut child = cmd.spawn()?;
+    let (mut child, _group) = crate::process::spawn_group(cmd)?;
     // Drained beside the wait, so a chatty process cannot fill a pipe and stall itself. Both
     // pipes were asked for above, so both are there to take.
     let drain = |mut pipe: Box<dyn Read + Send>| {
@@ -284,8 +288,9 @@ fn wait_bounded(cmd: &mut Command, timeout: Duration) -> std::io::Result<Finishe
 }
 
 /// Wait for `child` until `deadline`, asking `try_wait` (the child's own, but for a test that
-/// makes the wait itself fail): `None` when the deadline ended it, killed and reaped;
-/// `Some(None)` when the wait failed; otherwise its exit status.
+/// makes the wait itself fail): `None` when the deadline ended it; `Some(None)` when the wait
+/// failed; otherwise its exit status. A child not seen to exit is ended with its group and
+/// reaped either way, so that nothing it started outlives the answer.
 fn wait_until(
     child: &mut Child,
     deadline: Instant,
@@ -295,12 +300,14 @@ fn wait_until(
         match try_wait(child) {
             Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
             Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
+                crate::process::kill_group(child);
                 return None;
             }
             Ok(Some(status)) => return Some(Some(status)),
-            Err(_) => return Some(None),
+            Err(_) => {
+                crate::process::kill_group(child);
+                return Some(None);
+            }
         }
     }
 }
@@ -591,15 +598,59 @@ mod tests {
         assert_eq!(f.stdout, b"ok");
     }
 
-    /// A wait that itself fails is said to have failed, never read as an exit or a deadline.
+    /// A wait that itself fails is said to have failed, never read as an exit or a deadline,
+    /// and the child it could not wait for is ended and reaped, not left running.
     #[test]
     fn a_wait_that_fails_is_neither_an_exit_nor_a_deadline() {
-        let mut child = Command::new("true").spawn().expect("true runs");
+        use std::os::unix::process::ExitStatusExt;
+        let mut sleep = Command::new("sleep");
+        sleep.arg("30");
+        let (mut child, _group) = crate::process::spawn_group(&mut sleep).expect("sleep runs");
         let waited = wait_until(&mut child, Instant::now() + Duration::from_secs(5), |_| {
             Err(std::io::Error::other("the wait broke"))
         });
         assert_eq!(waited, Some(None));
-        child.wait().expect("reaped");
+        let status = child.wait().expect("reaped");
+        assert_eq!(
+            status.signal(),
+            Some(libc::SIGKILL),
+            "ended, not waited out"
+        );
+    }
+
+    /// A command past its deadline is ended with everything it started: the call returns at
+    /// the deadline although a program the command started holds its output open for thirty
+    /// seconds, and that program does not outlive it.
+    #[test]
+    fn a_command_past_its_deadline_ends_with_what_it_started() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let pids = dir.path().join("pids");
+        let mut cmd = Command::new("sh");
+        cmd.arg("-c")
+            .arg("sleep 30 & echo $! > \"$1\"; wait")
+            .arg("sh")
+            .arg(&pids);
+        let started = Instant::now();
+        let f = wait_bounded(&mut cmd, Duration::from_millis(500)).unwrap();
+        assert_eq!(f.status, None, "ended by the deadline");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "held past the deadline by an orphan: {:?}",
+            started.elapsed()
+        );
+        let grandchild: u32 = std::fs::read_to_string(&pids)
+            .expect("the sleeper started")
+            .trim()
+            .parse()
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while crate::lease::alive(grandchild) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(25));
+        }
+        assert!(
+            !crate::lease::alive(grandchild),
+            "the sleeper {grandchild} outlived git"
+        );
     }
 
     /// A bounded run that fails says what git said, or that it said nothing, and one that a

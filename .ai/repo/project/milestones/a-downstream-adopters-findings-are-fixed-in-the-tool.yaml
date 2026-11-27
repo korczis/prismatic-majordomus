@@ -1,0 +1,48 @@
+id: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "What a downstream adopter met on 1.2.0 is fixed in the tool: truthful advisors, registered proofs, versioned hooks, an honest plan and doctor"
+slug: a-downstream-adopters-findings-are-fixed-in-the-tool
+order: 560
+priority: p1
+problem: "A downstream supervised repository working on the installed 1.2.0 release (2026-11-25) met twelve generic defects in one session, each worked around by hand: advisors reported available while four of five could not answer; two copies of one credential, one stale; project rules proved only in prose, 13 blocking rules outside the doctrine registry; requirements nobody traced invisible to plan validate; one issue moved into a DONE milestone silently blocking every later READY issue; finish refusing the agent's task over a commit the owner made; an enforcement entry with args [] never recognised as wired; the versioned-hook recipe, the campsite ratchet, tracker progress comments and a mention graph all rebuilt locally; a milestone without due_on breaking a consumer; and doctor at 90 to 104 s against a 20 s budget. The repository is the evidence and is not named."
+outcome: "An adopter on the next release gets each of those readings right without a local workaround: what answers is reported as answering, its proofs count, its hooks and ratchet come from the skeleton, its plan says what a change re-opens and which requirement is untraced, its owner's commits are the owner's, its tracker hears about progress once, every mention is a link both ways, optional fields are explicit, and doctor stays inside its budget."
+current_state: "At origin/master 46775282570, none of the fifteen issues of this milestone has started. The adjacent adopter work is in a-second-adopter-is-served: I4255 (a project rule enforced by a command the repository names) is READY, and I4261 (issue traces and milestone due dates) has its case on master and is not recorded DONE; I4266, I4260, I4254, I4370, I4671, I3299, I3318 and I3412 are related and are named in the non_scope of the issue they touch."
+desired_state: "The plan of implementation, by wave (the waves are derived from depends_on; this is their reading at planning time). Wave 0, independent and parallel-safe where marked: I4783 (path-only wiring, a one-function fix that unblocks the skeleton), I4778 (advisor probe), I4780 (credential probe), I4781 (gated rules in the registry), I4788 (plan validate against a base), I4789 (person-authored commits in finish), I4791 (mention index), I4792 (optional fields as explicit null) and I4793 (doctor timings and machine-scaled bounds). Wave 1: I4779 after I4778 (model classification uses the probe's record), I4782 after I4781 (principle coverage reads gated rules), I4784 after I4783 (versioned hooks with a path-only gate), and I4787 and I4790 after I4261 is recorded DONE (requirement coverage and tracker comments read traces). Wave 2: I4786 after I4784 (campsite wired into pre-push by `hooks add`). Order inside a wave: the fixes that stop false readings first (I4783, I4788, I4789, I4778), then the capabilities. Each issue lands as one pull request with its case failing first, its derived files regenerated and its documentation page corrected; the README, docs and the layer are updated in the same pull request as the behaviour they describe."
+scope:
+  - ".ai/repo/project/issues/I4778.yaml"
+  - ".ai/repo/project/issues/I4779.yaml"
+  - ".ai/repo/project/issues/I4780.yaml"
+  - ".ai/repo/project/issues/I4781.yaml"
+  - ".ai/repo/project/issues/I4782.yaml"
+  - ".ai/repo/project/issues/I4783.yaml"
+  - ".ai/repo/project/issues/I4784.yaml"
+  - ".ai/repo/project/issues/I4786.yaml"
+  - ".ai/repo/project/issues/I4787.yaml"
+  - ".ai/repo/project/issues/I4788.yaml"
+  - ".ai/repo/project/issues/I4789.yaml"
+  - ".ai/repo/project/issues/I4790.yaml"
+  - ".ai/repo/project/issues/I4791.yaml"
+  - ".ai/repo/project/issues/I4792.yaml"
+  - ".ai/repo/project/issues/I4793.yaml"
+non_scope:
+  - "The downstream repository itself: it is the evidence, read only, and never named in any record"
+  - "The issues of a-second-adopter-is-served, which stay where they are; this milestone depends on I4261 through two issues and widens none"
+  - "Accepting any ADR an issue proposes: acceptance is the owner's act"
+acceptance_criteria:
+  - "Every satisfaction criterion of intent a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs carries its evidence"
+  - "Every issue of this milestone is DONE or CANCELLED with its reason"
+  - "No fix decides by the identity of the repository it runs in; each case runs against a fixture repository that is not this one"
+  - "No credential value appears in any output, record, fixture log or commit of any issue here"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "findings_fixed"
+depends_on: []
+claims: []
+risks:
+  - "I4789 changes a refusal surface (scope); the session trailer, never the author, is what proves agency, and the case holds the direction where an agent commits under the person's identity"
+  - "I4778 and I4790 reach vendors and trackers; both are explicit commands with a dry run, bounded by a time-to-live or a marker, and never part of a derivation"
+  - "I4787 and I4790 stay BLOCKED until I4261 is recorded DONE; recording it is a records-seat task, not this milestone's"
+  - "I4793's target is a measurement on a busy workstation; the fixture declares the machine it simulates so the number is reproducible"
+created_at: 2026-11-25
+updated_at: 2026-11-25

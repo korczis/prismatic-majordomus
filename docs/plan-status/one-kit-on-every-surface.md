@@ -54,7 +54,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4606; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/capability/builtin/design.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4633; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares bin/majordomus with I4741; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/capability/builtin/mod.rs with I4780; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares site/charts.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/src/ui.css with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/ui.js with I4494; they may not run concurrently |

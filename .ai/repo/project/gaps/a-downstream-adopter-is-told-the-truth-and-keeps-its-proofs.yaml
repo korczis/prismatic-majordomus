@@ -1,0 +1,159 @@
+intent: a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs
+observed_at: "46775282570"
+recorded_by: "claude-code (an /evolve subagent of a session in a downstream supervised repository; worktree plan/lessons-from-a-downstream-adopter-20261125; read-only over the tree, no build)"
+recorded_at: 2026-11-25
+observations:
+  - id: availability-is-presence
+    statement: "Availability is derived from an executable on PATH or a credential variable set, the mode and recorded consultation outcomes; a present advisor with no history is Available with reason present, and nothing cheaper than a consultation ever asks an advisor"
+    source: file:apps/majordomus-cli/src/reasoning/availability.rs
+  - id: local-runtime-is-assumed-local
+    statement: "ollama and lmstudio are declared transport local_runtime with the note that they stay on the machine, and their adapters take the first model the runtime lists without reading its tag, capability or weights"
+    source: file:scripts/lib/advisors/ollama-chat.mjs
+  - id: no-credential-probe
+    statement: "No command reads a credential source, compares two sources or asks a service whether it accepts one; only whether a variable is set is known"
+    source: file:apps/majordomus-cli/src/reasoning/availability.rs
+  - id: gated-rules-passed-over
+    statement: "The doctrine loader passes over a rule whose block names tests and no validator, the summary counts only validator rules as the registry, and gated-mode checking lives in a repository script that is not shipped"
+    source: file:lib/doctrine.sh
+  - id: no-principle-concept
+    statement: "No rule, policy key or command marks a rule as a principle or reports a rule's reach to one"
+    source: file:share/schemas/majordomus/rule/rule.v1.schema.json
+  - id: wiring-needs-an-argument
+    statement: "The wiring check greps for the program, whitespace and the first argument, so an entry with args [] invoked by its path alone never matches"
+    source: file:lib/doctor.sh
+  - id: init-installs-no-hook
+    statement: "init prints the two hook lines and installs nothing, also when the hooks directory is tracked; the skeleton declares only the two tool entries"
+    source: file:lib/init.sh
+  - id: ratchets-are-per-gate
+    statement: "Ratchets are separate baseline files read by separate scripts; nothing measures a declared metric at a branch's merge base"
+    source: file:.ai/repo/order-baseline.txt
+  - id: traces-are-one-way
+    statement: "traces is an admitted issue key projected into the forge body as written; no requirement source is declared or read"
+    source: file:lib/plan.sh
+  - id: validate-reads-one-revision
+    statement: "plan validate judges the tree as it is; a re-opened milestone is a valid plan and nothing compares two revisions"
+    source: file:lib/plan.sh
+  - id: touched-counts-every-local-commit
+    statement: "What a task touched is every path of every first-parent commit since its start that the trunk does not already hold or that this checkout made, and a commit made in the checkout by anybody is 'made here'"
+    source: file:lib/common.sh
+  - id: no-progress-comment
+    statement: "The forge projection writes issue bodies, milestones and due dates; nothing reads a commit range for issue ids, and no Jira adapter exists"
+    source: file:scripts/github-sync
+  - id: prose-links-are-a-count
+    statement: "doctor prints how many prose links resolve to nothing and points at knowledge validate; entity show answers declared relations and no reverse edges from text"
+    source: file:lib/knowledge.sh
+  - id: due-on-optional-in-prose
+    statement: "due_on is admitted and documented as optional, sent to the forge only when present; whether a JSON answer carries an absent key depends on the projection"
+    source: file:docs/SCHEMAS.md
+  - id: doctor-budget-from-an-empty-machine
+    statement: "The skeleton's doctor budget of 20 s was measured in a disposable fixture repository; doctor reports its total wall time only, with no per-section breakdown"
+    source: file:share/skeleton/policy.yaml
+conditions:
+  - criterion: advisors-are-reported-by-what-answers
+    state: missing
+    because: "presence is reported as availability and a local runtime is assumed local whatever model it forwards to"
+    observations: [availability-is-presence, local-runtime-is-assumed-local]
+  - criterion: credentials-are-probed-without-being-read
+    state: missing
+    because: "nothing probes a credential source"
+    observations: [no-credential-probe]
+  - criterion: a-projects-proofs-are-registered
+    state: missing
+    because: "gated rules are passed over by the shipped loader, no principle exists, and a path-only invocation is never wired"
+    observations: [gated-rules-passed-over, no-principle-concept, wiring-needs-an-argument]
+  - criterion: the-skeleton-ships-versioned-hooks-and-a-ratchet
+    state: missing
+    because: "init installs no hook and no metric is measured at a merge base"
+    observations: [init-installs-no-hook, ratchets-are-per-gate]
+  - criterion: every-requirement-is-traced
+    state: missing
+    because: "traces are checked in no direction against a declared source"
+    observations: [traces-are-one-way]
+  - criterion: a-plan-change-says-what-it-reopens
+    state: missing
+    because: "validate reads one revision"
+    observations: [validate-reads-one-revision]
+  - criterion: an-owners-commit-is-not-the-agents-scope
+    state: missing
+    because: "every commit made in the checkout is the task's"
+    observations: [touched-counts-every-local-commit]
+  - criterion: progress-reaches-the-tracker-once
+    state: missing
+    because: "no commit range is read for issue ids and no tracker adapter writes comments"
+    observations: [no-progress-comment]
+  - criterion: every-mention-is-a-link-both-ways
+    state: missing
+    because: "prose mentions are counted, not listed, and no reverse edge is derived from text"
+    observations: [prose-links-are-a-count]
+  - criterion: optional-fields-are-a-stated-contract
+    state: conflicting
+    because: "the schema and docs/SCHEMAS.md say due_on is optional, while a JSON answer may omit the key, so a consumer reads no contract from the answer"
+    observations: [due-on-optional-in-prose]
+  - criterion: doctor-keeps-its-budget-in-a-small-repository
+    state: unknown
+    because: "the 90 to 104 s were measured in the downstream repository on 1.2.0 and not re-measured here; this tree has no per-section timing to say where the time goes"
+    observations: [doctor-budget-from-an-empty-machine]
+risks:
+  - "The downstream measurements were taken on one workstation under heavy load (load average above 70 the same morning); I4793 re-measures before it changes a budget"
+  - "Several sessions planned lessons into this repository on the same morning; ids were allocated through the mesh and the scopes checked against the open plan worktrees"
+work:
+  - id: advisor-probe
+    title: "An advisor is answering only after a probe answered"
+    serves: [advisors-are-reported-by-what-answers]
+    issue: I4778
+  - id: model-classification
+    title: "A local runtime's model is classified by where it runs"
+    serves: [advisors-are-reported-by-what-answers]
+    issue: I4779
+  - id: credential-probe
+    title: "A credential source is probed, not read"
+    serves: [credentials-are-probed-without-being-read]
+    issue: I4780
+  - id: gated-registry
+    title: "A gated project rule is in the registry"
+    serves: [a-projects-proofs-are-registered]
+    issue: I4781
+  - id: principle-coverage
+    title: "Every rule reaches a principle"
+    serves: [a-projects-proofs-are-registered]
+    issue: I4782
+  - id: path-only-wiring
+    title: "A path-only invocation is wired"
+    serves: [a-projects-proofs-are-registered]
+    issue: I4783
+  - id: versioned-hooks
+    title: "init offers versioned hooks"
+    serves: [the-skeleton-ships-versioned-hooks-and-a-ratchet]
+    issue: I4784
+  - id: campsite
+    title: "The campsite ratchet is a capability"
+    serves: [the-skeleton-ships-versioned-hooks-and-a-ratchet]
+    issue: I4786
+  - id: requirement-coverage
+    title: "Every requirement of a declared source is traced"
+    serves: [every-requirement-is-traced]
+    issue: I4787
+  - id: reopen-report
+    title: "A plan change says what it re-opens"
+    serves: [a-plan-change-says-what-it-reopens]
+    issue: I4788
+  - id: person-commits
+    title: "An owner's commit is not the agent's scope"
+    serves: [an-owners-commit-is-not-the-agents-scope]
+    issue: I4789
+  - id: tracker-progress
+    title: "Progress reaches the tracker once"
+    serves: [progress-reaches-the-tracker-once]
+    issue: I4790
+  - id: mention-index
+    title: "Every mention is a link both ways"
+    serves: [every-mention-is-a-link-both-ways]
+    issue: I4791
+  - id: explicit-optionals
+    title: "Optional plan fields are a stated contract"
+    serves: [optional-fields-are-a-stated-contract]
+    issue: I4792
+  - id: doctor-budget
+    title: "doctor keeps its budget in a small repository"
+    serves: [doctor-keeps-its-budget-in-a-small-repository]
+    issue: I4793

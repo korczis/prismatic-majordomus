@@ -1,0 +1,33 @@
+id: I4718
+title: "A derived delivery.json whose observed commit is not an ancestor of the tree it ships in is refused before the commit, with its remedy named, so an offloaded derive's throwaway input commit never reaches CI"
+milestone: surfaces-never-disagree
+slug: a-delivery-observing-a-throwaway-commit-is-refused-locally
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The derived-data check that the pre-commit hook and scripts/derive-check already run reads `observed.commit` and `observed.trunk` from site/data/generated/delivery.json and refuses (exit 10) when the commit is neither HEAD nor an ancestor of HEAD. In a merge in progress it is checked against the commit the merge will be. The refusal names the commit it found, says that an offloaded derive's throwaway input commit is the usual cause, and names the remedy: `MAJORDOMUS_BIN_COMMIT=<HEAD> bin/majordomus --json plan delivery --at <HEAD>`, written to delivery.json and committed, or a rerun through `majordomus offload derive`, which sets MJ_DERIVE_OBSERVE."
+why: "scripts/generate-site-data observes MJ_DERIVE_OBSERVE when it is an ancestor of the tree it runs in, and HEAD otherwise (I3836, case 3846). An offload that does not set the variable derives on its own input commit: a `git stash create` snapshot, or a merge in progress written by commit-tree. That commit never reaches origin. Nothing local checks the observed commit, so the commit hook and the before-push plan pass, and CI's 'derived site data in sync' refuses the push a full round trip later. Observed four times from 2026-11-19 to 2026-11-22, each time after a derive through the workspace's own offload script ~/dev/.derive-offload-v2.sh, which predates MJ_DERIVE_OBSERVE. #3100 observed 4b9f4657cf95 and was repaired by restoring master's projection (e0542ae585c). #3107 observed b7ef3fd77b and was refused in validate run 45070641666, site job. Train #3112 observed df3d2d6a6d and fe48c6437d1's input. Each repair was `plan delivery --at HEAD` by hand, then another commit and another push."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. delivery_observe in scripts/generate-site-data (lines 204-218) chooses the observed commit at generation time. Neither the pages lines of the pre-commit hook ('site/data/generated is current for this tree (input hash ...)') nor scripts/derive-check compare the committed observed commit with the tree: the input hash covers the canonical inputs, not the observation. CI's --check re-derives and compares the whole file, and that is where the refusal first appears. The workspace script ~/dev/.derive-offload-v2.sh, outside this repository, sets no MJ_DERIVE_OBSERVE. `majordomus offload derive` is the repository's own path (case 3846)."
+desired_state: "A delivery.json that observes a commit the push cannot publish is refused at the commit that would add it, in seconds, naming the commit and the one command that repairs it. CI's refusal for this cause becomes unreachable from a tree that passed its commit hook."
+scope:
+  - "scripts/derive-check"
+  - "scripts/pages"
+  - "test/cases/4718_a_delivery_observing_a_throwaway_commit_is_refused_locally.sh"
+  - ".ai/repo/project/issues/I4718.yaml"
+  - "site/content/plan/I4718.md"
+non_scope:
+  - "~/dev/.derive-offload-v2.sh and any other machine-local offload script: it lives outside this repository, and its owner migrates it to `majordomus offload derive` or sets MJ_DERIVE_OBSERVE"
+  - "How scripts/generate-site-data chooses the observed commit (I3836)"
+  - "CI's whole-file comparison of the derived data, which stays as it is"
+acceptance_criteria:
+  - "Case 4718: a fixture repository commits a delivery.json observing a commit made with `git commit-tree` that is not an ancestor of HEAD. The commit hook's derived-data check refuses it with exit 10, naming that commit and the `plan delivery --at` remedy"
+  - "The same fixture observing HEAD, or an ancestor of HEAD, passes"
+  - "In a merge in progress, an observation of the merge's first parent passes, and one of a commit-tree input commit is refused"
+  - "Negative control: the case fails against scripts/derive-check and the pages check as they are at 46775282570"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 4718_a_delivery_observing_a_throwaway_commit_is_refused_locally 3846_an_offload_derive_observes_its_base_commit"
+evidence_required:
+  - "case_4718"
+depends_on: []
+created_at: 2026-11-25
