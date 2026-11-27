@@ -6,7 +6,7 @@
     "version": "1.3.0"
   },
   "registry": {
-    "fingerprint": "048326c01db03c0649e52e43eb3f334f3205f4dfe44159d1f43ec95d7c337c32",
+    "fingerprint": "f3ae51525061da2eb4df2f6781f2c5518aac66faf94007b53de463d94c4446d8",
     "summary": {
       "total": 4123,
       "builtin": 233,
@@ -52936,6 +52936,14 @@
                       "type": "string"
                     },
                     "description": "The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit."
+                  },
+                  "build_host_tenants": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Tenant"
+                    },
+                    "description": "The build host's baseline tenants (I4343): a path and the size, in GiB, it must not\noutgrow. Observed, never reclaimed by this: which homes disk-guard itself sweeps is\nI4352's.",
+                    "default": []
                   }
                 },
                 "required": [
@@ -52958,6 +52966,32 @@
                   "runner_units"
                 ],
                 "description": "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
+              },
+              "Tenant": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "A short name for what lives at `path`: `korczis home`, `docker`, `minio`, `swap`."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The path observed, repository-unrelated: a host path such as `/home/korczis`."
+                  },
+                  "bound_gib": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The size, in GiB, this tenant must not exceed."
+                  }
+                },
+                "required": [
+                  "name",
+                  "path",
+                  "bound_gib"
+                ],
+                "description": "One baseline tenant of the build host, observed against its bound (I4343)."
               },
               "Plan": {
                 "type": "object",
@@ -54291,14 +54325,21 @@
         "module": "mesh",
         "kind": "query",
         "title": "The mesh self-check",
-        "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
+        "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343).",
         "input": {
-          "name": "Empty",
+          "name": "DoctorInput",
           "schema": {
             "type": "object",
             "additionalProperties": false,
-            "description": "No input.",
-            "title": "Empty"
+            "properties": {
+              "build_host": {
+                "type": "boolean",
+                "description": "Also observe this build host's own guard (I4343): disk-guard.timer and\nbuild-host-observe.timer active, the ballast present, its state fresh, every\ndeclared critical-service drop-in present and every declared tenant at or under its\nbound. Observed against `/`, never a fixture: a test calls\n`crate::mesh::cache_provision::observe_build_host` directly.",
+                "default": false
+              }
+            },
+            "description": "The input of `mesh.doctor`.",
+            "title": "DoctorInput"
           }
         },
         "output": {
@@ -100045,7 +100086,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4b2334a3f8df805772dde76653920fcd00a3d8165be85ee50c52a99fc234eb3b",
+    "fingerprint": "9eda6b0927ce20b97d66850e667b8c6f38ece4e26020617121847357940b9727",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -107250,7 +107291,7 @@
         "title": "The build cache, as a person sees it",
         "path": "docs/BUILD_CACHE.md",
         "source_class": "document",
-        "bytes": 6590
+        "bytes": 7408
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -107628,7 +107669,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 99955
+        "bytes": 101703
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -163569,7 +163610,7 @@
             "route": "/docs/cli/mesh/doctor/",
             "executable": true,
             "usage": "majordomus mesh doctor [OPTIONS]",
-            "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
+            "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)",
             "args": [
               {
                 "name": "repo",
@@ -163653,6 +163694,20 @@
                 ],
                 "defaults": [
                   "text"
+                ]
+              },
+              {
+                "name": "build_host",
+                "long": "build-host",
+                "positional": false,
+                "help": "Also observe this build host's own guard: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound. Exits non-zero while any of it is not so, naming each",
+                "value_name": "BUILD_HOST",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
                 ]
               }
             ],
@@ -181234,7 +181289,7 @@
         "name": "majordomus_mesh_doctor",
         "id": "mesh.doctor",
         "title": "The mesh self-check",
-        "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
+        "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343).",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -181244,7 +181299,7 @@
           "idempotent": true,
           "open_world": false
         },
-        "input": "Empty",
+        "input": "DoctorInput",
         "output": "MeshDoctorReport"
       },
       {

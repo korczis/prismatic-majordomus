@@ -23145,7 +23145,7 @@
           "route": "/docs/cli/mesh/enrol/"
         },
         {
-          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
+          "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)",
           "command": "majordomus mesh doctor",
           "name": "doctor",
           "route": "/docs/cli/mesh/doctor/"
@@ -23772,7 +23772,7 @@
       "usage": "majordomus mesh enrol [OPTIONS]"
     },
     {
-      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
+      "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)",
       "ancestors": [
         {
           "command": "majordomus",
@@ -23869,6 +23869,20 @@
           "required": false,
           "takes_value": true,
           "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Also observe this build host's own guard: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound. Exits non-zero while any of it is not so, naming each",
+          "long": "build-host",
+          "name": "build_host",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "BUILD_HOST"
         }
       ],
       "children": [],
@@ -42009,7 +42023,7 @@
     }
   ],
   "counts": {
-    "arguments": 1823,
+    "arguments": 1824,
     "commands": 264,
     "examples": 263,
     "runnable": 229
