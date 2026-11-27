@@ -1,0 +1,31 @@
+id: I4676
+milestone: a-second-adopter-is-served
+title: "A quoted YAML scalar followed by a trailing comment loads without its quotes"
+slug: a-quoted-scalar-before-a-comment-loses-its-quotes
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The YAML subset parser strips the quotes of a double- or single-quoted scalar that is followed by whitespace and a trailing comment, as YAML 1.2 reads it, so `- \"<key>\"  # <note>` loads as the key and not as the key wrapped in quotes."
+why: "Reported by korczis-github-io-91 on 2026-11-22 (korczis.github.io master 96449d3, majordomus 1.1.0), and dev-31 hit the same in kompendium. A trust.allow entry written as a quoted key with a trailing comment naming its machine loaded with its quotes, failed majordomus.mesh-declaration/v1 (^[0-9a-f]{64}$), and the mesh went off (I4677). Annotating a key with the machine it belongs to is the natural way to write a trust list, and no existing issue was found for it."
+current_state: "Observed 2026-11-22: under trust.allow, the line `    - \"946e8aa5...\"  # 641bdb94 MacBook Pro` loads as a string that still carries both double quotes, and fails the declaration schema. A bare key with a trailing comment loads, and a quoted key without a comment loads. apps/majordomus-cli/src/metadata/yaml.rs locates the ' #' that starts a trailing comment and is the parser to change."
+desired_state: "A quoted scalar with a trailing comment loads as its unquoted value in a sequence item and in a mapping value; a '#' inside the quotes stays part of the value."
+scope:
+  - ".ai/repo/project/issues/I4676.yaml"
+  - "apps/majordomus-cli/src/metadata/yaml.rs"
+  - "test/cases/4676_a_quoted_scalar_before_a_comment_loses_its_quotes.sh"
+non_scope:
+  - "A present but invalid mesh declaration reading as absent: I4677"
+  - "Widening the YAML subset to other constructs"
+depends_on: []
+acceptance_criteria:
+  - "A sequence item `- \"abc\"  # note` and a mapping value `k: 'abc'  # note` each load as abc"
+  - "`- \"a # b\"` loads as a # b: a '#' inside the quotes is part of the value"
+  - "Case 4676 loads a mesh declaration whose trust.allow entries are quoted keys with trailing comments, and it passes majordomus.mesh-declaration/v1"
+  - "Negative control: the case fails against master, where the key keeps its quotes"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4676_a_quoted_scalar_before_a_comment_loses_its_quotes"
+evidence_required:
+  - "a_quoted_scalar_before_a_comment_loses_its_quotes"
+serves: []
+created_at: 2026-11-22

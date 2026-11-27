@@ -1,0 +1,38 @@
+id: I4673
+milestone: the-mesh-works-out-of-the-box
+title: "Every repository of a fleet trusts the fleet's machines from one list: init and update seed trust.allow and the hubs, and doctor names a repository that drifts from it"
+slug: a-fleet-trusts-its-machines-from-one-list
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A machine's node key is per machine and shared by every repository and worktree on it, so the trusted keys and the hubs are a fact of the fleet, not of one repository. `majordomus init` and `majordomus update` seed a repository's mesh declaration (trust.allow and the rendezvous hubs) from one fleet list, and doctor names a repository whose declaration drifts from that list, with the keys and hubs it lacks and the command that brings it level. A repository may still trust less than the fleet by declaring so; an undeclared difference is the drift doctor reports."
+why: "Owner-ordered on 2026-11-22 (AskUserQuestion in korczis.github.io session 722683c2, relayed by korczis-github-io-91; recorded in that repository's curated knowledge as owner-decisions-2026-11-22.md). A node key is per machine and shared by every repo and worktree there, yet trust.allow and rendezvous are per repo. On 2026-11-22 only prismatic-majordomus and prismatic-majordomus-hub carried all 5 keys and 6 hubs, and 12 repos had 0-3 keys and no hubs, so their sessions could not cooperate over the mesh. The rollout was done by hand, repository by repository."
+current_state: "Observed 2026-11-22 by korczis-github-io-91. Keys were verified through each hub's /api/v1/mesh/identity: imac-4 = aaba18ea, lundra = 25c9758f, second MacBook = 5d81b5c9; jetson offline. Hand rollout landed in korczis.github.io (#46), algoglyph, kompendium, oscilla, poppyhead and sonic-playground. It was blocked in three repositories: OpenTTD (a knowledge record with epistemics `derived` fails doctor), prismatic-platform (the pre-commit mix check needs deps in a fresh worktree), and a third whose declaration was staged but uncommitted in its primary checkout. The nearest records, I4571 and I4572, reload and check one repository's runtime trust; neither seeds a declaration from a list shared across repositories or reports a repository that differs from it."
+desired_state: "One fleet list names the trusted node keys and the hubs. init writes a new repository's mesh declaration from it, update brings an existing declaration level without dropping an entry the repository declared on its own, and doctor reports a repository whose declaration lacks a fleet key or hub, naming each one and the command that adds it."
+scope:
+  - ".ai/repo/project/issues/I4673.yaml"
+  - "lib/init.sh"
+  - "lib/update.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "docs/MESH.md"
+  - "test/cases/4673_a_fleet_trusts_its_machines_from_one_list.sh"
+non_scope:
+  - "Reloading a running server's trust when the trunk's trust.allow changes: I4571"
+  - "mesh doctor failing a runtime that is closed while the declaration trusts this machine's key: I4572"
+  - "Admitting a key nobody listed: the fleet list is written by its owner, never learned from what discovery heard"
+  - "The per-repository blockers met in the hand rollout (a doctor finding on a knowledge record, a pre-commit that needs deps): each belongs to its own repository"
+depends_on: []
+acceptance_criteria:
+  - "Case 4673 holds a fixture fleet list with three keys and two hubs: `majordomus init` in a fresh repository writes a mesh declaration whose trust.allow and rendezvous name exactly those, and the declaration passes majordomus.mesh-declaration/v1"
+  - "update over a declaration that holds one of the three keys and a repository-only key adds the two missing keys and both hubs and keeps the repository-only key"
+  - "doctor over a declaration missing one fleet key reports one WARN that names the key, the repository and the command that adds it; over a level declaration it reports nothing"
+  - "Negative control: the case fails against master, where init writes no fleet keys and doctor reports no drift"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4673_a_fleet_trusts_its_machines_from_one_list"
+evidence_required:
+  - "a_fleet_trusts_its_machines_from_one_list"
+serves: []
+created_at: 2026-11-22

@@ -1,0 +1,32 @@
+id: I4677
+milestone: the-mesh-works-out-of-the-box
+title: "A mesh declaration that exists but fails its schema fails mesh doctor and names the diagnostic, instead of reading as absent"
+slug: an-invalid-mesh-declaration-is-not-absent
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "mesh doctor tells a repository with no mesh declaration from one whose declaration is present but fails majordomus.mesh-declaration/v1. The second is a FAIL of the declaration check that names the file and the schema diagnostic, and the verdict is not 'every check holds'. The default posture (mesh off) is reported only when no declaration exists."
+why: "Reported by korczis-github-io-91 on 2026-11-22 (korczis.github.io master 96449d3, majordomus 1.1.0), with the I4676 repro: one quoted trust.allow key with a trailing comment made the declaration fail its schema, and the mesh went off silently. mesh doctor said 'declaration absent: the mesh is off, which is the default posture' and 'verdict every check holds'. The repository added its own check (check-mesh.mjs, rule project.mesh-fleet) as a stopgap."
+current_state: "Observed 2026-11-22: only an ERROR diagnostic is emitted for the invalid declaration; mesh doctor reports the declaration absent and every check holding, and no check fails. apps/majordomus-cli/src/mesh/doctor.rs reports 'default posture' for a missing declaration, and apps/majordomus-cli/src/mesh/config.rs parses the declaration. I4572 fails a closed runtime while the declaration trusts this machine's key; it presumes a declaration that parsed."
+desired_state: "A missing declaration reads as the default posture; a present but invalid one FAILs mesh doctor with the file, the schema and the diagnostic, and doctor's verdict says a check failed."
+scope:
+  - ".ai/repo/project/issues/I4677.yaml"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "docs/MESH.md"
+  - "test/cases/4677_an_invalid_mesh_declaration_is_not_absent.sh"
+non_scope:
+  - "The quoted-scalar parsing defect that produced the invalid declaration: I4676"
+  - "A runtime that is closed while a valid declaration trusts this machine: I4572"
+depends_on: []
+acceptance_criteria:
+  - "Case 4677 writes a mesh declaration whose trust.allow holds a value that fails ^[0-9a-f]{64}$: mesh doctor exits non-zero, its declaration check FAILs naming the file and the schema diagnostic, and its output does not contain 'default posture' or 'every check holds'"
+  - "With no declaration, mesh doctor still reports the default posture and passes"
+  - "Negative control: the case fails against master, where the invalid declaration reads as absent"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4677_an_invalid_mesh_declaration_is_not_absent"
+evidence_required:
+  - "an_invalid_mesh_declaration_is_not_absent"
+serves: []
+created_at: 2026-11-22
