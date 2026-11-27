@@ -1,0 +1,39 @@
+id: I4680
+milestone: a-second-adopter-is-served
+title: "The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it"
+slug: stale-topology-judges-the-pushers-own-holdings
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "finish --check's no-stale-topology question, as the pre-push hook asks it, refuses a push only over holdings that belong to the pushing session or its branch, and reports the others without refusing. One command rescues a named holding (a branch, a dirty worktree, a stash) into a local refs/rescue/ ref and a verified bundle, then removes it from the disk, without pushing it anywhere."
+why: "Reported by oscilla-e5 on 2026-11-17 (OSCILLA, majordomus 1.0.2). pre-push finish --check refused with no-stale-topology. convergence.report counted 54 holdings on that disk: 36 branches, 17 dirty worktrees including 14 orphan Claude agent worktrees 44-46 days old, and 1 stash. Almost none were the pusher's; its own unpushed branch was one of them, so the push could never pass alone. The remedy was done by hand with owner approval: a temp-index commit-tree into rescue/*, git bundle create --not origin/main (53 heads, verified), then removal; after that the push passed."
+current_state: "Observed as above. The no-stale-topology question is asked in apps/majordomus-cli/src/gates/done.rs and its holdings come from the convergence report (apps/majordomus-cli/src/capability/builtin/convergence.rs). The nearest records, I2301, I1995, I4324 and I4416, neither judge other sessions' holdings apart from the pusher's nor offer a rescue or bundle."
+desired_state: "A push is refused for the pusher's own stale holdings only; the rest are listed with their owners where known. A rescue command takes a holding off the disk into refs/rescue/ and a verified bundle, prints what it kept and where, and publishes nothing."
+scope:
+  - ".ai/repo/project/issues/I4680.yaml"
+  - "apps/majordomus-cli/src/gates/done.rs"
+  - "apps/majordomus-cli/src/capability/builtin/convergence.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.yaml"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "test/cases/4680_stale_topology_judges_the_pushers_own_holdings.sh"
+non_scope:
+  - "Uncommitted work in a worktree being named: I1995"
+  - "Reclaiming a finished worktree's build output: I4324"
+  - "A stale task read as active: I4416"
+  - "Deleting a holding without first keeping it in a rescue ref and a verified bundle"
+depends_on: []
+acceptance_criteria:
+  - "Case 4680 holds the pusher's branch, two other branches and an orphan dirty worktree: the pre-push check refuses only while the pusher's own branch is stale, and lists the others without refusing"
+  - "The rescue command turns the orphan worktree into a refs/rescue/ ref and a bundle that `git bundle verify` accepts, removes the worktree, and pushes nothing (the remote's refs are unchanged)"
+  - "Negative control: the case's first assertion fails against master, where the other holdings refuse the push"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4680_stale_topology_judges_the_pushers_own_holdings"
+evidence_required:
+  - "stale_topology_judges_the_pushers_own_holdings"
+serves: []
+created_at: 2026-11-22
