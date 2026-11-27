@@ -62,6 +62,8 @@ expect_grep 'skills: 1 discovered, 1 valid'
 doctor
 expect_no_grep '^FAIL skill '
 expect_grep "^OK +skill +\.ai/repo/skills/fleet-examplekit/SKILL\.md — proved by the fleet pack"
+# nor is a gate owed here: a local `skills verify` would fail on the copy by design
+expect_no_grep "^WARN skill +\.ai/repo/skills/fleet-examplekit/SKILL\.md — unenforced"
 # the Rust verdict is unchanged: the copy names no test of its own, and only the stamp waives that
 "$RB" skills verify --format json 2>/dev/null > "$S/v.json" || true
 jq -e '[.findings[] | select(.subject == ".ai/repo/skills/fleet-examplekit/SKILL.md") | .code] | index("untested") != null' \
@@ -72,6 +74,7 @@ printf '\nA local addition.\n' >> "$F"; commit "a hand edit to the copy"
 doctor
 expect_grep "^FAIL skill +\.ai/repo/skills/fleet-examplekit/SKILL\.md — (untested|unused): orphan"
 expect_no_grep 'proved by the fleet pack'
+expect_grep "^WARN skill +\.ai/repo/skills/fleet-examplekit/SKILL\.md — unenforced"
 
 # ---------------------------------------------------------------- not listed by the stamp
 skill fleet-examplekit

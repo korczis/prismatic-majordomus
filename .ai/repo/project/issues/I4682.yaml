@@ -1,0 +1,31 @@
+id: I4682
+milestone: a-claim-stands-only-on-its-evidence
+title: "An issue marked DONE on the claim that a named function or path does the work is reported when nothing in product code refers to that name"
+slug: a-done-claims-mechanism-is-called
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When an issue's completion or evidence names a mechanism (a function, a module path) as what delivers the work, a check looks the name up in the product code and reports a DONE issue whose named mechanism is defined but referenced from nowhere else, naming the issue, the name and the one place it occurs."
+why: "Reported by oscilla-e5 on 2026-11-17 (OSCILLA, majordomus 1.0.2): OSCILLA's K153 was marked DONE on the claim that the shortcuts dialog reads the key registry's helpRows. `git grep helpRows src` shows only the definition, and the dialog is still hand-written. The claim passed every gate because nothing asks whether the named mechanism is called."
+current_state: "Observed as above. plan done (lib/plan.sh, mj_plan_done) judges the issue's recorded evidence and does not look up the names its claim relies on. No nearest record was named by the reporter."
+desired_state: "A DONE claim that names a mechanism referenced only at its own definition is reported with the issue, the name and its single occurrence; a claim whose mechanism has a caller is not."
+scope:
+  - ".ai/repo/project/issues/I4682.yaml"
+  - "lib/plan.sh"
+  - "test/cases/4682_a_done_claims_mechanism_is_called.sh"
+non_scope:
+  - "Deciding whether a caller is correct: the check asks only whether the name is referenced outside its definition"
+  - "Parsing free prose for names: the mechanism is the one the issue's claim names explicitly"
+depends_on: []
+acceptance_criteria:
+  - "Case 4682 builds a repository with an issue whose claim names helpRows, defined in one source file and referenced nowhere else: the check reports the issue, the name and the file"
+  - "With a second source file that calls helpRows, the check reports nothing"
+  - "Negative control: the case fails against master, which reports nothing for the first repository"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4682_a_done_claims_mechanism_is_called"
+evidence_required:
+  - "a_done_claims_mechanism_is_called"
+serves:
+  - "a-claim-stands-only-on-its-evidence#unproven-never-reads-pass"
+created_at: 2026-11-22

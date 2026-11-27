@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1312
+      "count": 1327
     },
     {
       "kind": "knowledge",
@@ -184,7 +184,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 221
+      "count": 222
     },
     {
       "kind": "mesh-declaration",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 709
+      "count": 710
     },
     {
       "kind": "use-case",
@@ -323,7 +323,15 @@
       ],
       "source": ".ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3150,6 +3158,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0226",
           "kind": "adr",
           "route": "/adrs/adr-0226/",
@@ -4510,6 +4525,13 @@
           "label": "adr-0176",
           "kind": "adr",
           "route": "/adrs/adr-0176/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
           "external": false
         },
         {
@@ -12373,13 +12395,20 @@
       "slug": "adr-0199",
       "cockpit": "/cockpit/objects/adr/adr-0199",
       "title": "A hub is a declared host service; a working checkout's server stays a client's child",
-      "status": "proposed",
+      "status": "accepted",
       "tags": [
         "mesh-runtime",
         "chatgpt-project"
       ],
       "source": ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
       "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0001",
+          "kind": "adr",
+          "route": "/adrs/adr-0001/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0003",
@@ -12396,6 +12425,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0059",
           "kind": "adr",
           "route": "/adrs/adr-0059/",
@@ -12403,9 +12439,23 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0161",
           "kind": "adr",
           "route": "/adrs/adr-0161/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0224",
+          "kind": "adr",
+          "route": "/adrs/adr-0224/",
           "external": false
         },
         {
@@ -14787,7 +14837,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
