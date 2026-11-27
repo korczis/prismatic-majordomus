@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>the-host-knows-its-runtimes — Hostitel zná každý runtime Majordomus, který provozuje, bez otevřeného projektu — Prismatic Majordomus</title>
-<meta name="description" content="Nejprve read-only inventář hostitele odvozený z leasů, které už každý checkout zapisuje; až poté odpověď směrování. Služba hubu je deklarovaný cíl nasazení the-hub-is-reached-from-any-device a nestaví se žádný rezident na úrovni hostitele.">
+<meta name="description" content="A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub&#39;s service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric&#39;s opt-in host agent is fabric-local-pilot&#39;s, and this inventory needs no process of its own.">
 <link rel="canonical" href="https://majordomus.dev/cs/plan/the-host-knows-its-runtimes/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="the-host-knows-its-runtimes — Hostitel zná každý runtime Majordomus, který provozuje, bez otevřeného projektu — Prismatic Majordomus">
-<meta property="og:description" content="Nejprve read-only inventář hostitele odvozený z leasů, které už každý checkout zapisuje; až poté odpověď směrování. Služba hubu je deklarovaný cíl nasazení the-hub-is-reached-from-any-device a nestaví se žádný rezident na úrovni hostitele.">
+<meta property="og:description" content="A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub&#39;s service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric&#39;s opt-in host agent is fabric-local-pilot&#39;s, and this inventory needs no process of its own.">
 <meta property="og:url" content="https://majordomus.dev/cs/plan/the-host-knows-its-runtimes/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -168,17 +168,17 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">the-host-knows-its-runtimes — Hostitel zná každý runtime Majordomus, který provozuje, bez otevřeného projektu</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Nejdřív soupis hostitele jen pro čtení, odvozený z lease, která už každý checkout zapisuje; až poté odpověď směrování. Služba hubu je deklarovaným cílem nasazení the-hub-is-reached-from-any-device a nestaví se žádný rezident na úrovni hostitele.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub&#39;s service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric&#39;s opt-in host agent is fabric-local-pilot&#39;s, and this inventory needs no process of its own.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--planned relative" data-status="planned"><span aria-hidden="true">○</span>PLÁNOVÁNO</span>
 <span class="text-sm text-body">0 z 2 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">hotovo</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -186,9 +186,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </dl>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problém</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Dne 12. 10. 2026 vlastník žádal malou službu na úrovni hostitele, která koordinuje několik verzí Majordomus na jednom stroji, udržuje mesh zdravý a sama se aktualizuje. Každý dnešní server patří jednomu checkoutu (ADR 0035); za hostitele neodpovídá nic a dvě verze na jednom stroji se najdou jen znalostí jejich checkoutů. Navrženo v ADR 0199 (Hub je deklarovaná hostitelská služba; server pracovního checkoutu zůstává dítětem klienta) (navrženo; nemá žádnou pravomoc, dokud ho vlastník nepřijme). Zdroje: chatgpt-majordomus:c240#0, chatgpt-majordomus:c240#2, chatgpt-majordomus:c240#5.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">On 2026-10-12 the owner asked for a tiny host-level service that coordinates several Majordomus versions on one machine, keeps the mesh healthy and self-updates. Every server today is one checkout&#39;s (ADR 0035); nothing answers for the host, and two versions on one machine are found only by knowing their checkouts. Decided in ADR 0199, amended into Majordomus Fabric&#39;s opt-in host agent and accepted by the owner on 2026-11-25 (PR #3123); the agent itself is milestone fabric-local-pilot. Sources: chatgpt-majordomus:c240#0, chatgpt-majordomus:c240#2, chatgpt-majordomus:c240#5.</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Výsledek</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Nejdřív soupis hostitele jen pro čtení, odvozený z lease, která už každý checkout zapisuje; až poté odpověď směrování. Služba hubu je deklarovaným cílem nasazení the-hub-is-reached-from-any-device a nestaví se žádný rezident na úrovni hostitele.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Ověřeno: výpis serverů po repozitářích existuje (majordomus server); lease žijí pod .ai/local/state každého checkoutu; README a ADR 0003 říkají, že Majordomus není démon; huby přesto běží jako uživatelská jednotka systemd na lundře (docs/MESH.md &#39;The hubs as services&#39;).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">majordomus runtimes (rozsah hostitele) odpovídá bez otevřeného checkoutu; verze vedle sebe se směrují podle dojednané schopnosti; rezident existuje jen rozhodnutím.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A read-only host inventory first, derived from the leases every checkout already writes; a routing answer second. A hub&#39;s service is the declared deployment target of the-hub-is-reached-from-any-device, and this milestone builds no resident: Fabric&#39;s opt-in host agent is fabric-local-pilot&#39;s, and this inventory needs no process of its own.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">On 2026-11-25 the owner lifted this milestone&#39;s dependencies on runtime-lifecycle and safe-self-update so that I3184, a read-only inventory, can start (see evidence owner_lifted_dependencies); I3184 is in flight on branch feature/I3184-host-runtime-inventory. Verified: per-repository server listing exists (majordomus server); leases live under each checkout&#39;s .ai/local/state; README and ADR 0003 say Majordomus is not a daemon; hubs nevertheless run as a systemd user unit on lundra (docs/MESH.md &#39;The hubs as services&#39;).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">majordomus runtimes (rozsah hostitele) odpovídá bez otevřeného checkoutu; verze vedle sebe se směrují podle dojednané schopnosti; rezident existuje jen rozhodnutím.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rozsah</h2>
@@ -206,6 +206,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rizika</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Rozšiřování rozsahu, před kterým varoval audit z 7. 10.: každý řez musí být vertikálně úplný a malý</li></ul>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Milník není nikdy hotový tím, že jsou hotové jeho úkoly; poslední krok je jeho vlastní přijetí a podmiňují jej řádky níže.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th></tr></thead>
+      <tbody><tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">owner_lifted_dependencies</td><td class="px-4 py-2 font-mono text-xs text-body">ruční</td><td class="px-4 py-2 font-mono text-xs text-body break-words">AskUserQuestion, session 9ae82e7a-b0e4-44c0-a305-9c69cd1acf6a, 2026-11-25</td><td class="px-4 py-2 text-body">Q: &#39;Milestone the-host-knows-its-runtimes is blocked on runtime-lifecycle and safe-self-update. Its first issue, I3184, is read-only: the host&#39;s process inventory built from leases, no daemon. May it stop waiting on those two so I3184 can start?&#39; A: &#39;Lift the dependencies (Recommended)&#39;. depends_on runtime-lifecycle and safe-self-update removed.</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Úkoly</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Každý z nich je prováděcí kontrakt s vlastními kritérii přijetí, validačním příkazem a požadovanými důkazy. Sloupec wave je vrstva grafu závislostí, v níž úkol leží.</p>
@@ -215,7 +223,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <tbody>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i3184/" class="text-fg-brand hover:underline">I3184</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">0</td>
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
@@ -238,7 +246,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">the-host-knows-its-runtimes graf závislostí</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
   <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-the-host-knows-its-runtimes" data-diagram="the-host-knows-its-runtimes" data-nodes="I3184 I3185">flowchart LR
-    I3184[&quot;I3184&lt;br/&gt;One command lists every Majordomus runtime of this user on this host, with no checkout open&quot;]:::blocked
+    I3184[&quot;I3184&lt;br/&gt;One command lists every Majordomus runtime of this user on this host, with no checkout open&quot;]:::ready
     I3185[&quot;I3185&lt;br/&gt;A request on a host with two Majordomus versions reaches the one whose protocol satisfies it, or is refused with a reason&quot;]:::blocked
     I3184 --&gt; I3185
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
@@ -252,7 +260,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/93739746f8d9f488bbd3e999fc9ed27818ac81a9/.ai/repo/project/milestones/the-host-knows-its-runtimes.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/the-host-knows-its-runtimes.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show the-host-knows-its-runtimes</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/.ai/repo/project/milestones/the-host-knows-its-runtimes.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/the-host-knows-its-runtimes.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show the-host-knows-its-runtimes</code>.</p>
 </div>
 
 </div>
@@ -302,16 +310,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/93739746f8d9f488bbd3e999fc9ed27818ac81a9/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/93739746f8d9f488bbd3e999fc9ed27818ac81a9/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/93739746f8d9f488bbd3e999fc9ed27818ac81a9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.2.0">v1.2.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/93739746f8d9f488bbd3e999fc9ed27818ac81a9" class="font-mono underline">9373974</a> · inputs <span class="font-mono">38839fdf0b67</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.3.0">v1.3.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b12715aee72f6dcb8be1079bdee2e5b339489d07" class="font-mono underline">b12715a</a> · inputs <span class="font-mono">b209c2026319</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
