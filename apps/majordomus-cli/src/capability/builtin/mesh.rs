@@ -2793,6 +2793,20 @@ mod tests {
         (repo, ctx)
     }
 
+    /// `mesh.doctor` not asked for the build host observes none: the live host is named but
+    /// never read, and the report carries no `build_host` check.
+    #[test]
+    fn a_doctor_not_asked_for_the_build_host_observes_none() {
+        let (_repo, ctx) = context(false);
+        let report = mesh_doctor(&ctx, DoctorInput::default()).unwrap();
+        assert!(!report.checks.is_empty(), "{report:?}");
+        assert!(
+            report.checks.iter().all(|c| c.check != "build_host"),
+            "{report:?}"
+        );
+        assert_eq!(report.ok, report.checks.iter().all(|c| c.ok));
+    }
+
     /// `mesh.doctor` asked for the build host observes the host it is handed: a held guard
     /// passes, its verdict is written under that host and published to the runtime's
     /// journal; a stopped one fails the report naming what is not active, and with no
