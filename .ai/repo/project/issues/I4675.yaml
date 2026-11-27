@@ -1,0 +1,32 @@
+id: I4675
+milestone: a-session-proceeds
+title: "`majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready"
+slug: mesh-allocate-answers-when-the-capability-does
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The command-line path of `majordomus mesh allocate` reaches the same plan.allocate capability that a POST to /api/v1/plan/allocate reaches, and answers with the same reservation. A transient refusal from the socket (EAGAIN, os error 35) is retried within a bound and, if it persists, reported with the address the command dialled, the address the server reports, and the HTTP route that works."
+why: "No issue id could be handed out from the command line on three occasions. On 2026-11-17 at about 22:00Z, in the primary checkout, `majordomus mesh allocate --session claude-code-d8b3ef04-... issue` answered 'protocol: http://0.0.0.0:54725/api/v1/plan/allocate: Resource temporarily unavailable (os error 35)' 4 times over about 20 minutes, with the 1.1.0 binary of 41904d87959 too, while `serve status` said 'ready http://0.0.0.0:54725 pid 31575 version 1.1.0'. On 2026-11-22 the allocator failed with os error 35 again at 05:05Z and at about 05:30Z, so two owner-ordered records waited for ids. At about 08:55Z the same session reserved I4673-I4682 with a POST to http://127.0.0.1:62262/api/v1/plan/allocate, which succeeded where the CLI path did not."
+current_state: "Observed as above. apps/majordomus-cli/src/commands/mesh.rs sends MeshCommand::Allocate as a POST to /api/v1/plan/allocate through its shared ask helper. The failing calls dialled http://0.0.0.0:<port>, the address `serve status` printed; the succeeding HTTP call went to 127.0.0.1. Whether the address is the cause is not established. A related lead on another machine (flight-agent-empty-legs-1f, 2026-11-17): a 1.0.2 CLI said no server runs for any checkout while `serve status` listed a 1.0.1 checkout server as ready; it is undiagnosed and may share a cause."
+desired_state: "`mesh allocate` succeeds whenever the HTTP capability does on the same server; a persistent socket error names the dialled address, the server's reported address and the working route, and exits non-zero."
+scope:
+  - ".ai/repo/project/issues/I4675.yaml"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/allocate.rs"
+  - "test/cases/4675_mesh_allocate_answers_when_the_capability_does.sh"
+non_scope:
+  - "Reserving an id the mesh allocator holds for another session: I4616"
+  - "Ids in an adopter's own pattern: I4679"
+  - "Atomic reservation at origin and checks at landing: I4357"
+depends_on: []
+acceptance_criteria:
+  - "Case 4675 starts a server bound to 0.0.0.0, and `mesh allocate issue` through the CLI returns a reservation, as a POST to /api/v1/plan/allocate on 127.0.0.1 does"
+  - "With the socket forced to answer EAGAIN, the CLI retries within a bound and then exits non-zero naming the dialled address, the server's reported address and the HTTP route"
+  - "Negative control: the case's first assertion fails against master on a machine where the 2026-11-17 failure reproduces; if it does not reproduce in the case, the root cause is recorded in this issue's evidence before the fix"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4675_mesh_allocate_answers_when_the_capability_does"
+evidence_required:
+  - "mesh_allocate_answers_when_the_capability_does"
+serves: []
+created_at: 2026-11-22
