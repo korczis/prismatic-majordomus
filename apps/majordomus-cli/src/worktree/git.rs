@@ -193,14 +193,64 @@ pub enum FetchFailure {
 /// deadline is killed. The answer is whether the refs arrived and, when not, why; a git
 /// that cannot be run did not reach the remote either, and is said as `Unreachable` with
 /// the reason, so the caller falls back exactly as it does for a dead network.
+///
+/// The fetch runs in a process group of its own, which is not the terminal's foreground
+/// group: an ssh that asked the terminal for a key's passphrase would be stopped by
+/// `SIGTTIN`, not answered, and sit stopped until the deadline. So ssh is run in batch mode
+/// ([`BATCH_SSH`]) unless the person has chosen the ssh git runs (`GIT_SSH_COMMAND`,
+/// `GIT_SSH`, `core.sshCommand`), which is left exactly as chosen.
 pub fn fetch_bounded(
     cwd: &Path,
     remote: &str,
     refspecs: &[String],
     timeout: Duration,
 ) -> std::result::Result<(), FetchFailure> {
+    let ssh = batch_ssh(|name| std::env::var_os(name), || ssh_configured(cwd));
+    let mut cmd = fetch_command(cwd, remote, refspecs, ssh);
+    let finished = match wait_bounded(&mut cmd, timeout) {
+        Ok(finished) => finished,
+        Err(e) => {
+            return Err(FetchFailure::Unreachable(format!(
+                "git fetch could not be run in {}: {e}",
+                cwd.display()
+            )))
+        }
+    };
+    // A wait that failed is read as a fetch that failed, in whatever words git left.
+    let succeeded = finished.status.map(|s| s.unwrap_or(false));
+    classify_fetch(succeeded, finished.stderr.trim(), timeout)
+}
+
+/// The ssh a fetch runs when nobody has chosen one: it never asks for a passphrase or a
+/// password, and a key it cannot use without asking is a refusal, not a prompt.
+const BATCH_SSH: &str = "ssh -o BatchMode=yes";
+
+/// The ssh command a fetch is given: [`BATCH_SSH`], or `None` when `env` names a choice of
+/// the person's (`GIT_SSH_COMMAND`, `GIT_SSH`) or `configured` says git's configuration
+/// does (`core.sshCommand`). Git ranks the variables above the configuration, so the
+/// configuration is asked only when neither variable is there.
+fn batch_ssh(
+    env: impl Fn(&str) -> Option<std::ffi::OsString>,
+    configured: impl FnOnce() -> bool,
+) -> Option<&'static str> {
+    let chosen = ["GIT_SSH_COMMAND", "GIT_SSH"]
+        .iter()
+        .any(|name| env(name).is_some());
+    (!chosen && !configured()).then_some(BATCH_SSH)
+}
+
+/// Whether git's configuration, as it reads in `cwd`, names the ssh it runs.
+fn ssh_configured(cwd: &Path) -> bool {
+    try_run(cwd, &["config", "--get", "core.sshCommand"]).is_ok_and(|out| out.status == Some(0))
+}
+
+/// The `git fetch` [`fetch_bounded`] runs, with `ssh` as its ssh command when one is given.
+fn fetch_command(cwd: &Path, remote: &str, refspecs: &[String], ssh: Option<&str>) -> Command {
     let mut cmd = Command::new("git");
     cmd.env("GIT_TERMINAL_PROMPT", "0");
+    if let Some(ssh) = ssh {
+        cmd.env("GIT_SSH_COMMAND", ssh);
+    }
     cmd.env_remove("GIT_DIR");
     cmd.env_remove("GIT_WORK_TREE");
     cmd.arg("-C").arg(cwd);
@@ -214,18 +264,7 @@ pub fn fetch_bounded(
         remote,
     ]);
     cmd.args(refspecs);
-    let finished = match wait_bounded(&mut cmd, timeout) {
-        Ok(finished) => finished,
-        Err(e) => {
-            return Err(FetchFailure::Unreachable(format!(
-                "git fetch could not be run in {}: {e}",
-                cwd.display()
-            )))
-        }
-    };
-    // A wait that failed is read as a fetch that failed, in whatever words git left.
-    let succeeded = finished.status.map(|s| s.unwrap_or(false));
-    classify_fetch(succeeded, finished.stderr.trim(), timeout)
+    cmd
 }
 
 /// How long `git worktree add` may take before it is killed. A checkout of this size takes
@@ -474,6 +513,54 @@ mod tests {
             out.status.success(),
             "git {args:?}: {}",
             String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A fetch runs ssh in batch mode unless the person chose the ssh git runs, by either
+    /// variable or by configuration; the configuration is not asked when a variable answers.
+    #[test]
+    fn a_fetch_never_prompts_for_ssh_unless_the_person_chose_the_ssh() {
+        let none = |_: &str| None;
+        assert_eq!(batch_ssh(none, || false), Some(BATCH_SSH));
+        assert_eq!(batch_ssh(none, || true), None, "core.sshCommand is kept");
+        for chosen in ["GIT_SSH_COMMAND", "GIT_SSH"] {
+            let env = |name: &str| (name == chosen).then(|| "my-ssh".into());
+            let asked = std::cell::Cell::new(false);
+            assert_eq!(
+                batch_ssh(env, || asked.replace(true)),
+                None,
+                "{chosen} is kept"
+            );
+            assert!(
+                !asked.get(),
+                "the configuration was asked although {chosen} answered"
+            );
+        }
+
+        let dir = tempfile::tempdir().expect("tempdir");
+        let ssh_of = |cmd: &Command| {
+            cmd.get_envs()
+                .find(|(name, _)| *name == "GIT_SSH_COMMAND")
+                .map(|(_, value)| value.map(|v| v.to_string_lossy().to_string()))
+        };
+        let batch = fetch_command(dir.path(), "origin", &[], Some(BATCH_SSH));
+        assert_eq!(
+            ssh_of(&batch),
+            Some(Some("ssh -o BatchMode=yes".to_string()))
+        );
+        let kept = fetch_command(dir.path(), "origin", &[], None);
+        assert_eq!(ssh_of(&kept), None, "the inherited choice is not touched");
+        assert_eq!(
+            kept.get_args().last().and_then(|a| a.to_str()),
+            Some("origin")
+        );
+
+        git_in(dir.path(), &["init", "-q"]);
+        git_in(dir.path(), &["config", "core.sshCommand", "my-ssh -i key"]);
+        assert!(ssh_configured(dir.path()), "a configured ssh is seen");
+        assert!(
+            !ssh_configured(Path::new("no\0where")),
+            "an unreadable one is not"
         );
     }
 
