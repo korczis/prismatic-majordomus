@@ -185,17 +185,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="mb-6 flex min-w-0 flex-wrap items-center gap-2 text-sm">
-      <code class="min-w-0 break-all font-mono text-heading">majordomus://adr/adr-0199</code><span class="mj-badge mj-badge--proposed relative" data-status="proposed"><span aria-hidden="true">!</span>proposed</span>
+      <code class="min-w-0 break-all font-mono text-heading">majordomus://adr/adr-0199</code><span class="mj-badge mj-badge--accepted relative" data-status="accepted"><span aria-hidden="true">✓</span>accepted</span>
 <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mesh-runtime</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">chatgpt-project</span>
     </div>
     <div class="mb-8 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">it references</h2>
         <ul class="space-y-1.5 text-sm">
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0001/">adr-0001</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0003/">adr-0003</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0035/">adr-0035</a></li>
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0044/">adr-0044</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0059/">adr-0059</a></li>
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0067/">adr-0067</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0161/">adr-0161</a></li>
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/adrs/adr-0224/">adr-0224</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <span class="break-all font-mono text-heading">docs/MESH.md</span><span class="text-xs text-body-subtle"> (document)</span></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <span class="break-all font-mono text-heading">nothing-in-the-mesh-waits-on-something-dead</span><span class="text-xs text-body-subtle"> (intent)</span></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/plan/">I3184</a></li>
@@ -223,17 +227,82 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <h3 id="consequences"><a class="zola-anchor" href="#consequences" aria-label="Anchor link for: consequences">Consequences</a></h3>
 <p>ADR 0003 is narrowed, not reversed; README's 'not a daemon' gains its exception; I3186, I3193 and the OS half of supervision wait for this decision.</p>
 <h3 id="sources"><a class="zola-anchor" href="#sources" aria-label="Anchor link for: sources">Sources</a></h3>
-<p>Promoted on 2026-10-18 from the owner's ChatGPT project (workspace <code>chatgpt-majordomus</code>, issue I3100). The owner has not accepted it; it is proposed for the owner's decision.</p>
+<p>Promoted on 2026-10-18 from the owner's ChatGPT project (workspace <code>chatgpt-majordomus</code>, issue I3100). Accepted by the owner on 2026-11-25, with the amendment below, answering the gate-G0 question recorded verbatim in the knowledge record <code>fabric-starts-with-p00-s00-s01</code> ("Accept, set accepted (Recommended)").</p>
 <ul>
 <li><code>chatgpt-majordomus:c240#2</code></li>
 <li><code>chatgpt-majordomus:c118#3</code></li>
 <li><code>chatgpt-majordomus:c193#0</code></li>
 </ul>
+<h3 id="amendment-2026-11-24-the-resident-is-majordomus-fabric-s-opt-in-host-agent"><a class="zola-anchor" href="#amendment-2026-11-24-the-resident-is-majordomus-fabric-s-opt-in-host-agent" aria-label="Anchor link for: amendment-2026-11-24-the-resident-is-majordomus-fabric-s-opt-in-host-agent">Amendment, 2026-11-24: the resident is Majordomus Fabric's opt-in host agent</a></h3>
+<p>The owner ordered the Majordomus Fabric program on 2026-11-24 and chose this ADR to carry its
+decision rather than a new one (the owner's answers are recorded verbatim in the knowledge
+record <code>fabric-starts-with-p00-s00-s01</code>, pull request #3121). The decision above left a door
+open: "a host-level resident, if ever built, is the same executable in a declared role with a
+minimal dependency closure and user-only IPC, never a second server, registry, discovery or
+update system". This amendment decides what walks through that door. The owner accepted it on
+2026-11-25 (gate G0). Host-agent code lands from then on, in the order of the gates below.</p>
+<p><strong>What runs.</strong> At most one <em>host agent</em> per OS user and machine, and only when that user opts
+in with an explicit service install (a systemd user unit or a launchd agent written by one typed
+capability, the same capability that brings the hub's unit into the model). It is this
+executable in a declared role. It owns the local transport, the host's process inventory and the
+routing between them. It owns no project policy. Inside it, each checkout is a logical
+<strong>context</strong>, a client's attachment is a <strong>session</strong>, and work that needs isolation runs in a
+<strong>worker</strong> process the host starts and bounds. A context's identity is the checkout's
+(<code>repository.rs</code> <code>git_identity</code>). The node identity stays <code>mesh/identity.rs</code>'s key. None of
+these is a second registry: the host's context inventory is a process inventory built from
+leases (I3184), and <code>mesh/registry.rs</code> stays the only holder of peers.</p>
+<p><strong>How it is reached.</strong> A Unix-domain socket (a named pipe on Windows), mode 0600, in the user's
+runtime directory, with the peer's credentials checked on accept, is the local control channel.
+HTTP, REST, Swagger and MCP over HTTP are projections of the one capability registry, served only
+where configured. Local trust is the OS user: another user's process is refused, and every
+request is authorised against the context and capability it names. Being on the socket is not
+authority over every checkout, as being on loopback is today.</p>
+<p><strong>Between hosts.</strong> Host-to-host links are authenticated and encrypted, the tailnet included. A
+link admits the other host and nothing more. Each logical stream to a repository needs that
+repository's own enrolment and the capability's own effect check (ADR 0067's per-repository
+admission, per stream), and revocation ends live streams. Cleartext hub links remain only for
+the legacy mode. The enrolment logic of pull request #3108 is reused as host-transport
+admission, so that only the host binds a non-loopback address, and never every checkout.</p>
+<p><strong>What it narrows, and what stays.</strong></p>
+<ul>
+<li>ADR 0001's "no port, no daemon", ADR 0003's "a lease, not a daemon" and ADR 0044's "one server
+per checkout, no registry of servers, no daemon" are narrowed for the opt-in host mode only.</li>
+<li>Without the service, every behaviour of today stands: the per-checkout server elected through
+its lease, <code>env enter</code> starting nothing it must wait for (ADR 0043), and no ordinary command
+that builds (ADR 0224).</li>
+<li>A checkout whose server a legacy binary owns stays that server's. The host proxies to it and
+never takes its mutable ownership while a writer that does not check the host's fencing could
+run. A cutover happens only when every writer of that context is proven to take part.</li>
+</ul>
+<p><strong>Updates.</strong> The host follows releases through ADR 0161's one installer and pull request #3110's
+follower. An unattended activation requires verified provenance and refuses without it. A manual
+<code>self update</code> keeps today's behaviour, with a warning.</p>
+<p><strong>Gates.</strong> The order and the proofs are the corrected program's gates:</p>
+<ul>
+<li>G0, governance: this amendment, accepted;</li>
+<li>G1, legacy measurement: <code>scripts/fabric-baseline</code>, case 4663;</li>
+<li>G2, no second mutator;</li>
+<li>G3, a hung context does not starve the host;</li>
+<li>G4, scoped authority;</li>
+<li>G5, the local pilot: 2 repositories, 10 worktrees, 20 MCP sessions, with standalone fallback.</li>
+</ul>
+<p>Remote mutation waits for G6 and G7, and an unattended update for G8. No efficiency claim is
+made beyond what G1 and G5 measure.</p>
+<p><strong>Alternatives rejected.</strong></p>
+<ul>
+<li>A new ADR beside this one: the owner chose to amend this one.</li>
+<li>A resident that also schedules, parses and builds: a host is a small, responsive control
+plane, and heavy work goes to workers.</li>
+<li>Authorising by the OS user alone: one user's socket must not grant every context's
+capabilities.</li>
+<li>An authenticated host link standing for repository admission.</li>
+<li>Moving a live legacy checkout's ownership on a lock or an epoch that old binaries do not read.</li>
+</ul>
 </article>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/.ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md">.ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/.ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md">.ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">adr-0199</dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 break-all font-mono text-heading">MCP resource <code>majordomus://adr/adr-0199</code> · <code>majordomus entity show adr/adr-0199</code> · <code>GET /api/v1/entity?uri=majordomus://adr/adr-0199</code></dd>
       <dt class="text-body-subtle">in the Cockpit</dt><dd class="min-w-0 break-all font-mono text-heading">/cockpit/objects/adr/adr-0199</dd>
@@ -290,16 +359,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.3.0">v1.3.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b12715aee72f6dcb8be1079bdee2e5b339489d07" class="font-mono underline">b12715a</a> · inputs <span class="font-mono">b209c2026319</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.3.0">v1.3.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/030d81974cb47826091a5c9e5c7793ed6384eb08" class="font-mono underline">030d819</a> · inputs <span class="font-mono">107dbc258178</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -173,12 +173,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
 <span class="text-sm text-body">vlna 1 · p1 · profil implementation · běží samostatně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/an-authorised-node-connects-from-anywhere/" class="text-fg-brand underline">an-authorised-node-connects-from-anywhere — Autorizovaný uzel dosáhne jiného přes LAN, tailnet nebo NAT a řekne jak</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Připraveno. Všechny závislosti jsou hotové, takže <code class="font-mono text-heading">majordomus plan start I3826</code> bude přijato.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A server started with a deployment that names a provider reads its node seed from one secret environment variable and refuses to open its mesh without it, advertises provider.url instead of its interface addresses, answers the mesh&#39;s read capabilities to a remote caller only on a request signed by a key in trust.allow, and answers mesh.register from an untrusted caller with its own envelope only. ADR 0220 decisions 2 to 5.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The owner decided on 2026-10-21 that the hub&#39;s key may be a platform secret and that anonymous callers read the repository but not the mesh; without this a hosted hub mints a new untrusted key per boot, advertises unreachable pod addresses and publishes every node&#39;s sessions and claims to anyone.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">identity.rs loads or creates node.json under XDG_STATE_HOME; address.rs advertises interface addresses; ADR 0126 admits every read capability to a remote caller; registration returns trusted candidates to any validly signed caller.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cases 3826 prove: the seed variable yields the same node id across restarts and its absence keeps the mesh closed with a named reason; the advertised endpoint is provider.url; a remote unsigned read of mesh.state is refused while liveness answers; an untrusted registration receives no trusted candidate; the seed appears in no log or answer.</p>
@@ -193,8 +190,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <span class="min-w-0 break-words text-sm text-heading">A deployment names the provider that hosts it, and the provider&#39;s files are generated from it</span></a></li>
   </ul>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Co na tom čeká</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3827/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3827</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
-<span class="min-w-0 break-words text-sm text-heading">The hosted hub is this repository&#39;s default rendezvous, and every node shows it as the path from anywhere</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3842/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3842</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3827/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3827</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+<span class="min-w-0 break-words text-sm text-heading">The hosted hub is this repository&#39;s default rendezvous, and every node shows it as the path from anywhere</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3842/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3842</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 <span class="min-w-0 break-words text-sm text-heading">A caller on another host never sees this process&#39;s executions, live or recorded</span></a></li>
   </ul>
 
@@ -209,17 +206,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">seed_from_secret</li><li class="font-mono text-heading break-words">mesh_reads_gated</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">seed_from_secret</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers</td><td class="px-4 py-2 text-body">delivered by 75c02225f74 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 3826_a_hosted_hub_is_trusted_and_closed_to_strangers ok in suite-shard (2) job 138971458506</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">4677528</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">mesh_reads_gated</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- http::router mesh::manager</td><td class="px-4 py-2 text-body">at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002, rust (2) job 138952668919: http::router::tests::a_remote_caller_reads_the_repository_and_never_the_mesh ok and mesh::manager::tests::a_stranger_learns_this_hub_and_never_who_trusts_it ok</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">4677528</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-11-26T13:55:33Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-11-26T13:56:49Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/.ai/repo/project/issues/I3826.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3826.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3826</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/.ai/repo/project/issues/I3826.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3826.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3826</code>.</p>
 </div>
 
 </div>
@@ -269,16 +271,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b12715aee72f6dcb8be1079bdee2e5b339489d07/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/030d81974cb47826091a5c9e5c7793ed6384eb08/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
-    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.3.0">v1.3.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b12715aee72f6dcb8be1079bdee2e5b339489d07" class="font-mono underline">b12715a</a> · inputs <span class="font-mono">b209c2026319</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div><p class="block text-sm text-body sm:text-center">Built from the source of Prismatic Majordomus <span class="font-mono" data-version-role="source" data-source-version="1.3.0">v1.3.0</span> at commit <a href="https://github.com/korczis/prismatic-majordomus/commit/030d81974cb47826091a5c9e5c7793ed6384eb08" class="font-mono underline">030d819</a> · inputs <span class="font-mono">107dbc258178</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

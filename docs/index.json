@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "b12715aee72f6dcb8be1079bdee2e5b339489d07",
+  "commit": "030d81974cb47826091a5c9e5c7793ed6384eb08",
   "source_version": "1.3.0",
-  "registry_fingerprint": "3ad978663cdd8489a1c541f23958719ce4a3af2090508f3c16c5a33cdf377df6"
+  "registry_fingerprint": "e468003ca160e747f6988e3584c3c4d679f0e525c713003369de78e40ae10b16"
  },
  "counts": {
-  "pages": 6650,
-  "capabilities": 4106,
+  "pages": 6680,
+  "capabilities": 4123,
   "cli_commands": 128,
   "http_routes": 221,
   "mcp_tools": 217,
-  "mcp_resources": 3930,
+  "mcp_resources": 3947,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1312
+   "count": 1327
   },
   {
    "kind": "knowledge",
@@ -166,7 +166,7 @@
    "route": null,
    "title": null,
    "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-   "count": 221
+   "count": 222
   },
   {
    "kind": "mesh-declaration",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 709
+   "count": 710
   },
   {
    "kind": "use-case",
@@ -16179,6 +16179,78 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4673/",
+   "title": "I4673 — Every repository of a fleet trusts the fleet's machines from one list: init and update seed trust.allow and the hubs, and doctor names a repository that drifts from it",
+   "description": "A machine's node key is per machine and shared by every repository and worktree on it, so the trusted keys and the hubs are a fact of the fleet, not of one repository. `majordomus init` and `majordomus update` seed a repository's mesh declaration (trust.allow and the rendezvous hubs) from one fleet list, and doctor names a repository whose declaration drifts from that list, with the keys and hubs it lacks and the command that brings it level. A repository may still trust less than the fleet by declaring so; an undeclared difference is the drift doctor reports.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4674/",
+   "title": "I4674 — A long-running job is a mesh record with its machine, process group, budget, heartbeat and stop handle; jobs consult one machine guard; an owner's stop order reaches them",
+   "description": "`majordomus job run --name <n> --budget procs=N[,hosts=...] -- <argv>` starts a job in its own session (setsid), exports MAJORDOMUS_OWNER_JOB, beats, and watches for a stop order. `job register --pid` adopts a job that is already running, `job beat` beats for it, and `job list` lists every job on every node. `job stop <key|glob> [--host] [--grace]` signals the recorded process group, never a name match, and reaches remote children through the declared ssh host. `job admit <key> --want N` asks the machine guard for N more processes. The mesh journal gains the events job_registered, job_beat, job_ended and job_stop_ordered, which need no path claim and are shown in mesh state and mesh who. `machine guard [--json]` reads load per core, swap used and free disk against the policy's machine.guard (load_per_core_max, swap_used_max_pct, free_floor_gib: 35); doctor reports it, and I4006 and I4355 consume it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4675/",
+   "title": "I4675 — `majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready",
+   "description": "The command-line path of `majordomus mesh allocate` reaches the same plan.allocate capability that a POST to /api/v1/plan/allocate reaches, and answers with the same reservation. A transient refusal from the socket (EAGAIN, os error 35) is retried within a bound and, if it persists, reported with the address the command dialled, the address the server reports, and the HTTP route that works.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4676/",
+   "title": "I4676 — A quoted YAML scalar followed by a trailing comment loads without its quotes",
+   "description": "The YAML subset parser strips the quotes of a double- or single-quoted scalar that is followed by whitespace and a trailing comment, as YAML 1.2 reads it, so `- \\\"<key>\\\"  # <note>` loads as the key and not as the key wrapped in quotes.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4677/",
+   "title": "I4677 — A mesh declaration that exists but fails its schema fails mesh doctor and names the diagnostic, instead of reading as absent",
+   "description": "mesh doctor tells a repository with no mesh declaration from one whose declaration is present but fails majordomus.mesh-declaration/v1. The second is a FAIL of the declaration check that names the file and the schema diagnostic, and the verdict is not 'every check holds'. The default posture (mesh off) is reported only when no declaration exists.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4678/",
+   "title": "I4678 — The tailscale provider finds the macOS app's bundled CLI and probes again on every interval, not only at server start",
+   "description": "On macOS the tailscale provider also probes the CLI inside the Tailscale app bundle, and runs it by exec rather than through a symlink. The provider probes again on each discovery interval, so a tailnet that comes up after the server started is found without a restart.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4679/",
+   "title": "I4679 — plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn>",
+   "description": "plan.allocate reads the repository's declared issue-id pattern and reserves the next free id for the prefix it is asked for (letter plus digits, as in K247 or G030), surveying the same sources it surveys for I<nnnn>. A repository that declares no pattern keeps I<nnnn>.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4680/",
+   "title": "I4680 — The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it",
+   "description": "finish --check's no-stale-topology question, as the pre-push hook asks it, refuses a push only over holdings that belong to the pushing session or its branch, and reports the others without refusing. One command rescues a named holding (a branch, a dirty worktree, a stash) into a local refs/rescue/ ref and a verified bundle, then removes it from the disk, without pushing it anywhere.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4681/",
+   "title": "I4681 — finish --note given text, not a readable file, says that --note takes a file and prints the usage",
+   "description": "When the argument of `majordomus finish --note` is not a readable file, finish refuses before judging any doctrine, says that --note takes the path of a file holding the completion note, and prints the usage line, instead of reporting only an unmet majordomus.note-integrity.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4682/",
+   "title": "I4682 — An issue marked DONE on the claim that a named function or path does the work is reported when nothing in product code refers to that name",
+   "description": "When an issue's completion or evidence names a mechanism (a function, a module path) as what delivers the work, a check looks the name up in the product code and reports a DONE issue whose named mechanism is defined but referenced from nowhere else, naming the issue, the name and the one place it occurs.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4683/",
+   "title": "I4683 — An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries",
+   "description": "The macOS application firewall admits a program by its binary path, and the installer puts each version under its own versioned path. The hub's admission survives an upgrade: either the firewall admits a stable launcher path once, or the installer checks the admission and names the firewall step that restores it. `mesh firewall apply` also removes the entries it left for earlier versions and for temporary test binaries.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4684/",
+   "title": "I4684 — worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order",
+   "description": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks (branch.<trunk>.remote), and refuses, naming the remotes, when several remotes' HEADs name the trunk and disagree.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4685/",
    "title": "I4685 — The published-site gate resolves the deploy subject's abbreviated commit once, so an abbreviation that is ambiguous in the reading clone is still the commit it names",
    "description": "scripts/ci/pages-check resolves the abbreviated commit named by the deploy subject once, as a commit (`git rev-parse --verify <abbrev>^{commit}`). It then asks every git question with that full id: the ancestry test against the trunk, the distance behind it, the published tree's web.json and pages.yaml, and the owed-publication range. The abbreviation stays what the served identity is compared against.",
@@ -16266,6 +16338,18 @@
    "route": "/cs/plan/i4742/",
    "title": "I4742 — Who runs a long-lived service is a mesh record, and a helper whose launcher died is named an orphan",
    "description": "A long-lived service an adopter runs (a game server, a panel, a daemon on a port) is announced as a mesh record of kind service built on the shared owner record majordomus-owner/v1 (resource name, pid and start time, launcher pid, process group, session, worktree, command, stop command, heartbeat). `mesh who <resource>` answers who runs it, and a holder whose launcher pid is dead while it lives is reported as an orphan with its stop command.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4753/",
+   "title": "I4753 — Starting work on an issue takes an exclusive mesh claim on that issue, and a second session that starts the same issue is refused with the holder named",
+   "description": "Starting work on an issue (`plan start <id>`, or `start` whose `--issue`, branch or scope names an issue) takes an exclusive mesh claim on that issue, and a second session is refused with the holder named.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4754/",
+   "title": "I4754 — Overlapping pull requests of different sessions get a proposed landing order, sent to each owning session for agreement, and the lander keeps an agreed order",
+   "description": "When open PRs held by different sessions overlap (the same files, and where measurable the same functions), `majordomus prs` proposes a landing order with its reasons and sends each owning session a mesh review request naming the order and the overlap; the lander refuses to land out of an agreed order.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16392,6 +16476,12 @@
    "route": "/cs/plan/i4808/",
    "title": "I4808 — The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares",
    "description": "An adopter's plan declares the id prefixes it uses (for example U, Q, E, K), each with its digit width. `mesh allocate issue --prefix <P>` surveys the tree, the worktrees, every ref and the journal for that prefix, exactly as it does for `I<nnnn>`, and reserves the next number with one exclusive claim. `plan validate` and the commit hook (I4616) judge a prefixed id against the allocator's reservations, and an undeclared prefix is refused with the declared list.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4810/",
+   "title": "I4810 — homepage-check holds the hero's delivery counts to the delivery the page renders: the build's reading when the build carries one, the committed projection otherwise",
+   "description": "scripts/ci/homepage-check takes the expected delivery tallies of the hero's product view from the source site/templates/index.html renders, under the template's own rule: build.delivery when site/data/build.json carries one, site/data/generated/delivery.json otherwise. Every failure message keeps its shape and names the source it was compared with (the build's delivery reading, or the committed projection, with the commit it was observed at).",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33993,6 +34083,78 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4673/",
+   "title": "I4673 — Every repository of a fleet trusts the fleet's machines from one list: init and update seed trust.allow and the hubs, and doctor names a repository that drifts from it",
+   "description": "A machine's node key is per machine and shared by every repository and worktree on it, so the trusted keys and the hubs are a fact of the fleet, not of one repository. `majordomus init` and `majordomus update` seed a repository's mesh declaration (trust.allow and the rendezvous hubs) from one fleet list, and doctor names a repository whose declaration drifts from that list, with the keys and hubs it lacks and the command that brings it level. A repository may still trust less than the fleet by declaring so; an undeclared difference is the drift doctor reports.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4674/",
+   "title": "I4674 — A long-running job is a mesh record with its machine, process group, budget, heartbeat and stop handle; jobs consult one machine guard; an owner's stop order reaches them",
+   "description": "`majordomus job run --name <n> --budget procs=N[,hosts=...] -- <argv>` starts a job in its own session (setsid), exports MAJORDOMUS_OWNER_JOB, beats, and watches for a stop order. `job register --pid` adopts a job that is already running, `job beat` beats for it, and `job list` lists every job on every node. `job stop <key|glob> [--host] [--grace]` signals the recorded process group, never a name match, and reaches remote children through the declared ssh host. `job admit <key> --want N` asks the machine guard for N more processes. The mesh journal gains the events job_registered, job_beat, job_ended and job_stop_ordered, which need no path claim and are shown in mesh state and mesh who. `machine guard [--json]` reads load per core, swap used and free disk against the policy's machine.guard (load_per_core_max, swap_used_max_pct, free_floor_gib: 35); doctor reports it, and I4006 and I4355 consume it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4675/",
+   "title": "I4675 — `majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready",
+   "description": "The command-line path of `majordomus mesh allocate` reaches the same plan.allocate capability that a POST to /api/v1/plan/allocate reaches, and answers with the same reservation. A transient refusal from the socket (EAGAIN, os error 35) is retried within a bound and, if it persists, reported with the address the command dialled, the address the server reports, and the HTTP route that works.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4676/",
+   "title": "I4676 — A quoted YAML scalar followed by a trailing comment loads without its quotes",
+   "description": "The YAML subset parser strips the quotes of a double- or single-quoted scalar that is followed by whitespace and a trailing comment, as YAML 1.2 reads it, so `- \\\"<key>\\\"  # <note>` loads as the key and not as the key wrapped in quotes.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4677/",
+   "title": "I4677 — A mesh declaration that exists but fails its schema fails mesh doctor and names the diagnostic, instead of reading as absent",
+   "description": "mesh doctor tells a repository with no mesh declaration from one whose declaration is present but fails majordomus.mesh-declaration/v1. The second is a FAIL of the declaration check that names the file and the schema diagnostic, and the verdict is not 'every check holds'. The default posture (mesh off) is reported only when no declaration exists.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4678/",
+   "title": "I4678 — The tailscale provider finds the macOS app's bundled CLI and probes again on every interval, not only at server start",
+   "description": "On macOS the tailscale provider also probes the CLI inside the Tailscale app bundle, and runs it by exec rather than through a symlink. The provider probes again on each discovery interval, so a tailnet that comes up after the server started is found without a restart.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4679/",
+   "title": "I4679 — plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn>",
+   "description": "plan.allocate reads the repository's declared issue-id pattern and reserves the next free id for the prefix it is asked for (letter plus digits, as in K247 or G030), surveying the same sources it surveys for I<nnnn>. A repository that declares no pattern keeps I<nnnn>.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4680/",
+   "title": "I4680 — The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it",
+   "description": "finish --check's no-stale-topology question, as the pre-push hook asks it, refuses a push only over holdings that belong to the pushing session or its branch, and reports the others without refusing. One command rescues a named holding (a branch, a dirty worktree, a stash) into a local refs/rescue/ ref and a verified bundle, then removes it from the disk, without pushing it anywhere.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4681/",
+   "title": "I4681 — finish --note given text, not a readable file, says that --note takes a file and prints the usage",
+   "description": "When the argument of `majordomus finish --note` is not a readable file, finish refuses before judging any doctrine, says that --note takes the path of a file holding the completion note, and prints the usage line, instead of reporting only an unmet majordomus.note-integrity.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4682/",
+   "title": "I4682 — An issue marked DONE on the claim that a named function or path does the work is reported when nothing in product code refers to that name",
+   "description": "When an issue's completion or evidence names a mechanism (a function, a module path) as what delivers the work, a check looks the name up in the product code and reports a DONE issue whose named mechanism is defined but referenced from nowhere else, naming the issue, the name and the one place it occurs.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4683/",
+   "title": "I4683 — An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries",
+   "description": "The macOS application firewall admits a program by its binary path, and the installer puts each version under its own versioned path. The hub's admission survives an upgrade: either the firewall admits a stable launcher path once, or the installer checks the admission and names the firewall step that restores it. `mesh firewall apply` also removes the entries it left for earlier versions and for temporary test binaries.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4684/",
+   "title": "I4684 — worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order",
+   "description": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks (branch.<trunk>.remote), and refuses, naming the remotes, when several remotes' HEADs name the trunk and disagree.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4685/",
    "title": "I4685 — The published-site gate resolves the deploy subject's abbreviated commit once, so an abbreviation that is ambiguous in the reading clone is still the commit it names",
    "description": "scripts/ci/pages-check resolves the abbreviated commit named by the deploy subject once, as a commit (`git rev-parse --verify <abbrev>^{commit}`). It then asks every git question with that full id: the ancestry test against the trunk, the distance behind it, the published tree's web.json and pages.yaml, and the owed-publication range. The abbreviation stays what the served identity is compared against.",
@@ -34080,6 +34242,18 @@
    "route": "/plan/i4742/",
    "title": "I4742 — Who runs a long-lived service is a mesh record, and a helper whose launcher died is named an orphan",
    "description": "A long-lived service an adopter runs (a game server, a panel, a daemon on a port) is announced as a mesh record of kind service built on the shared owner record majordomus-owner/v1 (resource name, pid and start time, launcher pid, process group, session, worktree, command, stop command, heartbeat). `mesh who <resource>` answers who runs it, and a holder whose launcher pid is dead while it lives is reported as an orphan with its stop command.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4753/",
+   "title": "I4753 — Starting work on an issue takes an exclusive mesh claim on that issue, and a second session that starts the same issue is refused with the holder named",
+   "description": "Starting work on an issue (`plan start <id>`, or `start` whose `--issue`, branch or scope names an issue) takes an exclusive mesh claim on that issue, and a second session is refused with the holder named.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4754/",
+   "title": "I4754 — Overlapping pull requests of different sessions get a proposed landing order, sent to each owning session for agreement, and the lander keeps an agreed order",
+   "description": "When open PRs held by different sessions overlap (the same files, and where measurable the same functions), `majordomus prs` proposes a landing order with its reasons and sends each owning session a mesh review request naming the order and the overlap; the lander refuses to land out of an agreed order.",
    "section": "The plan"
   },
   {
@@ -34206,6 +34380,12 @@
    "route": "/plan/i4808/",
    "title": "I4808 — The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares",
    "description": "An adopter's plan declares the id prefixes it uses (for example U, Q, E, K), each with its digit width. `mesh allocate issue --prefix <P>` surveys the tree, the worktrees, every ref and the journal for that prefix, exactly as it does for `I<nnnn>`, and reserves the next number with one exclusive claim. `plan validate` and the commit hook (I4616) judge a prefixed id against the allocator's reservations, and an undeclared prefix is refused with the declared list.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4810/",
+   "title": "I4810 — homepage-check holds the hero's delivery counts to the delivery the page renders: the build's reading when the build carries one, the committed projection otherwise",
+   "description": "scripts/ci/homepage-check takes the expected delivery tallies of the hero's product view from the source site/templates/index.html renders, under the template's own rule: build.delivery when site/data/build.json carries one, site/data/generated/delivery.json otherwise. Every failure message keeps its shape and names the source it was compared with (the build's delivery reading, or the committed projection, with the commit it was observed at).",
    "section": "The plan"
   },
   {
@@ -38165,7 +38345,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.3.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.3.0, built from commit b12715aee72f6dcb8be1079bdee2e5b339489d07: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.3.0, built from commit 030d81974cb47826091a5c9e5c7793ed6384eb08: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.3.0 — Rust API reference"
   },
   {
