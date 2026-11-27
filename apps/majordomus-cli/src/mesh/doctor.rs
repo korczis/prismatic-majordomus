@@ -200,6 +200,56 @@ pub fn session_beats_check(tally: &super::cooperation::SessionBeatTally) -> Doct
     )
 }
 
+/// The `build_host` check (I4343, `mesh doctor --build-host`): a build host observes its own
+/// guard — `disk-guard.timer` and `build-host-observe.timer` active, the ballast present,
+/// disk-guard's state no older than `max_state_age`, every declared critical-service drop-in
+/// present and every declared tenant at or under its bound — and fails, naming each missing
+/// item, while any of it is not so. Incident 1 of 2026-10-28 is this check's reason: nothing
+/// ran it, so lundra's disk filled with no answer naming why.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::BuildHostObserved;
+/// use majordomus_cli::mesh::doctor::build_host_check;
+///
+/// let max_age = Duration::from_secs(900);
+/// let whole = BuildHostObserved {
+///     guard_timer_active: true,
+///     observe_timer_active: true,
+///     ballast_present: true,
+///     state_age: Some(Duration::from_secs(60)),
+///     missing_drop_ins: vec![],
+///     tenants_over_bound: vec![],
+/// };
+/// assert!(build_host_check(&whole, max_age).ok);
+///
+/// let stale = BuildHostObserved { state_age: Some(Duration::from_secs(16 * 60)), ..whole.clone() };
+/// let check = build_host_check(&stale, max_age);
+/// assert!(!check.ok && check.detail.contains("16m old"), "{}", check.detail);
+/// assert!(check.remediation.as_deref().unwrap().contains("mesh build-cache provision"));
+///
+/// let inactive = BuildHostObserved { guard_timer_active: false, ..whole };
+/// assert!(!build_host_check(&inactive, max_age).ok);
+/// ```
+pub fn build_host_check(
+    observed: &super::cache_provision::BuildHostObserved,
+    max_state_age: std::time::Duration,
+) -> DoctorCheck {
+    if observed.ok(max_state_age) {
+        return DoctorCheck::pass(
+            "build_host",
+            "disk-guard.timer and build-host-observe.timer are active, the ballast is present, the state is fresh, and every declared drop-in and tenant holds",
+        );
+    }
+    let failing = observed.failing(max_state_age);
+    DoctorCheck::fail(
+        "build_host",
+        failing.join("; "),
+        "this build host's own guard has stopped guarding it: the root filesystem can fill unnoticed until the runners it serves go offline (incident 1 of 2026-10-28)",
+        "run `mesh build-cache provision --apply` on the host to reinstall what is missing, then `systemctl status disk-guard.timer build-host-observe.timer`",
+    )
+}
+
 /// The `transport` check: how each declared rendezvous endpoint and seed would be reached —
 /// over TLS (`https://`), or in cleartext to an address that is loopback, private or an
 /// overlay's — and every one the client refuses to dial, because it would carry the mesh in
@@ -832,6 +882,50 @@ fn link_probe() -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A build host whose guard holds passes; one whose guard does not fails, naming every
+    /// missing item in its detail, and says what it risks and how to reinstall the guard.
+    #[test]
+    fn the_build_host_check_passes_a_held_guard_and_names_what_a_broken_one_lacks() {
+        use super::super::cache_provision::BuildHostObserved;
+        let max_age = std::time::Duration::from_secs(15 * 60);
+        let held = BuildHostObserved {
+            guard_timer_active: true,
+            observe_timer_active: true,
+            ballast_present: true,
+            state_age: Some(std::time::Duration::from_secs(60)),
+            ..Default::default()
+        };
+        let pass = build_host_check(&held, max_age);
+        assert_eq!(pass.check, "build_host");
+        assert!(pass.ok, "{pass:?}");
+        assert!(pass.remediation.is_none(), "{pass:?}");
+
+        let broken = BuildHostObserved {
+            ballast_present: false,
+            missing_drop_ins: vec!["sshd".into()],
+            ..held
+        };
+        let fail = build_host_check(&broken, max_age);
+        assert_eq!(fail.check, "build_host");
+        assert!(!fail.ok);
+        assert_eq!(
+            fail.detail,
+            "the ballast is missing; the drop-in of sshd is missing"
+        );
+        assert!(
+            fail.impact
+                .as_deref()
+                .is_some_and(|i| i.contains("incident 1")),
+            "{fail:?}"
+        );
+        assert!(
+            fail.remediation
+                .as_deref()
+                .is_some_and(|r| r.contains("mesh build-cache provision --apply")),
+            "{fail:?}"
+        );
+    }
 
     #[test]
     fn the_runtime_verdict_judges_what_a_server_decided_about_the_declaration() {

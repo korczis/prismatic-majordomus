@@ -387,6 +387,23 @@ impl Memory {
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {
                 return None
             }
+            // a build host's own word on itself (I4343): shown here, unlike the offer
+            // above, because nothing else surfaces that a guard stopped guarding
+            EventBody::BuildHostObserved { ok, failing } => MonitorSignal::new(
+                event.at,
+                MonitorSource::Mesh,
+                "build_host_observed",
+                if ok {
+                    MonitorSeverity::Info
+                } else {
+                    MonitorSeverity::Attention
+                },
+                &if ok {
+                    "its own guard holds".to_string()
+                } else {
+                    format!("its own guard is down: {}", failing.join("; "))
+                },
+            ),
             // a typed coordination record (I4665): a blocker, a decision and a handoff ask
             // for attention, the rest is news
             EventBody::RecordWritten { record } => {
@@ -1045,6 +1062,45 @@ mod tests {
         assert!(
             read.signals.is_empty(),
             "the build cache's news is `mesh state`'s, not the monitor's"
+        );
+    }
+
+    /// A build host's word on its own guard is shown: a held guard is news, a broken one
+    /// asks for attention and names every failing item (I4343).
+    #[test]
+    fn a_build_host_observation_is_news_and_a_broken_guard_asks_for_attention() {
+        let events = vec![
+            event(
+                1,
+                1,
+                json!({"kind": "build_host_observed", "ok": true, "failing": []}),
+            ),
+            event(
+                2,
+                2,
+                json!({"kind": "build_host_observed", "ok": false,
+                       "failing": ["the ballast is missing", "disk-guard.timer is not active"]}),
+            ),
+        ];
+        let reader = Reader::default();
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        assert_eq!(read.signals.len(), 2);
+        let (held, broken) = (&read.signals[0].1, &read.signals[1].1);
+        assert_eq!(held.kind, "build_host_observed");
+        assert_eq!(held.severity, MonitorSeverity::Info);
+        assert!(
+            held.summary.ends_with("its own guard holds"),
+            "{}",
+            held.summary
+        );
+        assert_eq!(broken.severity, MonitorSeverity::Attention);
+        assert!(
+            broken.summary.ends_with(
+                "its own guard is down: the ballast is missing; disk-guard.timer is not active"
+            ),
+            "{}",
+            broken.summary
         );
     }
 }

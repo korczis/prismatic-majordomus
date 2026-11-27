@@ -743,6 +743,17 @@ pub enum EventBody {
         /// Why, from a fixed vocabulary: one line, never a path or an endpoint.
         reason: String,
     },
+    /// A build host observed its own guard, every five minutes (I4343): whether
+    /// disk-guard.timer is active, the ballast is present, its state is fresh and every
+    /// declared drop-in and tenant bound holds. Not folded; read by `mesh events` and
+    /// `monitor` as the host's latest word on itself.
+    BuildHostObserved {
+        /// Every item checked.
+        ok: bool,
+        /// What is missing or over its bound, one line each; empty when `ok`.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        failing: Vec<String>,
+    },
     /// A session wrote a typed coordination record, or a revision of its own (I4665): an
     /// observation, hypothesis, plan, decision, blocker, handoff or outcome about a task and
     /// a scope, with its sources, its revision and the record it supersedes. The owner
@@ -896,6 +907,7 @@ pub const KNOWN_KINDS: &[&str] = &[
     "review_withdrawn",
     "build_cache_offered",
     "build_cache_withdrawn",
+    "build_host_observed",
     "record_written",
 ];
 
@@ -927,6 +939,7 @@ impl EventBody {
             EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
             EventBody::BuildCacheOffered { .. } => "build_cache_offered",
             EventBody::BuildCacheWithdrawn { .. } => "build_cache_withdrawn",
+            EventBody::BuildHostObserved { .. } => "build_host_observed",
             EventBody::RecordWritten { .. } => "record_written",
         }
     }
@@ -1110,6 +1123,15 @@ impl EventBody {
             }
             EventBody::BuildCacheOffered { offer } => offer.validate(),
             EventBody::BuildCacheWithdrawn { reason } => line("reason", reason, 256),
+            EventBody::BuildHostObserved { failing, .. } => {
+                if failing.len() > 16 {
+                    return Err("more than 16 failing items".into());
+                }
+                for item in failing {
+                    line("failing", item, 256)?;
+                }
+                Ok(())
+            }
             EventBody::RecordWritten { record } => record.validate(),
         }
     }
@@ -5754,5 +5776,33 @@ mod tests {
         assert_eq!(withdrawn.kind(), "build_cache_withdrawn");
         assert!(KNOWN_KINDS.contains(&offered.kind()));
         assert!(KNOWN_KINDS.contains(&withdrawn.kind()));
+    }
+
+    #[test]
+    fn a_build_host_observation_is_a_known_kind_bounded_and_round_trips() {
+        let pass = EventBody::BuildHostObserved {
+            ok: true,
+            failing: vec![],
+        };
+        let fail = EventBody::BuildHostObserved {
+            ok: false,
+            failing: vec!["disk-guard.timer is inactive".into()],
+        };
+        assert_eq!(pass.kind(), "build_host_observed");
+        assert!(KNOWN_KINDS.contains(&pass.kind()));
+        assert!(pass.validate().is_ok());
+        assert!(fail.validate().is_ok());
+        let too_many = EventBody::BuildHostObserved {
+            ok: false,
+            failing: (0..17).map(|i| format!("item {i}")).collect(),
+        };
+        assert!(too_many.validate().is_err());
+        let not_a_line = EventBody::BuildHostObserved {
+            ok: false,
+            failing: vec!["the ballast\nis missing".into()],
+        };
+        assert!(not_a_line
+            .validate()
+            .is_err_and(|e| e.contains("failing is over 256 bytes or is not a single line")));
     }
 }
