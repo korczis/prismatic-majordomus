@@ -74,6 +74,10 @@ mkbuild() {
 git -C "$FIX" worktree add -q -b idle "$WTS/idle" >/dev/null 2>&1 \
   || { echo "    could not add the idle worktree"; exit 2; }
 mkbuild "$WTS/idle"
+# Aged past the liveness predicate's idle window (I4346): a worktree whose HEAD moved a
+# moment ago is somebody's work in progress, and this one is meant to be nobody's.
+idle_gd="$(git -C "$WTS/idle" rev-parse --absolute-git-dir)"
+for f in HEAD index logs/HEAD; do [ ! -e "$idle_gd/$f" ] || touch -t 202001010000 "$idle_gd/$f"; done
 # The primary checkout gets build output too, so that the name-based exclusion is something
 # the report has to say out loud. Reading that name is the pipeline that was taking SIGPIPE:
 # without a build directory here the sweep would pass over the primary in silence and a
