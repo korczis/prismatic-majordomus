@@ -27,3 +27,16 @@ evidence_required:
   - test
 serves: []
 created_at: 2026-11-10
+started_at: 2026-11-26T14:46:37Z
+started_event: sha256:8a936bfec98bf002421c5354b624d60f13b84b1a336a931a80d2c8197a9aabaf
+updated_at: 2026-11-26T14:47:19Z
+completed_at: 2026-11-26T14:47:19Z
+completed_event: sha256:dde99783abef1599e3e53c89fae903d1339c7c166a09f082f989069530eb7503
+evidence:
+  - covers: "test"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 494_the_mesh_is_declared_and_held"
+    result: "delivered by dcc5a118a85 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 494_the_mesh_is_declared_and_held ok in suite-shard (4) job 138971458386; case 494 enrols the key on the trunk while the server runs, reads the mesh open with no restart, then withdraws the key and reads it closed (lines 115-135)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:47:04Z

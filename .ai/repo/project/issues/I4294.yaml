@@ -39,4 +39,16 @@ evidence_required:
   - "board_snapshot_tests"
 depends_on: []
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-26T14:24:02Z
+started_at: 2026-11-26T14:21:54Z
+started_event: sha256:a14baf28cfa44a865787fdaa63a8494ac8d3ed81bc464ebd68bf7c5c4bc37cb3
+completed_at: 2026-11-26T14:24:02Z
+completed_event: sha256:6da8879ef8ef2341585bab0199c4bb76efbea8e7a06a612faa4559189257ad01
+evidence:
+  - covers: "board_snapshot_tests"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- board && env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test board_snapshot"
+    result: "delivered by 4bdecc447d1 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: board:: 14 and capability::builtin::board:: 5 lib tests ok 0 failed (rust (2) job 138952668919), tests/board_snapshot.rs 2 passed 0 failed (rust (3) job 138952669033)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:23:06Z

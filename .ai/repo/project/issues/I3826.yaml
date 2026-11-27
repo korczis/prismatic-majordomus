@@ -32,4 +32,23 @@ depends_on:
 serves:
   - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-11-26T13:56:49Z
+started_at: 2026-11-26T13:55:33Z
+started_event: sha256:846bc787fa8543221384b9c459c9240c2aa30110c9f28a6a1a5e1ae4c4860c6b
+completed_at: 2026-11-26T13:56:49Z
+completed_event: sha256:0c48c55dfae769549d4996d3992a855c05631e39dac4e23bdaf13e008771ca66
+evidence:
+  - covers: "seed_from_secret"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
+    result: "delivered by 75c02225f74 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 3826_a_hosted_hub_is_trusted_and_closed_to_strangers ok in suite-shard (2) job 138971458506"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T13:56:06Z
+  - covers: "mesh_reads_gated"
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- http::router mesh::manager"
+    result: "at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002, rust (2) job 138952668919: http::router::tests::a_remote_caller_reads_the_repository_and_never_the_mesh ok and mesh::manager::tests::a_stranger_learns_this_hub_and_never_who_trusts_it ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T13:56:26Z
