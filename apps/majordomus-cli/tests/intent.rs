@@ -1043,3 +1043,100 @@ satisfaction:
     assert_ne!(code, 0);
     assert!(err.contains("`lint`") && err.contains("tests"), "{err}");
 }
+
+/// `evidence record --verify` in words: one line each for what ran and how it ended, the
+/// command, the tree and the ledger, and `no exit code` for a command a signal ended. It
+/// reads no report, so a report given beside it is refused; and a run the ledger holds as
+/// skipped is no run of the criterion that cites it; words it cannot write are a transport
+/// failure.
+#[test]
+fn test_verify_in_words_refuses_a_report_and_a_skip_is_not_run() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        "id: fixture-intent
+title: The fixture's outcome is true
+statement: \"The outcome the fixture milestone reaches is true for its users.\"
+invariants:
+  - The fixture stays a valid repository
+milestones:
+  - fixture-milestone
+satisfaction:
+  - id: the-checks-pass
+    criterion: The repository's own checks pass
+    evidence: command
+    ref: verify:tests
+",
+    );
+    f.write(
+        ".ai/repo/profiles/implementation.yaml",
+        &format!(
+            "{}{}",
+            common::PROFILE,
+            concat!(
+                "verification:\n",
+                "  commands:\n",
+                "    - name: tests\n",
+                "      command: \"true\"\n",
+                "    - name: killed\n",
+                "      command: \"kill -9 $$\"\n",
+            )
+        ),
+    );
+    f.commit("declare two checks");
+
+    let (code, out, err) = run_in(&f.root(), &["evidence", "record", "--verify", "tests"], "");
+    assert_eq!(code, 0, "{out}\n{err}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 4, "{out}");
+    assert!(
+        lines[0].starts_with("verified     tests (implementation): pass, exit 0, "),
+        "{out}"
+    );
+    assert!(lines[0].ends_with(" ms"), "{out}");
+    assert_eq!(lines[1], "command      true");
+    assert!(lines[2].starts_with("tree         sha256:"), "{out}");
+    assert!(lines[3].starts_with("ledger       "), "{out}");
+
+    let (code, out, err) = run_in(&f.root(), &["evidence", "record", "--verify", "killed"], "");
+    assert_eq!(code, 0, "a run a signal ended is recorded: {out}\n{err}");
+    assert!(
+        out.starts_with("verified     killed (implementation): error, no exit code, "),
+        "{out}"
+    );
+
+    // a report beside --verify is refused, and nothing is recorded
+    let ledger = f.root().join(".ai/repo/evidence/ledger.json");
+    let before = std::fs::read(&ledger).unwrap();
+    let (code, _, err) = run_in(
+        &f.root(),
+        &[
+            "evidence", "record", "--verify", "tests", "--suite", "run.tsv",
+        ],
+        "",
+    );
+    assert_ne!(code, 0);
+    assert!(err.contains("reads no report"), "{err}");
+    assert_eq!(std::fs::read(&ledger).unwrap(), before);
+
+    // the ledger holds both runs, by name; one it holds as skipped is no run at all
+    let mut v: Value = serde_json::from_slice(&before).unwrap();
+    let names: Vec<&str> = v["verifications"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| r["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, vec!["killed", "tests"]);
+    let (_, shown) = cli_json(&f, &["intent", "show", "fixture-intent"]);
+    assert_eq!(shown["satisfaction"][0]["state"], "current", "{shown:#}");
+    v["verifications"][1]["outcome"] = json!("skip");
+    std::fs::write(&ledger, serde_json::to_string_pretty(&v).unwrap()).unwrap();
+    let (_, shown) = cli_json(&f, &["intent", "show", "fixture-intent"]);
+    assert_eq!(shown["satisfaction"][0]["state"], "not_run", "{shown:#}");
+
+    // the run is recorded, but words that cannot be written are a transport failure
+    let (code, err) = run_into_a_closed_pipe(&f, &["evidence", "record", "--verify", "tests"]);
+    assert_eq!(code, 13, "a success it could not deliver: {err}");
+    assert!(err.contains("majordomus: transport:"), "{err}");
+}

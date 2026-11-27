@@ -860,4 +860,34 @@ mod tests {
         assert_eq!(counts.get("error"), Some(&1));
         assert_eq!(counts.get("skip"), None);
     }
+
+    /// Verification runs are kept one per name and ordered by it, whatever order they were
+    /// recorded in, so the tracked ledger diffs cleanly.
+    #[test]
+    fn verification_runs_are_ordered_by_their_name() {
+        let run = |name: &str, outcome: Outcome| VerificationRun {
+            name: name.into(),
+            profile: "implementation".into(),
+            command: "true".into(),
+            outcome,
+            exit: Some(0),
+            millis: 1,
+            tree: "sha256:0".into(),
+            commit: "0".repeat(40),
+            at: "2026-11-27T00:00:00Z".into(),
+            origin: Origin::Local,
+        };
+        let mut ledger = Ledger::empty();
+        for name in ["tests", "lint", "build"] {
+            ledger.merge_verification(run(name, Outcome::Pass));
+        }
+        ledger.merge_verification(run("lint", Outcome::Fail));
+        let names: Vec<&str> = ledger
+            .verifications
+            .iter()
+            .map(|v| v.name.as_str())
+            .collect();
+        assert_eq!(names, vec!["build", "lint", "tests"]);
+        assert_eq!(ledger.verification("lint").unwrap().outcome, Outcome::Fail);
+    }
 }
