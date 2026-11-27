@@ -1169,7 +1169,7 @@ apply` added three rules (`Rule added`, `Rule added`, `Rule updated` — the LAN
 been added by hand a quarter of an hour earlier), after which the report as root read
 `present` with no drop in the window, and the hub's `mesh nodes`, which had listed nobody, listed both Macs of the LAN as present and trusted, each heard by multicast and registered by rendezvous.
 
-## The build host's own guard
+## The guard on the build host
 
 A build host bounds its own disk with `disk-guard`, a timer every five minutes
 (`apps/majordomus-cli/assets/mesh-cache-provider/disk-guard{,.service,.timer}`), and a ballast
