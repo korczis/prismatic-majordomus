@@ -143,6 +143,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4331; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4336; they may not run concurrently |
+| WARN | `scope_conflict` | `I2411` | shares test/cases with I4337; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares docs/MESH.md with I4343; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4349; they may not run concurrently |

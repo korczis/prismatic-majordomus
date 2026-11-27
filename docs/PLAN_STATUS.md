@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `fc4ffb6226ea`.
+Generated from canonical inputs `088f4576b60f`.
 
 ## Milestones
 
@@ -88,7 +88,7 @@ Generated from canonical inputs `fc4ffb6226ea`.
 | [intent-intake](https://majordomus.dev/plan/intent-intake/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | A campaign revision's requirements get content-derived identities, are classified against the existing intents and issues into a draft, a later revision reports only the criteria whose source changed, and every intent shows the segments it was derived from. | [`plan-status/intent-intake.md`](plan-status/intent-intake.md) |
 | [intent-lifecycle](https://majordomus.dev/plan/intent-lifecycle/) | PLANNED | 0/3 | 2 | 1 | 0 | 0 | 0 | An intent is a typed record above the milestones that realise it: a statement, its invariants, and satisfaction criteria each naming the evidence that settles it. Its stage is derived from the plan's milestone status and its satisfaction from the evidence ledger, never stored. A gate refuses an intent that names no milestone or evidence that resolves to nothing, a session's preflight names the intent its work serves or refuses, the Cockpit shows intents with measured and enforced coverage of its scripts, and a milestone closes on GitHub only when the intents it serves are satisfied. | [`plan-status/intent-lifecycle.md`](plan-status/intent-lifecycle.md) |
 | [intent-planning](https://majordomus.dev/plan/intent-planning/) | BLOCKED | 0/3 | 0 | 3 | 0 | 0 | 0 | An issue names the intent criteria it serves; coverage of every criterion is derived from the plan and refused when a criterion has no work or work has no purpose. The gap a worker observed and the critique of the plan are typed records validated against the intent and the plan, and work does not start on an intent whose plan was never critiqued or has an open blocking finding. | [`plan-status/intent-planning.md`](plan-status/intent-planning.md) |
-| [knowledge-acts-on-what-it-learns](https://majordomus.dev/plan/knowledge-acts-on-what-it-learns/) | ACTIVE | 1/6 | 3 | 2 | 0 | 0 | 0 | Friction is measured and then derived; each boundary records an evolve readiness verdict the next session is told; evolve output does not feed itself; outcomes are measured; a curated note whose source moved is flagged. | [`plan-status/knowledge-acts-on-what-it-learns.md`](plan-status/knowledge-acts-on-what-it-learns.md) |
+| [knowledge-acts-on-what-it-learns](https://majordomus.dev/plan/knowledge-acts-on-what-it-learns/) | PLANNED | 0/6 | 4 | 2 | 0 | 0 | 0 | Friction is measured and then derived; each boundary records an evolve readiness verdict the next session is told; evolve output does not feed itself; outcomes are measured; a curated note whose source moved is flagged. | [`plan-status/knowledge-acts-on-what-it-learns.md`](plan-status/knowledge-acts-on-what-it-learns.md) |
 | [knowledge-is-reconciled-before-it-is-reviewed](https://majordomus.dev/plan/knowledge-is-reconciled-before-it-is-reviewed/) | BLOCKED | 0/6 | 0 | 6 | 0 | 0 | 0 | A known fact gets one candidate. Each candidate group names what already speaks about its subject, read from the entity layer rather than from a second derivation. A promotion needs a resolvable reference and records it. An observation can cite the review that found it. | [`plan-status/knowledge-is-reconciled-before-it-is-reviewed.md`](plan-status/knowledge-is-reconciled-before-it-is-reviewed.md) |
 | [landing-survives-any-session](https://majordomus.dev/plan/landing-survives-any-session/) | ACTIVE | 1/8 | 3 | 4 | 0 | 0 | 0 | Landing green work on master never waits on a person or on one session staying alive. | [`plan-status/landing-survives-any-session.md`](plan-status/landing-survives-any-session.md) |
 | [mcp-transports-are-reliable](https://majordomus.dev/plan/mcp-transports-are-reliable/) | ACTIVE | 6/14 | 7 | 1 | 0 | 0 | 0 | A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it. | [`plan-status/mcp-transports-are-reliable.md`](plan-status/mcp-transports-are-reliable.md) |
@@ -429,6 +429,7 @@ Generated from canonical inputs `fc4ffb6226ea`.
 - `I4332` (a-version-follows-the-work, wave 1) — A release left half-published is named with its finishing step: tagged with no forge Release, or released with no successful deployment
 - `I4333` (a-second-adopter-is-served, wave 0) — Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands
 - `I4336` (adopter-upgrades, wave 0) — Every adopter the owner's fleet pack applies to receives its kit, rules and skills, and no licensed source reaches a public tree
+- `I4337` (knowledge-acts-on-what-it-learns, wave 0) — The evolve skill harvests what sessions only remembered, links what is in flight, and takes a number on the board first
 - `I4342` (test-evidence, wave 1) — A release's record lands without a person within two hours of its tag
 - `I4343` (development-runtime, wave 0) — A build host's disk guard is observed live every five minutes, and the observation fails while it is not
 - `I4346` (development-runtime, wave 0) — Every sweep that deletes asks one liveness predicate, and it fails closed
@@ -548,13 +549,13 @@ Generated from canonical inputs `fc4ffb6226ea`.
 
 ## Findings
 
-11728 finding(s), each on the page of the milestone its subject is or belongs to:
+11777 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 32 |
 | [`M003`](plan-status/M003.md) | 9 |
-| [`M004`](plan-status/M004.md) | 518 |
+| [`M004`](plan-status/M004.md) | 520 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 204 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 109 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 237 |
@@ -562,11 +563,11 @@ Generated from canonical inputs `fc4ffb6226ea`.
 | [`a-downstream-adopters-findings-are-fixed-in-the-tool`](plan-status/a-downstream-adopters-findings-are-fixed-in-the-tool.md) | 13 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 4 |
 | [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 25 |
-| [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 14 |
+| [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 15 |
 | [`a-profile-is-resolved-once-and-enforced`](plan-status/a-profile-is-resolved-once-and-enforced.md) | 2 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 23 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 77 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 155 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 156 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 57 |
 | [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 4 |
 | [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 370 |
@@ -575,19 +576,19 @@ Generated from canonical inputs `fc4ffb6226ea`.
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 48 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 24 |
 | [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 3 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 727 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 730 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 7 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 19 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 166 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 167 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
 | [`automation`](plan-status/automation.md) | 84 |
-| [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 29 |
+| [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 30 |
 | [`capability-graph`](plan-status/capability-graph.md) | 15 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 420 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 422 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 6 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 32 |
-| [`development-runtime`](plan-status/development-runtime.md) | 1038 |
+| [`development-runtime`](plan-status/development-runtime.md) | 1043 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 37 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 59 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 19 |
@@ -596,13 +597,13 @@ Generated from canonical inputs `fc4ffb6226ea`.
 | [`external-workspaces`](plan-status/external-workspaces.md) | 35 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 63 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3910 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3926 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 64 |
-| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 101 |
+| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 110 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 15 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 235 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 236 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 16 |
-| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 56 |
+| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 57 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 225 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 9 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 8 |
@@ -613,12 +614,12 @@ Generated from canonical inputs `fc4ffb6226ea`.
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 8 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 46 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 50 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 595 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 424 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 598 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 426 |
 | [`test-evidence`](plan-status/test-evidence.md) | 24 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 4 |
 | [`the-host-knows-its-runtimes`](plan-status/the-host-knows-its-runtimes.md) | 34 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 342 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 343 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 36 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 5 |
