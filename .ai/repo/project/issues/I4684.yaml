@@ -1,0 +1,36 @@
+id: I4684
+milestone: a-second-adopter-is-served
+title: "worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order"
+slug: worktree-create-follows-the-tracked-trunk-remote
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "worktree create bases a new branch on the trunk of the remote the trunk branch tracks (branch.<trunk>.remote), and refuses, naming the remotes, when several remotes' HEADs name the trunk and disagree."
+why: "Observed twice in one adopter repository within ten days, on 2026-11-12 and 2026-11-22, and again on 2026-11-25. The adopter has two remotes, `gitlab` and `origin`, whose HEADs both name the trunk, and its trunk branch tracks `origin`. `worktree create` started each new branch from `gitlab/<trunk>`, which lagged `origin/<trunk>`, so each branch began on a stale base and had to be reset to `origin/<trunk>` before its first commit. The workaround was kept in a session memory rather than in the tool. On 2026-11-25 the local trunk also lagged its remote, and the new branch's base had to be checked by hand again before the first commit."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. apps/majordomus-cli/src/worktree/service.rs:237-276 (trunk_remote) lists `git remote` (:240), walks the remotes in that order and returns the first whose `refs/remotes/<remote>/HEAD` names `refs/remotes/<remote>/<trunk>` (:251-264). It consults `branch.<trunk>.remote` (:265-274) only when no remote's HEAD names the trunk. `git remote` lists remotes alphabetically, so with both `gitlab` and `origin` naming the trunk, `gitlab` wins whatever the trunk tracks, and two remotes whose trunks point at different commits are never compared. I3153 covers how far `start`'s base is behind the remote's master and does not cover which remote `worktree create` reads. A code pull request will implement this issue separately; this record only plans it."
+desired_state: "trunk_remote prefers `branch.<trunk>.remote` when it names an existing remote. Without that setting it falls back to the remotes whose HEAD names the trunk. When several of those exist and their trunk refs point at different commits, worktree create refuses and names each remote with its trunk commit and the setting that would decide it. One remote, or several that agree, behaves as today."
+scope:
+  - ".ai/repo/project/issues/I4684.yaml"
+  - "apps/majordomus-cli/src/worktree/service.rs"
+  - "apps/majordomus-cli/tests/worktree.rs"
+  - "docs/WORKTREES.md"
+  - "test/cases/4684_worktree_create_follows_the_tracked_trunk_remote.sh"
+  - "site/content/plan/I4684.md"
+non_scope:
+  - "start's report of its base's distance from the remote trunk: I3153"
+  - "Fetching or pushing any remote other than the one chosen"
+  - "Changing a repository's remotes or its branch.<trunk>.remote setting"
+depends_on: []
+acceptance_criteria:
+  - "Case 4684, in a fixture with two remotes `gitlab` and `origin` whose HEADs both name the trunk, where `gitlab`'s trunk lags and the trunk tracks `origin`: worktree create starts the new branch from `origin/<trunk>`"
+  - "Case 4684: with branch.<trunk>.remote unset and the two remotes' trunks at different commits, worktree create exits refused, names both remotes with their trunk commits and names the setting, and creates no branch or worktree"
+  - "Case 4684: with one remote, or with two whose trunks agree, worktree create behaves as before, and case 3131_a_new_worktree_starts_from_the_remote_trunk still passes"
+  - "Negative control: with trunk_remote reverted to master, case 4684 finds the branch started from `gitlab/<trunk>`"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test worktree"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4684_worktree_create_follows_the_tracked_trunk_remote 3131_a_new_worktree_starts_from_the_remote_trunk"
+evidence_required:
+  - "worktree_create_follows_the_tracked_trunk_remote"
+serves: []
+created_at: 2026-11-25

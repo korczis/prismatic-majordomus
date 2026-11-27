@@ -7,6 +7,89 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.3.0**
 
+## v1.3.0 — 2026-11-27
+
+### Added
+
+- **plan**: a pull request's merge does not move the committed delivery (I4634) (`f44e89839`)
+
+### Fixed
+
+- **plan**: intake records serve a criterion, I4337 waits on its blocker; derive top 20261127b (`8a58a4ad8`)
+- **generate**: regenerate the artifact registry from this tree, not the primary checkout's share (`a615e38a4`)
+- **pages**: homepage-check holds the hero's delivery counts to the delivery the page renders (I4810) (`6c773ada0`)
+- **skills**: a fleet skill the pack proves owes no local skills verify gate (I4336) (`701267435`)
+- **board**: the milestones #3140 and #3130 open have a lane in share/board.yaml (`5cd2b9b29`)
+- **ci**: plan-record-cases runs 4634_a_merge_does_not_move_the_committed_delivery (I4634) (`ed34ffd07`)
+- **worktree**: the reclaim lock is a flock within the crate's MSRV (I4712) (`20f1be2ea`)
+- **process**: a bounded subprocess's output is read while it runs (I4713) (`8e2b42120`)
+- **doctor**: the printed npm remedy declares why it is not a build (I4595) (`1111d4407`)
+- **worktree**: two recoverers of a dead owner's lock never both hold it (I4712) (`37121d359`)
+- **test**: case 104 asks whether python3 runs, not whether it is on PATH (I4685) (`242d354f9`)
+- **process**: a bounded subprocess ends with everything it started (I4712) (`1a6127bc0`)
+- **pages-check**: resolve the deploy subject's abbreviated commit once (I4685) (`f861ebeba`)
+- **test**: case 4634 reads the projection without a pager (I4634) (`b22698595`)
+- **doctor**: keep a prompting mix from swallowing the checkout list (I4595) (`893a75c57`)
+- **doctor**: name a checkout whose dependency install is behind its lockfile (I4595) (`862950a4e`)
+
+### Documentation
+
+- **plan**: file eleven intake records of 2026-11-22 (I4673-I4683) and extend three (`929b77ce7`)
+- **adr**: ADR 0199 is accepted with its Fabric amendment (gate G0) (`8c46bc158`)
+- **knowledge**: record the owner's 2026-11-25 answers on Fabric gate G0 and I3184 (`344ab341f`)
+- **plan**: I4754 serves the mesh intent's criterion that two sessions never share an item (`6b93dd024`)
+- **plan**: workspace adoption findings I4803 I4804 I4805 I4806 I4807 I4808 (`34349bf8d`)
+- **plan**: I4712 and I4713 serve their milestone's criterion (`b6ac92742`)
+- **plan**: I4740, I4741 and I4742 name the criteria of their intent they serve (`d948df025`)
+- **plan**: I4357 notes an allocation its client gave up on (`bdecf4fd1`)
+- **plan**: I4740, I4741 and I4742 record three liveness lessons from the OpenTTD adopter (`98f34005b`)
+- **plan**: an issue start claims it, overlaps get a landing order, I4684 (`5c55c0a2e`)
+- **plan**: Fabric gates G0-G5 as milestones and I4721-I4728; the host milestone stops waiting (`72679d9df`)
+- **plan**: I4718 a delivery observing a throwaway commit is refused locally (`5f179cdf3`)
+- **adr**: amend ADR 0199 into Majordomus Fabric's opt-in host agent (`e2e51a9d2`)
+- **knowledge**: record the owner's decisions that start Majordomus Fabric (`64c18cef4`)
+- **plan**: derive delivery observed at the combined top 4354b754239 (`e13b7568b`)
+- **plan**: derive delivery observed at the combined top e21b7cdf4fe (`06298de3e`)
+- **plan**: I4668, I4670 and I4671 serve their milestones' criteria (`e21b7cdf4`)
+- **plan**: derive delivery observed at the combined top 1111d440753 (`41d227803`)
+- **plan**: derive delivery observed at 242d354f985, a commit on origin (`e8c8db3e0`)
+- **worktree**: the lock's documentation names no private item (I4712) (`836436e0c`)
+- **plan**: derive delivery observed at b22698595ee (`46a70991f`)
+- **plan**: derive delivery observed at the merge of master d02c59d447c (`44b68f08f`)
+- **plan**: four generic findings of a long multi-session run (I4668-I4671) (`213bdf684`)
+- **plan**: derive delivery observed at 7118e6fc8b5 (`c4fca22b8`)
+- **plan**: derive delivery observed at f56deff7836 (`e228f9594`)
+- **knowledge**: record the owner's decision that a push may start at 35 GiB free (`dad6814e4`)
+- **plan**: derive delivery observed at 8f4424d3d89 (`8b3154835`)
+- **plan**: derive delivery observed at ab8b6903134 (`f38ecf164`)
+- **plan**: derive delivery observed at f44e8983975 (`d5514f3b0`)
+
+### Tests
+
+- **process**: a bounded run's drain has no branch it never takes (I4713) (`ad18cb72d`)
+- **process**: every changed line of I4712 is run by a test (I4712) (`9b8c4bd0c`)
+- **doctor**: renumber the install-currency case to 4595 (I4595) (`7c97174d3`)
+
+### Housekeeping
+
+- **plan**: record 44 issues delivered by merged work (merged_not_recorded drift) (`edd3e0cac`)
+- **derive**: the combined top derives to itself after #3092's fix and five plan pull requests (`706ba20a6`)
+- **plan**: a downstream adopter's 1.2.0 findings are planned (I4778-I4793) (`bb7d7e492`)
+- **derive**: delivery.json carries I4685, observed at a commit on origin (`43f9ddbf8`)
+- **derive**: delivery.json observes master, not the offload's stash commit (`f6d7e5364`)
+- **release**: record v1.2.0 and the metadata it publishes (`d410a2405`)
+- **derive**: the delivery dataset observes a commit on origin, not the offload's throwaway one (`e0542ae58`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.3.0-aarch64-apple-darwin.tar.gz (`480b76fea007`)
+- `macos-x86_64` — majordomus-v1.3.0-x86_64-apple-darwin.tar.gz (`1f0f95cbe8a4`)
+- `linux-x86_64-gnu` — majordomus-v1.3.0-x86_64-unknown-linux-gnu.tar.gz (`cb42ad3933ca`)
+- `linux-x86_64-musl` — majordomus-v1.3.0-x86_64-unknown-linux-musl.tar.gz (`8dc91fe8c06a`)
+- `linux-aarch64-gnu` — majordomus-v1.3.0-aarch64-unknown-linux-gnu.tar.gz (`608e4402f6cc`)
+- `linux-aarch64-musl` — majordomus-v1.3.0-aarch64-unknown-linux-musl.tar.gz (`d8f0df5dd21c`)
+
+
 ## v1.2.0 — 2026-11-22
 
 ### Decisions
@@ -1132,7 +1215,7 @@ Current version: **1.3.0**
 - **ADR-0202** The mesh routes work to an identity, never an address, and selects among proven transports instead of implementing NAT traversal _(proposed)_
 - **ADR-0201** The persistent runtime is the authority; every operator surface, Lumen included, is a client of it _(proposed)_
 - **ADR-0200** Supervision repairs only what is idempotent, owned and verified, and never restarts blindly _(proposed)_
-- **ADR-0199** A hub is a declared host service; a working checkout's server stays a client's child _(proposed)_
+- **ADR-0199** A hub is a declared host service; a working checkout's server stays a client's child _(accepted)_
 - **ADR-0198** Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions _(proposed)_
 - **ADR-0197** The backlog is bounded by a declared bound that every session reads at start, and the bound reports rather than refuses _(proposed)_
 - **ADR-0196** Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own _(proposed)_

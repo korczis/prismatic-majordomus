@@ -1,0 +1,43 @@
+id: I4753
+milestone: a-session-proceeds-through-the-mesh
+title: "Starting work on an issue takes an exclusive mesh claim on that issue, and a second session that starts the same issue is refused with the holder named"
+slug: starting-an-issue-claims-it-exclusively
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Starting work on an issue (`plan start <id>`, or `start` whose `--issue`, branch or scope names an issue) takes an exclusive mesh claim on that issue, and a second session is refused with the holder named."
+why: "Observed on 2026-11-25 in an adopter repository. Two sessions implemented one plan issue in parallel pull requests. One of them began with `start --scope` and never ran `plan start`, so its task claimed only its paths, as an advisory claim that named no issue. The other session's picker saw no claim on the issue and handed it out again. The duplicate was found only after one of the two pull requests had merged, so one session's work was written for nothing. Nothing in the tool's start path can prevent this today: the claim a task takes is advisory by construction, and the plan's own start takes none."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. lib/common.sh:2131-2147 (mj_mesh_task_claim) always claims a task's scope with `--advisory` (:2135) and passes `--issue` only when the caller has one. lib/start.sh:25-26 reads `--issue`, and :173 hands that value, empty when `--issue` was not given, to mj_mesh_task_start_claim (lib/common.sh:2188). So `start` without `--issue` attaches no issue to its claim, and with `--issue` the claim is still advisory, which reports overlaps and refuses nobody. apps/majordomus-cli/src/worktree/state.rs:564 (issue_of) already maps a branch name such as `feature/I1003-graph-kinds` to its issue id, and start does not call it. lib/plan.sh:478-503 (mj_plan_transition, start) checks that the issue is READY and its binding, stamps started_at (:501) and takes no claim at all. finish releases the task's claim by closing its mesh session (lib/finish.sh:147, lib/common.sh:2203-2208). handover --close marks the task handed_over (lib/handover.sh:80-83) and leaves the claim to expire with its session. I3971 (BLOCKED on I3754) will pass over an issue under an exclusive claim whose scope meets the issue's scope, and an advisory claim passes nothing over by its own criterion, so even once it lands it would not have caught this case. I3771 (not built) plans to map an `issue:<id>` scope to the issue's record path, which would give such a claim a key that other claims and the picker can meet; until it lands, a claim on the record path itself is that key."
+desired_state: "Starting an issue, by `plan start <id>` or by a `start` that names it through `--issue`, its branch or its scope, takes one exclusive claim on that issue's key beside the task's advisory path claim. A second session that starts the same issue exits refused and names the holding session and its pull request, if it has one. `plan next` and `plan waves` pass over an issue held this way and say who holds it. finish and handover --close release the claim, and a holder that stops beating loses it as any exclusive claim does."
+scope:
+  - ".ai/repo/project/issues/I4753.yaml"
+  - "lib/common.sh"
+  - "lib/start.sh"
+  - "lib/plan.sh"
+  - "lib/handover.sh"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "docs/MESH.md"
+  - "docs/PLANNING.md"
+  - "test/cases/4753_starting_an_issue_claims_it_exclusively.sh"
+  - "site/content/plan/I4753.md"
+non_scope:
+  - "Mapping a namespaced claim scope such as issue:<id> to a record path: I3771"
+  - "Passing over an issue that sits in an open pull request or under a live branch claim: I3971"
+  - "Passing over delivered work: I3754"
+  - "Making a task's path claim exclusive: the scope claim stays advisory, and only the issue key excludes"
+  - "Inferring an issue from prose in a commit, an intent or a task title"
+depends_on: []
+acceptance_criteria:
+  - "Case 4753: a second session's `plan start <id>`, or its `start --issue <id>`, of an issue another live session has started exits refused, and the refusal names the holding session and the holder's open pull request when the forge observation has one"
+  - "Case 4753: `start` without `--issue` on a branch named `feature/<id>-<slug>` claims that issue exclusively, inferred through the existing issue_of; on a branch that names no issue it claims no issue key and behaves as today"
+  - "Case 4753: the issue claim is released when the task finishes and when it is handed over with `handover --close`, and a third session's `plan start` of the same issue then succeeds"
+  - "Case 4753: `plan next` and `plan waves` pass over an issue under such a claim and name its holder; an expired claim passes nothing over"
+  - "Negative control: with the change reverted, case 4753 finds the second `start --issue` accepted"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4753_starting_an_issue_claims_it_exclusively"
+evidence_required:
+  - "starting_an_issue_claims_it_exclusively"
+serves:
+  - "a-session-proceeds-through-the-mesh#two-sessions-never-share-an-item"
+created_at: 2026-11-25
