@@ -6,23 +6,23 @@
     "version": "1.3.0"
   },
   "registry": {
-    "fingerprint": "9487a659af630b63a8548aa55742cb5421f9e2890de8d2a4887ed9bed3adab29",
+    "fingerprint": "048326c01db03c0649e52e43eb3f334f3205f4dfe44159d1f43ec95d7c337c32",
     "summary": {
-      "total": 4108,
+      "total": 4123,
       "builtin": 233,
-      "declarative": 3875,
+      "declarative": 3890,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3875
+        "resource": 3890
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3885
+        "implemented": 3900
       },
       "mcp_tools": 217,
-      "mcp_resources": 3932,
+      "mcp_resources": 3947,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -28459,7 +28459,7 @@
         "module": "evidence",
         "kind": "command",
         "title": "Record a run that happened",
-        "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
+        "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped. With --verify <name> it reads no report: it runs the verification the effective profile (the policy's profiles.default) declares under that name in verification.commands, and records its exit, duration, the digest of the tree it ran on and the time, which is what an intent criterion citing verify:<name> is judged by; a name the profile does not declare is refused.",
         "input": {
           "name": "EvidenceRecordInput",
           "schema": {
@@ -28518,6 +28518,13 @@
                   "null"
                 ],
                 "description": "Also write the run record to this file."
+              },
+              "verify": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Run the verification the effective profile declares under this name\n(`verification.commands`) and record its exit, duration, tree digest and time — the\nrun an intent criterion citing `verify:<name>` is judged by. Given alone: it reads no\nreport."
               }
             },
             "description": "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, carries into each result what that run measured about its own checkout, and\nmerges it. The reports are optional and may be given together; an absent origin is\n`local`, and an absent ledger is the tracked one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```",
@@ -28588,6 +28595,17 @@
                 "$ref": "#/$defs/EvidenceRunRecord",
                 "description": "The recording as a typed run."
               },
+              "verification": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/EvidenceVerificationRun"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The verification run `verify` asked for, as the ledger now holds it; absent from the\ndocument for a recording of reports."
+              },
               "suite_coverage": {
                 "anyOf": [
                   {
@@ -28609,7 +28627,7 @@
               "ledger",
               "run_record"
             ],
-            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    suite_coverage: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
+            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    verification: None,\n    suite_coverage: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
             "title": "RecordReport",
             "$defs": {
               "EvidenceDropped": {
@@ -29400,6 +29418,69 @@
                   }
                 ],
                 "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              },
+              "EvidenceVerificationRun": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name the profile declares the command under; what `verify:<name>` cites."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The profile that declared it: the policy's `profiles.default`."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "The command as the profile declared it when it ran."
+                  },
+                  "outcome": {
+                    "$ref": "#/$defs/EvidenceOutcome",
+                    "description": "`pass` when the command exited 0, `fail` when it exited otherwise, `error` when it\ncould not be started or was ended by a signal."
+                  },
+                  "exit": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int32",
+                    "description": "The exit code; absent when the command was ended by a signal or never started."
+                  },
+                  "millis": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long it ran, in milliseconds."
+                  },
+                  "tree": {
+                    "type": "string",
+                    "description": "The digest of the tree it ran on (`super::record::tree_digest`), `sha256:<hex>`."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit checked out when it ran."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When it ran, RFC 3339, UTC."
+                  },
+                  "origin": {
+                    "$ref": "#/$defs/EvidenceOrigin",
+                    "description": "Where it ran."
+                  }
+                },
+                "required": [
+                  "name",
+                  "profile",
+                  "command",
+                  "outcome",
+                  "millis",
+                  "tree",
+                  "commit",
+                  "at",
+                  "origin"
+                ],
+                "description": "One run of a verification the repository's effective profile declares under\n`verification.commands` (I3395): which one, the command that ran, how it exited, how long\nit took, the digest of the tree it ran on, and when.\n\nThe digest is what makes the run evidence: an intent criterion citing `verify:<name>` is\ncurrent only while the newest run of that name passed and the tree digest the run\nrecorded is the digest of the tree now (`super::record::tree_digest`). A run at any\nother tree, a failing run, or a run of a command the profile no longer declares, is not.\n\n```\nuse majordomus_cli::evidence::ledger::{Ledger, VerificationRun};\nuse majordomus_cli::evidence::{Origin, Outcome};\n\nlet run = |outcome: Outcome| VerificationRun {\n    name: \"tests\".into(),\n    profile: \"implementation\".into(),\n    command: \"python3 -m pytest -q\".into(),\n    outcome,\n    exit: Some(if outcome == Outcome::Pass { 0 } else { 1 }),\n    millis: 412,\n    tree: \"sha256:0\".into(),\n    commit: \"0\".repeat(40),\n    at: \"2026-10-19T00:00:00Z\".into(),\n    origin: Origin::Local,\n};\nlet mut ledger = Ledger::empty();\nledger.merge_verification(run(Outcome::Pass));\nledger.merge_verification(run(Outcome::Fail));\n// one entry per name: the newest replaces the one before it\nassert_eq!(ledger.verifications.len(), 1);\nassert_eq!(ledger.verification(\"tests\").unwrap().outcome, Outcome::Fail);\nassert!(ledger.verification(\"lint\").is_none());\n```"
               },
               "SuiteCoverage": {
                 "type": "object",
@@ -44991,7 +45072,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -45954,7 +46035,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -46841,7 +46922,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -47884,7 +47965,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -48440,7 +48521,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -49239,7 +49320,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -99256,7 +99337,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1313,
+        "capabilities": 1327,
         "capability_ids": []
       },
       {
@@ -99264,7 +99345,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 221,
+        "capabilities": 222,
         "capability_ids": []
       },
       {
@@ -99964,7 +100045,7 @@
     ]
   },
   "index": {
-    "fingerprint": "11cbe742a2f840f5258227a26e7a36526a93595d2f35a4a0013a1423189b730d",
+    "fingerprint": "4b2334a3f8df805772dde76653920fcd00a3d8165be85ee50c52a99fc234eb3b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -100004,8 +100085,8 @@
       "gap": 6,
       "implementation": 54,
       "intent": 46,
-      "issue": 1313,
-      "knowledge": 221,
+      "issue": 1327,
+      "knowledge": 222,
       "mesh-declaration": 1,
       "milestone": 120,
       "moment": 38,
@@ -102347,7 +102428,7 @@
         "path": ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 3373,
+        "bytes": 8547,
         "tags": [
           "mesh-runtime",
           "chatgpt-project"
@@ -107628,7 +107709,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 148130
+        "bytes": 146575
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -111094,7 +111175,7 @@
         "identity": "lib/skills.sh",
         "path": "lib/skills.sh",
         "source_class": "library",
-        "bytes": 27959
+        "bytes": 28124
       },
       {
         "uri": "majordomus://implementation/lib/start.sh",
@@ -111852,7 +111933,7 @@
         "path": ".ai/repo/project/issues/I0201.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2284
+        "bytes": 3105
       },
       {
         "uri": "majordomus://issue/I0202",
@@ -116329,7 +116410,7 @@
         "path": ".ai/repo/project/issues/I2722.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2127
+        "bytes": 3111
       },
       {
         "uri": "majordomus://issue/I2723",
@@ -116516,7 +116597,7 @@
         "path": ".ai/repo/project/issues/I2749.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5476
+        "bytes": 5922
       },
       {
         "uri": "majordomus://issue/I2750",
@@ -116868,7 +116949,7 @@
         "path": ".ai/repo/project/issues/I2858.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2570
+        "bytes": 3530
       },
       {
         "uri": "majordomus://issue/I2863",
@@ -117308,7 +117389,7 @@
         "path": ".ai/repo/project/issues/I2972.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2001
+        "bytes": 2925
       },
       {
         "uri": "majordomus://issue/I2973",
@@ -117319,7 +117400,7 @@
         "path": ".ai/repo/project/issues/I2973.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2299
+        "bytes": 3275
       },
       {
         "uri": "majordomus://issue/I2974",
@@ -117759,7 +117840,7 @@
         "path": ".ai/repo/project/issues/I3040.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2891
+        "bytes": 3356
       },
       {
         "uri": "majordomus://issue/I3060",
@@ -118859,7 +118940,7 @@
         "path": ".ai/repo/project/issues/I3179.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3394
+        "bytes": 4463
       },
       {
         "uri": "majordomus://issue/I3180",
@@ -120806,7 +120887,7 @@
         "path": ".ai/repo/project/issues/I3395.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2935
+        "bytes": 3185
       },
       {
         "uri": "majordomus://issue/I3396",
@@ -121532,7 +121613,7 @@
         "path": ".ai/repo/project/issues/I3668.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4482
+        "bytes": 5454
       },
       {
         "uri": "majordomus://issue/I3750",
@@ -121587,7 +121668,7 @@
         "path": ".ai/repo/project/issues/I3754.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6202
+        "bytes": 6700
       },
       {
         "uri": "majordomus://issue/I3755",
@@ -121752,7 +121833,7 @@
         "path": ".ai/repo/project/issues/I3769.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5486
+        "bytes": 6478
       },
       {
         "uri": "majordomus://issue/I3770",
@@ -122016,7 +122097,7 @@
         "path": ".ai/repo/project/issues/I3825.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3200
+        "bytes": 3494
       },
       {
         "uri": "majordomus://issue/I3826",
@@ -122027,7 +122108,7 @@
         "path": ".ai/repo/project/issues/I3826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2621
+        "bytes": 4163
       },
       {
         "uri": "majordomus://issue/I3827",
@@ -122269,7 +122350,7 @@
         "path": ".ai/repo/project/issues/I3910.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4338
+        "bytes": 4815
       },
       {
         "uri": "majordomus://issue/I3911",
@@ -122588,7 +122669,7 @@
         "path": ".ai/repo/project/issues/I3949.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3238
+        "bytes": 4382
       },
       {
         "uri": "majordomus://issue/I3950",
@@ -122731,7 +122812,7 @@
         "path": ".ai/repo/project/issues/I3970.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6716
+        "bytes": 7873
       },
       {
         "uri": "majordomus://issue/I3971",
@@ -122852,7 +122933,7 @@
         "path": ".ai/repo/project/issues/I3991.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3220
+        "bytes": 4229
       },
       {
         "uri": "majordomus://issue/I3992",
@@ -123182,7 +123263,7 @@
         "path": ".ai/repo/project/issues/I4226.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1911
+        "bytes": 2844
       },
       {
         "uri": "majordomus://issue/I4227",
@@ -123215,7 +123296,7 @@
         "path": ".ai/repo/project/issues/I4230.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2916
+        "bytes": 3786
       },
       {
         "uri": "majordomus://issue/I4231",
@@ -123226,7 +123307,7 @@
         "path": ".ai/repo/project/issues/I4231.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2592
+        "bytes": 3536
       },
       {
         "uri": "majordomus://issue/I4232",
@@ -123237,7 +123318,7 @@
         "path": ".ai/repo/project/issues/I4232.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2806
+        "bytes": 3815
       },
       {
         "uri": "majordomus://issue/I4235",
@@ -123303,7 +123384,7 @@
         "path": ".ai/repo/project/issues/I4252.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1691
+        "bytes": 2597
       },
       {
         "uri": "majordomus://issue/I4253",
@@ -123347,7 +123428,7 @@
         "path": ".ai/repo/project/issues/I4256.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2191
+        "bytes": 2674
       },
       {
         "uri": "majordomus://issue/I4257",
@@ -123358,7 +123439,7 @@
         "path": ".ai/repo/project/issues/I4257.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1529
+        "bytes": 2432
       },
       {
         "uri": "majordomus://issue/I4258",
@@ -123402,7 +123483,7 @@
         "path": ".ai/repo/project/issues/I4261.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1925
+        "bytes": 2791
       },
       {
         "uri": "majordomus://issue/I4262",
@@ -123413,7 +123494,7 @@
         "path": ".ai/repo/project/issues/I4262.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1767
+        "bytes": 2226
       },
       {
         "uri": "majordomus://issue/I4263",
@@ -123435,7 +123516,7 @@
         "path": ".ai/repo/project/issues/I4264.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1438
+        "bytes": 2320
       },
       {
         "uri": "majordomus://issue/I4265",
@@ -123479,7 +123560,7 @@
         "path": ".ai/repo/project/issues/I4268.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1752
+        "bytes": 2649
       },
       {
         "uri": "majordomus://issue/I4290",
@@ -123512,7 +123593,7 @@
         "path": ".ai/repo/project/issues/I4292.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3369
+        "bytes": 4600
       },
       {
         "uri": "majordomus://issue/I4294",
@@ -123523,7 +123604,7 @@
         "path": ".ai/repo/project/issues/I4294.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3840
+        "bytes": 4885
       },
       {
         "uri": "majordomus://issue/I4296",
@@ -123743,7 +123824,7 @@
         "path": ".ai/repo/project/issues/I4315.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3787
+        "bytes": 4951
       },
       {
         "uri": "majordomus://issue/I4316",
@@ -123765,7 +123846,7 @@
         "path": ".ai/repo/project/issues/I4317.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 8531
+        "bytes": 10329
       },
       {
         "uri": "majordomus://issue/I4318",
@@ -123776,7 +123857,7 @@
         "path": ".ai/repo/project/issues/I4318.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5769
+        "bytes": 6871
       },
       {
         "uri": "majordomus://issue/I4320",
@@ -123941,7 +124022,7 @@
         "path": ".ai/repo/project/issues/I4334.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7230
+        "bytes": 8283
       },
       {
         "uri": "majordomus://issue/I4336",
@@ -123952,7 +124033,7 @@
         "path": ".ai/repo/project/issues/I4336.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7067
+        "bytes": 7424
       },
       {
         "uri": "majordomus://issue/I4337",
@@ -123963,7 +124044,7 @@
         "path": ".ai/repo/project/issues/I4337.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5406
+        "bytes": 6711
       },
       {
         "uri": "majordomus://issue/I4338",
@@ -124073,7 +124154,7 @@
         "path": ".ai/repo/project/issues/I4347.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2828
+        "bytes": 3754
       },
       {
         "uri": "majordomus://issue/I4348",
@@ -124183,7 +124264,7 @@
         "path": ".ai/repo/project/issues/I4357.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7708
+        "bytes": 8940
       },
       {
         "uri": "majordomus://issue/I4358",
@@ -124282,7 +124363,7 @@
         "path": ".ai/repo/project/issues/I4367.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 9804
+        "bytes": 10353
       },
       {
         "uri": "majordomus://issue/I4368",
@@ -124381,7 +124462,7 @@
         "path": ".ai/repo/project/issues/I4377.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4268
+        "bytes": 4682
       },
       {
         "uri": "majordomus://issue/I4380",
@@ -124414,7 +124495,7 @@
         "path": ".ai/repo/project/issues/I4400.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4040
+        "bytes": 4925
       },
       {
         "uri": "majordomus://issue/I4410",
@@ -124854,7 +124935,7 @@
         "path": ".ai/repo/project/issues/I4500.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5170
+        "bytes": 5646
       },
       {
         "uri": "majordomus://issue/I4501",
@@ -124986,7 +125067,7 @@
         "path": ".ai/repo/project/issues/I4512.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4563
+        "bytes": 5754
       },
       {
         "uri": "majordomus://issue/I4513",
@@ -125041,7 +125122,7 @@
         "path": ".ai/repo/project/issues/I4527.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3178
+        "bytes": 4109
       },
       {
         "uri": "majordomus://issue/I4528",
@@ -125052,7 +125133,7 @@
         "path": ".ai/repo/project/issues/I4528.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2483
+        "bytes": 3261
       },
       {
         "uri": "majordomus://issue/I4529",
@@ -125063,7 +125144,7 @@
         "path": ".ai/repo/project/issues/I4529.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3658
+        "bytes": 4481
       },
       {
         "uri": "majordomus://issue/I4530",
@@ -125074,7 +125155,7 @@
         "path": ".ai/repo/project/issues/I4530.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5884
+        "bytes": 6351
       },
       {
         "uri": "majordomus://issue/I4531",
@@ -125118,7 +125199,7 @@
         "path": ".ai/repo/project/issues/I4565.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2260
+        "bytes": 3139
       },
       {
         "uri": "majordomus://issue/I4566",
@@ -125129,7 +125210,7 @@
         "path": ".ai/repo/project/issues/I4566.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1976
+        "bytes": 2862
       },
       {
         "uri": "majordomus://issue/I4567",
@@ -125151,7 +125232,7 @@
         "path": ".ai/repo/project/issues/I4568.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2930
+        "bytes": 3483
       },
       {
         "uri": "majordomus://issue/I4569",
@@ -125162,7 +125243,7 @@
         "path": ".ai/repo/project/issues/I4569.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6855
+        "bytes": 7739
       },
       {
         "uri": "majordomus://issue/I4570",
@@ -125184,7 +125265,7 @@
         "path": ".ai/repo/project/issues/I4571.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2437
+        "bytes": 3458
       },
       {
         "uri": "majordomus://issue/I4572",
@@ -125360,7 +125441,7 @@
         "path": ".ai/repo/project/issues/I4591.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3190
+        "bytes": 4154
       },
       {
         "uri": "majordomus://issue/I4592",
@@ -125371,7 +125452,7 @@
         "path": ".ai/repo/project/issues/I4592.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4357
+        "bytes": 5587
       },
       {
         "uri": "majordomus://issue/I4594",
@@ -125393,7 +125474,7 @@
         "path": ".ai/repo/project/issues/I4595.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4722
+        "bytes": 5720
       },
       {
         "uri": "majordomus://issue/I4596",
@@ -125415,7 +125496,7 @@
         "path": ".ai/repo/project/issues/I4597.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7005
+        "bytes": 7827
       },
       {
         "uri": "majordomus://issue/I4598",
@@ -125426,7 +125507,7 @@
         "path": ".ai/repo/project/issues/I4598.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3563
+        "bytes": 4862
       },
       {
         "uri": "majordomus://issue/I4599",
@@ -125448,7 +125529,7 @@
         "path": ".ai/repo/project/issues/I4600.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3759
+        "bytes": 4890
       },
       {
         "uri": "majordomus://issue/I4602",
@@ -125536,7 +125617,7 @@
         "path": ".ai/repo/project/issues/I4618.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4061
+        "bytes": 5305
       },
       {
         "uri": "majordomus://issue/I4622",
@@ -125558,7 +125639,7 @@
         "path": ".ai/repo/project/issues/I4627.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5678
+        "bytes": 6985
       },
       {
         "uri": "majordomus://issue/I4628",
@@ -125624,7 +125705,7 @@
         "path": ".ai/repo/project/issues/I4665.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5985
+        "bytes": 6886
       },
       {
         "uri": "majordomus://issue/I4668",
@@ -125646,7 +125727,7 @@
         "path": ".ai/repo/project/issues/I4669.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5634
+        "bytes": 6033
       },
       {
         "uri": "majordomus://issue/I4670",
@@ -125671,6 +125752,138 @@
         "bytes": 5930
       },
       {
+        "uri": "majordomus://issue/I4673",
+        "kind": "issue",
+        "identity": "I4673",
+        "title": "Every repository of a fleet trusts the fleet's machines from one list: init and update seed trust.allow and the hubs, and doctor names a repository that drifts from it",
+        "description": "A machine's node key is per machine and shared by every repository and worktree on it, so the trusted keys and the hubs are a fact of the fleet, not of one repository. `majordomus init` and `majordomus update` seed a repository's mesh declaration (trust.allow and the rendezvous hubs) from one fleet list, and doctor names a repository whose declaration drifts from that list, with the keys and hubs it lacks and the command that brings it level. A repository may still trust less than the fleet by declaring so; an undeclared difference is the drift doctor reports.",
+        "path": ".ai/repo/project/issues/I4673.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4371
+      },
+      {
+        "uri": "majordomus://issue/I4674",
+        "kind": "issue",
+        "identity": "I4674",
+        "title": "A long-running job is a mesh record with its machine, process group, budget, heartbeat and stop handle; jobs consult one machine guard; an owner's stop order reaches them",
+        "description": "`majordomus job run --name <n> --budget procs=N[,hosts=...] -- <argv>` starts a job in its own session (setsid), exports MAJORDOMUS_OWNER_JOB, beats, and watches for a stop order. `job register --pid` adopts a job that is already running, `job beat` beats for it, and `job list` lists every job on every node. `job stop <key|glob> [--host] [--grace]` signals the recorded process group, never a name match, and reaches remote children through the declared ssh host. `job admit <key> --want N` asks the machine guard for N more processes. The mesh journal gains the events job_registered, job_beat, job_ended and job_stop_ordered, which need no path claim and are shown in mesh state and mesh who. `machine guard [--json]` reads load per core, swap used and free disk against the policy's machine.guard (load_per_core_max, swap_used_max_pct, free_floor_gib: 35); doctor reports it, and I4006 and I4355 consume it.",
+        "path": ".ai/repo/project/issues/I4674.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5260
+      },
+      {
+        "uri": "majordomus://issue/I4675",
+        "kind": "issue",
+        "identity": "I4675",
+        "title": "`majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready",
+        "description": "The command-line path of `majordomus mesh allocate` reaches the same plan.allocate capability that a POST to /api/v1/plan/allocate reaches, and answers with the same reservation. A transient refusal from the socket (EAGAIN, os error 35) is retried within a bound and, if it persists, reported with the address the command dialled, the address the server reports, and the HTTP route that works.",
+        "path": ".ai/repo/project/issues/I4675.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3569
+      },
+      {
+        "uri": "majordomus://issue/I4676",
+        "kind": "issue",
+        "identity": "I4676",
+        "title": "A quoted YAML scalar followed by a trailing comment loads without its quotes",
+        "description": "The YAML subset parser strips the quotes of a double- or single-quoted scalar that is followed by whitespace and a trailing comment, as YAML 1.2 reads it, so `- \\\"<key>\\\"  # <note>` loads as the key and not as the key wrapped in quotes.",
+        "path": ".ai/repo/project/issues/I4676.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2560
+      },
+      {
+        "uri": "majordomus://issue/I4677",
+        "kind": "issue",
+        "identity": "I4677",
+        "title": "A mesh declaration that exists but fails its schema fails mesh doctor and names the diagnostic, instead of reading as absent",
+        "description": "mesh doctor tells a repository with no mesh declaration from one whose declaration is present but fails majordomus.mesh-declaration/v1. The second is a FAIL of the declaration check that names the file and the schema diagnostic, and the verdict is not 'every check holds'. The default posture (mesh off) is reported only when no declaration exists.",
+        "path": ".ai/repo/project/issues/I4677.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2910
+      },
+      {
+        "uri": "majordomus://issue/I4678",
+        "kind": "issue",
+        "identity": "I4678",
+        "title": "The tailscale provider finds the macOS app's bundled CLI and probes again on every interval, not only at server start",
+        "description": "On macOS the tailscale provider also probes the CLI inside the Tailscale app bundle, and runs it by exec rather than through a symlink. The provider probes again on each discovery interval, so a tailnet that comes up after the server started is found without a restart.",
+        "path": ".ai/repo/project/issues/I4678.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2199
+      },
+      {
+        "uri": "majordomus://issue/I4679",
+        "kind": "issue",
+        "identity": "I4679",
+        "title": "plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn>",
+        "description": "plan.allocate reads the repository's declared issue-id pattern and reserves the next free id for the prefix it is asked for (letter plus digits, as in K247 or G030), surveying the same sources it surveys for I<nnnn>. A repository that declares no pattern keeps I<nnnn>.",
+        "path": ".ai/repo/project/issues/I4679.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2560
+      },
+      {
+        "uri": "majordomus://issue/I4680",
+        "kind": "issue",
+        "identity": "I4680",
+        "title": "The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it",
+        "description": "finish --check's no-stale-topology question, as the pre-push hook asks it, refuses a push only over holdings that belong to the pushing session or its branch, and reports the others without refusing. One command rescues a named holding (a branch, a dirty worktree, a stash) into a local refs/rescue/ ref and a verified bundle, then removes it from the disk, without pushing it anywhere.",
+        "path": ".ai/repo/project/issues/I4680.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3405
+      },
+      {
+        "uri": "majordomus://issue/I4681",
+        "kind": "issue",
+        "identity": "I4681",
+        "title": "finish --note given text, not a readable file, says that --note takes a file and prints the usage",
+        "description": "When the argument of `majordomus finish --note` is not a readable file, finish refuses before judging any doctrine, says that --note takes the path of a file holding the completion note, and prints the usage line, instead of reporting only an unmet majordomus.note-integrity.",
+        "path": ".ai/repo/project/issues/I4681.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2347
+      },
+      {
+        "uri": "majordomus://issue/I4682",
+        "kind": "issue",
+        "identity": "I4682",
+        "title": "An issue marked DONE on the claim that a named function or path does the work is reported when nothing in product code refers to that name",
+        "description": "When an issue's completion or evidence names a mechanism (a function, a module path) as what delivers the work, a check looks the name up in the product code and reports a DONE issue whose named mechanism is defined but referenced from nowhere else, naming the issue, the name and the one place it occurs.",
+        "path": ".ai/repo/project/issues/I4682.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2353
+      },
+      {
+        "uri": "majordomus://issue/I4683",
+        "kind": "issue",
+        "identity": "I4683",
+        "title": "An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries",
+        "description": "The macOS application firewall admits a program by its binary path, and the installer puts each version under its own versioned path. The hub's admission survives an upgrade: either the firewall admits a stable launcher path once, or the installer checks the admission and names the firewall step that restores it. `mesh firewall apply` also removes the entries it left for earlier versions and for temporary test binaries.",
+        "path": ".ai/repo/project/issues/I4683.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2898
+      },
+      {
+        "uri": "majordomus://issue/I4684",
+        "kind": "issue",
+        "identity": "I4684",
+        "title": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order",
+        "description": "worktree create bases a new branch on the trunk of the remote the trunk branch tracks (branch.<trunk>.remote), and refuses, naming the remotes, when several remotes' HEADs name the trunk and disagree.",
+        "path": ".ai/repo/project/issues/I4684.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4039
+      },
+      {
         "uri": "majordomus://issue/I4685",
         "kind": "issue",
         "identity": "I4685",
@@ -125679,7 +125892,7 @@
         "path": ".ai/repo/project/issues/I4685.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3298
+        "bytes": 4172
       },
       {
         "uri": "majordomus://issue/I4712",
@@ -125834,6 +126047,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3722
+      },
+      {
+        "uri": "majordomus://issue/I4753",
+        "kind": "issue",
+        "identity": "I4753",
+        "title": "Starting work on an issue takes an exclusive mesh claim on that issue, and a second session that starts the same issue is refused with the holder named",
+        "description": "Starting work on an issue (`plan start <id>`, or `start` whose `--issue`, branch or scope names an issue) takes an exclusive mesh claim on that issue, and a second session is refused with the holder named.",
+        "path": ".ai/repo/project/issues/I4753.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5206
+      },
+      {
+        "uri": "majordomus://issue/I4754",
+        "kind": "issue",
+        "identity": "I4754",
+        "title": "Overlapping pull requests of different sessions get a proposed landing order, sent to each owning session for agreement, and the lander keeps an agreed order",
+        "description": "When open PRs held by different sessions overlap (the same files, and where measurable the same functions), `majordomus prs` proposes a landing order with its reasons and sends each owning session a mesh review request naming the order and the overlap; the lander refuses to land out of an agreed order.",
+        "path": ".ai/repo/project/issues/I4754.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5623
       },
       {
         "uri": "majordomus://issue/I4778",
@@ -126537,6 +126772,22 @@
         "tags": [
           "enforcement-evidence",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/fabric-starts-with-p00-s00-s01",
+        "kind": "knowledge",
+        "identity": "fabric-starts-with-p00-s00-s01",
+        "title": "Owner decisions 2026-11-24/25: Majordomus Fabric starts with P00, S00 and S01; ADR 0199 is amended and accepted (G0); #3108 is held; an unattended follower requires provenance; one OS user locally, encrypted between hosts; I3184 is unblocked",
+        "description": "When a session asks whether the Majordomus Fabric program (user-scoped host agent, local IPC, host-to-host mesh multiplexing, user services, managed update) has been ordered, where it starts, which ADR carries it, what happens to PR #3108 or #3110, what Fabric's trust boundary is, whether gate G0 is passed, or whether I3184 may start",
+        "path": ".ai/repo/knowledge/curated/fabric-starts-with-p00-s00-s01.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 9314,
+        "tags": [
+          "decision",
+          "fabric",
+          "owner-answer"
         ]
       },
       {
@@ -139157,7 +139408,7 @@
         "identity": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "source_class": "case",
-        "bytes": 8426
+        "bytes": 11614
       },
       {
         "uri": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
@@ -139925,7 +140176,7 @@
         "identity": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
         "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
         "source_class": "case",
-        "bytes": 10082
+        "bytes": 10341
       },
       {
         "uri": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
@@ -142754,7 +143005,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1313
+      "objects": 1327
     },
     {
       "name": "knowledge",
@@ -142764,7 +143015,7 @@
       "identity": [
         "id"
       ],
-      "objects": 221
+      "objects": 222
     },
     {
       "name": "mesh-declaration",
@@ -169295,6 +169546,18 @@
                 "positional": false,
                 "help": "Also write the run record to this file",
                 "value_name": "RUN_RECORD",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "verify",
+                "long": "verify",
+                "positional": false,
+                "help": "Run the verification the effective profile declares under this name (verification.commands) and record it; an intent criterion cites it as verify:NAME",
+                "value_name": "NAME",
                 "takes_value": true,
                 "required": false,
                 "global": false,
