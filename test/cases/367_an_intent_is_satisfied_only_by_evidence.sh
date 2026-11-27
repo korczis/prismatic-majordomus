@@ -172,7 +172,7 @@ same "an unresolved reference" "unresolved" "$(state)"
 #     recorded passing run at this tree, stale once the tree changes, failing after a failing
 #     run — with no test under test/cases/ anywhere in the repository.
 mj_runs python3 || { echo "    $(mj_runs_why python3)"; exit 1; }
-F="$M/foreign"; mkdir -p "$F"; cd "$F"
+F="$M/foreign"; mkdir -p "$F"; cd "$F" || exit 2
 git init -q . && git config user.email t@example.com && git config user.name t
 "$MJ" init >/dev/null
 mkdir -p tests .ai/repo/project/milestones .ai/repo/project/intents
