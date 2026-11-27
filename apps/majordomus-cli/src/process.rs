@@ -122,8 +122,10 @@ pub(crate) struct Bounded {
 /// The program leads a group of its own ([`spawn_group`]). At the bound the group is ended
 /// and the child reaped. A program that exits but leaves a member of its group holding a
 /// pipe is given what is left of the bound for that pipe to close, and then its group is
-/// ended too, so no reader outlives the bound. A wait that cannot say whether the program
-/// has exited is treated as the bound. Only a program that cannot be started is an error.
+/// ended too, so no reader outlives the bound. A pipe still held [`GRACE`] after that, by a
+/// process that left the group, is abandoned to it: the run answers by the bound plus the
+/// grace, whatever its program left behind. A wait that cannot say whether the program has
+/// exited is treated as the bound. Only a program that cannot be started is an error.
 pub(crate) fn run_bounded(
     cmd: &mut Command,
     limit: Duration,
@@ -147,8 +149,9 @@ pub(crate) fn run_bounded(
             }
         }
     };
-    let (stdout, out_open) = drained(out, deadline, &mut child);
-    let (stderr, err_open) = drained(err, deadline, &mut child);
+    let mut grace = None;
+    let (stdout, out_open) = drained(out, deadline, &mut grace, &mut child);
+    let (stderr, err_open) = drained(err, deadline, &mut grace, &mut child);
     if out_open || err_open {
         status = None;
     }
@@ -170,17 +173,35 @@ fn drain(mut pipe: impl Read + Send + 'static) -> mpsc::Receiver<Vec<u8>> {
     rx
 }
 
+/// How long a pipe is given to reach its end once the bound has ended the group that held
+/// it. Ending the group closes every end its members held at once; one still open past this
+/// is held by a process that left the group (`setsid`, a group of its own), which no signal to
+/// the group reaches, and its reader is abandoned.
+const GRACE: Duration = Duration::from_secs(1);
+
 /// What a drain read, waited for until `deadline`. Past it the group `child` leads is ended,
-/// which closes the pipe its remaining members held, and the drain then reaches its end; the
-/// flag says the pipe was still open at the deadline. A pipe still open means a member of the
-/// group lives, so the group's id still names this group when it is signalled.
-fn drained(rx: mpsc::Receiver<Vec<u8>>, deadline: Instant, child: &mut Child) -> (Vec<u8>, bool) {
+/// once, and `grace` records until when the pipes are then waited for ([`GRACE`]): the
+/// remaining members' ends close and the drain reaches its end, or, when a process outside
+/// the group still holds the pipe, the reader is left to it and nothing is answered for that
+/// pipe. The flag says the pipe was still open at the deadline. A pipe still open means a
+/// member of the group may live, so the group's id still names this group when it is
+/// signalled.
+fn drained(
+    rx: mpsc::Receiver<Vec<u8>>,
+    deadline: Instant,
+    grace: &mut Option<Instant>,
+    child: &mut Child,
+) -> (Vec<u8>, bool) {
     let left = deadline.saturating_duration_since(Instant::now());
     if let Ok(bytes) = rx.recv_timeout(left) {
         return (bytes, false);
     }
-    kill_group(child);
-    (rx.recv().unwrap_or_default(), true)
+    let until = *grace.get_or_insert_with(|| {
+        kill_group(child);
+        Instant::now() + GRACE
+    });
+    let left = until.saturating_duration_since(Instant::now());
+    (rx.recv_timeout(left).unwrap_or_default(), true)
 }
 
 /// End every group this process leads and still holds a [`Group`] for. Async-signal-safe:
@@ -303,9 +324,15 @@ mod groups {
     pub fn kill_all() {}
 }
 
-/// This boot of this machine, as the system names it: Linux's `boot_id`, the time macOS
-/// booted at, `None` where neither is there. A lock written under another boot was written
-/// by a process that cannot be running now, whatever its pid has since come to name.
+/// This boot of this machine, as the system names it: Linux's `boot_id`, macOS's
+/// `kern.bootsessionuuid`, `None` where neither is there. A lock written under another boot
+/// was written by a process that cannot be running now, whatever its pid has since come to
+/// name.
+///
+/// Both names are drawn once per boot and never change while it lasts. macOS's
+/// `kern.boottime`, which this once read, does not hold still: XNU recomputes it whenever the
+/// wall clock is stepped (an NTP correction, a wake from sleep), so a lock written before the
+/// step read as written in another boot, and a live holder's lock was taken from it.
 pub(crate) fn boot_id() -> Option<String> {
     #[cfg(target_os = "linux")]
     {
@@ -316,23 +343,23 @@ pub(crate) fn boot_id() -> Option<String> {
     }
     #[cfg(target_os = "macos")]
     {
-        let mut tv = libc::timeval {
-            tv_sec: 0,
-            tv_usec: 0,
-        };
-        let mut len = std::mem::size_of::<libc::timeval>();
-        // SAFETY: the name is a NUL-terminated literal; `tv` is a timeval of the size passed
-        // in `len`, which is what kern.boottime answers with; no new value is set.
+        // a UUID is 36 bytes and its NUL one more; the rest is room the kernel never needs
+        let mut buf = [0u8; 64];
+        let mut len = buf.len();
+        // SAFETY: the name is a NUL-terminated literal; `buf` is writable for the `len` bytes
+        // passed, and sysctl writes no more than that; no new value is set.
         let rc = unsafe {
             libc::sysctlbyname(
-                c"kern.boottime".as_ptr(),
-                (&mut tv as *mut libc::timeval).cast(),
+                c"kern.bootsessionuuid".as_ptr(),
+                buf.as_mut_ptr().cast(),
                 &mut len,
                 std::ptr::null_mut(),
                 0,
             )
         };
-        (rc == 0 && tv.tv_sec > 0).then(|| format!("{}.{:06}", tv.tv_sec, tv.tv_usec))
+        let answered = buf.get(..len).filter(|_| rc == 0)?;
+        let text = std::ffi::CStr::from_bytes_until_nul(answered).ok()?;
+        Some(text.to_str().ok()?.trim().to_string()).filter(|s| !s.is_empty())
     }
     #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     {
@@ -620,6 +647,65 @@ mod tests {
         );
     }
 
+    /// The variable that makes a run of this test binary the program below that leaves a
+    /// process outside its group holding stdout.
+    #[cfg(unix)]
+    const ESCAPER_CHILD: &str = "MAJORDOMUS_PROCESS_TEST_ESCAPER";
+
+    /// A program that leaves a process holding its stdout outside its group — what `setsid`
+    /// does, which no signal to the group reaches — is answered within its bound and the
+    /// grace, not held until that process lets go. Here the program is this test binary run
+    /// again, which starts a `sleep` in a process group of its own on the inherited stdout,
+    /// records its pid, and waits.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_abandons_a_pipe_held_outside_its_group() {
+        use std::os::unix::process::CommandExt;
+        if let Some(pids) = std::env::var_os(ESCAPER_CHILD) {
+            let mut escaper = Command::new("sleep")
+                .arg("30")
+                .process_group(0)
+                .stdin(Stdio::null())
+                .spawn()
+                .expect("sleep starts");
+            std::fs::write(pids, escaper.id().to_string()).unwrap();
+            // held here until the bound ends this program; the escaper lives on past it
+            let _ = escaper.wait();
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let mut cmd = Command::new(std::env::current_exe().unwrap());
+        cmd.args([
+            "--exact",
+            "process::tests::a_bounded_run_abandons_a_pipe_held_outside_its_group",
+            "--nocapture",
+            "--test-threads",
+            "1",
+        ])
+        .env(ESCAPER_CHILD, &pids);
+        let limit = Duration::from_secs(2);
+        let started = Instant::now();
+        let run = run_bounded(&mut cmd, limit, Duration::from_millis(10)).expect("it runs");
+        let took = started.elapsed();
+        let escaper = sleeper(&pids);
+        // SAFETY: ending the one process this test left outside every group it can signal
+        unsafe { libc::kill(escaper as libc::pid_t, libc::SIGKILL) };
+        assert!(
+            took < limit + GRACE + Duration::from_secs(2),
+            "the reader was held by a process outside the group: {took:?}"
+        );
+        assert!(
+            took >= limit,
+            "it was ended at its bound, not before: {took:?}"
+        );
+        assert!(run.status.is_none(), "a pipe still held is not an answer");
+        assert!(
+            gone_soon(escaper),
+            "the escaped sleeper {escaper} was ended"
+        );
+    }
+
     /// A program that cannot be started is the run's error.
     #[test]
     fn a_bounded_run_of_a_program_that_cannot_start_is_its_error() {
@@ -720,6 +806,21 @@ mod tests {
         let boot = boot_id().expect("the system names its boot");
         assert!(!boot.is_empty());
         assert_eq!(boot_id().as_deref(), Some(boot.as_str()));
+    }
+
+    /// On macOS the boot is named by `kern.bootsessionuuid`, which holds still while the
+    /// clock steps, and not by `kern.boottime`, which does not.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn a_mac_names_its_boot_by_the_boot_session_uuid() {
+        let out = Command::new("sysctl")
+            .args(["-n", "kern.bootsessionuuid"])
+            .output()
+            .expect("sysctl runs");
+        assert!(out.status.success(), "{out:?}");
+        let uuid = String::from_utf8(out.stdout).expect("a UUID is text");
+        assert_eq!(boot_id().as_deref(), Some(uuid.trim()));
+        assert_eq!(uuid.trim().len(), 36, "{uuid:?} is a UUID");
     }
 
     /// The variable that makes a run of this test binary the child process below.
