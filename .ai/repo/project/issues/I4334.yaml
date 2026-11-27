@@ -46,4 +46,16 @@ evidence_required:
   - suite
 risk: "The signals read markers in text, not a rendered page: a shell assembled at run time from components the profile does not name reads as missing. The remedy is an exemption with its reason under ui.exempt, which keeps every exception visible, or the layout's shape added to the profile; a profile that grows too many alternatives would stop meaning anything, so additions go through the profile and its tests."
 created_at: 2026-10-28
-updated_at: 2026-10-29
+updated_at: 2026-11-26T14:31:40Z
+started_at: 2026-11-26T14:29:52Z
+started_event: sha256:302230bd9ceff6f95bfff3d43920f8e45ba3e5cb03e89c2f8a66dc44cb5535b3
+completed_at: 2026-11-26T14:31:40Z
+completed_event: sha256:3765174d45bbe64f8a5dc061079be28bbab0c345d2e805f96fb9ab8c630e28ed
+evidence:
+  - covers: "suite"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4334_the_ui_kit_is_checked_by_one_capability"
+    result: "delivered by 4346f610652 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 4334_the_ui_kit_is_checked_by_one_capability ok in suite-shard (3) job 138971458403; design::kit 68 and design::licence 38 lib tests ok 0 failed (rust (2) job 138952668919); tests/cli_examples.rs 3 passed (rust (2)), tests/cli_docs.rs 16 passed (rust (3) job 138952669033)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:31:03Z

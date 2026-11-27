@@ -32,4 +32,16 @@ evidence_required:
   - test
 risk: "A future hero figure that links a page declaring figures must name one of them, so adding a data-figure to a page the strip links obliges the homepage to name it; that is the intent, and the finding says which figures the target shows. A data-figure placed on the homepage outside the strip owes a data-figure-href, and one the check's element pattern cannot read fails as uncompared rather than passing."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-26T14:29:14Z
+started_at: 2026-11-26T14:28:17Z
+started_event: sha256:747a57f9d2ba7793cbd0b05d9fbdb36be76c4976b6fd525a1df636a43996a73a
+completed_at: 2026-11-26T14:29:14Z
+completed_event: sha256:0b6f7930498f5fa45bd23a5b83e01ca16ed200e288cb3d94c3a2717fd25c557a
+evidence:
+  - covers: "test"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4318_the_homepage_rule_figure_agrees_with_its_link 333_homepage_narrative"
+    result: "delivered by bff63bff21b on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 4318_the_homepage_rule_figure_agrees_with_its_link ok in suite-shard (1) job 138971458450; 333_homepage_narrative ok in suite-shard (3) job 138971458403; site job 138970179875: homepage-check 'OK figures 3 homepage figure(s) read what the page they link shows: rules-blocking 43 = /doctrines/'"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:28:55Z
