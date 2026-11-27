@@ -154,3 +154,40 @@ fn a_host_lists_its_runtimes_from_outside_every_repository() {
     );
     drop(server);
 }
+
+/// The host index (`majordomus_cli::lease::host`) is a cache of roots and nothing else: a
+/// root is added once however often its server publishes, a root whose checkout is gone is
+/// dropped at the next write, a line that is no absolute path is not a root, and a reader of
+/// an absent index is given an empty cache rather than an error.
+#[test]
+fn the_host_index_holds_each_root_once_and_an_absent_one_is_empty() {
+    use majordomus_cli::lease::host::{read_index, remember_at, INDEX_FILE};
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir.path().join("majordomus").join(INDEX_FILE);
+    assert_eq!(
+        read_index(&index).unwrap(),
+        Vec::<std::path::PathBuf>::new()
+    );
+
+    let (one, two, gone) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let gone_path = gone.path().to_path_buf();
+    assert!(
+        remember_at(&index, one.path()).unwrap(),
+        "a new root is written"
+    );
+    assert!(
+        !remember_at(&index, one.path()).unwrap(),
+        "a known root is not"
+    );
+    assert!(remember_at(&index, &gone_path).unwrap());
+    drop(gone);
+    assert!(remember_at(&index, two.path()).unwrap());
+    let mut text = std::fs::read_to_string(&index).unwrap();
+    text.push_str("relative/path\n\n");
+    std::fs::write(&index, text).unwrap();
+    assert_eq!(read_index(&index).unwrap(), vec![one.path(), two.path()]);
+}

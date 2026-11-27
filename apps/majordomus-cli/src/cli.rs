@@ -3605,9 +3605,10 @@ pub enum DriftGateArg {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, OutputFormat};
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, RuntimesArgs};
 /// let cli = Cli::try_parse_from(["majordomus", "runtimes", "--host", "--format", "json"]).unwrap();
 /// let Command::Runtimes(args) = cli.command else { panic!("runtimes") };
+/// let args: RuntimesArgs = args;
 /// assert!(args.host && args.format == OutputFormat::Json);
 /// // the scope is said, so that a later scope is an addition and not a change of meaning
 /// assert!(Cli::try_parse_from(["majordomus", "runtimes"]).is_err());

@@ -1440,6 +1440,20 @@ pub fn port_of(url: &str) -> Option<u16> {
 /// machine, each checkout then answered by its own lease. Needs no checkout to be asked
 /// from and no server to answer: the command line reads it itself, and any running server
 /// answers the same reading over its API.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::host_runtimes;
+/// let state = tempfile::tempdir().unwrap();
+/// // this doctest is its own process: an empty state directory, so no index at all
+/// std::env::set_var("XDG_STATE_HOME", state.path());
+/// let host = host_runtimes();
+/// assert_eq!(host.index.entries, 0);
+/// assert_eq!(host.version, majordomus_cli::VERSION);
+/// // a live row is a server that answered, never one only an index or a process named
+/// assert!(host.runtimes.iter().filter(|r| r.live).all(|r| r.lease.is_some()));
+/// // and the reader wrote nothing, not even the index it would read
+/// assert!(std::fs::read_dir(state.path()).unwrap().next().is_none());
+/// ```
 pub fn host_runtimes() -> HostRuntimes {
     let node = crate::mesh::identity::default_identity_path()
         .and_then(|path| crate::mesh::identity::node_id_at(&path))
@@ -1454,6 +1468,18 @@ pub fn host_runtimes() -> HostRuntimes {
 
 /// [`host_runtimes`] from an index path, a reading of the process table and a node id
 /// already in hand, asking `version_of` an executable's version: the seam the tests drive.
+/// A process table that could not be read is a reason in the answer, not an empty host.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::host_runtimes_from;
+/// let host = host_runtimes_from(None, Ok(Vec::new()), Some("n1".into()), |_| None);
+/// assert!(host.runtimes.is_empty() && host.process_table.read);
+/// assert_eq!(host.node.as_deref(), Some("n1"));
+///
+/// let blind = host_runtimes_from(None, Err("ps could not be run".into()), None, |_| None);
+/// assert!(!blind.process_table.read);
+/// assert_eq!(blind.process_table.problem.as_deref(), Some("ps could not be run"));
+/// ```
 pub fn host_runtimes_from(
     index_path: Option<PathBuf>,
     table: Result<Vec<HostProcess>, String>,

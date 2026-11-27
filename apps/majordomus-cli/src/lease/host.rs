@@ -157,6 +157,21 @@ pub fn remember_at(path: &Path, root: &Path) -> io::Result<bool> {
 /// Add `root` to this user's index, as a server does once it has published its lease. Never
 /// fails the caller: a server that cannot write the cache is still found by the process
 /// table, so the reason goes to the log at debug level and nowhere else.
+///
+/// ```
+/// use majordomus_cli::lease::host::{index_path, read_index, remember};
+/// let state = tempfile::tempdir().unwrap();
+/// let (one, two) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+/// // this doctest is its own process: the state directory is the temporary one
+/// std::env::set_var("XDG_STATE_HOME", state.path());
+/// let index = index_path().unwrap();
+/// assert!(index.starts_with(state.path()));
+/// remember(one.path());
+/// remember(one.path());
+/// remember(two.path());
+/// // each root once, in the order the servers added themselves
+/// assert_eq!(read_index(&index).unwrap(), vec![one.path(), two.path()]);
+/// ```
 pub fn remember(root: &Path) {
     remember_in(index_path(), root);
 }
@@ -193,7 +208,19 @@ pub enum Subcommand {
 }
 
 /// A `majordomus serve` or `majordomus mcp` process of this machine, as the process table
-/// shows it.
+/// shows it. Only a Majordomus executable running `serve`, or `mcp` serving, is one: any
+/// other command line is not a row.
+///
+/// ```
+/// use majordomus_cli::lease::host::{server_of, HostProcess, Subcommand};
+/// use std::path::PathBuf;
+/// let p: HostProcess =
+///     server_of(42, &["/opt/bin/majordomus", "serve", "--repo", "/srv/one"]).unwrap();
+/// assert_eq!((p.pid, p.subcommand), (42, Subcommand::Serve));
+/// assert_eq!(p.repo, Some(PathBuf::from("/srv/one")));
+/// assert!(p.cwd.is_none(), "the process table does not say where a process works");
+/// assert!(server_of(43, &["/usr/bin/vim", "serve"]).is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HostProcess {
     /// The process id.
