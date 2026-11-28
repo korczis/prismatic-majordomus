@@ -82,6 +82,7 @@ mj_cmd_doctor() {
   mj_report_environment
   mj_report_reasoning
   mj_report_layout
+  mj_report_campaigns
   mj_fleet_report_licence
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
@@ -678,6 +679,32 @@ mj_report_layout() {
       while IFS="$(printf '\t')" read -r path contract excludes reason; do
         mj_fail layout "$path" "violates $contract: excludes $excludes; $reason" "majordomus layout check"
       done
+  fi
+  return 0
+}
+
+# The prompt packs staged in the primary checkout and never kept (ADR 0236, I4715): one WARN
+# naming every pack staged past the policy's campaigns.staged_max_age_days, an INFO otherwise.
+# A pack in the staging place is a brief one disk holds; WARN, because keeping it is the
+# owner's act and no gate of this tree can make it. Never a FAIL: a clone has no staged packs.
+mj_report_campaigns() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share report
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ]; then
+    mj_info campaigns "-" "the executable is not built, so the staged prompt packs are not listed here (majordomus campaigns staged)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  report="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+               "$bin" campaigns staged --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  if [ -z "$report" ] || [ "$(printf '%s' "$report" | jq -r '.reason == null')" != true ]; then
+    mj_info campaigns "-" "the staging places could not be read: $(printf '%s' "$report" | jq -r '.reason // "no answer"' 2>/dev/null) (majordomus campaigns staged)"
+  elif [ "$(printf '%s' "$report" | jq -r '.stale')" -gt 0 ]; then
+    mj_warn campaigns "tmp/owner-packs" "$(printf '%s' "$report" | jq -r '"\(.stale) prompt pack(s) staged past \(.stale_after_days) day(s) and never kept under campaigns/: " + ([.packs[] | select(.stale) | "\(.place)/\(.name)"] | join(", "))')" "majordomus campaigns staged"
+  else
+    mj_ok campaigns "-" "$(printf '%s' "$report" | jq -r '"campaigns staged: \(.packs | length) pack(s) in the staging places, none staged past " + (if .stale_after_days == null then "a bound (none declared)" else "\(.stale_after_days) day(s)" end)')"
   fi
   return 0
 }

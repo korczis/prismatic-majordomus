@@ -15,6 +15,9 @@ scope:
   - "lib/context.sh"
   - ".ai/repo/policy.yaml"
   - "docs/OWNER_PACKS.md"
+  - "share/schemas/majordomus/policy"
+  - "test/cases/4664_a_staged_pack_is_listed_with_its_state.sh"
+  - ".ai/repo/project/issues/I4715.yaml"
 non_scope:
   - "Copying a pack into campaigns/ (I3169)"
   - "Publishing staged packs anywhere"
@@ -28,9 +31,12 @@ acceptance_criteria:
   - "A pack kept with the same bytes reads kept; with a staged file changed afterwards, diverged; kept and cited by a record, planned; named in campaigns-unplanned.txt, unplanned"
   - "A pack staged longer than the policy's bound is a WARN of doctor and a line of context; under the bound it is neither"
   - "A missing staging place is an empty list with the reason, never an error"
-  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053)"
+  - "Case 4664 (test/cases/4664_a_staged_pack_is_listed_with_its_state.sh) was reserved through plan.allocate (id:case/4664) on 2026-11-24 before the file was written (ADR 0053)"
 validation:
+  - "bash test/run.sh 4664_a_staged_pack_is_listed_with_its_state"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib campaigns"
   - "majordomus plan validate"
 evidence_required:
   - "a_staged_pack_is_listed_with_its_state"
 created_at: 2026-11-24
+updated_at: 2026-11-24

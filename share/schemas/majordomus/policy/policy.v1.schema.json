@@ -571,6 +571,18 @@
         }
       }
     },
+    "campaigns": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Prompt packs staged before they are kept (ADR 0236, I4715): how long one may stay in the primary checkout's git-ignored tmp/owner-packs/ before majordomus context and doctor report it. Absent judges no staged pack stale.",
+      "properties": {
+        "staged_max_age_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A pack staged and not kept under campaigns/ for this many whole days, by its newest file, is reported by majordomus context and doctor (majordomus campaigns staged)."
+        }
+      }
+    },
     "server": {
       "type": "object",
       "additionalProperties": false,

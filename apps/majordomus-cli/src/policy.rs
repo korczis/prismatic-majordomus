@@ -182,6 +182,26 @@ pub struct Policy {
     /// (ADR 0157, I3952). Absent keeps the executable's default.
     #[serde(default)]
     pub build_cache: BuildCachePolicy,
+    /// `campaigns:` — how long a prompt pack may stay staged before it is reported (ADR 0236,
+    /// I4715). Absent judges no staged pack stale.
+    #[serde(default)]
+    pub campaigns: CampaignsPolicy,
+}
+
+/// `campaigns:` — the bound on a prompt pack left in the staging place (ADR 0236).
+///
+/// ```
+/// use majordomus_cli::policy::CampaignsPolicy;
+/// assert_eq!(CampaignsPolicy::default().staged_max_age_days, None, "absent is no bound");
+/// let p: CampaignsPolicy = serde_json::from_str(r#"{"staged_max_age_days": 7}"#).unwrap();
+/// assert_eq!(p.staged_max_age_days, Some(7));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct CampaignsPolicy {
+    /// `campaigns.staged_max_age_days:` — a pack staged and not kept for this many whole days
+    /// is reported by `majordomus context` and `doctor`.
+    #[serde(default)]
+    pub staged_max_age_days: Option<u64>,
 }
 
 /// `build_cache:` — what the machine-wide archive level of `mesh build-cache ensure` may hold.

@@ -36,6 +36,7 @@ pub(crate) mod blackboard;
 pub(crate) mod board;
 pub(crate) mod brief;
 pub(crate) mod cache_provision;
+pub mod campaigns;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
@@ -219,6 +220,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         session_domain,
         shell,
         layout,
+        campaigns,
         pack,
         perf,
         plan,

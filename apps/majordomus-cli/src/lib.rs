@@ -17,6 +17,7 @@ pub(crate) mod automation;
 pub mod bench;
 pub(crate) mod board;
 pub mod build_identity;
+pub mod campaigns;
 pub mod capability;
 pub(crate) mod change;
 pub mod cli;
