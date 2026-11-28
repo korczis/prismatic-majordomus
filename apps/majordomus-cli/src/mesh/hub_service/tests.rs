@@ -72,10 +72,19 @@ impl Fake {
                 *self.served.borrow_mut() = next.remove(0);
             }
         }
-        if line.starts_with("env ") {
+        if line.starts_with("env ") || line.contains(" self update --apply ") {
             if let Some(i) = argv.iter().position(|a| a == "--version") {
-                *self.installed.borrow_mut() = argv[i + 1].clone();
+                *self.installed.borrow_mut() = argv[i + 1].trim_start_matches('v').to_string();
             }
+        }
+        if line.contains(" self update --apply ") {
+            return (
+                true,
+                format!(
+                    "{{\"exit_code\":0,\"applied\":{{\"installed\":\"{}\"}}}}",
+                    self.installed.borrow()
+                ),
+            );
         }
         if line.ends_with(" --version") && !self.installed.borrow().is_empty() {
             return (true, format!("majordomus {}\n", self.installed.borrow()));
@@ -670,8 +679,11 @@ fn an_update_installs_moves_the_checkout_restarts_rerenders_and_records_it() {
     let r = update(&h, &s, RELEASE_BASE, true, false);
     assert_eq!(r.result, "updated", "{r:?}");
     assert!(r.ok);
-    let dir = home.path().join(".local/bin").display().to_string();
-    assert!(fake.called(&format!("--version 1.3.0 --install-dir {dir}")));
+    assert!(fake.called("self update --apply --version v1.3.0 --require-provenance --format json"));
+    assert!(
+        !fake.called("curl -fsSL"),
+        "a forward install goes through self update"
+    );
     assert!(fake.called(&format!("{GIT} checkout --quiet --detach v1.3.0")));
     assert!(fake.called("launchctl kickstart -k gui/501/dev.majordomus.hub"));
     assert!(fake.called("mesh hub install --apply --port 8791 --repo /srv/mj/hub repo"));
@@ -845,20 +857,33 @@ fn an_update_reports_current_deferred_unknown_busy_and_a_failed_installer() {
     write_file(&lock_path(home.path()), "8\n").unwrap();
     assert_ne!(update(&h, &s, RELEASE_BASE, true, false).result, "busy");
 
-    for (fails, needle) in [
-        ("curl -fsSL", "did not install"),
-        ("env sh", "did not install"),
+    let exe = s.executable.display().to_string();
+    for (said, result, needle) in [
+        (
+            "{\"exit_code\":10,\"decision\":{\"reason\":\"refused\"},\"applied\":{\"provenance_refused\":true}}",
+            "failed",
+            "provenance of 1.3.0 was not verified",
+        ),
+        ("{\"exit_code\":10,\"decision\":{\"reason\":\"the installer failed\"}}", "failed", "the installer failed"),
+        ("{\"exit_code\":12,\"decision\":{\"reason\":\"an update is being applied here already\"}}", "busy", "being applied"),
+        ("error: unknown subcommand self", "failed", "nothing readable: error: unknown subcommand self"),
+        ("{\"exit_code\":0,\"applied\":{\"installed\":\"1.2.9\"}}", "failed", "installed 1.2.9, not 1.3.0"),
     ] {
         let fake = behind();
-        fake.answer(fails, false, "");
+        fake.answer(&format!("{exe} self update"), true, said);
         with_fake!(fake, Manager::Launchd, false, h);
         let r = update(&h, &s, RELEASE_BASE, true, false);
-        assert_eq!(r.result, "failed");
-        assert!(r.detail.contains(needle));
+        assert_eq!(r.result, result, "{said}");
+        assert!(r.detail.contains(needle), "{said}: {}", r.detail);
+        assert!(read_state(home.path()).failed.is_empty(), "{said}: no release is blamed");
     }
-    // the installer ran and the executable is still the old one
+    // self update said it installed, and the executable is still the old one
     let fake = behind();
-    fake.answer("env sh", true, "");
+    fake.answer(
+        &format!("{exe} self update"),
+        true,
+        "{\"exit_code\":0,\"applied\":{\"installed\":\"1.3.0\"}}",
+    );
     with_fake!(fake, Manager::Launchd, false, h);
     let r = update(&h, &s, RELEASE_BASE, true, false);
     assert!(r.detail.contains("executable is 1.2.0"), "{}", r.detail);
@@ -1153,4 +1178,85 @@ fn a_hub_behind_the_release_with_no_update_ever_says_never() {
     let current = r.checks.iter().find(|c| c.name == "current").unwrap();
     assert_eq!(current.level, Level::Fail);
     assert!(current.detail.contains("ended never"), "{}", current.detail);
+}
+
+#[test]
+fn the_prefix_is_where_the_launcher_execs() {
+    let home = tempfile::tempdir().unwrap();
+    let launcher = home.path().join("majordomus");
+    std::fs::write(
+        &launcher,
+        "#!/bin/sh\nexec \"/opt/mj/versions/1.3.0/bin/majordomus\" \"$@\"\n",
+    )
+    .unwrap();
+    assert_eq!(
+        install_prefix(&launcher, None, home.path()),
+        PathBuf::from("/opt/mj")
+    );
+    let none = home.path().join("absent");
+    assert_eq!(
+        install_prefix(&none, Some("/p".into()), home.path()),
+        PathBuf::from("/p")
+    );
+    assert_eq!(
+        install_prefix(&none, Some(String::new()), home.path()),
+        home.path().join(".local/share/majordomus")
+    );
+    assert_eq!(
+        self_update_outcome(
+            "{\"exit_code\":0,\"applied\":{\"installed\":\"1.3.0\"}}",
+            "1.3.0"
+        ),
+        SelfUpdate::Installed
+    );
+    assert!(matches!(
+        self_update_outcome("} nothing {", "1.3.0"),
+        SelfUpdate::Failed(_)
+    ));
+}
+
+#[test]
+fn a_rollback_waits_for_nobody_and_takes_over_a_stale_lock() {
+    // the installation is locked by a live update: the rollback does not run the installer
+    let home = tempfile::tempdir().unwrap();
+    let s = spec(Manager::SystemdUser, home.path());
+    let lock = install_prefix(&s.executable, None, home.path()).join("self-update.lock");
+    write_file(&lock, "7").unwrap();
+    let fake = behind();
+    fake.installed("1.3.0").restarts_onto(&[None, None]);
+    with_fake!(fake, Manager::SystemdUser, false, h);
+    let r = update(&h, &s, RELEASE_BASE, true, false);
+    assert_eq!(r.result, "failed");
+    assert!(r
+        .steps
+        .iter()
+        .any(|st| st.line.starts_with("lock ") && st.output.contains("pid 7")));
+    assert!(!fake.called("env sh"));
+    assert!(lock.exists(), "another holder's lock stays");
+
+    // a lock older than an hour is taken over, whoever's pid it names
+    let exec = |a: &[String]| fake.exec(a);
+    let get = |b: &str, p: &str| fake.get(b, p);
+    let later = || {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
+            + 2 * LOCK_STALE_SECONDS
+    };
+    let h = Host {
+        manager: Manager::SystemdUser,
+        uid: 1,
+        user: "o".into(),
+        pid: 99,
+        staging: false,
+        exec: &exec,
+        get: &get,
+        alive: &|_| true,
+        now: &later,
+        sleep: &|_| {},
+    };
+    assert!(take_lock_at(&h, &lock).is_ok());
+    assert_eq!(std::fs::read_to_string(&lock).unwrap(), "99");
+    assert_eq!(lock_age(&home.path().join("absent"), 0), None);
 }

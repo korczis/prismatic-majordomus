@@ -985,15 +985,19 @@ the hub for their versions, and decides:
 
 - **current**: the hub serves the newest release and its checkout is at that release's tag,
   so nothing is done;
-- **install**: a newer release is published, so the verified installer runs (digest and
-  attestation, keeping the trees in use);
+- **install**: a newer release is published, so `majordomus self update --apply --version
+  v<X> --require-provenance` installs it (I2720, I4728): the archive's digest and attestation
+  verified, the trees in use kept, the installation's `self-update.lock` held, and the new
+  launcher read back. Another update holding that lock makes the run `busy`, and a refusal
+  (provenance, a pre-release, an unlisted version) fails the run without marking the release;
 - **activate**: the installed release is newer than the one the hub serves, or than the tag
   its checkout is at (a hub the service manager restarted onto a new executable on an old
   checkout is moved too, and so is one that does not answer at all). The hub checkout
   is detached at the release's tag (refused while it has uncommitted changes), the hub is
   restarted through its manager, and it must answer with the new version within 90 seconds.
-  If it does not, the previous release and checkout are put back, the hub is restarted onto
-  them, and the version is recorded as failed on this node and not tried again until a newer
+  If it does not, the previous release is put back by the installer (`--force`, because
+  `self update` refuses a downgrade, under the same `self-update.lock`) and the checkout with
+  it, the hub is restarted onto them, and the version is recorded as failed on this node and not tried again until a newer
   one is published;
 - **deferred**: sessions are attached to the hub, so the restart waits for the next run, a
   day at most; after that the hub is moved anyway.

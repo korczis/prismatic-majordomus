@@ -1148,7 +1148,26 @@ fn lock_path(home: &Path) -> PathBuf {
 /// Take the update's lock: `Err` names the live process that holds it. A lock whose holder
 /// is gone is taken over.
 fn take_lock(host: &Host<'_>, home: &Path) -> Result<(), String> {
-    let path = lock_path(home);
+    take_lock_at(host, &lock_path(home))
+}
+
+/// How old a lock may be and still be held (`release::follow` APPLY_LOCK_STALE).
+pub(crate) const LOCK_STALE_SECONDS: u64 = 3600;
+
+/// Seconds since `path` was last written, on the clock `now` reads.
+fn lock_age(path: &Path, now: u64) -> Option<u64> {
+    let written = std::fs::metadata(path).and_then(|m| m.modified()).ok()?;
+    let secs = written
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+    Some(now.saturating_sub(secs))
+}
+
+/// Take the lock at `path` by the convention `release::follow::ApplyLock` keeps: created
+/// new, this process's decimal pid inside, and a lock whose holder is gone taken over.
+fn take_lock_at(host: &Host<'_>, path: &Path) -> Result<(), String> {
+    let path = path.to_path_buf();
     let _ = std::fs::create_dir_all(path.parent().unwrap_or(Path::new("")));
     for _ in 0..2 {
         match std::fs::OpenOptions::new()
@@ -1158,15 +1177,18 @@ fn take_lock(host: &Host<'_>, home: &Path) -> Result<(), String> {
         {
             Ok(mut f) => {
                 use std::io::Write;
-                let _ = writeln!(f, "{}", host.pid);
+                let _ = write!(f, "{}", host.pid);
                 return Ok(());
             }
             Err(_) => {
                 let holder = std::fs::read_to_string(&path)
                     .ok()
                     .and_then(|t| t.trim().parse::<u32>().ok());
+                // a lock older than an hour is a recycled pid's, never a live update's
+                let fresh =
+                    lock_age(&path, (host.now)()).is_some_and(|age| age < LOCK_STALE_SECONDS);
                 match holder {
-                    Some(pid) if pid != host.pid && (host.alive)(pid) => {
+                    Some(pid) if pid > 0 && pid != host.pid && fresh && (host.alive)(pid) => {
                         return Err(format!("another update runs (pid {pid})"));
                     }
                     _ => {
@@ -1202,6 +1224,58 @@ fn rotate(log: &Path) -> Option<Step> {
         ok: Some(done.is_ok()),
         output: done.err().map(|e| e.to_string()).unwrap_or_default(),
     })
+}
+
+/// The installation prefix the launcher runs out of: the directory before `versions/` in
+/// its `exec` line, else `MAJORDOMUS_PREFIX`, else the installer's default under the home.
+/// The installer and `self update` both lock it with `self-update.lock`.
+pub(crate) fn install_prefix(launcher: &Path, env_prefix: Option<String>, home: &Path) -> PathBuf {
+    let text = std::fs::read_to_string(launcher).unwrap_or_default();
+    let from_exec = text
+        .lines()
+        .filter_map(|l| l.trim().strip_prefix("exec \""))
+        .find_map(|rest| rest.split_once("/versions/"))
+        .map(|(prefix, _)| PathBuf::from(prefix));
+    from_exec
+        .or(env_prefix.filter(|p| !p.is_empty()).map(PathBuf::from))
+        .unwrap_or(home.join(".local/share/majordomus"))
+}
+
+/// What `majordomus self update --apply` came to, read from its JSON report.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum SelfUpdate {
+    /// It installed the version, and the new launcher says so.
+    Installed,
+    /// It did not answer: another update holds the installation, or this is no installation.
+    Busy(String),
+    /// It refused or failed: a downgrade, an unlisted version, provenance not verified, the
+    /// installer.
+    Failed(String),
+}
+
+/// Read `self update --format json`'s report out of what it printed.
+pub(crate) fn self_update_outcome(output: &str, version: &str) -> SelfUpdate {
+    let json = match (output.find('{'), output.rfind('}')) {
+        (Some(a), Some(b)) if a < b => serde_json::from_str::<Value>(&output[a..=b]).ok(),
+        _ => None,
+    };
+    let Some(v) = json else {
+        let first = output.lines().next().unwrap_or("").trim();
+        return SelfUpdate::Failed(format!("self update said nothing readable: {first}"));
+    };
+    let reason = v["decision"]["reason"].as_str().unwrap_or("").to_string();
+    match v["exit_code"].as_u64() {
+        Some(0) if v["applied"]["installed"].as_str() == Some(version) => SelfUpdate::Installed,
+        Some(0) => SelfUpdate::Failed(format!(
+            "self update installed {}, not {version}",
+            v["applied"]["installed"].as_str().unwrap_or("nothing")
+        )),
+        Some(12) => SelfUpdate::Busy(reason),
+        _ if v["applied"]["provenance_refused"] == Value::Bool(true) => SelfUpdate::Failed(
+            format!("the provenance of {version} was not verified: {reason}"),
+        ),
+        _ => SelfUpdate::Failed(reason),
+    }
 }
 
 /// The report of `mesh hub update`.
@@ -1282,6 +1356,7 @@ struct Run<'h, 'a> {
     host: &'h Host<'a>,
     spec: &'h Spec,
     base: &'h str,
+    prefix: PathBuf,
     steps: Vec<Step>,
 }
 
@@ -1303,10 +1378,43 @@ impl Run<'_, '_> {
         self.run(a)
     }
 
+    /// Install `version` with `majordomus self update`, which verifies its provenance
+    /// (I4728), takes the installation's lock and reads the new launcher back.
+    fn self_update(&mut self, version: &str) -> SelfUpdate {
+        let mut words = Vec::new();
+        if self.base != RELEASE_BASE {
+            words.push("env".to_string());
+            words.push(format!("MAJORDOMUS_RELEASE_BASE_URL={}", self.base));
+        }
+        words.push(self.spec.executable.display().to_string());
+        words.extend(argv(&["self", "update", "--apply", "--version"]));
+        words.push(format!("v{version}"));
+        words.extend(argv(&["--require-provenance", "--format", "json"]));
+        let (_, out) = self.run(words);
+        self_update_outcome(&out, version)
+    }
+
     /// Run the installer of the release origin for `version`, into the directory of the
     /// launcher the units run, so the launcher they run is the one it rewrites; `force` lets
     /// it put an older release back.
     fn installer(&mut self, version: &str, force: bool) -> bool {
+        // the installation's lock, which `self update` and its follower take too
+        let lock = self.prefix.join("self-update.lock");
+        if let Err(why) = take_lock_at(self.host, &lock) {
+            self.steps.push(Step {
+                line: format!("lock {}", lock.display()),
+                ran: true,
+                ok: Some(false),
+                output: why,
+            });
+            return false;
+        }
+        let done = self.installer_unlocked(version, force);
+        let _ = std::fs::remove_file(&lock);
+        done
+    }
+
+    fn installer_unlocked(&mut self, version: &str, force: bool) -> bool {
         let home = &self.spec.home;
         let script = home
             .join(".local/state/majordomus/install.sh")
@@ -1424,6 +1532,11 @@ pub(crate) fn update(
         host,
         spec,
         base,
+        prefix: install_prefix(
+            &spec.executable,
+            std::env::var("MAJORDOMUS_PREFIX").ok(),
+            &spec.home,
+        ),
         steps: Vec::new(),
     };
     for role in [UnitRole::Hub, UnitRole::Update] {
@@ -1456,8 +1569,15 @@ pub(crate) fn update(
                 )
             }
             Decision::Install { version } => {
-                if !run.installer(&version, false) {
-                    break ("failed", format!("the installer did not install {version}"));
+                match run.self_update(&version) {
+                    SelfUpdate::Installed => {}
+                    SelfUpdate::Busy(why) => break ("busy", why),
+                    SelfUpdate::Failed(why) => {
+                        break (
+                            "failed",
+                            format!("self update did not install {version}: {why}"),
+                        )
+                    }
                 }
                 let now_v = version_of(host, &spec.executable);
                 if now_v.as_deref() != Some(version.as_str()) {
