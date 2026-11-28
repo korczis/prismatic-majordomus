@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.3.0
+# Generator: majordomus-cli 1.4.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.3.0
+generator: majordomus-cli 1.4.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -331,10 +331,10 @@ modules:
     capabilities: 3
   - id: server
     title: Server
-    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds."
+    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds; and every Majordomus runtime of this user on this host, read from leases with no checkout open."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 1
+    capabilities: 2
   - id: session_domain
     title: The session domain
     description: "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so."
@@ -376,7 +376,7 @@ modules:
     description: "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 7
+    capabilities: 8
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -20555,7 +20555,7 @@ capabilities:
     module: evidence
     kind: command
     title: Record a run that happened
-    description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped."
+    description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped. With --verify <name> it reads no report: it runs the verification the effective profile (the policy's profiles.default) declares under that name in verification.commands, and records its exit, duration, the digest of the tree it ran on and the time, which is what an intent criterion citing verify:<name> is judged by; a name the profile does not declare is refused."
     input:
       name: EvidenceRecordInput
       schema:
@@ -20597,6 +20597,11 @@ capabilities:
               - string
               - "null"
             description: Also write the run record to this file.
+          verify:
+            type:
+              - string
+              - "null"
+            description: "Run the verification the effective profile declares under this name\n(`verification.commands`) and record its exit, duration, tree digest and time — the\nrun an intent criterion citing `verify:<name>` is judged by. Given alone: it reads no\nreport."
         description: "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, carries into each result what that run measured about its own checkout, and\nmerges it. The reports are optional and may be given together; an absent origin is\n`local`, and an absent ledger is the tracked one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```"
         title: EvidenceRecordInput
         "$defs":
@@ -20646,6 +20651,11 @@ capabilities:
           run_record:
             "$ref": "#/$defs/EvidenceRunRecord"
             description: The recording as a typed run.
+          verification:
+            anyOf:
+              - "$ref": "#/$defs/EvidenceVerificationRun"
+              - type: "null"
+            description: "The verification run `verify` asked for, as the ledger now holds it; absent from the\ndocument for a recording of reports."
           suite_coverage:
             anyOf:
               - "$ref": "#/$defs/SuiteCoverage"
@@ -20659,7 +20669,7 @@ capabilities:
           - unknown
           - ledger
           - run_record
-        description: "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    suite_coverage: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```"
+        description: "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    verification: None,\n    suite_coverage: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```"
         title: RecordReport
         "$defs":
           EvidenceDropped:
@@ -21212,6 +21222,55 @@ capabilities:
                 const: error
                 description: The harness could not run it at all.
             description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+          EvidenceVerificationRun:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name the profile declares the command under; what `verify:<name>` cites."
+              profile:
+                type: string
+                description: "The profile that declared it: the policy's `profiles.default`."
+              command:
+                type: string
+                description: The command as the profile declared it when it ran.
+              outcome:
+                "$ref": "#/$defs/EvidenceOutcome"
+                description: "`pass` when the command exited 0, `fail` when it exited otherwise, `error` when it\ncould not be started or was ended by a signal."
+              exit:
+                type:
+                  - integer
+                  - "null"
+                format: int32
+                description: The exit code; absent when the command was ended by a signal or never started.
+              millis:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How long it ran, in milliseconds."
+              tree:
+                type: string
+                description: "The digest of the tree it ran on (`super::record::tree_digest`), `sha256:<hex>`."
+              commit:
+                type: string
+                description: The commit checked out when it ran.
+              at:
+                type: string
+                description: "When it ran, RFC 3339, UTC."
+              origin:
+                "$ref": "#/$defs/EvidenceOrigin"
+                description: Where it ran.
+            required:
+              - name
+              - profile
+              - command
+              - outcome
+              - millis
+              - tree
+              - commit
+              - at
+              - origin
+            description: "One run of a verification the repository's effective profile declares under\n`verification.commands` (I3395): which one, the command that ran, how it exited, how long\nit took, the digest of the tree it ran on, and when.\n\nThe digest is what makes the run evidence: an intent criterion citing `verify:<name>` is\ncurrent only while the newest run of that name passed and the tree digest the run\nrecorded is the digest of the tree now (`super::record::tree_digest`). A run at any\nother tree, a failing run, or a run of a command the profile no longer declares, is not.\n\n```\nuse majordomus_cli::evidence::ledger::{Ledger, VerificationRun};\nuse majordomus_cli::evidence::{Origin, Outcome};\n\nlet run = |outcome: Outcome| VerificationRun {\n    name: \"tests\".into(),\n    profile: \"implementation\".into(),\n    command: \"python3 -m pytest -q\".into(),\n    outcome,\n    exit: Some(if outcome == Outcome::Pass { 0 } else { 1 }),\n    millis: 412,\n    tree: \"sha256:0\".into(),\n    commit: \"0\".repeat(40),\n    at: \"2026-10-19T00:00:00Z\".into(),\n    origin: Origin::Local,\n};\nlet mut ledger = Ledger::empty();\nledger.merge_verification(run(Outcome::Pass));\nledger.merge_verification(run(Outcome::Fail));\n// one entry per name: the newest replaces the one before it\nassert_eq!(ledger.verifications.len(), 1);\nassert_eq!(ledger.verification(\"tests\").unwrap().outcome, Outcome::Fail);\nassert!(ledger.verification(\"lint\").is_none());\n```"
           SuiteCoverage:
             type: object
             properties:
@@ -32046,7 +32105,7 @@ capabilities:
                 description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
               - type: string
                 const: not_derivable
-                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
               - type: string
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
@@ -32725,7 +32784,7 @@ capabilities:
                 description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
               - type: string
                 const: not_derivable
-                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
               - type: string
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
@@ -33335,7 +33394,7 @@ capabilities:
                 description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
               - type: string
                 const: not_derivable
-                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
               - type: string
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
@@ -34053,7 +34112,7 @@ capabilities:
                 description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
               - type: string
                 const: not_derivable
-                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
               - type: string
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
@@ -34434,7 +34493,7 @@ capabilities:
                 description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
               - type: string
                 const: not_derivable
-                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
               - type: string
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
@@ -34981,7 +35040,7 @@ capabilities:
                 description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
               - type: string
                 const: not_derivable
-                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
               - type: string
                 const: unresolved
                 description: The reference is empty or names nothing this repository holds.
@@ -37594,6 +37653,12 @@ capabilities:
                 items:
                   type: string
                 description: "The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit."
+              build_host_tenants:
+                type: array
+                items:
+                  "$ref": "#/$defs/Tenant"
+                description: "The build host's baseline tenants (I4343): a path and the size, in GiB, it must not\noutgrow. Observed, never reclaimed by this: which homes disk-guard itself sweeps is\nI4352's."
+                default: []
             required:
               - user
               - home
@@ -37613,6 +37678,26 @@ capabilities:
               - runner_homes
               - runner_units
             description: "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
+          Tenant:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+                description: "A short name for what lives at `path`: `korczis home`, `docker`, `minio`, `swap`."
+              path:
+                type: string
+                description: "The path observed, repository-unrelated: a host path such as `/home/korczis`."
+              bound_gib:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The size, in GiB, this tenant must not exceed."
+            required:
+              - name
+              - path
+              - bound_gib
+            description: "One baseline tenant of the build host, observed against its bound (I4343)."
           Plan:
             type: object
             properties:
@@ -38581,14 +38666,19 @@ capabilities:
     module: mesh
     kind: query
     title: The mesh self-check
-    description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required."
+    description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343)."
     input:
-      name: Empty
+      name: DoctorInput
       schema:
         type: object
         additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          build_host:
+            type: boolean
+            description: "Also observe this build host's own guard (I4343): disk-guard.timer and\nbuild-host-observe.timer active, the ballast present, its state fresh, every\ndeclared critical-service drop-in present and every declared tenant at or under its\nbound. Observed against `/`, never a fixture: a test calls\n`crate::mesh::cache_provision::observe_build_host` directly."
+            default: false
+        description: "The input of `mesh.doctor`."
+        title: DoctorInput
     output:
       name: MeshDoctorReport
       schema:
@@ -63303,6 +63393,358 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/served.rs
+  - id: server.runtimes
+    module: server
+    kind: query
+    title: Every Majordomus runtime of this user on this host
+    description: "Every Majordomus runtime of this user on this host, whatever repository it serves, with no checkout open: each checkout with its root and identity, the git repository it belongs to, where its server stands (the same five words as `server.status`, measured against the answering executable, and `live` only when a server answers — a lease whose process is gone is `stale`), the port its lease names, the version it runs (the lease's, else what its executable reports to `--version`), the `serve` and `mcp` processes working on it and whether each holds the lease, and this host's node id. The checkouts come from two places and neither is believed: the disposable index of checkout roots each server adds itself to beside `node.json` (`checkout-roots` in `$XDG_STATE_HOME/majordomus`, else `~/.local/state/majordomus`), and the process table, where every `majordomus serve` and `majordomus mcp` is found by executable path — which is how a runtime older than the index, or one with another state directory, is listed. Every row is re-read from its checkout's lease, so deleting the index loses nothing but speed. Read-only: no process of its own, no registry, nothing started or stopped; peers stay the mesh registry's. The command line answers it without a server (`majordomus runtimes --host`, from any directory), and any running server answers the same reading here."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: HostRuntimes
+      schema:
+        type: object
+        properties:
+          version:
+            type: string
+            description: "The version of the executable that answered, which every `standing` is measured\nagainst."
+          node:
+            type:
+              - string
+              - "null"
+            description: "This host's node id, read from this user's `node.json` and never created by asking.\nEvery runtime of the user on the host shares it unless it was started with another\nstate directory."
+          index:
+            "$ref": "#/$defs/HostIndexView"
+            description: The host index this reading started from.
+          process_table:
+            "$ref": "#/$defs/ProcessTableView"
+            description: The process table this reading started from.
+          runtimes:
+            type: array
+            items:
+              "$ref": "#/$defs/HostRuntime"
+            description: "Every checkout with a lease or a Majordomus process, in path order."
+          not_running:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many checkouts the index lists that have neither a lease nor a process: their\nservers stopped cleanly, and they are not listed."
+          unplaced:
+            type: array
+            items:
+              "$ref": "#/$defs/HostProcessView"
+            description: "The `serve` and `mcp` processes whose checkout could not be found: no working\ndirectory the system would say, or one inside no repository of the layer."
+        required:
+          - version
+          - index
+          - process_table
+          - runtimes
+          - not_running
+          - unplaced
+        description: "Every Majordomus runtime of this user on this host.\n\n```\nuse majordomus_cli::capability::builtin::server::{HostIndexView, HostRuntimes, ProcessTableView};\nlet r = HostRuntimes { version: \"1.0.0\".into(), node: None,\n    index: HostIndexView { path: None, entries: 0, problem: None },\n    process_table: ProcessTableView { read: true, processes: 0, problem: None },\n    runtimes: Vec::new(), not_running: 0, unplaced: Vec::new() };\nlet text = serde_json::to_string(&r).unwrap();\nassert_eq!(serde_json::from_str::<HostRuntimes>(&text).unwrap(), r);\n```"
+        title: HostRuntimes
+        "$defs":
+          HostIndexView:
+            type: object
+            properties:
+              path:
+                type:
+                  - string
+                  - "null"
+                description: "Where it is: `checkout-roots` beside `node.json`; absent when this user has no state\ndirectory."
+              entries:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many checkout roots it lists.
+              problem:
+                type:
+                  - string
+                  - "null"
+                description: "Why it could not be read, when it could not."
+            required:
+              - entries
+            description: "The host index as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostIndexView;\nlet v = serde_json::to_value(HostIndexView { path: None, entries: 0, problem: None }).unwrap();\nassert_eq!(v[\"entries\"], 0);\n```"
+          ProcessTableView:
+            type: object
+            properties:
+              read:
+                type: boolean
+                description: "Whether it was read. A table that could not be read lists nothing, and the\ninventory then holds only what the index found."
+              processes:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many `serve` and `mcp` processes it holds."
+              problem:
+                type:
+                  - string
+                  - "null"
+                description: "Why it could not be read, when it could not."
+            required:
+              - read
+              - processes
+            description: "The process table as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::ProcessTableView;\nlet v = serde_json::to_value(ProcessTableView { read: true, processes: 2, problem: None }).unwrap();\nassert_eq!(v[\"processes\"], 2);\n```"
+          HostRuntime:
+            type: object
+            properties:
+              checkout:
+                type: string
+                description: "The checkout, absolute and canonical where it still exists."
+              checkout_id:
+                type: string
+                description: "The checkout's identity: what its server answers as `repository_id`."
+              git:
+                anyOf:
+                  - "$ref": "#/$defs/GitIdentity"
+                  - type: "null"
+                description: "The git repository the checkout belongs to: one id for every worktree of it, so two\nruntimes of one repository are told from runtimes of two. Absent where git cannot be\nasked."
+              found_by:
+                type: array
+                items:
+                  "$ref": "#/$defs/FoundBy"
+                description: "Where the checkout was found: the index, the process table, or both."
+              standing:
+                "$ref": "#/$defs/ServerStanding"
+                description: "Where its server stands, as `server.status` would say it: measured against this\nexecutable, from the lease and one probe of the address it names."
+              live:
+                type: boolean
+                description: "Whether a server answers for the checkout: `ready` or `outdated`. A lease whose\nprocess is gone is `stale` and never live."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when the standing is not `ready`."
+              lease:
+                anyOf:
+                  - "$ref": "#/$defs/LeaseView"
+                  - type: "null"
+                description: "The lease, when the file holds one."
+              port:
+                type:
+                  - integer
+                  - "null"
+                format: uint16
+                minimum: 0
+                maximum: 65535
+                description: The port of the address the lease names.
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version the runtime runs: the lease's, else what its executable reports."
+              version_source:
+                anyOf:
+                  - "$ref": "#/$defs/VersionSource"
+                  - type: "null"
+                description: "Where `version` was read."
+              processes:
+                type: array
+                items:
+                  "$ref": "#/$defs/HostProcessView"
+                description: "The `serve` and `mcp` processes the process table shows working on the checkout."
+            required:
+              - checkout
+              - checkout_id
+              - found_by
+              - standing
+              - live
+              - processes
+            description: "One checkout of the host, and the runtime its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{FoundBy, HostRuntime, ServerStanding};\nlet r = HostRuntime { checkout: \"/r\".into(), checkout_id: \"c\".into(), git: None,\n    found_by: vec![FoundBy::Index], standing: ServerStanding::Stale, live: false,\n    reason: Some(\"gone\".into()), lease: None, port: None, version: None, version_source: None,\n    processes: Vec::new() };\nlet v = serde_json::to_value(&r).unwrap();\nassert_eq!(v[\"standing\"], \"stale\");\nassert_eq!(v[\"live\"], false);\nassert!(v.get(\"port\").is_none() && v.get(\"version\").is_none(), \"what there is not is not written\");\n```"
+          GitIdentity:
+            type: object
+            properties:
+              common_dir:
+                type: string
+                description: "The git directory every work tree of the repository shares, canonical."
+              id:
+                type: string
+                description: "Its digest: the same for every checkout of one repository, different across\nrepositories, and never a path."
+              linked:
+                type: boolean
+                description: Whether this checkout is a linked work tree rather than the primary one.
+            required:
+              - common_dir
+              - id
+              - linked
+            description: "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n`identity` names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```"
+          FoundBy:
+            oneOf:
+              - type: string
+                const: index
+                description: "The host index of checkout roots: its server published a lease and added its root."
+              - type: string
+                const: process_table
+                description: "The process table: a `majordomus serve` or `majordomus mcp` works on this checkout."
+            description: "Where a checkout of the host inventory was found. Neither source is believed: each only\nsays which lease to read.\n\n```\nuse majordomus_cli::capability::builtin::server::FoundBy;\nassert_eq!(serde_json::to_value(FoundBy::ProcessTable).unwrap(), \"process_table\");\n```"
+          ServerStanding:
+            oneOf:
+              - type: string
+                const: absent
+                description: "No lease: nothing serves this checkout."
+              - type: string
+                const: starting
+                description: "A lease without an address, young enough that its owner is still binding."
+              - type: string
+                const: ready
+                description: "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+              - type: string
+                const: outdated
+                description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+              - type: string
+                const: stale
+                description: "The lease names a server that does not answer, or is not a lease at all."
+              - type: string
+                const: building
+                description: "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+              - type: string
+                const: mesh_attaching
+                description: "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+              - type: string
+                const: operational
+                description: "The server is ready, says so itself, and its mesh runs or is not declared."
+              - type: string
+                const: degraded
+                description: "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+              - type: string
+                const: stopping
+                description: "The process that holds the lease recorded that it is stopping, and it is still alive."
+              - type: string
+                const: stopped
+                description: The server is gone after it recorded that it was stopping.
+              - type: string
+                const: failed
+                description: "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
+          LeaseView:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "The server's process id. Not proof of a live server — only a probe that is answered\nis — but decisions are made from it: a live pid earns a server that does not answer\nthe election's busy wait before its lease is taken over, and `serve ensure`'s patience\nbefore it starts another; `serve stop` sends its `SIGTERM` to this pid."
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The address, once bound."
+              started_at:
+                type: string
+                description: "When the server took the lease, RFC 3339."
+              executable:
+                anyOf:
+                  - "$ref": "#/$defs/ExecutableIdentity"
+                  - type: "null"
+                description: "The executable the server was started from, when it could be located."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The executable's version; absent for a server too old to have written one."
+            required:
+              - pid
+              - started_at
+            description: "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+          ExecutableIdentity:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path the process was started from.
+              mtime:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The file's modification time, seconds since the epoch."
+              size:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The file's size in bytes."
+            required:
+              - path
+              - mtime
+              - size
+            description: "The identity of the file an executable was started from: where it is, and the mtime\nand size of the file at that path. A server outlives its own binary — a rebuild replaces\nthe file under a process that keeps serving the code it loaded hours ago — and nothing\nabout the process itself says so. This is what makes that visible.\n\n```\nuse majordomus_cli::lease::ExecutableIdentity;\nlet recorded = ExecutableIdentity { path: \"/opt/majordomus\".into(), mtime: 1_700_000_000, size: 42 };\nlet text = serde_json::to_string(&recorded).unwrap();\nassert_eq!(serde_json::from_str::<ExecutableIdentity>(&text).unwrap(), recorded);\n```"
+          VersionSource:
+            oneOf:
+              - type: string
+                const: lease
+                description: "The lease: what the server wrote about itself when it started."
+              - type: string
+                const: executable
+                description: "`<executable> --version`: a lease too old to carry a version, or no lease at all."
+            description: "Where a runtime's version was read.\n\n```\nuse majordomus_cli::capability::builtin::server::VersionSource;\nassert_eq!(serde_json::to_value(VersionSource::Executable).unwrap(), \"executable\");\n```"
+          HostProcessView:
+            type: object
+            properties:
+              pid:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The process id.
+              subcommand:
+                "$ref": "#/$defs/Subcommand"
+                description: "`serve` or `mcp`."
+              executable:
+                type: string
+                description: "The executable, as the process table names it."
+              holds_lease:
+                type: boolean
+                description: "Whether the checkout's lease names this process: the server, rather than a client\nattached to it or a server superseded by another."
+            required:
+              - pid
+              - subcommand
+              - executable
+              - holds_lease
+            description: "A `majordomus serve` or `majordomus mcp` process of a checkout, as the process table\nshows it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostProcessView;\nuse majordomus_cli::lease::host::Subcommand;\nlet p = HostProcessView { pid: 7, subcommand: Subcommand::Mcp, executable: \"/bin/majordomus\".into(), holds_lease: false };\nassert_eq!(serde_json::to_value(&p).unwrap()[\"subcommand\"], \"mcp\");\n```"
+          Subcommand:
+            oneOf:
+              - type: string
+                const: serve
+                description: "`majordomus serve`: a server and nothing else."
+              - type: string
+                const: mcp
+                description: "`majordomus mcp`: a client's session, which serves its checkout when it won the\nelection and attaches to the server that did otherwise."
+            description: "Which Majordomus process a row of the process table is.\n\n```\nuse majordomus_cli::lease::host::Subcommand;\nassert_eq!(serde_json::to_value(Subcommand::Serve).unwrap(), \"serve\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::server
+    exposure:
+      mcp:
+        tool: majordomus_runtimes
+        resource:
+          uri: majordomus://runtimes
+          name: runtimes
+      http:
+        method: GET
+        path: /api/v1/runtimes
+      cli:
+        path:
+          - runtimes
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - server
+      - lease
+      - host
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/server.rs
   - id: server.status
     module: server
     kind: query
@@ -68064,6 +68506,178 @@ capabilities:
       - worktree
       - git
       - topology
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.liveness
+    module: worktree
+    kind: query
+    title: "Whether anybody uses a tree or build directory: keep or reclaim"
+    description: "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index."
+    input:
+      name: LivenessInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          paths:
+            type: array
+            items:
+              type: string
+            description: "The trees or build directories, absolute or relative to the primary checkout."
+          idle:
+            type:
+              - string
+              - "null"
+            description: "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes."
+        required:
+          - paths
+        description: The paths a sweep is about to delete.
+        title: LivenessInput
+    output:
+      name: LivenessReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`SCHEMA`."
+          idle_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "The idle window git activity is judged against, in seconds."
+          complete:
+            type: boolean
+            description: "Whether every source was read. A sweep that gets `false` removes nothing."
+          blind:
+            type: array
+            items:
+              type: string
+            description: "Every source that could not be read at all, with why."
+          paths:
+            type: array
+            items:
+              "$ref": "#/$defs/PathLiveness"
+            description: "One answer per path, in the order asked."
+        required:
+          - schema
+          - idle_seconds
+          - complete
+          - blind
+          - paths
+        description: "The answer of `worktree.liveness`."
+        title: LivenessReport
+        "$defs":
+          PathLiveness:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path as it was asked about (made absolute when it was relative).
+              verdict:
+                "$ref": "#/$defs/LivenessVerdict"
+                description: Keep or reclaim.
+              tree:
+                type:
+                  - string
+                  - "null"
+                description: "The work tree that holds it, when one does."
+              reasons:
+                type: array
+                items:
+                  "$ref": "#/$defs/LivenessReason"
+                description: "Every reason it is kept; empty exactly when the verdict is `reclaim`."
+            required:
+              - path
+              - verdict
+              - reasons
+            description: The answer for one path.
+          LivenessVerdict:
+            oneOf:
+              - type: string
+                const: keep
+                description: "Something uses it, or that could not be ruled out."
+              - type: string
+                const: reclaim
+                description: Every source was read and none of them names it.
+            description: Keep or reclaim.
+          LivenessReason:
+            type: object
+            properties:
+              signal:
+                "$ref": "#/$defs/LivenessSignal"
+                description: What kind of evidence.
+              detail:
+                type: string
+                description: "The evidence, in words."
+            required:
+              - signal
+              - detail
+            description: One reason a path is kept.
+          LivenessSignal:
+            oneOf:
+              - type: string
+                const: task
+                description: An open majordomus task in the tree.
+              - type: string
+                const: mesh_claim
+                description: A live mesh claim or session names it.
+              - type: string
+                const: board_claim
+                description: "A peer of the tree's own server is attached or announced."
+              - type: string
+                const: derive_lock
+                description: "The derive lock's live owner names it."
+              - type: string
+                const: queue_pid_file
+                description: An offload run record or a pid file of the offload lock names it.
+              - type: string
+                const: runner_job
+                description: A CI runner job is running under the home that holds it.
+              - type: string
+                const: process_environment
+                description: "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it."
+              - type: string
+                const: process_directory
+                description: "Another process's working directory is inside it."
+              - type: string
+                const: process_arguments
+                description: Another process names it on its command line.
+              - type: string
+                const: git_activity
+                description: "Its index, `HEAD` or `HEAD` reflog changed within the idle window."
+              - type: string
+                const: unreadable
+                description: "A reading that could not be taken: not knowing keeps it."
+            description: What made a path live.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_liveness
+      http:
+        method: POST
+        path: /api/v1/worktrees/liveness
+      cli:
+        path:
+          - worktree
+          - liveness
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - liveness
+      - reclamation
+      - introspection
     benchmark:
       policy: required
     cache:

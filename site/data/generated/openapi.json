@@ -197,6 +197,7 @@
     "op-rules-report": "docs/api/rules/",
     "op-rules-show": "docs/api/rules/",
     "op-served-show": "docs/api/served/",
+    "op-server-runtimes": "docs/api/server/",
     "op-server-status": "docs/api/server/",
     "op-session_domain-identity": "docs/api/session-domain/",
     "op-session_domain-machine": "docs/api/session-domain/",
@@ -216,6 +217,7 @@
     "op-why-validate": "docs/api/why/",
     "op-worktree-create": "docs/api/worktree/",
     "op-worktree-inspect": "docs/api/worktree/",
+    "op-worktree-liveness": "docs/api/worktree/",
     "op-worktree-migration_plan": "docs/api/worktree/",
     "op-worktree-status": "docs/api/worktree/",
     "op-worktree-topology": "docs/api/worktree/",
@@ -636,6 +638,7 @@
     "schema-FlightMilestone": "docs/api/plan/",
     "schema-FlightRelease": "docs/api/plan/",
     "schema-Fonts": "docs/api/design/",
+    "schema-FoundBy": "docs/api/server/",
     "schema-Freshness": "docs/api/shared/",
     "schema-FundingEvidence": "docs/api/models/",
     "schema-FundingKind": "docs/api/models/",
@@ -678,6 +681,10 @@
     "schema-Holding": "docs/api/convergence/",
     "schema-HoldingKind": "docs/api/convergence/",
     "schema-HooksPath": "docs/api/worktree/",
+    "schema-HostIndexView": "docs/api/server/",
+    "schema-HostProcessView": "docs/api/server/",
+    "schema-HostRuntime": "docs/api/server/",
+    "schema-HostRuntimes": "docs/api/server/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
     "schema-IdKind": "docs/api/plan/",
@@ -797,6 +804,11 @@
     "schema-LinkState": "docs/api/mesh/",
     "schema-Listen": "docs/api/deploy/",
     "schema-Liveness": "docs/api/health/",
+    "schema-LivenessInput": "docs/api/worktree/",
+    "schema-LivenessReason": "docs/api/worktree/",
+    "schema-LivenessReport": "docs/api/worktree/",
+    "schema-LivenessSignal": "docs/api/worktree/",
+    "schema-LivenessVerdict": "docs/api/worktree/",
     "schema-LocalOverrides": "docs/api/worktree/",
     "schema-LogStream": "docs/api/executions/",
     "schema-MachineNode": "docs/api/mesh/",
@@ -921,6 +933,7 @@
     "schema-ParameterView": "docs/api/executions/",
     "schema-PassedOver": "docs/api/integration/",
     "schema-PathChange": "docs/api/commit/",
+    "schema-PathLiveness": "docs/api/worktree/",
     "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
     "schema-PeerAddress": "docs/api/shared/",
@@ -981,6 +994,7 @@
     "schema-ProceedSourceState": "docs/api/proceed/",
     "schema-ProceedTerms": "docs/api/proceed/",
     "schema-ProcessFact": "docs/api/mesh/",
+    "schema-ProcessTableView": "docs/api/server/",
     "schema-ProductCounts": "docs/api/product/",
     "schema-ProductCoverage": "docs/api/product/",
     "schema-ProductFinding": "docs/api/product/",
@@ -1254,6 +1268,7 @@
     "schema-StreamId": "docs/api/mesh/",
     "schema-StreamLiveness": "docs/api/mesh/",
     "schema-StreamView": "docs/api/mesh/",
+    "schema-Subcommand": "docs/api/server/",
     "schema-Summary": "docs/api/shared/",
     "schema-Surface": "docs/api/web/",
     "schema-SurfaceAvailability": "docs/api/web/",
@@ -1339,6 +1354,7 @@
     "schema-VendorView": "docs/api/models/",
     "schema-Verdict": "docs/api/repository/",
     "schema-VerifyReport": "docs/api/objects/",
+    "schema-VersionSource": "docs/api/server/",
     "schema-Via": "docs/api/continuity/",
     "schema-Violation": "docs/api/quality/",
     "schema-ViolationCode": "docs/api/quality/",
@@ -1425,8 +1441,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 221,
-    "schemas": 1139,
+    "operations": 223,
+    "schemas": 1153,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1461,7 +1477,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.3.0",
+  "generated_by": "majordomus-cli 1.4.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1470,7 +1486,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "infrastructure": [
     {
@@ -1720,6 +1736,7 @@
     "rules.report": "rules",
     "rules.show": "rules",
     "served.show": "served",
+    "server.runtimes": "server",
     "server.status": "server",
     "session_domain.identity": "session-domain",
     "session_domain.machine": "session-domain",
@@ -1739,6 +1756,7 @@
     "why.validate": "why",
     "worktree.create": "worktree",
     "worktree.inspect": "worktree",
+    "worktree.liveness": "worktree",
     "worktree.migration_plan": "worktree",
     "worktree.status": "worktree",
     "worktree.topology": "worktree",
@@ -2163,6 +2181,7 @@
     "FlightMilestone": "plan",
     "FlightRelease": "plan",
     "Fonts": "design",
+    "FoundBy": "server",
     "Freshness": "shared",
     "FundingEvidence": "models",
     "FundingKind": "models",
@@ -2205,6 +2224,10 @@
     "Holding": "convergence",
     "HoldingKind": "convergence",
     "HooksPath": "worktree",
+    "HostIndexView": "server",
+    "HostProcessView": "server",
+    "HostRuntime": "server",
+    "HostRuntimes": "server",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
     "IdKind": "plan",
@@ -2324,6 +2347,11 @@
     "LinkState": "mesh",
     "Listen": "deploy",
     "Liveness": "health",
+    "LivenessInput": "worktree",
+    "LivenessReason": "worktree",
+    "LivenessReport": "worktree",
+    "LivenessSignal": "worktree",
+    "LivenessVerdict": "worktree",
     "LocalOverrides": "worktree",
     "LogStream": "executions",
     "MachineNode": "mesh",
@@ -2448,6 +2476,7 @@
     "ParameterView": "executions",
     "PassedOver": "integration",
     "PathChange": "commit",
+    "PathLiveness": "worktree",
     "PathOverlap": "integration",
     "Peer": "peers",
     "PeerAddress": "shared",
@@ -2508,6 +2537,7 @@
     "ProceedSourceState": "proceed",
     "ProceedTerms": "proceed",
     "ProcessFact": "mesh",
+    "ProcessTableView": "server",
     "ProductCounts": "product",
     "ProductCoverage": "product",
     "ProductFinding": "product",
@@ -2781,6 +2811,7 @@
     "StreamId": "mesh",
     "StreamLiveness": "mesh",
     "StreamView": "mesh",
+    "Subcommand": "server",
     "Summary": "shared",
     "Surface": "web",
     "SurfaceAvailability": "web",
@@ -2866,6 +2897,7 @@
     "VendorView": "models",
     "Verdict": "repository",
     "VerifyReport": "objects",
+    "VersionSource": "server",
     "Via": "continuity",
     "Violation": "quality",
     "ViolationCode": "quality",
@@ -22591,6 +22623,7 @@
         "rules.report",
         "rules.proves",
         "rules.show",
+        "server.runtimes",
         "repository.scope",
         "repository.scope_classify",
         "objects.search",
@@ -22615,6 +22648,7 @@
         "worktree.topology",
         "worktree.create",
         "worktree.inspect",
+        "worktree.liveness",
         "worktree.migration_plan",
         "worktree.status",
         "worktree.trunk",
@@ -26498,6 +26532,29 @@
       "variants": []
     },
     {
+      "description": "Where a checkout of the host inventory was found. Neither source is believed: each only\nsays which lease to read.\n\n```\nuse majordomus_cli::capability::builtin::server::FoundBy;\nassert_eq!(serde_json::to_value(FoundBy::ProcessTable).unwrap(), \"process_table\");\n```",
+      "home": "server",
+      "is_enum": true,
+      "name": "FoundBy",
+      "properties": [],
+      "type": "\"index\" | \"process_table\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostRuntime"
+      ],
+      "values": [
+        {
+          "description": "The host index of checkout roots: its server published a lease and added its root.",
+          "value": "index"
+        },
+        {
+          "description": "The process table: a `majordomus serve` or `majordomus mcp` works on this checkout.",
+          "value": "process_table"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```",
       "home": "shared",
       "is_enum": true,
@@ -27560,6 +27617,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "HostRuntime",
         "ServerStatus"
       ],
       "values": [],
@@ -28836,6 +28894,271 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "The host index as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostIndexView;\nlet v = serde_json::to_value(HostIndexView { path: None, entries: 0, problem: None }).unwrap();\nassert_eq!(v[\"entries\"], 0);\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "HostIndexView",
+      "properties": [
+        {
+          "description": "Where it is: `checkout-roots` beside `node.json`; absent when this user has no state\ndirectory.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many checkout roots it lists.",
+          "name": "entries",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Why it could not be read, when it could not.",
+          "name": "problem",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostRuntimes"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A `majordomus serve` or `majordomus mcp` process of a checkout, as the process table\nshows it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostProcessView;\nuse majordomus_cli::lease::host::Subcommand;\nlet p = HostProcessView { pid: 7, subcommand: Subcommand::Mcp, executable: \"/bin/majordomus\".into(), holds_lease: false };\nassert_eq!(serde_json::to_value(&p).unwrap()[\"subcommand\"], \"mcp\");\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "HostProcessView",
+      "properties": [
+        {
+          "description": "The process id.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "`serve` or `mcp`.",
+          "name": "subcommand",
+          "refs": [
+            "Subcommand"
+          ],
+          "required": true,
+          "type": "Subcommand"
+        },
+        {
+          "description": "The executable, as the process table names it.",
+          "name": "executable",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the checkout's lease names this process: the server, rather than a client\nattached to it or a server superseded by another.",
+          "name": "holds_lease",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostRuntime",
+        "HostRuntimes"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One checkout of the host, and the runtime its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{FoundBy, HostRuntime, ServerStanding};\nlet r = HostRuntime { checkout: \"/r\".into(), checkout_id: \"c\".into(), git: None,\n    found_by: vec![FoundBy::Index], standing: ServerStanding::Stale, live: false,\n    reason: Some(\"gone\".into()), lease: None, port: None, version: None, version_source: None,\n    processes: Vec::new() };\nlet v = serde_json::to_value(&r).unwrap();\nassert_eq!(v[\"standing\"], \"stale\");\nassert_eq!(v[\"live\"], false);\nassert!(v.get(\"port\").is_none() && v.get(\"version\").is_none(), \"what there is not is not written\");\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "HostRuntime",
+      "properties": [
+        {
+          "description": "The checkout, absolute and canonical where it still exists.",
+          "name": "checkout",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The checkout's identity: what its server answers as `repository_id`.",
+          "name": "checkout_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The git repository the checkout belongs to: one id for every worktree of it, so two\nruntimes of one repository are told from runtimes of two. Absent where git cannot be\nasked.",
+          "name": "git",
+          "refs": [
+            "GitIdentity"
+          ],
+          "required": false,
+          "type": "GitIdentity | null"
+        },
+        {
+          "description": "Where the checkout was found: the index, the process table, or both.",
+          "name": "found_by",
+          "refs": [
+            "FoundBy"
+          ],
+          "required": true,
+          "type": "array of FoundBy"
+        },
+        {
+          "description": "Where its server stands, as `server.status` would say it: measured against this\nexecutable, from the lease and one probe of the address it names.",
+          "name": "standing",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "Whether a server answers for the checkout: `ready` or `outdated`. A lease whose\nprocess is gone is `stale` and never live.",
+          "name": "live",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why, when the standing is not `ready`.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The lease, when the file holds one.",
+          "name": "lease",
+          "refs": [
+            "LeaseView"
+          ],
+          "required": false,
+          "type": "LeaseView | null"
+        },
+        {
+          "description": "The port of the address the lease names.",
+          "name": "port",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The version the runtime runs: the lease's, else what its executable reports.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where `version` was read.",
+          "name": "version_source",
+          "refs": [
+            "VersionSource"
+          ],
+          "required": false,
+          "type": "VersionSource | null"
+        },
+        {
+          "description": "The `serve` and `mcp` processes the process table shows working on the checkout.",
+          "name": "processes",
+          "refs": [
+            "HostProcessView"
+          ],
+          "required": true,
+          "type": "array of HostProcessView"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostRuntimes"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every Majordomus runtime of this user on this host.\n\n```\nuse majordomus_cli::capability::builtin::server::{HostIndexView, HostRuntimes, ProcessTableView};\nlet r = HostRuntimes { version: \"1.0.0\".into(), node: None,\n    index: HostIndexView { path: None, entries: 0, problem: None },\n    process_table: ProcessTableView { read: true, processes: 0, problem: None },\n    runtimes: Vec::new(), not_running: 0, unplaced: Vec::new() };\nlet text = serde_json::to_string(&r).unwrap();\nassert_eq!(serde_json::from_str::<HostRuntimes>(&text).unwrap(), r);\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "HostRuntimes",
+      "properties": [
+        {
+          "description": "The version of the executable that answered, which every `standing` is measured\nagainst.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This host's node id, read from this user's `node.json` and never created by asking.\nEvery runtime of the user on the host shares it unless it was started with another\nstate directory.",
+          "name": "node",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The host index this reading started from.",
+          "name": "index",
+          "refs": [
+            "HostIndexView"
+          ],
+          "required": true,
+          "type": "HostIndexView"
+        },
+        {
+          "description": "The process table this reading started from.",
+          "name": "process_table",
+          "refs": [
+            "ProcessTableView"
+          ],
+          "required": true,
+          "type": "ProcessTableView"
+        },
+        {
+          "description": "Every checkout with a lease or a Majordomus process, in path order.",
+          "name": "runtimes",
+          "refs": [
+            "HostRuntime"
+          ],
+          "required": true,
+          "type": "array of HostRuntime"
+        },
+        {
+          "description": "How many checkouts the index lists that have neither a lease nor a process: their\nservers stopped cleanly, and they are not listed.",
+          "name": "not_running",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The `serve` and `mcp` processes whose checkout could not be found: no working\ndirectory the system would say, or one inside no repository of the layer.",
+          "name": "unplaced",
+          "refs": [
+            "HostProcessView"
+          ],
+          "required": true,
+          "type": "array of HostProcessView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "server.runtimes"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
     },
     {
       "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under `HttpExposure::PREFIX`.",
@@ -31074,7 +31397,7 @@
           "value": "not_run"
         },
         {
-          "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself.",
+          "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this.",
           "value": "not_derivable"
         },
         {
@@ -34536,6 +34859,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "HostRuntime",
         "ServerStatus",
         "ServerView"
       ],
@@ -35183,6 +35507,200 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The paths a sweep is about to delete.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "LivenessInput",
+      "properties": [
+        {
+          "description": "The trees or build directories, absolute or relative to the primary checkout.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes.",
+          "name": "idle",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.liveness"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One reason a path is kept.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "LivenessReason",
+      "properties": [
+        {
+          "description": "What kind of evidence.",
+          "name": "signal",
+          "refs": [
+            "LivenessSignal"
+          ],
+          "required": true,
+          "type": "LivenessSignal"
+        },
+        {
+          "description": "The evidence, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathLiveness"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `worktree.liveness`.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "LivenessReport",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The idle window git activity is judged against, in seconds.",
+          "name": "idle_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether every source was read. A sweep that gets `false` removes nothing.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every source that could not be read at all, with why.",
+          "name": "blind",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "One answer per path, in the order asked.",
+          "name": "paths",
+          "refs": [
+            "PathLiveness"
+          ],
+          "required": true,
+          "type": "array of PathLiveness"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.liveness"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What made a path live.",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "LivenessSignal",
+      "properties": [],
+      "type": "\"task\" | \"mesh_claim\" | \"board_claim\" | \"derive_lock\" | \"queue_pid_file\" | \"runner_job\" | \"process_environment\" | \"process_directory\" | \"process_arguments\" | \"git_activity\" | \"unreadable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LivenessReason"
+      ],
+      "values": [
+        {
+          "description": "An open majordomus task in the tree.",
+          "value": "task"
+        },
+        {
+          "description": "A live mesh claim or session names it.",
+          "value": "mesh_claim"
+        },
+        {
+          "description": "A peer of the tree's own server is attached or announced.",
+          "value": "board_claim"
+        },
+        {
+          "description": "The derive lock's live owner names it.",
+          "value": "derive_lock"
+        },
+        {
+          "description": "An offload run record or a pid file of the offload lock names it.",
+          "value": "queue_pid_file"
+        },
+        {
+          "description": "A CI runner job is running under the home that holds it.",
+          "value": "runner_job"
+        },
+        {
+          "description": "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it.",
+          "value": "process_environment"
+        },
+        {
+          "description": "Another process's working directory is inside it.",
+          "value": "process_directory"
+        },
+        {
+          "description": "Another process names it on its command line.",
+          "value": "process_arguments"
+        },
+        {
+          "description": "Its index, `HEAD` or `HEAD` reflog changed within the idle window.",
+          "value": "git_activity"
+        },
+        {
+          "description": "A reading that could not be taken: not knowing keeps it.",
+          "value": "unreadable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Keep or reclaim.",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "LivenessVerdict",
+      "properties": [],
+      "type": "\"keep\" | \"reclaim\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathLiveness"
+      ],
+      "values": [
+        {
+          "description": "Something uses it, or that could not be ruled out.",
+          "value": "keep"
+        },
+        {
+          "description": "Every source was read and none of them names it.",
+          "value": "reclaim"
+        }
+      ],
       "variants": []
     },
     {
@@ -42288,6 +42806,53 @@
       "variants": []
     },
     {
+      "description": "The answer for one path.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "PathLiveness",
+      "properties": [
+        {
+          "description": "The path as it was asked about (made absolute when it was relative).",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Keep or reclaim.",
+          "name": "verdict",
+          "refs": [
+            "LivenessVerdict"
+          ],
+          "required": true,
+          "type": "LivenessVerdict"
+        },
+        {
+          "description": "The work tree that holds it, when one does.",
+          "name": "tree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every reason it is kept; empty exactly when the verdict is `reclaim`.",
+          "name": "reasons",
+          "refs": [
+            "LivenessReason"
+          ],
+          "required": true,
+          "type": "array of LivenessReason"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LivenessReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Shared authored paths with one other open pull request.",
       "home": "integration",
       "is_enum": false,
@@ -45321,6 +45886,42 @@
       "used_by": [],
       "used_by_schemas": [
         "WhoReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The process table as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::ProcessTableView;\nlet v = serde_json::to_value(ProcessTableView { read: true, processes: 2, problem: None }).unwrap();\nassert_eq!(v[\"processes\"], 2);\n```",
+      "home": "server",
+      "is_enum": false,
+      "name": "ProcessTableView",
+      "properties": [
+        {
+          "description": "Whether it was read. A table that could not be read lists nothing, and the\ninventory then holds only what the index found.",
+          "name": "read",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many `serve` and `mcp` processes it holds.",
+          "name": "processes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Why it could not be read, when it could not.",
+          "name": "problem",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostRuntimes"
       ],
       "values": [],
       "variants": []
@@ -57406,6 +58007,7 @@
       "used_by": [],
       "used_by_schemas": [
         "BoardView",
+        "HostRuntime",
         "RuntimeState",
         "RuntimeTransition",
         "ServerStatus",
@@ -61390,6 +61992,29 @@
         "MeshStateAnswer"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which Majordomus process a row of the process table is.\n\n```\nuse majordomus_cli::lease::host::Subcommand;\nassert_eq!(serde_json::to_value(Subcommand::Serve).unwrap(), \"serve\");\n```",
+      "home": "server",
+      "is_enum": true,
+      "name": "Subcommand",
+      "properties": [],
+      "type": "\"serve\" | \"mcp\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostProcessView"
+      ],
+      "values": [
+        {
+          "description": "`majordomus serve`: a server and nothing else.",
+          "value": "serve"
+        },
+        {
+          "description": "`majordomus mcp`: a client's session, which serves its checkout when it won the\nelection and attaches to the server that did otherwise.",
+          "value": "mcp"
+        }
+      ],
       "variants": []
     },
     {
@@ -65928,6 +66553,29 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a runtime's version was read.\n\n```\nuse majordomus_cli::capability::builtin::server::VersionSource;\nassert_eq!(serde_json::to_value(VersionSource::Executable).unwrap(), \"executable\");\n```",
+      "home": "server",
+      "is_enum": true,
+      "name": "VersionSource",
+      "properties": [],
+      "type": "\"lease\" | \"executable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "HostRuntime"
+      ],
+      "values": [
+        {
+          "description": "The lease: what the server wrote about itself when it started.",
+          "value": "lease"
+        },
+        {
+          "description": "`<executable> --version`: a lease too old to carry a version, or no lease at all.",
+          "value": "executable"
+        }
+      ],
       "variants": []
     },
     {
@@ -75249,15 +75897,28 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "mesh doctor",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor\"",
-          "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor?build_host=false\"",
+          "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343).",
           "home": "mesh",
           "id": "mesh.doctor",
           "kind": "query",
           "mcp_resource": "",
           "mcp_tool": "majordomus_mesh_doctor",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "Also observe this build host's own guard (I4343): disk-guard.timer and\nbuild-host-observe.timer active, the ballast present, its state fresh, every\ndeclared critical-service drop-in present and every declared tenant at or under its\nbound. Observed against `/`, never a fixture: a test calls\n`crate::mesh::cache_provision::observe_build_host` directly.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "false"
+                }
+              ],
+              "name": "build_host",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
           "path": "/api/v1/mesh/doctor",
           "primary": true,
           "provenance": {
@@ -81394,9 +82055,66 @@
       "slug": "served"
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
+      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds; and every Majordomus runtime of this user on this host, read from leases with no checkout open.",
       "name": "server",
       "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "runtimes",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/runtimes\"",
+          "description": "Every Majordomus runtime of this user on this host, whatever repository it serves, with no checkout open: each checkout with its root and identity, the git repository it belongs to, where its server stands (the same five words as `server.status`, measured against the answering executable, and `live` only when a server answers — a lease whose process is gone is `stale`), the port its lease names, the version it runs (the lease's, else what its executable reports to `--version`), the `serve` and `mcp` processes working on it and whether each holds the lease, and this host's node id. The checkouts come from two places and neither is believed: the disposable index of checkout roots each server adds itself to beside `node.json` (`checkout-roots` in `$XDG_STATE_HOME/majordomus`, else `~/.local/state/majordomus`), and the process table, where every `majordomus serve` and `majordomus mcp` is found by executable path — which is how a runtime older than the index, or one with another state directory, is listed. Every row is re-read from its checkout's lease, so deleting the index loses nothing but speed. Read-only: no process of its own, no registry, nothing started or stopped; peers stay the mesh registry's. The command line answers it without a server (`majordomus runtimes --host`, from any directory), and any running server answers the same reading here.",
+          "home": "server",
+          "id": "server.runtimes",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "runtimes",
+            "uri": "majordomus://runtimes"
+          },
+          "mcp_tool": "majordomus_runtimes",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/runtimes",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::server",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every Majordomus runtime of this user on this host: the result.",
+              "schema": "HostRuntimes",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "HostRuntimes",
+          "stability": "behaviorally_verified",
+          "summary": "Every Majordomus runtime of this user on this host"
+        },
         {
           "benchmark": "required",
           "benchmark_reason": "",
@@ -82766,6 +83484,65 @@
           "result_schema": "InspectReport",
           "stability": "behaviorally_verified",
           "summary": "One branch: where its worktree belongs and what is there"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "absent-path",
+              "json": "{\"paths\":[\"does/not/exist\"]}"
+            }
+          ],
+          "body_schema": "LivenessInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "worktree liveness",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/worktrees/liveness\" -H \"content-type: application/json\" -d '{\"paths\":[\"does/not/exist\"]}'",
+          "description": "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index.",
+          "home": "worktree",
+          "id": "worktree.liveness",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_worktree_liveness",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/worktrees/liveness",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::worktree",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether anybody uses a tree or build directory: keep or reclaim: the result.",
+              "schema": "LivenessReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LivenessReport",
+          "stability": "behaviorally_verified",
+          "summary": "Whether anybody uses a tree or build directory: keep or reclaim"
         },
         {
           "benchmark": "required",

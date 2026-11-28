@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.3.0 -->
+     Generator: majordomus-cli 1.4.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 233 | 187 | 0 | 46 |
-| http | 221 | 185 | 0 | 36 |
-| mcp | 217 | 182 | 0 | 35 |
+| direct | 235 | 189 | 0 | 46 |
+| http | 223 | 187 | 0 | 36 |
+| mcp | 219 | 184 | 0 | 35 |
 | system | 14 | 14 | 0 | 0 |
-| total | 685 | 568 | 0 | 117 |
+| total | 691 | 574 | 0 | 117 |
 
 ## Capabilities
 
@@ -228,6 +228,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `served.forge` | served | command | — | waived | — | — | — |
 | `served.observe` | served | command | — | waived | — | — | — |
 | `served.show` | served | query | — | covered | covered | covered | `head`, `pages-against-head` |
+| `server.runtimes` | server | query | — | covered | covered | covered | `default` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |
@@ -247,6 +248,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
 | `worktree.create` | worktree | command | — | covered | covered | covered | `refused-name` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
+| `worktree.liveness` | worktree | query | — | covered | covered | covered | `absent-path` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |

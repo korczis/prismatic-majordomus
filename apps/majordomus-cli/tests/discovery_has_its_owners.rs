@@ -60,8 +60,8 @@ const OWNERS: &[(&str, usize, &str)] = &[
     ),
     (
         "src/capability/builtin/server.rs",
-        1,
-        "local_half of a checkout given by its path",
+        2,
+        "local_half of a checkout given by its path; checkout_of a serve or mcp process the host inventory found (I3184)",
     ),
     (
         "src/capability/builtin/brief.rs",
@@ -92,6 +92,11 @@ const OWNERS: &[(&str, usize, &str)] = &[
         "src/synthetic.rs",
         1,
         "the synthetic repository a test builds",
+    ),
+    (
+        "src/evidence/record.rs",
+        1,
+        "declared_verifications: the profile of a root an index or a request names (I3395)",
     ),
 ];
 

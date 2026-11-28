@@ -2337,7 +2337,10 @@ pub fn continuous(
 
 /// Ask this process to stop at the next safe point on SIGINT or SIGTERM: the returned flag
 /// is set by the first signal, and a second one ends the process at once the way the signal
-/// would have. Installed once per process; the handler does only async-signal-safe work.
+/// would have, after ending every process group this process leads
+/// ([`crate::process::kill_registered_groups`]): the handler installed here takes the place
+/// of the one that would have ended them, so a `git` or `gh` the drain was running does not
+/// outlive it. Installed once per process; the handler does only async-signal-safe work.
 pub fn stop_on_signals() -> &'static std::sync::atomic::AtomicBool {
     signals::install()
 }
@@ -2364,12 +2367,100 @@ mod signals {
 
     extern "C" fn on_signal(signal: libc::c_int) {
         if STOP.swap(true, Ordering::SeqCst) {
-            // the second signal: the person means it
+            // the second signal: the person means it, and what this process started goes
+            // with it
+            crate::process::kill_registered_groups();
             // SAFETY: restoring the default disposition and re-raising are async-signal-safe
             unsafe {
                 libc::signal(signal, libc::SIG_DFL);
                 libc::raise(signal);
             }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::process::{Command, Stdio};
+        use std::time::{Duration, Instant};
+
+        /// The variable that makes a run of this test binary the handler's child below.
+        const CHILD: &str = "MAJORDOMUS_DRAIN_TEST_SIGNALS";
+
+        /// The pid `sh` wrote into `pids`, once it is there.
+        fn written(pids: &std::path::Path) -> u32 {
+            let deadline = Instant::now() + Duration::from_secs(10);
+            loop {
+                if let Some(pid) = std::fs::read_to_string(pids)
+                    .ok()
+                    .and_then(|s| s.trim().parse().ok())
+                {
+                    return pid;
+                }
+                assert!(Instant::now() < deadline, "the sleeper never started");
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        }
+
+        /// Whether `pid` is gone within a few seconds.
+        fn gone_soon(pid: u32) -> bool {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            while Instant::now() < deadline {
+                if !crate::lease::alive(pid) {
+                    return true;
+                }
+                std::thread::sleep(Duration::from_millis(25));
+            }
+            false
+        }
+
+        /// The first signal only asks the drain to stop, and what it runs runs on; the second
+        /// ends every group the process leads before the signal is raised again with its
+        /// default. Run for `SIGWINCH`, whose default is to be ignored, so the process lives
+        /// on to say what the handler did — in a process of its own, because the handler ends
+        /// every group the process holds.
+        #[test]
+        fn a_second_signal_ends_the_groups_before_it_ends_the_drain() {
+            if let Some(dir) = std::env::var_os(CHILD) {
+                let pids = std::path::Path::new(&dir).join("pids");
+                let mut cmd = Command::new("sh");
+                cmd.args(["-c", "sleep 30 & echo $! > \"$1\"; wait", "sh"])
+                    .arg(&pids)
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null());
+                let (mut child, _group) = crate::process::spawn_group(&mut cmd).unwrap();
+                let sleeper = written(&pids);
+                on_signal(libc::SIGWINCH);
+                assert!(STOP.load(Ordering::SeqCst), "the first signal asks to stop");
+                std::thread::sleep(Duration::from_millis(100));
+                assert!(
+                    crate::lease::alive(sleeper),
+                    "the first signal ended {sleeper}"
+                );
+                on_signal(libc::SIGWINCH);
+                assert!(gone_soon(sleeper), "the second signal left {sleeper}");
+                let _ = child.wait();
+                return;
+            }
+            let dir = tempfile::tempdir().unwrap();
+            let out = Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "integration::drain::signals::tests::\
+                     a_second_signal_ends_the_groups_before_it_ends_the_drain",
+                    "--nocapture",
+                    "--test-threads",
+                    "1",
+                ])
+                .env(CHILD, dir.path())
+                .output()
+                .expect("the child process runs");
+            assert!(out.status.success(), "{out:?}");
+            assert!(
+                String::from_utf8_lossy(&out.stdout).contains("1 passed"),
+                "the child ran the test: {out:?}"
+            );
         }
     }
 }

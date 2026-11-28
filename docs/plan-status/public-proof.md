@@ -136,7 +136,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4622; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4680; they may not run concurrently |
@@ -147,15 +146,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3765; they may not run concurrently |
 | WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3766; they may not run concurrently |
 | WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares site/templates/index.html with I3764; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares site/templates/index.html with I3765; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares site/templates/index.html with I3766; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3760` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3765` | shares site/templates/index.html with I3766; they may not run concurrently |
 | WARN | `scope_conflict` | `I3765` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3765` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3766` | shares site/templates/components.html with I3793; they may not run concurrently |
 | WARN | `scope_conflict` | `I3766` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3766` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |

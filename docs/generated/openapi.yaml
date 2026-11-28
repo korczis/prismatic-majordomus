@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.3.0
+# Generator: majordomus-cli 1.4.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "1.3.0"
+  version: "1.4.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 409 `conflict` and 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -130,7 +130,7 @@ tags:
   - name: served
     description: "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface."
   - name: server
-    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds."
+    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds; and every Majordomus runtime of this user on this host, read from leases with no checkout open."
   - name: session_domain
     description: "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so."
   - name: shell
@@ -7291,10 +7291,20 @@ paths:
     get:
       operationId: mesh.doctor
       summary: The mesh self-check
-      description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required."
+      description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343)."
       tags:
         - mesh
-      parameters: []
+      parameters:
+        - name: build_host
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Also observe this build host's own guard (I4343): disk-guard.timer and\nbuild-host-observe.timer active, the ballast present, its state fresh, every\ndeclared critical-service drop-in present and every declared tenant at or under its\nbound. Observed against `/`, never a fixture: a test calls\n`crate::mesh::cache_provision::observe_build_host` directly."
+          examples:
+            default:
+              value: false
       responses:
         "200":
           description: "The mesh self-check: the result."
@@ -13188,6 +13198,62 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_rule
       x-majordomus-cli: rules show
+  "/api/v1/runtimes":
+    get:
+      operationId: server.runtimes
+      summary: Every Majordomus runtime of this user on this host
+      description: "Every Majordomus runtime of this user on this host, whatever repository it serves, with no checkout open: each checkout with its root and identity, the git repository it belongs to, where its server stands (the same five words as `server.status`, measured against the answering executable, and `live` only when a server answers — a lease whose process is gone is `stale`), the port its lease names, the version it runs (the lease's, else what its executable reports to `--version`), the `serve` and `mcp` processes working on it and whether each holds the lease, and this host's node id. The checkouts come from two places and neither is believed: the disposable index of checkout roots each server adds itself to beside `node.json` (`checkout-roots` in `$XDG_STATE_HOME/majordomus`, else `~/.local/state/majordomus`), and the process table, where every `majordomus serve` and `majordomus mcp` is found by executable path — which is how a runtime older than the index, or one with another state directory, is listed. Every row is re-read from its checkout's lease, so deleting the index loses nothing but speed. Read-only: no process of its own, no registry, nothing started or stopped; peers stay the mesh registry's. The command line answers it without a server (`majordomus runtimes --host`, from any directory), and any running server answers the same reading here."
+      tags:
+        - server
+      parameters: []
+      responses:
+        "200":
+          description: "Every Majordomus runtime of this user on this host: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/HostRuntimes"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: server.runtimes
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::server
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_runtimes
+        resource:
+          uri: majordomus://runtimes
+          name: runtimes
+      x-majordomus-cli: runtimes
   "/api/v1/scope":
     get:
       operationId: repository.scope
@@ -14737,6 +14803,70 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_worktree_inspect
       x-majordomus-cli: worktree inspect
+  "/api/v1/worktrees/liveness":
+    post:
+      operationId: worktree.liveness
+      summary: "Whether anybody uses a tree or build directory: keep or reclaim"
+      description: "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index."
+      tags:
+        - worktree
+      requestBody:
+        required: true
+        description: "The input of `worktree.liveness`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/LivenessInput"
+            examples:
+              absent-path:
+                value:
+                  paths:
+                    - does/not/exist
+      responses:
+        "200":
+          description: "Whether anybody uses a tree or build directory: keep or reclaim: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/LivenessReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.liveness
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_worktree_liveness
+      x-majordomus-cli: worktree liveness
   "/api/v1/worktrees/migration":
     get:
       operationId: worktree.migration_plan
@@ -27902,6 +28032,15 @@ components:
         - sans
         - mono
       description: The two type stacks.
+    FoundBy:
+      oneOf:
+        - type: string
+          const: index
+          description: "The host index of checkout roots: its server published a lease and added its root."
+        - type: string
+          const: process_table
+          description: "The process table: a `majordomus serve` or `majordomus mcp` works on this checkout."
+      description: "Where a checkout of the host inventory was found. Neither source is believed: each only\nsays which lease to read.\n\n```\nuse majordomus_cli::capability::builtin::server::FoundBy;\nassert_eq!(serde_json::to_value(FoundBy::ProcessTable).unwrap(), \"process_table\");\n```"
     Freshness:
       oneOf:
         - type: string
@@ -29211,6 +29350,156 @@ components:
             - message
           description: "Git was asked and refused, or could not be run; the message is its own."
       description: "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```"
+    HostIndexView:
+      type: object
+      properties:
+        path:
+          type:
+            - string
+            - "null"
+          description: "Where it is: `checkout-roots` beside `node.json`; absent when this user has no state\ndirectory."
+        entries:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many checkout roots it lists.
+        problem:
+          type:
+            - string
+            - "null"
+          description: "Why it could not be read, when it could not."
+      required:
+        - entries
+      description: "The host index as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostIndexView;\nlet v = serde_json::to_value(HostIndexView { path: None, entries: 0, problem: None }).unwrap();\nassert_eq!(v[\"entries\"], 0);\n```"
+    HostProcessView:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process id.
+        subcommand:
+          "$ref": "#/components/schemas/Subcommand"
+          description: "`serve` or `mcp`."
+        executable:
+          type: string
+          description: "The executable, as the process table names it."
+        holds_lease:
+          type: boolean
+          description: "Whether the checkout's lease names this process: the server, rather than a client\nattached to it or a server superseded by another."
+      required:
+        - pid
+        - subcommand
+        - executable
+        - holds_lease
+      description: "A `majordomus serve` or `majordomus mcp` process of a checkout, as the process table\nshows it.\n\n```\nuse majordomus_cli::capability::builtin::server::HostProcessView;\nuse majordomus_cli::lease::host::Subcommand;\nlet p = HostProcessView { pid: 7, subcommand: Subcommand::Mcp, executable: \"/bin/majordomus\".into(), holds_lease: false };\nassert_eq!(serde_json::to_value(&p).unwrap()[\"subcommand\"], \"mcp\");\n```"
+    HostRuntime:
+      type: object
+      properties:
+        checkout:
+          type: string
+          description: "The checkout, absolute and canonical where it still exists."
+        checkout_id:
+          type: string
+          description: "The checkout's identity: what its server answers as `repository_id`."
+        git:
+          anyOf:
+            - "$ref": "#/components/schemas/GitIdentity"
+            - type: "null"
+          description: "The git repository the checkout belongs to: one id for every worktree of it, so two\nruntimes of one repository are told from runtimes of two. Absent where git cannot be\nasked."
+        found_by:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FoundBy"
+          description: "Where the checkout was found: the index, the process table, or both."
+        standing:
+          "$ref": "#/components/schemas/ServerStanding"
+          description: "Where its server stands, as `server.status` would say it: measured against this\nexecutable, from the lease and one probe of the address it names."
+        live:
+          type: boolean
+          description: "Whether a server answers for the checkout: `ready` or `outdated`. A lease whose\nprocess is gone is `stale` and never live."
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when the standing is not `ready`."
+        lease:
+          anyOf:
+            - "$ref": "#/components/schemas/LeaseView"
+            - type: "null"
+          description: "The lease, when the file holds one."
+        port:
+          type:
+            - integer
+            - "null"
+          format: uint16
+          minimum: 0
+          maximum: 65535
+          description: The port of the address the lease names.
+        version:
+          type:
+            - string
+            - "null"
+          description: "The version the runtime runs: the lease's, else what its executable reports."
+        version_source:
+          anyOf:
+            - "$ref": "#/components/schemas/VersionSource"
+            - type: "null"
+          description: "Where `version` was read."
+        processes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/HostProcessView"
+          description: "The `serve` and `mcp` processes the process table shows working on the checkout."
+      required:
+        - checkout
+        - checkout_id
+        - found_by
+        - standing
+        - live
+        - processes
+      description: "One checkout of the host, and the runtime its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{FoundBy, HostRuntime, ServerStanding};\nlet r = HostRuntime { checkout: \"/r\".into(), checkout_id: \"c\".into(), git: None,\n    found_by: vec![FoundBy::Index], standing: ServerStanding::Stale, live: false,\n    reason: Some(\"gone\".into()), lease: None, port: None, version: None, version_source: None,\n    processes: Vec::new() };\nlet v = serde_json::to_value(&r).unwrap();\nassert_eq!(v[\"standing\"], \"stale\");\nassert_eq!(v[\"live\"], false);\nassert!(v.get(\"port\").is_none() && v.get(\"version\").is_none(), \"what there is not is not written\");\n```"
+    HostRuntimes:
+      type: object
+      properties:
+        version:
+          type: string
+          description: "The version of the executable that answered, which every `standing` is measured\nagainst."
+        node:
+          type:
+            - string
+            - "null"
+          description: "This host's node id, read from this user's `node.json` and never created by asking.\nEvery runtime of the user on the host shares it unless it was started with another\nstate directory."
+        index:
+          "$ref": "#/components/schemas/HostIndexView"
+          description: The host index this reading started from.
+        process_table:
+          "$ref": "#/components/schemas/ProcessTableView"
+          description: The process table this reading started from.
+        runtimes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/HostRuntime"
+          description: "Every checkout with a lease or a Majordomus process, in path order."
+        not_running:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many checkouts the index lists that have neither a lease nor a process: their\nservers stopped cleanly, and they are not listed."
+        unplaced:
+          type: array
+          items:
+            "$ref": "#/components/schemas/HostProcessView"
+          description: "The `serve` and `mcp` processes whose checkout could not be found: no working\ndirectory the system would say, or one inside no repository of the layer."
+      required:
+        - version
+        - index
+        - process_table
+        - runtimes
+        - not_running
+        - unplaced
+      description: "Every Majordomus runtime of this user on this host.\n\n```\nuse majordomus_cli::capability::builtin::server::{HostIndexView, HostRuntimes, ProcessTableView};\nlet r = HostRuntimes { version: \"1.0.0\".into(), node: None,\n    index: HostIndexView { path: None, entries: 0, problem: None },\n    process_table: ProcessTableView { read: true, processes: 0, problem: None },\n    runtimes: Vec::new(), not_running: 0, unplaced: Vec::new() };\nlet text = serde_json::to_string(&r).unwrap();\nassert_eq!(serde_json::from_str::<HostRuntimes>(&text).unwrap(), r);\n```"
     HttpExposure:
       type: object
       properties:
@@ -30466,7 +30755,7 @@ components:
           description: "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
         - type: string
           const: not_derivable
-          description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+          description: "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
         - type: string
           const: unresolved
           description: The reference is empty or names nothing this repository holds.
@@ -32719,6 +33008,112 @@ components:
         - version
         - commit
       description: "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
+    LivenessInput:
+      type: object
+      additionalProperties: false
+      properties:
+        paths:
+          type: array
+          items:
+            type: string
+          description: "The trees or build directories, absolute or relative to the primary checkout."
+        idle:
+          type:
+            - string
+            - "null"
+          description: "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes."
+      required:
+        - paths
+      description: The paths a sweep is about to delete.
+    LivenessReason:
+      type: object
+      properties:
+        signal:
+          "$ref": "#/components/schemas/LivenessSignal"
+          description: What kind of evidence.
+        detail:
+          type: string
+          description: "The evidence, in words."
+      required:
+        - signal
+        - detail
+      description: One reason a path is kept.
+    LivenessReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`SCHEMA`."
+        idle_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The idle window git activity is judged against, in seconds."
+        complete:
+          type: boolean
+          description: "Whether every source was read. A sweep that gets `false` removes nothing."
+        blind:
+          type: array
+          items:
+            type: string
+          description: "Every source that could not be read at all, with why."
+        paths:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PathLiveness"
+          description: "One answer per path, in the order asked."
+      required:
+        - schema
+        - idle_seconds
+        - complete
+        - blind
+        - paths
+      description: "The answer of `worktree.liveness`."
+    LivenessSignal:
+      oneOf:
+        - type: string
+          const: task
+          description: An open majordomus task in the tree.
+        - type: string
+          const: mesh_claim
+          description: A live mesh claim or session names it.
+        - type: string
+          const: board_claim
+          description: "A peer of the tree's own server is attached or announced."
+        - type: string
+          const: derive_lock
+          description: "The derive lock's live owner names it."
+        - type: string
+          const: queue_pid_file
+          description: An offload run record or a pid file of the offload lock names it.
+        - type: string
+          const: runner_job
+          description: A CI runner job is running under the home that holds it.
+        - type: string
+          const: process_environment
+          description: "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it."
+        - type: string
+          const: process_directory
+          description: "Another process's working directory is inside it."
+        - type: string
+          const: process_arguments
+          description: Another process names it on its command line.
+        - type: string
+          const: git_activity
+          description: "Its index, `HEAD` or `HEAD` reflog changed within the idle window."
+        - type: string
+          const: unreadable
+          description: "A reading that could not be taken: not knowing keeps it."
+      description: What made a path live.
+    LivenessVerdict:
+      oneOf:
+        - type: string
+          const: keep
+          description: "Something uses it, or that could not be ruled out."
+        - type: string
+          const: reclaim
+          description: Every source was read and none of them names it.
+      description: Keep or reclaim.
     LocalOverrides:
       oneOf:
         - type: object
@@ -36653,6 +37048,30 @@ components:
         - stage
         - status
       description: "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```"
+    PathLiveness:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The path as it was asked about (made absolute when it was relative).
+        verdict:
+          "$ref": "#/components/schemas/LivenessVerdict"
+          description: Keep or reclaim.
+        tree:
+          type:
+            - string
+            - "null"
+          description: "The work tree that holds it, when one does."
+        reasons:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LivenessReason"
+          description: "Every reason it is kept; empty exactly when the verdict is `reclaim`."
+      required:
+        - path
+        - verdict
+        - reasons
+      description: The answer for one path.
     PathOverlap:
       type: object
       properties:
@@ -38341,6 +38760,26 @@ components:
         - pgid
         - cwd_gone
       description: "One process of a parent chain, as its host reports it."
+    ProcessTableView:
+      type: object
+      properties:
+        read:
+          type: boolean
+          description: "Whether it was read. A table that could not be read lists nothing, and the\ninventory then holds only what the index found."
+        processes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many `serve` and `mcp` processes it holds."
+        problem:
+          type:
+            - string
+            - "null"
+          description: "Why it could not be read, when it could not."
+      required:
+        - read
+        - processes
+      description: "The process table as one reading found it.\n\n```\nuse majordomus_cli::capability::builtin::server::ProcessTableView;\nlet v = serde_json::to_value(ProcessTableView { read: true, processes: 2, problem: None }).unwrap();\nassert_eq!(v[\"processes\"], 2);\n```"
     ProductCounts:
       type: object
       properties:
@@ -47229,6 +47668,15 @@ components:
         - stream
         - liveness
       description: "One stream's liveness."
+    Subcommand:
+      oneOf:
+        - type: string
+          const: serve
+          description: "`majordomus serve`: a server and nothing else."
+        - type: string
+          const: mcp
+          description: "`majordomus mcp`: a client's session, which serves its checkout when it won the\nelection and attaches to the server that did otherwise."
+      description: "Which Majordomus process a row of the process table is.\n\n```\nuse majordomus_cli::lease::host::Subcommand;\nassert_eq!(serde_json::to_value(Subcommand::Serve).unwrap(), \"serve\");\n```"
     Summary:
       type: object
       properties:
@@ -49821,6 +50269,15 @@ components:
         - index_is_current
         - findings
       description: "The answer of `objects.verify`."
+    VersionSource:
+      oneOf:
+        - type: string
+          const: lease
+          description: "The lease: what the server wrote about itself when it started."
+        - type: string
+          const: executable
+          description: "`<executable> --version`: a lease too old to carry a version, or no lease at all."
+      description: "Where a runtime's version was read.\n\n```\nuse majordomus_cli::capability::builtin::server::VersionSource;\nassert_eq!(serde_json::to_value(VersionSource::Executable).unwrap(), \"executable\");\n```"
     Via:
       oneOf:
         - type: string
@@ -50505,7 +50962,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 1.3.0
+  generator: majordomus-cli 1.4.0
   infrastructure:
     - id: home
       path: /
@@ -50557,4 +51014,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 1.3.0
+x-majordomus-generator: majordomus-cli 1.4.0

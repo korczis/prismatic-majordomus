@@ -138,8 +138,25 @@ const SCHEMA: &str = "majordomus-mesh-identity/v1";
 /// `$HOME/.local/state/majordomus/node.json`. `None` when neither variable is set —
 /// a process with no home has no node identity, and the mesh stays off.
 pub fn default_identity_path() -> Option<PathBuf> {
+    default_state_dir().map(|dir| dir.join("node.json"))
+}
+
+/// The user's Majordomus state directory on this machine, the one `node.json` lives in:
+/// `$XDG_STATE_HOME/majordomus`, else `$HOME/.local/state/majordomus`; `None` when neither
+/// variable is set. Per user and machine, never inside a repository: what is kept here is
+/// about the host, and the host's index of checkout roots (I3184,
+/// [`crate::lease::host::INDEX_FILE`]) sits beside the identity for that reason.
+///
+/// ```
+/// use majordomus_cli::mesh::identity::{default_identity_path, default_state_dir};
+/// if let Some(dir) = default_state_dir() {
+///     assert!(dir.ends_with("majordomus"));
+///     assert_eq!(default_identity_path(), Some(dir.join("node.json")));
+/// }
+/// ```
+pub fn default_state_dir() -> Option<PathBuf> {
     if let Some(state) = std::env::var_os("XDG_STATE_HOME").filter(|v| !v.is_empty()) {
-        return Some(PathBuf::from(state).join("majordomus").join("node.json"));
+        return Some(PathBuf::from(state).join("majordomus"));
     }
     std::env::var_os("HOME")
         .filter(|v| !v.is_empty())
@@ -148,8 +165,31 @@ pub fn default_identity_path() -> Option<PathBuf> {
                 .join(".local")
                 .join("state")
                 .join("majordomus")
-                .join("node.json")
         })
+}
+
+/// The node id of the identity at `path`, read and never created: `None` when there is no
+/// identity file there or it is not one. A reader asking which node a host is must not mint
+/// a key as a side effect — [`NodeIdentity::load_or_create`] is the writer's call.
+///
+/// ```
+/// use majordomus_cli::mesh::identity::{node_id_at, NodeIdentity};
+/// let dir = tempfile::tempdir().unwrap();
+/// let path = dir.path().join("node.json");
+/// assert!(node_id_at(&path).is_none());
+/// assert!(!path.exists(), "asking created nothing");
+/// let made = NodeIdentity::load_or_create(&path).unwrap();
+/// assert_eq!(node_id_at(&path), Some(made.public.node_id));
+/// std::fs::write(&path, "{not json").unwrap();
+/// assert!(node_id_at(&path).is_none());
+/// ```
+pub fn node_id_at(path: &Path) -> Option<NodeId> {
+    if !path.is_file() {
+        return None;
+    }
+    NodeIdentity::load(path)
+        .ok()
+        .map(|identity| identity.public.node_id)
 }
 
 impl NodeIdentity {

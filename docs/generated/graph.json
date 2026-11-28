@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.3.0",
+  "generator": "majordomus-cli 1.4.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1951,6 +1951,15 @@
         "status": "query"
       },
       {
+        "id": "capability:server.runtimes",
+        "kind": "capability",
+        "label": "server.runtimes",
+        "summary": "Every Majordomus runtime of this user on this host",
+        "route": "/cockpit/capabilities/server.runtimes",
+        "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:server.status",
         "kind": "capability",
         "label": "server.status",
@@ -2118,6 +2127,15 @@
         "label": "worktree.inspect",
         "summary": "One branch: where its worktree belongs and what is there",
         "route": "/cockpit/capabilities/worktree.inspect",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:worktree.liveness",
+        "kind": "capability",
+        "label": "worktree.liveness",
+        "summary": "Whether anybody uses a tree or build directory: keep or reclaim",
+        "route": "/cockpit/capabilities/worktree.liveness",
         "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "status": "query"
       },
@@ -62508,6 +62526,11 @@
             "apps/majordomus-cli/src/evidence/record.rs",
             "apps/majordomus-cli/src/evidence/ledger.rs",
             "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "share/schemas/majordomus/profile/profile.v1.schema.json",
+            "share/schemas/majordomus/intent/intent.v1.schema.json",
+            "share/allow/profile.txt",
             "apps/majordomus-cli/tests/intent.rs",
             "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
             "docs/generated/cli.json",
@@ -62520,7 +62543,7 @@
             "the-product-proves-it-pays#a-criterion-can-cite-the-repositorys-own-check"
           ],
           "slug": "a-criterion-cites-the-repositorys-own-check",
-          "updated_at": "2026-10-19",
+          "updated_at": "2026-11-07",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent",
             "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence",
@@ -76170,7 +76193,7 @@
           ],
           "serves": [],
           "slug": "every-deleting-sweep-asks-one-liveness-predicate",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-07",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::liveness",
             "bash test/run.sh 611_the_reclaim_refuses_what_it_cannot_prove 276_disk_is_bounded",
@@ -82801,6 +82824,8 @@
         "route": "/cockpit/objects/issue/i4634",
         "source": ".ai/repo/project/issues/I4634.yaml",
         "facts": {
+          "completed_at": "2026-11-28T05:34:02Z",
+          "completed_event": "sha256:15ff25282e34d21290ce46b2a3118c12acd845eb615cd616c0bc4b41ac784e9e",
           "created_at": "2026-11-17",
           "depends_on": [],
           "evidence_required": [
@@ -82831,6 +82856,9 @@
           ],
           "serves": [],
           "slug": "a-merge-does-not-move-the-committed-delivery",
+          "started_at": "2026-11-28T05:33:07Z",
+          "started_event": "sha256:29cbd17bb9bf355dd4f5b16928c933e975913a9dc8903d9aaa650ba31525534e",
+          "updated_at": "2026-11-28T05:34:02Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
@@ -83782,6 +83810,8 @@
         "route": "/cockpit/objects/issue/i4721",
         "source": ".ai/repo/project/issues/I4721.yaml",
         "facts": {
+          "completed_at": "2026-11-28T05:36:01Z",
+          "completed_event": "sha256:69c7f143763f3c99b3e4ceb01493cbfdb8f3ca07f96efb4f69e80a0a958ad009",
           "created_at": "2026-11-25",
           "desired_state": "ADR 0199 on master reads accepted with its amendment; the knowledge record is on master; this issue carries both merges as evidence.",
           "evidence_required": [
@@ -83805,7 +83835,7 @@
             "https://github.com/korczis/prismatic-majordomus/pull/3123",
             "https://github.com/korczis/prismatic-majordomus/pull/3121"
           ],
-          "updated_at": "2026-11-25T04:10:33Z",
+          "updated_at": "2026-11-28T05:36:01Z",
           "validation": [
             "majordomus plan validate",
             "bin/majordomus knowledge check"
@@ -85335,6 +85365,8 @@
             "test/cases/4779 fails at its first assertion against scripts/ci/homepage-check as it was at 46775282570, and its mutant of the fixed checker fails situation 1",
             "test/cases/333, 3742 and every other case that runs scripts/ci/homepage-check pass unchanged"
           ],
+          "completed_at": "2026-11-28T05:35:16Z",
+          "completed_event": "sha256:1fd318f6d25d2540f5ecf9a4b3021f5674160401112e6cf1ca6fd0da6d9767f0",
           "created_at": "2026-11-25",
           "depends_on": [],
           "evidence_required": [
@@ -85355,6 +85387,9 @@
             ".ai/repo/project/issues/I4810.yaml"
           ],
           "slug": "homepage-check-compares-the-delivery-the-page-renders",
+          "started_at": "2026-11-28T05:34:37Z",
+          "started_event": "sha256:fae125de2adc2582ce012f691f6396c7641fc94ed2f4d68efa55aa50f8dd4e69",
+          "updated_at": "2026-11-28T05:35:16Z",
           "validation": [
             "bash test/run.sh 4779_homepage_check_compares_the_delivery_the_page_renders",
             "bash test/run.sh 333_homepage_narrative 3742_a_published_page_reads_delivery_at_its_build_commit"
@@ -101072,7 +101107,7 @@
             "project.worktree-topology@1",
             "project.work-is-claimed-before-it-is-built@1",
             "project.destructive-sweeps-fail-closed@1",
-            "project.reclaim-only-what-you-own@1",
+            "project.reclaim-only-what-you-own@2",
             "project.every-wait-is-bounded@2"
           ],
           "tags": [
@@ -102520,22 +102555,23 @@
         }
       },
       {
-        "id": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "id": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "rule",
-        "label": "project.reclaim-only-what-you-own@1",
-        "summary": "A worker reclaims only what it owns",
-        "route": "/cockpit/objects/rule/project-reclaim-only-what-you-own-1",
-        "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+        "label": "project.reclaim-only-what-you-own@2",
+        "summary": "A worker reclaims only what it owns, and every deleting sweep asks one liveness predicate",
+        "route": "/cockpit/objects/rule/project-reclaim-only-what-you-own-2",
+        "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
-            "project.worktree-topology@1"
+            "project.worktree-topology@1",
+            "project.destructive-sweeps-fail-closed@1"
           ],
-          "statement": "A worker removes build output only from the worktree it is working in, and never from the primary checkout or another branch's; disk pressure is reported, not resolved by taking someone else's tools.",
           "tags": [
             "process",
-            "worktrees"
+            "worktrees",
+            "reclamation"
           ]
         }
       },
@@ -103398,7 +103434,7 @@
           "class": "blocking",
           "depends_on": [
             "project.worktree-topology@1",
-            "project.reclaim-only-what-you-own@1",
+            "project.reclaim-only-what-you-own@2",
             "project.accumulation-is-measured@2",
             "project.destructive-sweeps-fail-closed@1"
           ],
@@ -113310,6 +113346,13 @@
         "source": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4266_a_milestone_block_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/4266_a_milestone_block_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-4266-a-milestone-block-is-named-sh",
+        "source": "test/cases/4266_a_milestone_block_is_named.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
         "kind": "test",
         "label": "test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
@@ -113511,6 +113554,13 @@
         "label": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
         "route": "/cockpit/objects/test/test-cases-4634-a-merge-does-not-move-the-committed-delivery-sh",
         "source": "test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4665_a_host_lists_its_runtimes.sh",
+        "kind": "test",
+        "label": "test/cases/4665_a_host_lists_its_runtimes.sh",
+        "route": "/cockpit/objects/test/test-cases-4665-a-host-lists-its-runtimes-sh",
+        "source": "test/cases/4665_a_host_lists_its_runtimes.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -121108,6 +121158,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:server.runtimes",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.runtimes",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:server.status",
         "target": "projection:cli",
         "kind": "projects"
@@ -121454,6 +121524,26 @@
       },
       {
         "source": "capability:worktree.inspect",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.liveness",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -123249,7 +123339,7 @@
       },
       {
         "source": "majordomus://adr/adr-0055",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "put_in_force"
       },
       {
@@ -127849,7 +127939,7 @@
       },
       {
         "source": "majordomus://adr/adr-0200",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "put_in_force"
       },
       {
@@ -159674,7 +159764,7 @@
       },
       {
         "source": "majordomus://rule/project.accumulation-is-measured@2",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "depends_on"
       },
       {
@@ -160538,12 +160628,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@2",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
@@ -161104,7 +161199,7 @@
       },
       {
         "source": "majordomus://rule/project.worktrees-share-build-intermediates@1",
-        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "depends_on"
       },
       {
@@ -164103,6 +164198,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4266_a_milestone_block_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164244,6 +164344,11 @@
       },
       {
         "source": "majordomus://test/test/cases/4634_a_merge_does_not_move_the_committed_delivery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4665_a_host_lists_its_runtimes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -169264,6 +169369,11 @@
       },
       {
         "source": "module:server",
+        "target": "capability:server.runtimes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:server",
         "target": "capability:server.status",
         "kind": "composes"
       },
@@ -169359,6 +169469,11 @@
       },
       {
         "source": "module:worktree",
+        "target": "capability:worktree.liveness",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
         "target": "capability:worktree.migration_plan",
         "kind": "composes"
       },
@@ -169384,8 +169499,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4606,
+      "edges": 10377,
       "acyclic": false,
       "truncated": false
     }

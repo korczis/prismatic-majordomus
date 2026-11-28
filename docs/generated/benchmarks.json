@@ -1,28 +1,28 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.3.0",
+  "generator": "majordomus-cli 1.4.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 233,
-      "covered": 187,
+      "required": 235,
+      "covered": 189,
       "missing": 0,
       "waived": 46,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 221,
-      "covered": 185,
+      "required": 223,
+      "covered": 187,
       "missing": 0,
       "waived": 36,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 217,
-      "covered": 182,
+      "required": 219,
+      "covered": 184,
       "missing": 0,
       "waived": 35,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 685,
-      "covered": 568,
+      "required": 691,
+      "covered": 574,
       "missing": 0,
       "waived": 117,
       "inapplicable": 0
@@ -2537,6 +2537,18 @@
       ]
     },
     {
+      "id": "server.runtimes",
+      "module": "server",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "server.status",
       "module": "server",
       "kind": "query",
@@ -2766,6 +2778,18 @@
       "http": "covered",
       "cases": [
         "feature-branch"
+      ]
+    },
+    {
+      "id": "worktree.liveness",
+      "module": "worktree",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "absent-path"
       ]
     },
     {

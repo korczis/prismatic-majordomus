@@ -50,6 +50,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::Duration;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -64,9 +65,18 @@ const DAEMON: &str = include_str!("../../assets/mesh-cache-provider/daemon.json"
 const GUARD: &str = include_str!("../../assets/mesh-cache-provider/disk-guard");
 const GUARD_SERVICE: &str = include_str!("../../assets/mesh-cache-provider/disk-guard.service");
 const GUARD_TIMER: &str = include_str!("../../assets/mesh-cache-provider/disk-guard.timer");
+const OBSERVE_SERVICE: &str =
+    include_str!("../../assets/mesh-cache-provider/build-host-observe.service");
+const OBSERVE_TIMER: &str =
+    include_str!("../../assets/mesh-cache-provider/build-host-observe.timer");
 const RW_POLICY: &str = include_str!("../../assets/mesh-cache-provider/mesh-build-cache-rw.json");
 const WRAPPER: &str = include_str!("../../assets/mesh-cache-provider/sccache-mesh");
 const RUNNER: &str = include_str!("../../assets/mesh-cache-provider/runner.conf");
+
+/// Where disk-guard.service tells the guard the liveness predicate's executable is (I4346):
+/// the executable that applies the provisioning is installed there, and the guard removes no
+/// build directory while nothing executable is.
+pub(crate) const GUARD_LIVENESS: &str = "/usr/local/libexec/majordomus/majordomus";
 
 /// The file the disk guard reads its homes from (`HOMES_FILE` in the script), rendered from
 /// the policy.
@@ -131,6 +141,23 @@ pub struct Policy {
     /// The CI runner services, as unit name patterns (`*` matches any run of characters):
     /// every observed unit that matches one restarts always, without a start limit.
     pub runner_units: Vec<String>,
+    /// The build host's baseline tenants (I4343): a path and the size, in GiB, it must not
+    /// outgrow. Observed, never reclaimed by this: which homes disk-guard itself sweeps is
+    /// I4352's.
+    #[serde(default)]
+    pub build_host_tenants: Vec<Tenant>,
+}
+
+/// One baseline tenant of the build host, observed against its bound (I4343).
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Tenant {
+    /// A short name for what lives at `path`: `korczis home`, `docker`, `minio`, `swap`.
+    pub name: String,
+    /// The path observed, repository-unrelated: a host path such as `/home/korczis`.
+    pub path: String,
+    /// The size, in GiB, this tenant must not exceed.
+    pub bound_gib: u64,
 }
 
 impl Policy {
@@ -372,6 +399,18 @@ fn wants(policy: &Policy, runners: &[String]) -> Vec<Want> {
             0o644,
             GUARD_TIMER,
             "disk-guard.timer",
+        ),
+        declared(
+            "/etc/systemd/system/build-host-observe.service".into(),
+            0o644,
+            OBSERVE_SERVICE,
+            "build-host-observe.service",
+        ),
+        declared(
+            "/etc/systemd/system/build-host-observe.timer".into(),
+            0o644,
+            OBSERVE_TIMER,
+            "build-host-observe.timer",
         ),
         declared(
             "/etc/systemd/journald.conf.d/50-build-host.conf".into(),
@@ -721,6 +760,11 @@ fn steps(policy: &Policy, runners: &[String]) -> Vec<Step> {
     }
     v.extend([
         s(
+            "observe-timer",
+            "systemctl enable --now build-host-observe.timer".into(),
+            "always",
+        ),
+        s(
             "ci-cache-quota",
             mc(
                 policy,
@@ -787,11 +831,23 @@ fn steps(policy: &Policy, runners: &[String]) -> Vec<Step> {
         ));
     }
     v.push(s(
+        "guard-liveness",
+        install_liveness_line(std::env::current_exe().ok()),
+        "always",
+    ));
+    v.push(s(
         "guard-run",
         "systemctl start disk-guard.service".into(),
         "always",
     ));
     v
+}
+
+/// The step that puts the liveness predicate where disk-guard.service names it: the
+/// executable applying the provisioning, or the one on the path when that is unknown.
+fn install_liveness_line(exe: Option<PathBuf>) -> String {
+    let exe = exe.map_or("majordomus".to_string(), |p| p.display().to_string());
+    format!("install -D -m 0755 {exe} {GUARD_LIVENESS}")
 }
 
 fn physical(root: &Path, logical: &str) -> PathBuf {
@@ -881,6 +937,259 @@ pub fn observe(policy: &Policy, root: &Path) -> BTreeMap<String, Observed> {
     };
     seen.insert(cfg, o);
     seen
+}
+
+/// How old a build host's own disk-guard.json may be before the observation calls it stale:
+/// three times the timer's five-minute period, so one missed or slow run is not a false
+/// alarm (I4343).
+pub const BUILD_HOST_STATE_MAX_AGE: Duration = Duration::from_secs(15 * 60);
+
+/// What a build host's own guard was observed to be, as far as this process could tell: the
+/// timer's own activity, the ballast, the age of its last state, every declared drop-in, and
+/// every declared tenant's size against its bound. Pure data:
+/// [`build_host_check`](super::doctor::build_host_check) is what judges it.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::BuildHostObserved;
+///
+/// let bound = Duration::from_secs(15 * 60); // BUILD_HOST_STATE_MAX_AGE
+/// // nothing observed is nothing held: every item is named
+/// let nothing = BuildHostObserved::default();
+/// assert!(!nothing.ok(bound));
+/// assert_eq!(nothing.failing(bound).len(), 4);
+///
+/// let held = BuildHostObserved {
+///     guard_timer_active: true,
+///     observe_timer_active: true,
+///     ballast_present: true,
+///     state_age: Some(Duration::from_secs(60)),
+///     ..Default::default()
+/// };
+/// assert!(held.ok(bound));
+/// assert!(held.failing(bound).is_empty());
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct BuildHostObserved {
+    /// `disk-guard.timer` is active.
+    pub guard_timer_active: bool,
+    /// `build-host-observe.timer` is active (so this observation itself keeps running).
+    pub observe_timer_active: bool,
+    /// The ballast file (`/var/lib/majordomus/ballast`) exists.
+    pub ballast_present: bool,
+    /// How long ago disk-guard last wrote its state, when it ever has.
+    pub state_age: Option<Duration>,
+    /// Every declared critical-service drop-in the policy wants that is missing.
+    pub missing_drop_ins: Vec<String>,
+    /// Every declared tenant found over its bound, as `"<name> is <over>G over its <bound>G
+    /// bound"`.
+    pub tenants_over_bound: Vec<String>,
+}
+
+impl BuildHostObserved {
+    /// Every item held: the guard observes nothing wrong (I4343's acceptance criteria 1-2).
+    /// A state older than `max_state_age`, or one never written, is not held: a guard that
+    /// stopped writing is a guard that stopped guarding.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::BuildHostObserved;
+    ///
+    /// let mut o = BuildHostObserved {
+    ///     guard_timer_active: true,
+    ///     observe_timer_active: true,
+    ///     ballast_present: true,
+    ///     state_age: Some(Duration::from_secs(20 * 60)),
+    ///     ..Default::default()
+    /// };
+    /// assert!(o.ok(Duration::from_secs(30 * 60)));
+    /// assert!(!o.ok(Duration::from_secs(15 * 60)), "a stale state is not held");
+    /// o.tenants_over_bound.push("ci is 3G over its 40G bound".into());
+    /// assert!(!o.ok(Duration::from_secs(30 * 60)));
+    /// ```
+    pub fn ok(&self, max_state_age: Duration) -> bool {
+        self.guard_timer_active
+            && self.observe_timer_active
+            && self.ballast_present
+            && self.state_age.is_some_and(|a| a <= max_state_age)
+            && self.missing_drop_ins.is_empty()
+            && self.tenants_over_bound.is_empty()
+    }
+
+    /// Every item that fails, one line each, naming what is missing or over its bound; empty
+    /// exactly when [`Self::ok`] holds. These lines are what the `build_host_observed` event
+    /// carries and what `monitor` shows.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::BuildHostObserved;
+    ///
+    /// let o = BuildHostObserved {
+    ///     guard_timer_active: true,
+    ///     observe_timer_active: true,
+    ///     ballast_present: false,
+    ///     state_age: Some(Duration::from_secs(40 * 60)),
+    ///     missing_drop_ins: vec!["sshd.service".into()],
+    ///     ..Default::default()
+    /// };
+    /// assert_eq!(
+    ///     o.failing(Duration::from_secs(15 * 60)),
+    ///     vec![
+    ///         "the ballast is missing".to_string(),
+    ///         "disk-guard.json is 40m old, over the 15m bound".to_string(),
+    ///         "the drop-in of sshd.service is missing".to_string(),
+    ///     ]
+    /// );
+    /// ```
+    pub fn failing(&self, max_state_age: Duration) -> Vec<String> {
+        let mut out = Vec::new();
+        if !self.guard_timer_active {
+            out.push("disk-guard.timer is not active".into());
+        }
+        if !self.observe_timer_active {
+            out.push("build-host-observe.timer is not active".into());
+        }
+        if !self.ballast_present {
+            out.push("the ballast is missing".into());
+        }
+        match self.state_age {
+            None => out.push("disk-guard.json has never been written".into()),
+            Some(age) if age > max_state_age => out.push(format!(
+                "disk-guard.json is {}m old, over the {}m bound",
+                age.as_secs() / 60,
+                max_state_age.as_secs() / 60
+            )),
+            Some(_) => {}
+        }
+        for unit in &self.missing_drop_ins {
+            out.push(format!("the drop-in of {unit} is missing"));
+        }
+        out.extend(self.tenants_over_bound.iter().cloned());
+        out
+    }
+}
+
+/// Whether a systemd unit is active, shelled to `systemctl is-active --quiet`. The default
+/// the live observation uses; a test injects a closure instead, so no fixture needs systemd.
+pub fn systemctl_is_active(unit: &str) -> bool {
+    is_active_by("systemctl", unit)
+}
+
+/// [`systemctl_is_active`] with the program named: one that cannot be started, or that
+/// exits non-zero, says the unit is not active.
+fn is_active_by(program: &str, unit: &str) -> bool {
+    Command::new(program)
+        .args(["is-active", "--quiet", unit])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+/// A path's size, in GiB, shelled to `du -sx`; `None` when the path does not exist or `du`
+/// could not read it. The default the live observation uses; a test injects a closure.
+pub fn du_gib(path: &Path) -> Option<u64> {
+    du_gib_by("du", path)
+}
+
+/// [`du_gib`] with the program named: one that cannot be started, exits non-zero or prints
+/// no size is no size.
+fn du_gib_by(program: &str, path: &Path) -> Option<u64> {
+    if !path.exists() {
+        return None;
+    }
+    let out = Command::new(program)
+        .args(["-sx", "-BG"])
+        .arg(path)
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    gib_of_du(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// The size `du -sx -BG` prints first, `<n>G<tab><path>`, as a number of GiB.
+fn gib_of_du(text: &str) -> Option<u64> {
+    text.split_whitespace()
+        .next()?
+        .trim_end_matches('G')
+        .parse()
+        .ok()
+}
+
+/// Observe a build host's own guard under `root` (the live host is `/`; a test gives a
+/// fixture directory), reading `is_active` for each systemd unit and `size_gib` for each
+/// declared tenant rather than shelling out itself, so a fixture needs no real systemd or
+/// host filesystem to walk (I4343).
+pub fn observe_build_host(
+    policy: &Policy,
+    root: &Path,
+    is_active: &dyn Fn(&str) -> bool,
+    size_gib: &dyn Fn(&Path) -> Option<u64>,
+) -> BuildHostObserved {
+    let state = physical(root, "/var/lib/majordomus/disk-guard.json");
+    let state_age = std::fs::metadata(&state)
+        .ok()
+        .and_then(|m| m.modified().ok())
+        .and_then(|t| std::time::SystemTime::now().duration_since(t).ok());
+    let ballast_present = physical(root, "/var/lib/majordomus/ballast").exists();
+    let missing_drop_ins = policy
+        .critical_services
+        .iter()
+        .filter(|unit| {
+            !physical(
+                root,
+                &format!("/etc/systemd/system/{unit}.service.d/50-build-host.conf"),
+            )
+            .exists()
+        })
+        .cloned()
+        .collect();
+    let tenants_over_bound = policy
+        .build_host_tenants
+        .iter()
+        .filter_map(|t| {
+            let used = size_gib(&physical(root, &t.path))?;
+            (used > t.bound_gib).then(|| {
+                format!(
+                    "{} is {}G over its {}G bound",
+                    t.name,
+                    used - t.bound_gib,
+                    t.bound_gib
+                )
+            })
+        })
+        .collect();
+    BuildHostObserved {
+        guard_timer_active: is_active("disk-guard.timer"),
+        observe_timer_active: is_active("build-host-observe.timer"),
+        ballast_present,
+        state_age,
+        missing_drop_ins,
+        tenants_over_bound,
+    }
+}
+
+/// Write the build host's own verdict to `/var/lib/majordomus/build-host.json` under `root`
+/// (the live host is `/`, as for [`observe_build_host`]): the time, whether the check held,
+/// and what failed, each one line — mirroring disk-guard's own `$STATE` write so both files
+/// share a reader (I4343). Never a secret; nothing it reads is one.
+pub fn write_build_host_state(
+    root: &Path,
+    observed: &BuildHostObserved,
+    ok: bool,
+) -> std::io::Result<()> {
+    let failing = observed.failing(BUILD_HOST_STATE_MAX_AGE);
+    let at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let body = serde_json::json!({ "at": at, "ok": ok, "failing": failing });
+    write_file(
+        &physical(root, "/var/lib/majordomus/build-host.json"),
+        serde_json::to_string(&body).unwrap_or_default().as_bytes(),
+        0o644,
+    )
 }
 
 /// What an apply did.
@@ -2016,6 +2325,7 @@ mod tests {
             rm() { command rm -rf -- "${@: -1}"; }
             size_gib() { echo 1; }
             [ "$(id -u)" -ne 0 ] || as_owner_of() { shift; "$@"; }
+            liveness_reclaims() { return 0; }
         "#;
         let mut cmd = Command::new("bash");
         cmd.arg("-c")
@@ -2097,6 +2407,70 @@ mod tests {
             names_in(&dir),
             vec!["disk-guard".to_string(), "target".to_string()]
         );
+    }
+
+    /// I4346: the guard asks the one liveness predicate before it renames anything. Without
+    /// an executable at the path disk-guard.service names it removes no build directory, and
+    /// an answer that is not `reclaim` for that very path keeps it; only `reclaim` lets it go.
+    #[test]
+    fn the_guard_removes_a_build_directory_only_when_the_liveness_predicate_says_reclaim() {
+        assert!(
+            GUARD_SERVICE.contains(&format!("Environment=LIVENESS_BIN={GUARD_LIVENESS}")),
+            "the service names the predicate's executable"
+        );
+        assert!(GUARD.contains("liveness_reclaims \"$dir\" \"$minutes\" || return 1"));
+        assert!(install_liveness_line(None).ends_with(&format!("majordomus {GUARD_LIVENESS}")));
+        assert!(
+            install_liveness_line(Some("/x/mj".into())).starts_with("install -D -m 0755 /x/mj ")
+        );
+        let dir = scratch("liveness");
+        let target = dir.join("target");
+        let fresh = |t: &Path| {
+            std::fs::create_dir_all(t.join("debug")).unwrap();
+            std::fs::write(t.join("CACHEDIR.TAG"), "created by cargo").unwrap();
+        };
+        fresh(&target);
+        let stub = dir.join("majordomus");
+        let mut answers = Vec::new();
+        // the stub is asked `worktree liveness --idle 20m -- <dir>`: the path is its sixth word
+        for (bin, verdict, path, kept) in [
+            ("absent", "", "", true),
+            ("stub", "keep", "$6", true),
+            ("stub", "reclaim", "/somewhere/else", true),
+            ("stub", "reclaim", "$6", false),
+        ] {
+            fresh(&target);
+            std::fs::write(
+                &stub,
+                format!("#!/bin/sh\nprintf '%s\\t%s\\t%s\\n' {verdict} \"{path}\" 'pid 1 works in it'\n"),
+            )
+            .unwrap();
+            std::fs::set_permissions(&stub, std::fs::Permissions::from_mode(0o755)).unwrap();
+            let bin = if bin == "absent" {
+                dir.join("nothing-here")
+            } else {
+                stub.clone()
+            };
+            // the guard sourced again: its own liveness_reclaims, not the preamble's
+            let script = format!(
+                ". \"$1\"; LIVENESS_BIN='{}'; reap \"$3\" 20; printf '%s\\n' \"${{actions[@]+\"${{actions[@]}}\"}}\"",
+                bin.display()
+            );
+            let out = run_guard(&dir, &script, &[&target, &target]);
+            assert!(out.status.success(), "{out:?}");
+            assert_eq!(
+                target.join("CACHEDIR.TAG").is_file(),
+                kept,
+                "{verdict} {path}: {out:?}"
+            );
+            answers.push(String::from_utf8_lossy(&out.stdout).into_owned());
+        }
+        assert!(
+            answers[0].contains("no liveness executable"),
+            "{}",
+            answers[0]
+        );
+        assert!(answers[1].contains("kept"), "{}", answers[1]);
     }
 
     /// I4352 (review): a runner home is written by the CI jobs it runs, so a tag planted
@@ -2312,6 +2686,214 @@ mod tests {
             .iter()
             .any(|s| s.starts_with(&p.cargo_config())));
         assert!(report.written.is_empty());
+    }
+
+    // --------------------------------------------------- build host observation (I4343)
+
+    fn always(_: &str) -> bool {
+        true
+    }
+
+    fn never_active(_: &str) -> bool {
+        false
+    }
+
+    fn no_size(_: &Path) -> Option<u64> {
+        None
+    }
+
+    fn whole_build_host_policy() -> Policy {
+        let mut p = Policy::declared();
+        p.critical_services = vec!["minio".into()];
+        p.build_host_tenants = vec![Tenant {
+            name: "korczis home".into(),
+            path: "/home/korczis".into(),
+            bound_gib: 100,
+        }];
+        p
+    }
+
+    /// Every signal the timer owns present, every drop-in in place and every tenant under
+    /// its bound: the observation owes nothing.
+    #[test]
+    fn a_whole_build_host_observes_nothing_owed() {
+        let root = scratch("build-host-whole");
+        let p = whole_build_host_policy();
+        std::fs::create_dir_all(root.join("var/lib/majordomus")).unwrap();
+        std::fs::write(root.join("var/lib/majordomus/disk-guard.json"), b"{}").unwrap();
+        std::fs::write(root.join("var/lib/majordomus/ballast"), b"").unwrap();
+        std::fs::create_dir_all(root.join("etc/systemd/system/minio.service.d")).unwrap();
+        std::fs::write(
+            root.join("etc/systemd/system/minio.service.d/50-build-host.conf"),
+            b"",
+        )
+        .unwrap();
+        let size_under = |_: &Path| Some(10u64);
+        let observed = observe_build_host(&p, &root, &always, &size_under);
+        assert!(observed.ok(BUILD_HOST_STATE_MAX_AGE), "{:?}", observed);
+        assert_eq!(
+            observed.failing(BUILD_HOST_STATE_MAX_AGE),
+            Vec::<String>::new()
+        );
+    }
+
+    /// Each signal missing on its own fails the check, naming what is missing: the inactive
+    /// timer, the missing ballast, the stale state, the missing drop-in and the tenant over
+    /// its bound each fail alone (I4343's acceptance criteria 1-2).
+    #[test]
+    fn each_missing_signal_fails_alone_and_names_itself() {
+        let root = scratch("build-host-missing");
+        let p = whole_build_host_policy();
+        std::fs::create_dir_all(root.join("var/lib/majordomus")).unwrap();
+        std::fs::create_dir_all(root.join("etc/systemd/system/minio.service.d")).unwrap();
+        std::fs::write(
+            root.join("etc/systemd/system/minio.service.d/50-build-host.conf"),
+            b"",
+        )
+        .unwrap();
+
+        // nothing at all: every signal missing
+        let observed = observe_build_host(&p, &root, &never_active, &no_size);
+        assert!(!observed.ok(BUILD_HOST_STATE_MAX_AGE));
+        let failing = observed.failing(BUILD_HOST_STATE_MAX_AGE);
+        assert!(failing.iter().any(|f| f.contains("disk-guard.timer")));
+        assert!(failing
+            .iter()
+            .any(|f| f.contains("build-host-observe.timer")));
+        assert!(failing.iter().any(|f| f.contains("ballast")));
+        assert!(failing.iter().any(|f| f.contains("never been written")));
+
+        // the timer active, the ballast present, but the state 16 minutes old
+        std::fs::write(root.join("var/lib/majordomus/ballast"), b"").unwrap();
+        let state = root.join("var/lib/majordomus/disk-guard.json");
+        std::fs::write(&state, b"{}").unwrap();
+        let old = std::time::SystemTime::now() - Duration::from_secs(16 * 60);
+        let file = std::fs::File::open(&state).unwrap();
+        file.set_modified(old).unwrap();
+        let size_under = |_: &Path| Some(10u64);
+        let observed = observe_build_host(&p, &root, &always, &size_under);
+        let failing = observed.failing(BUILD_HOST_STATE_MAX_AGE);
+        assert_eq!(failing.len(), 1, "{:?}", failing);
+        assert!(failing[0].contains("16m old"), "{}", failing[0]);
+
+        // fresh state, but a declared tenant over its 100G bound
+        file.set_modified(std::time::SystemTime::now()).unwrap();
+        let size_over = |_: &Path| Some(159u64);
+        let observed = observe_build_host(&p, &root, &always, &size_over);
+        let failing = observed.failing(BUILD_HOST_STATE_MAX_AGE);
+        assert_eq!(failing.len(), 1, "{:?}", failing);
+        assert!(
+            failing[0].contains("korczis home is 59G over its 100G bound"),
+            "{}",
+            failing[0]
+        );
+    }
+
+    /// The provision plan installs build-host-observe.service and build-host-observe.timer
+    /// and enables the timer; a second plan over the applied fixture owes nothing
+    /// (I4343's acceptance criterion 3).
+    #[test]
+    fn the_provision_plan_installs_and_enables_the_observe_timer() {
+        let p = Policy::declared();
+        let planned = plan(&p, &BTreeMap::new());
+        assert!(planned
+            .files
+            .iter()
+            .any(|f| f.path == "/etc/systemd/system/build-host-observe.service"));
+        assert!(planned
+            .files
+            .iter()
+            .any(|f| f.path == "/etc/systemd/system/build-host-observe.timer"));
+        assert!(planned
+            .steps
+            .iter()
+            .any(|s| s.id == "observe-timer"
+                && s.line.contains("enable --now build-host-observe.timer")));
+
+        let root = scratch("build-host-provision");
+        let first = apply(&p, &root);
+        assert!(first.ok, "{first:?}");
+        let second = apply(&p, &root);
+        assert_eq!(
+            second.after.as_ref().unwrap().changes,
+            0,
+            "a second apply owes nothing: {second:?}"
+        );
+    }
+
+    /// A declared critical-service drop-in that is not in place fails alone and names its
+    /// unit.
+    #[test]
+    fn a_missing_drop_in_fails_alone_and_names_its_unit() {
+        let root = scratch("build-host-drop-in");
+        let p = whole_build_host_policy();
+        std::fs::create_dir_all(root.join("var/lib/majordomus")).unwrap();
+        std::fs::write(root.join("var/lib/majordomus/disk-guard.json"), b"{}").unwrap();
+        std::fs::write(root.join("var/lib/majordomus/ballast"), b"").unwrap();
+        let observed = observe_build_host(&p, &root, &always, &no_size);
+        assert_eq!(observed.missing_drop_ins, vec!["minio".to_string()]);
+        assert!(!observed.ok(BUILD_HOST_STATE_MAX_AGE));
+        assert_eq!(
+            observed.failing(BUILD_HOST_STATE_MAX_AGE),
+            vec!["the drop-in of minio is missing".to_string()]
+        );
+    }
+
+    /// The host's own verdict is written under the root it is given, as one JSON document
+    /// with the time, the verdict and every failing item; a root that cannot hold it is an
+    /// error, not a silent success.
+    #[test]
+    fn the_build_host_state_is_written_under_its_root() {
+        let root = scratch("build-host-state");
+        let observed = BuildHostObserved {
+            guard_timer_active: true,
+            observe_timer_active: true,
+            state_age: Some(Duration::from_secs(60)),
+            ..Default::default()
+        };
+        write_build_host_state(&root, &observed, false).unwrap();
+        let path = root.join("var/lib/majordomus/build-host.json");
+        let written: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(written["ok"], serde_json::json!(false));
+        assert_eq!(
+            written["failing"],
+            serde_json::json!(["the ballast is missing"])
+        );
+        assert!(written["at"].as_u64().is_some_and(|at| at > 0), "{written}");
+        assert_eq!(mode_of(&path), Some(0o644));
+        let plain = root.join("plain");
+        std::fs::write(&plain, b"").unwrap();
+        assert!(write_build_host_state(&plain, &observed, true).is_err());
+    }
+
+    /// The live readers say "not active" and "no size" for whatever they cannot read: a
+    /// unit no host has, a program that cannot start or fails, an output that is no size.
+    #[test]
+    fn the_live_readers_answer_nothing_for_what_they_cannot_read() {
+        assert!(!systemctl_is_active("mj-no-such-unit-i4343.timer"));
+        assert!(is_active_by("true", "disk-guard.timer"));
+        assert!(!is_active_by("false", "disk-guard.timer"));
+        assert!(!is_active_by(
+            "/nonexistent/mj-systemctl",
+            "disk-guard.timer"
+        ));
+        let root = scratch("build-host-du");
+        assert_eq!(du_gib(&root.join("absent")), None);
+        assert_eq!(du_gib_by("/nonexistent/mj-du", &root), None);
+        assert_eq!(du_gib_by("false", &root), None);
+        // echo succeeds and prints its arguments, which are no size
+        assert_eq!(du_gib_by("echo", &root), None);
+        assert_eq!(gib_of_du("12G\t/home/korczis\n"), Some(12));
+        assert_eq!(gib_of_du(""), None);
+        // GNU du rounds up to whole GiB; a du without -BG (BSD's) reads as no size
+        let live = du_gib(&root);
+        if cfg!(target_os = "linux") {
+            assert!(
+                live.is_some_and(|gib| gib <= 1),
+                "an almost empty directory is at most 1G rounded up: {live:?}"
+            );
+        }
     }
 
     /// I4352: a runner is a unit file that exists under a unit directory. A name observed

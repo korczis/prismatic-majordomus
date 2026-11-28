@@ -101,6 +101,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// Every Majordomus runtime of this user on this host, from any directory and with no server: each checkout's server as its lease says, with version, repository, port and node, found through the host index and the process table
+    Runtimes(RuntimesArgs),
     /// The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit
     Deploy(DeployArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
@@ -1124,8 +1126,8 @@ pub enum MeshCommand {
     Identity(MeshQueryArgs),
     /// Add this machine's public key to the mesh declaration's trust list, once; commit it to join
     Enrol(MeshQueryArgs),
-    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
-    Doctor(MeshQueryArgs),
+    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall; --build-host adds whether this build host's own guard is observed live (I4343)
+    Doctor(MeshDoctorArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
     Firewall(MeshFirewallArgs),
     /// Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim
@@ -1355,6 +1357,37 @@ pub struct MeshFirewallArgs {
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh doctor`'s arguments: the mesh self-check alone, or with `--build-host` this build
+/// host's own guard as well, observed live rather than trusted from its last report (I4343).
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshDoctorArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "doctor", "--build-host"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Doctor(doctor) = mesh.command else { panic!("expected `doctor`") };
+/// let doctor: MeshDoctorArgs = doctor;
+/// assert!(doctor.build_host);
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "doctor"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Doctor(doctor) = mesh.command else { panic!("expected `doctor`") };
+/// assert!(!doctor.build_host, "the host's guard is observed only when asked");
+/// ```
+pub struct MeshDoctorArgs {
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+    #[arg(long)]
+    /// Also observe this build host's own guard: disk-guard.timer and
+    /// build-host-observe.timer active, the ballast present, its state fresh, every
+    /// declared critical-service drop-in present and every declared tenant at or under its
+    /// bound. Exits non-zero while any of it is not so, naming each.
+    pub build_host: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -3398,6 +3431,10 @@ pub enum EvidenceCommand {
         /// Also write the run record to this file
         #[arg(long)]
         run_record: Option<PathBuf>,
+        /// Run the verification the effective profile declares under this name
+        /// (verification.commands) and record it; an intent criterion cites it as verify:NAME
+        #[arg(long, value_name = "NAME")]
+        verify: Option<String>,
     },
     /// Measure the checkout as a run left it, for `record --provenance`
     Stamp {
@@ -3593,6 +3630,33 @@ pub enum DriftGateArg {
     Head,
     /// The trunk: merged work unrecorded past the window is refused
     Trunk,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus runtimes --host`: every Majordomus runtime of this user on this host, read
+/// without a repository and without a server (I3184). It is the command-line projection of
+/// `server.runtimes`, answered in this process from the host index and the process table
+/// because a question asked from outside every checkout has no layer to load.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, RuntimesArgs};
+/// let cli = Cli::try_parse_from(["majordomus", "runtimes", "--host", "--format", "json"]).unwrap();
+/// let Command::Runtimes(args) = cli.command else { panic!("runtimes") };
+/// let args: RuntimesArgs = args;
+/// assert!(args.host && args.format == OutputFormat::Json);
+/// // the scope is said, so that a later scope is an addition and not a change of meaning
+/// assert!(Cli::try_parse_from(["majordomus", "runtimes"]).is_err());
+/// ```
+pub struct RuntimesArgs {
+    /// Every runtime of the host — the only scope there is today; one repository's servers
+    /// are `serve status`
+    #[arg(long, required = true)]
+    pub host: bool,
+
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -4816,6 +4880,15 @@ pub enum WorktreeCommand {
         /// Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)
         #[arg(long, value_name = "DURATION")]
         older_than: Option<String>,
+    },
+    /// Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise
+    Liveness {
+        /// The trees or build directories, absolute or relative to the current directory
+        #[arg(required = true, value_name = "PATH")]
+        paths: Vec<String>,
+        /// Judge git activity against this idle window instead of thirty minutes (90s, 20m, 2h)
+        #[arg(long, value_name = "DURATION")]
+        idle: Option<String>,
     },
     /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
     Trunk,
@@ -6680,6 +6753,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "runtimes",
+        examples: &[ExampleDoc {
+            id: "runtimes-host",
+            title: "Every Majordomus runtime of this user on this host",
+            description: "Asked from any directory, with no server and no checkout open: every checkout whose server this user runs, found through the host index of checkout roots beside node.json and through the process table, each row re-read from that checkout's lease — where its server stands, its port, the version it runs, its repository and the `serve` and `mcp` processes working on it. A host where nothing runs answers with no row and exits 0; the reader writes nothing, not even the index.",
+            argv: &["runtimes", "--host", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/runtimes", "/index"]),
+        }],
+    },
+    CommandExamples {
         command: "served observe",
         examples: &[ExampleDoc {
             id: "served-observe-unreachable",
@@ -7095,6 +7179,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "uncommitted"],
             setup: &[],
             expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree liveness",
+        examples: &[ExampleDoc {
+            id: "worktree-liveness-absent",
+            title: "Keep or reclaim, and why",
+            description: "The one liveness predicate every deleting sweep asks, for each path it is given: `keep` with every reason found, or `reclaim` when every source was read and none names it. A path that is not there is kept, as anything the predicate cannot read is, and asking about it reads nothing of the machine.",
+            argv: &["worktree", "liveness", "no/such/build-dir"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["keep", "it does not exist", "every source was read"]),
         }],
     },
     CommandExamples {

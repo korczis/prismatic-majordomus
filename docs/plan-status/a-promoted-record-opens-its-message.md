@@ -27,6 +27,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3280` | shares share/schemas/majordomus/adr/adr.v1.schema.json with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3318; they may not run concurrently |
+| WARN | `scope_conflict` | `I3280` | shares share/schemas/majordomus/intent/intent.v1.schema.json with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/plan.rs with I3757; they may not run concurrently |
@@ -45,5 +46,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3280` | shares share/schemas/majordomus/knowledge/knowledge.v1.schema.json with I4585; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/plan.rs with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/commands/plan.rs with I4622; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/commands/plan.rs with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares share/schemas/majordomus/milestone/milestone.v1.schema.json with I4792; they may not run concurrently |

@@ -82,6 +82,13 @@ nothing to `node.json`, and keeps one node id across every boot; with the variab
 malformed the mesh stays off and its reason names the variable, never the value (ADR 0220,
 I3826). The seed's public key is what `trust.allow` lists for the hub.
 
+Which runtimes a node has is read, not registered: `majordomus runtimes --host` (the
+capability `server.runtimes`) lists every runtime of this user on this machine from each
+checkout's lease, found through `checkout-roots` — a disposable cache of checkout roots beside
+`node.json` — and the process table, with the node id read from `node.json` (I3184,
+[`MCP.md`](MCP.md#every-runtime-of-the-host)). It holds no peers: the mesh registry stays
+the only holder of those.
+
 An address, a port, a host name or a PID is never identity. Two worktrees of one machine
 share the node key and are two runtimes; a restarted server keeps its runtime and changes
 its instance, so its peers list it once with `restarts` counted.
@@ -1114,6 +1121,31 @@ holds as an absence, like `runtime` in a process no server runs in.
 apply` added three rules (`Rule added`, `Rule added`, `Rule updated` — the LAN hub rule had
 been added by hand a quarter of an hour earlier), after which the report as root read
 `present` with no drop in the window, and the hub's `mesh nodes`, which had listed nobody, listed both Macs of the LAN as present and trusted, each heard by multicast and registered by rendezvous.
+
+## The guard on the build host
+
+A build host bounds its own disk with `disk-guard`, a timer every five minutes
+(`apps/majordomus-cli/assets/mesh-cache-provider/disk-guard{,.service,.timer}`), and a ballast
+of free space released at the hard floor. Nothing proved the guard kept running: incident 1 of
+2026-10-28 found lundra's disk full and its runners offline, with disk-guard installed but
+never checked.
+
+`build-host-observe.timer` runs `majordomus mesh doctor --build-host` on the same five-minute
+cadence (I4343). It observes, without changing anything: `disk-guard.timer` and its own timer
+active (`systemctl is-active`), the ballast file present, how old disk-guard's own state
+(`/var/lib/majordomus/disk-guard.json`) is, every declared critical-service drop-in present
+under `/etc/systemd/system/<unit>.service.d/`, and every tenant the policy's
+`build_host_tenants` names (a path and a bound in GiB — `apps/majordomus-cli/assets/mesh-cache-provider/policy.json`)
+at or under its bound. The check fails, naming each item, while the state is older than 15
+minutes or anything above does not hold.
+
+The verdict is written to `/var/lib/majordomus/build-host.json` (the time, `ok`, and what
+failed, mirroring disk-guard's own `$STATE`), and, where a shared server runs, journaled as a
+`build_host_observed` event (`ok`, `failing`) — read by `mesh events` and shown by `monitor`,
+not folded into `mesh state`. `mesh doctor --build-host` run by hand on the host gives the same
+verdict on demand; `mesh build-cache provision --apply` installs and enables the timer.
+Rendering disk-guard's own homes and the runner units' drop-ins from the policy, and refusing a
+CI job on a host whose latest observation is stale, are separate (I4352, I4359).
 
 ## Operating it
 

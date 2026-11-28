@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.3.0 -->
+     Generator: majordomus-cli 1.4.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -63,14 +63,14 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `served` | Served deployments | behaviorally_verified | 3 | [`modules/served.md`](modules/served.md) |
-| `server` | Server | behaviorally_verified | 1 | [`modules/server.md`](modules/server.md) |
+| `server` | Server | behaviorally_verified | 2 | [`modules/server.md`](modules/server.md) |
 | `session_domain` | The session domain | behaviorally_verified | 2 | [`modules/session_domain.md`](modules/session_domain.md) |
 | `shell` | Shell automation | behaviorally_verified | 1 | [`modules/shell.md`](modules/shell.md) |
 | `skills` | Skills | behaviorally_verified | 3 | [`modules/skills.md`](modules/skills.md) |
 | `trace` | Traceability | behaviorally_verified | 3 | [`modules/trace.md`](modules/trace.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
-| `worktree` | Worktree topology | behaviorally_verified | 7 | [`modules/worktree.md`](modules/worktree.md) |
+| `worktree` | Worktree topology | behaviorally_verified | 8 | [`modules/worktree.md`](modules/worktree.md) |
 
 ## Executable capabilities
 
@@ -285,6 +285,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `served.forge` | `served` | command | behaviorally_verified | — | — | — | `majordomus served forge` | — | waived (external_dependency) |
 | `served.observe` | `served` | command | behaviorally_verified | — | — | — | `majordomus served observe` | — | waived (external_dependency) |
 | `served.show` | `served` | query | behaviorally_verified | `majordomus_served` | `majordomus://served` | `GET /api/v1/served` | `majordomus served show` | — | required |
+| `server.runtimes` | `server` | query | behaviorally_verified | `majordomus_runtimes` | `majordomus://runtimes` | `GET /api/v1/runtimes` | `majordomus runtimes` | — | required |
 | `server.status` | `server` | query | behaviorally_verified | `majordomus_server` | `majordomus://server` | `GET /api/v1/server` | `majordomus serve status` | — | required |
 | `session_domain.identity` | `session_domain` | query | behaviorally_verified | `majordomus_session_identity` | `majordomus://session/identity` | `GET /api/v1/session/identity` | — | process, 2 entries, 2s | required |
 | `session_domain.machine` | `session_domain` | query | behaviorally_verified | `majordomus_session_machine` | `majordomus://session/machine` | `GET /api/v1/session/machine` | — | process, 1 entries, 600s | required |
@@ -304,6 +305,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `why.validate` | `why` | query | behaviorally_verified | `majordomus_why_validate` | — | `GET /api/v1/why/validate` | `majordomus why validate` | process, 2 entries | required |
 | `worktree.create` | `worktree` | command | behaviorally_verified | `majordomus_worktree_create` | — | `POST /api/v1/worktrees/create` | `majordomus worktree ensure` | — | required |
 | `worktree.inspect` | `worktree` | query | behaviorally_verified | `majordomus_worktree_inspect` | — | `GET /api/v1/worktrees/inspect` | `majordomus worktree inspect` | — | required |
+| `worktree.liveness` | `worktree` | query | behaviorally_verified | `majordomus_worktree_liveness` | — | `POST /api/v1/worktrees/liveness` | `majordomus worktree liveness` | — | required |
 | `worktree.migration_plan` | `worktree` | query | behaviorally_verified | `majordomus_worktree_migration_plan` | — | `GET /api/v1/worktrees/migration` | `majordomus worktree migrate` | — | required |
 | `worktree.status` | `worktree` | query | behaviorally_verified | `majordomus_worktree_status` | — | `GET /api/v1/worktrees/status` | `majordomus worktree status` | — | required |
 | `worktree.topology` | `worktree` | query | behaviorally_verified | `majordomus_worktrees` | `majordomus://worktrees` | `GET /api/v1/worktrees` | `majordomus worktree topology` | — | required |
