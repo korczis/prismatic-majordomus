@@ -618,7 +618,7 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, inten
                 .and_then(Value::as_str)
                 .is_some_and(|i| ids.contains(i))
         };
-        let rows = items(waves, "/waves")
+        let held: Vec<(&Value, Vec<&Value>)> = items(waves, "/waves")
             .iter()
             .filter_map(|w| {
                 let members: Vec<&Value> = w
@@ -626,32 +626,34 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, inten
                     .and_then(Value::as_array)
                     .map(|a| a.iter().filter(|x| mine_id(x)).collect())
                     .unwrap_or_default();
-                if members.is_empty() {
-                    return None;
-                }
-                Some(
-                    el("tr")
-                        .child(
-                            el("td")
-                                .class("mj-ui-mono")
-                                .text(w.get("wave").map(Value::to_string).unwrap_or_default()),
-                        )
-                        .child(el("td").child(el("p").class("mj-ui-badges").children(
-                            members.iter().map(|x| {
-                                el("span")
-                                    .child(chip(issue_href(&text(x, "id")), text(x, "id")))
-                                    .child(state(x, "status"))
-                            }),
-                        ))),
-                )
+                (!members.is_empty()).then_some((w, members))
             })
-            .collect::<Vec<_>>();
+            .collect();
+        let number = |w: &Value| w.get("wave").map(Value::to_string).unwrap_or_default();
+        // one wave is one sentence, not a table of one row: the issue list above already
+        // names each issue with its wave (I2909)
+        let waves_body = match held.as_slice() {
+            [(w, members)] => nothing(&one_wave(&number(w), members.len())),
+            _ => table(
+                &["Wave", "Issues of this intent in it"],
+                held.iter()
+                    .map(|(w, members)| {
+                        el("tr")
+                            .child(el("td").class("mj-ui-mono").text(number(w)))
+                            .child(el("td").child(el("p").class("mj-ui-badges").children(
+                                members.iter().map(|x| {
+                                    el("span")
+                                        .child(chip(issue_href(&text(x, "id")), text(x, "id")))
+                                        .child(state(x, "status"))
+                                }),
+                            )))
+                    })
+                    .collect(),
+                "No issue of this intent is in a wave.",
+            ),
+        };
         let conflicts = shared_scope(waves, &ids);
-        let mut body = el("div").class("mj-ui-stack").child(table(
-            &["Wave", "Issues of this intent in it"],
-            rows,
-            "No issue of this intent is in a wave.",
-        ));
+        let mut body = el("div").class("mj-ui-stack").child(waves_body);
         if !conflicts.is_empty() {
             // one line says how many pairs share a scope; the pairs are one click away, so they
             // never outweigh the waves they qualify (I2900). An intent of many issues has
@@ -686,6 +688,16 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, inten
         body,
         &[waves],
     )
+}
+
+/// The sentence that stands for the waves when the intent's issues are all in wave `wave`:
+/// issues of one wave never wait for one another, which is what the panel asks.
+fn one_wave(wave: &str, issues: usize) -> String {
+    if issues == 1 {
+        format!("Its one issue in a wave is in wave {wave}.")
+    } else {
+        format!("All {issues} of its issues are in wave {wave}: none of them waits for another.")
+    }
 }
 
 /// The scope conflicts `plan.waves` reports whose subject is one of `ids`, in its order.
@@ -780,6 +792,9 @@ fn known(issues: &Answer, roadmap: &Answer) -> super::prose::Known {
     }
 }
 
+/// What the dependency panel says when no issue of the intent depends on any issue.
+const NO_DEPENDENCY: &str = "No issue of this intent depends on another.";
+
 /// The dependency graph of the intent's issues: each a node in the tone of its status, each
 /// dependency the plan records an edge, and a dependency outside the intent drawn small. The
 /// table beneath it is the same edges, for a reader without the picture.
@@ -799,6 +814,11 @@ fn dependency_graph(issues: &Answer, mine: &[Value]) -> El {
                     .map(move |from| (from, to.clone()))
             })
             .collect();
+        // no dependency is one sentence where the graph was: neither an empty canvas nor a
+        // table that holds no row (I2909)
+        if edges.is_empty() {
+            return nothing(NO_DEPENDENCY);
+        }
         let mut ids: BTreeSet<String> = own.clone();
         ids.extend(edges.iter().map(|(from, _)| from.clone()));
         let nodes: Vec<GraphNode> = ids
@@ -826,11 +846,7 @@ fn dependency_graph(issues: &Answer, mine: &[Value]) -> El {
                     }))
             })
             .collect::<Vec<_>>();
-        let fallback = table(
-            &["Issue", "Depends on", "Its status"],
-            rows,
-            "No issue of this intent depends on another.",
-        );
+        let fallback = table(&["Issue", "Depends on", "Its status"], rows, NO_DEPENDENCY);
         graph(
             "The issues of this intent and the dependencies between them",
             Layout::Directed,
@@ -1789,19 +1805,76 @@ mod tests {
                 "waves": [
                     { "wave": 7, "issues": [{ "id": "OTHER", "status": "READY" }] },
                     { "wave": 8, "issues": [{ "id": "I1", "status": "READY" }] },
+                    { "wave": 9, "issues": [{ "id": "I2", "status": "READY" }] },
                 ],
                 "serialised_by_scope": [{ "subject": "I1", "message": "shares lib/a.rs" }],
             })),
         );
-        let mine = vec![serde_json::json!({ "id": "I1" })];
+        let mine = vec![
+            serde_json::json!({ "id": "I1" }),
+            serde_json::json!({ "id": "I2" }),
+        ];
         let html = wave_panel(&waves, &mine, &Default::default(), "it").render();
         assert!(html.contains(">8</td>"), "{html}");
+        assert!(html.contains(">9</td>"), "{html}");
         assert!(!html.contains(">7</td>"), "{html}");
         assert!(!html.contains("OTHER"), "{html}");
         assert!(html.contains("shares lib/a.rs"), "{html}");
         assert!(
             !html.contains(SHARED_SCOPE_PANEL),
             "one pair needs no link to the rest: {html}"
+        );
+    }
+
+    /// A panel with nothing to show is one sentence (I2909): an intent none of whose issues
+    /// depends on another draws neither a graph nor an empty table where the graph was, and
+    /// an intent whose issues are all in one wave says so in a sentence rather than a table
+    /// of one row, keeping what qualifies it, the pairs that share a scope.
+    #[test]
+    fn a_panel_with_nothing_to_show_is_one_sentence() {
+        let mine = vec![
+            serde_json::json!({ "id": "I1", "status": "READY" }),
+            serde_json::json!({ "id": "I2", "status": "READY" }),
+        ];
+        let issues = answer(ISSUES, Ok(serde_json::json!({ "issues": mine })));
+        let html = dependency_graph(&issues, &mine).render();
+        assert!(
+            html.contains(&format!("<p class=\"mj-ui-empty\">{NO_DEPENDENCY}</p>")),
+            "{html}"
+        );
+        for gone in ["mj-ui-graph", "data-graph", "<table"] {
+            assert!(!html.contains(gone), "{gone}: {html}");
+        }
+        assert!(html.contains("What waits for what?"), "{html}");
+
+        let waves = answer(
+            WAVES,
+            Ok(serde_json::json!({
+                "waves": [
+                    { "wave": 0, "issues": [{ "id": "OTHER" }] },
+                    { "wave": 3, "issues": [{ "id": "I1", "status": "READY" }, { "id": "I2", "status": "READY" }] },
+                ],
+                "serialised_by_scope": [{ "subject": "I2", "message": "shares lib/a.rs" }],
+            })),
+        );
+        let html = wave_panel(&waves, &mine, &Default::default(), "it").render();
+        assert!(
+            html.contains("All 2 of its issues are in wave 3: none of them waits for another."),
+            "{html}"
+        );
+        assert!(!html.contains("<table"), "{html}");
+        assert!(html.contains("Shared scope: 1 pair(s)"), "{html}");
+
+        let one = &mine[..1];
+        let html = wave_panel(&waves, one, &Default::default(), "it").render();
+        assert!(
+            html.contains("Its one issue in a wave is in wave 3."),
+            "{html}"
+        );
+        assert!(!html.contains("<table"), "{html}");
+        assert!(
+            !html.contains("Shared scope"),
+            "I2's pair is not I1's: {html}"
         );
     }
 
