@@ -22,6 +22,7 @@ use serde_json::Value;
 
 use crate::capability::Context;
 use crate::cockpit::html::{el, El};
+use crate::intent::IntentStage;
 
 use super::dashboard::milestone_row;
 use super::shell::View;
@@ -58,8 +59,14 @@ pub const SHARED_SCOPE_SHOWN: usize = 25;
 
 /// The stages, in the order the screen prefers them when the link names no intent: the
 /// first intent `intents.list` reports at the earliest of these is opened. A presentation
-/// rule, printed on the screen, never a status.
-pub const PREFERRED_STAGES: &[&str] = &["executing", "verifying", "planned", "declared"];
+/// rule, printed on the screen, never a status. The stages are the intent module's own, each
+/// printed through [`IntentStage::as_str`], so a renamed stage cannot leave the screen behind.
+pub const PREFERRED_STAGES: &[IntentStage] = &[
+    IntentStage::Executing,
+    IntentStage::Verifying,
+    IntentStage::Planned,
+    IntentStage::Declared,
+];
 
 /// The question the standing panel answers, its heading and its accessible name.
 pub const STANDING_TITLE: &str = "Why does it stand where it stands?";
@@ -116,7 +123,7 @@ pub fn chosen(query: &[(String, String)], intents: &[Value]) -> Option<String> {
     }
     PREFERRED_STAGES
         .iter()
-        .find_map(|stage| intents.iter().find(|i| text(i, "stage") == *stage))
+        .find_map(|stage| intents.iter().find(|i| text(i, "stage") == stage.as_str()))
         .or_else(|| intents.first())
         .map(|i| text(i, "id"))
 }
@@ -320,7 +327,11 @@ fn choice(intents: &Answer, open: Option<&str>) -> El {
             .child(table(&["Intent", "Stage", "Verdict"], rows, ""))
             .child(el("p").class("mj-ui-dim").text(format!(
                 "A link that names no intent opens the first intent whose stage is {}, in that order.",
-                PREFERRED_STAGES.join(", then ")
+                PREFERRED_STAGES
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", then ")
             )))
     });
     panel(
@@ -1143,6 +1154,19 @@ mod tests {
         // a named id is kept as named, to be refused by name, unless it is no id at all
         assert_eq!(chosen(&q("intent", "zz"), &intents).as_deref(), Some("zz"));
         assert_eq!(chosen(&q("intent", "a\"b"), &intents).as_deref(), Some("c"));
+        // the preference is typed, and printed in the words the intent module owns (I2903)
+        let words: Vec<&str> = PREFERRED_STAGES.iter().map(|s| s.as_str()).collect();
+        assert_eq!(words, ["executing", "verifying", "planned", "declared"]);
+        let printed = choice(
+            &answer(INTENTS, Ok(serde_json::json!({ "intents": intents }))),
+            Some("c"),
+        )
+        .render();
+        assert!(
+            printed
+                .contains("whose stage is executing, then verifying, then planned, then declared"),
+            "{printed}"
+        );
     }
 
     /// An intent is served by the issues of its milestones and by any issue naming it.

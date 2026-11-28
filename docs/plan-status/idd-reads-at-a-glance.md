@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [idd-reads-at-a-glance](https://majordomus.dev/plan/idd-reads-at-a-glance/) | ACTIVE | 8/27 | 18 | 1 | 0 | 0 | 0 | The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on. |
+| [idd-reads-at-a-glance](https://majordomus.dev/plan/idd-reads-at-a-glance/) | ACTIVE | 8/27 | 17 | 1 | 1 | 0 | 0 | The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on. |
 
 ## Issues
 
@@ -17,7 +17,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|---|
 | [I2901](https://majordomus.dev/plan/i2901/) | READY | 0 | — | One grammar names a record id, and every surface reads it: a capital letter and three or more digits that name a record file of the tree read |
 | [I2902](https://majordomus.dev/plan/i2902/) | READY | 0 | — | A status names the moves it admits, and every surface reads that |
-| [I2903](https://majordomus.dev/plan/i2903/) | READY | 0 | — | The workspace prefers stages by IntentStage, not by strings |
+| [I2903](https://majordomus.dev/plan/i2903/) | ACTIVE | 0 | — | The workspace prefers stages by IntentStage, not by strings |
 | [I2904](https://majordomus.dev/plan/i2904/) | READY | 0 | — | An intent whose criteria are met while its milestones hold open issues says so |
 | [I2906](https://majordomus.dev/plan/i2906/) | READY | 5 | I2812 | Every id and chip on the workspace leads to its record |
 | [I2907](https://majordomus.dev/plan/i2907/) | DONE | 5 | I2812 | The workspace's headline numbers are the chosen intent's |
