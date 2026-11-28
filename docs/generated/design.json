@@ -2,8 +2,8 @@
   "schema": "majordomus/design-system/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`",
   "generator": "majordomus-cli 1.3.0",
-  "fingerprint": "944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540",
-  "design": "944a896b2646",
+  "fingerprint": "54b077115929eed40390d1bb29a0f239a610d9f7996fb95e23c5e443b845ccca",
+  "design": "54b077115929",
   "source": "share/design/tokens.yaml",
   "projections": [
     "share/design/theme.css",
@@ -21,7 +21,7 @@
     "font": 2,
     "role": 22,
     "status": 5,
-    "state": 105,
+    "state": 113,
     "tone": 6,
     "type": 4,
     "tracking": 2,
@@ -962,7 +962,9 @@
         "clean",
         "merged",
         "documented",
-        "proven"
+        "proven",
+        "satisfied",
+        "met"
       ],
       "aliases": [
         "--color-fg-success-strong",
@@ -1055,7 +1057,8 @@
         "deprecated",
         "degraded",
         "experimental",
-        "ephemeral"
+        "ephemeral",
+        "verifying"
       ],
       "aliases": [
         "--color-fg-warning",
@@ -1150,7 +1153,10 @@
         "foreign",
         "misplaced",
         "failing",
-        "unrunnable"
+        "unrunnable",
+        "unsatisfied",
+        "unmet",
+        "unresolved"
       ],
       "aliases": [
         "--color-fg-danger-strong",
@@ -1243,7 +1249,8 @@
         "inherited",
         "unmerged",
         "detached",
-        "inputs-unchanged"
+        "inputs-unchanged",
+        "executing"
       ],
       "projections": [
         "share/design/theme.css",
@@ -1338,7 +1345,8 @@
         "inspect",
         "conclude",
         "not-run",
-        "no-test"
+        "no-test",
+        "not-derivable"
       ],
       "projections": [
         "share/design/theme.css",
@@ -1785,6 +1793,42 @@
       ]
     },
     {
+      "name": "satisfied",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--satisfied",
+        ".mj-status--satisfied"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "met",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--met",
+        ".mj-status--met"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
       "name": "warning",
       "kind": "state",
       "about": "a state word filed under `warn`",
@@ -2097,6 +2141,24 @@
       "css": [
         ".mj-badge--ephemeral",
         ".mj-status--ephemeral"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "verifying",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--verifying",
+        ".mj-status--verifying"
       ],
       "role": "warn",
       "projections": [
@@ -2469,6 +2531,60 @@
       ]
     },
     {
+      "name": "unsatisfied",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--unsatisfied",
+        ".mj-status--unsatisfied"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unmet",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--unmet",
+        ".mj-status--unmet"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unresolved",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--unresolved",
+        ".mj-status--unresolved"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
       "name": "running",
       "kind": "state",
       "about": "a state word filed under `info`",
@@ -2781,6 +2897,24 @@
       "css": [
         ".mj-badge--inputs-unchanged",
         ".mj-status--inputs-unchanged"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "executing",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--executing",
+        ".mj-status--executing"
       ],
       "role": "info",
       "projections": [
@@ -3231,6 +3365,24 @@
       "css": [
         ".mj-badge--no-test",
         ".mj-status--no-test"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "not-derivable",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--not-derivable",
+        ".mj-status--not-derivable"
       ],
       "role": "neutral",
       "projections": [
@@ -5129,7 +5281,9 @@
           "clean",
           "merged",
           "documented",
-          "proven"
+          "proven",
+          "satisfied",
+          "met"
         ],
         "warn": [
           "warn",
@@ -5150,7 +5304,8 @@
           "deprecated",
           "degraded",
           "experimental",
-          "ephemeral"
+          "ephemeral",
+          "verifying"
         ],
         "bad": [
           "bad",
@@ -5173,7 +5328,10 @@
           "foreign",
           "misplaced",
           "failing",
-          "unrunnable"
+          "unrunnable",
+          "unsatisfied",
+          "unmet",
+          "unresolved"
         ],
         "info": [
           "info",
@@ -5194,7 +5352,8 @@
           "inherited",
           "unmerged",
           "detached",
-          "inputs-unchanged"
+          "inputs-unchanged",
+          "executing"
         ],
         "neutral": [
           "neutral",
@@ -5222,7 +5381,8 @@
           "inspect",
           "conclude",
           "not-run",
-          "no-test"
+          "no-test",
+          "not-derivable"
         ]
       }
     },
