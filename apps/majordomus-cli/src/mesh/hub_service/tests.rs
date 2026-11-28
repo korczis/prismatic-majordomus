@@ -1065,3 +1065,92 @@ fn what_the_hub_answers_is_read_loosely() {
     std::fs::write(&blocked, "a file where the state directory goes").unwrap();
     assert!(take_lock(&h, &blocked).is_err());
 }
+
+#[test]
+fn an_unsupported_host_owes_no_unit_command() {
+    let home = tempfile::tempdir().unwrap();
+    let fake = Fake::new();
+    fake.answer(GIT, false, "");
+    with_fake!(fake, Manager::Unsupported, false, h);
+    let r = install(&h, &spec(Manager::Launchd, home.path()), true, false, false);
+    assert!(r.units.iter().all(|u| !u.loaded && !u.enabled && !u.active));
+    assert!(
+        r.steps.iter().all(|st| st.line.starts_with("write ")),
+        "{:?}",
+        r.steps
+    );
+    assert_eq!(r.notes.len(), 1, "only the firewall: {:?}", r.notes);
+    assert!(!fake.called("launchctl") && !fake.called("systemctl"));
+}
+
+#[test]
+fn a_hub_without_a_board_or_links_is_still_an_answer() {
+    let exec = |_: &[String]| (true, String::new());
+    let get = |_: &str, p: &str| {
+        (p == "/")
+            .then(|| "{\"version\":\"1.3.0\"}".to_string())
+            .or(Some("{}".into()))
+    };
+    let h = Host {
+        manager: Manager::Launchd,
+        uid: 1,
+        user: "o".into(),
+        pid: 1,
+        staging: false,
+        exec: &exec,
+        get: &get,
+        alive: &|_| false,
+        now: &|| 0,
+        sleep: &|_| {},
+    };
+    let a = ask_hub(&h, 8791);
+    assert!(a.answering && a.version.as_deref() == Some("1.3.0"));
+    assert_eq!(a.attached, 0);
+    assert!(a.linked.is_empty());
+}
+
+#[test]
+fn a_log_that_cannot_rotate_says_why() {
+    let home = tempfile::tempdir().unwrap();
+    let log = home.path().join("hub.log");
+    std::fs::File::create(&log)
+        .unwrap()
+        .set_len(LOG_BOUND + 1)
+        .unwrap();
+    std::fs::create_dir_all(log.with_extension("log.1")).unwrap();
+    let step = rotate(&log).unwrap();
+    assert_eq!(step.ok, Some(false));
+    assert!(!step.output.is_empty());
+    // and a file whose directory cannot be made is not written
+    let blocked = home.path().join("blocked");
+    std::fs::write(&blocked, "a file").unwrap();
+    assert!(write_file(&blocked.join("x"), "").is_err());
+}
+
+#[test]
+fn a_staging_update_asks_nothing_and_decides_nothing() {
+    let home = tempfile::tempdir().unwrap();
+    let s = spec(Manager::Launchd, home.path());
+    let fake = behind();
+    with_fake!(fake, Manager::Launchd, true, h);
+    let r = update(&h, &s, RELEASE_BASE, true, false);
+    assert!(matches!(r.decision, Decision::Unknown { .. }) && r.result == "unknown");
+    assert!(!fake.called("curl") && !fake.called("git"));
+    assert!(r.published.is_none() && r.served.is_none());
+}
+
+#[test]
+fn a_hub_behind_the_release_with_no_update_ever_says_never() {
+    let home = tempfile::tempdir().unwrap();
+    let s = spec(Manager::Launchd, home.path());
+    let fake = Fake::new();
+    fake.serving(Some("1.2.0"))
+        .installed("1.2.0")
+        .answer("launchctl print gui", true, "state = running")
+        .answer("curl -fsS -m", true, &latest("1.3.0"));
+    with_fake!(fake, Manager::Launchd, false, h);
+    let r = status(&h, &s, true, RELEASE_BASE);
+    let current = r.checks.iter().find(|c| c.name == "current").unwrap();
+    assert_eq!(current.level, Level::Fail);
+    assert!(current.detail.contains("ended never"), "{}", current.detail);
+}

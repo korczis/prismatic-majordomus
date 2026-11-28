@@ -1135,7 +1135,8 @@ pub(crate) fn read_state(home: &Path) -> UpdateState {
 }
 
 fn write_state(home: &Path, state: &UpdateState) -> std::io::Result<()> {
-    let text = serde_json::to_string_pretty(state).map_err(std::io::Error::other)?;
+    // a struct of strings, numbers and lists always serialises
+    let text = serde_json::to_string_pretty(state).unwrap_or_default();
     write_file(&state_path(home), &(text + "\n"))
 }
 
@@ -1357,10 +1358,20 @@ pub(crate) fn update(
     if retry {
         state.failed.clear();
     }
-    let published_v = published(host, base);
+    // a staging home asks nothing beyond the executable: no origin, no checkout, no hub
+    let asks = !host.staging;
+    let published_v = if asks { published(host, base) } else { None };
     let installed_v = version_of(host, &spec.executable);
-    let checkout_v = checkout_version(host, &spec.repo);
-    let hub = ask_hub(host, spec.port);
+    let checkout_v = if asks {
+        checkout_version(host, &spec.repo)
+    } else {
+        None
+    };
+    let hub = if asks {
+        ask_hub(host, spec.port)
+    } else {
+        HubAnswer::default()
+    };
     let served_v = hub.version.clone();
     let now = (host.now)();
     let versions = Versions {
@@ -1373,7 +1384,13 @@ pub(crate) fn update(
             .deferred_since
             .is_some_and(|since| now.saturating_sub(since) > DEFER_AT_MOST_SECONDS),
     };
-    let first = decide(&versions, &state.failed);
+    let first = if asks {
+        decide(&versions, &state.failed)
+    } else {
+        Decision::Unknown {
+            reason: "a staging home asks no release origin, checkout or hub".into(),
+        }
+    };
     let mut out = HubUpdateReport {
         mode: if apply { "apply".into() } else { "plan".into() },
         published: published_v.clone(),
@@ -1448,7 +1465,7 @@ pub(crate) fn update(
                         "failed",
                         format!(
                             "after the installer the executable is {}",
-                            now_v.unwrap_or_else(|| "silent".into())
+                            now_v.as_deref().unwrap_or("silent")
                         ),
                     );
                 }

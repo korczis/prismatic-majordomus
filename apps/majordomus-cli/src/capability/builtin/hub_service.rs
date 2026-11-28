@@ -106,8 +106,19 @@ pub(crate) fn get_json(base: &str, path: &str) -> Option<String> {
         Duration::from_secs(5),
     )
     .ok()
-    .filter(|r| r.status == 200)
-    .map(|r| r.body)
+    .and_then(body_of_200)
+}
+
+/// The body of a 200, else nothing.
+fn body_of_200(reply: crate::mcp::bridge::Reply) -> Option<String> {
+    (reply.status == 200).then_some(reply.body)
+}
+
+/// The home the units are written under: a staging root, else `$HOME`, else `/`.
+pub(crate) fn home_for(root: Option<String>, home: Option<std::ffi::OsString>) -> PathBuf {
+    root.map(PathBuf::from)
+        .or(home.map(PathBuf::from))
+        .unwrap_or(PathBuf::from("/"))
 }
 
 fn now() -> u64 {
@@ -183,19 +194,14 @@ struct Built {
 
 fn build(ctx: &Context, input: &HubInput) -> Built {
     let asked = input.executable.is_some();
-    let config = declaration(ctx).and_then(|d| d.ok());
+    let config = declaration(ctx).and_then(Result::ok);
     let local: Vec<Ipv4Addr> = crate::mesh::address::interfaces()
         .into_iter()
         .map(|(_, ip)| ip)
         .collect();
     let (port, declared) = port_for(input.port, config.as_ref(), &local);
     let staging = input.root.is_some();
-    let home = input
-        .root
-        .clone()
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
-        .unwrap_or_else(|| PathBuf::from("/"));
+    let home = home_for(input.root.clone(), std::env::var_os("HOME"));
     let spec = Spec {
         manager: Manager::of(std::env::consts::OS),
         home,
@@ -319,6 +325,44 @@ mod tests {
             release_base(None, Some(String::new())),
             hub_service::RELEASE_BASE
         );
+    }
+
+    /// Serve one canned HTTP answer on a loopback port and give its base URL.
+    fn serve_once(status: &'static str, body: &'static str) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            if let Ok((mut stream, _)) = listener.accept() {
+                let mut buf = [0u8; 4096];
+                let _ = stream.read(&mut buf);
+                let _ = write!(
+                    stream,
+                    "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+            }
+        });
+        base
+    }
+
+    #[test]
+    fn get_json_reads_a_200_and_drops_the_rest() {
+        assert_eq!(
+            get_json(&serve_once("200 OK", "{}"), "/"),
+            Some("{}".into())
+        );
+        assert_eq!(get_json(&serve_once("404 Not Found", "{}"), "/"), None);
+    }
+
+    #[test]
+    fn the_home_is_the_staging_root_then_home_then_the_root() {
+        assert_eq!(
+            home_for(Some("/r".into()), Some("/h".into())),
+            PathBuf::from("/r")
+        );
+        assert_eq!(home_for(None, Some("/h".into())), PathBuf::from("/h"));
+        assert_eq!(home_for(None, None), PathBuf::from("/"));
     }
 
     #[test]
