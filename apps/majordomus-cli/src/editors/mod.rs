@@ -1708,4 +1708,49 @@ mod tests {
             "the command's projection, not the workflow skill's"
         );
     }
+
+    /// The workflow skill is in the environment, so the plan meets it under `.agents/skills/`
+    /// and passes it by: the one file there is derived from the command's capability alone,
+    /// and the skill's own file is never among its sources.
+    #[test]
+    fn a_skill_in_the_environment_named_like_a_command_is_not_written_beside_it() {
+        let repo = repository(false);
+        let root = repo.root().to_path_buf();
+        let skill_path = ".ai/repo/skills/proceed/SKILL.md";
+        write(
+            &root,
+            skill_path,
+            &skill_md("proceed", "A workflow named like a command.", "active"),
+        );
+        let index = repo.index().unwrap();
+        let ctx = repo.context().unwrap();
+        let env = environment(&index, &root);
+        assert!(
+            env.skills
+                .iter()
+                .any(|s| s.id == "proceed" && s.path == skill_path),
+            "the skill is discovered: {:?}",
+            env.skills.iter().map(|s| &s.id).collect::<Vec<_>>()
+        );
+        let command = commands(&ctx.registry)
+            .into_iter()
+            .find(|c| c.alias == "proceed")
+            .expect("the command exists");
+        let plan = plan(&index, &ctx.registry, &root, "0.0.0");
+        let at = ".agents/skills/proceed/SKILL.md";
+        let derived: Vec<&EditorDerivation> =
+            plan.derivations.iter().filter(|d| d.path == at).collect();
+        assert_eq!(derived.len(), 1, "one file at {at}");
+        assert_eq!(
+            derived[0].sources,
+            [format!("capability:{}", command.capability)],
+            "the command's capability is the only source"
+        );
+        assert!(
+            !plan.derivations.iter().any(
+                |d| d.path.starts_with(".agents/") && d.sources.iter().any(|s| s == skill_path)
+            ),
+            "the workflow skill is written nowhere under .agents/"
+        );
+    }
 }
