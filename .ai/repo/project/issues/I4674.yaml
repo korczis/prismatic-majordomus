@@ -1,0 +1,53 @@
+id: I4674
+milestone: a-session-proceeds-through-the-mesh
+title: "A long-running job is a mesh record with its machine, process group, budget, heartbeat and stop handle; jobs consult one machine guard; an owner's stop order reaches them"
+slug: a-long-running-job-is-a-mesh-record
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus job run --name <n> --budget procs=N[,hosts=...] -- <argv>` starts a job in its own session (setsid), exports MAJORDOMUS_OWNER_JOB, beats, and watches for a stop order. `job register --pid` adopts a job that is already running, `job beat` beats for it, and `job list` lists every job on every node. `job stop <key|glob> [--host] [--grace]` signals the recorded process group, never a name match, and reaches remote children through the declared ssh host. `job admit <key> --want N` asks the machine guard for N more processes. The mesh journal gains the events job_registered, job_beat, job_ended and job_stop_ordered, which need no path claim and are shown in mesh state and mesh who. `machine guard [--json]` reads load per core, swap used and free disk against the policy's machine.guard (load_per_core_max, swap_used_max_pct, free_floor_gib: 35); doctor reports it, and I4006 and I4355 consume it."
+why: "Owner-ordered post-mortem, proposed by openttd-28 on 2026-11-22. An OpenTTD AIBattle genetic-algorithm run (battle.py in that repository's research tools) ran for 3 days from another MacBook Pro and SSH-dispatched about 32 OpenTTD processes per host to this Mac and to lundra. Load stood at 60-86 on 18 cores, swap at 35/37 GB, and the disk under the 35 GiB floor, which blocked builds and pushes across sessions, this repository's landing queue included, from 2026-11-19 to 2026-11-22. There was no mesh claim and no owner file, the processes were reparented to launchd, five sessions truthfully denied owning it, and the owner's Markdown order 'Stop ttd-battle' never reached it. It was stopped by SIGTERM at its source. The post-mortem is OpenTTD's incident-2026-11-19-ai-battle-overload.md. Detection of such a group after the fact is I4668; this issue makes a long-running job declare itself before it runs, so there is something to stop."
+current_state: "Per the proposal's nearest list: the offload run record (docs/OFFLOAD.md:159-194) records runs the offload starts, and nothing else; I4622 declares services a session starts and leaves remote hosts out of its scope; I3956 traces a worker's processes to its session; I4006 is a counting machine-wide slot for heavy work; I4355 announces a machine's disk emergency; I4415 waits for a load bound before a verification runs. None of them records a job started outside a session, takes a stop order from another machine, or admits more processes against one machine guard."
+desired_state: "A long-running job on any node is listed on every node within one beat, with its machine, process group, budget and last beat. A job whose beat is missed reads as stalled and one whose process is gone as orphaned. An owner's stop order given on any node reaches the recorded process group, and the order and the job's exit are in the journal and the brief. A job asking for more processes is refused while the machine guard reads over its bound, and the refusal names the reading."
+scope:
+  - ".ai/repo/project/issues/I4674.yaml"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/who.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "lib/doctor.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - ".ai/repo/ci/mesh-event-fields.yaml"
+  - "docs/MESH.md"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.yaml"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "test/cases/4674_a_long_running_job_is_a_mesh_record.sh"
+non_scope:
+  - "Naming a heavy process group that nobody registered, and pausing it: I4668 (related; detection after the fact)"
+  - "Supervising a service a session declares: I4622"
+  - "Tracing a session's own workers: I3956"
+  - "Stopping a process by its name or command line: a stop signals only a recorded process group"
+depends_on: []
+acceptance_criteria:
+  - "A job started on node A is listed by `job list` on node B within one beat"
+  - "A job whose beat is missed is reported stalled, and one whose recorded pid is gone is reported orphaned"
+  - "`job admit` grants 0 while the machine guard reads over a bound, and names the reading"
+  - "`job stop` from node B signals the recorded process group on node A; a remote child carrying MAJORDOMUS_OWNER_JOB is stopped; a decoy process with the same command line is never signalled"
+  - "The stop order and the job's exit appear in the journal and in the brief"
+  - "Case 4674 fails first against master"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4674_a_long_running_job_is_a_mesh_record"
+evidence_required:
+  - "a_long_running_job_is_a_mesh_record"
+serves:
+  - "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
+created_at: 2026-11-22

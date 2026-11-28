@@ -1,0 +1,32 @@
+id: I4683
+milestone: safe-self-update
+title: "An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries"
+slug: an-upgrade-keeps-the-firewall-admission
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The macOS application firewall admits a program by its binary path, and the installer puts each version under its own versioned path. The hub's admission survives an upgrade: either the firewall admits a stable launcher path once, or the installer checks the admission and names the firewall step that restores it. `mesh firewall apply` also removes the entries it left for earlier versions and for temporary test binaries."
+why: "Reported by dev-87 on 2026-11-22 at about 10:30Z, while hubs were upgraded to v1.2.0. socketfilterfw allows by binary path, and the installer puts each version under its own versions/<v> directory (libexec/majordomus-cli inside it). After 1.1.0 -> 1.2.0 on macbook-2, `mesh doctor` FAILed the firewall check until `sudo majordomus mesh firewall apply` was run again. macbook-2's list held stale entries for 1.0.2 and 1.1.0 and for majordomus test binaries in mj* directories under the per-user temporary folder."
+current_state: "Observed as above. apps/majordomus-cli/src/mesh/firewall.rs drives /usr/libexec/ApplicationFirewall/socketfilterfw; share/install/install.sh.in is the installer template. Every upgrade on a macOS hub with the firewall on therefore loses inbound admission until a person runs firewall apply with sudo."
+desired_state: "After an upgrade on a macOS hub with the firewall on, mesh doctor's firewall check passes without a further sudo step, or the installer's output names that step; after firewall apply the list holds one entry for the current version and none for earlier versions or temporary binaries."
+scope:
+  - ".ai/repo/project/issues/I4683.yaml"
+  - "apps/majordomus-cli/src/mesh/firewall.rs"
+  - "share/install/install.sh.in"
+  - "docs/MESH.md"
+  - "test/cases/495_the_firewall_admits_the_mesh.sh"
+non_scope:
+  - "Activating the new version under the service manager and rolling back: I2722"
+  - "Firewalls other than the macOS application firewall"
+depends_on: []
+acceptance_criteria:
+  - "Case 495, with a fixture socketfilterfw that records its calls, shows that after an install of a second version the admitted path still runs the current version, or that the installer prints the firewall step"
+  - "firewall apply over a fixture list holding entries for two earlier versions and a temporary test binary leaves only the current entry"
+  - "Negative control: both assertions fail against master"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 495_the_firewall_admits_the_mesh"
+evidence_required:
+  - "an_upgrade_keeps_the_firewall_admission"
+serves: []
+created_at: 2026-11-22

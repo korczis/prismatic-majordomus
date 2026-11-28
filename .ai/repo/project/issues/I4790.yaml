@@ -1,0 +1,41 @@
+id: I4790
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "A pushed commit that names an issue leaves one progress comment on that issue's tracker projection, on GitHub and on Jira through provider adapters, found again by a marker and never written twice"
+slug: progress-reaches-the-tracker-once
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus plan progress <range>` (for a push: the range the push adds to the remote branch) reads every commit of the range, the issue ids its message names and the tracker keys those issues trace (I4261), and for each (issue, commit) pair ensures one comment on the issue's projection carrying a hidden marker `majordomus:progress <commit sha>` with the commit's subject, its branch and a link pinned to the commit. Before writing it lists the projection's comments and skips a pair whose marker is already there, so a rerun, a retried push or a second machine writes nothing. A provider adapter does the forge's part: GitHub (issue comments over the REST API through `gh`) and Jira (comments over the REST API with the repository's declared credential source); a repository declares which adapters are on and where each one's issues are. `--dry-run` prints the comments it would write. The pre-push hook or the trunk workflow may run it; failure to reach a tracker is reported and never refuses a push."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), the plan was projected to GitHub, but the people following the work read the issue tracker, and progress reached it only when somebody wrote a comment by hand; the repository built its own idempotent commenter for GitHub and for a Jira issue keyed by the traces. The projection writes issue bodies and milestones; it says nothing about the commits that move an issue."
+current_state: "Measured at origin/master 46775282570. scripts/github-sync projects issues and milestones to GitHub (bodies, milestones, due dates; lib/plan.sh writes Traces into the body); I4254 makes an adopter project its plan with the installed tool and I4370 ships the projection as `majordomus forge`; no command reads a commit range for issue ids, no record marks a comment as written, and no Jira adapter exists anywhere in lib/, scripts/ or the crate."
+desired_state: "The capability is declared under apps/majordomus-cli/src/capability/builtin/ and projected by `majordomus generate`; adapters sit behind one trait with recorded HTTP fixtures; the marker is the only memory (no comment id is stored); credentials are read through the declared source (I4780 where it has landed, the environment otherwise) and never printed; docs/INTEGRATION.md documents the adapters and the hook line; a case runs the command twice over one range against both fixtures and sees one comment per pair."
+scope:
+  - ".ai/repo/project/issues/I4790.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/plan/progress.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "share/skeleton/policy.yaml"
+  - "docs/INTEGRATION.md"
+  - "test/cases/4790_progress_reaches_the_tracker_once.sh"
+non_scope:
+  - "A tracker writing back into the plan, or closing an issue from a comment"
+  - "Storing a tracker comment id or issue number in any record (rule project.the-projection-is-applied-at-landing and the intent's invariant)"
+  - "Shipping the issue and milestone projection itself (I4254, I4370)"
+depends_on:
+  - "I4261"
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#progress-reaches-the-tracker-once"
+acceptance_criteria:
+  - "Over a range of three commits naming I1, I1 and I2, the GitHub fixture receives three comments and the Jira fixture (I1 traces PROJ-7) one per commit naming I1"
+  - "A second run over the same range lists the comments, finds every marker and writes nothing"
+  - "A commit naming an id the plan does not hold writes nothing and is reported"
+  - "An unreachable tracker is reported with the adapter's name and the command exits 0 under the pre-push wiring"
+  - "No output or fixture request log contains the credential value"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::progress"
+  - "bash test/run.sh 4790_progress_reaches_the_tracker_once"
+evidence_required:
+  - "case_4790"
+risk: "Medium. Comments are visible to people outside the repository; --dry-run is the first step of the documented setup, and the comment carries only the subject, the branch and the pinned link."
+created_at: 2026-11-25
+updated_at: 2026-11-25

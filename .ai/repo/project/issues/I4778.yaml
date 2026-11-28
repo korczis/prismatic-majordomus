@@ -1,0 +1,45 @@
+id: I4778
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "An advisor is reported answering only after a cheap real call answered: `reasoning probe` records each advisor's liveness with a time-to-live, and availability reads it"
+slug: an-advisor-is-answering-only-when-a-probe-answered
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add `majordomus reasoning probe [<advisor>...]`: for each declared advisor it makes the cheapest real call its adapter supports (a one-token exchange, or the runtime's model listing plus a one-token chat for a local runtime) under a short deadline, and records the outcome as a consultation outcome of kind probe with its status (answered, refused_client, credential_rejected, model_missing, no_chat_model, unreachable, timeout). Availability keeps deriving from presence, mode and recorded outcomes alone: a probe outcome younger than the declared time-to-live is what turns `present` into `answering`, a failed one opens the circuit with the status it carries, and an advisor never probed is reported `present, unprobed`, never as available without qualification."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), reasoning advisors reported five advisors available (present): the Gemini CLI refused with 'client no longer supported', the ChatGPT CLI held a placeholder key and answered 401, Ollama listed models whose blobs were missing ('read GGUF metadata ... no such file'), LM Studio served only an embedding model, and only Codex answered. A session that trusted the list spent its consultations discovering this one advisor at a time. Presence says installed, not answering (availability.rs says so itself); nothing records the cheap answer that would tell them apart."
+current_state: "Measured at origin/master 46775282570. apps/majordomus-cli/src/reasoning/availability.rs derives availability from presence (an executable on PATH, a credential variable set), the reasoning mode and recorded consultation outcomes, with no network (ADR 0032); a present advisor with no history reads Available with reason `present`. scripts/lib/advisors/*.mjs adapters only run inside a consultation, and a consultation's failure opens the circuit only after it was spent. No command asks an advisor anything cheaper than a consultation, and no outcome kind distinguishes a probe."
+desired_state: "`reasoning probe` exists as a capability declared under apps/majordomus-cli/src/capability/builtin/, projected by `majordomus generate`; each adapter exports a probe beside its exchange; a probe outcome is recorded like a consultation outcome and read by derive_availability; `reasoning advisors` shows answering, present-unprobed and the failed probe's status with its age; the time-to-live is a declared key of share/advisors.yaml with a default; and a fixture with fake adapters holds each status."
+scope:
+  - ".ai/repo/project/issues/I4778.yaml"
+  - "apps/majordomus-cli/src/reasoning/availability.rs"
+  - "apps/majordomus-cli/src/reasoning/record.rs"
+  - "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+  - "scripts/advisor-consult"
+  - "scripts/lib/advisors/contract.mjs"
+  - "scripts/lib/advisors/driver.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "share/advisors.yaml"
+  - "docs/REASONING.md"
+  - "test/cases/4778_an_advisor_answers_before_it_is_available.sh"
+non_scope:
+  - "Classifying remote models and choosing a chat-capable local model (I4779)"
+  - "Probing credentials of services that are not advisors (I4780)"
+  - "Probing on every availability read: a probe is an explicit command, or a step a plan asks for, never part of a derivation"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#advisors-are-reported-by-what-answers"
+acceptance_criteria:
+  - "An advisor whose fake executable answers the probe reads answering until the time-to-live passes, then present-unprobed again"
+  - "A fake CLI that prints 'client no longer supported' and exits non-zero reads unavailable with refused_client after one probe"
+  - "A fake API answering 401 reads unavailable with credential_rejected, and the probe's record carries no credential value"
+  - "An advisor never probed is listed as present-unprobed, and `reasoning plan` still selects it, saying it is unprobed"
+  - "derive_availability makes no network call: its unit tests run with the network unreachable"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::"
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "bash test/run.sh 4778_an_advisor_answers_before_it_is_available"
+evidence_required:
+  - "case_4778"
+risk: "Medium. A probe spends a little of each vendor's quota; the time-to-live bounds it, and a plan with no consultation never probes."
+created_at: 2026-11-25
+updated_at: 2026-11-25

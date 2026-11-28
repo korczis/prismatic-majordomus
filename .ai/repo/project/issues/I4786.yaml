@@ -1,0 +1,40 @@
+id: I4786
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "`majordomus campsite` leaves every branch no worse than its merge base: declared metrics measured on both sides, a grown one refused, wired into pre-push and CI"
+slug: the-campsite-ratchet-is-a-capability
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A capability that measures declared metrics at the branch head and at its merge base with the trunk, in one temporary worktree of the base, and refuses when a metric grew. The policy declares the metrics under `campsite.metrics`, each a built-in measure with its parameters or a repository command that prints one number: built-ins for placeholder markers in tracked text (patterns declared), skipped or focused tests (patterns per test framework), coverage exemptions (a declared file or pattern), open assumptions and questions in the layer, decisions no issue owns, and commit subjects in the range that name an issue id the plan does not hold. The answer lists each metric with its base value, its head value and the files that added to it; `--explain <metric>` shows the lines. A metric may be marked `report` instead of `refuse`."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), the most useful local gate was a hand-built 'campsite' ratchet: scripts comparing the branch with its merge base on the trunk for placeholder markers, skipped tests, coverage exemptions, open assumptions, decisions no issue owns and commit subjects naming a tracker id. Every part of it is generic, and this repository keeps the same idea as many separate baseline files (.ai/repo/*-baseline.txt) that a branch can only shrink."
+current_state: "Measured at origin/master 46775282570. Ratchets exist as per-gate baseline files (.ai/repo/order-baseline.txt, pipefail-baseline.txt, rule-proof-baseline.txt and others) read by separate scripts under scripts/ci/; check's `no-new-debt` closing reading counts their entries against the task's start; nothing measures a declared metric at a merge base, and an adopter has no command to declare one."
+desired_state: "The capability is declared under apps/majordomus-cli/src/capability/builtin/ and projected by `majordomus generate`; the policy schema carries `campsite`; the versioned hooks of I4784 can wire `campsite --refuse` into pre-push with one `hooks add`; the CI model can name it as a gate; docs/QUALITY.md documents the metrics; a case holds a branch that adds a skipped test and a placeholder and is refused with both named, and a branch that removes one and adds another of the same metric that is refused only if the count grew."
+scope:
+  - ".ai/repo/project/issues/I4786.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/campsite.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/skeleton/policy.yaml"
+  - "docs/QUALITY.md"
+  - "test/cases/4786_the_campsite_ratchet_is_a_capability.sh"
+non_scope:
+  - "Folding this repository's existing baseline files into campsite: a later issue, once the capability has run here"
+  - "Any metric that needs a build or a network call; a repository command may, at its own cost"
+depends_on:
+  - "I4784"
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#the-skeleton-ships-versioned-hooks-and-a-ratchet"
+acceptance_criteria:
+  - "A fixture branch adding `it.skip(` and a declared placeholder marker is refused with both metrics, their base and head values and the adding files"
+  - "A branch that removes one skipped test and adds another passes the skipped-tests metric (equal is not worse)"
+  - "A metric marked report prints its growth and does not refuse"
+  - "A repository command metric that exits non-zero is reported as unmeasured, never as zero"
+  - "The base is measured in a temporary worktree that is removed afterwards, and the head's work tree is untouched"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::campsite"
+  - "bash test/run.sh 4786_the_campsite_ratchet_is_a_capability"
+evidence_required:
+  - "case_4786"
+risk: "Medium. Measuring the base costs a worktree checkout per run; the capability reuses one per base commit and says what it cost."
+created_at: 2026-11-25
+updated_at: 2026-11-25

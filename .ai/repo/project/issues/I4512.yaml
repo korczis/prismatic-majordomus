@@ -42,4 +42,16 @@ evidence_required:
   - ci
 risk: "Low to medium. Every link to docs/PLAN_STATUS.md (site, docs, briefings) must keep resolving after the split, so the index page keeps that path."
 created_at: 2026-10-30
-updated_at: 2026-10-30
+updated_at: 2026-11-26T14:40:04Z
+started_at: 2026-11-26T14:38:28Z
+started_event: sha256:340f500bb39be02f65fb0bda636d690268d628af5cb063b00198cc10dbec4ff8
+completed_at: 2026-11-26T14:40:04Z
+completed_event: sha256:07fba22dec834aac0533d126df4eb6a99f58f0b6e564d7c67a5dc8eefcf25d3a
+evidence:
+  - covers: "ci"
+    type: ci
+    command: "scripts/derive-check; scripts/ci/derived-size-check"
+    result: "delivered by 9a3a4ff2e67 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 51_derived_artifacts_committed ok in suite-shard (1) job 138971458450; 4512_no_derived_page_outgrows_the_index ok in suite-shard (2) job 138971458506; 3246_every_file_the_site_generator_reads_is_an_input ok in suite-shard (3) job 138971458403; 400_derivation_is_one_graph ok in suite-shard (4) job 138971458386; structure job 138970179917: 'OK derived-size no derived file the index judges by size is above 75% of out.max_bytes 1048576 (786432 bytes); 3625 derived file(s) examined'"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:39:31Z

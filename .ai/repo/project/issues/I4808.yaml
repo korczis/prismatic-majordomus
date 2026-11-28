@@ -1,0 +1,33 @@
+id: I4808
+milestone: a-second-adopter-is-served
+title: "The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares"
+slug: the-allocator-reserves-prefixed-ids
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "An adopter's plan declares the id prefixes it uses (for example U, Q, E, K), each with its digit width. `mesh allocate issue --prefix <P>` surveys the tree, the worktrees, every ref and the journal for that prefix, exactly as it does for `I<nnnn>`, and reserves the next number with one exclusive claim. `plan validate` and the commit hook (I4616) judge a prefixed id against the allocator's reservations, and an undeclared prefix is refused with the declared list."
+why: "Raised three times by one adopter, whose issues are named by line. 2026-11-18: the first held candidate. 2026-11-20: U121 was filed after checking every ref, worktree and open PR by hand. 2026-11-24/25: U141-U147, Q115, Q116 and E080 were numbered by hand in one plan PR after the same manual survey. Each time the reason was that the allocator gives only I<nnnn>, cases and ADRs."
+current_state: "Measured at origin/master 46775282570 on 2026-11-25. `mesh allocate` takes the kinds issue (I<nnnn>), case and adr. I3974 unifies the survey of those numbers, I4357 reserves them atomically at origin, and I4616 refuses an I<nnnn> reserved for another session. None of them knows a prefix."
+desired_state: "An adopter with prefixed ids takes them from the allocator like any other number, and a hand-numbered collision is refused locally."
+scope:
+  - "apps/majordomus-cli/src/integration/allocate.rs"
+  - "apps/majordomus-cli/src/capability/builtin/allocate.rs"
+  - "share/schemas/majordomus/project/project.v1.schema.json"
+  - "docs/CLI.md"
+  - "test/cases/4808_the_allocator_reserves_prefixed_ids.sh"
+non_scope:
+  - "Atomic reservation at origin: I4357"
+  - "Renaming existing prefixed records"
+depends_on: []
+acceptance_criteria:
+  - "Case 4808: a fixture plan declaring prefixes U and Q with U120 on a branch gets U121 from `allocate issue --prefix U`, and a second allocation gets U122"
+  - "A record named with a prefixed id reserved for another session is refused by plan validate and the commit hook"
+  - "An undeclared prefix is refused, naming the declared ones"
+  - "Negative control: with the prefix survey removed, the case finds U120 handed out again"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4808_the_allocator_reserves_prefixed_ids"
+evidence_required:
+  - "the_allocator_reserves_prefixed_ids"
+serves: []
+created_at: 2026-11-25

@@ -696,7 +696,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "plan.delivery",
                 title: "How far each issue's work has travelled",
-                description: "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
+                description: "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. With `at` and `merge_title`, `merge_branch` or `merge_number`, that commit is read as the merge into the trunk of that pull request, as the forge's merge commit will name it, judged against its first parent when it is a merge (a test merge) and against where it leaves the trunk otherwise (a head), and the source `anticipated_merge` says so: a pull request is judged by what its merge will prove before it lands (I4634). A merge subject of the landing seat's combined top, `Merge #<n> (<branch>) into the combined top on <sha>`, names its member's pull request and branch. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
                 input: PlanDeliveryInput,
                 output: IssueDeliveryReport,
                 stability: Stability::Experimental,
@@ -791,6 +791,17 @@ pub struct PlanDeliveryInput {
     /// Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree's release
     /// records, and nothing live — no branch, forge, deployment or clock. Default: live.
     pub at: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// With `at`: read that commit as the merge into the trunk of a pull request with this
+    /// title (I4634), named as the forge's merge commit will name it, so a pull request is
+    /// judged by what its merge will prove before it lands. Refused without `at`.
+    pub merge_title: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// With `at`: the anticipated merge's head branch, without its owner, as `merge_title`.
+    pub merge_branch: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// With `at`: the anticipated merge's pull request number, as `merge_title`.
+    pub merge_number: Option<u64>,
 }
 
 impl BenchmarkCases for PlanDeliveryInput {
@@ -807,6 +818,7 @@ impl BenchmarkCases for PlanDeliveryInput {
                 PlanDeliveryInput {
                     issue: Some(issue),
                     at: Some("HEAD".into()),
+                    ..PlanDeliveryInput::default()
                 },
             ),
         ]
@@ -828,12 +840,21 @@ fn plan_delivery(
     let root = Path::new(&ctx.index.repository.root);
     let identity = crate::worktree::RepositoryIdentity::discover(root)
         .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let anticipated = (input.merge_title.is_some()
+        || input.merge_branch.is_some()
+        || input.merge_number.is_some())
+    .then(|| delivery::AnticipatedMerge {
+        pull_request: input.merge_number,
+        title: input.merge_title.clone(),
+        branch: input.merge_branch.clone(),
+    });
     delivery::infer(
         root,
         &plan,
         identity.trunk(),
         input.at.as_deref(),
         input.issue.as_deref(),
+        anticipated.as_ref(),
     )
     .map_err(CapabilityError::Refused)
 }
@@ -1032,6 +1053,7 @@ fn plan_drift(ctx: &Context, input: PlanDriftInput) -> Result<DriftReport, Capab
         identity.trunk(),
         input.at.as_deref(),
         input.issue.as_deref(),
+        None,
     )
     .map_err(CapabilityError::Refused)?;
     let started: BTreeMap<String, String> = plan

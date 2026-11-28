@@ -1,0 +1,36 @@
+id: I4722
+milestone: fabric-is-decided-and-the-legacy-is-measured
+title: "The legacy per-checkout runtime is measured at L1, L2 and L3 before Fabric changes it (S01, gate G1)"
+slug: fabric-s01-legacy-baseline
+priority: p1
+profile: implementation
+objective: "Measure today's model (one shared server per checkout, ADR 0003 and 0044) reproducibly in disposable fixtures at L1 (one checkout, one entry, one MCP client), L2 (one repository, two worktrees, four clients) and L3 (two repositories, ten worktrees, twenty concurrent MCP sessions): every Majordomus process and listener, RSS and descriptors, cold and warm env enter, readiness and MCP attach latencies, and every failure beside its attempts."
+why: "Corrected DAG: S01 precedes P03, and no efficiency claim about a host agent may be made before G1. Ordered by the owner on 2026-11-24 ('Start with P00+S00+S01 (Recommended)', knowledge record fabric-starts-with-p00-s00-s01)."
+current_state: "Observed 2026-11-25: PR #3122 (branch test/fabric-s01-legacy-baseline) adds scripts/fabric-baseline, case 4663 and docs/PERFORMANCE.md, and is open. Its first L3 baseline on one Darwin arm64 host: 30 processes, 10 TCP listeners, 0 UDP and Unix sockets, RSS total at most 645,584 kB, MCP attach plus first answer p50 486 ms and p95 893 ms, 0 failures of 150 attempts."
+desired_state: "PR #3122 is merged; the baseline output (majordomus-fabric-baseline/v1) with host metadata is attached as this issue's evidence; the fabric-local-pilot milestone is measured with the same script."
+scope:
+  - "scripts/fabric-baseline"
+  - "test/cases/4663_fabric_legacy_baseline.sh"
+  - "docs/PERFORMANCE.md"
+  - ".ai/repo/automation/inventory.jsonl"
+non_scope:
+  - "Changing production runtime behaviour"
+  - "Turning one machine's numbers into a budget; the policy's entry budgets are printed, never changed"
+  - "L4 (two hosts), which needs Fabric's networking first"
+traces:
+  - "https://github.com/korczis/prismatic-majordomus/pull/3122"
+acceptance_criteria:
+  - "scripts/fabric-baseline runs L1, L2 and L3 only in a fixture it made and refuses a non-empty unmarked directory and one inside a git work tree"
+  - "Every run reports samples plus failures equal to attempts, and a server killed before its clients attach is counted, not dropped"
+  - "Case 4663 proves the L1 positive with a real MCP answer, both refusals and the killed-server count"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 4663_fabric_legacy_baseline"
+evidence_required:
+  - "legacy_baseline_measured"
+created_at: 2026-11-25
+updated_at: 2026-11-25T04:22:59Z
+started_at: 2026-11-25T04:15:28Z
+started_event: sha256:017c09767d5535f1804493584c39d31aa7e235182b78e99a6ee4e4d0bf411587
+verified_at: 2026-11-25T04:22:59Z
+verified_event: sha256:f7be2dd43121c88e135c0da2cf6476d84797178291c11a622ab3b7fef5a027ea

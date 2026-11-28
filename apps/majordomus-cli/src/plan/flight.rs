@@ -522,7 +522,7 @@ pub(crate) fn observe(
     claims: Result<Vec<IssueClaim>, String>,
     inspect: Option<&str>,
 ) -> Result<PlanFlight, String> {
-    let report = delivery::infer(root, plan, trunk, None, None)?;
+    let report = delivery::infer(root, plan, trunk, None, None, None)?;
     let mut sources = report.sources.clone();
     sources.push(match &claims {
         Ok(c) => DeliverySource {

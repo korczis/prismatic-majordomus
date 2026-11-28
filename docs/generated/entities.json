@@ -2,7 +2,7 @@
   "schema": 1,
   "source": "docs/generated/graph.json",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: docs/generated/graph.json and site/data/publication.toml; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.2.0",
+  "generator": "majordomus-cli 1.3.0",
   "kinds": [
     {
       "kind": "adr",
@@ -96,7 +96,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 40
+      "count": 41
     },
     {
       "kind": "deployment",
@@ -152,7 +152,7 @@
       "route": null,
       "title": null,
       "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-      "count": 5
+      "count": 6
     },
     {
       "kind": "implementation",
@@ -168,7 +168,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 45
+      "count": 46
     },
     {
       "kind": "issue",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1276
+      "count": 1327
     },
     {
       "kind": "knowledge",
@@ -184,7 +184,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 221
+      "count": 222
     },
     {
       "kind": "mesh-declaration",
@@ -200,7 +200,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 117
+      "count": 120
     },
     {
       "kind": "moment",
@@ -240,7 +240,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 44
+      "count": 45
     },
     {
       "kind": "rule",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 708
+      "count": 710
     },
     {
       "kind": "use-case",
@@ -323,7 +323,15 @@
       ],
       "source": ".ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md",
       "references": [],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3150,6 +3158,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0226",
           "kind": "adr",
           "route": "/adrs/adr-0226/",
@@ -4510,6 +4525,13 @@
           "label": "adr-0176",
           "kind": "adr",
           "route": "/adrs/adr-0176/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
           "external": false
         },
         {
@@ -12373,13 +12395,20 @@
       "slug": "adr-0199",
       "cockpit": "/cockpit/objects/adr/adr-0199",
       "title": "A hub is a declared host service; a working checkout's server stays a client's child",
-      "status": "proposed",
+      "status": "accepted",
       "tags": [
         "mesh-runtime",
         "chatgpt-project"
       ],
       "source": ".ai/repo/adrs/0199-a-hub-is-a-declared-host-service-a-working-checkout-s-server-sta.md",
       "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0001",
+          "kind": "adr",
+          "route": "/adrs/adr-0001/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0003",
@@ -12396,6 +12425,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0059",
           "kind": "adr",
           "route": "/adrs/adr-0059/",
@@ -12403,9 +12439,23 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0161",
           "kind": "adr",
           "route": "/adrs/adr-0161/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0224",
+          "kind": "adr",
+          "route": "/adrs/adr-0224/",
           "external": false
         },
         {
@@ -14787,7 +14837,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0199",
+          "kind": "adr",
+          "route": "/adrs/adr-0199/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
