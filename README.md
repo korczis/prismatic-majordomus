@@ -553,7 +553,10 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 - not a prompt library or a memory system
 - not a daemon, database, queue, or hosted service; the Rust executable's `mcp` and
   `serve` are processes a client or a person starts and owns, one shared server per
-  repository on the loopback interface that ends when its last client leaves. Most of what
+  repository on the loopback interface that ends when its last client leaves. The host's
+  inventory of those servers (`majordomus runtimes --host`) needs no process of its own: it
+  is read from each checkout's lease, found through a disposable cache of checkout roots and
+  the process table, by whoever asks. Most of what
   they serve reads; the capabilities whose registry effect is `repository_mutation` write
   the repository, and the `initialize` instructions every client reads name them
   ([`docs/MCP.md`](docs/MCP.md))
