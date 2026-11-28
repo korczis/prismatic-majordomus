@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 15/57 | 40 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 15/56 | 39 | 2 | 0 | 0 | 1 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -62,7 +62,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4622](https://majordomus.dev/plan/i4622/) | READY | 0 | — | A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads |
 | [I4633](https://majordomus.dev/plan/i4633/) | READY | 0 | — | A landing wait judges the whole run, every job of its attempt, unless the CI model names the jobs that gate landing; a green range of steps is never a landing verdict |
 | [I4676](https://majordomus.dev/plan/i4676/) | READY | 0 | — | A quoted YAML scalar followed by a trailing comment loads without its quotes |
-| [I4679](https://majordomus.dev/plan/i4679/) | READY | 0 | — | plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn> |
+| [I4679](https://majordomus.dev/plan/i4679/) | CANCELLED | 0 | — | plan.allocate reserves the next id in an adopter's declared id pattern, per prefix, not only I<nnnn> |
 | [I4680](https://majordomus.dev/plan/i4680/) | READY | 0 | — | The pre-push no-stale-topology question judges the pusher's own holdings, and one command rescues a holding off the disk without publishing it |
 | [I4681](https://majordomus.dev/plan/i4681/) | READY | 0 | — | finish --note given text, not a readable file, says that --note takes a file and prints the usage |
 | [I4684](https://majordomus.dev/plan/i4684/) | READY | 0 | — | worktree create bases a new branch on the trunk of the remote the trunk branch tracks, not on the first remote in alphabetical order |
@@ -420,7 +420,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4622` | shares share/skeleton/policy.yaml with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/commands with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/commands with I4675; they may not run concurrently |
-| WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4740; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4753; they may not run concurrently |
@@ -437,7 +436,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4680; they may not run concurrently |
-| WARN | `scope_conflict` | `I4679` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I4681` | shares lib/finish.sh with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I4681` | shares lib/finish.sh with I4805; they may not run concurrently |
 | WARN | `scope_conflict` | `I4803` | shares docs/CLI.md with I4804; they may not run concurrently |

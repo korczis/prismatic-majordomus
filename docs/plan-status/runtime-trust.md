@@ -34,9 +34,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/link.rs with I2709; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3072; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/rendezvous.rs with I3176; they may not run concurrently |
-| WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3798; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3993; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares docs/MESH.md with I3994; they may not run concurrently |
+| WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4356; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3184; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I3444; they may not run concurrently |
@@ -47,7 +48,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3771; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I3772; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3774; they may not run concurrently |
-| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/registry.rs with I3835; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4327; they may not run concurrently |

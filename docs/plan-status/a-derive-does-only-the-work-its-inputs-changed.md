@@ -48,7 +48,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares .ai/repo/benchmarks with I3232; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares .ai/repo/project/issues/I2521.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares .ai/repo/benchmarks with I3298; they may not run concurrently |
@@ -79,7 +78,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3120; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3241; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .ai/repo/project/issues/I2867.yaml with I3246; they may not run concurrently |

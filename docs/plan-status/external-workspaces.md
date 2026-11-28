@@ -39,10 +39,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1302` | shares docs with I2704; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I2709; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares share/schemas with I2870; they may not run concurrently |
-| WARN | `scope_conflict` | `I1302` | shares docs with I2981; they may not run concurrently |
-| WARN | `scope_conflict` | `I1302` | shares docs with I3071; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3072; they may not run concurrently |
-| WARN | `scope_conflict` | `I1302` | shares docs with I3076; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3117; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3122; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3124; they may not run concurrently |
@@ -57,13 +54,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1302` | shares docs with I3378; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3382; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3390; they may not run concurrently |
+| WARN | `scope_conflict` | `I1302` | shares docs with I3798; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3932; they may not run concurrently |
-| WARN | `scope_conflict` | `I1302` | shares docs with I3992; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3993; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3994; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4332; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4342; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4353; they may not run concurrently |
+| WARN | `scope_conflict` | `I1302` | shares docs with I4356; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4523; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares share/schemas with I4787; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4790; they may not run concurrently |

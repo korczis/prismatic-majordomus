@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | ACTIVE | 2/6 | 3 | 1 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
+| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | ACTIVE | 3/6 | 3 | 0 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
 
 ## Issues
 
@@ -18,7 +18,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2972](https://majordomus.dev/plan/i2972/) | DONE | 0 | — | One query decides what a session proceeds with, and says why |
 | [I2973](https://majordomus.dev/plan/i2973/) | DONE | 1 | I2972 | The choice ranks by what it unblocks |
 | [I2974](https://majordomus.dev/plan/i2974/) | CANCELLED | 2 | I2973 | Proceeding claims and starts the chosen work once |
-| [I2975](https://majordomus.dev/plan/i2975/) | BLOCKED | 3 | I2974 | /proceed is a generated skill that names only the command |
+| [I2975](https://majordomus.dev/plan/i2975/) | DONE | 0 | — | /proceed is a generated skill that names only the command |
 | [I2976](https://majordomus.dev/plan/i2976/) | CANCELLED | 3 | I2974 | Two sessions proceeding at once never hold the same work |
 | [I2977](https://majordomus.dev/plan/i2977/) | CANCELLED | 3 | I2974 | A session whose work stopped is resumed, never duplicated |
 | [I2978](https://majordomus.dev/plan/i2978/) | READY | 1 | I2972 | The UI shows what proceeding chose, what it refused and why |
@@ -30,7 +30,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I2978` | shares apps/majordomus-cli/src/ui with I3071; they may not run concurrently |
 | WARN | `scope_conflict` | `I2978` | shares apps/majordomus-cli/src/ui with I3122; they may not run concurrently |
 | WARN | `scope_conflict` | `I2978` | shares apps/majordomus-cli/src/ui with I3229; they may not run concurrently |
 | WARN | `scope_conflict` | `I2978` | shares apps/majordomus-cli/src/ui with I3270; they may not run concurrently |
@@ -60,12 +59,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3770; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3771; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3774; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/commands/mesh.rs with I3835; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3941; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3961; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4000; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4291; they may not run concurrently |
@@ -96,7 +92,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4740; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4753; they may not run concurrently |
@@ -105,5 +100,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4781; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4791; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
-| WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4808; they may not run concurrently |

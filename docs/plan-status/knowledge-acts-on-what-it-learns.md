@@ -74,9 +74,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/cockpit with I3767; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/cockpit with I3772; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares site/content/guarantees/knowledge-served-on-every-surface.md with I3841; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/brief.rs with I3961; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/adrs/0183-evolution-is-scheduled-at-the-episode-boundary-and-carried-out-b.md with I4307; they may not run concurrently |
@@ -120,7 +117,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/ui/knowledge.rs with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I3607; they may not run concurrently |
-| WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares docs/KNOWLEDGE.md with I4337; they may not run concurrently |

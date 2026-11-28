@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [an-authorised-node-connects-from-anywhere](https://majordomus.dev/plan/an-authorised-node-connects-from-anywhere/) | ACTIVE | 2/5 | 3 | 0 | 0 | 0 | 0 | Two trusted Majordomus nodes cooperate whether they share a LAN, a tailnet or neither, choose a working path by themselves, fall back to a relay when no direct path exists, and every surface shows the path in use and why it was chosen. |
+| [an-authorised-node-connects-from-anywhere](https://majordomus.dev/plan/an-authorised-node-connects-from-anywhere/) | ACTIVE | 3/5 | 2 | 0 | 0 | 0 | 0 | Two trusted Majordomus nodes cooperate whether they share a LAN, a tailnet or neither, choose a working path by themselves, fall back to a relay when no direct path exists, and every surface shows the path in use and why it was chosen. |
 
 ## Issues
 
@@ -19,16 +19,16 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3823](https://majordomus.dev/plan/i3823/) | DONE | 0 | — | The mesh client reaches an https endpoint over TLS and refuses cleartext to a public address |
 | [I3826](https://majordomus.dev/plan/i3826/) | DONE | 1 | I3820 | A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts |
 | [I3827](https://majordomus.dev/plan/i3827/) | READY | 3 | I3823, I3826, I3822 | The hosted hub is this repository's default rendezvous, and every node shows it as the path from anywhere |
-| [I3842](https://majordomus.dev/plan/i3842/) | READY | 2 | I3826 | A caller on another host never sees this process's executions, live or recorded |
+| [I3842](https://majordomus.dev/plan/i3842/) | DONE | 2 | I3826 | A caller on another host never sees this process's executions, live or recorded |
 
 ## Findings
 
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3176` | shares apps/majordomus-cli/src/http/router.rs with I3288; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3798; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3837; they may not run concurrently |
-| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3992; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3993; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3994; they may not run concurrently |
-| WARN | `scope_conflict` | `I3842` | shares test/cases/3861_a_remote_caller_never_sees_the_executions.sh with I4493; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I4356; they may not run concurrently |

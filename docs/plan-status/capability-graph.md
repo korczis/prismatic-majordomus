@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [capability-graph](https://majordomus.dev/plan/capability-graph/) | ACTIVE | 12/34 | 7 | 15 | 0 | 0 | 0 | One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them. |
+| [capability-graph](https://majordomus.dev/plan/capability-graph/) | ACTIVE | 12/33 | 7 | 14 | 0 | 0 | 1 | One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them. |
 
 ## Issues
 
@@ -42,9 +42,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I1025](https://majordomus.dev/plan/i1025/) | DONE | 1 | I1001 | The federated model and its two projections are an architecture decision |
 | [I1026](https://majordomus.dev/plan/i1026/) | BLOCKED | 4 | I1012, I1025 | The architecture explains itself, from inside itself |
 | [I1027](https://majordomus.dev/plan/i1027/) | BLOCKED | 5 | I1018, I1019 | A synthetic capability proves the architecture instead of describing it |
-| [I1028](https://majordomus.dev/plan/i1028/) | BLOCKED | 4 | I1009 | The inventories this replaces are removed, not left running beside it |
+| [I1028](https://majordomus.dev/plan/i1028/) | CANCELLED | 4 | I1009 | The inventories this replaces are removed, not left running beside it |
 | [I1029](https://majordomus.dev/plan/i1029/) | BLOCKED | 6 | I1021, I1022, I1023 | The gate refuses what would silently break the interface |
-| [I1030](https://majordomus.dev/plan/i1030/) | BLOCKED | 7 | I1010, I1013, I1017, I1020, I1024, I1026, I1027, I1028, I1029 | The milestone is accepted on its evidence |
+| [I1030](https://majordomus.dev/plan/i1030/) | BLOCKED | 7 | I1010, I1013, I1017, I1020, I1024, I1026, I1027, I1117, I1029 | The milestone is accepted on its evidence |
 | [I1031](https://majordomus.dev/plan/i1031/) | DONE | 0 | — | A served surface says which checkout it is serving |
 | [I1966](https://majordomus.dev/plan/i1966/) | DONE | 0 | — | The composed graph is whole or its generation refuses |
 | [I2732](https://majordomus.dev/plan/i2732/) | DONE | 0 | — | The MCP reference repeats no registry entry: no hand-written document lists tools |
@@ -59,8 +59,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/cockpit/pages.rs with I3317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/capability/builtin/entity.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/cockpit/pages.rs with I3772; they may not run concurrently |
-| WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/cockpit/pages.rs with I3961; they may not run concurrently |
-| WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/capability/builtin/entity.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/capability/builtin/entity.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/capability/builtin/entity.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3314` | shares apps/majordomus-cli/src/cockpit/pages.rs with I4416; they may not run concurrently |

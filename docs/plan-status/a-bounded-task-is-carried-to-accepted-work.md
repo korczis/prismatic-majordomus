@@ -191,7 +191,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares lib with I4673; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares share/schemas/majordomus/policy with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
-| WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares lib with I4681; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares lib with I4682; they may not run concurrently |

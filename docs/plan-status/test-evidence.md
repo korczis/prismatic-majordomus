@@ -62,7 +62,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2488; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2750; they may not run concurrently |
-| WARN | `scope_conflict` | `I1953` | shares test/cases with I3842; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I3975; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I4493; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I4499; they may not run concurrently |
@@ -72,7 +71,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1954` | shares test/cases/94_ci_plan.sh with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases/94_ci_plan.sh with I2488; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares .github/workflows/validate.yml with I2750; they may not run concurrently |
-| WARN | `scope_conflict` | `I1954` | shares test/cases with I3842; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares .github/workflows/validate.yml with I3975; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases/94_ci_plan.sh with I4493; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases with I4499; they may not run concurrently |

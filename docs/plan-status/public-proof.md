@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [public-proof](https://majordomus.dev/plan/public-proof/) | ACTIVE | 14/27 | 7 | 6 | 0 | 0 | 0 | One recorded scenario tells the whole story — a worker strays, claims it is done, hands over, and is refused until the repository's own test passes — and it drives the homepage hero, its own route, the README's first transcript and the live smoke check, each held to the recorded run by a gate rather than by care. |
+| [public-proof](https://majordomus.dev/plan/public-proof/) | ACTIVE | 15/27 | 6 | 6 | 0 | 0 | 0 | One recorded scenario tells the whole story — a worker strays, claims it is done, hands over, and is refused until the repository's own test passes — and it drives the homepage hero, its own route, the README's first transcript and the live smoke check, each held to the recorded run by a gate rather than by care. |
 
 ## Issues
 
@@ -36,7 +36,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3438](https://majordomus.dev/plan/i3438/) | DONE | 1 | I3436 | A translation records the digest of its source, and site-check refuses one its source has moved past |
 | [I3753](https://majordomus.dev/plan/i3753/) | READY | 0 | — | The Czech copy says what the English says, in one vocabulary, with no segment of the homepage or the roadmap left in English |
 | [I3758](https://majordomus.dev/plan/i3758/) | BLOCKED | 1 | I3753 | A number in a segment is a placeholder, so a changed count keeps its translation, and site-check reports each copy's untranslated share |
-| [I3759](https://majordomus.dev/plan/i3759/) | READY | 0 | — | Every language's homepage is held to the declared weight budget, and the capability list is fetched rather than inlined |
+| [I3759](https://majordomus.dev/plan/i3759/) | DONE | 0 | — | Every language's homepage is held to the declared weight budget, and the capability list is fetched rather than inlined |
 | [I3760](https://majordomus.dev/plan/i3760/) | READY | 0 | — | Each evidence-chain node says its own thing, and every homepage figure links to a page that counts the same number |
 | [I3765](https://majordomus.dev/plan/i3765/) | READY | 0 | — | The homepage's provider figure says what it counts, and every provider it names is a name a visitor can recognise |
 | [I3766](https://majordomus.dev/plan/i3766/) | READY | 0 | — | The install section links each page once, and the recorded refusals are grouped by the use case they prove |
@@ -60,7 +60,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `no_evidence_required` | `I3860` | requires no evidence; nothing gates its completion |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-deploy with I2660; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I2661; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I2662; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2714; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I2717; they may not run concurrently |
@@ -87,7 +86,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/project/issues/I2374.yaml with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/project/issues/I2374.yaml with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/project/issues/I2374.yaml with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares .ai/repo/project/issues/I2374.yaml with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I3120; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3155; they may not run concurrently |
@@ -104,20 +102,16 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3400; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3442; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3443; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares scripts/site-check with I3447; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-deploy with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3752; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3757; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I3759; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I3760; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3762; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3763; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I3764; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I3765; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I3766; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares docs/generated with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares scripts/site-check with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/changelog.html with I4298; they may not run concurrently |
@@ -141,13 +135,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3757; they may not run concurrently |
-| WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3760; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3764; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3765; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3766; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I4810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares site/templates/index.html with I3764; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares site/templates/index.html with I3765; they may not run concurrently |
 | WARN | `scope_conflict` | `I3760` | shares site/templates/index.html with I3766; they may not run concurrently |
