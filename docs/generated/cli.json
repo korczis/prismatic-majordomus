@@ -20716,6 +20716,725 @@
             "path": [
               "majordomus",
               "mesh",
+              "hub"
+            ],
+            "route": "/docs/cli/mesh/hub/",
+            "executable": true,
+            "usage": "majordomus mesh hub [OPTIONS] [COMMAND]",
+            "about": "The hub as a service of this host: its units, its manager, its answer, its versions and its update; `install`, `uninstall` and `update` change it",
+            "args": [
+              {
+                "name": "port",
+                "long": "port",
+                "positional": false,
+                "help": "The hub port; default the port the declaration gives this machine, else 8791",
+                "value_name": "PORT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "root",
+                "long": "root",
+                "positional": false,
+                "help": "A staging directory that stands for the home: no service manager or hub is asked",
+                "value_name": "ROOT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-hub",
+                "title": "Whether this machine's hub runs as a service and follows the release",
+                "description": "Each unit file of the hub's service against what install renders, whether the service manager has it loaded and running, whether the hub answers on its port and with which version, the runtimes it is linked with, the published and installed versions and the update's last run. Here, in a staging home with nothing installed, the units are missing and the report exits 10.",
+                "argv": [
+                  "mesh",
+                  "hub",
+                  "--root",
+                  "hub-home"
+                ],
+                "command": "majordomus mesh hub --root hub-home",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": [
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "hub",
+                  "install"
+                ],
+                "route": "/docs/cli/mesh/hub/install/",
+                "executable": true,
+                "usage": "majordomus mesh hub install [OPTIONS]",
+                "about": "Write the hub's launchd agent or systemd user unit and its hourly update from the declaration, and load them; a second install does nothing; exits 10 when it refuses",
+                "args": [
+                  {
+                    "name": "apply",
+                    "long": "apply",
+                    "positional": false,
+                    "help": "Carry the plan out; without it nothing changes",
+                    "value_name": "APPLY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "port",
+                    "long": "port",
+                    "positional": false,
+                    "help": "The hub port; default the port the declaration gives this machine, else 8791",
+                    "value_name": "PORT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "executable",
+                    "long": "executable",
+                    "positional": false,
+                    "help": "The executable the units run; default the installer's launcher",
+                    "value_name": "EXECUTABLE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "release_base",
+                    "long": "release-base",
+                    "positional": false,
+                    "help": "Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev",
+                    "value_name": "RELEASE_BASE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "root",
+                    "long": "root",
+                    "positional": false,
+                    "help": "A staging directory that stands for the home: files only, no command",
+                    "value_name": "ROOT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "retry",
+                    "long": "retry",
+                    "positional": false,
+                    "help": "Update: try again the versions that failed on this node",
+                    "value_name": "RETRY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-hub-install",
+                    "title": "Install the hub as a service of this host",
+                    "description": "Renders the launch agent or the systemd user unit of the hub and its hourly update from the declaration, and with --apply writes and loads them. It refuses on a machine the declaration does not name as a hub, and exits 10, as here, where nothing is declared.",
+                    "argv": [
+                      "mesh",
+                      "hub",
+                      "install",
+                      "--root",
+                      "hub-home"
+                    ],
+                    "command": "majordomus mesh hub install --root hub-home",
+                    "setup": [],
+                    "expectation": "exits 10"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "hub",
+                  "uninstall"
+                ],
+                "route": "/docs/cli/mesh/hub/uninstall/",
+                "executable": true,
+                "usage": "majordomus mesh hub uninstall [OPTIONS]",
+                "about": "Stop the hub and its update and remove their units",
+                "args": [
+                  {
+                    "name": "apply",
+                    "long": "apply",
+                    "positional": false,
+                    "help": "Carry the plan out; without it nothing changes",
+                    "value_name": "APPLY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "port",
+                    "long": "port",
+                    "positional": false,
+                    "help": "The hub port; default the port the declaration gives this machine, else 8791",
+                    "value_name": "PORT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "executable",
+                    "long": "executable",
+                    "positional": false,
+                    "help": "The executable the units run; default the installer's launcher",
+                    "value_name": "EXECUTABLE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "release_base",
+                    "long": "release-base",
+                    "positional": false,
+                    "help": "Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev",
+                    "value_name": "RELEASE_BASE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "root",
+                    "long": "root",
+                    "positional": false,
+                    "help": "A staging directory that stands for the home: files only, no command",
+                    "value_name": "ROOT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "retry",
+                    "long": "retry",
+                    "positional": false,
+                    "help": "Update: try again the versions that failed on this node",
+                    "value_name": "RETRY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-hub-uninstall",
+                    "title": "What removing the hub's service would do",
+                    "description": "Plans the stop of the hub and its update and the removal of their unit files; --apply carries it out. Here, in an empty staging home, nothing is owed.",
+                    "argv": [
+                      "mesh",
+                      "hub",
+                      "uninstall",
+                      "--root",
+                      "hub-home"
+                    ],
+                    "command": "majordomus mesh hub uninstall --root hub-home",
+                    "setup": [],
+                    "expectation": "exits 0; prints ok"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "hub",
+                  "update"
+                ],
+                "route": "/docs/cli/mesh/hub/update/",
+                "executable": true,
+                "usage": "majordomus mesh hub update [OPTIONS]",
+                "about": "Bring the hub to the published release: install it, move the hub checkout to its tag, restart, and roll back when the hub does not answer",
+                "args": [
+                  {
+                    "name": "apply",
+                    "long": "apply",
+                    "positional": false,
+                    "help": "Carry the plan out; without it nothing changes",
+                    "value_name": "APPLY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "port",
+                    "long": "port",
+                    "positional": false,
+                    "help": "The hub port; default the port the declaration gives this machine, else 8791",
+                    "value_name": "PORT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "executable",
+                    "long": "executable",
+                    "positional": false,
+                    "help": "The executable the units run; default the installer's launcher",
+                    "value_name": "EXECUTABLE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "release_base",
+                    "long": "release-base",
+                    "positional": false,
+                    "help": "Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev",
+                    "value_name": "RELEASE_BASE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "root",
+                    "long": "root",
+                    "positional": false,
+                    "help": "A staging directory that stands for the home: files only, no command",
+                    "value_name": "ROOT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "retry",
+                    "long": "retry",
+                    "positional": false,
+                    "help": "Update: try again the versions that failed on this node",
+                    "value_name": "RETRY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-hub-update",
+                    "title": "What bringing the hub to the published release would do",
+                    "description": "Asks the release origin, the executable and the hub for their versions and plans the update: current, install, restart onto the installed release, defer, or skip a version that failed here. Here no release origin answers and no hub runs, so the decision is unknown and it exits 10.",
+                    "argv": [
+                      "mesh",
+                      "hub",
+                      "update",
+                      "--root",
+                      "hub-home",
+                      "--release-base",
+                      "http://127.0.0.1:9",
+                      "--executable",
+                      "/nonexistent/majordomus"
+                    ],
+                    "command": "majordomus mesh hub update --root hub-home --release-base http://127.0.0.1:9 --executable /nonexistent/majordomus",
+                    "setup": [],
+                    "expectation": "exits 10"
+                  }
+                ],
+                "subcommands": []
+              }
+            ]
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
               "peers"
             ],
             "route": "/docs/cli/mesh/peers/",

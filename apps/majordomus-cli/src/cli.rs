@@ -1128,6 +1128,8 @@ pub enum MeshCommand {
     Doctor(MeshQueryArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
     Firewall(MeshFirewallArgs),
+    /// The hub as a service of this host: its units, its manager, its answer, its versions and its update; `install`, `uninstall` and `update` change it
+    Hub(MeshHubArgs),
     /// Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim
     Peers(MeshViewArgs),
     /// One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here
@@ -1401,6 +1403,107 @@ pub struct MeshFirewallApplyArgs {
     #[arg(long)]
     /// The port this checkout's server listens on beyond loopback, when it does
     pub port: Option<u16>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh hub`: whether this machine's hub runs as its host's service and follows the
+/// release, each answer a check, exit 10 when one fails. `install`, `uninstall` and `update`
+/// change it, and plan unless `--apply` is given.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHubArgs, MeshHubCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "hub", "--port", "8791"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Hub(hub) = mesh.command else { panic!("expected `hub`") };
+/// let hub: MeshHubArgs = hub;
+/// assert_eq!(hub.port, Some(8791));
+/// assert!(hub.command.is_none());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "hub", "install", "--apply"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Hub(hub) = mesh.command else { panic!("expected `hub`") };
+/// assert!(matches!(hub.command, Some(MeshHubCommand::Install(ref a)) if a.apply));
+/// ```
+pub struct MeshHubArgs {
+    #[command(subcommand)]
+    /// `install`, `uninstall`, `update`, or nothing for the status.
+    pub command: Option<MeshHubCommand>,
+    #[arg(long)]
+    /// The hub port; default the port the declaration gives this machine, else 8791
+    pub port: Option<u16>,
+    #[arg(long)]
+    /// A staging directory that stands for the home: no service manager or hub is asked
+    pub root: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh hub` subcommands. Each plans by default and changes the host only with
+/// `--apply`; none is offered over HTTP or MCP.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHubCommand};
+///
+/// for word in ["install", "uninstall", "update"] {
+///     let cli = Cli::try_parse_from(["majordomus", "mesh", "hub", word]).unwrap();
+///     let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+///     let MeshCommand::Hub(hub) = mesh.command else { panic!("expected `hub`") };
+///     assert!(hub.command.is_some());
+/// }
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "hub", "restart"]).is_err());
+/// ```
+pub enum MeshHubCommand {
+    /// Write the hub's launchd agent or systemd user unit and its hourly update from the declaration, and load them; a second install does nothing; exits 10 when it refuses
+    Install(MeshHubChangeArgs),
+    /// Stop the hub and its update and remove their units
+    Uninstall(MeshHubChangeArgs),
+    /// Bring the hub to the published release: install it, move the hub checkout to its tag, restart, and roll back when the hub does not answer
+    Update(MeshHubChangeArgs),
+}
+
+#[derive(Debug, Args)]
+/// The arguments of `mesh hub install`, `uninstall` and `update`: `--apply` to carry the
+/// plan out, and the status's own options.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHubChangeArgs, MeshHubCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "hub", "update", "--apply", "--port", "8792"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Hub(hub) = mesh.command else { panic!("expected `hub`") };
+/// let Some(MeshHubCommand::Update(update)) = hub.command else { panic!("expected `update`") };
+/// let update: MeshHubChangeArgs = update;
+/// assert!(update.apply);
+/// assert_eq!(update.port, Some(8792));
+/// ```
+pub struct MeshHubChangeArgs {
+    #[arg(long)]
+    /// Carry the plan out; without it nothing changes
+    pub apply: bool,
+    #[arg(long)]
+    /// The hub port; default the port the declaration gives this machine, else 8791
+    pub port: Option<u16>,
+    #[arg(long)]
+    /// The executable the units run; default the installer's launcher
+    pub executable: Option<String>,
+    #[arg(long)]
+    /// Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev
+    pub release_base: Option<String>,
+    #[arg(long)]
+    /// A staging directory that stands for the home: files only, no command
+    pub root: Option<String>,
+    #[arg(long)]
+    /// Update: try again the versions that failed on this node
+    pub retry: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -8428,6 +8531,50 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Admit the mesh through the host firewall, as root",
             description: "Runs the commands `mesh firewall` renders — one allow per rule and source network on ufw or nftables, the executable admitted on the macOS application firewall — and asks the firewall again, so the verdict is its own. It refuses, running nothing, without root or without a backend, and exits 10, as here, where nothing is declared and the example does not run as root.",
             argv: &["mesh", "firewall", "apply"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh hub",
+        examples: &[ExampleDoc {
+            id: "mesh-hub",
+            title: "Whether this machine's hub runs as a service and follows the release",
+            description: "Each unit file of the hub's service against what install renders, whether the service manager has it loaded and running, whether the hub answers on its port and with which version, the runtimes it is linked with, the published and installed versions and the update's last run. Here, in a staging home with nothing installed, the units are missing and the report exits 10.",
+            argv: &["mesh", "hub", "--root", "hub-home"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh hub install",
+        examples: &[ExampleDoc {
+            id: "mesh-hub-install",
+            title: "Install the hub as a service of this host",
+            description: "Renders the launch agent or the systemd user unit of the hub and its hourly update from the declaration, and with --apply writes and loads them. It refuses on a machine the declaration does not name as a hub, and exits 10, as here, where nothing is declared.",
+            argv: &["mesh", "hub", "install", "--root", "hub-home"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh hub uninstall",
+        examples: &[ExampleDoc {
+            id: "mesh-hub-uninstall",
+            title: "What removing the hub's service would do",
+            description: "Plans the stop of the hub and its update and the removal of their unit files; --apply carries it out. Here, in an empty staging home, nothing is owed.",
+            argv: &["mesh", "hub", "uninstall", "--root", "hub-home"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["ok"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh hub update",
+        examples: &[ExampleDoc {
+            id: "mesh-hub-update",
+            title: "What bringing the hub to the published release would do",
+            description: "Asks the release origin, the executable and the hub for their versions and plans the update: current, install, restart onto the installed release, defer, or skip a version that failed here. Here no release origin answers and no hub runs, so the decision is unknown and it exits 10.",
+            argv: &["mesh", "hub", "update", "--root", "hub-home", "--release-base", "http://127.0.0.1:9", "--executable", "/nonexistent/majordomus"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 233 | 187 | 0 | 46 |
-| http | 221 | 185 | 0 | 36 |
-| mcp | 217 | 182 | 0 | 35 |
+| direct | 237 | 187 | 0 | 50 |
+| http | 222 | 185 | 0 | 37 |
+| mcp | 218 | 182 | 0 | 36 |
 | system | 14 | 14 | 0 | 0 |
-| total | 685 | 568 | 0 | 117 |
+| total | 691 | 568 | 0 | 123 |
 
 ## Capabilities
 
@@ -148,6 +148,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.firewall.apply` | mesh | command | — | waived | — | — | — |
 | `mesh.handover.consume` | mesh | command | — | waived | waived | waived | — |
 | `mesh.handover.publish` | mesh | command | — | waived | waived | waived | — |
+| `mesh.hub` | mesh | query | — | waived | waived | waived | — |
+| `mesh.hub.install` | mesh | command | — | waived | — | — | — |
+| `mesh.hub.uninstall` | mesh | command | — | waived | — | — | — |
+| `mesh.hub.update` | mesh | command | — | waived | — | — | — |
 | `mesh.identity` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.link.hello` | mesh | command | — | covered | — | covered | `malformed` |
 | `mesh.link.sync` | mesh | command | — | covered | — | covered | `malformed` |

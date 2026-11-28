@@ -105,5 +105,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4781; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4791; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4816; they may not run concurrently |
 | WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4808; they may not run concurrently |

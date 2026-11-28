@@ -5,7 +5,7 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 33.
+Stability: experimental. Capabilities: 37.
 
 ## `mesh.beat` — Say a session is making progress
 
@@ -345,6 +345,110 @@ directory is ever read by this command. |
 | `milestone` | string or null | no | The milestone it belongs to. |
 
 Output: `Written`.
+
+## `mesh.hub` — The hub as a service of this host
+
+Whether this machine's hub runs as its host's service and follows the release (I4816): each unit file — the launchd agent and its update agent on macOS, the systemd user unit, the update service and its hourly timer on Linux — as missing, drifted or as rendered, and whether the manager has it loaded and running; whether the hub answers on its port, with the version it serves, the sessions attached to it and the runtimes it is linked with; the published, installed and served versions; the update's last run; and every linked runtime behind the published release. Fails when a unit is missing, drifted or not loaded, the hub does not answer, it is linked with nobody, the update has not run within two hours, or it serves an older release than is published with no update on it. Reads the host; changes nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_hub` |
+| HTTP | `GET /api/v1/mesh/hub` |
+| CLI | `majordomus mesh hub` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, diagnostics, hub, service |
+
+| input | type | required | description |
+|---|---|---|---|
+| `port` | integer or null | no | The hub port; default the port the declaration gives this machine's address, else 8791. |
+| `root` | string or null | no | A staging directory that stands for the home: no service manager or hub is asked. |
+
+Output: `HubStatusReport`.
+
+## `mesh.hub.install` — Install the hub as a service of this host
+
+Render the hub's service from the mesh declaration and this checkout — on macOS the launch agent dev.majordomus.hub (RunAtLoad, KeepAlive) and the update agent dev.majordomus.hub-update (at load and every hour), on Linux the systemd user units majordomus-hub.service (Restart=always, no start limit) and majordomus-hub-update.service with its hourly timer — each running the installer's launcher, whose path does not move with the version, on this checkout with --host 0.0.0.0, the declared hub port and --idle 0. Refuses on a machine the declaration does not name as a hub and for a checkout on a branch, because a hub serves a dedicated checkout detached at a release tag. Without `apply` it plans: every file missing or drifted and every manager command owed. With `apply` it writes them and loads them; a second install finds everything current and does nothing. A `root` is a staging home: files only, no command. Offered on the command line only: it installs a service, which nothing reachable over HTTP or MCP may do.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh hub install` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, hub, service |
+
+| input | type | required | description |
+|---|---|---|---|
+| `apply` | boolean | no | Carry the plan out. Absent, install, uninstall and update only plan and change nothing. |
+| `root` | string or null | no | A staging directory that stands for the home: the units are written under it, no
+service manager is asked and no hub is reached. |
+| `port` | integer or null | no | The hub port; default the port the declaration gives this machine's address, else 8791. |
+| `executable` | string or null | no | The executable the units run; default the installer's launcher, else this executable. |
+| `release_base` | string or null | no | Where the published release and the installer are read; default
+`MAJORDOMUS_RELEASE_BASE_URL`, else https://majordomus.dev. |
+| `retry` | boolean | no | Update: try again the versions that failed on this node. |
+
+Output: `HubServiceReport`.
+
+## `mesh.hub.uninstall` — Remove the hub's service from this host
+
+Stop the hub and its update through the service manager (launchctl bootout, systemctl --user disable --now) and remove every unit file mesh hub install writes. Without `apply` it plans; a host without the units owes nothing. Offered on the command line only.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh hub uninstall` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, hub, service |
+
+| input | type | required | description |
+|---|---|---|---|
+| `apply` | boolean | no | Carry the plan out. Absent, install, uninstall and update only plan and change nothing. |
+| `root` | string or null | no | A staging directory that stands for the home: the units are written under it, no
+service manager is asked and no hub is reached. |
+| `port` | integer or null | no | The hub port; default the port the declaration gives this machine's address, else 8791. |
+| `executable` | string or null | no | The executable the units run; default the installer's launcher, else this executable. |
+| `release_base` | string or null | no | Where the published release and the installer are read; default
+`MAJORDOMUS_RELEASE_BASE_URL`, else https://majordomus.dev. |
+| `retry` | boolean | no | Update: try again the versions that failed on this node. |
+
+Output: `HubServiceReport`.
+
+## `mesh.hub.update` — Bring the hub to the published release
+
+What the hub's update agent runs every hour. It asks the release origin for the latest release, the executable for its version and the hub for the version it serves and the sessions attached to it, and decides: current, install the newer release, restart the hub onto the installed one, defer while sessions are attached, or skip a version that failed here before until a newer one is published. With `apply` it carries the decision out: the verified installer (digest and attestation), the hub checkout detached at the release's tag (refused when the checkout has uncommitted changes), a restart through the service manager, and the hub's own answer within 90 seconds; a hub that does not answer with the new version gets the previous release and checkout back and the version is recorded as failed on this node. Every run is recorded under ~/.local/state/majordomus/hub-update.json, which mesh hub reads. Offered on the command line only: it installs a release and restarts a service.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh hub update` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, hub, release |
+
+| input | type | required | description |
+|---|---|---|---|
+| `apply` | boolean | no | Carry the plan out. Absent, install, uninstall and update only plan and change nothing. |
+| `root` | string or null | no | A staging directory that stands for the home: the units are written under it, no
+service manager is asked and no hub is reached. |
+| `port` | integer or null | no | The hub port; default the port the declaration gives this machine's address, else 8791. |
+| `executable` | string or null | no | The executable the units run; default the installer's launcher, else this executable. |
+| `release_base` | string or null | no | Where the published release and the installer are read; default
+`MAJORDOMUS_RELEASE_BASE_URL`, else https://majordomus.dev. |
+| `retry` | boolean | no | Update: try again the versions that failed on this node. |
+
+Output: `HubUpdateReport`.
 
 ## `mesh.identity` — This machine's node identity
 

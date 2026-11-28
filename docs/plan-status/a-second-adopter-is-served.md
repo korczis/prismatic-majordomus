@@ -433,6 +433,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4622` | shares share/skeleton/policy.yaml with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4806; they may not run concurrently |
 | WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
+| WARN | `scope_conflict` | `I4622` | shares apps/majordomus-cli/src/capability/builtin with I4816; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4633` | shares apps/majordomus-cli/src/cli.rs with I4674; they may not run concurrently |

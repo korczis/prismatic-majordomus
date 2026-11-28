@@ -894,18 +894,85 @@ added under `rendezvous.endpoints`; then `sudo majordomus mesh firewall apply` t
 hub whose host firewall drops port 8791 is a hub nobody can register with
 ([The host firewall](#the-host-firewall)).
 
-**The hubs as services.** On lundra the hub is a systemd user unit,
-`~/.config/systemd/user/majordomus.service`, running the release executable of a dedicated
-checkout (`~/dev/prismatic-majordomus-hub`, detached at the trunk) with `serve --host 0.0.0.0
---port 8791 --idle 0`, `Restart=always`, and the share of that checkout; updating it is a
-fetch and checkout of the trunk there, `just build-release`, and `systemctl --user restart
-majordomus`. On the owner's MacBook Pro the hub runs the installed release from a dedicated
-worktree (`~/dev/prismatic-majordomus-hub`, detached at the trunk): `majordomus serve --repo
-~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, started by hand, because
-the checkout a person works in already runs its own shared server and a second one is refused.
-The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
-`RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
-that writes either unit is still owed as a typed capability (ADR 0059).
+**The hubs as services.** A hub is a service of its host, written by `majordomus mesh hub
+install` and never by hand (I4816, ADR 0199). Run it once on the machine, from the hub's
+dedicated checkout — a worktree detached at the release's tag, because the checkout a person
+works in already runs its own shared server and a second one would exit and be restarted for
+ever. Install refuses a checkout on a branch, a machine the declaration does not name as a
+hub, and an executable that is not the installer's launcher (a hub run from a cargo build or a
+copied binary would not follow the release; `--executable` names one on purpose):
+
+```bash
+git -C ~/dev/prismatic-majordomus worktree add --detach ~/dev/prismatic-majordomus-hub v1.3.0
+cd ~/dev/prismatic-majordomus-hub
+majordomus mesh hub install            # the plan: every unit missing or drifted, every command owed
+majordomus mesh hub install --apply    # write and load them; a second --apply does nothing
+majordomus mesh hub                    # read it all back; exit 10 when a check fails
+```
+
+It renders, from the declaration and that checkout:
+
+| | macOS (launchd, per user) | Linux (systemd, per user) |
+|---|---|---|
+| the hub | `~/Library/LaunchAgents/dev.majordomus.hub.plist`: `RunAtLoad`, `KeepAlive`, `ThrottleInterval` 30 | `~/.config/systemd/user/majordomus-hub.service`: `Restart=always`, `RestartSec=10`, `StartLimitIntervalSec=0` |
+| the update | `dev.majordomus.hub-update.plist`: at load and every hour (`StartInterval` 3600) | `majordomus-hub-update.service`, started by `majordomus-hub-update.timer` (`OnBootSec=5min`, `OnCalendar=hourly`, `Persistent=true`) |
+| what runs | the installer's launcher `~/.local/bin/majordomus`, whose path does not move with the version | the same |
+| the log | `~/Library/Logs/majordomus-hub.log`, `majordomus-hub-update.log` | the journal (`journalctl --user -u majordomus-hub`) |
+
+The hub runs `serve --repo <checkout> --host 0.0.0.0 --port <the declared hub port> --idle 0`,
+and the service manager starts it again whatever it exits with. Once it serves, the mesh keeps
+it connected by itself: the rendezvous provider registers with every declared hub in a loop of
+its own per endpoint, backing off to eight intervals at most, the tailscale provider asks every
+online tailnet peer, and each link redials after a restart or an outage
+([Failure and recovery](#failure-and-recovery)). Two things stay a person's: on Linux,
+`sudo loginctl enable-linger <user>`, without which a user unit starts at login rather than at
+boot (install says so); on macOS a launch agent starts at the user's login, so the machine
+keeps automatic login on; and on both, `sudo majordomus mesh firewall apply`.
+
+**The hub follows the release by itself.** Every hour the update agent runs `majordomus mesh
+hub update --apply`. It asks `https://majordomus.dev/releases/latest.json`, the executable and
+the hub for their versions, and decides:
+
+- **current**: the hub serves the newest release and its checkout is at that release's tag,
+  so nothing is done;
+- **install**: a newer release is published, so the verified installer runs (digest and
+  attestation, keeping the trees in use);
+- **activate**: the installed release is newer than the one the hub serves, or than the tag
+  its checkout is at (a hub the service manager restarted onto a new executable on an old
+  checkout is moved too, and so is one that does not answer at all). The hub checkout
+  is detached at the release's tag (refused while it has uncommitted changes), the hub is
+  restarted through its manager, and it must answer with the new version within 90 seconds.
+  If it does not, the previous release and checkout are put back, the hub is restarted onto
+  them, and the version is recorded as failed on this node and not tried again until a newer
+  one is published;
+- **deferred**: sessions are attached to the hub, so the restart waits for the next run, a
+  day at most; after that the hub is moved anyway.
+
+A restart that does not take blames no release: when the service manager refuses it, or the
+port still answers with the old version (another process serves it), the checkout is put back
+and the run fails without marking the version. When the previous release cannot be installed
+again, the checkout stays at the new tag, matching the executable. One update runs at a time
+per home (`hub-update.lock`, taken over from a holder that is gone); the launchd logs are
+rotated past 64 MiB; after an update the new executable writes the units again, so a release
+that renders them differently reaches every hub. `mesh hub update --apply --retry` tries a
+version that failed here again.
+
+Every run is recorded in `~/.local/state/majordomus/hub-update.json`. `mesh hub` reads that
+record and fails when no update has run within two hours, or when the hub serves an older
+release than is published while the restart is not deferred, and it warns about a version
+recorded as failed. The release origin it reads is `MAJORDOMUS_RELEASE_BASE_URL` when set (the
+installer's own variable), never a caller's, because the status is also served over HTTP and MCP. It also lists every linked runtime that
+runs behind the published release, read from the versions the links themselves carry, so one
+machine's status shows the whole fleet. `mesh hub uninstall --apply` stops both and removes
+their files.
+
+Before 2026-11-28 these units were written by hand, and they drifted. On 2026-11-05 this
+MacBook's agent pointed at a deleted checkout, and the hub was dead for eleven days. On
+2026-11-16 lundra's unit was disabled while a hub started from a shell served instead. And
+on 2026-11-28 every reachable hub served 1.2.0 a day after 1.3.0 was published, because no
+machine carried the daily update timer ordered on 2026-11-22 (I2722). That interim timer is
+superseded by the hourly update agent; what I2722 still owes is the activation's grace for
+attached sessions and a board entry for a rollout that failed.
 
 **The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
 systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo

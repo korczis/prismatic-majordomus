@@ -36,6 +36,7 @@ pub(crate) mod blackboard;
 pub(crate) mod board;
 pub(crate) mod brief;
 pub(crate) mod cache_provision;
+pub(crate) mod hub_service;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;

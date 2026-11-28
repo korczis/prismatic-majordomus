@@ -108,3 +108,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4783; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4816; they may not run concurrently |

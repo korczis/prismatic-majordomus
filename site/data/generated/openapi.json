@@ -119,6 +119,7 @@
     "op-mesh-firewall": "docs/api/mesh/",
     "op-mesh-handover-consume": "docs/api/mesh/",
     "op-mesh-handover-publish": "docs/api/mesh/",
+    "op-mesh-hub": "docs/api/mesh/",
     "op-mesh-identity": "docs/api/mesh/",
     "op-mesh-link-hello": "docs/api/mesh/",
     "op-mesh-link-sync": "docs/api/mesh/",
@@ -625,6 +626,7 @@
     "schema-FeatureSummary": "docs/api/product/",
     "schema-FieldProvenance": "docs/api/devtask/",
     "schema-FieldSource": "docs/api/environment/",
+    "schema-FileState": "docs/api/mesh/",
     "schema-Finding": "docs/api/why/",
     "schema-FirewallObservation": "docs/api/mesh/",
     "schema-FirewallObservationState": "docs/api/mesh/",
@@ -680,6 +682,9 @@
     "schema-HooksPath": "docs/api/worktree/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
+    "schema-HubAnswer": "docs/api/mesh/",
+    "schema-HubCheck": "docs/api/mesh/",
+    "schema-HubStatusReport": "docs/api/mesh/",
     "schema-IdKind": "docs/api/plan/",
     "schema-IdSkip": "docs/api/plan/",
     "schema-IdSource": "docs/api/plan/",
@@ -784,6 +789,7 @@
     "schema-LedgerMark": "docs/api/knowledge-base/",
     "schema-LeftBranch": "docs/api/integration/",
     "schema-LeftBranchReport": "docs/api/integration/",
+    "schema-Level": "docs/api/mesh/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LifecycleStage": "docs/api/gates/",
     "schema-LimitsView": "docs/api/executions/",
@@ -795,6 +801,7 @@
     "schema-LinkRefusal": "docs/api/mesh/",
     "schema-LinkReply": "docs/api/mesh/",
     "schema-LinkState": "docs/api/mesh/",
+    "schema-LinkedRuntime": "docs/api/mesh/",
     "schema-Listen": "docs/api/deploy/",
     "schema-Liveness": "docs/api/health/",
     "schema-LocalOverrides": "docs/api/worktree/",
@@ -802,6 +809,7 @@
     "schema-MachineNode": "docs/api/mesh/",
     "schema-MachineReport": "docs/api/session-domain/",
     "schema-Machines": "docs/api/deploy/",
+    "schema-Manager": "docs/api/mesh/",
     "schema-Match": "docs/api/continuity/",
     "schema-Materiality": "docs/api/reasoning/",
     "schema-Matrix": "docs/api/product/",
@@ -1329,7 +1337,11 @@
     "schema-UncommittedReport": "docs/api/worktree/",
     "schema-UncommittedTallies": "docs/api/worktree/",
     "schema-UncommittedWorktree": "docs/api/worktree/",
+    "schema-UnitRole": "docs/api/mesh/",
+    "schema-UnitView": "docs/api/mesh/",
     "schema-UnreadSource": "docs/api/devcontext/",
+    "schema-UpdateRun": "docs/api/mesh/",
+    "schema-UpdateState": "docs/api/mesh/",
     "schema-UpstreamState": "docs/api/worktree/",
     "schema-UsageSource": "docs/api/shared/",
     "schema-UseCaseRef": "docs/api/product/",
@@ -1425,8 +1437,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 221,
-    "schemas": 1139,
+    "operations": 222,
+    "schemas": 1150,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1642,6 +1654,7 @@
     "mesh.firewall": "mesh",
     "mesh.handover.consume": "mesh",
     "mesh.handover.publish": "mesh",
+    "mesh.hub": "mesh",
     "mesh.identity": "mesh",
     "mesh.link.hello": "mesh",
     "mesh.link.sync": "mesh",
@@ -2152,6 +2165,7 @@
     "FeatureSummary": "product",
     "FieldProvenance": "devtask",
     "FieldSource": "environment",
+    "FileState": "mesh",
     "Finding": "why",
     "FirewallObservation": "mesh",
     "FirewallObservationState": "mesh",
@@ -2207,6 +2221,9 @@
     "HooksPath": "worktree",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
+    "HubAnswer": "mesh",
+    "HubCheck": "mesh",
+    "HubStatusReport": "mesh",
     "IdKind": "plan",
     "IdSkip": "plan",
     "IdSource": "plan",
@@ -2311,6 +2328,7 @@
     "LedgerMark": "knowledge-base",
     "LeftBranch": "integration",
     "LeftBranchReport": "integration",
+    "Level": "mesh",
     "Libc": "distribution",
     "LifecycleStage": "gates",
     "LimitsView": "executions",
@@ -2322,6 +2340,7 @@
     "LinkRefusal": "mesh",
     "LinkReply": "mesh",
     "LinkState": "mesh",
+    "LinkedRuntime": "mesh",
     "Listen": "deploy",
     "Liveness": "health",
     "LocalOverrides": "worktree",
@@ -2329,6 +2348,7 @@
     "MachineNode": "mesh",
     "MachineReport": "session-domain",
     "Machines": "deploy",
+    "Manager": "mesh",
     "Match": "continuity",
     "Materiality": "reasoning",
     "Matrix": "product",
@@ -2856,7 +2876,11 @@
     "UncommittedReport": "worktree",
     "UncommittedTallies": "worktree",
     "UncommittedWorktree": "worktree",
+    "UnitRole": "mesh",
+    "UnitView": "mesh",
     "UnreadSource": "devcontext",
+    "UpdateRun": "mesh",
+    "UpdateState": "mesh",
     "UpstreamState": "worktree",
     "UsageSource": "shared",
     "UseCaseRef": "product",
@@ -22512,6 +22536,7 @@
         "mesh.firewall",
         "mesh.handover.publish",
         "mesh.handover.consume",
+        "mesh.hub",
         "mesh.identity",
         "mesh.link.hello",
         "mesh.link.sync",
@@ -25914,6 +25939,33 @@
       "variants": []
     },
     {
+      "description": "A file against what is rendered for it.",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "FileState",
+      "properties": [],
+      "type": "\"missing\" | \"drifted\" | \"current\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "UnitView"
+      ],
+      "values": [
+        {
+          "description": "Not there.",
+          "value": "missing"
+        },
+        {
+          "description": "There, with other content: a hand-made unit, or one an older release rendered.",
+          "value": "drifted"
+        },
+        {
+          "description": "There, as rendered.",
+          "value": "current"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching.",
       "home": "why",
       "is_enum": false,
@@ -28889,6 +28941,191 @@
           "value": "POST"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What the hub answers on its port: its version, how many sessions are attached to it, and\nthe runtimes it is linked with.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HubAnswer",
+      "properties": [
+        {
+          "description": "Whether it answered at all.",
+          "name": "answering",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The version it serves.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The sessions attached to the hub's own board.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Every runtime it is linked with, and the version each speaks: what the mesh\nbroadcasts about its members.",
+          "name": "linked",
+          "refs": [
+            "LinkedRuntime"
+          ],
+          "required": true,
+          "type": "array of LinkedRuntime"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One check of `mesh hub status`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HubCheck",
+      "properties": [
+        {
+          "description": "Which.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it came out.",
+          "name": "level",
+          "refs": [
+            "Level"
+          ],
+          "required": true,
+          "type": "Level"
+        },
+        {
+          "description": "What was found.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to run when it does not hold.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The report of `mesh hub status`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HubStatusReport",
+      "properties": [
+        {
+          "description": "The service manager.",
+          "name": "manager",
+          "refs": [
+            "Manager"
+          ],
+          "required": true,
+          "type": "Manager"
+        },
+        {
+          "description": "The hub's checkout.",
+          "name": "repo",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The hub port.",
+          "name": "port",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint16)"
+        },
+        {
+          "description": "The unit files.",
+          "name": "units",
+          "refs": [
+            "UnitView"
+          ],
+          "required": true,
+          "type": "array of UnitView"
+        },
+        {
+          "description": "What the hub answered.",
+          "name": "hub",
+          "refs": [
+            "HubAnswer"
+          ],
+          "required": true,
+          "type": "HubAnswer"
+        },
+        {
+          "description": "The published release.",
+          "name": "published",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The release the executable is.",
+          "name": "installed",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the update remembers.",
+          "name": "update",
+          "refs": [
+            "UpdateState"
+          ],
+          "required": true,
+          "type": "UpdateState"
+        },
+        {
+          "description": "Every check.",
+          "name": "checks",
+          "refs": [
+            "HubCheck"
+          ],
+          "required": true,
+          "type": "array of HubCheck"
+        },
+        {
+          "description": "No check failed.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.hub"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -34681,6 +34918,33 @@
       "variants": []
     },
     {
+      "description": "How one check of `mesh hub status` came out.",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Level",
+      "properties": [],
+      "type": "\"pass\" | \"warn\" | \"fail\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubCheck"
+      ],
+      "values": [
+        {
+          "description": "Holds.",
+          "value": "pass"
+        },
+        {
+          "description": "Holds, with something a person should know.",
+          "value": "warn"
+        },
+        {
+          "description": "Does not hold.",
+          "value": "fail"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The C library a Linux artifact is linked against.",
       "home": "distribution",
       "is_enum": true,
@@ -35110,6 +35374,42 @@
       "variants": []
     },
     {
+      "description": "A runtime the hub is linked with.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "LinkedRuntime",
+      "properties": [
+        {
+          "description": "The machine's short name.",
+          "name": "machine",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The runtime.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version it runs.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The address the process listens on.",
       "home": "deploy",
       "is_enum": false,
@@ -35434,6 +35734,33 @@
         "DeploymentView"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The service manager of a host.",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Manager",
+      "properties": [],
+      "type": "\"launchd\" | \"systemd_user\" | \"unsupported\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubStatusReport"
+      ],
+      "values": [
+        {
+          "description": "launchd, per user (macOS): `~/Library/LaunchAgents`.",
+          "value": "launchd"
+        },
+        {
+          "description": "systemd, per user (Linux): `~/.config/systemd/user`.",
+          "value": "systemd_user"
+        },
+        {
+          "description": "Neither: no hub service can be written here.",
+          "value": "unsupported"
+        }
+      ],
       "variants": []
     },
     {
@@ -65506,6 +65833,101 @@
       "variants": []
     },
     {
+      "description": "What one file is for.",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "UnitRole",
+      "properties": [],
+      "type": "\"hub\" | \"update\" | \"update_timer\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "UnitView"
+      ],
+      "values": [
+        {
+          "description": "The hub itself, kept running.",
+          "value": "hub"
+        },
+        {
+          "description": "The update, run by its schedule.",
+          "value": "update"
+        },
+        {
+          "description": "The schedule of the update (systemd only: launchd keeps it in the update's agent).",
+          "value": "update_timer"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One unit file, as found.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "UnitView",
+      "properties": [
+        {
+          "description": "What it is for.",
+          "name": "role",
+          "refs": [
+            "UnitRole"
+          ],
+          "required": true,
+          "type": "UnitRole"
+        },
+        {
+          "description": "The service manager's name of it.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Against what is rendered.",
+          "name": "state",
+          "refs": [
+            "FileState"
+          ],
+          "required": true,
+          "type": "FileState"
+        },
+        {
+          "description": "Whether the manager has it: loaded (launchd), or enabled or static (systemd).",
+          "name": "loaded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the manager may start it: not disabled (launchd), enabled or static (systemd).",
+          "name": "enabled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it runs now (the hub) or is scheduled (the timer).",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```",
       "home": "devcontext",
       "is_enum": false,
@@ -65530,6 +65952,80 @@
       "used_by": [],
       "used_by_schemas": [
         "SourceCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One run of the update.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "UpdateRun",
+      "properties": [
+        {
+          "description": "When it ran, in seconds since the epoch.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`current`, `updated`, `deferred`, `rolled_back`, `failed`, `skipped` or `unknown`.",
+          "name": "result",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it said.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "UpdateState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the update remembers between runs.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "UpdateState",
+      "properties": [
+        {
+          "description": "The last run.",
+          "name": "last",
+          "refs": [
+            "UpdateRun"
+          ],
+          "required": false,
+          "type": "UpdateRun | null"
+        },
+        {
+          "description": "Versions that failed on this node and are not tried again.",
+          "name": "failed",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Since when the restart has been deferred, while it is.",
+          "name": "deferred_since",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HubStatusReport"
       ],
       "values": [],
       "variants": []
@@ -75658,6 +76154,75 @@
           "result_schema": "ConsumeAnswer",
           "stability": "experimental",
           "summary": "Consume a handover from the mesh"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh hub",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/hub\"",
+          "description": "Whether this machine's hub runs as its host's service and follows the release (I4816): each unit file — the launchd agent and its update agent on macOS, the systemd user unit, the update service and its hourly timer on Linux — as missing, drifted or as rendered, and whether the manager has it loaded and running; whether the hub answers on its port, with the version it serves, the sessions attached to it and the runtimes it is linked with; the published, installed and served versions; the update's last run; and every linked runtime behind the published release. Fails when a unit is missing, drifted or not loaded, the hub does not answer, it is linked with nobody, the update has not run within two hours, or it serves an older release than is published with no update on it. Reads the host; changes nothing.",
+          "home": "mesh",
+          "id": "mesh.hub",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_hub",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The hub port; default the port the declaration gives this machine's address, else 8791.",
+              "examples": [],
+              "name": "port",
+              "required": false,
+              "type": "integer (uint16)"
+            },
+            {
+              "description": "A staging directory that stands for the home: no service manager or hub is asked.",
+              "examples": [],
+              "name": "root",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/mesh/hub",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The hub as a service of this host: the result.",
+              "schema": "HubStatusReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "HubStatusReport",
+          "stability": "experimental",
+          "summary": "The hub as a service of this host"
         },
         {
           "benchmark": "required",

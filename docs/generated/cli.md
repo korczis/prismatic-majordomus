@@ -161,6 +161,10 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall |
 | [`majordomus mesh firewall`](#majordomus-mesh-firewall) | `/docs/cli/mesh/firewall/` | What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root |
 | [`majordomus mesh firewall apply`](#majordomus-mesh-firewall-apply) | `/docs/cli/mesh/firewall/apply/` | Run the commands that admit the plan on this host's firewall; needs root, and exits 10 when it refuses or the firewall still does not admit the mesh |
+| [`majordomus mesh hub`](#majordomus-mesh-hub) | `/docs/cli/mesh/hub/` | The hub as a service of this host: its units, its manager, its answer, its versions and its update; `install`, `uninstall` and `update` change it |
+| [`majordomus mesh hub install`](#majordomus-mesh-hub-install) | `/docs/cli/mesh/hub/install/` | Write the hub's launchd agent or systemd user unit and its hourly update from the declaration, and load them; a second install does nothing; exits 10 when it refuses |
+| [`majordomus mesh hub uninstall`](#majordomus-mesh-hub-uninstall) | `/docs/cli/mesh/hub/uninstall/` | Stop the hub and its update and remove their units |
+| [`majordomus mesh hub update`](#majordomus-mesh-hub-update) | `/docs/cli/mesh/hub/update/` | Bring the hub to the published release: install it, move the hub checkout to its tag, restart, and roll back when the hub does not answer |
 | [`majordomus mesh peers`](#majordomus-mesh-peers) | `/docs/cli/mesh/peers/` | Every machine and runtime this checkout's server cooperates with, each link's state, and the active sessions; --full for every session and claim |
 | [`majordomus mesh peer`](#majordomus-mesh-peer) | `/docs/cli/mesh/peer/` | One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here |
 | [`majordomus mesh state`](#majordomus-mesh-state) | `/docs/cli/mesh/state/` | The state every linked runtime converges on, summarised with its digest; --full for every session, claim, handover and review |
@@ -4470,7 +4474,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh allocate`](#majordomus-mesh-allocate), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh beat`](#majordomus-mesh-beat), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review), [`majordomus mesh build-cache`](#majordomus-mesh-build-cache), [`majordomus mesh who`](#majordomus-mesh-who).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh hub`](#majordomus-mesh-hub), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh allocate`](#majordomus-mesh-allocate), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh beat`](#majordomus-mesh-beat), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review), [`majordomus mesh build-cache`](#majordomus-mesh-build-cache), [`majordomus mesh who`](#majordomus-mesh-who).
 
 ```text
 majordomus mesh <COMMAND>
@@ -4667,6 +4671,136 @@ Examples:
 
   ```console
   $ majordomus mesh firewall apply
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-hub"></a>
+## `majordomus mesh hub`
+
+The hub as a service of this host: its units, its manager, its answer, its versions and its update; `install`, `uninstall` and `update` change it
+
+Subcommands: [`majordomus mesh hub install`](#majordomus-mesh-hub-install), [`majordomus mesh hub uninstall`](#majordomus-mesh-hub-uninstall), [`majordomus mesh hub update`](#majordomus-mesh-hub-update).
+
+```text
+majordomus mesh hub [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
+| `--root` | `<ROOT>` | — | A staging directory that stands for the home: no service manager or hub is asked |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether this machine's hub runs as a service and follows the release** — Each unit file of the hub's service against what install renders, whether the service manager has it loaded and running, whether the hub answers on its port and with which version, the runtimes it is linked with, the published and installed versions and the update's last run. Here, in a staging home with nothing installed, the units are missing and the report exits 10.
+
+  ```console
+  $ majordomus mesh hub --root hub-home
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-hub-install"></a>
+## `majordomus mesh hub install`
+
+Write the hub's launchd agent or systemd user unit and its hourly update from the declaration, and load them; a second install does nothing; exits 10 when it refuses
+
+```text
+majordomus mesh hub install [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--apply` | flag | — | Carry the plan out; without it nothing changes |
+| `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
+| `--executable` | `<EXECUTABLE>` | — | The executable the units run; default the installer's launcher |
+| `--release-base` | `<RELEASE_BASE>` | — | Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
+| `--root` | `<ROOT>` | — | A staging directory that stands for the home: files only, no command |
+| `--retry` | flag | — | Update: try again the versions that failed on this node |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Install the hub as a service of this host** — Renders the launch agent or the systemd user unit of the hub and its hourly update from the declaration, and with --apply writes and loads them. It refuses on a machine the declaration does not name as a hub, and exits 10, as here, where nothing is declared.
+
+  ```console
+  $ majordomus mesh hub install --root hub-home
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-hub-uninstall"></a>
+## `majordomus mesh hub uninstall`
+
+Stop the hub and its update and remove their units
+
+```text
+majordomus mesh hub uninstall [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--apply` | flag | — | Carry the plan out; without it nothing changes |
+| `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
+| `--executable` | `<EXECUTABLE>` | — | The executable the units run; default the installer's launcher |
+| `--release-base` | `<RELEASE_BASE>` | — | Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
+| `--root` | `<ROOT>` | — | A staging directory that stands for the home: files only, no command |
+| `--retry` | flag | — | Update: try again the versions that failed on this node |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What removing the hub's service would do** — Plans the stop of the hub and its update and the removal of their unit files; --apply carries it out. Here, in an empty staging home, nothing is owed.
+
+  ```console
+  $ majordomus mesh hub uninstall --root hub-home
+  ```
+
+  Verified: exits 0; prints ok.
+
+<a id="majordomus-mesh-hub-update"></a>
+## `majordomus mesh hub update`
+
+Bring the hub to the published release: install it, move the hub checkout to its tag, restart, and roll back when the hub does not answer
+
+```text
+majordomus mesh hub update [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--apply` | flag | — | Carry the plan out; without it nothing changes |
+| `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
+| `--executable` | `<EXECUTABLE>` | — | The executable the units run; default the installer's launcher |
+| `--release-base` | `<RELEASE_BASE>` | — | Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
+| `--root` | `<ROOT>` | — | A staging directory that stands for the home: files only, no command |
+| `--retry` | flag | — | Update: try again the versions that failed on this node |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What bringing the hub to the published release would do** — Asks the release origin, the executable and the hub for their versions and plans the update: current, install, restart onto the installed release, defer, or skip a version that failed here. Here no release origin answers and no hub runs, so the decision is unknown and it exits 10.
+
+  ```console
+  $ majordomus mesh hub update --root hub-home --release-base http://127.0.0.1:9 --executable /nonexistent/majordomus
   ```
 
   Verified: exits 10.

@@ -1,0 +1,38 @@
+id: I4816
+milestone: safe-self-update
+title: "The hub's launchd agent or systemd user unit and its daily update timer are written by a capability, the hub links with the mesh by itself, and status checks that it follows the release"
+slug: the-hub-runs-as-a-service
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "majordomus mesh hub install, run by the owner on a machine, writes the hub's service from the mesh declaration through one unit writer: a launchd agent (~/Library/LaunchAgents/dev.majordomus.hub.plist, RunAtLoad, KeepAlive) on macOS and a systemd user unit (~/.config/systemd/user/majordomus-hub.service, Restart=always, with lingering checked) on Linux, running the stable launcher's serve of a dedicated hub checkout on the declared hub port with --idle 0. A second install changes nothing; mesh hub status says whether the unit is written as rendered, loaded, running and answering, and how many runtimes the hub is linked with; mesh hub uninstall stops it and removes the unit. The hub started that way registers with every declared hub and keeps its links across restarts on its own. Install also writes the update timer (hourly; the interim step the owner ordered on 2026-11-22 for I2722 was daily): mesh hub update runs the verified installer, and when the installed release is newer than the one the hub serves and no session is attached, it moves the hub checkout to that release's tag and restarts the hub through its manager; status compares the published, the installed and the served version and names the update's last run."
+why: "docs/MESH.md (The hubs as services) recorded every hub unit as written by hand and owed an installer as a typed capability (ADR 0059, ADR 0199); on 2026-11-05 this Mac's hand-written agent pointed at a deleted checkout and the hub was dead for eleven days, and on 2026-11-16 lundra's unit had been disabled while a shell-started hub served instead. A unit written by a capability from the declaration, and a status that reads it back, answers both. This is the unit-writer slice of I2722; the activation of a new version and its rollback stay with I2722."
+current_state: "Every hub's service is a hand-written file (docs/MESH.md); nothing renders, writes, reads back or removes one, and I2722 and I3913 both plan to need the writer. Owner decision, 2026-11-28, session f2ea8dfd-cefd-4a21-a4dc-be20e3ab6487, about 07:56Z: asked by AskUserQuestion 'Instalátor launchd/systemd služby pro hub ani auto-připojování zatím není v kódu; huby na strojích jsou nainstalované ručně (I2722, I3913). Jaký rozsah mám implementovat a dotáhnout až do release?', the owner answered 'Hub služba + auto-connect (Recommended)', whose option text read: '`mesh hub install/status/uninstall` (launchd + systemd --user) z mesh deklarace, start po bootu, registrace u hubů a reconnect, docs + pages, release. Bez self-update rollbacku.' The owner then re-issued the order in the same session (about 08:05Z) as '/orchestrate dotahni a integruj do main a release vcetne pages a vseho tykajici se systemd/mac service a utomatickeho pripojovani, kontrola auto-update, etc ...', adding the check of auto-update. A third message of the same session (about 08:20Z) set the bar: 'pokracuj autonomne - ten daemon musi byt velice rock-solid, always-running, self-updating, broadcasting, keeping all instances and mesh always up to date'. So the hub unit restarts without a start limit, the update timer runs hourly and asks the published release before it installs anything, an update verifies the new executable before the restart and puts the previous release back when the restarted hub does not answer, and status reads every declared hub's version against the published release. Observed that morning: every reachable hub (this MacBook, lundra, the iMac) served 1.2.0 a day after 1.3.0 was published, with each hub checkout detached at v1.2.0 by hand, and no machine carried the daily update timer of 2026-11-22."
+desired_state: "On a macOS or Linux machine, mesh hub install writes the unit once and starts it; the hub answers on its port after a login or a boot without anybody starting it; status reads the unit, the manager and the hub back; uninstall leaves nothing behind; docs/MESH.md describes the command instead of the hand-written units."
+scope:
+  - "apps/majordomus-cli/src/mesh/hub_service.rs"
+  - "apps/majordomus-cli/src/mesh/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "test/cases/4783_the_hub_service_is_written_by_a_capability.sh"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I4816.yaml"
+  - ".ai/repo/project/issues/I2722.yaml"
+non_scope:
+  - "Activating a newly installed version, its health check and rollback (I2722)"
+  - "The executor's service (I3913)"
+  - "Opening the host firewall, which mesh firewall apply already does as root"
+acceptance_criteria:
+  - "install renders the launchd agent or the systemd user unit from the declaration, writes it, and starts it; a second install writes and runs nothing (unit test install_twice_changes_nothing)"
+  - "status reports the unit as missing, drifted or as rendered, the manager's verdict and whether the hub answers on its port (case 4783, with a fake service manager)"
+  - "uninstall stops the service and removes the unit file and the update timer (case 4783)"
+  - "install writes the daily update timer beside the hub unit; update installs a newer release, moves the hub checkout to its tag and restarts the hub only when no session is attached, and changes nothing when the hub already serves the newest release (unit tests with a fake installer and manager)"
+  - "status names the published, installed and served versions and the update timer's last run, and fails when the hub serves an older release than the installed one past a day (case 4783)"
+  - "The hub serve the unit runs registers with the declared hubs and redials after a hub restarts (unit tests of the rendered arguments and of the rendezvous loop)"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::hub_service"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4783_the_hub_service_is_written_by_a_capability"
+evidence_required:
+  - "hub_service_written_by_a_capability_test"
+created_at: 2026-11-28
+updated_at: 2026-11-28
