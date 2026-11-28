@@ -474,6 +474,66 @@ pub fn command(text: &str) -> El {
         .child(el("span").class("mj-sr-only").attr("role", "status"))
 }
 
+/// The attribute a move carries: a control that asks a running process to change the
+/// repository. Its value is the move as [`live_only`] draws it on a published page.
+pub const LIVE_MOVE: &str = "data-live-move";
+
+/// The attribute that marks a move as a publication draws it: disabled, "live only" beside it.
+pub const LIVE_ONLY: &str = "data-live-only";
+
+/// A move as a link: `label`, leading to `href`, where a running process makes it. A
+/// published page has no process behind it, so there [`live_only`] draws the same move
+/// disabled and reading "live only" (I2910).
+pub fn move_link(class: &str, href: &str, title: &str, label: &str) -> El {
+    let published = serde_json::json!({ "class": class, "href": href, "label": label });
+    el("a")
+        .class(class)
+        .attr("href", href)
+        .attr(LIVE_MOVE, published.to_string())
+        .attr("title", title)
+        .text(label)
+}
+
+/// Every move of `main` as a publication draws it (I2910): a disabled control that still
+/// says which move it is, and beside it "live only", a link to the route where a running
+/// process makes it. A snapshot relinks that route to its page about the live UI.
+pub fn live_only(main: El) -> El {
+    main.replacing(LIVE_MOVE, &mut |published| {
+        let published: Value = serde_json::from_str(published).ok()?;
+        let field = |k: &str| {
+            published
+                .get(k)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
+        let label = field("label");
+        Some(
+            el("span")
+                .class("mj-ui-badges")
+                .attr(LIVE_ONLY, "")
+                .child(
+                    el("button")
+                        .attr("type", "button")
+                        .class(field("class"))
+                        .flag("disabled")
+                        .attr("aria-disabled", "true")
+                        .text(label.clone()),
+                )
+                .child(
+                    el("a")
+                        .class("mj-ui-link")
+                        .attr("href", field("href"))
+                        .attr(
+                            "title",
+                            format!("{label} is made where a running process serves this UI"),
+                        )
+                        .text("live only"),
+                ),
+        )
+    })
+}
+
 /// An empty list, said in words.
 pub fn nothing(what: &str) -> El {
     el("p").class("mj-ui-empty").text(what)
@@ -772,6 +832,56 @@ mod tests {
     use super::*;
     use crate::ui::source::{Exposure, Source};
     use std::time::Duration;
+
+    /// A move is a link where a process serves the UI, and on a published page a disabled
+    /// control that says which move it is, with "live only" beside it leading to the route
+    /// where it is made (I2910). An attribute that is not a move's is left as it is.
+    #[test]
+    fn a_published_move_reads_live_only() {
+        let href = "/ui/idd?intent=i&issue=I1#move";
+        let live = move_link("mj-btn mj-btn--primary", href, "start I1", "Start I1");
+        let html = live.render();
+        assert!(
+            html.starts_with(
+                "<a class=\"mj-btn mj-btn--primary\" href=\"/ui/idd?intent=i&amp;issue=I1#move\""
+            ),
+            "{html}"
+        );
+        assert!(html.ends_with(">Start I1</a>"), "{html}");
+        assert!(html.contains(LIVE_MOVE), "{html}");
+
+        let page = el("main")
+            .child(el("p").child(live))
+            .child(el("span").attr(LIVE_MOVE, "not a move").text("kept"));
+        let published = live_only(page).render();
+        assert!(
+            published.contains("data-live-move=\"not a move\">kept</span>"),
+            "{published}"
+        );
+        assert_eq!(
+            published.matches(LIVE_MOVE).count(),
+            1,
+            "only the malformed value is left: {published}"
+        );
+        assert!(
+            published.contains(
+                "<span class=\"mj-ui-badges\" data-live-only><button type=\"button\" \
+                 class=\"mj-btn mj-btn--primary\" disabled aria-disabled=\"true\">Start I1</button>"
+            ),
+            "{published}"
+        );
+        assert!(
+            published.contains(
+                "<a class=\"mj-ui-link\" href=\"/ui/idd?intent=i&amp;issue=I1#move\" \
+                 title=\"Start I1 is made where a running process serves this UI\">live only</a>"
+            ),
+            "{published}"
+        );
+        assert!(
+            !published.contains("mj-btn mj-btn--primary\" href"),
+            "{published}"
+        );
+    }
 
     /// A command is a code block holding exactly its text, escaped, with a copy button the page
     /// carries hidden for the script to offer, and a status beside it for what the copy did

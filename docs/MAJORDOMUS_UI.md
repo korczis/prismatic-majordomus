@@ -529,6 +529,7 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
 | the script reads the screen again every minute and follows the executions of its server | it does neither: the body carries `data-snapshot` |
 | a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood |
+| a move (`data-live-move`): the workspace's primary action, a move in the table of an intent's work | a disabled control naming the same move, with "live only" beside it leading to the move's route, which the snapshot relinks to its page about the live UI (I2910) |
 | "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
 A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no

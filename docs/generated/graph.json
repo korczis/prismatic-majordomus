@@ -47294,7 +47294,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "a-published-move-reads-live-only",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-11-28T07:25:34Z",
+          "started_event": "sha256:758d2da155339af9a06a64a99b534d9207f52cd06cabc0ea04052fd0faadab55",
+          "updated_at": "2026-11-28T07:25:34Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd"
@@ -111294,6 +111296,13 @@
         "source": "test/cases/28_no_hardcoded_values.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2910_a_published_move_reads_live_only.sh",
+        "kind": "test",
+        "label": "test/cases/2910_a_published_move_reads_live_only.sh",
+        "route": "/cockpit/objects/test/test-cases-2910-a-published-move-reads-live-only-sh",
+        "source": "test/cases/2910_a_published_move_reads_live_only.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
         "kind": "test",
         "label": "test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
@@ -162663,6 +162672,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2910_a_published_move_reads_live_only.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/2978_an_intent_is_proposed_by_a_capability.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -169384,8 +169398,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4603,
+      "edges": 10365,
       "acyclic": false,
       "truncated": false
     }

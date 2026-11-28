@@ -144,3 +144,57 @@ fn the_workspace_is_read_and_changes_nothing() {
         "reading the workspace wrote the repository"
     );
 }
+
+/// A move on the published workspace reads "live only" (I2910): asked the way a snapshot asks,
+/// the workspace draws the primary action and the issue's move in the table of its work as
+/// disabled controls, each with "live only" beside it leading to the move's live route, and no
+/// move as a link. Asked as a browser asks, the same moves are links.
+#[test]
+fn a_move_on_the_published_workspace_reads_live_only() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let target = "/ui/idd?intent=fixture-intent";
+    let route = "/ui/idd?intent=fixture-intent&amp;issue=I0001#move";
+
+    let (status, _, live) = s.request("GET", target, None);
+    assert_eq!(status, 200, "{live}");
+    assert!(
+        live.contains(&format!(
+            "<a class=\"mj-btn mj-btn--primary\" href=\"{route}\""
+        )),
+        "the live workspace offers the primary move as a link: {live}"
+    );
+    assert!(!live.contains("live only"), "{live}");
+
+    let (status, _, published) =
+        s.request_with("GET", target, None, &[("X-Majordomus-Snapshot", "1")]);
+    assert_eq!(status, 200, "{published}");
+    assert!(
+        !published.contains("data-live-move"),
+        "every move is drawn as published: {published}"
+    );
+    assert!(
+        !published.contains(&format!("href=\"{route}\" title=\"the move")),
+        "no move is a link: {published}"
+    );
+    let disabled = published
+        .matches(" disabled aria-disabled=\"true\">")
+        .count();
+    let says = published
+        .matches(&format!("<a class=\"mj-ui-link\" href=\"{route}\""))
+        .count();
+    assert_eq!(
+        disabled, 2,
+        "the primary action and the table's move: {published}"
+    );
+    assert_eq!(says, 2, "each leads to its live route: {published}");
+    assert_eq!(
+        published.matches(">live only</a>").count(),
+        2,
+        "{published}"
+    );
+    assert!(
+        published.contains("disabled aria-disabled=\"true\">Start I0001</button>"),
+        "{published}"
+    );
+}
