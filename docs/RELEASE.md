@@ -578,6 +578,37 @@ Since 2026-10-16 that decision has an owner and a cadence: the release seat of
 milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
 session that seat; the tag still waits for `scripts/ci/release-verdict`.
 
+### Who tags: nobody (ADR 0240)
+
+The seat tagged by hand, and so landed work waited for a person: on 2026-11-28 the owner
+ordered every landed issue to bump a dev version and every completed milestone the minor,
+automatically. [ADR 0240](../.ai/repo/adrs/0240-a-landing-publishes-its-release.md) amends
+ADR 0134's "allocation is not publication": publication is automatic, and the owner's decision
+is recorded once, as `publication: automatic` in `.ai/repo/ci/release-auto.yaml`. It lands
+`off`; the landing seat sets `automatic` once the owner confirms the workflow's token may push
+`v*` tags and a dry run over master (`scripts/ci/release-autotag --commit origin/master`) is green.
+
+`.github/workflows/release-auto.yml` runs after every successful `validate` on a master push and
+hourly; `scripts/ci/release-autotag` decides, from the commit's own records read by the plan
+engine:
+
+| The commit | It owes |
+|---|---|
+| a milestone DONE here and not at the last stable tag, the tree declaring at least the next minor | `v<declared>`, stable |
+| an issue DONE here and not at the newest release tag it contains, the tree declaring a version above the last stable | `v<declared>-dev.<N>`, a prerelease, N one past the highest such tag |
+| work landed and the tree declares a version already released | no tag; `version.yml` is asked for the next minor (`release bump --exact`) |
+| a `ci` check that did not conclude success | nothing (`held`) |
+| a tag already, or an ancestor of a tagged commit | nothing new (`already`, `behind`) |
+
+One commit carries one tag, so a merge that lands several issues is one dev release whose
+annotation names them all. The tag is pushed with the workflow's token and `release.yml` is
+dispatched for it once; a rerun dispatches only when no release run of that tag is listed and
+GitHub holds no release of it. A
+dev tag's version is not declared by any commit: `scripts/release-stamp` checks it in the plan
+job and stamps it into the build job's checkout, so the archive prints `1.4.0-dev.3` while the
+tree keeps declaring the `1.4.0` the next stable tag carries. `version.yml` itself still never
+tags (case 353). Cases 4780 and 4781 prove the decision, the stamp and the wiring.
+
 ### How long landed work has waited
 
 The seat's cadence was a rule and not a measurement. Master could hold a day of landed work
@@ -653,6 +684,8 @@ otherwise `next_unmeasured` says which of the two it is not.
 | `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, the tree is not behind the newest release the layer records, and every published tag has a record — or, for at most a day, a `release/record-<tag>` branch proposing one ([`DISTRIBUTION.md`](DISTRIBUTION.md#releasing) says why the tag comes first); a branch this checkout did not fetch is asked of origin (`git ls-remote --heads`) and fetched as that one ref, and an origin that cannot be asked is named in a note; before that branch exists, a tag is pending within the same grace whatever its release run concluded — queued or running, concluded any way, or not listed yet, the grace counted from the GitHub release when one is published — with its run named, asked of the forge with `gh`, and where the forge cannot be asked (no `gh`, no token, no GitHub repository known) the tag is not excused |
 | `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` | a head that changes no release file passes while a tag's record is proposed, naming the tag pending; the record's own branch passes as recorded; a record branch without the record, a proposal past its grace and no proposal at all are refused |
 | `test/cases/3029_a_tag_in_flight_is_pending.sh` | inside the grace, a tag without a record is pending in every ordering of the checkout's fetch, the record branch's push and the release run's conclusion (in progress, success, failure, cancelled), a record branch pushed after the fetch is asked of origin and fetched, and a GitHub release published inside the grace is pending; past the grace, a forge that cannot be read, an unknown repository and an unreachable origin leave the finding standing, each with a note |
+| `test/cases/4780_a_landing_publishes_its_release.sh` | ADR 0240 over a fixture with the real plan engine, a bare origin and a stub `gh`: publication off tags nothing; a landed issue on a green commit is exactly one annotated `v1.4.0-dev.1` and one `release.yml` dispatch, and a dry run writes nothing; a rerun tags and dispatches nothing, and dispatches once when no release run is listed; a red commit is held; the next landing is `v1.4.0-dev.2`; a commit that landed nothing owes nothing; a completed milestone is `v1.4.0`, and an older commit is behind it; a tree declaring the released 1.4.0 asks `version.yml` for 1.5.0 unless it is proposed, and is `v1.5.0-dev.1` once it declares it; an unreadable verdict refuses |
+| `test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh` | `scripts/release-stamp` accepts `v<declared>-dev.<N>` and refuses another base, a bad number and a pre-release tree; the stamp writes the manifest, the lock's own entry and `share/version.txt` and no dependency, and the shell tool prints the dev version; `release.yml` checks in its plan job and stamps before it packages; `release-auto.yml` follows a green master validate; a dev release is a pre-release in every shared pattern, ordered alpha < beta < dev < rc |
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
 | `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |

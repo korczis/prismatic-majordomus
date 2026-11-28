@@ -1,0 +1,289 @@
+#!/usr/bin/env bash
+# release-autotag — a green master commit that landed work is released without a person
+# (ADR 0240, I4811).
+#
+# The owner's order of 2026-11-28: every issue that lands bumps a dev version, every milestone
+# that completes bumps the minor, automatically. Until this script every tag was a person's
+# act, and "landed work past the last tag" (release.currency) waited for one. This decides,
+# from the commit's own records and the repository's tags, which tag the commit owes, and
+# with --apply makes it and starts its release:
+#
+#   publication off      .ai/repo/ci/release-auto.yaml at the commit does not say
+#                        `publication: automatic`: nothing, exit 0
+#   already              a v* tag points at the commit: nothing new; --apply starts the
+#                        release of that tag when no release run of it is listed (a rerun
+#                        after a failed dispatch dispatches exactly once)
+#   behind               a v* tag points at a descendant of the commit: a newer commit is
+#                        released, and an older one is never tagged after it
+#   held                 the commit's `ci` check did not conclude success
+#                        (scripts/ci/release-verdict): a red or unjudged commit is never tagged
+#   minor                a milestone is DONE at the commit and was not at the last stable tag,
+#                        and the crate declares at least the next minor: v<crate>, stable
+#   dev                  an issue is DONE at the commit and was not at the newest release tag
+#                        the commit contains: v<crate>-dev.<N>, a prerelease, where N is one
+#                        past the highest v<crate>-dev.* tag there is (so a retry never reuses
+#                        a number and two landings never share one); one tag per commit, so
+#                        several issues landing in one merge are one dev release
+#   bump                 the crate declares a version that is already released, or one below
+#                        the next minor a completed milestone needs: no tag can carry it, and
+#                        --apply asks .github/workflows/version.yml to propose that version
+#                        (`release bump --exact`), unless a proposal for it is already open
+#   none                 nothing landed since the last release
+#
+# DONE is the plan engine's word (bin/majordomus plan list / plan status, lib/project.awk),
+# read over each commit's own .ai/ tree, never a second derivation of it.
+#
+#   scripts/ci/release-autotag [--commit REV] [--apply] [--remote NAME] [--repo DIR]
+#
+#   --commit REV   the commit judged (default HEAD)
+#   --apply        fetch the remote's tags, push the tag, dispatch release.yml (and
+#                  version.yml for a bump); without it nothing is written or asked to run,
+#                  and the verdict is still read
+#   --remote NAME  where tags are fetched from and pushed to (default origin)
+#   --repo DIR     the repository (default: the current directory's)
+#
+#   GITHUB_REPOSITORY        owner/repo for gh (default: from the remote's URL)
+#   MJ_AUTOTAG_TOOL          the launcher whose plan engine reads the records (default: this
+#                            checkout's bin/majordomus)
+#   GITHUB_OUTPUT            when set, decision=, tag= and version= are appended to it
+#
+# Exit: 0 decided (a tag made, or nothing owed) · 2 usage · 10 a tag or a dispatch could not
+# be made · 12 an input could not be read (the verdict, the records, the remote).
+set -euo pipefail
+
+TOOL="$(cd "$(dirname "$0")/../.." && pwd)"
+MANIFEST="apps/majordomus-cli/Cargo.toml"
+MODEL=".ai/repo/ci/release-auto.yaml"
+
+commit="HEAD"; apply=0; remote="origin"; repo=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --commit) commit="${2:?--commit needs a revision}"; shift 2 ;;
+    --apply) apply=1; shift ;;
+    --remote) remote="${2:?--remote needs a name}"; shift 2 ;;
+    --repo) repo="${2:?--repo needs a directory}"; shift 2 ;;
+    -h|--help) sed -n '2,55p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) printf 'release-autotag: unknown option %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+
+say() { printf 'release-autotag: %s\n' "$*"; }
+die() { printf 'release-autotag: %s\n' "$2" >&2; exit "$1"; }
+
+[ -n "$repo" ] || repo="$(git rev-parse --show-toplevel 2>/dev/null)" || die 12 "not inside a git repository (use --repo)"
+repo="$(cd "$repo" && pwd)"
+g() { git -C "$repo" "$@"; }
+mj="${MJ_AUTOTAG_TOOL:-$TOOL/bin/majordomus}"
+command -v jq >/dev/null 2>&1 || die 12 "jq is required to read the plan"
+
+C="$(g rev-parse --verify -q "$commit^{commit}" 2>/dev/null)" || die 12 "$commit names no commit in $repo"
+short="${C:0:12}"
+
+decided() { # <decision> [tag] [version] — the one line a reader or the workflow takes
+  say "decision $1${2:+ $2} at $short"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    { echo "decision=$1"; echo "tag=${2:-}"; echo "version=${3:-}"; } >> "$GITHUB_OUTPUT"
+  fi
+}
+
+# ---------------------------------------------------------------- the switch, at the commit
+publication="$(g show "$C:$MODEL" 2>/dev/null | awk -F: '/^publication:/ { v = $2; sub(/#.*/, "", v); gsub(/[ "\047]/, "", v); print v; exit }')"
+if [ "$publication" != automatic ]; then
+  say "publication is ${publication:-not declared} in $MODEL at $short, not automatic: nothing is tagged"
+  decided off
+  exit 0
+fi
+
+slug="${GITHUB_REPOSITORY:-}"
+[ -n "$slug" ] || slug="$(g remote get-url "$remote" 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+
+if [ "$apply" = 1 ]; then
+  # every tag the remote holds, so the counter and the "already" answer are the remote's
+  g fetch --quiet "$remote" '+refs/tags/v*:refs/tags/v*' \
+    || die 12 "the tags of $remote could not be fetched; nothing is tagged from a partial reading"
+fi
+
+# ---------------------------------------------------------------- versions
+VERSION_ERE='^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$'
+# the greatest of the versions on stdin (no leading v), by semantic versioning's precedence
+semver_max() {
+  awk 'function num(x) { return x ~ /^[0-9]+$/ }
+    function less(a, b,   ca, cb, pa, pb, x, y, n, m, i) {
+      ca = a; pa = ""; if (index(a, "-")) { ca = substr(a, 1, index(a, "-") - 1); pa = substr(a, index(a, "-") + 1) }
+      cb = b; pb = ""; if (index(b, "-")) { cb = substr(b, 1, index(b, "-") - 1); pb = substr(b, index(b, "-") + 1) }
+      split(ca, x, "."); split(cb, y, ".")
+      for (i = 1; i <= 3; i++) if (x[i] + 0 != y[i] + 0) return x[i] + 0 < y[i] + 0
+      if (pa == pb) return 0
+      if (pa == "") return 0
+      if (pb == "") return 1
+      n = split(pa, x, "."); m = split(pb, y, ".")
+      for (i = 1; i <= n && i <= m; i++) {
+        if (x[i] == y[i]) continue
+        if (num(x[i]) && num(y[i])) return x[i] + 0 < y[i] + 0
+        if (num(x[i])) return 1
+        if (num(y[i])) return 0
+        return x[i] < y[i]
+      }
+      return n < m
+    }
+    NF { if (best == "" || less(best, $0)) best = $0 }
+    END { if (best != "") print best }'
+}
+# the release tags a commit contains, as versions: all of them, or the stable ones
+versions_in() { g tag --merged "$1" --list 'v*' | grep -E "$VERSION_ERE" | sed 's/^v//' || true; }
+next_minor() { awk -F. '{ printf "%d.%d.0\n", $1, $2 + 1 }' <<<"$1"; }
+newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | semver_max)" = "$1" ]; }
+
+# ---------------------------------------------------------------- release runs
+runs_of() { # <tag>: how many release runs GitHub lists for it, or nothing when it cannot say
+  gh api "repos/$slug/actions/workflows/release.yml/runs?branch=$1&per_page=5" --jq '.total_count' 2>/dev/null || true
+}
+published() { # <tag>: GitHub holds a release of it, whichever run made it
+  gh api "repos/$slug/releases/tags/$1" --jq '.tag_name' >/dev/null 2>&1
+}
+dispatch_release() { # <tag>
+  gh workflow run release.yml --repo "$slug" --ref "$1" -f tag="$1" >/dev/null \
+    || die 10 "$1 is tagged and release.yml could not be started; rerun this, or: gh workflow run release.yml --ref $1 -f tag=$1"
+  say "release.yml started for $1"
+}
+
+# ---------------------------------------------------------------- already tagged, or behind
+at="$(g tag --points-at "$C" --list 'v*' | grep -E "$VERSION_ERE" | sed 's/^v//' | semver_max || true)"
+if [ -n "$at" ]; then
+  say "$short is already tagged v$at"
+  if [ "$apply" = 1 ]; then
+    n="$(runs_of "v$at")"
+    case "$n" in
+      ''|*[!0-9]*) die 12 "the release runs of v$at could not be read from $slug; nothing is dispatched twice on a guess" ;;
+      0) if published "v$at"; then say "v$at is published and lists no release run; nothing to start"
+         else say "no release run of v$at is listed"; dispatch_release "v$at"; fi ;;
+      *) say "its release has $n run(s); nothing to start" ;;
+    esac
+  fi
+  decided already "v$at" "$at"
+  exit 0
+fi
+later="$(g tag --contains "$C" --list 'v*' | grep -E "$VERSION_ERE" | head -n 1 || true)"
+if [ -n "$later" ]; then
+  say "$later is at a commit that contains $short: a newer landing is released, and this one is not tagged after it"
+  decided behind "$later"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- the verdict
+vrc=0
+( cd "$repo" && GITHUB_REPOSITORY="$slug" "$TOOL/scripts/ci/release-verdict" --commit "$C" ) || vrc=$?
+case "$vrc" in
+  0) ;;
+  10) say "a red commit is not released"; decided held; exit 0 ;;
+  *) die 12 "the ci verdict of $short could not be read (release-verdict exit $vrc); nothing is tagged unjudged" ;;
+esac
+
+# ---------------------------------------------------------------- what the commit declares
+crate="$(g show "$C:$MANIFEST" 2>/dev/null | awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}')"
+printf 'v%s\n' "$crate" | grep -Eq "$VERSION_ERE" || die 12 "$MANIFEST at $short declares no version ('$crate')"
+case "$crate" in *-*)
+  say "the tree declares the pre-release $crate; a dev release is cut only from a final version"
+  decided none; exit 0 ;;
+esac
+
+newest="$(versions_in "$C" | semver_max || true)"
+stable="$(versions_in "$C" | grep -v -- - | semver_max || true)"
+say "the crate declares $crate; the newest release it contains is ${newest:+v}${newest:-none}, the newest stable ${stable:+v}${stable:-none}"
+
+# ---------------------------------------------------------------- the plan, at each commit
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT INT TERM HUP
+plan_at() { # <rev> <name>: the plan engine's issue and milestone statuses over that commit's .ai/
+  local d="$work/$2"
+  mkdir -p "$d"
+  if g archive "$1" .ai 2>/dev/null | tar -x -C "$d" 2>/dev/null && [ -d "$d/.ai/repo/project" ]; then
+    git -C "$d" init -q
+    if ! env -u MAJORDOMUS_SHARE -u MAJORDOMUS_ROOT "$mj" --repo "$d" --json plan list > "$d.issues.json" 2>"$d.err" \
+      || ! env -u MAJORDOMUS_SHARE -u MAJORDOMUS_ROOT "$mj" --repo "$d" --json plan status > "$d.status.json" 2>>"$d.err"; then
+      sed 's/^/  /' "$d.err" >&2
+      die 12 "the plan at $(g rev-parse --short "$1") could not be read"
+    fi
+    jq -r '.issues[] | select(.status == "DONE") | .id' "$d.issues.json" | LC_ALL=C sort > "$d.issues"
+    jq -r '.milestones[] | select(.status == "DONE") | .id' "$d.status.json" | LC_ALL=C sort > "$d.milestones"
+  else
+    : > "$d.issues"; : > "$d.milestones"
+  fi
+}
+plan_at "$C" now
+if [ -n "$newest" ]; then plan_at "v$newest" newest; else : > "$work/newest.issues"; fi
+if [ -n "$stable" ]; then plan_at "v$stable" stable; else : > "$work/stable.milestones"; fi
+landed="$(LC_ALL=C comm -13 "$work/newest.issues" "$work/now.issues" | tr '\n' ' ' | sed 's/ $//')"
+completed="$(LC_ALL=C comm -13 "$work/stable.milestones" "$work/now.milestones" | tr '\n' ' ' | sed 's/ $//')"
+say "issues DONE since ${newest:+v}${newest:-the beginning}: ${landed:-none}"
+say "milestones DONE since ${stable:+v}${stable:-the beginning}: ${completed:-none}"
+
+# ---------------------------------------------------------------- the decision
+owe_bump() { # <version>: no tag can carry the landed work until the tree declares <version>
+  local to="$1" open
+  say "the tree must declare $to before this work can be released; version.yml proposes it"
+  if [ "$apply" = 1 ]; then
+    open="$(gh pr list --repo "$slug" --head "release/bump-$to" --state open --json number --jq 'length' 2>/dev/null || true)"
+    case "$open" in
+      ''|*[!0-9]*) die 12 "whether release/bump-$to is already proposed could not be read from $slug" ;;
+      0) gh workflow run version.yml --repo "$slug" --ref master -f to="$to" >/dev/null \
+           || die 10 "version.yml could not be asked to propose $to"
+         say "version.yml asked to propose $to" ;;
+      *) say "release/bump-$to is already proposed" ;;
+    esac
+  fi
+}
+
+tag=""; kind=""
+if [ -n "$stable" ] && ! newer "$crate" "$stable"; then
+  # what the tree declares is released already: nothing above it can be tagged from this tree
+  if [ -z "$landed$completed" ]; then decided none; exit 0; fi
+  to="$(next_minor "$stable")"
+  owe_bump "$to"; decided bump "" "$to"
+  exit 0
+fi
+if [ -n "$completed" ]; then
+  need="$crate"; [ -z "$stable" ] || need="$(next_minor "$stable")"
+  if [ "$crate" = "$need" ] || newer "$crate" "$need"; then
+    tag="v$crate"; kind=minor
+  elif [ -z "$landed" ]; then
+    owe_bump "$need"; decided bump "" "$need"; exit 0
+  else
+    say "milestone(s) $completed completed and the tree declares $crate, below the minor $need they owe"
+    owe_bump "$need"
+  fi
+fi
+if [ -z "$tag" ] && [ -n "$landed" ]; then
+  n="$(g tag --list "v$crate-dev.*" | sed -n "s/^v${crate//./\\.}-dev\.\([0-9][0-9]*\)\$/\1/p" | sort -n | tail -n 1)"
+  tag="v$crate-dev.$(( ${n:-0} + 1 ))"; kind=dev
+fi
+if [ -z "$tag" ]; then
+  say "nothing landed since the last release"
+  decided none
+  exit 0
+fi
+
+message="$(printf 'release-autotag: %s at %s (%s)\n\n' "$tag" "$short" "$kind"
+  [ -z "$completed" ] || printf 'Milestones completed since %s: %s\n' "${stable:+v}${stable:-the beginning}" "$completed"
+  [ -z "$landed" ] || printf 'Issues landed since %s: %s\n' "${newest:+v}${newest:-the beginning}" "$landed")"
+say "$C owes $tag"
+if [ "$apply" = 0 ]; then
+  decided "$kind" "$tag" "${tag#v}"
+  exit 0
+fi
+
+g tag -a "$tag" -m "$message" "$C" || die 10 "$tag could not be created"
+if ! g push --quiet "$remote" "refs/tags/$tag"; then
+  # Someone else pushed a tag of that name first. When it names this commit the work is
+  # done; otherwise this run is the loser and the next one recomputes from the remote.
+  g tag -d "$tag" >/dev/null 2>&1 || true
+  g fetch --quiet "$remote" "+refs/tags/$tag:refs/tags/$tag" 2>/dev/null || true
+  if [ "$(g rev-parse -q --verify "$tag^{commit}" 2>/dev/null || true)" = "$C" ]; then
+    say "$tag was pushed by another run at the same commit"
+  else
+    die 10 "$tag is taken on $remote by another commit; the next run recomputes the number"
+  fi
+fi
+say "$tag pushed to $remote"
+dispatch_release "$tag"
+decided "$kind" "$tag" "${tag#v}"

@@ -23,6 +23,7 @@ related:
   - test:test/cases/1060_the_version_is_allocated_at_landing.sh
   - test:test/cases/1061_the_executor_allocates_the_version_at_landing.sh
   - file:apps/majordomus-cli/src/integration/allocate.rs
+  - file:.ai/repo/adrs/0240-a-landing-publishes-its-release.md
 ---
 
 # 134. The next version is allocated at landing, by the integration executor, from the trunk's version and the change's measured impact under a typed policy floor
@@ -85,7 +86,9 @@ serialised the choice except people.
    per-pull-request switch.
 5. **Allocation is not publication.** A raised version is an integrated fact; a release is
    published by a tag and verified by its record and smoke. Nothing in this decision tags
-   or publishes.
+   or publishes. Amended by ADR 0240: publication is automatic, a dev pre-release for every
+   green landing that carries an issue and the minor for every completed milestone, made by
+   `scripts/ci/release-autotag` rather than by a person.
 6. **A repository that says nothing is unchanged.** `release.allocation` defaults to `off`
    and `release.floor` to `none`: the gate and the bump work exactly as before.
 

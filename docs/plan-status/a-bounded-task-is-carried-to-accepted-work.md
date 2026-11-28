@@ -214,7 +214,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares lib with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4811; they may not run concurrently |
 | WARN | `scope_conflict` | `I4522` | shares apps/majordomus-cli/src/commands/distribution.rs with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I4522` | shares docs/RELEASE.md with I4811; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/finish.sh with I4628; they may not run concurrently |
 | WARN | `scope_conflict` | `I4567` | shares lib/finish.sh with I4632; they may not run concurrently |

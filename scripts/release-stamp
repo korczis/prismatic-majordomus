@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# release-stamp — a dev tag's version, stamped into the build that publishes it (ADR 0240).
+#
+#   scripts/release-stamp --tag vX.Y.Z-dev.N --check   the tag is a dev release of the version
+#                                                       this tree declares, and the shell tool
+#                                                       prints that version
+#   scripts/release-stamp --tag vX.Y.Z-dev.N           write the tag's version into this
+#                                                       checkout, so the executable and the
+#                                                       shell tool built from it print it
+#   scripts/release-stamp --tag vX.Y.Z [--check]        not a dev tag: --check is
+#                                                       `scripts/release-version --check --tag`,
+#                                                       and nothing is written
+#
+# A dev release (vX.Y.Z-dev.N) is cut by scripts/ci/release-autotag from a master commit as it
+# landed, and that commit declares X.Y.Z: the release it leads up to, which the next stable tag
+# will carry. No commit declares the dev version, because every landing would then owe a bump
+# pull request of its own. So the version is the tag's, and the release job stamps it into the
+# checkout it builds from: the manifest's `[package] version` line, the lock's own
+# `majordomus-cli` entry and the projection share/version.txt, exactly the lines
+# `majordomus release bump` writes and `scripts/derive` derives. The checkout is the job's and
+# is thrown away with it; nothing stamped is committed. The authored version keeps its one
+# writer (ADR 0029, ADR 0085): this writes a build, not the tree.
+#
+# Exit: 0 ok · 2 usage · 10 the tag is not a dev release of what this tree declares, or the
+# stamp did not take · 12 a file could not be read.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
+LOCK="$ROOT/apps/majordomus-cli/Cargo.lock"
+PROJECTION="$ROOT/share/version.txt"
+
+tag=""; check=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tag) tag="${2:-}"; shift 2 ;;
+    --check) check=1; shift ;;
+    -h|--help) sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) printf 'release-stamp: unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$tag" ] || { printf 'release-stamp: --tag is required\n' >&2; exit 2; }
+
+case "$tag" in
+  v*-dev.*) ;;
+  *)
+    if [ "$check" = 1 ]; then exec "$ROOT/scripts/release-version" --check --tag "$tag"; fi
+    printf 'release-stamp: %s is not a dev tag; the tree already declares what it releases, nothing stamped\n' "$tag"
+    exit 0 ;;
+esac
+
+crate="$("$ROOT/scripts/release-version")" || exit 12
+base="${tag#v}"; n="${base##*-dev.}"; base="${base%-dev.*}"
+case "$crate" in *-*)
+  printf 'release-stamp: FAIL the tree declares the pre-release %s; a dev tag is cut only from a final version\n' "$crate" >&2
+  exit 10 ;;
+esac
+case "$n" in ''|*[!0-9]*|0*)
+  printf 'release-stamp: FAIL %s: the dev number must be a positive whole number\n' "$tag" >&2
+  exit 10 ;;
+esac
+if [ "$base" != "$crate" ]; then
+  printf 'release-stamp: FAIL %s is a dev release of %s and this tree declares %s; a dev tag is v<declared>-dev.<N>\n' \
+    "$tag" "$base" "$crate" >&2
+  exit 10
+fi
+version="${tag#v}"
+
+if [ "$check" = 1 ]; then
+  printf 'release-stamp: OK   %s is dev release %s of the %s this tree declares\n' "$tag" "$n" "$crate"
+  exec "$ROOT/scripts/release-version" --check
+fi
+
+for f in "$MANIFEST" "$LOCK" "$PROJECTION"; do
+  [ -f "$f" ] || { printf 'release-stamp: no %s\n' "$f" >&2; exit 12; }
+done
+stamp() { # <file> <awk program>: rewrite the file through the program, in place
+  local tmp="$1.stamp.$$"
+  awk -v to="$version" "$2" "$1" > "$tmp" && mv "$tmp" "$1"
+}
+# The three programs are awk's, so nothing in them is the shell's to expand.
+# shellcheck disable=SC2016
+# the first version line of [package], as release::version::write rewrites it
+stamp "$MANIFEST" '
+  /^\[/ { pkg = ($0 == "[package]") }
+  pkg && !done && /^version *=/ && /"/ { print "version = \"" to "\""; done = 1; next }
+  { print }'
+# the version line of the lock's own entry, and no dependency's
+# shellcheck disable=SC2016
+stamp "$LOCK" '
+  $0 == "[[package]]" { here = 0 }
+  $0 == "name = \"majordomus-cli\"" { here = 1 }
+  here && !done && /^version *=/ && /"/ { print "version = \"" to "\""; here = 0; done = 1; next }
+  { print }'
+# the projection the shell tool prints, past its banner
+stamp "$PROJECTION" '
+  !done && /^version=/ { print "version=" to; done = 1; next }
+  { print }'
+printf 'release-stamp: %s stamped into this checkout (manifest, lock, share/version.txt); never commit it\n' "$version"
+exec "$ROOT/scripts/release-version" --check --tag "$tag"

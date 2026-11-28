@@ -129,6 +129,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3110` | shares lib/commands.sh with I4671; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares scripts/ci/rule-proof-check with I4781; they may not run concurrently |
 | WARN | `scope_conflict` | `I3110` | shares lib/commands.sh with I4803; they may not run concurrently |
+| WARN | `scope_conflict` | `I3110` | shares .ai/repo/project/intents with I4811; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares docs/CLAIMS.yaml with I3118; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares .github/workflows/github.yml with I3120; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares .ai/repo/project/intents with I3162; they may not run concurrently |
@@ -143,6 +144,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3113` | shares docs/INTEGRATION.md with I4582; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares docs/INTEGRATION.md with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares docs/INTEGRATION.md with I4754; they may not run concurrently |
+| WARN | `scope_conflict` | `I3113` | shares .ai/repo/project/intents with I4811; they may not run concurrently |
 | WARN | `scope_conflict` | `I3115` | shares scripts/generate-site-data with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I3115` | shares lib/adr.sh with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I3115` | shares scripts/generate-site-data with I3750; they may not run concurrently |
@@ -203,6 +205,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4783; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares lib/doctor.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I3116` | shares .ai/repo/ci/gates.yaml with I4811; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares .ai/repo/project/intents with I3119; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares .ai/repo/project/intents with I3229; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares docs/CLAIMS.yaml with I3352; they may not run concurrently |

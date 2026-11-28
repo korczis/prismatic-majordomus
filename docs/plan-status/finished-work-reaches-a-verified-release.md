@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [finished-work-reaches-a-verified-release](https://majordomus.dev/plan/finished-work-reaches-a-verified-release/) | BLOCKED | 0/2 | 0 | 2 | 0 | 0 | 0 | Work does not end when it is written or merged. A finished change flows to master, to a release whose version the public contract decided, and to every surface that publishes it, at the pace work is finished; the flow is measured, its backlog is loud before it is large, a red trunk holds it, and nothing calls a change delivered before its publication is observed. |
+| [finished-work-reaches-a-verified-release](https://majordomus.dev/plan/finished-work-reaches-a-verified-release/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | Work does not end when it is written or merged. A finished change flows to master, to a release whose version the public contract decided, and to every surface that publishes it, at the pace work is finished; the flow is measured, its backlog is loud before it is large, a red trunk holds it, and nothing calls a change delivered before its publication is observed. |
 
 ## Issues
 
@@ -17,6 +17,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|---|
 | [I3200](https://majordomus.dev/plan/i3200/) | BLOCKED | 2 | I2709 | The trunk's protection is compared with the CI model, and a drift is a finding that names the change |
 | [I3212](https://majordomus.dev/plan/i3212/) | BLOCKED | 1 | I3204 | Two open pull requests that realise the same issue are reported as duplicates, with the survivor named |
+| [I4811](https://majordomus.dev/plan/i4811/) | READY | 0 | — | A green landing that carries an issue publishes vX.Y.Z-dev.N, and a completed milestone the minor, with no person tagging |
 
 ## Findings
 

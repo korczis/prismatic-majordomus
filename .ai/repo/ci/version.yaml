@@ -25,6 +25,9 @@ trigger:
       - lib/**
   schedule: '17 6 * * *'
   dispatch: true
+  # a dispatch may name the version to propose: scripts/ci/release-autotag asks for the next
+  # minor when the tree declares a version already released (ADR 0240)
+  dispatch_input: to
   # one question at a time, never cancelled: a cancelled run is a skipped question
   concurrency: version
 
@@ -40,7 +43,7 @@ phases:
     job: owed
     when: the required version differs from the declared one, and no proposal for it is open
     permissions: contents-write, pull-requests-write
-    runs: majordomus release bump && scripts/derive && scripts/derive-check
+    runs: majordomus release bump [--exact <to>] && scripts/derive && scripts/derive-check
     summary: every site that states a version is raised at once by the one writer, the projections follow, and the result is proposed as a pull request on release/bump-<version>
 
 # ---------------------------------------------------------------- what the actor may not do

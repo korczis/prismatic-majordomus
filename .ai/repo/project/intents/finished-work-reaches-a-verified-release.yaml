@@ -40,9 +40,13 @@ satisfaction:
     criterion: "Whether a commit may be released is one read naming each condition, and the release path reads the same functions (planned proof: case_release_readiness_is_one_read (I3208) and case_a_fresh_clone_reaches_published_evidence (I3213))"
     evidence: command
     ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+  - id: landed-work-publishes-itself
+    criterion: "A green master commit that landed an issue is published as vX.Y.Z-dev.N and one that completed a milestone as the minor, exactly once per commit, never from a red commit, with no person tagging (ADR 0240, I4811)"
+    evidence: test
+    ref: test/cases/4780_a_landing_publishes_its_release.sh
   - id: finished-work-names-its-landing
     criterion: "A finished task names the pull request that carries it and its disposition (planned proof: case_finish_names_its_pull_request (I3207))"
     evidence: command
     ref: "majordomus intent explain finished-work-reaches-a-verified-release"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-11-28

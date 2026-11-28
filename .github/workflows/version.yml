@@ -39,7 +39,15 @@ on:
       - lib/**
   schedule:
     - cron: '17 6 * * *'
+  # `to` names the version to propose. scripts/ci/release-autotag asks for one when landed work
+  # cannot be released because the tree declares a version already released, or one below the
+  # minor a completed milestone owes (ADR 0240); without it the contract decides, as on a push.
   workflow_dispatch:
+    inputs:
+      to:
+        description: "the version to propose (release bump --exact); empty: the one the public contract requires"
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -64,6 +72,8 @@ jobs:
 
       - id: ask
         name: what does the surface owe
+        env:
+          TO: ${{ github.event.inputs.to }}
         run: |
           set -euo pipefail
           cargo build --quiet --manifest-path apps/majordomus-cli/Cargo.toml
@@ -75,6 +85,8 @@ jobs:
           [ "$rc" = 0 ] || [ "$rc" = 10 ] || exit "$rc"
           declared="$(jq -r '.declared_version' analysis.json)"
           required="$(jq -r '.required_version' analysis.json)"
+          # a version asked for by name is proposed when the tree does not declare it already
+          [ -z "${TO:-}" ] || required="$TO"
           echo "declared=$declared" >> "$GITHUB_OUTPUT"
           echo "required=$required" >> "$GITHUB_OUTPUT"
           if [ "$declared" = "$required" ]; then
@@ -95,6 +107,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REQUIRED: ${{ steps.ask.outputs.required }}
           DECLARED: ${{ steps.ask.outputs.declared }}
+          TO: ${{ github.event.inputs.to }}
         run: |
           set -euo pipefail
           BIN=apps/majordomus-cli/target/debug/majordomus
@@ -109,7 +122,7 @@ jobs:
             exit 0
           fi
           git checkout -b "$branch"
-          "$BIN" release bump
+          "$BIN" release bump ${TO:+--exact "$TO"}
           scripts/derive
           scripts/derive-check
           {
