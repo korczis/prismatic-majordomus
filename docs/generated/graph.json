@@ -82801,6 +82801,8 @@
         "route": "/cockpit/objects/issue/i4634",
         "source": ".ai/repo/project/issues/I4634.yaml",
         "facts": {
+          "completed_at": "2026-11-28T05:34:02Z",
+          "completed_event": "sha256:15ff25282e34d21290ce46b2a3118c12acd845eb615cd616c0bc4b41ac784e9e",
           "created_at": "2026-11-17",
           "depends_on": [],
           "evidence_required": [
@@ -82831,6 +82833,9 @@
           ],
           "serves": [],
           "slug": "a-merge-does-not-move-the-committed-delivery",
+          "started_at": "2026-11-28T05:33:07Z",
+          "started_event": "sha256:29cbd17bb9bf355dd4f5b16928c933e975913a9dc8903d9aaa650ba31525534e",
+          "updated_at": "2026-11-28T05:34:02Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
@@ -83782,6 +83787,8 @@
         "route": "/cockpit/objects/issue/i4721",
         "source": ".ai/repo/project/issues/I4721.yaml",
         "facts": {
+          "completed_at": "2026-11-28T05:36:01Z",
+          "completed_event": "sha256:69c7f143763f3c99b3e4ceb01493cbfdb8f3ca07f96efb4f69e80a0a958ad009",
           "created_at": "2026-11-25",
           "desired_state": "ADR 0199 on master reads accepted with its amendment; the knowledge record is on master; this issue carries both merges as evidence.",
           "evidence_required": [
@@ -83805,7 +83812,7 @@
             "https://github.com/korczis/prismatic-majordomus/pull/3123",
             "https://github.com/korczis/prismatic-majordomus/pull/3121"
           ],
-          "updated_at": "2026-11-25T04:10:33Z",
+          "updated_at": "2026-11-28T05:36:01Z",
           "validation": [
             "majordomus plan validate",
             "bin/majordomus knowledge check"
@@ -85335,6 +85342,8 @@
             "test/cases/4779 fails at its first assertion against scripts/ci/homepage-check as it was at 46775282570, and its mutant of the fixed checker fails situation 1",
             "test/cases/333, 3742 and every other case that runs scripts/ci/homepage-check pass unchanged"
           ],
+          "completed_at": "2026-11-28T05:35:16Z",
+          "completed_event": "sha256:1fd318f6d25d2540f5ecf9a4b3021f5674160401112e6cf1ca6fd0da6d9767f0",
           "created_at": "2026-11-25",
           "depends_on": [],
           "evidence_required": [
@@ -85355,6 +85364,9 @@
             ".ai/repo/project/issues/I4810.yaml"
           ],
           "slug": "homepage-check-compares-the-delivery-the-page-renders",
+          "started_at": "2026-11-28T05:34:37Z",
+          "started_event": "sha256:fae125de2adc2582ce012f691f6396c7641fc94ed2f4d68efa55aa50f8dd4e69",
+          "updated_at": "2026-11-28T05:35:16Z",
           "validation": [
             "bash test/run.sh 4779_homepage_check_compares_the_delivery_the_page_renders",
             "bash test/run.sh 333_homepage_narrative 3742_a_published_page_reads_delivery_at_its_build_commit"
