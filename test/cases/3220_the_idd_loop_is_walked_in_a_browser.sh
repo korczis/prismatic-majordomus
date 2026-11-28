@@ -12,6 +12,9 @@
 #   read        its issues with their status, and the dependency: I0002 waits for I0001; every
 #               issue id on the screen is a link, and the issues that share a scope (I0001 and
 #               I0003) are one counted line that opens to the pairs (I2900)
+#   sentence    a second intent, whose one issue I0004 waits for nothing, says so in one
+#               sentence where the graph was, and its one wave in one sentence where the table
+#               was (I2909)
 #   move        I0001 is started from its move form, opened by the primary action; the row
 #               reads active
 #   work        the work I0001 owes is written into its scope and committed
@@ -83,6 +86,25 @@ milestones:
 satisfaction:
   - id: the-answer-holds
     criterion: The answer the work owes is in its scope
+    evidence: test
+    ref: checks/the-answer-holds.sh
+YAML
+# a second intent with a milestone of one issue that waits for nothing: its panels have nothing
+# to draw, and each says so in one sentence (I2909)
+pj_milestone ask 2
+pj_issue I0004 ask
+sed -i.bak 's#^title: Issue I0004$#title: The question is asked#' .ai/repo/project/issues/I0004.yaml && rm -f .ai/repo/project/issues/I0004.yaml.bak
+cat > .ai/repo/project/intents/the-question-is-asked.yaml <<'YAML'
+id: the-question-is-asked
+title: The question is asked
+statement: "Whoever has a question finds where to ask it."
+invariants:
+  - The question is asked once
+milestones:
+  - ask
+satisfaction:
+  - id: the-question-is-heard
+    criterion: The question reaches the one who answers it
     evidence: test
     ref: checks/the-answer-holds.sh
 YAML
@@ -233,6 +255,25 @@ try {
   }
   console.log(`    read: I0001 ${await status(a, 'I0001')}, I0002 ${await status(a, 'I0002')} waiting for I0001; every issue id is a link; "${summary}" opens to the pairs`);
   await a.screenshot({ path: `${shots}/1-picked.png`, fullPage: true });
+
+  step = 'sentence';
+  // sentence: an intent with nothing to draw says so in one sentence per panel (I2909)
+  const s = await browser.newPage({ viewport: { width: 1440, height: 1400 } });
+  watch(s, 'second intent');
+  await s.goto(`${base}/ui/idd?intent=the-question-is-asked`, { waitUntil: 'networkidle' });
+  const sentenceOf = async (title, want) => {
+    const body = s.locator(`section[aria-label="${title}"] .mj-ui-panel-body`);
+    if (await body.count() !== 1) fail(`the second intent has no panel "${title}"`);
+    const said = (await body.innerText()).replace(/\s+/g, ' ').trim();
+    if (said !== want) fail(`"${title}" reads "${said}", not the one sentence "${want}"`);
+    const drawn = await body.locator('table, .mj-ui-graph, canvas, svg').count();
+    if (drawn) fail(`"${title}" draws ${drawn} table or graph element(s) beside its sentence`);
+  };
+  await sentenceOf('What waits for what?', 'No issue of this intent depends on another.');
+  await sentenceOf('What can run together?', 'Its one issue in a wave is in wave 0.');
+  await noBareIds(s, 'sentence');
+  console.log('    sentence: the second intent says "no dependency" and "one wave" in one sentence each');
+  await s.close();
 
   step = 'move';
   // move: start I0001 from its move form, opened by the primary action (I2917)
