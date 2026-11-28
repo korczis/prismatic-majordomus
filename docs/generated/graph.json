@@ -75979,7 +75979,9 @@
           ],
           "serves": [],
           "slug": "a-release-record-lands-within-its-bound",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-28T05:50:07Z",
+          "started_event": "sha256:22283b6a53ec6e474342937182f76725c1305aaa766f17b838d118dd4400000e",
+          "updated_at": "2026-11-28T05:50:07Z",
           "validation": [
             "bash test/run.sh 4342_a_release_record_lands_within_its_bound 996_the_record_pull_request_gets_its_verdict",
             "actionlint .github/workflows/release.yml",
@@ -113364,6 +113366,13 @@
         "label": "test/cases/4337_a_changed_skill_raises_its_version.sh",
         "route": "/cockpit/objects/test/test-cases-4337-a-changed-skill-raises-its-version-sh",
         "source": "test/cases/4337_a_changed_skill_raises_its_version.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4342_a_release_record_lands_within_its_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4342_a_release_record_lands_within_its_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4342-a-release-record-lands-within-its-bound-sh",
+        "source": "test/cases/4342_a_release_record_lands_within_its_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
@@ -164143,6 +164152,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4342_a_release_record_lands_within_its_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -169384,8 +169398,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4603,
+      "edges": 10365,
       "acyclic": false,
       "truncated": false
     }

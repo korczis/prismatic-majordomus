@@ -32,6 +32,11 @@
 #   7  what lets the record merge is named where a lander reads it: the pull request's body,
 #      the publish job's notice, the runbook and the failure table name the approval and the
 #      close and reopen, and the documentation names the token remedy as the owner's
+#   8  the owner's credential (I4342): the propose step opens the pull request with the secret
+#      RELEASE_RECORD_TOKEN when the repository holds it and with the workflow's token when it
+#      does not or it is refused, saying so; no token value is written anywhere; and
+#      docs/DISTRIBUTION.md names the credential as the owner's, its kinds, how it is rotated,
+#      and the release seat's bound that holds without it
 . "$ROOT/test/lib.sh"
 RL="$ROOT/.github/workflows/release.yml"
 VL="$ROOT/.github/workflows/validate.yml"
@@ -108,12 +113,20 @@ grep -qF 'branch protection and the pull request'"'"'s check rollup read no chec
   || { echo "    docs/DISTRIBUTION.md no longer says what branch protection does not read"; exit 1; }
 
 # ---------------------------------------------------------------- 7. what lets it merge, named
-body_line="$(grep -F -- '--body "Written by scripts/release-record' "$RL" | head -n 1)"
-for want in 'approve its waiting validate run' 'close and reopen it' 'majordomus prs drain' \
-  'not the merge'"'"'s verdict'; do
-  printf '%s\n' "$body_line" | grep -qF "$want" \
-    || { echo "    the record pull request's body does not say: $want"; exit 1; }
+# the propose step, from its name to the next step's
+pstep="$(line_of "$RL" '- name: propose the record and the metadata it publishes')"
+[ -n "$pstep" ] || { echo "    the step that proposes the record is gone or renamed"; exit 1; }
+awk -v s="$pstep" 'NR > s && /^      - name: / {exit} NR >= s' "$RL" > "$T/propose.txt"
+body_line="$(grep -F -- '--body "Written by scripts/release-record' "$T/propose.txt" | head -n 1)"
+person_line="$(grep -F 'person_starts="' "$T/propose.txt" | head -n 1)"
+for want in 'approve its waiting validate run' 'close and reopen it' 'majordomus prs drain'; do
+  printf '%s\n' "$person_line" | grep -qF "$want" \
+    || { echo "    the record pull request's body, opened with the workflow's token, does not say: $want"; exit 1; }
 done
+printf '%s\n' "$body_line" | grep -qF 'not the merge'"'"'s verdict' \
+  || { echo "    the record pull request's body does not say the dispatch is not the merge's verdict"; exit 1; }
+printf '%s\n' "$body_line" | grep -qF ' $1 ' \
+  || { echo "    the record pull request's body does not say which token opened it"; exit 1; }
 grep -qF '::notice::the release record is proposed in $url; it merges on a run of its own, which starts when a person approves its waiting run or closes and reopens it' "$RL" \
   || { echo "    the publish job's notice does not name the person's step"; exit 1; }
 awk '/^# 6\. /,/^```$/' "$DIST" > "$T/runbook.txt"
@@ -128,4 +141,25 @@ done
 grep -qF 'a credential only the repository'"'"'s owner can create and hold, and is the owner'"'"'s decision' "$T/dist.txt" \
   || { echo "    docs/DISTRIBUTION.md does not name the token remedy as the owner's decision"; exit 1; }
 
-echo "    the release dispatches validate on the record's branch, planned as the change it is, and nothing calls it the record's verdict; a request that cannot start is a warning; the input is read from the environment and an unknown value is refused; the body, the notice, the runbook and the failure table name the person's step"
+# ---------------------------------------------------------------- 8. the owner's credential (I4342)
+# the propose step reads it from the secret, opens the pull request with it when it is there,
+# and falls back to the workflow's token with a warning when it is refused; no value is written
+grep -qF 'RECORD_TOKEN: ${{ secrets.RELEASE_RECORD_TOKEN }}' "$T/propose.txt" \
+  || { echo "    the propose step does not read the owner's RELEASE_RECORD_TOKEN from the repository's secrets"; exit 1; }
+grep -qF 'GH_TOKEN: ${{ github.token }}' "$T/propose.txt" \
+  || { echo "    the propose step lost the workflow's own token, its fallback"; exit 1; }
+grep -qF 'if url="$(GH_TOKEN="$RECORD_TOKEN" propose "$owner_starts"' "$T/propose.txt" \
+  || { echo "    the pull request is not opened with the owner's token when it is there"; exit 1; }
+grep -qF "::warning::the owner's RELEASE_RECORD_TOKEN did not open the record pull request" "$T/propose.txt" \
+  || { echo    "a refused owner's token is not said"; exit 1; }
+grep -qF 'url="$(propose "$person_starts"' "$T/propose.txt" \
+  || { echo "    a refused or absent owner's token does not fall back to the workflow's token"; exit 1; }
+grep -nE 'gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}' "$RL" "$DIST" \
+  && { echo "    a token value is written into the workflow or the documentation"; exit 1; }
+# docs/DISTRIBUTION.md names the credential as the owner's, what it is, and how it is rotated
+for want in 'The credential is the owner'"'"'s' 'RELEASE_RECORD_TOKEN' 'GitHub App' 'fine-grained' \
+  'Rotating it' 'gh secret set RELEASE_RECORD_TOKEN' 'scripts/ci/release-check --seat'; do
+  grep -qF "$want" "$T/dist.txt" || { echo "    docs/DISTRIBUTION.md does not say: $want"; exit 1; }
+done
+
+echo "    the release dispatches validate on the record's branch, planned as the change it is, and nothing calls it the record's verdict; a request that cannot start is a warning; the input is read from the environment and an unknown value is refused; the body, the notice, the runbook and the failure table name the person's step; the owner's RELEASE_RECORD_TOKEN opens the record when it is there, and the documentation names it as the owner's and how it is rotated"

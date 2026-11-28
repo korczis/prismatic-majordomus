@@ -205,10 +205,13 @@ git tag v0.3.0 && git push origin v0.3.0
 # 5. the pipeline publishes, puts releases/v0.3.0.json and releases/latest.json on the
 #    site at once (ADR 0131), then proposes the record as release/record-v0.3.0; confirm
 #    with curl -fsSL https://majordomus.dev/releases/latest.json
-# 6. start the record pull request's own run, which the pipeline cannot: approve its
+# 6. start the record pull request's own run when the owner's RELEASE_RECORD_TOKEN did not
+#    open it, which the pipeline cannot: approve its
 #    waiting validate run, or close and reopen it (majordomus prs drain reopens it)
 # 7. merge the record's pull request once that run's ci is green; Pages then deploys master
 #    with the record, and scripts/pages verify --commit <merge sha> confirms it
+# 8. until it lands, the release seat runs scripts/ci/release-check --seat, which fails, naming
+#    the pull request and its age, once the record has waited more than two hours
 ```
 
 **The tag comes first and the record second, and the window between them is pending, not
@@ -411,6 +414,31 @@ events start workflows would make its own run start at once; that needs a creden
 repository's owner can create and hold, and is the owner's decision. Until it is made, a
 release whose record run the dispatch could not approve costs one person's act between
 publication and its record reaching master.
+
+The pipeline is ready for that decision (I4342). The publish job reads the repository secret
+`RELEASE_RECORD_TOKEN` and, when it is there, opens the record's pull request with it; the
+pull request's body and the job's notice say which token opened it. Absent, or refused
+because it expired or was revoked, the pull request is opened with `GITHUB_TOKEN` as before,
+and a refusal is a warning, never the job's failure.
+
+**The credential is the owner's.** It is a GitHub App installation token or a fine-grained
+personal access token, limited to this repository, with Pull requests read and write. The
+owner creates it, stores it with `gh secret set RELEASE_RECORD_TOKEN`, and nothing in the
+repository holds its value; evidence that a record landed by it names the run, the pull
+request and the token's kind, never the value. **Rotating it** is the owner's act, before it
+expires and whenever it may have leaked: create the new token, `gh secret set
+RELEASE_RECORD_TOKEN` with it, then revoke the old one. A release that runs between an
+expiry and the rotation loses nothing but the person's step above.
+
+With the credential or without it, a record is not left waiting unnoticed. The release seat
+runs `scripts/ci/release-check --seat` after every tag until the record lands: every proposed
+record is reported with the minutes it has waited, and past the seat's bound, two hours
+(`MJ_RELEASE_RECORD_SEAT_MINUTES`), the check fails, naming the record's pull request (asked
+of the forge; its branch when the forge cannot be asked) and its age. On 2026-11-27 v1.3.0's
+record #3202 waited 35 minutes for a person's merge while the homepage offered 1.2.0 and
+`releases/latest.json` named 1.3.0. The structure job runs the gate without `--seat`: an
+unrelated head is not the record's to land, and only the 24-hour grace below refuses it
+(`test/cases/4342_a_release_record_lands_within_its_bound.sh`).
 
 #### The site serves a release before its record lands
 
