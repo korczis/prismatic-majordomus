@@ -130,21 +130,21 @@ done
 if [ "$authored" = 0 ]; then ok "no changelog is kept by hand"; fi
 
 # ----------------------------------------------- 4. the tree is not behind what was published
-# A version is X.Y.Z, or a pre-release X.Y.Z-alpha.N, -beta.N or -rc.N and no other suffix
+# A version is X.Y.Z, or a pre-release X.Y.Z-alpha.N, -beta.N, -dev.N or -rc.N and no other suffix
 # (I2829; the same pattern is in scripts/site-deploy, scripts/ci/install-check and release.yml,
 # and site/static/install.sh refuses any pre-release it was not asked for by name). Precedence is semantic versioning's: the numbers
-# first, a pre-release below its own final, alpha < beta < rc, then N as a number. A plain
+# first, a pre-release below its own final, alpha < beta < dev < rc, then N as a number. A plain
 # `sort -t.` ties 1.0.0 with 1.0.0-alpha.1 and breaks the tie bytewise, the wrong way round.
-VERSION_ERE='[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?'
+VERSION_ERE='[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc|dev)\.[0-9]+)?'
 version_newer() {   # <a> <b>: exit 0 when a takes precedence over b
   awk -v a="$1" -v b="$2" 'function key(v, k,   core, pre, n, c, p) {
       core = v; pre = ""
       if (index(v, "-")) { core = substr(v, 1, index(v, "-") - 1); pre = substr(v, index(v, "-") + 1) }
       n = split(core, c, ".")
       k[1] = c[1] + 0; k[2] = c[2] + 0; k[3] = c[3] + 0
-      if (pre == "") { k[4] = 3; k[5] = 0; return }
+      if (pre == "") { k[4] = 4; k[5] = 0; return }
       split(pre, p, ".")
-      k[4] = (p[1] == "alpha") ? 0 : (p[1] == "beta") ? 1 : 2
+      k[4] = (p[1] == "alpha") ? 0 : (p[1] == "beta") ? 1 : (p[1] == "dev") ? 2 : 3
       k[5] = p[2] + 0
     }
     BEGIN {

@@ -140,6 +140,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4680; they may not run concurrently |
+| WARN | `scope_conflict` | `I2374` | shares scripts/site-deploy with I4811; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3759` | shares scripts/ci/homepage-check with I3760; they may not run concurrently |

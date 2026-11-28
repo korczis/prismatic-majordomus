@@ -2393,6 +2393,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/ci/release-auto.yaml",
+        "kind": "file",
+        "label": "release-auto.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/ci/release-auto.yaml",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/commit-policy-baseline.txt",
         "kind": "file",
         "label": "commit-policy-baseline.txt",
@@ -2465,6 +2473,14 @@
         "external": true
       },
       {
+        "id": "file:.github/workflows/release-auto.yml",
+        "kind": "file",
+        "label": "release-auto.yml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".github/workflows/release-auto.yml",
+        "external": true
+      },
+      {
         "id": "file:.github/workflows/release.yml",
         "kind": "file",
         "label": "release.yml",
@@ -2478,6 +2494,14 @@
         "label": "validate.yml",
         "summary": "named by the layer; not an object of this index",
         "source": ".github/workflows/validate.yml",
+        "external": true
+      },
+      {
+        "id": "file:.github/workflows/version.yml",
+        "kind": "file",
+        "label": "version.yml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".github/workflows/version.yml",
         "external": true
       },
       {
@@ -4249,6 +4273,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/release-autotag",
+        "kind": "file",
+        "label": "release-autotag",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/release-autotag",
+        "external": true
+      },
+      {
         "id": "file:scripts/ci/release-check",
         "kind": "file",
         "label": "release-check",
@@ -4438,6 +4470,14 @@
         "label": "release-record",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/release-record",
+        "external": true
+      },
+      {
+        "id": "file:scripts/release-stamp",
+        "kind": "file",
+        "label": "release-stamp",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/release-stamp",
         "external": true
       },
       {
@@ -7712,7 +7752,8 @@
             "file:.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
             "test:test/cases/1060_the_version_is_allocated_at_landing.sh",
             "test:test/cases/1061_the_executor_allocates_the_version_at_landing.sh",
-            "file:apps/majordomus-cli/src/integration/allocate.rs"
+            "file:apps/majordomus-cli/src/integration/allocate.rs",
+            "file:.ai/repo/adrs/0240-a-landing-publishes-its-release.md"
           ],
           "tags": [
             "release",
@@ -9920,6 +9961,40 @@
             "profiles",
             "policy",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0240",
+        "kind": "adr",
+        "label": "adr-0240",
+        "summary": "A green master commit that landed an issue publishes a dev pre-release, and one that completed a milestone publishes the minor, with no person tagging",
+        "route": "/cockpit/objects/adr/adr-0240",
+        "source": ".ai/repo/adrs/0240-a-landing-publishes-its-release.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-28",
+          "related": [
+            "file:.ai/repo/adrs/0134-the-version-is-allocated-at-landing.md",
+            "file:.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
+            "file:.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md",
+            "file:.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
+            "file:.ai/repo/adrs/0069-a-capability-may-be-scripted.md",
+            "file:.ai/repo/ci/release-auto.yaml",
+            "file:.github/workflows/release-auto.yml",
+            "file:.github/workflows/release.yml",
+            "file:.github/workflows/version.yml",
+            "file:scripts/ci/release-autotag",
+            "file:scripts/release-stamp",
+            "file:docs/RELEASE.md",
+            "file:.ai/repo/project/issues/I4811.yaml",
+            "test:test/cases/4780_a_landing_publishes_its_release.sh",
+            "test:test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh"
+          ],
+          "tags": [
+            "release",
+            "versioning",
+            "automation"
           ]
         }
       },
@@ -23120,7 +23195,7 @@
             "Running the continuous drain as a detached execution (a decision for the session-proceeds runtime work, in flight on a branch)",
             "A delivery or throughput figure before the owner accepts ADR 0198's definition"
           ],
-          "updated_at": "2026-10-18"
+          "updated_at": "2026-11-28"
         }
       },
       {
@@ -85362,6 +85437,64 @@
         }
       },
       {
+        "id": "majordomus://issue/I4811",
+        "kind": "issue",
+        "label": "I4811",
+        "summary": "A green landing that carries an issue publishes vX.Y.Z-dev.N, and a completed milestone the minor, with no person tagging",
+        "route": "/cockpit/objects/issue/i4811",
+        "source": ".ai/repo/project/issues/I4811.yaml",
+        "facts": {
+          "created_at": "2026-11-28",
+          "depends_on": [],
+          "evidence_required": [
+            "test",
+            "dev_release_published_by_itself"
+          ],
+          "milestone": "finished-work-reaches-a-verified-release",
+          "non_scope": [
+            "Landing the record pull request without a person: I4342",
+            "Landing a version.yml bump proposal without a person: the landing seat lands it until a credential lets it land itself",
+            "Exempting a dev release's run from the release path's runner priority (scripts/ci/release-path)",
+            "Moving the decision into a typed capability beside release.currency (the inventory records the migration)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0240-a-landing-publishes-its-release.md",
+            ".ai/repo/adrs/0134-the-version-is-allocated-at-landing.md",
+            ".ai/repo/ci/release-auto.yaml",
+            ".ai/repo/ci/version.yaml",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml",
+            ".github/workflows/release-auto.yml",
+            ".github/workflows/release.yml",
+            ".github/workflows/version.yml",
+            "scripts/ci/release-autotag",
+            "scripts/release-stamp",
+            "scripts/site-deploy",
+            "scripts/ci/install-check",
+            "scripts/ci/release-check",
+            "scripts/release-probe",
+            "test/cases/4780_a_landing_publishes_its_release.sh",
+            "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+            "docs/RELEASE.md",
+            "docs/DISTRIBUTION.md"
+          ],
+          "serves": [
+            "finished-work-reaches-a-verified-release#landed-work-publishes-itself"
+          ],
+          "slug": "a-landing-publishes-its-release",
+          "validation": [
+            "bash test/run.sh 4780_a_landing_publishes_its_release 4781_a_dev_tag_is_stamped_into_its_build",
+            "bash test/run.sh 353_the_version_bump_has_an_actor 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -113527,6 +113660,20 @@
         "source": "test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4780_a_landing_publishes_its_release.sh",
+        "kind": "test",
+        "label": "test/cases/4780_a_landing_publishes_its_release.sh",
+        "route": "/cockpit/objects/test/test-cases-4780-a-landing-publishes-its-release-sh",
+        "source": "test/cases/4780_a_landing_publishes_its_release.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+        "kind": "test",
+        "label": "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+        "route": "/cockpit/objects/test/test-cases-4781-a-dev-tag-is-stamped-into-its-build-sh",
+        "source": "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/47_mutation.sh",
         "kind": "test",
         "label": "test/cases/47_mutation.sh",
@@ -125274,6 +125421,11 @@
       },
       {
         "source": "majordomus://adr/adr-0134",
+        "target": "majordomus://adr/adr-0240",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0134",
         "target": "majordomus://rule/project.release-is-a-projection@2",
         "kind": "put_in_force"
       },
@@ -129415,6 +129567,86 @@
       {
         "source": "majordomus://adr/adr-0232",
         "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "file:.ai/repo/ci/release-auto.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "file:.github/workflows/release-auto.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "file:.github/workflows/release.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "file:.github/workflows/version.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "file:scripts/ci/release-autotag",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "file:scripts/release-stamp",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://adr/adr-0029",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://adr/adr-0051",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://adr/adr-0069",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://adr/adr-0085",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://adr/adr-0134",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://document/docs/RELEASE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://issue/I4811",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://test/test/cases/4780_a_landing_publishes_its_release.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0240",
+        "target": "majordomus://test/test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
         "kind": "put_in_force"
       },
       {
@@ -156418,6 +156650,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4811",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4811",
+        "target": "majordomus://milestone/finished-work-reaches-a-verified-release",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164258,6 +164500,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4780_a_landing_publishes_its_release.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/47_mutation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -169384,8 +169636,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4611,
+      "edges": 10385,
       "acyclic": false,
       "truncated": false
     }

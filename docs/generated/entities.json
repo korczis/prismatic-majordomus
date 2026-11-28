@@ -11,7 +11,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 170,
+      "count": 171,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -40,7 +40,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 170
+      "count": 171
     },
     {
       "kind": "application",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1327
+      "count": 1328
     },
     {
       "kind": "knowledge",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 710
+      "count": 712
     },
     {
       "kind": "use-case",
@@ -1959,6 +1959,13 @@
           "label": "adr-0175",
           "kind": "adr",
           "route": "/adrs/adr-0175/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0240",
+          "kind": "adr",
+          "route": "/adrs/adr-0240/",
           "external": false
         }
       ]
@@ -3757,6 +3764,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0134/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0240",
+          "kind": "adr",
+          "route": "/adrs/adr-0240/",
+          "external": false
         }
       ]
     },
@@ -4686,6 +4700,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0184/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0240",
+          "kind": "adr",
+          "route": "/adrs/adr-0240/",
+          "external": false
         }
       ]
     },
@@ -5532,6 +5553,13 @@
           "label": "adr-0134",
           "kind": "adr",
           "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0240",
+          "kind": "adr",
+          "route": "/adrs/adr-0240/",
           "external": false
         }
       ]
@@ -7989,6 +8017,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0240",
+          "kind": "adr",
+          "route": "/adrs/adr-0240/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "project.release-is-a-projection@2",
           "kind": "rule",
           "route": "/rules/project-release-is-a-projection-2/",
@@ -8016,7 +8051,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0240",
+          "kind": "adr",
+          "route": "/adrs/adr-0240/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -15114,6 +15157,137 @@
         }
       ],
       "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0240",
+      "identity": "adr-0240",
+      "slug": "adr-0240",
+      "cockpit": "/cockpit/objects/adr/adr-0240",
+      "title": "A green master commit that landed an issue publishes a dev pre-release, and one that completed a milestone publishes the minor, with no person tagging",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "versioning",
+        "automation"
+      ],
+      "source": ".ai/repo/adrs/0240-a-landing-publishes-its-release.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/release-auto.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/release-auto.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/release.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/version.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-autotag",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/release-stamp",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0029",
+          "kind": "adr",
+          "route": "/adrs/adr-0029/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0051",
+          "kind": "adr",
+          "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0069",
+          "kind": "adr",
+          "route": "/adrs/adr-0069/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/RELEASE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4811",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/4780_a_landing_publishes_its_release.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0134",
+          "kind": "adr",
+          "route": "/adrs/adr-0134/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",

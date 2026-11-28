@@ -162,7 +162,7 @@ const read = async () => {
   });
   Object.assign(r, dom);
   r.navBadge = (dom.navText.match(/\bv\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?\b/) || [null])[0];
-  r.heroPrereleasesNamed = [...new Set((dom.heroText.match(/\b\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\b/g) || []))];
+  r.heroPrereleasesNamed = [...new Set((dom.heroText.match(/\b\d+\.\d+\.\d+-(?:alpha|beta|rc|dev)\.\d+\b/g) || []))];
   r.latest = await readJson('releases/latest.json');
   r.build = await readJson('build.json');
   const gh = releases();

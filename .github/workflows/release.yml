@@ -55,11 +55,15 @@ jobs:
           ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
 
+      # A stable tag equals the version the tree declares. A dev tag (vX.Y.Z-dev.N, cut by
+      # scripts/ci/release-autotag as a landing reached master, ADR 0240) is a dev release of
+      # the X.Y.Z the tree declares; its version is stamped into the build below, never
+      # committed. scripts/release-stamp --check is release-version --check --tag for the first.
       - id: resolve
-        name: the tag equals the authority, and the tool prints it
+        name: the tag equals the authority, or is a dev release of it, and the tool prints it
         run: |
           tag="${{ github.event.inputs.tag || github.ref_name }}"
-          scripts/release-version --check --tag "$tag"
+          scripts/release-stamp --check --tag "$tag"
           {
             echo "tag=$tag"
             echo "version=${tag#v}"
@@ -116,6 +120,11 @@ jobs:
           sudo apt-get update -qq
           # shellcheck disable=SC2086
           sudo apt-get install -y --no-install-recommends ${{ matrix.packages }}
+
+      # A dev tag's version, written into this job's checkout so the executable and the shell
+      # tool built here print it (ADR 0240); a stable tag stamps nothing. Never committed.
+      - name: the version a dev tag carries, stamped into this build
+        run: scripts/release-stamp --tag "${{ needs.plan.outputs.tag }}"
 
       - uses: ./.github/actions/setup-rust
 
@@ -625,7 +634,7 @@ jobs:
           # and, once served, latest.json must name another release. The pattern is the one
           # scripts/site-deploy publishes by.
           latest="$url"
-          if printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+          if printf '%s\n' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc|dev)\.[0-9]+$'; then
             url="${url%latest.json}$tag.json"
           fi
           echo "waiting for  $url"
@@ -636,7 +645,7 @@ jobs:
               echo "site built from  $(curl -fsSL --max-time 60 "$base/build.json" 2>/dev/null | sed -n 's/.*"commit": "\([^"]*\)".*/\1/p' | head -n 1)"
               if [ "$url" != "$latest" ] && latest_tag="$(curl -fsSL --max-time 60 "$latest" 2>/dev/null | sed -n 's/.*"tag": "\([^" ]*\)".*/\1/p' | head -n 1)"; then
                 case "$latest_tag" in
-                  *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+                  *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*|*-dev.[0-9]*)
                     echo "::error::$latest names the pre-release $latest_tag; a pre-release is never the latest release"
                     exit 1 ;;
                 esac

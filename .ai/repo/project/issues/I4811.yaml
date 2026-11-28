@@ -1,0 +1,53 @@
+id: I4811
+milestone: finished-work-reaches-a-verified-release
+title: "A green landing that carries an issue publishes vX.Y.Z-dev.N, and a completed milestone the minor, with no person tagging"
+slug: a-landing-publishes-its-release
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "After master's validate concludes success on a push, scripts/ci/release-autotag (from .github/workflows/release-auto.yml, modelled by .ai/repo/ci/release-auto.yaml) reads the commit's records with the plan engine: an issue DONE there and not at the newest release tag the commit contains is tagged v<declared>-dev.<N>, N one past the highest such tag; a milestone DONE there and not at the last stable tag is tagged v<declared> when the tree declares at least the next minor; a tree that declares a released version gets a version.yml proposal for the next minor instead. It pushes the tag and dispatches release.yml for it exactly once. release.yml accepts a dev tag of the declared version through scripts/release-stamp, which stamps the tag's version into the build checkout and never into the tree."
+why: "The owner's order of 2026-11-28 (majordomus decision add, verbatim): 'zase tisic let zadna verze / jaktoze spravne nefunguje to uatomaticke verzovani / bumpovani / kazdy issue musi bunpnout dev / Kazdy milestone minor / automagicky / resime to jiz po trocate'. ADR 0134 point 5 said nothing tags or publishes, docs/RELEASE.md called the tag a person's decision, and release.currency reported landed work overdue until a person tagged: 1.3.0 on 2026-11-28 was tagged by hand and its record #3202 merged by hand."
+current_state: "At origin/master 649e41282d4 every v* tag is pushed by a person; release.yml refuses any tag that is not v<declared>; version.yml proposes contract bumps and never tags; site-deploy, install-check, release-check and release.yml's smoke know alpha, beta and rc as pre-releases and no other suffix."
+desired_state: "A green master commit that landed an issue carries exactly one vX.Y.Z-dev.N tag and its prerelease is published by release.yml; a rerun tags nothing and dispatches nothing twice; a red commit tags nothing; a completed milestone is published as the minor; no person tags. Enforced by cases 4780 and 4781 and the release-auto workflow."
+scope:
+  - ".ai/repo/adrs/0240-a-landing-publishes-its-release.md"
+  - ".ai/repo/adrs/0134-the-version-is-allocated-at-landing.md"
+  - ".ai/repo/ci/release-auto.yaml"
+  - ".ai/repo/ci/version.yaml"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - ".ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml"
+  - ".github/workflows/release-auto.yml"
+  - ".github/workflows/release.yml"
+  - ".github/workflows/version.yml"
+  - "scripts/ci/release-autotag"
+  - "scripts/release-stamp"
+  - "scripts/site-deploy"
+  - "scripts/ci/install-check"
+  - "scripts/ci/release-check"
+  - "scripts/release-probe"
+  - "test/cases/4780_a_landing_publishes_its_release.sh"
+  - "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh"
+  - "docs/RELEASE.md"
+  - "docs/DISTRIBUTION.md"
+non_scope:
+  - "Landing the record pull request without a person: I4342"
+  - "Landing a version.yml bump proposal without a person: the landing seat lands it until a credential lets it land itself"
+  - "Exempting a dev release's run from the release path's runner priority (scripts/ci/release-path)"
+  - "Moving the decision into a typed capability beside release.currency (the inventory records the migration)"
+acceptance_criteria:
+  - "Case 4780: on a fixture with the real plan engine, a bare origin and a stub gh, a landed issue on a green commit yields exactly one annotated v1.4.0-dev.1 tag naming the issue and one release.yml dispatch; a rerun tags and dispatches nothing; a red commit tags nothing; the next green landing is v1.4.0-dev.2; a completed milestone is v1.4.0; a tree declaring the released 1.4.0 asks version.yml for 1.5.0 and is tagged v1.5.0-dev.1 once it declares it; an unreadable verdict refuses"
+  - "Case 4781: release-stamp accepts v<declared>-dev.<N> and nothing else, stamps the manifest, the lock's own entry and share/version.txt so the shell tool prints the dev version; release.yml stamps before it packages; a dev release is a pre-release in site-deploy, install-check, release-check and release.yml"
+  - "On master, the first green landing after this lands carries a v<declared>-dev.<N> tag whose release.yml run was dispatched by release-auto (the evidence names the run)"
+validation:
+  - "bash test/run.sh 4780_a_landing_publishes_its_release 4781_a_dev_tag_is_stamped_into_its_build"
+  - "bash test/run.sh 353_the_version_bump_has_an_actor 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "dev_release_published_by_itself"
+depends_on: []
+serves:
+  - finished-work-reaches-a-verified-release#landed-work-publishes-itself
+created_at: 2026-11-28

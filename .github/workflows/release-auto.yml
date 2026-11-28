@@ -1,0 +1,113 @@
+# A landing releases itself (ADR 0240, I4811). After master's `validate` run on a push concludes
+# success, scripts/ci/release-autotag reads that commit's records: an issue DONE there and not at
+# the newest release tag it contains is a dev release, vX.Y.Z-dev.N, a GitHub prerelease and
+# never "latest"; a milestone DONE there and not at the last stable tag is the minor, vX.Y.0. It
+# pushes the tag and starts release.yml for it; the pipeline from there is the one a person's
+# tag starts. The model is .ai/repo/ci/release-auto.yaml; this file is an adapter over it.
+#
+# Publication follows verification: the commit's `ci` check is read again by
+# scripts/ci/release-verdict before anything is tagged, and release.yml reads it a third time.
+# A red commit is never tagged. The schedule is the backstop for a workflow_run that never
+# came (a cancelled or skipped run): it judges master's tip by the same proof.
+#
+# The tag is pushed with this job's token, and GitHub starts no workflow for a push that token
+# makes, so release.yml is dispatched for the tag explicitly, exactly once per tag: a rerun over
+# a tagged commit dispatches only when no release run of that tag is listed.
+name: release-auto
+
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+    branches: [master]
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: a master commit to judge; empty is master's tip
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  # One decision at a time, never cancelled: the dev counter is read from the tags, and two
+  # runs deciding at once would race for the same number (the loser's push is refused).
+  group: release-auto
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    # validate's run on a master push that succeeded, the schedule or a dispatch. A pull
+    # request's validate run never qualifies: its event is pull_request.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'master' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      # the tag
+      contents: write
+      # release.yml for the tag, version.yml for a bump the landed work needs first
+      actions: write
+      # the commit's `ci` check-run, which release-verdict reads
+      checks: read
+      # whether a bump proposal is already open
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: the commit it judges
+        id: subject
+        timeout-minutes: 1
+        env:
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.sha }}
+        run: |
+          set -eu
+          case "$EVENT" in
+            workflow_run) sha="$RUN_SHA" ;;
+            workflow_dispatch) sha="${DISPATCH_SHA:-$(git rev-parse HEAD)}" ;;
+            *) sha="$(git rev-parse HEAD)" ;;
+          esac
+          sha="$(git rev-parse --verify "$sha^{commit}")"
+          git merge-base --is-ancestor "$sha" HEAD \
+            || { echo "::error::$sha is not on ${{ github.event.repository.default_branch }}"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: tag what landed, and start its release
+        id: tag
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.subject.outputs.sha }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: scripts/ci/release-autotag --commit "$SHA" --apply
+
+      - name: summary
+        if: always()
+        timeout-minutes: 1
+        env:
+          DECISION: ${{ steps.tag.outputs.decision }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          SHA: ${{ steps.subject.outputs.sha }}
+        run: |
+          {
+            echo "### release-auto"
+            echo "- commit: \`${SHA:-?}\`"
+            echo "- decision: ${DECISION:-none recorded}${TAG:+, tag \`$TAG\`}${VERSION:+, version $VERSION}"
+          } >> "$GITHUB_STEP_SUMMARY"

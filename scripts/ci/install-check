@@ -110,7 +110,7 @@ fi
 # any pre-release suffix it was not asked for by name.
 meta_url="$latest_url"
 pin_env=""
-if [ -n "$EXPECT" ] && printf 'v%s\n' "${EXPECT#v}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9]+$'; then
+if [ -n "$EXPECT" ] && printf 'v%s\n' "${EXPECT#v}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc|dev)\.[0-9]+$'; then
   meta_url="${latest_url%latest.json}v${EXPECT#v}.json"
   pin_env="MAJORDOMUS_VERSION=v${EXPECT#v}"
 fi

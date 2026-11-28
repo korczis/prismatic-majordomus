@@ -187,6 +187,20 @@ than its attestations.
 
 ## Releasing
 
+Once ADR 0240's switch is on (it lands `off`, see below), no person runs the steps below for
+an ordinary release.
+[`.github/workflows/release-auto.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/release-auto.yml) follows every
+successful `validate` run on a master push (and an hourly schedule behind it), and
+`scripts/ci/release-autotag` tags the commit when its records say work landed: an issue DONE
+there and not at the newest release tag it contains is `v<declared>-dev.<N>`, a prerelease; a
+milestone DONE there and not at the last stable tag is `v<declared>`, the minor. It pushes the
+tag and dispatches `release.yml` for it, which runs every step from 5 on. A dev tag is a
+release of the version the commit declares, so `release.yml` checks it with
+`scripts/release-stamp --check` and its build job stamps the tag's version into the checkout it
+packages (never into the tree). `publication: off` in
+[`.ai/repo/ci/release-auto.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/release-auto.yaml) stops it. The steps remain
+the procedure for a release a person cuts by hand, and the reference for what each phase does.
+
 ```bash
 # 1. raise the version in the one place it is authored — the measured minimum unless told
 #    otherwise — and derive everything that follows from it
@@ -313,7 +327,8 @@ Until one of those happens the advertised install command is broken for everyone
 
 ### A pre-release is never the stable release
 
-A tag with a pre-release part (`v1.0.0-alpha.1`) is published as a GitHub prerelease and never
+A tag with a pre-release part (`v1.0.0-alpha.1`, or a dev release `v1.4.0-dev.3` that
+`release-autotag` cuts) is published as a GitHub prerelease and never
 as its "latest" (`--prerelease --latest=false` in the publish step of `release.yml`), and
 `scripts/release-record` records it on `channel: prerelease`: the channel is derived from the
 tag unless `--channel` is given, and `--channel stable` on a suffixed tag exits 2. The version

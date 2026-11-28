@@ -81,3 +81,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4684; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares .ai/repo/adrs with I4721; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares .ai/repo/policy.yaml with I4741; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares .ai/repo/adrs with I4811; they may not run concurrently |

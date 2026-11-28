@@ -1,0 +1,79 @@
+# The model of automatic publication (ADR 0240, I4811): which tag a green master commit owes,
+# from what its records say landed, and what the tag sets in motion. .github/workflows/release-auto.yml
+# is an adapter over this file and scripts/ci/release-autotag is its one enforcer; release.yaml
+# models what the tag starts.
+#
+# Rules this file encodes:
+#   - the owner's order of 2026-11-28: every issue that lands bumps a dev version, every
+#     milestone that completes bumps the minor, automatically, and no person tags;
+#   - publication follows verification: only a commit whose `ci` check concluded success is
+#     tagged, and release.yml reads that verdict again;
+#   - DONE is the plan engine's word, read over each commit's own records, never derived again;
+#   - one tag per commit: several issues landing in one merge are one dev release;
+#   - the dev number is one past the highest tag of that version there is, so a retry never
+#     reuses a number and an older commit is never tagged after a newer one;
+#   - the version a stable tag carries is the one the tree declares (release.yml checks it); a
+#     dev tag's version is stamped into the build and never committed (scripts/release-stamp);
+#   - a version the tree cannot carry is proposed through version.yml, never written here.
+version: 1
+
+# The switch. `automatic`: release-autotag tags and dispatches; anything else: it decides
+# nothing and says so. Read from the commit being judged, so the switch that applies is the
+# one master committed. It ships `off` (dark): the landing seat sets `automatic` once the
+# owner confirms that the workflow's GITHUB_TOKEN may push v* tags and a first dry run over
+# master (`scripts/ci/release-autotag --commit origin/master`, no --apply) is green.
+publication: "off"
+
+# ---------------------------------------------------------------- when it runs
+trigger:
+  # validate's run on a master push, once it has concluded success
+  after_validate:
+    branch: master
+    event: push
+    conclusion: success
+  # the backstop for a workflow_run that never came: master's tip, judged by the same proof
+  schedule: '41 * * * *'
+  dispatch:
+    input: sha
+  # one decision at a time, never cancelled
+  concurrency: release-auto
+
+# ---------------------------------------------------------------- what a commit owes
+# `newest` is the greatest release tag the commit contains, `stable` the greatest without a
+# pre-release part, `declared` the crate manifest's version at the commit.
+decisions:
+  - id: "off"
+    when: publication is not automatic at the commit
+    does: nothing
+  - id: already
+    when: a v* tag points at the commit
+    does: dispatches release.yml for that tag when no release run of it is listed and GitHub holds no release of it
+  - id: behind
+    when: a v* tag points at a descendant of the commit
+    does: nothing
+  - id: held
+    when: the commit's ci check did not conclude success
+    does: nothing
+  - id: minor
+    when: a milestone is DONE at the commit and not at stable, and declared is at least stable's next minor
+    tag: v<declared>
+    channel: stable
+  - id: dev
+    when: an issue is DONE at the commit and not at newest, and declared is above stable
+    tag: v<declared>-dev.<N>
+    channel: prerelease
+  - id: bump
+    when: work landed and declared is not above stable, or a milestone completed and declared is below stable's next minor
+    does: dispatches version.yml with to=<stable's next minor>, unless release/bump-<it> is open
+  - id: none
+    when: nothing is DONE at the commit that was not at the release it contains
+    does: nothing
+
+# ---------------------------------------------------------------- what it may do
+permissions: contents-write (the tag), actions-write (release.yml, version.yml), checks-read, pull-requests-read
+forbidden:
+  - tag a commit whose ci check did not conclude success
+  - move or delete a tag
+  - write a version into the tree
+  - push a branch
+  - merge a pull request

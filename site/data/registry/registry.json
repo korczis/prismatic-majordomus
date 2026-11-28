@@ -6,23 +6,23 @@
     "version": "1.3.0"
   },
   "registry": {
-    "fingerprint": "5891c8366f518ad53f451107c437f7cd6c307a707819c703b03d8631cb3a99da",
+    "fingerprint": "0b3b7660d738a4b9d8ea7538c56ce6e7a5e34e4d648faa620029e647d25ca958",
     "summary": {
-      "total": 4124,
+      "total": 4128,
       "builtin": 233,
-      "declarative": 3891,
+      "declarative": 3895,
       "by_kind": {
         "command": 42,
         "query": 191,
-        "resource": 3891
+        "resource": 3895
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 70,
-        "implemented": 3901
+        "implemented": 3905
       },
       "mcp_tools": 217,
-      "mcp_resources": 3948,
+      "mcp_resources": 3952,
       "http_routes": 221,
       "cli_commands": 128,
       "modules": 96,
@@ -98599,7 +98599,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 170,
+        "capabilities": 171,
         "capability_ids": []
       },
       {
@@ -99256,7 +99256,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1327,
+        "capabilities": 1328,
         "capability_ids": []
       },
       {
@@ -99871,7 +99871,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 710,
+        "capabilities": 712,
         "capability_ids": []
       },
       {
@@ -99964,7 +99964,7 @@
     ]
   },
   "index": {
-    "fingerprint": "03868e2ba9e212c92b3c6ea3ed360866f0dd5508835e4fb3f6580ad7584eb675",
+    "fingerprint": "903cb0f4dc5166423da7f53f82324c0057436c064d3100066c2c279d5c53b584",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99987,7 +99987,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 170,
+      "adr": 171,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -100004,7 +100004,7 @@
       "gap": 6,
       "implementation": 54,
       "intent": 46,
-      "issue": 1327,
+      "issue": 1328,
       "knowledge": 222,
       "mesh-declaration": 1,
       "milestone": 120,
@@ -100018,7 +100018,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 710,
+      "test": 712,
       "use-case": 49,
       "workspace": 1
     },
@@ -101553,7 +101553,7 @@
         "path": ".ai/repo/adrs/0134-the-version-is-allocated-at-landing.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8076,
+        "bytes": 8363,
         "tags": [
           "release",
           "versioning",
@@ -102781,6 +102781,22 @@
           "profiles",
           "policy",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0240",
+        "kind": "adr",
+        "identity": "adr-0240",
+        "title": "A green master commit that landed an issue publishes a dev pre-release, and one that completed a milestone publishes the minor, with no person tagging",
+        "description": "A green master commit that landed an issue publishes a dev pre-release, and one that completed a milestone publishes the minor, with no person tagging",
+        "path": ".ai/repo/adrs/0240-a-landing-publishes-its-release.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9701,
+        "tags": [
+          "release",
+          "versioning",
+          "automation"
         ]
       },
       {
@@ -106011,7 +106027,7 @@
         "description": "The gates this repository runs, which changed paths select them, and what publication may spend.",
         "path": ".ai/repo/ci/README.md",
         "source_class": "context",
-        "bytes": 2716
+        "bytes": 2882
       },
       {
         "uri": "majordomus://context/ai.repo.deployments",
@@ -107331,7 +107347,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 42696
+        "bytes": 43834
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -107628,7 +107644,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 146753
+        "bytes": 146947
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107700,7 +107716,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 48260
+        "bytes": 51723
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -111412,7 +111428,7 @@
         "path": ".ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 4086
+        "bytes": 4431
       },
       {
         "uri": "majordomus://intent/intent-bound-work",
@@ -126232,6 +126248,17 @@
         "bytes": 4320
       },
       {
+        "uri": "majordomus://issue/I4811",
+        "kind": "issue",
+        "identity": "I4811",
+        "title": "A green landing that carries an issue publishes vX.Y.Z-dev.N, and a completed milestone the minor, with no person tagging",
+        "description": "After master's validate concludes success on a push, scripts/ci/release-autotag (from .github/workflows/release-auto.yml, modelled by .ai/repo/ci/release-auto.yaml) reads the commit's records with the plan engine: an issue DONE there and not at the newest release tag the commit contains is tagged v<declared>-dev.<N>, N one past the highest such tag; a milestone DONE there and not at the last stable tag is tagged v<declared> when the tree declares at least the next minor; a tree that declares a released version gets a version.yml proposal for the next minor instead. It pushes the tag and dispatches release.yml for it exactly once. release.yml accepts a dev tag of the declared version through scripts/release-stamp, which stamps the tag's version into the build checkout and never into the tree.",
+        "path": ".ai/repo/project/issues/I4811.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4996
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -140428,6 +140455,22 @@
         "bytes": 15426
       },
       {
+        "uri": "majordomus://test/test/cases/4780_a_landing_publishes_its_release.sh",
+        "kind": "test",
+        "identity": "test/cases/4780_a_landing_publishes_its_release.sh",
+        "path": "test/cases/4780_a_landing_publishes_its_release.sh",
+        "source_class": "case",
+        "bytes": 12552
+      },
+      {
+        "uri": "majordomus://test/test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+        "kind": "test",
+        "identity": "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+        "path": "test/cases/4781_a_dev_tag_is_stamped_into_its_build.sh",
+        "source_class": "case",
+        "bytes": 10135
+      },
+      {
         "uri": "majordomus://test/test/cases/47_mutation.sh",
         "kind": "test",
         "identity": "test/cases/47_mutation.sh",
@@ -142771,7 +142814,7 @@
       "identity": [
         "id"
       ],
-      "objects": 170
+      "objects": 171
     },
     {
       "name": "application",
@@ -142934,7 +142977,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1327
+      "objects": 1328
     },
     {
       "name": "knowledge",
@@ -143096,7 +143139,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 710
+      "objects": 712
     },
     {
       "name": "use-case",
