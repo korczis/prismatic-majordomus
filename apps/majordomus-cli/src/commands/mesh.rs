@@ -2801,6 +2801,87 @@ mod tests {
         );
     }
 
+    /// I3992: a payload that is not text stands for no beat; nothing is asked of anyone.
+    #[test]
+    fn a_hook_payload_that_is_not_text_stands_for_no_beat() {
+        assert_eq!(hook_body("claude-code", &mut &[0xff, 0xfe, 0xfd][..]), None);
+    }
+
+    /// I3992: in a checkout whose lease names a ready server the beat is posted to that
+    /// server — after one probe that it answers for the checkout — and the hook still
+    /// answers 0.
+    #[test]
+    fn a_hook_beat_is_posted_to_the_server_the_checkouts_lease_names() {
+        use std::io::{BufRead, Read, Write};
+        let dir = tempfile::tempdir().unwrap();
+        let root = std::fs::canonicalize(dir.path()).unwrap();
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let index = json!({
+            "name": "majordomus",
+            "repository_id": crate::repository::identity(&root),
+        });
+        // answers the probe with the index, then the beat; hands back each request line
+        // and body it was asked
+        let server = std::thread::spawn(move || {
+            let mut asked = Vec::new();
+            for answer in [index.to_string(), "{}".to_string()] {
+                let (stream, _) = listener.accept().unwrap();
+                let mut reader = std::io::BufReader::new(stream);
+                let mut head = Vec::new();
+                let mut length = 0usize;
+                loop {
+                    let mut line = String::new();
+                    reader.read_line(&mut line).unwrap();
+                    if let Some(n) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                        length = n.trim().parse().unwrap();
+                    }
+                    if line.trim().is_empty() {
+                        break;
+                    }
+                    head.push(line.trim().to_string());
+                }
+                let mut body = vec![0u8; length];
+                reader.read_exact(&mut body).unwrap();
+                asked.push((head[0].clone(), String::from_utf8(body).unwrap()));
+                let mut stream = reader.into_inner();
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{answer}",
+                    answer.len()
+                )
+                .unwrap();
+            }
+            asked
+        });
+        let lease = crate::lease::lease_file(&root, ".ai/local");
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        let document = json!({
+            "schema": crate::lease::SCHEMA,
+            "pid": std::process::id(),
+            "token": "t",
+            "root": root,
+            "url": url,
+            "started_at": "2026-11-03T00:00:00Z",
+            "version": crate::VERSION,
+        });
+        std::fs::write(&lease, document.to_string()).unwrap();
+
+        let stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#;
+        let here = query(Some(root.clone()), OutputFormat::Text);
+        assert_eq!(hook_beat("claude-code", &here, &mut stop.as_bytes()), 0);
+        let asked = server.join().unwrap();
+        assert!(asked[0].0.starts_with("GET / "), "{asked:?}");
+        assert!(
+            asked[1].0.starts_with("POST /api/v1/mesh/beats "),
+            "{asked:?}"
+        );
+        assert_eq!(
+            serde_json::from_str::<Value>(&asked[1].1).unwrap(),
+            json!({ "session": "claude-code-s1", "phase": "blocked: awaiting input" })
+        );
+    }
+
     /// I3992: the text board says what a session does, or that it waits on a person and
     /// why, beside when it last showed progress.
     #[test]

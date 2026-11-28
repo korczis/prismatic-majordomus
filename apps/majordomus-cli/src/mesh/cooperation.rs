@@ -6636,6 +6636,34 @@ mod tests {
         );
     }
 
+    /// I3992: a first wait of a session that never beat, withheld past the limit, has no beat
+    /// to be shown beside: it is refused, and nothing is shown for the session until it
+    /// beats.
+    #[test]
+    fn a_first_wait_past_the_limit_is_withheld_and_shown_nowhere() {
+        let ttl = 3600;
+        let a = progress_runtime(ttl, None);
+        a.open_session(SessionInfo::named("s", "cli")).unwrap();
+        a.open_session(SessionInfo::named("t", "cli")).unwrap();
+        let limit = session_beat_limit(Duration::from_secs(ttl));
+        let start = Instant::now();
+        for n in 0..limit {
+            let phase = if n % 2 == 0 {
+                Some("blocked: awaiting input".to_string())
+            } else {
+                None
+            };
+            a.beat_at("s", phase, None, start + Duration::from_secs(n as u64))
+                .unwrap();
+        }
+        let past = start + Duration::from_secs(limit as u64);
+        a.beat_at("t", Some("blocked: permission dialog".into()), None, past)
+            .expect_err("the window is spent");
+        assert!(!a.beats.lock().unwrap().contains_key("t"));
+        let key = format!("{}/t", a.journal().own_stream());
+        assert_eq!(a.session_phase(&key), None);
+    }
+
     /// B1: past its limit per window a runtime withholds beats — never a ttl-0 beat that
     /// turns the rule off — warns once, and fails `mesh doctor`'s session_beats check; the
     /// window moving lets it beat again.
