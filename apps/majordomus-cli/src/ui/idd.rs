@@ -1841,6 +1841,92 @@ mod tests {
         assert!(html.contains(&format!("Open all {total} pairs")), "{html}");
     }
 
+    /// Stage, verdict and status wear the kit's one state badge (I2908): every word the
+    /// workspace can draw for an intent's stage, its verdict, a criterion's evidence and
+    /// whether it is met, or an issue's status is filed
+    /// under a state by the design declaration, so none of them falls back to the boxed tag
+    /// an unfiled word wears. The words are the vocabularies' own, so a stage added to
+    /// IntentStage without a state fails here, and the screen draws no tag at all.
+    #[test]
+    fn every_stage_verdict_and_status_wears_the_state_badge() {
+        use crate::intent::{IntentStage, IntentVerdictState};
+        let stages = [
+            IntentStage::Declared,
+            IntentStage::Planned,
+            IntentStage::Executing,
+            IntentStage::Verifying,
+            IntentStage::Satisfied,
+            IntentStage::Cancelled,
+            IntentStage::Superseded,
+        ];
+        // a variant this list lacks stops the build here, not a reader of the screen
+        for s in stages {
+            match s {
+                IntentStage::Declared
+                | IntentStage::Planned
+                | IntentStage::Executing
+                | IntentStage::Verifying
+                | IntentStage::Satisfied
+                | IntentStage::Cancelled
+                | IntentStage::Superseded => {}
+            }
+        }
+        let verdicts = [
+            IntentVerdictState::Satisfied,
+            IntentVerdictState::Unsatisfied,
+            IntentVerdictState::Unknown,
+        ];
+        for v in verdicts {
+            match v {
+                IntentVerdictState::Satisfied
+                | IntentVerdictState::Unsatisfied
+                | IntentVerdictState::Unknown => {}
+            }
+        }
+        use crate::intent::IntentEvidenceState as E;
+        let evidence = [
+            E::Current,
+            E::Stale,
+            E::Failing,
+            E::NotRun,
+            E::NotDerivable,
+            E::Unresolved,
+        ];
+        for e in evidence {
+            match e {
+                E::Current
+                | E::Stale
+                | E::Failing
+                | E::NotRun
+                | E::NotDerivable
+                | E::Unresolved => {}
+            }
+        }
+        // and whether a criterion is met, which the inspector draws beside its evidence
+        let words = stages
+            .iter()
+            .map(|s| s.as_str().to_string())
+            .chain(verdicts.iter().map(|v| v.as_str().to_string()))
+            .chain(evidence.iter().map(|e| e.as_str().to_string()))
+            .chain(["met", "unmet"].map(String::from))
+            .chain(crate::plan::ISSUE_STATUSES.iter().map(|s| s.to_lowercase()));
+        for word in words {
+            let html = crate::cockpit::view::word_badge(&word).render();
+            let class = word.replace('_', "-");
+            assert!(
+                html.starts_with(&format!("<span class=\"mj-badge mj-badge--{class}\">")),
+                "{word} is not filed under a state: {html}"
+            );
+        }
+
+        let repo = planned_with_an_intent();
+        let html = screen(&repo.context().expect("a context"), &q("intent", "i-first"))
+            .main
+            .render();
+        assert!(!html.contains("class=\"mj-tag\""), "a boxed tag: {html}");
+        assert!(html.contains("mj-badge mj-badge--"), "{html}");
+    }
+
     /// A dependency outside the intent is drawn small, and one the plan does not hold reads
     /// as unknown rather than as any status.
     #[test]

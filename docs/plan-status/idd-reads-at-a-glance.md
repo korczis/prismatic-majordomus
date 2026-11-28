@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [idd-reads-at-a-glance](https://majordomus.dev/plan/idd-reads-at-a-glance/) | ACTIVE | 8/27 | 18 | 1 | 0 | 0 | 0 | The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on. |
+| [idd-reads-at-a-glance](https://majordomus.dev/plan/idd-reads-at-a-glance/) | ACTIVE | 8/27 | 17 | 1 | 1 | 0 | 0 | The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on. |
 
 ## Issues
 
@@ -21,7 +21,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2904](https://majordomus.dev/plan/i2904/) | READY | 0 | — | An intent whose criteria are met while its milestones hold open issues says so |
 | [I2906](https://majordomus.dev/plan/i2906/) | READY | 5 | I2812 | Every id and chip on the workspace leads to its record |
 | [I2907](https://majordomus.dev/plan/i2907/) | DONE | 5 | I2812 | The workspace's headline numbers are the chosen intent's |
-| [I2908](https://majordomus.dev/plan/i2908/) | READY | 0 | — | Stage and verdict wear the kit's one badge |
+| [I2908](https://majordomus.dev/plan/i2908/) | ACTIVE | 0 | — | Stage and verdict wear the kit's one badge |
 | [I2909](https://majordomus.dev/plan/i2909/) | READY | 0 | — | A panel with nothing to show is one sentence |
 | [I2910](https://majordomus.dev/plan/i2910/) | READY | 0 | — | A move on the published workspace reads \"live only\" |
 | [I2911](https://majordomus.dev/plan/i2911/) | READY | 0 | — | The workspace is a list and its chosen intent side by side |
