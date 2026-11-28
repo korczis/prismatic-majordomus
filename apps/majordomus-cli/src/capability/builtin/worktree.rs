@@ -15,6 +15,10 @@
 //! the same idempotent contract; `worktree create` stays the command that refuses a worktree
 //! already there.
 //!
+//! `worktree.liveness` (I4346) is the one liveness predicate every deleting sweep asks:
+//! `keep` or `reclaim` for each path, with every reason found, and `keep` whenever a reading
+//! could not be taken. It reads the machine and writes nothing.
+//!
 //! Migrating, repairing and removing are deliberately *not* here: they move or delete work
 //! that exists, which is not a thing the shared MCP server takes on. They are command-line
 //! operations, they call the same service, and the Cockpit names the exact command for each.
@@ -30,6 +34,7 @@ use crate::capability::model::{
     CachePolicy, CapabilityKind, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::worktree::liveness::{self, LivenessReport};
 use crate::worktree::{
     migrate, CreateReport, CreateRequest, Detail, InspectReport, MigrationPlan, RepositoryTopology,
     StatusReport, Threshold, TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
@@ -143,6 +148,32 @@ impl BenchmarkCases for CreateInput {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The paths a sweep is about to delete.
+pub struct LivenessInput {
+    /// The trees or build directories, absolute or relative to the primary checkout.
+    pub paths: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The idle window git activity is judged against, as a person writes it (`20m`, `2h`).
+    /// Default: thirty minutes.
+    pub idle: Option<String>,
+}
+
+impl BenchmarkCases for LivenessInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // A path that is not there is kept without the machine being read: the benchmark
+        // measures the whole answer and reads no process table.
+        vec![NamedCase::new(
+            "absent-path",
+            LivenessInput {
+                paths: vec!["does/not/exist".into()],
+                idle: None,
+            },
+        )]
+    }
+}
+
 // ---------------------------------------------------------------- the service, from a context
 
 fn refused(e: WorktreeError) -> CapabilityError {
@@ -234,6 +265,16 @@ fn worktree_uncommitted(
     )
     .map_err(CapabilityError::InvalidInput)?;
     service_of(ctx)?.uncommitted(&threshold).map_err(refused)
+}
+
+fn worktree_liveness(
+    ctx: &Context,
+    input: LivenessInput,
+) -> Result<LivenessReport, CapabilityError> {
+    let idle =
+        liveness::idle_seconds(input.idle.as_deref()).map_err(CapabilityError::InvalidInput)?;
+    let paths = liveness::absolute(&input.paths, Path::new(&ctx.index.repository.root));
+    Ok(liveness::answer(&paths, idle))
 }
 
 // ---------------------------------------------------------------- the module
@@ -364,6 +405,22 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: worktree_trunk,
             },
+            capability! {
+                id: "worktree.liveness",
+                title: "Whether anybody uses a tree or build directory: keep or reclaim",
+                description: "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index.",
+                input: LivenessInput,
+                output: LivenessReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_liveness"),
+                    http: post("/api/v1/worktrees/liveness"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "liveness".into()] }),
+                },
+                tags: ["worktree", "liveness", "reclamation", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: worktree_liveness,
+            },
         ],
     }
 }
@@ -413,6 +470,11 @@ mod tests {
                 "worktree.trunk",
                 "majordomus_worktree_trunk",
                 "/api/v1/worktrees/trunk",
+            ),
+            (
+                "worktree.liveness",
+                "majordomus_worktree_liveness",
+                "/api/v1/worktrees/liveness",
             ),
         ];
         let ids: Vec<&str> = m
@@ -469,6 +531,44 @@ mod tests {
             .unwrap_err();
         assert!(
             matches!(&refused, CapabilityError::InvalidInput(m) if m.contains("older_than")),
+            "{refused:?}"
+        );
+    }
+
+    /// The liveness answer through the registry: a path that is not there is kept, a relative
+    /// one is taken against the primary checkout, and an idle window that is not a duration is
+    /// the caller's error.
+    #[test]
+    fn a_liveness_question_is_answered_through_the_registry() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let v = app
+            .context
+            .execute(
+                "worktree.liveness",
+                serde_json::json!({ "paths": ["no/such/dir"], "idle": "20m" }),
+            )
+            .unwrap();
+        let r: LivenessReport = serde_json::from_value(v).unwrap();
+        assert_eq!(r.idle_seconds, 1200);
+        assert_eq!(r.paths[0].verdict, liveness::LivenessVerdict::Keep);
+        assert!(r.paths[0].path.ends_with("no/such/dir"));
+        assert!(Path::new(&r.paths[0].path).is_absolute());
+        let refused = app
+            .context
+            .execute(
+                "worktree.liveness",
+                serde_json::json!({ "paths": ["x"], "idle": "soon" }),
+            )
+            .unwrap_err();
+        assert!(
+            matches!(refused, CapabilityError::InvalidInput(_)),
             "{refused:?}"
         );
     }
