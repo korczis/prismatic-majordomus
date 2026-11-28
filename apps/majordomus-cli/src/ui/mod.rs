@@ -396,6 +396,9 @@ impl Ui {
                     .contains(&route)
                     .then(|| self.view(&ctx, route, &panel.query, false).main)
             });
+            // and no process stands behind it, so a move there is drawn disabled and says
+            // "live only", leading to where it is made (I2910)
+            screen.main = view::live_only(screen.main);
         }
         if behind {
             screen.main = crate::cockpit::html::el("div")

@@ -447,19 +447,15 @@ fn issue_table(issues: &Answer, waves: &Answer, next: &Answer, mine: &[Value], i
                             .class("mj-ui-badges")
                             .children(blocked_by.into_iter().map(|b| chip(issue_href(&b), b)))
                     }))
-                    .child(
-                        el("td").child(match mv {
-                            Some(word) => el("a")
-                                .class("mj-ui-more")
-                                .attr("href", move_href(intent, &id))
-                                .attr(
-                                    "title",
-                                    format!("the move plan.transition makes: {word} {id}"),
-                                )
-                                .text(word),
-                            None => el("span").class("mj-ui-dim").text("none"),
-                        }),
-                    )
+                    .child(el("td").child(match mv {
+                        Some(word) => super::view::move_link(
+                            "mj-ui-more",
+                            &move_href(intent, &id),
+                            &format!("the move plan.transition makes: {word} {id}"),
+                            word,
+                        ),
+                        None => el("span").class("mj-ui-dim").text("none"),
+                    }))
             })
             .collect::<Vec<_>>();
         table(
@@ -546,16 +542,12 @@ fn primary_action(issues: &Answer, next: &Answer, mine: &[Value], intent: &str) 
                 .child(
                     el("p")
                         .class("mj-ui-badges")
-                        .child(
-                            el("a")
-                                .class("mj-btn mj-btn--primary")
-                                .attr("href", move_href(intent, &id))
-                                .attr(
-                                    "title",
-                                    format!("the move plan.transition makes: {word} {id}"),
-                                )
-                                .text(action_label(word, &id)),
-                        )
+                        .child(super::view::move_link(
+                            "mj-btn mj-btn--primary",
+                            &move_href(intent, &id),
+                            &format!("the move plan.transition makes: {word} {id}"),
+                            &action_label(word, &id),
+                        ))
                         .child(state(x, "status"))
                         .child(el("span").class("mj-ui-cell-title").text(text(x, "title"))),
                 )
@@ -1360,7 +1352,7 @@ mod tests {
         let ctx = repo.context().expect("a context");
         let html = screen(&ctx, &q("intent", "i-first")).main.render();
         assert_eq!(
-            html.matches("mj-btn--primary").count(),
+            html.matches("class=\"mj-btn mj-btn--primary\"").count(),
             1,
             "one primary action: {html}"
         );
