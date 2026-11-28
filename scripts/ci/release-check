@@ -35,13 +35,33 @@
 #      a tag whose release is still in flight (I2712): its release run queued or running, or
 #      no run concluded yet and no GitHub release published — asked of the forge, see 5.
 #
+#   6. A proposed record is not left waiting (I4342). Every pending proposal is printed with how
+#      many minutes it has waited unlanded; the release seat asks with --seat, and there a
+#      record whose pull request has waited longer than the seat's bound (two hours) is a
+#      finding naming the pull request and its age. The structure job does not pass --seat: an
+#      unrelated head is not the record's to land, and only the 24h grace refuses it.
+#
 #   scripts/ci/release-check                report every finding, exit 10 on any
+#   scripts/ci/release-check --seat         the release seat's check: also refuse a record
+#                                           unlanded past MJ_RELEASE_RECORD_SEAT_MINUTES (120)
 #   MJ_ROOT=<dir> scripts/ci/release-check  against another tree (the behavioural case does)
 #   MJ_RELEASE_CHECK_REPO=<owner/name>      the GitHub repository whose release runs are asked
 #                                           (default: the one `origin` points at, if any)
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
+SEAT=0
+for arg in "$@"; do
+  case "$arg" in
+    --seat) SEAT=1 ;;
+    *) echo "release-check: unknown argument '$arg' (the one option is --seat)" >&2; exit 12 ;;
+  esac
+done
+SEAT_MINUTES="${MJ_RELEASE_RECORD_SEAT_MINUTES:-120}"
+case "$SEAT_MINUTES" in ''|*[!0-9]*)
+  echo "release-check: MJ_RELEASE_RECORD_SEAT_MINUTES must be a whole number of minutes, not '$SEAT_MINUTES'" >&2
+  exit 12 ;;
+esac
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 findings=0
@@ -317,17 +337,17 @@ release_in_flight() {
     printf 'stands no release run of it was ever listed and GitHub holds no release of it, %sh after the tag' "$age"
   fi
 }
-# prints "<ref> <age in hours>" for the freshest ref here that proposes the tag's record
+# prints "<ref> <age in minutes>" for the freshest ref here that proposes the tag's record
 local_proposal() {
   git for-each-ref --sort=-committerdate --format='%(refname) %(committerdate:unix)' \
     "refs/heads/release/record-$1" "refs/remotes/*/release/record-$1" 2>/dev/null |
     while read -r ref when; do
       git cat-file -e "$ref:.ai/repo/releases/$1.yaml" 2>/dev/null || continue
-      printf '%s %s\n' "${ref#refs/}" "$(( (now_epoch - when) / 3600 ))"
+      printf '%s %s\n' "${ref#refs/}" "$(( (now_epoch - when) / 60 ))"
       break
     done
 }
-# prints "found <ref> <age in hours>", "none", or "unasked <why>": a local ref answers first,
+# prints "found <ref> <age in minutes>", "none", or "unasked <why>": a local ref answers first,
 # then origin's release/record-<tag>, fetched as that one ref when origin has it
 proposed_record() {
   local t="$1" found url heads sha have
@@ -355,6 +375,28 @@ proposed_record() {
   fi
   found="$(local_proposal "$t")"
   if [ -n "$found" ]; then printf 'found %s\n' "$found"; else printf 'none\n'; fi
+}
+
+# The release seat's bound (I4342). v1.3.0 was tagged at 14:10Z on 2026-11-27 and published at
+# 14:54Z; its record pull request #3202 was opened at 15:05Z, landed at 15:40Z only because a
+# person merged it, and until then the homepage offered 1.2.0 while releases/latest.json named
+# 1.3.0, so the release's own `live` job failed. Nothing but a person noticed the record was
+# waiting: the 24h grace above is how long an unrelated head may ignore it, not how long the
+# release may. Under --seat a record unlanded past SEAT_MINUTES is the seat's finding, named
+# by its pull request, which is asked of the forge — only here, so the structure job never
+# asks it about a proposal git already answered.
+# prints "pr <number> <url> <opened, epoch>" or "unasked <why>"
+record_pull_request() {
+  local t="$1" repo prs line
+  repo="$(release_repo)"
+  if [ -z "$repo" ]; then printf 'unasked no GitHub repository is known, so its pull request was not asked'; return 0; fi
+  if ! command -v gh >/dev/null 2>&1; then printf 'unasked gh is not installed, so its pull request in %s was not asked' "$repo"; return 0; fi
+  if ! prs="$(gh api "repos/$repo/pulls?head=${repo%%/*}:release/record-$t&state=open&per_page=5" 2>/dev/null)" \
+     || ! line="$(printf '%s' "$prs" | jq -er '[.[] | select(.number)] | sort_by(.created_at) | first | select(.) | "pr \(.number) \(.html_url) \(.created_at | fromdateiso8601)"' 2>/dev/null)"; then
+    printf 'unasked no open pull request from release/record-%s could be read in %s (gh, its token, the network, or none is open)' "$t" "$repo"
+    return 0
+  fi
+  printf '%s' "$line"
 }
 
 if ! command -v git >/dev/null 2>&1 || ! git rev-parse --git-dir >/dev/null 2>&1; then
@@ -401,10 +443,33 @@ else
       if [ "${proposal#found }" != "$proposal" ]; then
         proposal="${proposal#found }"
         pref="${proposal% *}"
-        page="${proposal##* }"
+        pmin="${proposal##* }"
+        page="$(( pmin / 60 ))"
         if [ "$page" -lt "$RECORD_GRACE_HOURS" ]; then
-          printf 'pending %s is published and its record is proposed on %s (%sh old, grace %sh) and not yet on this head; nothing for this head to do — the record lands with its own pull request\n' \
-            "$t" "$pref" "$page" "$RECORD_GRACE_HOURS"
+          if [ "$SEAT" = 1 ]; then
+            # the pull request's own age when the forge names it, else its branch's tip's
+            pr="$(record_pull_request "$t")"
+            case "$pr" in
+              pr\ *)
+                read -r _ pnum purl popened <<< "$pr"
+                pmin="$(( (now_epoch - popened) / 60 ))"
+                pname="#$pnum ($purl)" ;;
+              *)
+                printf 'note  %s: %s\n' "$t" "${pr#unasked }"
+                pname="on $pref" ;;
+            esac
+            if [ "$pmin" -gt "$SEAT_MINUTES" ]; then
+              missing=$((missing+1))
+              fail "$t's record pull request $pname has waited ${pmin} min unlanded, longer than the release seat's ${SEAT_MINUTES} min bound; start its own run (approve its waiting validate run, or close and reopen it — majordomus prs drain reopens it) and land it on that run's ci (docs/DISTRIBUTION.md, 'Who starts the record's verdict')"
+              continue
+            fi
+            printf 'pending %s is published and its record pull request %s has waited %s min unlanded, inside the release seat'"'"'s %s min bound\n' \
+              "$t" "$pname" "$pmin" "$SEAT_MINUTES"
+            pending=$((pending+1))
+            continue
+          fi
+          printf 'pending %s is published and its record is proposed on %s (%sh old, grace %sh) and not yet on this head, unlanded for %s min; nothing for this head to do — the record lands with its own pull request\n' \
+            "$t" "$pref" "$page" "$RECORD_GRACE_HOURS" "$pmin"
           pending=$((pending+1))
           continue
         fi
