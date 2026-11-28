@@ -83,6 +83,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4330; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4410; they may not run concurrently |
+| WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4520; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4596; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4634; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4741; they may not run concurrently |
@@ -130,6 +131,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4260` | shares bin/majordomus with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4411; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/start.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4260` | shares bin/majordomus with I4520; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/start.sh with I4581; they may not run concurrently |
@@ -269,6 +271,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4413` | shares .ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares lib/common.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares lib/finish.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4413` | shares lib/finish.sh with I4520; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares lib/finish.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares share/allow/policy.txt with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares share/allow/policy.txt with I4599; they may not run concurrently |
@@ -298,6 +301,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4415` | shares .ai/repo/rules/vendor/majordomus/rules/verification-integrity.v1.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4415` | shares lib/common.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4415` | shares lib/finish.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4415` | shares lib/finish.sh with I4520; they may not run concurrently |
 | WARN | `scope_conflict` | `I4415` | shares lib/finish.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I4415` | shares share/allow/policy.txt with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I4415` | shares share/allow/policy.txt with I4599; they may not run concurrently |
@@ -327,6 +331,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4416` | shares docs/CLI.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4416` | shares lib/derive.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4416` | shares lib/derive.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4416` | shares lib/finish.sh with I4520; they may not run concurrently |
 | WARN | `scope_conflict` | `I4416` | shares lib/finish.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I4416` | shares lib/doctor.sh with I4584; they may not run concurrently |
 | WARN | `scope_conflict` | `I4416` | shares lib/finish.sh with I4628; they may not run concurrently |

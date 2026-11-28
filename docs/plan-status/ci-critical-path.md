@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 25/52 | 16 | 10 | 1 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 25/53 | 17 | 10 | 1 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
 
 ## Issues
 
@@ -59,6 +59,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4373](https://majordomus.dev/plan/i4373/) | DONE | 0 | — | The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version |
 | [I4380](https://majordomus.dev/plan/i4380/) | DONE | 0 | — | An optional step of the Pages publication never stops the deploy |
 | [I4513](https://majordomus.dev/plan/i4513/) | READY | 0 | — | The pre-commit pages gate judges a staged merge as scripts/derive writes it, with both parents |
+| [I4520](https://majordomus.dev/plan/i4520/) | READY | 0 | — | finish runs its verify command in the caller's environment, not with the launcher's own MJ_* exported |
 | [I4527](https://majordomus.dev/plan/i4527/) | DONE | 0 | — | The installed launcher is checked on a layer the release wrote, never on the source checkout |
 | [I4528](https://majordomus.dev/plan/i4528/) | DONE | 0 | — | Case 3002's disk-floor scenario proves the function, not the runner's free disk |
 | [I4532](https://majordomus.dev/plan/i4532/) | READY | 0 | — | The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA |
@@ -188,6 +189,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/lib.sh with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4513; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/cases with I4520; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/cases with I4521; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4522; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4530; they may not run concurrently |
@@ -379,6 +382,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4513; they may not run concurrently |
+| WARN | `scope_conflict` | `I2350` | shares test/cases with I4520; they may not run concurrently |
+| WARN | `scope_conflict` | `I2350` | shares test/cases with I4521; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4522; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares docs/CI.md with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4530; they may not run concurrently |
@@ -489,6 +494,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4513` | shares scripts/derive with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4513` | shares scripts/pages with I4718; they may not run concurrently |
 | WARN | `scope_conflict` | `I4513` | shares .githooks/pre-commit with I4788; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4567; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4628; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4632; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4681; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares bin/majordomus with I4741; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4789; they may not run concurrently |
+| WARN | `scope_conflict` | `I4520` | shares lib/finish.sh with I4805; they may not run concurrently |
 | WARN | `scope_conflict` | `I4532` | shares .ai/repo/ci/pages.yaml with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I4532` | shares .github/workflows/validate.yml with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4532` | shares .ai/repo/ci/gates.yaml with I4634; they may not run concurrently |
