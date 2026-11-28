@@ -172,6 +172,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4513; they may not run concurrently |
+| WARN | `scope_conflict` | `I2411` | shares test/cases with I4520; they may not run concurrently |
+| WARN | `scope_conflict` | `I2411` | shares test/cases with I4521; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4522; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4530; they may not run concurrently |
