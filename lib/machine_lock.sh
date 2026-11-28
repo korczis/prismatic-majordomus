@@ -31,6 +31,9 @@
 #   MAJORDOMUS_DERIVE_QUEUE             the ticket directory instead
 #   MAJORDOMUS_DERIVE_IGNORE_PRIORITY=1 the marker is this worker's own, under another name
 #   MAJORDOMUS_DERIVE_WAIT_MAX          seconds before giving up with exit 75 (default 14400)
+#   MAJORDOMUS_DERIVE_UNMADE_MAX        seconds a lock path that cannot be made (a dangling
+#                                       link, a file, an unwritable or full parent) is retried
+#                                       before giving up with exit 75 (default 60)
 #   MAJORDOMUS_DERIVE_POLL              seconds between looks (default 15)
 #   MAJORDOMUS_DERIVE_PS                a file of "pid ppid command" lines read in place of
 #                                       the process table (a case's fixture)
@@ -183,8 +186,9 @@ mj_lock_run() {
 
 mj_lock_acquire() {
   local owner pid waited=0 said="" why poll="${MAJORDOMUS_DERIVE_POLL:-15}"
-  local max="${MAJORDOMUS_DERIVE_WAIT_MAX:-14400}" ahead
-  mkdir -p "$(dirname "$MJ_LOCK_DIR")"
+  local max="${MAJORDOMUS_DERIVE_WAIT_MAX:-14400}" ahead mkerr
+  local unmade=0 unmade_max="${MAJORDOMUS_DERIVE_UNMADE_MAX:-60}"
+  mkdir -p "$(dirname "$MJ_LOCK_DIR")" 2>/dev/null || true
   mj_lock_take_ticket
   while :; do
     owner="$(cat "$MJ_LOCK_DIR/owner" 2>/dev/null || true)"
@@ -209,12 +213,27 @@ mj_lock_acquire() {
       && [ "$MJ_Q_FIRST" != "$MJ_LOCK_TICKET" ] && [ ! -d "$MJ_LOCK_DIR" ]; then
       ahead="$(cat "$MJ_Q_FIRST" 2>/dev/null || true)"
       why="the lock is free and ${ahead:-an earlier derive} arrived first (place ${MJ_Q_POS:-?} of $MJ_Q_COUNT in the queue)"
-    elif mkdir "$MJ_LOCK_DIR" 2>/dev/null; then
+    elif mkerr="$(mkdir "$MJ_LOCK_DIR" 2>&1)"; then
       printf '%s\n' "$MJ_LOCK_LINE" > "$MJ_LOCK_DIR/owner"
       MJ_LOCK_HOLD=own
       mj_lock_leave_queue
       [ "$waited" = 0 ] || mj_lock_say "lock taken after ${waited}s"
       return 0
+    elif [ ! -d "$MJ_LOCK_DIR" ]; then
+      # mkdir failed and no lock directory is there, so nobody holds it: the path cannot be
+      # made. Read as "an owner still writing its name", this waited 1h12m on lundra for a
+      # lock that no longer existed; it is named instead, and given up on when it persists.
+      if [ -L "$MJ_LOCK_DIR" ]; then
+        why="$MJ_LOCK_DIR is a symbolic link to $(readlink "$MJ_LOCK_DIR" 2>/dev/null || printf 'nowhere') that leads to no directory, so no derive can take it"
+      elif [ -e "$MJ_LOCK_DIR" ]; then
+        why="$MJ_LOCK_DIR is a file, not a lock directory, so no derive can take it"
+      else
+        why="$MJ_LOCK_DIR cannot be created (${mkerr:-mkdir failed}), so no derive can take it"
+      fi
+      if [ "$unmade" -ge "$unmade_max" ]; then
+        mj_lock_say "gave up after ${waited}s: $why"; mj_lock_leave_queue; exit 75
+      fi
+      unmade=$(( unmade + poll ))
     elif [ -z "$pid" ] && [ -n "$owner" ]; then
       why="$MJ_LOCK_DIR is held by an owner that names no pid, so it cannot be checked: $owner"
     else
