@@ -4720,7 +4720,7 @@ majordomus mesh hub install [OPTIONS]
 | `--apply` | flag | — | Carry the plan out; without it nothing changes |
 | `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
 | `--executable` | `<EXECUTABLE>` | — | The executable the units run; default the installer's launcher |
-| `--release-base` | `<RELEASE_BASE>` | — | Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
+| `--release-base` | `<RELEASE_BASE>` | — | The release origin; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
 | `--root` | `<ROOT>` | — | A staging directory that stands for the home: files only, no command |
 | `--retry` | flag | — | Update: try again the versions that failed on this node |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
@@ -4753,7 +4753,7 @@ majordomus mesh hub uninstall [OPTIONS]
 | `--apply` | flag | — | Carry the plan out; without it nothing changes |
 | `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
 | `--executable` | `<EXECUTABLE>` | — | The executable the units run; default the installer's launcher |
-| `--release-base` | `<RELEASE_BASE>` | — | Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
+| `--release-base` | `<RELEASE_BASE>` | — | The release origin; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
 | `--root` | `<ROOT>` | — | A staging directory that stands for the home: files only, no command |
 | `--retry` | flag | — | Update: try again the versions that failed on this node |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
@@ -4786,7 +4786,7 @@ majordomus mesh hub update [OPTIONS]
 | `--apply` | flag | — | Carry the plan out; without it nothing changes |
 | `--port` | `<PORT>` | — | The hub port; default the port the declaration gives this machine, else 8791 |
 | `--executable` | `<EXECUTABLE>` | — | The executable the units run; default the installer's launcher |
-| `--release-base` | `<RELEASE_BASE>` | — | Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
+| `--release-base` | `<RELEASE_BASE>` | — | The release origin; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev |
 | `--root` | `<ROOT>` | — | A staging directory that stands for the home: files only, no command |
 | `--retry` | flag | — | Update: try again the versions that failed on this node |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |

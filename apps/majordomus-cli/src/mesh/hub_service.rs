@@ -1415,55 +1415,56 @@ pub(crate) fn update(
         }
     }
     let mut decision = first;
-    let (result, detail) =
-        loop {
-            match decision.clone() {
-                Decision::Current => {
-                    break (
-                        "current",
-                        format!("the hub serves {}", served_v.clone().unwrap_or_default()),
-                    )
-                }
-                Decision::Unknown { reason } => break ("unknown", reason),
-                Decision::Failed { version } => break (
+    let (result, detail) = loop {
+        match decision.clone() {
+            Decision::Current => {
+                break (
+                    "current",
+                    format!("the hub serves {}", served_v.clone().unwrap_or_default()),
+                )
+            }
+            Decision::Unknown { reason } => break ("unknown", reason),
+            Decision::Failed { version } => {
+                break (
                     "skipped",
                     format!(
                         "{version} failed here before; waiting for a newer release (or --retry)"
                     ),
-                ),
-                Decision::Deferred { attached } => {
-                    break (
-                        "deferred",
-                        format!("{attached} session(s) attached to the hub"),
-                    )
+                )
+            }
+            Decision::Deferred { attached } => {
+                break (
+                    "deferred",
+                    format!("{attached} session(s) attached to the hub"),
+                )
+            }
+            Decision::Install { version } => {
+                if !run.installer(&version, false) {
+                    break ("failed", format!("the installer did not install {version}"));
                 }
-                Decision::Install { version } => {
-                    if !run.installer(&version, false) {
-                        break ("failed", format!("the installer did not install {version}"));
-                    }
-                    let now_v = version_of(host, &spec.executable);
-                    if now_v.as_deref() != Some(version.as_str()) {
-                        break (
-                            "failed",
-                            format!(
-                                "after the installer the executable is {}",
-                                now_v.unwrap_or_else(|| "silent".into())
-                            ),
-                        );
-                    }
-                    decision = decide(
-                        &Versions {
-                            installed: Some(&version),
-                            ..versions.clone()
-                        },
-                        &state.failed,
+                let now_v = version_of(host, &spec.executable);
+                if now_v.as_deref() != Some(version.as_str()) {
+                    break (
+                        "failed",
+                        format!(
+                            "after the installer the executable is {}",
+                            now_v.unwrap_or_else(|| "silent".into())
+                        ),
                     );
                 }
-                Decision::Activate { version } => {
-                    break activate(&mut run, &version, served_v.as_deref(), &mut state);
-                }
+                decision = decide(
+                    &Versions {
+                        installed: Some(&version),
+                        ..versions.clone()
+                    },
+                    &state.failed,
+                );
             }
-        };
+            Decision::Activate { version } => {
+                break activate(&mut run, &version, served_v.as_deref(), &mut state);
+            }
+        }
+    };
     state.deferred_since = match result {
         "deferred" => state.deferred_since.or(Some(now)),
         _ => None,

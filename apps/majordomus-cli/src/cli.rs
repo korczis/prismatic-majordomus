@@ -1496,7 +1496,7 @@ pub struct MeshHubChangeArgs {
     /// The executable the units run; default the installer's launcher
     pub executable: Option<String>,
     #[arg(long)]
-    /// Where the published release and the installer are read; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev
+    /// The release origin; default MAJORDOMUS_RELEASE_BASE_URL, else https://majordomus.dev
     pub release_base: Option<String>,
     #[arg(long)]
     /// A staging directory that stands for the home: files only, no command
