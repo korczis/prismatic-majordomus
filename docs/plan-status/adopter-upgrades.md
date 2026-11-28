@@ -94,6 +94,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I3166; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I3241; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares share/schemas with I3258; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I3280; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I3299; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I3304; they may not run concurrently |
@@ -151,6 +152,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4291; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares share/skeleton with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I4309; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares test/cases with I4321; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares lib/doctor.sh with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4325; they may not run concurrently |
@@ -252,6 +254,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares lib/init.sh with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares test/cases with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares test/cases with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2654; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2700; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2704; they may not run concurrently |
@@ -384,6 +388,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4267; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4291; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares share/skeleton with I4306; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4321; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4325; they may not run concurrently |
@@ -484,6 +489,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares docs/CLI.md with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2059; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2114; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I2115; they may not run concurrently |
@@ -639,6 +646,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4297; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares share/skeleton with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4309; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4321; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4325; they may not run concurrently |
@@ -753,6 +761,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares lib with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares test/cases with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares test/cases with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4416; they may not run concurrently |
@@ -780,3 +790,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4805; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4806; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/init.sh with I4807; they may not run concurrently |
+| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4813; they may not run concurrently |

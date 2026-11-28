@@ -64,6 +64,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares share/allow/policy.txt with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/cockpit with I3214; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/cockpit with I3258; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I3304; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/cockpit with I3314; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/cockpit with I3317; they may not run concurrently |
@@ -113,6 +114,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares lib/knowledge.sh with I4791; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares share/skeleton/policy.yaml with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4806; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares docs/CLAIMS.yaml with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |
@@ -136,3 +139,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4337` | shares docs/KNOWLEDGE.md with I4585; they may not run concurrently |
 | WARN | `scope_conflict` | `I4337` | shares .ai/repo/knowledge with I4721; they may not run concurrently |
 | WARN | `scope_conflict` | `I4337` | shares docs/KNOWLEDGE.md with I4791; they may not run concurrently |
+| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4813; they may not run concurrently |

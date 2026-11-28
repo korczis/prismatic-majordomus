@@ -8,7 +8,7 @@ parallel_safe: false
 serves:
   - intent-bound-work#start-is-gated
 objective: "Give start the flags --issue, --intent, --exempt and --because; ask intents.binding through the built executable; under policy intent.binding: required refuse a refused or unreadable binding, under advisory report it, and when the key is absent change nothing. Record what was named and the revision in the task record and the task.started ledger event."
-why: "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused."
+why: "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused. 2026-11-28: the criterion that start --issue writes the issue's evidence_required and implied obligations into requires, added by 984034fbc2b on 2026-10-30 after this issue's work had landed (4f4136ea60b), moved to I4814 in milestone a-bounded-task-is-carried-to-accepted-work, whose row it is."
 current_state: "start takes a description, a scope, requires, a profile and an owner, and reads no intent."
 desired_state: "A task record carries issue, intent or exemption with its reason, and binding_revision; a refused binding is refused (exit 15) naming the cause and the three ways through."
 scope:
@@ -39,7 +39,6 @@ acceptance_criteria:
   - A scope that lies outside the named issue's scope is said in the binding as a note the start prints
   - Under required an unreadable binding (no built executable, no jq) refuses naming the command that builds it; under advisory it warns; with the key absent a flag that was given is still asked and an unreadable answer refuses
   - The share of scope-only starts that bind against this repository's plan is measured before this repository's policy is set to required, and the value chosen is recorded with the measurement
-  - start --issue writes the issue's evidence_required and the obligations its paths imply into the task's requires, so check and finish hold them without a hand-typed --requires; case 960 proves it, for the bounded-task-and-coordination row of milestone a-bounded-task-is-carried-to-accepted-work
 validation:
   - bash test/run.sh 960_a_task_starts_bound_to_what_it_serves
   - bash test/run.sh 04_start_check
@@ -49,4 +48,37 @@ evidence_required:
   - realization_and_binding_agree
   - scope_only_binding_rate_measured
 created_at: 2026-10-07
-updated_at: 2026-10-30
+updated_at: 2026-11-28T07:02:57Z
+started_at: 2026-11-28T07:01:05Z
+started_event: sha256:581bb6ed3522c0d8cd735ef21625c4031c14110740b068bcc0cebf678108a9da
+completed_at: 2026-11-28T07:02:57Z
+completed_event: sha256:5eb815d9ea036b1ecb05195048e0dfb35e28ac235d6a77d24b239856ce87b689
+evidence:
+  - covers: "start_refuses_a_refused_binding"
+    type: test
+    command: "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: case 960 ok (required: a scope no issue covers does not start, an uncritiqued intent's work is refused, an unreadable binding is unknown and does not start; doctor reports no policy or unknown-key FAIL)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:01:35Z
+  - covers: "an_absent_policy_key_changes_nothing"
+    type: test
+    command: "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves; bash test/run.sh 04_start_check (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: case 960 key-absent arm ok (start with no new flag asks nothing; a given flag is still asked); case 04_start_check ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:01:48Z
+  - covers: "realization_and_binding_agree"
+    type: test
+    command: "cargo test --test intent_binding (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent_binding.rs realization_and_binding_agree ok; a scope outside the named issue is a binding note (tests/intent_binding.rs:198); continuity.state carries issue, intent, exemption and plan_revision (capability/builtin/continuity.rs:518-530)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:02:02Z
+  - covers: "scope_only_binding_rate_measured"
+    type: manual
+    command: "jq over task.started in the 78 checkout ledgers (prismatic-majordomus and prismatic-majordomus-wt/*); majordomus intent binding --path <each scope> --format json at 649e41282d4"
+    result: "Measured 2026-11-28: 78 task starts with a binding field (2026-11-17..2026-11-28); 54 were scope-only, and at start 2 bound (maintenance), 46 were refused and 6 unknown. Re-asked against this plan, the 50 distinct scope-only scopes gave 2 bound and 48 refused (4%). Value chosen: intent.binding stays advisory, because required would refuse about 96% of the scope-only starts sessions make today"
+    artifact: "649e41282d4ffd28c830670f4ddf1eae5e60603d"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:02:17Z

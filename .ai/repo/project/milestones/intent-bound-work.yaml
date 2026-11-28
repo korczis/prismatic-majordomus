@@ -47,8 +47,10 @@ validation:
   - bash test/run.sh 960_a_task_starts_bound_to_what_it_serves
   - bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved
 evidence_required: []
-depends_on:
-  - intent-planning
+# 2026-11-28: was [intent-planning]. A binding reads the critique and the coverage that
+# I1901 and I1902 deliver, so I2000 depends on I1902; it does not need critique_invalid
+# (I4321), which keeps intent-planning open. The order is carried by the issue edge.
+depends_on: []
 risks:
   - "The records, the ADR and the tests they name land in one change: a criterion whose evidence reference does not resolve fails intent validate, so no part of this milestone reaches the trunk without the rest."
   - "Requiring binding in this repository refuses the scope-only `start` every session uses today; the refusal must name the three ways through (an issue, an intent, an exemption) or it reads as the tool being broken."

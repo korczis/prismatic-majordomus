@@ -1,0 +1,36 @@
+id: I4812
+milestone: intent-lifecycle
+title: "The Cockpit's JavaScript is measured by a coverage run, and a gate refuses a changed line no test ran"
+slug: the-cockpit-javascript-coverage-is-gated
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "intent-lifecycle#surfaces-agree"
+objective: "Deliver slice 4's remainder of milestone intent-lifecycle: the Cockpit's own scripts under share/cockpit/ are measured with V8 coverage from the browser suite that drives the Cockpit, and a gate in the cockpit lane refuses a change whose added or modified lines under share/cockpit/ no test ran, by file and line, with exemptions written down and listed in every run."
+why: "The critique of intent-lifecycle (finding slice-4-coverage-gate-absent, 2026-11-28) found the Cockpit intent view delivered (apps/majordomus-cli/src/cockpit/intents.rs, claim intent-cockpit-pages guaranteed) and no gate measuring or enforcing the Cockpit's JavaScript coverage: the only Cockpit gates are cockpit-assets, cockpit-projection and cockpit-probe (.ai/repo/ci/gates.yaml). The milestone's slice 4 names both halves, so the milestone cannot read DONE while one is missing."
+current_state: "On master 649e41282d4 the cockpit job runs the Cockpit's browser checks and no coverage of share/cockpit/*.js is collected, reported or gated."
+desired_state: "The cockpit lane writes a V8 coverage report of share/cockpit/*.js from the browser run, and a gate refuses a changed line no test ran, naming file and line; an exemption carries a written reason and is printed on every run; the gate is proven against a build it must refuse."
+scope:
+  - "share/cockpit"
+  - "scripts/ci"
+  - ".ai/repo/ci/gates.yaml"
+  - ".github/workflows/validate.yml"
+  - "test/cases"
+  - "docs/COCKPIT.md"
+non_scope:
+  - "Coverage of the Rust crate, which the coverage job already measures"
+  - "Coverage of the public site's scripts"
+depends_on: []
+acceptance_criteria:
+  - "A cockpit lane run produces a per-file, per-line coverage report of share/cockpit/*.js from the browser suite"
+  - "A change adding a line under share/cockpit/ that no test runs fails the gate naming the file and line"
+  - "An exemption is honoured only with a written reason and is listed in every run's output"
+  - "The gate is shown failing on a fixture build it must refuse before it is shown passing on master"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "cockpit_coverage_gate_refuses_an_unrun_line"
+created_at: 2026-11-28
+updated_at: 2026-11-28

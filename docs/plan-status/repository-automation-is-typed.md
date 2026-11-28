@@ -58,6 +58,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3155` | shares .ai/repo/automation with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares .ai/repo/automation with I4634; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4254; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4260; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4322; they may not run concurrently |

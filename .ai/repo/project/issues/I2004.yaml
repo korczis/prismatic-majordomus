@@ -31,4 +31,16 @@ validation:
 evidence_required:
   - plan_start_refuses_a_refused_binding_in_both_engines
 created_at: 2026-10-07
-updated_at: 2026-10-07
+updated_at: 2026-11-28T07:00:37Z
+started_at: 2026-11-28T06:59:55Z
+started_event: sha256:9aa8ea6cef177ef1baaf9768ca0eae0d75a86967dc033bd7e35ca859c156e1d4
+completed_at: 2026-11-28T07:00:37Z
+completed_event: sha256:b73f5cc339a2422949719e0f47b064f1b40f5b95ad9641bf0953f6082624081d
+evidence:
+  - covers: "plan_start_refuses_a_refused_binding_in_both_engines"
+    type: test
+    command: "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines; bash test/run.sh 133_plan_transition; bash test/run.sh 582_the_done_guard_holds_in_both_engines (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: cases 962, 133 and 582 ok in the suite shards (962: both engines refuse an uncritiqued intent's issue under required with the same sentence, over MCP too; key absent unchanged); intent_binding::tests::a_required_policy_refuses_the_start_of_work_whose_binding_is_refused ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:00:23Z

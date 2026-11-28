@@ -92,3 +92,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4788; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/check.sh with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4792; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares test/cases/83_doctor_budget.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares test/cases/83_doctor_budget.sh with I4813; they may not run concurrently |

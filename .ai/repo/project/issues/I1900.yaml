@@ -9,7 +9,7 @@ serves:
   - intent-lifecycle#stage-is-derived
   - intent-lifecycle#surfaces-agree
   - intent-lifecycle#model-is-gated
-objective: "Deliver slice 1 of the intent-lifecycle milestone: the intent kind and schema, the read-only capabilities intent.list, intent.record, intent.validate and intent.preflight on every surface, and the intent-check gate."
+objective: "Deliver slice 1 of the intent-lifecycle milestone: the intent kind and schema, the read-only capabilities intents.list, intents.record, intents.validate and intents.preflight on every surface, and the intent-check gate."
 why: "Nothing above a milestone recorded what must become true, so no command could say which outcome a change serves or whether finished milestones achieved it (ADR 0070)."
 current_state: "No intent kind, capability or gate exists on master."
 desired_state: "An intent's stage follows the plan and its satisfaction follows recorded evidence, answered identically on the command line, HTTP and MCP, and an invalid intent model fails a gate."
@@ -31,5 +31,32 @@ validation:
 evidence_required:
   - intent_stage_is_derived
   - intent_surfaces_agree
+  - intent_check_gate_runs_validate
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-11-28T06:48:34Z
+started_at: 2026-11-28T06:46:34Z
+started_event: sha256:a5bc26d4537629def68ce0fbbab23f1143a7831c396ffc6fb1a13863c4e46327
+completed_at: 2026-11-28T06:48:34Z
+completed_event: sha256:c8b7681c0fb2bb805fa08b8023cd042792c9737e52dfff80d45fe9a765cddbc5
+evidence:
+  - covers: "intent_stage_is_derived"
+    type: test
+    command: "cargo test --test intent; cargo test --lib (intent::tests); bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent.rs 15 passed (a_criterion_is_met_only_by_evidence_current_at_the_working_tree_and_follows_it_both_ways, a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there, the_command_line_http_and_mcp_agree_on_the_verdict_the_evidence_alone_derives); lib unit tests 4679 passed in rust (2), including the intent.rs stage tests; case 367 ok in suite shard"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:47:40Z
+  - covers: "intent_surfaces_agree"
+    type: test
+    command: "cargo test --test intent; bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent.rs the_command_line_http_and_mcp_answer_the_same_intents ok (HTTP, MCP and CLI parity); case 367 ok (CLI against MCP, and a non-zero exit naming the finding on an invalid model)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:47:58Z
+  - covers: "intent_check_gate_runs_validate"
+    type: ci
+    command: "bin/majordomus-cli intent validate (gate intent-check, rust lane, .ai/repo/ci/gates.yaml)"
+    result: "master validate 46027019147 at 649e41282d4, job rust (3): '==> intent-check: bin/majordomus-cli intent validate' then 'intent-check: ok (5s)'; case 367 holds the exit 10 on an invalid model"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147/job/140601122449"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:48:15Z

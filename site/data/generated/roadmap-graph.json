@@ -135,10 +135,19 @@
       "id": "intent-lifecycle",
       "kind": "milestone",
       "label": "intent-lifecycle",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/intent-lifecycle/",
       "external": false,
       "summary": "Work is traceable to the intent it serves, and an intent is satisfied only by evidence"
+    },
+    {
+      "id": "intent-planning",
+      "kind": "milestone",
+      "label": "intent-planning",
+      "status": "ACTIVE",
+      "route": "/plan/intent-planning/",
+      "external": false,
+      "summary": "The plan of an intent is held to it before execution"
     },
     {
       "id": "development-runtime",
@@ -184,6 +193,15 @@
       "route": "/plan/a-second-adopter-is-served/",
       "external": false,
       "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool"
+    },
+    {
+      "id": "intent-bound-work",
+      "kind": "milestone",
+      "label": "intent-bound-work",
+      "status": "DONE",
+      "route": "/plan/intent-bound-work/",
+      "external": false,
+      "summary": "A task is bound to the intent it serves"
     },
     {
       "id": "ci-critical-path",
@@ -852,15 +870,6 @@
       "summary": "Cost per accepted outcome, only on measured data"
     },
     {
-      "id": "intent-planning",
-      "kind": "milestone",
-      "label": "intent-planning",
-      "status": "BLOCKED",
-      "route": "/plan/intent-planning/",
-      "external": false,
-      "summary": "The plan of an intent is held to it before execution"
-    },
-    {
       "id": "idd-reads-at-a-glance",
       "kind": "milestone",
       "label": "idd-reads-at-a-glance",
@@ -996,6 +1005,15 @@
       "summary": "A vendor workspace reads the repository, and proposes to it only where the owner has decided it may"
     },
     {
+      "id": "a-finish-reads-the-criteria-its-work-serves",
+      "kind": "milestone",
+      "label": "a-finish-reads-the-criteria-its-work-serves",
+      "status": "BLOCKED",
+      "route": "/plan/a-finish-reads-the-criteria-its-work-serves/",
+      "external": false,
+      "summary": "A finish reads what its work serves"
+    },
+    {
       "id": "an-entity-says-how-it-is-known-and-what-it-affects",
       "kind": "milestone",
       "label": "an-entity-says-how-it-is-known-and-what-it-affects",
@@ -1021,15 +1039,6 @@
       "route": "/plan/routing-recommendations/",
       "external": false,
       "summary": "Routing recommendations derived from measured cost"
-    },
-    {
-      "id": "intent-bound-work",
-      "kind": "milestone",
-      "label": "intent-bound-work",
-      "status": "BLOCKED",
-      "route": "/plan/intent-bound-work/",
-      "external": false,
-      "summary": "A task is bound to the intent it serves"
     },
     {
       "id": "mesh-peers-execute-assigned-work",
@@ -1075,15 +1084,6 @@
       "route": "/plan/shared-policy/",
       "external": false,
       "summary": "Shared policy across repositories and workers"
-    },
-    {
-      "id": "a-finish-reads-the-criteria-its-work-serves",
-      "kind": "milestone",
-      "label": "a-finish-reads-the-criteria-its-work-serves",
-      "status": "BLOCKED",
-      "route": "/plan/a-finish-reads-the-criteria-its-work-serves/",
-      "external": false,
-      "summary": "A finish reads what its work serves"
     }
   ],
   "edges": [
@@ -1095,11 +1095,6 @@
     {
       "source": "execution-telemetry",
       "target": "cost-per-accepted-outcome",
-      "kind": "unblocks"
-    },
-    {
-      "source": "intent-lifecycle",
-      "target": "intent-planning",
       "kind": "unblocks"
     },
     {
@@ -1203,6 +1198,11 @@
       "kind": "unblocks"
     },
     {
+      "source": "intent-bound-work",
+      "target": "a-finish-reads-the-criteria-its-work-serves",
+      "kind": "unblocks"
+    },
+    {
       "source": "capability-graph",
       "target": "an-entity-says-how-it-is-known-and-what-it-affects",
       "kind": "unblocks"
@@ -1215,11 +1215,6 @@
     {
       "source": "cost-per-accepted-outcome",
       "target": "routing-recommendations",
-      "kind": "unblocks"
-    },
-    {
-      "source": "intent-planning",
-      "target": "intent-bound-work",
       "kind": "unblocks"
     },
     {
@@ -1270,11 +1265,6 @@
     {
       "source": "routing-recommendations",
       "target": "shared-policy",
-      "kind": "unblocks"
-    },
-    {
-      "source": "intent-bound-work",
-      "target": "a-finish-reads-the-criteria-its-work-serves",
       "kind": "unblocks"
     }
   ]

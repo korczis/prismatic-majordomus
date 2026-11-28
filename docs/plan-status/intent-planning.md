@@ -9,16 +9,30 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [intent-planning](https://majordomus.dev/plan/intent-planning/) | BLOCKED | 0/3 | 0 | 3 | 0 | 0 | 0 | An issue names the intent criteria it serves; coverage of every criterion is derived from the plan and refused when a criterion has no work or work has no purpose. The gap a worker observed and the critique of the plan are typed records validated against the intent and the plan, and work does not start on an intent whose plan was never critiqued or has an open blocking finding. |
+| [intent-planning](https://majordomus.dev/plan/intent-planning/) | ACTIVE | 2/3 | 1 | 0 | 0 | 0 | 0 | An issue names the intent criteria it serves; coverage of every criterion is derived from the plan and refused when a criterion has no work or work has no purpose. The gap a worker observed and the critique of the plan are typed records validated against the intent and the plan, and work does not start on an intent whose plan was never critiqued or has an open blocking finding. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I1901](https://majordomus.dev/plan/i1901/) | BLOCKED | 1 | I1900 | An issue names the intent criterion it serves, and coverage is derived |
-| [I1902](https://majordomus.dev/plan/i1902/) | BLOCKED | 2 | I1901 | The gap and the critique of an intent are typed records the plan is held to |
-| [I4321](https://majordomus.dev/plan/i4321/) | BLOCKED | 0 | — | A critique or gap file that fails its schema is named by intent validate, and never reads as no critique |
+| [I1901](https://majordomus.dev/plan/i1901/) | DONE | 1 | I1900 | An issue names the intent criterion it serves, and coverage is derived |
+| [I1902](https://majordomus.dev/plan/i1902/) | DONE | 2 | I1901 | The gap and the critique of an intent are typed records the plan is held to |
+| [I4321](https://majordomus.dev/plan/i4321/) | READY | 0 | — | A critique or gap file that fails its schema is named by intent validate, and never reads as no critique |
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I4321` | shares apps/majordomus-cli/src/intent.rs with I4322; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares apps/majordomus-cli/src/intent.rs with I4325; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4330; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4410; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares apps/majordomus-cli/src/index.rs with I4417; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares apps/majordomus-cli/tests/intent_plan.rs with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4596; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4634; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4753; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4788; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares docs/PLANNING.md with I4792; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares test/cases/386_a_plan_is_held_to_its_intent.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4321` | shares test/cases/386_a_plan_is_held_to_its_intent.sh with I4813; they may not run concurrently |
