@@ -1,0 +1,10 @@
+[Unit]
+Description=Run build-host-observe every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=20s
+
+[Install]
+WantedBy=timers.target

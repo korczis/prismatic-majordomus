@@ -232,9 +232,56 @@ fn cursor_refusal(e: CursorError) -> CapabilityError {
     }
 }
 
-// ---------------------------------------------------------------- mesh.doctor
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.doctor`.
+pub struct DoctorInput {
+    /// Also observe this build host's own guard (I4343): disk-guard.timer and
+    /// build-host-observe.timer active, the ballast present, its state fresh, every
+    /// declared critical-service drop-in present and every declared tenant at or under its
+    /// bound. Observed against `/`, never a fixture: a test calls
+    /// [`crate::mesh::cache_provision::observe_build_host`] directly.
+    #[serde(default)]
+    pub build_host: bool,
+}
 
-fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityError> {
+impl BenchmarkCases for DoctorInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // `build_host` is never cased here: true shells to systemctl and writes host
+        // state, which a benchmark run must not do.
+        vec![NamedCase::new("default", DoctorInput { build_host: false })]
+    }
+}
+
+/// Where and how `mesh.doctor` observes a build host's own guard: the live host is `/`,
+/// read through systemctl and du; a test hands in a fixture root and closures.
+struct BuildHost<'a> {
+    root: &'a std::path::Path,
+    is_active: &'a dyn Fn(&str) -> bool,
+    size_gib: &'a dyn Fn(&std::path::Path) -> Option<u64>,
+}
+
+impl BuildHost<'static> {
+    /// This machine, as it is.
+    fn live() -> Self {
+        BuildHost {
+            root: std::path::Path::new("/"),
+            is_active: &crate::mesh::cache_provision::systemctl_is_active,
+            size_gib: &crate::mesh::cache_provision::du_gib,
+        }
+    }
+}
+
+fn mesh_doctor(ctx: &Context, input: DoctorInput) -> Result<MeshDoctorReport, CapabilityError> {
+    mesh_doctor_on(ctx, input, &BuildHost::live())
+}
+
+/// [`mesh_doctor`], with the build host it observes when `build_host` is asked named.
+fn mesh_doctor_on(
+    ctx: &Context,
+    input: DoctorInput,
+    host: &BuildHost<'_>,
+) -> Result<MeshDoctorReport, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
     // The runtime's verdict is reported only where a shared server made one: in the
     // command line's process nothing activates the mesh, and that absence is not news.
@@ -254,6 +301,35 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
         report.checks.push(crate::mesh::doctor::session_beats_check(
             &cooperation.session_beat_tally(),
         ));
+    }
+    if input.build_host {
+        let policy = crate::mesh::cache_provision::Policy::declared();
+        let observed = crate::mesh::cache_provision::observe_build_host(
+            &policy,
+            host.root,
+            host.is_active,
+            host.size_gib,
+        );
+        let check = crate::mesh::doctor::build_host_check(
+            &observed,
+            crate::mesh::cache_provision::BUILD_HOST_STATE_MAX_AGE,
+        );
+        // the host's own file is written under the host observed (`/` live, never under a
+        // `--repo` pointed at a test fixture), and neither it nor the mesh event fails the
+        // check itself: an unwritable state file or no local journal to publish to is this
+        // run's own problem, not evidence the guard is down
+        let _ =
+            crate::mesh::cache_provision::write_build_host_state(host.root, &observed, check.ok);
+        if let Some(cooperation) = ctx.mesh.cooperation() {
+            let _ = cooperation.journal().append_own(
+                crate::mesh::journal::EventBody::BuildHostObserved {
+                    ok: check.ok,
+                    failing: observed
+                        .failing(crate::mesh::cache_provision::BUILD_HOST_STATE_MAX_AGE),
+                },
+            );
+        }
+        report.checks.push(check);
     }
     // on the build host alone: what its provisioning still owes, a warning with the command
     report
@@ -2012,8 +2088,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.doctor",
                 title: "The mesh self-check",
-                description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
-                input: Empty,
+                description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required. `build_host` adds whether this build host's own guard is observed live: disk-guard.timer and build-host-observe.timer active, the ballast present, its state fresh, every declared critical-service drop-in present and every declared tenant at or under its bound (I4343).",
+                input: DoctorInput,
                 output: MeshDoctorReport,
                 stability: Stability::Experimental,
                 exposure: Exposure {
@@ -2715,6 +2791,96 @@ mod tests {
             .expect("the registry builds");
         let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
         (repo, ctx)
+    }
+
+    /// `mesh.doctor` not asked for the build host observes none: the live host is named but
+    /// never read, and the report carries no `build_host` check.
+    #[test]
+    fn a_doctor_not_asked_for_the_build_host_observes_none() {
+        let (_repo, ctx) = context(false);
+        let report = mesh_doctor(&ctx, DoctorInput::default()).unwrap();
+        assert!(!report.checks.is_empty(), "{report:?}");
+        assert!(
+            report.checks.iter().all(|c| c.check != "build_host"),
+            "{report:?}"
+        );
+        assert_eq!(report.ok, report.checks.iter().all(|c| c.ok));
+    }
+
+    /// `mesh.doctor` asked for the build host observes the host it is handed: a held guard
+    /// passes, its verdict is written under that host and published to the runtime's
+    /// journal; a stopped one fails the report naming what is not active, and with no
+    /// runtime nothing is published (I4343).
+    #[test]
+    fn a_doctor_asked_for_the_build_host_observes_records_and_publishes_it() {
+        use crate::mesh::journal::EventBody;
+        let host = tempfile::tempdir().unwrap();
+        let state = host.path().join("var/lib/majordomus");
+        std::fs::create_dir_all(&state).unwrap();
+        std::fs::write(state.join("disk-guard.json"), b"{}").unwrap();
+        std::fs::write(state.join("ballast"), b"").unwrap();
+        for unit in &crate::mesh::cache_provision::Policy::declared().critical_services {
+            let dir = host
+                .path()
+                .join(format!("etc/systemd/system/{unit}.service.d"));
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::write(dir.join("50-build-host.conf"), b"").unwrap();
+        }
+        let active = |_: &str| true;
+        let small = |_: &std::path::Path| Some(0u64);
+        let held = BuildHost {
+            root: host.path(),
+            is_active: &active,
+            size_gib: &small,
+        };
+        let build_host = DoctorInput { build_host: true };
+        let verdict_of = |report: &MeshDoctorReport| {
+            report
+                .checks
+                .iter()
+                .find(|c| c.check == "build_host")
+                .cloned()
+                .expect("the build host is checked")
+        };
+        let written = || -> serde_json::Value {
+            serde_json::from_slice(&std::fs::read(state.join("build-host.json")).unwrap()).unwrap()
+        };
+
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let report = mesh_doctor_on(&ctx, build_host, &held).unwrap();
+        assert!(verdict_of(&report).ok, "{report:?}");
+        assert_eq!(written()["ok"], serde_json::json!(true));
+        let published: Vec<(bool, Vec<String>)> = c
+            .journal()
+            .events()
+            .iter()
+            .filter_map(|e| match e.body() {
+                Some(EventBody::BuildHostObserved { ok, failing }) => Some((ok, failing)),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(published, vec![(true, Vec::new())]);
+
+        let (_repo, alone) = context(false);
+        let inactive = |_: &str| false;
+        let stopped = BuildHost {
+            is_active: &inactive,
+            ..held
+        };
+        let report = mesh_doctor_on(&alone, DoctorInput { build_host: true }, &stopped).unwrap();
+        let check = verdict_of(&report);
+        assert!(!check.ok && !report.ok, "{report:?}");
+        assert!(
+            check.detail.contains("disk-guard.timer is not active")
+                && check
+                    .detail
+                    .contains("build-host-observe.timer is not active"),
+            "{}",
+            check.detail
+        );
+        assert_eq!(written()["ok"], serde_json::json!(false));
     }
 
     /// `mesh.who` refuses a subject of no form it reads, naming the forms, and answers one it

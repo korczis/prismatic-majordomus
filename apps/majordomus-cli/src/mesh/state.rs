@@ -778,6 +778,9 @@ pub fn fold_with(
             // not a verdict every runtime shares, so it stays out of the state two runtimes
             // compare: mesh::build_cache::offer reads it.
             EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {}
+            // A build host's own word on itself (I4343): not folded, read by `mesh events`
+            // and `monitor` as the host's latest observation, the same as the offer above.
+            EventBody::BuildHostObserved { .. } => {}
             EventBody::RecordWritten { record } => records.apply(event, record, &closed_at),
         }
     }
@@ -1638,5 +1641,23 @@ mod tests {
         assert_eq!(after.claims.len(), before.claims.len());
         assert_eq!(after.claims[0].state, ClaimState::Held);
         assert!(after.reviews.is_empty(), "an offer is not a review");
+    }
+
+    /// A build host's word on its own guard is read by `mesh events` and `monitor`, not
+    /// folded: the state is what it was without it.
+    #[test]
+    fn a_build_host_observation_stays_out_of_the_folded_state() {
+        let a = journal("0000000000000001");
+        claim(&a, "c1", "s1", &["apps"], ClaimMode::Exclusive);
+        let before = fold(&a.events(), &all_live);
+        a.append_own(EventBody::BuildHostObserved {
+            ok: false,
+            failing: vec!["the ballast is missing".into()],
+        })
+        .unwrap();
+        let after = fold(&a.events(), &all_live);
+        assert_eq!(after.claims.len(), before.claims.len());
+        assert_eq!(after.claims[0].state, ClaimState::Held);
+        assert!(after.reviews.is_empty() && after.handovers.is_empty());
     }
 }
