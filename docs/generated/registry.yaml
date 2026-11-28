@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.3.0
+# Generator: majordomus-cli 1.4.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.3.0
+generator: majordomus-cli 1.4.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -220,7 +220,7 @@ modules:
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
     stability: experimental
     source: builtin
-    capabilities: 33
+    capabilities: 37
   - id: models
     title: Models
     description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
@@ -39755,6 +39755,964 @@ capabilities:
     benchmark:
       policy: waived
       reason: transient_state
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.hub
+    module: mesh
+    kind: query
+    title: The hub as a service of this host
+    description: "Whether this machine's hub runs as its host's service and follows the release (I4816): each unit file — the launchd agent and its update agent on macOS, the systemd user unit, the update service and its hourly timer on Linux — as missing, drifted or as rendered, and whether the manager has it loaded and running; whether the hub answers on its port, with the version it serves, the sessions attached to it and the runtimes it is linked with; the published, installed and served versions; the update's last run; and every linked runtime behind the published release. Fails when a unit is missing, drifted or not loaded, the hub does not answer, it is linked with nobody, the update has not run within two hours, or it serves an older release than is published with no update on it. Reads the host; changes nothing."
+    input:
+      name: HubStatusInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          port:
+            type:
+              - integer
+              - "null"
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: "The hub port; default the port the declaration gives this machine's address, else 8791."
+          root:
+            type:
+              - string
+              - "null"
+            description: "A staging directory that stands for the home: no service manager or hub is asked."
+        description: "The input of `mesh.hub`, the status: what a caller over HTTP or MCP may name. The\nexecutable and the release origin are this process's own (the installer's launcher,\n`MAJORDOMUS_RELEASE_BASE_URL`), never a caller's, because the status runs the one and\nreads the other."
+        title: HubStatusInput
+    output:
+      name: HubStatusReport
+      schema:
+        type: object
+        properties:
+          manager:
+            "$ref": "#/$defs/Manager"
+            description: The service manager.
+          repo:
+            type: string
+            description: "The hub's checkout."
+          port:
+            type: integer
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: The hub port.
+          units:
+            type: array
+            items:
+              "$ref": "#/$defs/UnitView"
+            description: The unit files.
+          hub:
+            "$ref": "#/$defs/HubAnswer"
+            description: What the hub answered.
+          published:
+            type:
+              - string
+              - "null"
+            description: The published release.
+          installed:
+            type:
+              - string
+              - "null"
+            description: The release the executable is.
+          update:
+            "$ref": "#/$defs/UpdateState"
+            description: What the update remembers.
+          checks:
+            type: array
+            items:
+              "$ref": "#/$defs/HubCheck"
+            description: Every check.
+          ok:
+            type: boolean
+            description: No check failed.
+        required:
+          - manager
+          - repo
+          - port
+          - units
+          - hub
+          - update
+          - checks
+          - ok
+        description: "The report of `mesh hub status`."
+        title: HubStatusReport
+        "$defs":
+          Manager:
+            oneOf:
+              - type: string
+                const: launchd
+                description: "launchd, per user (macOS): `~/Library/LaunchAgents`."
+              - type: string
+                const: systemd_user
+                description: "systemd, per user (Linux): `~/.config/systemd/user`."
+              - type: string
+                const: unsupported
+                description: "Neither: no hub service can be written here."
+            description: The service manager of a host.
+          UnitView:
+            type: object
+            properties:
+              role:
+                "$ref": "#/$defs/UnitRole"
+                description: What it is for.
+              name:
+                type: string
+                description: "The service manager's name of it."
+              path:
+                type: string
+                description: Where it is.
+              state:
+                "$ref": "#/$defs/FileState"
+                description: Against what is rendered.
+              loaded:
+                type: boolean
+                description: "Whether the manager has it: loaded (launchd), or enabled or static (systemd)."
+              enabled:
+                type: boolean
+                description: "Whether the manager may start it: not disabled (launchd), enabled or static (systemd)."
+              active:
+                type: boolean
+                description: Whether it runs now (the hub) or is scheduled (the timer).
+            required:
+              - role
+              - name
+              - path
+              - state
+              - loaded
+              - enabled
+              - active
+            description: "One unit file, as found."
+          UnitRole:
+            oneOf:
+              - type: string
+                const: hub
+                description: "The hub itself, kept running."
+              - type: string
+                const: update
+                description: "The update, run by its schedule."
+              - type: string
+                const: update_timer
+                description: "The schedule of the update (systemd only: launchd keeps it in the update's agent)."
+            description: What one file is for.
+          FileState:
+            oneOf:
+              - type: string
+                const: missing
+                description: Not there.
+              - type: string
+                const: drifted
+                description: "There, with other content: a hand-made unit, or one an older release rendered."
+              - type: string
+                const: current
+                description: "There, as rendered."
+            description: A file against what is rendered for it.
+          HubAnswer:
+            type: object
+            properties:
+              answering:
+                type: boolean
+                description: Whether it answered at all.
+              version:
+                type:
+                  - string
+                  - "null"
+                description: The version it serves.
+              attached:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The sessions attached to the hub's own board."
+              linked:
+                type: array
+                items:
+                  "$ref": "#/$defs/LinkedRuntime"
+                description: "Every runtime it is linked with, and the version each speaks: what the mesh\nbroadcasts about its members."
+            required:
+              - answering
+              - attached
+              - linked
+            description: "What the hub answers on its port: its version, how many sessions are attached to it, and\nthe runtimes it is linked with."
+          LinkedRuntime:
+            type: object
+            properties:
+              machine:
+                type: string
+                description: "The machine's short name."
+              runtime:
+                type: string
+                description: The runtime.
+              version:
+                type: string
+                description: The version it runs.
+            required:
+              - machine
+              - runtime
+              - version
+            description: A runtime the hub is linked with.
+          UpdateState:
+            type: object
+            properties:
+              last:
+                anyOf:
+                  - "$ref": "#/$defs/UpdateRun"
+                  - type: "null"
+                description: The last run.
+              failed:
+                type: array
+                items:
+                  type: string
+                description: Versions that failed on this node and are not tried again.
+                default: []
+              deferred_since:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Since when the restart has been deferred, while it is."
+            description: What the update remembers between runs.
+          UpdateRun:
+            type: object
+            properties:
+              at:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "When it ran, in seconds since the epoch."
+              result:
+                type: string
+                description: "`current`, `updated`, `deferred`, `rolled_back`, `failed`, `skipped` or `unknown`."
+              detail:
+                type: string
+                description: What it said.
+            required:
+              - at
+              - result
+              - detail
+            description: One run of the update.
+          HubCheck:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Which.
+              level:
+                "$ref": "#/$defs/Level"
+                description: How it came out.
+              detail:
+                type: string
+                description: What was found.
+              remedy:
+                type:
+                  - string
+                  - "null"
+                description: What to run when it does not hold.
+            required:
+              - name
+              - level
+              - detail
+            description: "One check of `mesh hub status`."
+          Level:
+            oneOf:
+              - type: string
+                const: pass
+                description: Holds.
+              - type: string
+                const: warn
+                description: "Holds, with something a person should know."
+              - type: string
+                const: fail
+                description: Does not hold.
+            description: "How one check of `mesh hub status` came out."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_hub
+      http:
+        method: GET
+        path: /api/v1/mesh/hub
+      cli:
+        path:
+          - mesh
+          - hub
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - diagnostics
+      - hub
+      - service
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+      local_only: true
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.hub.install
+    module: mesh
+    kind: command
+    title: Install the hub as a service of this host
+    description: "Render the hub's service from the mesh declaration and this checkout — on macOS the launch agent dev.majordomus.hub (RunAtLoad, KeepAlive) and the update agent dev.majordomus.hub-update (at load and every hour), on Linux the systemd user units majordomus-hub.service (Restart=always, no start limit) and majordomus-hub-update.service with its hourly timer — each running the installer's launcher, whose path does not move with the version, on this checkout with --host 0.0.0.0, the declared hub port and --idle 0. Refuses on a machine the declaration does not name as a hub and for a checkout on a branch, because a hub serves a dedicated checkout detached at a release tag. Without `apply` it plans: every file missing or drifted and every manager command owed. With `apply` it writes them and loads them; a second install finds everything current and does nothing. A `root` is a staging home: files only, no command. Offered on the command line only: it installs a service, which nothing reachable over HTTP or MCP may do."
+    input:
+      name: HubInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          apply:
+            type: boolean
+            description: "Carry the plan out. Absent, install, uninstall and update only plan and change nothing."
+            default: false
+          root:
+            type:
+              - string
+              - "null"
+            description: "A staging directory that stands for the home: the units are written under it, no\nservice manager is asked and no hub is reached."
+          port:
+            type:
+              - integer
+              - "null"
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: "The hub port; default the port the declaration gives this machine's address, else 8791."
+          executable:
+            type:
+              - string
+              - "null"
+            description: "The executable the units run; default the installer's launcher, else this executable."
+          release_base:
+            type:
+              - string
+              - "null"
+            description: "Where the published release and the installer are read; default\n`MAJORDOMUS_RELEASE_BASE_URL`, else https://majordomus.dev."
+          retry:
+            type: boolean
+            description: "Update: try again the versions that failed on this node."
+            default: false
+        description: "The input of `mesh.hub.install`, `mesh.hub.uninstall` and `mesh.hub.update`, offered on\nthe command line alone."
+        title: HubInput
+    output:
+      name: HubServiceReport
+      schema:
+        type: object
+        properties:
+          mode:
+            type: string
+            description: "`plan`, `apply` or `staging`."
+          manager:
+            "$ref": "#/$defs/Manager"
+            description: The service manager.
+          repo:
+            type: string
+            description: "The hub's checkout the units serve."
+          executable:
+            type: string
+            description: The executable the units run.
+          port:
+            type: integer
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: The hub port.
+          units:
+            type: array
+            items:
+              "$ref": "#/$defs/UnitView"
+            description: The unit files before anything was done.
+          steps:
+            type: array
+            items:
+              "$ref": "#/$defs/Step"
+            description: "What was owed, and what came of it."
+          refusal:
+            type:
+              - string
+              - "null"
+            description: "Why nothing could be done, when nothing could."
+          notes:
+            type: array
+            items:
+              type: string
+            description: "What still needs a person: lingering, the firewall, trust."
+          ok:
+            type: boolean
+            description: "No refusal, and every step that ran held."
+        required:
+          - mode
+          - manager
+          - repo
+          - executable
+          - port
+          - units
+          - steps
+          - ok
+        description: "The report of `mesh hub install` and `mesh hub uninstall`."
+        title: HubServiceReport
+        "$defs":
+          Manager:
+            oneOf:
+              - type: string
+                const: launchd
+                description: "launchd, per user (macOS): `~/Library/LaunchAgents`."
+              - type: string
+                const: systemd_user
+                description: "systemd, per user (Linux): `~/.config/systemd/user`."
+              - type: string
+                const: unsupported
+                description: "Neither: no hub service can be written here."
+            description: The service manager of a host.
+          UnitView:
+            type: object
+            properties:
+              role:
+                "$ref": "#/$defs/UnitRole"
+                description: What it is for.
+              name:
+                type: string
+                description: "The service manager's name of it."
+              path:
+                type: string
+                description: Where it is.
+              state:
+                "$ref": "#/$defs/FileState"
+                description: Against what is rendered.
+              loaded:
+                type: boolean
+                description: "Whether the manager has it: loaded (launchd), or enabled or static (systemd)."
+              enabled:
+                type: boolean
+                description: "Whether the manager may start it: not disabled (launchd), enabled or static (systemd)."
+              active:
+                type: boolean
+                description: Whether it runs now (the hub) or is scheduled (the timer).
+            required:
+              - role
+              - name
+              - path
+              - state
+              - loaded
+              - enabled
+              - active
+            description: "One unit file, as found."
+          UnitRole:
+            oneOf:
+              - type: string
+                const: hub
+                description: "The hub itself, kept running."
+              - type: string
+                const: update
+                description: "The update, run by its schedule."
+              - type: string
+                const: update_timer
+                description: "The schedule of the update (systemd only: launchd keeps it in the update's agent)."
+            description: What one file is for.
+          FileState:
+            oneOf:
+              - type: string
+                const: missing
+                description: Not there.
+              - type: string
+                const: drifted
+                description: "There, with other content: a hand-made unit, or one an older release rendered."
+              - type: string
+                const: current
+                description: "There, as rendered."
+            description: A file against what is rendered for it.
+          Step:
+            type: object
+            properties:
+              line:
+                type: string
+                description: "What the step does, in words or as the command line."
+              ran:
+                type: boolean
+                description: "Whether it ran: a plan, a staging root and a step after a failed one run nothing."
+              ok:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether it held, when it ran."
+              output:
+                type: string
+                description: "What it said, when it ran."
+            required:
+              - line
+              - ran
+            description: "One step a plan owes, and what came of it when it was carried out."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - hub
+          - install
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - hub
+      - service
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.hub.uninstall
+    module: mesh
+    kind: command
+    title: "Remove the hub's service from this host"
+    description: "Stop the hub and its update through the service manager (launchctl bootout, systemctl --user disable --now) and remove every unit file mesh hub install writes. Without `apply` it plans; a host without the units owes nothing. Offered on the command line only."
+    input:
+      name: HubInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          apply:
+            type: boolean
+            description: "Carry the plan out. Absent, install, uninstall and update only plan and change nothing."
+            default: false
+          root:
+            type:
+              - string
+              - "null"
+            description: "A staging directory that stands for the home: the units are written under it, no\nservice manager is asked and no hub is reached."
+          port:
+            type:
+              - integer
+              - "null"
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: "The hub port; default the port the declaration gives this machine's address, else 8791."
+          executable:
+            type:
+              - string
+              - "null"
+            description: "The executable the units run; default the installer's launcher, else this executable."
+          release_base:
+            type:
+              - string
+              - "null"
+            description: "Where the published release and the installer are read; default\n`MAJORDOMUS_RELEASE_BASE_URL`, else https://majordomus.dev."
+          retry:
+            type: boolean
+            description: "Update: try again the versions that failed on this node."
+            default: false
+        description: "The input of `mesh.hub.install`, `mesh.hub.uninstall` and `mesh.hub.update`, offered on\nthe command line alone."
+        title: HubInput
+    output:
+      name: HubServiceReport
+      schema:
+        type: object
+        properties:
+          mode:
+            type: string
+            description: "`plan`, `apply` or `staging`."
+          manager:
+            "$ref": "#/$defs/Manager"
+            description: The service manager.
+          repo:
+            type: string
+            description: "The hub's checkout the units serve."
+          executable:
+            type: string
+            description: The executable the units run.
+          port:
+            type: integer
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: The hub port.
+          units:
+            type: array
+            items:
+              "$ref": "#/$defs/UnitView"
+            description: The unit files before anything was done.
+          steps:
+            type: array
+            items:
+              "$ref": "#/$defs/Step"
+            description: "What was owed, and what came of it."
+          refusal:
+            type:
+              - string
+              - "null"
+            description: "Why nothing could be done, when nothing could."
+          notes:
+            type: array
+            items:
+              type: string
+            description: "What still needs a person: lingering, the firewall, trust."
+          ok:
+            type: boolean
+            description: "No refusal, and every step that ran held."
+        required:
+          - mode
+          - manager
+          - repo
+          - executable
+          - port
+          - units
+          - steps
+          - ok
+        description: "The report of `mesh hub install` and `mesh hub uninstall`."
+        title: HubServiceReport
+        "$defs":
+          Manager:
+            oneOf:
+              - type: string
+                const: launchd
+                description: "launchd, per user (macOS): `~/Library/LaunchAgents`."
+              - type: string
+                const: systemd_user
+                description: "systemd, per user (Linux): `~/.config/systemd/user`."
+              - type: string
+                const: unsupported
+                description: "Neither: no hub service can be written here."
+            description: The service manager of a host.
+          UnitView:
+            type: object
+            properties:
+              role:
+                "$ref": "#/$defs/UnitRole"
+                description: What it is for.
+              name:
+                type: string
+                description: "The service manager's name of it."
+              path:
+                type: string
+                description: Where it is.
+              state:
+                "$ref": "#/$defs/FileState"
+                description: Against what is rendered.
+              loaded:
+                type: boolean
+                description: "Whether the manager has it: loaded (launchd), or enabled or static (systemd)."
+              enabled:
+                type: boolean
+                description: "Whether the manager may start it: not disabled (launchd), enabled or static (systemd)."
+              active:
+                type: boolean
+                description: Whether it runs now (the hub) or is scheduled (the timer).
+            required:
+              - role
+              - name
+              - path
+              - state
+              - loaded
+              - enabled
+              - active
+            description: "One unit file, as found."
+          UnitRole:
+            oneOf:
+              - type: string
+                const: hub
+                description: "The hub itself, kept running."
+              - type: string
+                const: update
+                description: "The update, run by its schedule."
+              - type: string
+                const: update_timer
+                description: "The schedule of the update (systemd only: launchd keeps it in the update's agent)."
+            description: What one file is for.
+          FileState:
+            oneOf:
+              - type: string
+                const: missing
+                description: Not there.
+              - type: string
+                const: drifted
+                description: "There, with other content: a hand-made unit, or one an older release rendered."
+              - type: string
+                const: current
+                description: "There, as rendered."
+            description: A file against what is rendered for it.
+          Step:
+            type: object
+            properties:
+              line:
+                type: string
+                description: "What the step does, in words or as the command line."
+              ran:
+                type: boolean
+                description: "Whether it ran: a plan, a staging root and a step after a failed one run nothing."
+              ok:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether it held, when it ran."
+              output:
+                type: string
+                description: "What it said, when it ran."
+            required:
+              - line
+              - ran
+            description: "One step a plan owes, and what came of it when it was carried out."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - hub
+          - uninstall
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - hub
+      - service
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.hub.update
+    module: mesh
+    kind: command
+    title: Bring the hub to the published release
+    description: "What the hub's update agent runs every hour. It asks the release origin for the latest release, the executable for its version and the hub for the version it serves and the sessions attached to it, and decides: current, install the newer release, restart the hub onto the installed one, defer while sessions are attached, or skip a version that failed here before until a newer one is published. With `apply` it carries the decision out: the verified installer (digest and attestation), the hub checkout detached at the release's tag (refused when the checkout has uncommitted changes), a restart through the service manager, and the hub's own answer within 90 seconds; a hub that does not answer with the new version gets the previous release and checkout back and the version is recorded as failed on this node. Every run is recorded under ~/.local/state/majordomus/hub-update.json, which mesh hub reads. Offered on the command line only: it installs a release and restarts a service."
+    input:
+      name: HubInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          apply:
+            type: boolean
+            description: "Carry the plan out. Absent, install, uninstall and update only plan and change nothing."
+            default: false
+          root:
+            type:
+              - string
+              - "null"
+            description: "A staging directory that stands for the home: the units are written under it, no\nservice manager is asked and no hub is reached."
+          port:
+            type:
+              - integer
+              - "null"
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: "The hub port; default the port the declaration gives this machine's address, else 8791."
+          executable:
+            type:
+              - string
+              - "null"
+            description: "The executable the units run; default the installer's launcher, else this executable."
+          release_base:
+            type:
+              - string
+              - "null"
+            description: "Where the published release and the installer are read; default\n`MAJORDOMUS_RELEASE_BASE_URL`, else https://majordomus.dev."
+          retry:
+            type: boolean
+            description: "Update: try again the versions that failed on this node."
+            default: false
+        description: "The input of `mesh.hub.install`, `mesh.hub.uninstall` and `mesh.hub.update`, offered on\nthe command line alone."
+        title: HubInput
+    output:
+      name: HubUpdateReport
+      schema:
+        type: object
+        properties:
+          mode:
+            type: string
+            description: "`plan` or `apply`."
+          published:
+            type:
+              - string
+              - "null"
+            description: The published release.
+          installed:
+            type:
+              - string
+              - "null"
+            description: "The release the executable is, before the run."
+          served:
+            type:
+              - string
+              - "null"
+            description: "The release the hub served, before the run."
+          checkout:
+            type:
+              - string
+              - "null"
+            description: "The release the hub's checkout was at, before the run."
+          decision:
+            "$ref": "#/$defs/Decision"
+            description: What the versions called for.
+          steps:
+            type: array
+            items:
+              "$ref": "#/$defs/Step"
+            description: What was done.
+          result:
+            type: string
+            description: "How the run ended: the `result` it recorded."
+          detail:
+            type: string
+            description: What it said about it.
+          ok:
+            type: boolean
+            description: "Nothing failed, and the hub serves what it should."
+        required:
+          - mode
+          - decision
+          - steps
+          - result
+          - detail
+          - ok
+        description: "The report of `mesh hub update`."
+        title: HubUpdateReport
+        "$defs":
+          Decision:
+            oneOf:
+              - type: object
+                properties:
+                  decision:
+                    type: string
+                    const: current
+                required:
+                  - decision
+                description: "The hub and its checkout are at the newest release there is: nothing to do."
+              - type: object
+                properties:
+                  version:
+                    type: string
+                    description: The version to install.
+                  decision:
+                    type: string
+                    const: install
+                required:
+                  - decision
+                  - version
+                description: "A newer release is published than installed: install it, then decide again."
+              - type: object
+                properties:
+                  version:
+                    type: string
+                    description: The version the hub moves to.
+                  decision:
+                    type: string
+                    const: activate
+                required:
+                  - decision
+                  - version
+                description: "The installed release is newer than the hub serves or its checkout is at: move the\ncheckout to its tag and restart the hub onto it."
+              - type: object
+                properties:
+                  attached:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: How many.
+                  decision:
+                    type: string
+                    const: deferred
+                required:
+                  - decision
+                  - attached
+                description: "Sessions are attached to the hub: the restart waits, a day at most."
+              - type: object
+                properties:
+                  version:
+                    type: string
+                    description: The version.
+                  decision:
+                    type: string
+                    const: failed
+                required:
+                  - decision
+                  - version
+                description: "The version failed on this node before: it is not tried again until a newer one is\npublished, or the update is asked to retry."
+              - type: object
+                properties:
+                  reason:
+                    type: string
+                    description: Which.
+                  decision:
+                    type: string
+                    const: unknown
+                required:
+                  - decision
+                  - reason
+                description: "A version could not be read, so nothing is done."
+            description: What the update does about the versions it found.
+          Step:
+            type: object
+            properties:
+              line:
+                type: string
+                description: "What the step does, in words or as the command line."
+              ran:
+                type: boolean
+                description: "Whether it ran: a plan, a staging root and a step after a failed one run nothing."
+              ok:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether it held, when it ran."
+              output:
+                type: string
+                description: "What it said, when it ran."
+            required:
+              - line
+              - ran
+            description: "One step a plan owes, and what came of it when it was carried out."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - hub
+          - update
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - hub
+      - release
+    benchmark:
+      policy: waived
+      reason: destructive
     cache:
       policy: disabled
     execution:

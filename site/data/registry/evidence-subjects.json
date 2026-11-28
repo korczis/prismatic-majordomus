@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -686,6 +686,26 @@
       "kind": "capability",
       "subject": "capability:mesh.handover.publish",
       "path": "/evidence/capabilities/mesh-handover-publish/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.hub.install",
+      "path": "/evidence/capabilities/mesh-hub-install/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.hub.uninstall",
+      "path": "/evidence/capabilities/mesh-hub-uninstall/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.hub.update",
+      "path": "/evidence/capabilities/mesh-hub-update/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.hub",
+      "path": "/evidence/capabilities/mesh-hub/"
     },
     {
       "kind": "capability",
@@ -3101,6 +3121,26 @@
       "kind": "command",
       "subject": "command:mesh handover publish",
       "path": "/evidence/commands/mesh-handover-publish/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh hub install",
+      "path": "/evidence/commands/mesh-hub-install/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh hub uninstall",
+      "path": "/evidence/commands/mesh-hub-uninstall/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh hub update",
+      "path": "/evidence/commands/mesh-hub-update/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh hub",
+      "path": "/evidence/commands/mesh-hub/"
     },
     {
       "kind": "command",
@@ -5704,6 +5744,54 @@
       "page": "/evidence/capabilities/mesh-handover-publish/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.hub": {
+      "kind": "capability",
+      "id": "mesh.hub",
+      "page": "/evidence/capabilities/mesh-hub/",
+      "programs": [],
+      "members": [
+        "command:mesh hub"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.hub.install": {
+      "kind": "capability",
+      "id": "mesh.hub.install",
+      "page": "/evidence/capabilities/mesh-hub-install/",
+      "programs": [],
+      "members": [
+        "command:mesh hub install"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.hub.uninstall": {
+      "kind": "capability",
+      "id": "mesh.hub.uninstall",
+      "page": "/evidence/capabilities/mesh-hub-uninstall/",
+      "programs": [],
+      "members": [
+        "command:mesh hub uninstall"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.hub.update": {
+      "kind": "capability",
+      "id": "mesh.hub.update",
+      "page": "/evidence/capabilities/mesh-hub-update/",
+      "programs": [],
+      "members": [
+        "command:mesh hub update"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -16847,6 +16935,82 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh hub": {
+      "kind": "command",
+      "id": "mesh hub",
+      "page": "/evidence/commands/mesh-hub/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh hub install": {
+      "kind": "command",
+      "id": "mesh hub install",
+      "page": "/evidence/commands/mesh-hub-install/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh hub uninstall": {
+      "kind": "command",
+      "id": "mesh hub uninstall",
+      "page": "/evidence/commands/mesh-hub-uninstall/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh hub update": {
+      "kind": "command",
+      "id": "mesh hub update",
+      "page": "/evidence/commands/mesh-hub-update/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh identity": {
       "kind": "command",
       "id": "mesh identity",
@@ -22360,6 +22524,18 @@
       "programs": [],
       "members": [
         "capability:mesh.handover.publish"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_hub": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_hub",
+      "alias_of": "capability:mesh.hub",
+      "programs": [],
+      "members": [
+        "capability:mesh.hub"
       ],
       "routes": [],
       "mechanisms": [],
@@ -30617,6 +30793,7 @@
     "suite:4627_a_merge_does_not_borrow_a_foreign_executable",
     "suite:46_cross_surface",
     "suite:4779_homepage_check_compares_the_delivery_the_page_renders",
+    "suite:4783_the_hub_service_is_written_by_a_capability",
     "suite:47_mutation",
     "suite:48_roadmap_graph",
     "suite:491_the_mesh_is_on_here",

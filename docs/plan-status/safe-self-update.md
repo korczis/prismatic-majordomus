@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [safe-self-update](https://majordomus.dev/plan/safe-self-update/) | ACTIVE | 4/14 | 4 | 6 | 0 | 0 | 0 | An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks. |
+| [safe-self-update](https://majordomus.dev/plan/safe-self-update/) | ACTIVE | 4/15 | 5 | 6 | 0 | 0 | 0 | An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks. |
 
 ## Issues
 
@@ -29,6 +29,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3178](https://majordomus.dev/plan/i3178/) | BLOCKED | 2 | I2720, I2722 | A self update killed at any stage leaves a usable installation |
 | [I4683](https://majordomus.dev/plan/i4683/) | READY | 0 | — | An upgrade on a macOS hub with the application firewall on keeps the hub's inbound admission, and firewall apply prunes stale version and temp entries |
 | [I4728](https://majordomus.dev/plan/i4728/) | BLOCKED | 1 | I2720, I2165 | An unattended follower installs only a release whose provenance it verified, and refuses otherwise |
+| [I4816](https://majordomus.dev/plan/i4816/) | READY | 0 | — | The hub's launchd agent or systemd user unit and its daily update timer are written by a capability, the hub links with the mesh by itself, and status checks that it follows the release |
 
 ## Findings
 
@@ -243,6 +244,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2720` | shares test/cases with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares test/cases with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4816; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares apps/majordomus-cli/src/ui with I2747; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I2826; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares apps/majordomus-cli/src/mesh with I2874; they may not run concurrently |
@@ -450,6 +452,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I2723` | shares apps/majordomus-cli/src/mesh with I4816; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I2902; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I2903; they may not run concurrently |
@@ -630,5 +633,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2826` | shares test/cases with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares test/cases with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares test/cases with I4810; they may not run concurrently |
+| WARN | `scope_conflict` | `I2826` | shares test/cases with I4816; they may not run concurrently |
 | WARN | `scope_conflict` | `I4683` | shares docs/MESH.md with I4740; they may not run concurrently |
 | WARN | `scope_conflict` | `I4683` | shares docs/MESH.md with I4753; they may not run concurrently |
+| WARN | `scope_conflict` | `I4683` | shares docs/MESH.md with I4816; they may not run concurrently |

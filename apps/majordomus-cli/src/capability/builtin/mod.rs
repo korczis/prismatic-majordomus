@@ -61,6 +61,7 @@ pub mod gates;
 pub(crate) mod graph;
 pub(crate) mod guard;
 pub mod health;
+pub(crate) mod hub_service;
 pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;

@@ -26,8 +26,8 @@ use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
     MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshBuildCacheEnvArgs, MeshCommand,
-    MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand,
-    OutputFormat,
+    MeshFirewallCommand, MeshHandoverCommand, MeshHubCommand, MeshQueryArgs, MeshReviewCommand,
+    MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -89,6 +89,32 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 render_firewall_apply,
                 not_ok,
             ),
+        },
+        // The hub's service is a fact of this host: answered in this process, and changed
+        // on the command line alone.
+        MeshCommand::Hub(a) => match a.command {
+            None => in_process(
+                a.query,
+                &["mesh", "hub"],
+                json!({ "port": a.port, "root": a.root }),
+                crate::mesh::hub_service::render_text,
+                not_ok,
+            ),
+            Some(c) => {
+                let (words, x) = match c {
+                    MeshHubCommand::Install(x) => ("install", x),
+                    MeshHubCommand::Uninstall(x) => ("uninstall", x),
+                    MeshHubCommand::Update(x) => ("update", x),
+                };
+                in_process(
+                    x.query,
+                    &["mesh", "hub", words],
+                    json!({ "apply": x.apply, "port": x.port, "executable": x.executable,
+                            "release_base": x.release_base, "root": x.root, "retry": x.retry }),
+                    crate::mesh::hub_service::render_text,
+                    not_ok,
+                )
+            }
         },
         // A process is a fact of the machine it runs on, the board is gathered from every
         // checkout's server: answered in this process, like the identity.

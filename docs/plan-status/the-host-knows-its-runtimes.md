@@ -56,3 +56,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4683; they may not run concurrently |
 | WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4740; they may not run concurrently |
 | WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4753; they may not run concurrently |
+| WARN | `scope_conflict` | `I3184` | shares docs/MESH.md with I4816; they may not run concurrently |

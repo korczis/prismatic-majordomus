@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `ad1ed94f8723`.
+Generated from canonical inputs `ebd136bccb9c`.
 
 ## Milestones
 
@@ -109,7 +109,7 @@ Generated from canonical inputs `ad1ed94f8723`.
 | [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 1/6 | 1 | 4 | 0 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. | [`plan-status/runtime-adapters.md`](plan-status/runtime-adapters.md) |
 | [runtime-lifecycle](https://majordomus.dev/plan/runtime-lifecycle/) | ACTIVE | 8/10 | 2 | 0 | 0 | 0 | 1 | Entering a checkout, opening the Cockpit, or starting any number of MCP clients converges on one server for that checkout, which is taken over only when it is dead, stops in order when asked, removes only its own lease, reports a typed state every surface reads, and stays up while any surface uses it. | [`plan-status/runtime-lifecycle.md`](plan-status/runtime-lifecycle.md) |
 | [runtime-trust](https://majordomus.dev/plan/runtime-trust/) | ACTIVE | 8/11 | 3 | 0 | 0 | 0 | 0 | Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces. | [`plan-status/runtime-trust.md`](plan-status/runtime-trust.md) |
-| [safe-self-update](https://majordomus.dev/plan/safe-self-update/) | ACTIVE | 4/14 | 4 | 6 | 0 | 0 | 0 | An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks. | [`plan-status/safe-self-update.md`](plan-status/safe-self-update.md) |
+| [safe-self-update](https://majordomus.dev/plan/safe-self-update/) | ACTIVE | 4/15 | 5 | 6 | 0 | 0 | 0 | An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks. | [`plan-status/safe-self-update.md`](plan-status/safe-self-update.md) |
 | [shared-policy](https://majordomus.dev/plan/shared-policy/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | A policy can be shared across repositories and workers, with local override remaining explicit and drift from the shared source detectable in one command. | [`plan-status/shared-policy.md`](plan-status/shared-policy.md) |
 | [surfaces-never-disagree](https://majordomus.dev/plan/surfaces-never-disagree/) | ACTIVE | 12/26 | 14 | 0 | 0 | 0 | 0 | A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped. | [`plan-status/surfaces-never-disagree.md`](plan-status/surfaces-never-disagree.md) |
 | [test-evidence](https://majordomus.dev/plan/test-evidence/) | ACTIVE | 21/35 | 4 | 10 | 0 | 0 | 0 | Evidence is indexed by subject and judged at the presented revision, as ADR 0087 records. Every claim, rule, feature, command, capability, MCP tool and use case is a subject of one derived index, and every widget that states behaviour names one. Every surface reads its verdict from the tracked ledger alone, through one freshness function and one aggregation, at the revision it presents: the CLI and HTTP and MCP at the working tree or the checked-out commit, the site at the commit it was built from. A trunk run reaches the ledger through a reviewed recording pull request, and a supplementary record (a run record, coverage, a local row) can only weaken a verdict, naming itself when it does. Verified is rendered only for the one proven row of the freshness table, on every surface. | [`plan-status/test-evidence.md`](plan-status/test-evidence.md) |
@@ -137,7 +137,7 @@ Generated from canonical inputs `ad1ed94f8723`.
 
 ## Execution waves
 
-- **wave 0** — I0001, I0101, I0201, I0301, I0401, I0501, I0601, I0701, I0801, I0802, I0817, I0829, I0901, I1001, I1031, I1101, I1201, I1301, I1401, I1406, I1409, I1501, I1502, I1503, I1504, I1508, I1509, I1510, I1511, I1512, I1516, I1520, I1600, I1800, I1802, I1803, I1900, I1945, I1946, I1947, I1948, I1949, I1950, I1966, I1967, I1980, I1981, I1984, I1986, I1987, I1989, I1990, I1991, I1992, I1995, I1996, I1997, I1998, I1999, I2000, I2054, I2059, I2068, I2073, I2114, I2115, I2123, I2124, I2126, I2127, I2128, I2129, I2131, I2132, I2133, I2134, I2135, I2137, I2139, I2140, I2145, I2147, I2148, I2151, I2156, I2157, I2161, I2162, I2165, I2282, I2296, I2298, I2300, I2301, I2303, I2350, I2374, I2396, I2398, I2399, I2400, I2410, I2411, I2412, I2413, I2414, I2415, I2416, I2417, I2460, I2461, I2463, I2464, I2491, I2521, I2588, I2601, I2653, I2660, I2661, I2662, I2664, I2670, I2678, I2679, I2680, I2690, I2694, I2695, I2696, I2697, I2698, I2710, I2711, I2713, I2714, I2715, I2716, I2717, I2718, I2720, I2723, I2731, I2732, I2734, I2735, I2740, I2742, I2745, I2746, I2747, I2760, I2761, I2770, I2780, I2784, I2786, I2795, I2813, I2825, I2826, I2827, I2829, I2840, I2841, I2842, I2844, I2845, I2846, I2847, I2848, I2849, I2850, I2852, I2853, I2858, I2863, I2864, I2867, I2874, I2882, I2901, I2902, I2903, I2904, I2908, I2909, I2910, I2911, I2912, I2913, I2914, I2915, I2916, I2917, I2918, I2919, I2941, I2942, I2943, I2962, I2963, I2964, I2965, I2966, I2967, I2972, I2980, I2987, I2993, I2995, I3000, I3001, I3002, I3003, I3004, I3005, I3007, I3008, I3009, I3010, I3013, I3014, I3018, I3020, I3021, I3022, I3023, I3024, I3025, I3040, I3060, I3061, I3070, I3079, I3083, I3087, I3089, I3090, I3091, I3092, I3094, I3095, I3097, I3098, I3099, I3100, I3110, I3113, I3115, I3116, I3118, I3120, I3121, I3123, I3126, I3134, I3136, I3137, I3147, I3152, I3153, I3154, I3155, I3156, I3160, I3162, I3163, I3166, I3167, I3171, I3172, I3174, I3175, I3179, I3182, I3184, I3196, I3201, I3202, I3204, I3205, I3207, I3208, I3214, I3215, I3218, I3219, I3222, I3226, I3232, I3241, I3244, I3245, I3246, I3251, I3255, I3258, I3267, I3280, I3287, I3298, I3299, I3304, I3307, I3308, I3309, I3310, I3312, I3314, I3315, I3316, I3317, I3318, I3319, I3320, I3322, I3350, I3351, I3359, I3366, I3373, I3376, I3395, I3400, I3406, I3416, I3424, I3426, I3427, I3432, I3434, I3436, I3440, I3441, I3442, I3443, I3444, I3447, I3448, I3449, I3606, I3607, I3608, I3609, I3660, I3663, I3750, I3751, I3752, I3753, I3756, I3757, I3759, I3760, I3762, I3763, I3764, I3765, I3766, I3767, I3769, I3770, I3771, I3772, I3774, I3775, I3793, I3795, I3799, I3810, I3820, I3823, I3824, I3829, I3830, I3831, I3834, I3835, I3836, I3838, I3839, I3840, I3841, I3861, I3862, I3902, I3910, I3911, I3916, I3917, I3918, I3919, I3920, I3930, I3931, I3934, I3936, I3937, I3938, I3939, I3941, I3942, I3943, I3945, I3949, I3955, I3956, I3957, I3960, I3961, I3962, I3963, I3973, I3974, I3979, I3990, I3995, I3999, I4000, I4002, I4006, I4007, I4008, I4012, I4013, I4154, I4199, I4200, I4203, I4207, I4220, I4221, I4222, I4223, I4227, I4229, I4231, I4232, I4235, I4241, I4244, I4245, I4251, I4252, I4253, I4254, I4255, I4256, I4257, I4258, I4259, I4260, I4261, I4262, I4263, I4264, I4265, I4266, I4267, I4268, I4290, I4291, I4292, I4294, I4296, I4297, I4298, I4302, I4306, I4307, I4309, I4315, I4316, I4317, I4318, I4321, I4322, I4323, I4325, I4326, I4327, I4329, I4330, I4331, I4333, I4334, I4336, I4337, I4338, I4339, I4340, I4341, I4343, I4346, I4347, I4349, I4350, I4352, I4357, I4362, I4363, I4364, I4373, I4374, I4375, I4377, I4380, I4381, I4400, I4410, I4411, I4413, I4415, I4416, I4417, I4418, I4460, I4461, I4462, I4463, I4464, I4465, I4466, I4467, I4468, I4481, I4483, I4485, I4486, I4488, I4494, I4495, I4500, I4512, I4513, I4522, I4524, I4527, I4528, I4529, I4530, I4531, I4532, I4533, I4565, I4566, I4567, I4568, I4569, I4570, I4571, I4572, I4573, I4576, I4577, I4578, I4579, I4581, I4582, I4583, I4584, I4585, I4586, I4587, I4588, I4591, I4592, I4594, I4595, I4596, I4597, I4598, I4599, I4600, I4602, I4604, I4605, I4606, I4612, I4615, I4616, I4618, I4622, I4627, I4628, I4630, I4632, I4633, I4634, I4665, I4668, I4669, I4671, I4673, I4674, I4675, I4676, I4677, I4678, I4679, I4680, I4681, I4682, I4683, I4684, I4685, I4712, I4718, I4721, I4722, I4740, I4741, I4753, I4754, I4778, I4780, I4781, I4783, I4788, I4789, I4791, I4792, I4793, I4803, I4804, I4805, I4806, I4807, I4808, I4810
+- **wave 0** — I0001, I0101, I0201, I0301, I0401, I0501, I0601, I0701, I0801, I0802, I0817, I0829, I0901, I1001, I1031, I1101, I1201, I1301, I1401, I1406, I1409, I1501, I1502, I1503, I1504, I1508, I1509, I1510, I1511, I1512, I1516, I1520, I1600, I1800, I1802, I1803, I1900, I1945, I1946, I1947, I1948, I1949, I1950, I1966, I1967, I1980, I1981, I1984, I1986, I1987, I1989, I1990, I1991, I1992, I1995, I1996, I1997, I1998, I1999, I2000, I2054, I2059, I2068, I2073, I2114, I2115, I2123, I2124, I2126, I2127, I2128, I2129, I2131, I2132, I2133, I2134, I2135, I2137, I2139, I2140, I2145, I2147, I2148, I2151, I2156, I2157, I2161, I2162, I2165, I2282, I2296, I2298, I2300, I2301, I2303, I2350, I2374, I2396, I2398, I2399, I2400, I2410, I2411, I2412, I2413, I2414, I2415, I2416, I2417, I2460, I2461, I2463, I2464, I2491, I2521, I2588, I2601, I2653, I2660, I2661, I2662, I2664, I2670, I2678, I2679, I2680, I2690, I2694, I2695, I2696, I2697, I2698, I2710, I2711, I2713, I2714, I2715, I2716, I2717, I2718, I2720, I2723, I2731, I2732, I2734, I2735, I2740, I2742, I2745, I2746, I2747, I2760, I2761, I2770, I2780, I2784, I2786, I2795, I2813, I2825, I2826, I2827, I2829, I2840, I2841, I2842, I2844, I2845, I2846, I2847, I2848, I2849, I2850, I2852, I2853, I2858, I2863, I2864, I2867, I2874, I2882, I2901, I2902, I2903, I2904, I2908, I2909, I2910, I2911, I2912, I2913, I2914, I2915, I2916, I2917, I2918, I2919, I2941, I2942, I2943, I2962, I2963, I2964, I2965, I2966, I2967, I2972, I2980, I2987, I2993, I2995, I3000, I3001, I3002, I3003, I3004, I3005, I3007, I3008, I3009, I3010, I3013, I3014, I3018, I3020, I3021, I3022, I3023, I3024, I3025, I3040, I3060, I3061, I3070, I3079, I3083, I3087, I3089, I3090, I3091, I3092, I3094, I3095, I3097, I3098, I3099, I3100, I3110, I3113, I3115, I3116, I3118, I3120, I3121, I3123, I3126, I3134, I3136, I3137, I3147, I3152, I3153, I3154, I3155, I3156, I3160, I3162, I3163, I3166, I3167, I3171, I3172, I3174, I3175, I3179, I3182, I3184, I3196, I3201, I3202, I3204, I3205, I3207, I3208, I3214, I3215, I3218, I3219, I3222, I3226, I3232, I3241, I3244, I3245, I3246, I3251, I3255, I3258, I3267, I3280, I3287, I3298, I3299, I3304, I3307, I3308, I3309, I3310, I3312, I3314, I3315, I3316, I3317, I3318, I3319, I3320, I3322, I3350, I3351, I3359, I3366, I3373, I3376, I3395, I3400, I3406, I3416, I3424, I3426, I3427, I3432, I3434, I3436, I3440, I3441, I3442, I3443, I3444, I3447, I3448, I3449, I3606, I3607, I3608, I3609, I3660, I3663, I3750, I3751, I3752, I3753, I3756, I3757, I3759, I3760, I3762, I3763, I3764, I3765, I3766, I3767, I3769, I3770, I3771, I3772, I3774, I3775, I3793, I3795, I3799, I3810, I3820, I3823, I3824, I3829, I3830, I3831, I3834, I3835, I3836, I3838, I3839, I3840, I3841, I3861, I3862, I3902, I3910, I3911, I3916, I3917, I3918, I3919, I3920, I3930, I3931, I3934, I3936, I3937, I3938, I3939, I3941, I3942, I3943, I3945, I3949, I3955, I3956, I3957, I3960, I3961, I3962, I3963, I3973, I3974, I3979, I3990, I3995, I3999, I4000, I4002, I4006, I4007, I4008, I4012, I4013, I4154, I4199, I4200, I4203, I4207, I4220, I4221, I4222, I4223, I4227, I4229, I4231, I4232, I4235, I4241, I4244, I4245, I4251, I4252, I4253, I4254, I4255, I4256, I4257, I4258, I4259, I4260, I4261, I4262, I4263, I4264, I4265, I4266, I4267, I4268, I4290, I4291, I4292, I4294, I4296, I4297, I4298, I4302, I4306, I4307, I4309, I4315, I4316, I4317, I4318, I4321, I4322, I4323, I4325, I4326, I4327, I4329, I4330, I4331, I4333, I4334, I4336, I4337, I4338, I4339, I4340, I4341, I4343, I4346, I4347, I4349, I4350, I4352, I4357, I4362, I4363, I4364, I4373, I4374, I4375, I4377, I4380, I4381, I4400, I4410, I4411, I4413, I4415, I4416, I4417, I4418, I4460, I4461, I4462, I4463, I4464, I4465, I4466, I4467, I4468, I4481, I4483, I4485, I4486, I4488, I4494, I4495, I4500, I4512, I4513, I4522, I4524, I4527, I4528, I4529, I4530, I4531, I4532, I4533, I4565, I4566, I4567, I4568, I4569, I4570, I4571, I4572, I4573, I4576, I4577, I4578, I4579, I4581, I4582, I4583, I4584, I4585, I4586, I4587, I4588, I4591, I4592, I4594, I4595, I4596, I4597, I4598, I4599, I4600, I4602, I4604, I4605, I4606, I4612, I4615, I4616, I4618, I4622, I4627, I4628, I4630, I4632, I4633, I4634, I4665, I4668, I4669, I4671, I4673, I4674, I4675, I4676, I4677, I4678, I4679, I4680, I4681, I4682, I4683, I4684, I4685, I4712, I4718, I4721, I4722, I4740, I4741, I4753, I4754, I4778, I4780, I4781, I4783, I4788, I4789, I4791, I4792, I4793, I4803, I4804, I4805, I4806, I4807, I4808, I4810, I4816
 - **wave 1** — I0002, I0102, I0202, I0302, I0402, I0502, I0602, I0702, I0803, I0807, I0818, I0819, I0821, I0823, I0833, I0837, I0902, I0924, I1002, I1003, I1004, I1025, I1202, I1302, I1402, I1405, I1505, I1801, I1901, I1903, I1951, I1952, I1965, I1982, I1983, I1985, I1988, I2001, I2004, I2074, I2163, I2288, I2348, I2401, I2403, I2462, I2484, I2486, I2522, I2654, I2655, I2656, I2671, I2672, I2674, I2691, I2692, I2693, I2700, I2701, I2702, I2703, I2704, I2705, I2706, I2707, I2708, I2709, I2712, I2722, I2724, I2733, I2741, I2743, I2744, I2781, I2787, I2851, I2865, I2866, I2870, I2973, I2978, I2981, I3015, I3016, I3071, I3072, I3076, I3111, I3112, I3114, I3117, I3119, I3122, I3124, I3127, I3128, I3130, I3133, I3135, I3138, I3141, I3151, I3161, I3164, I3165, I3168, I3169, I3176, I3177, I3180, I3183, I3187, I3198, I3203, I3212, I3217, I3221, I3223, I3224, I3227, I3228, I3229, I3231, I3233, I3247, I3250, I3254, I3256, I3259, I3268, I3269, I3270, I3281, I3285, I3288, I3292, I3300, I3301, I3303, I3323, I3352, I3353, I3367, I3377, I3378, I3379, I3381, I3382, I3390, I3396, I3401, I3407, I3408, I3411, I3418, I3428, I3433, I3437, I3438, I3439, I3602, I3661, I3668, I3758, I3761, I3773, I3790, I3791, I3794, I3796, I3798, I3821, I3825, I3826, I3832, I3833, I3837, I3843, I3903, I3914, I3915, I3932, I3935, I3940, I3944, I3950, I3951, I3970, I3972, I3977, I3991, I3992, I3993, I3994, I4001, I4004, I4155, I4299, I4303, I4310, I4311, I4312, I4313, I4320, I4324, I4328, I4332, I4342, I4344, I4345, I4351, I4353, I4356, I4366, I4369, I4414, I4419, I4469, I4484, I4487, I4489, I4491, I4492, I4501, I4523, I4580, I4670, I4713, I4723, I4728, I4779, I4782, I4784, I4787, I4790
 - **wave 2** — I0003, I0103, I0203, I0303, I0403, I0503, I0603, I0703, I0804, I0808, I0820, I0824, I0827, I0832, I0836, I0841, I0903, I0904, I0905, I0907, I0908, I0918, I1005, I1011, I1015, I1203, I1303, I1304, I1404, I1506, I1804, I1902, I1953, I1954, I2002, I2003, I2075, I2289, I2402, I2404, I2405, I2470, I2477, I2478, I2483, I2487, I2488, I2489, I2523, I2652, I2673, I2675, I2677, I2721, I2749, I2750, I2783, I2871, I2872, I2873, I2974, I2982, I3017, I3074, I3125, I3129, I3131, I3132, I3140, I3142, I3157, I3170, I3178, I3181, I3185, I3188, I3189, I3191, I3195, I3199, I3200, I3206, I3225, I3230, I3237, I3248, I3249, I3252, I3257, I3261, I3271, I3272, I3286, I3289, I3291, I3293, I3296, I3302, I3321, I3324, I3354, I3360, I3374, I3383, I3387, I3391, I3398, I3402, I3403, I3404, I3410, I3412, I3413, I3419, I3420, I3429, I3435, I3662, I3664, I3665, I3666, I3755, I3777, I3792, I3797, I3822, I3842, I3912, I3913, I3933, I3946, I3952, I3959, I3975, I3976, I3978, I3996, I4003, I4225, I4226, I4300, I4301, I4304, I4314, I4348, I4355, I4359, I4360, I4367, I4368, I4370, I4480, I4493, I4496, I4498, I4499, I4502, I4724, I4742, I4786
 - **wave 3** — I0004, I0104, I0204, I0304, I0404, I0504, I0604, I0704, I0805, I0809, I0822, I0825, I0828, I0840, I0842, I0906, I0909, I0913, I0927, I1006, I1007, I1009, I1010, I1012, I1018, I1023, I1102, I1105, I1204, I1305, I1308, I1403, I1407, I1408, I1507, I1955, I1956, I2406, I2471, I2473, I2481, I2485, I2495, I2524, I2663, I2676, I2748, I2789, I2975, I2976, I2977, I2979, I2983, I3075, I3143, I3144, I3146, I3148, I3150, I3159, I3190, I3220, I3235, I3253, I3260, I3276, I3290, I3295, I3297, I3305, I3311, I3355, I3358, I3361, I3362, I3368, I3369, I3375, I3380, I3392, I3393, I3399, I3405, I3414, I3423, I3754, I3768, I3827, I3947, I3953, I4005, I4230, I4305, I4308, I4354, I4358, I4371, I4372, I4497, I4503, I4505, I4507, I4725
@@ -545,20 +545,21 @@ Generated from canonical inputs `ad1ed94f8723`.
 - `I4807` (a-second-adopter-is-served, wave 0) — A merge=table-rows driver merges hand-written Markdown tables by row and cell, and conflicts only where both sides changed one cell
 - `I4808` (a-second-adopter-is-served, wave 0) — The allocator reserves line-prefixed plan ids as well as I<nnnn>, from the prefixes an adopter's plan declares
 - `I4810` (truthful-plan-surfaces, wave 0) — homepage-check holds the hero's delivery counts to the delivery the page renders: the build's reading when the build carries one, the committed projection otherwise
+- `I4816` (safe-self-update, wave 0) — The hub's launchd agent or systemd user unit and its daily update timer are written by a capability, the hub links with the mesh by itself, and status checks that it follows the release
 
 
 ## Findings
 
-11764 finding(s), each on the page of the milestone its subject is or belongs to:
+11837 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 32 |
 | [`M003`](plan-status/M003.md) | 9 |
-| [`M004`](plan-status/M004.md) | 520 |
-| [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 204 |
+| [`M004`](plan-status/M004.md) | 522 |
+| [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 206 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 109 |
-| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 236 |
+| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 237 |
 | [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 64 |
 | [`a-downstream-adopters-findings-are-fixed-in-the-tool`](plan-status/a-downstream-adopters-findings-are-fixed-in-the-tool.md) | 13 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 4 |
@@ -566,30 +567,30 @@ Generated from canonical inputs `ad1ed94f8723`.
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 15 |
 | [`a-profile-is-resolved-once-and-enforced`](plan-status/a-profile-is-resolved-once-and-enforced.md) | 2 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 22 |
-| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 77 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 156 |
-| [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 57 |
+| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 78 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 157 |
+| [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 58 |
 | [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 4 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 370 |
-| [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 77 |
-| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 138 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 371 |
+| [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 78 |
+| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 144 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 48 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 24 |
 | [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 3 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 730 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 733 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 7 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 19 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 167 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 168 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
-| [`automation`](plan-status/automation.md) | 84 |
+| [`automation`](plan-status/automation.md) | 85 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 29 |
 | [`capability-graph`](plan-status/capability-graph.md) | 15 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 422 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 424 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 6 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 32 |
-| [`development-runtime`](plan-status/development-runtime.md) | 1042 |
-| [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 37 |
+| [`development-runtime`](plan-status/development-runtime.md) | 1048 |
+| [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 39 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 59 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 19 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 8 |
@@ -597,14 +598,14 @@ Generated from canonical inputs `ad1ed94f8723`.
 | [`external-workspaces`](plan-status/external-workspaces.md) | 35 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 63 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3926 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3942 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 64 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 110 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 15 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 236 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 237 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 16 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 57 |
-| [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 225 |
+| [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 232 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 9 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 8 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 12 |
@@ -612,14 +613,14 @@ Generated from canonical inputs `ad1ed94f8723`.
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 1 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 32 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 8 |
-| [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 46 |
-| [`runtime-trust`](plan-status/runtime-trust.md) | 50 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 598 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 426 |
+| [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 47 |
+| [`runtime-trust`](plan-status/runtime-trust.md) | 51 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 602 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 428 |
 | [`test-evidence`](plan-status/test-evidence.md) | 24 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 4 |
-| [`the-host-knows-its-runtimes`](plan-status/the-host-knows-its-runtimes.md) | 34 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 343 |
+| [`the-host-knows-its-runtimes`](plan-status/the-host-knows-its-runtimes.md) | 35 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 352 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 36 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 5 |

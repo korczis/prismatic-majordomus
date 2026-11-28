@@ -5,7 +5,7 @@ argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:mesh; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.3.0 -->
+     Generator: majordomus-cli 1.4.0 -->
 
 # Majordomus `mesh`
 
@@ -26,6 +26,7 @@ $ARGUMENTS
 | `mesh.firewall` | The host firewall, as the mesh needs it | `majordomus_mesh_firewall` | `majordomus mesh firewall` | reads |
 | `mesh.handover.consume` | Consume a handover from the mesh | `majordomus_mesh_handover_consume` | — | changes |
 | `mesh.handover.publish` | Publish a handover to the mesh | `majordomus_mesh_handover_publish` | — | changes |
+| `mesh.hub` | The hub as a service of this host | `majordomus_mesh_hub` | `majordomus mesh hub` | reads |
 | `mesh.identity` | This machine's node identity | `majordomus_mesh_identity` | `majordomus mesh identity` | reads |
 | `mesh.nodes` | The discovered nodes | `majordomus_mesh_nodes` | — | reads |
 | `mesh.peer` | One runtime | `majordomus_mesh_peer` | — | reads |

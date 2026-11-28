@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 409 `conflict` and 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -11945,6 +11945,110 @@
         "x-majordomus-mcp": {
           "tool": "majordomus_mesh_handover_consume"
         }
+      }
+    },
+    "/api/v1/mesh/hub": {
+      "get": {
+        "operationId": "mesh.hub",
+        "summary": "The hub as a service of this host",
+        "description": "Whether this machine's hub runs as its host's service and follows the release (I4816): each unit file — the launchd agent and its update agent on macOS, the systemd user unit, the update service and its hourly timer on Linux — as missing, drifted or as rendered, and whether the manager has it loaded and running; whether the hub answers on its port, with the version it serves, the sessions attached to it and the runtimes it is linked with; the published, installed and served versions; the update's last run; and every linked runtime behind the published release. Fails when a unit is missing, drifted or not loaded, the hub does not answer, it is linked with nobody, the update has not run within two hours, or it serves an older release than is published with no update on it. Reads the host; changes nothing.",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "description": "The hub port; default the port the declaration gives this machine's address, else 8791."
+          },
+          {
+            "name": "root",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A staging directory that stands for the home: no service manager or hub is asked."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The hub as a service of this host: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HubStatusReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.hub",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_hub"
+        },
+        "x-majordomus-cli": "mesh hub"
       }
     },
     "/api/v1/mesh/identity": {
@@ -40762,6 +40866,26 @@
         ],
         "description": "Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \"why does it say that\"\nis answered by the tool rather than by reading its source."
       },
+      "FileState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "missing",
+            "description": "Not there."
+          },
+          {
+            "type": "string",
+            "const": "drifted",
+            "description": "There, with other content: a hand-made unit, or one an older release rendered."
+          },
+          {
+            "type": "string",
+            "const": "current",
+            "description": "There, as rendered."
+          }
+        ],
+        "description": "A file against what is rendered for it."
+      },
       "Finding": {
         "type": "object",
         "properties": {
@@ -43081,6 +43205,142 @@
           }
         ],
         "description": "The HTTP methods a capability may be bound to."
+      },
+      "HubAnswer": {
+        "type": "object",
+        "properties": {
+          "answering": {
+            "type": "boolean",
+            "description": "Whether it answered at all."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version it serves."
+          },
+          "attached": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The sessions attached to the hub's own board."
+          },
+          "linked": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedRuntime"
+            },
+            "description": "Every runtime it is linked with, and the version each speaks: what the mesh\nbroadcasts about its members."
+          }
+        },
+        "required": [
+          "answering",
+          "attached",
+          "linked"
+        ],
+        "description": "What the hub answers on its port: its version, how many sessions are attached to it, and\nthe runtimes it is linked with."
+      },
+      "HubCheck": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Which."
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level",
+            "description": "How it came out."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was found."
+          },
+          "remedy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What to run when it does not hold."
+          }
+        },
+        "required": [
+          "name",
+          "level",
+          "detail"
+        ],
+        "description": "One check of `mesh hub status`."
+      },
+      "HubStatusReport": {
+        "type": "object",
+        "properties": {
+          "manager": {
+            "$ref": "#/components/schemas/Manager",
+            "description": "The service manager."
+          },
+          "repo": {
+            "type": "string",
+            "description": "The hub's checkout."
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535,
+            "description": "The hub port."
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitView"
+            },
+            "description": "The unit files."
+          },
+          "hub": {
+            "$ref": "#/components/schemas/HubAnswer",
+            "description": "What the hub answered."
+          },
+          "published": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The published release."
+          },
+          "installed": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The release the executable is."
+          },
+          "update": {
+            "$ref": "#/components/schemas/UpdateState",
+            "description": "What the update remembers."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HubCheck"
+            },
+            "description": "Every check."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "No check failed."
+          }
+        },
+        "required": [
+          "manager",
+          "repo",
+          "port",
+          "units",
+          "hub",
+          "update",
+          "checks",
+          "ok"
+        ],
+        "description": "The report of `mesh hub status`."
       },
       "IdKind": {
         "oneOf": [
@@ -47654,6 +47914,26 @@
         ],
         "description": "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network."
       },
+      "Level": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "pass",
+            "description": "Holds."
+          },
+          {
+            "type": "string",
+            "const": "warn",
+            "description": "Holds, with something a person should know."
+          },
+          {
+            "type": "string",
+            "const": "fail",
+            "description": "Does not hold."
+          }
+        ],
+        "description": "How one check of `mesh hub status` came out."
+      },
       "Libc": {
         "oneOf": [
           {
@@ -47972,6 +48252,29 @@
         ],
         "description": "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
       },
+      "LinkedRuntime": {
+        "type": "object",
+        "properties": {
+          "machine": {
+            "type": "string",
+            "description": "The machine's short name."
+          },
+          "runtime": {
+            "type": "string",
+            "description": "The runtime."
+          },
+          "version": {
+            "type": "string",
+            "description": "The version it runs."
+          }
+        },
+        "required": [
+          "machine",
+          "runtime",
+          "version"
+        ],
+        "description": "A runtime the hub is linked with."
+      },
       "Listen": {
         "type": "object",
         "additionalProperties": false,
@@ -48214,6 +48517,26 @@
           "autostop"
         ],
         "description": "How many machines run, and whether the platform may stop them."
+      },
+      "Manager": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "launchd",
+            "description": "launchd, per user (macOS): `~/Library/LaunchAgents`."
+          },
+          {
+            "type": "string",
+            "const": "systemd_user",
+            "description": "systemd, per user (Linux): `~/.config/systemd/user`."
+          },
+          {
+            "type": "string",
+            "const": "unsupported",
+            "description": "Neither: no hub service can be written here."
+          }
+        ],
+        "description": "The service manager of a host."
       },
       "Match": {
         "oneOf": [
@@ -71576,6 +71899,69 @@
         ],
         "description": "One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\"/wt/held-old\", WorkStanding::Held, 900_000),\n    entry(\"/wt/young\", WorkStanding::Abandoned, 50_000),\n    entry(\"/wt/older\", WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&mut listing);\nlet paths: Vec<&str> = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\"/wt/older\", \"/wt/young\", \"/wt/held-old\"]);\n```"
       },
+      "UnitRole": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "hub",
+            "description": "The hub itself, kept running."
+          },
+          {
+            "type": "string",
+            "const": "update",
+            "description": "The update, run by its schedule."
+          },
+          {
+            "type": "string",
+            "const": "update_timer",
+            "description": "The schedule of the update (systemd only: launchd keeps it in the update's agent)."
+          }
+        ],
+        "description": "What one file is for."
+      },
+      "UnitView": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UnitRole",
+            "description": "What it is for."
+          },
+          "name": {
+            "type": "string",
+            "description": "The service manager's name of it."
+          },
+          "path": {
+            "type": "string",
+            "description": "Where it is."
+          },
+          "state": {
+            "$ref": "#/components/schemas/FileState",
+            "description": "Against what is rendered."
+          },
+          "loaded": {
+            "type": "boolean",
+            "description": "Whether the manager has it: loaded (launchd), or enabled or static (systemd)."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the manager may start it: not disabled (launchd), enabled or static (systemd)."
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether it runs now (the hub) or is scheduled (the timer)."
+          }
+        },
+        "required": [
+          "role",
+          "name",
+          "path",
+          "state",
+          "loaded",
+          "enabled",
+          "active"
+        ],
+        "description": "One unit file, as found."
+      },
       "UnreadSource": {
         "type": "object",
         "properties": {
@@ -71593,6 +71979,65 @@
           "reason"
         ],
         "description": "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```"
+      },
+      "UpdateRun": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "When it ran, in seconds since the epoch."
+          },
+          "result": {
+            "type": "string",
+            "description": "`current`, `updated`, `deferred`, `rolled_back`, `failed`, `skipped` or `unknown`."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What it said."
+          }
+        },
+        "required": [
+          "at",
+          "result",
+          "detail"
+        ],
+        "description": "One run of the update."
+      },
+      "UpdateState": {
+        "type": "object",
+        "properties": {
+          "last": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UpdateRun"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The last run."
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Versions that failed on this node and are not tried again.",
+            "default": []
+          },
+          "deferred_since": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Since when the restart has been deferred, while it is."
+          }
+        },
+        "description": "What the update remembers between runs."
       },
       "UpstreamState": {
         "type": "object",
@@ -72875,7 +73320,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 1.3.0",
+    "generator": "majordomus-cli 1.4.0",
     "infrastructure": [
       {
         "id": "home",
@@ -72956,5 +73401,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 1.3.0"
+  "x-majordomus-generator": "majordomus-cli 1.4.0"
 }

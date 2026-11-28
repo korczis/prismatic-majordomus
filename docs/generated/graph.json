@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.3.0",
+  "generator": "majordomus-cli 1.4.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1227,6 +1227,42 @@
         "label": "mesh.handover.publish",
         "summary": "Publish a handover to the mesh",
         "route": "/cockpit/capabilities/mesh.handover.publish",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.hub",
+        "kind": "capability",
+        "label": "mesh.hub",
+        "summary": "The hub as a service of this host",
+        "route": "/cockpit/capabilities/mesh.hub",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.hub.install",
+        "kind": "capability",
+        "label": "mesh.hub.install",
+        "summary": "Install the hub as a service of this host",
+        "route": "/cockpit/capabilities/mesh.hub.install",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.hub.uninstall",
+        "kind": "capability",
+        "label": "mesh.hub.uninstall",
+        "summary": "Remove the hub's service from this host",
+        "route": "/cockpit/capabilities/mesh.hub.uninstall",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.hub.update",
+        "kind": "capability",
+        "label": "mesh.hub.update",
+        "summary": "Bring the hub to the published release",
+        "route": "/cockpit/capabilities/mesh.hub.update",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "command"
       },
@@ -44100,7 +44136,7 @@
             "test/cases"
           ],
           "slug": "a-hub-activates-and-rolls-back",
-          "updated_at": "2026-11-22",
+          "updated_at": "2026-11-28",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -85362,6 +85398,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4816",
+        "kind": "issue",
+        "label": "I4816",
+        "summary": "The hub's launchd agent or systemd user unit and its daily update timer are written by a capability, the hub links with the mesh by itself, and status checks that it follows the release",
+        "route": "/cockpit/objects/issue/i4816",
+        "source": ".ai/repo/project/issues/I4816.yaml",
+        "facts": {
+          "created_at": "2026-11-28",
+          "evidence_required": [
+            "hub_service_written_by_a_capability_test"
+          ],
+          "milestone": "safe-self-update",
+          "non_scope": [
+            "Activating a newly installed version, its health check and rollback (I2722)",
+            "The executor's service (I3913)",
+            "Opening the host firewall, which mesh firewall apply already does as root"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/hub_service.rs",
+            "apps/majordomus-cli/src/mesh/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "test/cases/4783_the_hub_service_is_written_by_a_capability.sh",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I4816.yaml",
+            ".ai/repo/project/issues/I2722.yaml"
+          ],
+          "slug": "the-hub-runs-as-a-service",
+          "updated_at": "2026-11-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::hub_service",
+            "MJ_TEST_JOBS=4 bash test/run.sh 4783_the_hub_service_is_written_by_a_capability"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -113527,6 +113602,13 @@
         "source": "test/cases/4779_homepage_check_compares_the_delivery_the_page_renders.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4783_the_hub_service_is_written_by_a_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4783_the_hub_service_is_written_by_a_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4783-the-hub-service-is-written-by-a-capability-sh",
+        "source": "test/cases/4783_the_hub_service_is_written_by_a_capability.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/47_mutation.sh",
         "kind": "test",
         "label": "test/cases/47_mutation.sh",
@@ -119780,6 +119862,56 @@
       {
         "source": "capability:mesh.handover.publish",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub.install",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub.install",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub.uninstall",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub.uninstall",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub.update",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.hub.update",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -156418,6 +156550,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4816",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4816",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164258,6 +164400,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4783_the_hub_service_is_written_by_a_capability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/47_mutation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -168864,6 +169011,26 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.hub",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.hub.install",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.hub.uninstall",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.hub.update",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.identity",
         "kind": "composes"
       },
@@ -169384,8 +169551,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4608,
+      "edges": 10381,
       "acyclic": false,
       "truncated": false
     }

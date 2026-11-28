@@ -2324,6 +2324,74 @@
       "tool": "majordomus_mesh_handover_publish"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-hub",
+      "claims": [],
+      "cli": "majordomus mesh hub",
+      "id": "mesh.hub",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-hub/",
+      "slug": "mesh-hub",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The hub as a service of this host",
+      "tool": "majordomus_mesh_hub"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh hub install",
+      "id": "mesh.hub.install",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-hub-install/",
+      "slug": "mesh-hub-install",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Install the hub as a service of this host",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh hub uninstall",
+      "id": "mesh.hub.uninstall",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-hub-uninstall/",
+      "slug": "mesh-hub-uninstall",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Remove the hub's service from this host",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh hub update",
+      "id": "mesh.hub.update",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-hub-update/",
+      "slug": "mesh-hub-update",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Bring the hub to the published release",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-identity",
       "claims": [],
       "cli": "majordomus mesh identity",
@@ -4768,11 +4836,11 @@
     ]
   },
   "counts": {
-    "capabilities": 233,
+    "capabilities": 237,
     "claims": 93,
     "modules": 62
   },
-  "generator": "majordomus-cli 1.3.0",
+  "generator": "majordomus-cli 1.4.0",
   "modules": [
     {
       "capabilities": [
@@ -5829,6 +5897,26 @@
           "id": "mesh.handover.publish",
           "route": "/registry/capabilities/mesh-handover-publish/",
           "slug": "mesh-handover-publish"
+        },
+        {
+          "id": "mesh.hub",
+          "route": "/registry/capabilities/mesh-hub/",
+          "slug": "mesh-hub"
+        },
+        {
+          "id": "mesh.hub.install",
+          "route": "/registry/capabilities/mesh-hub-install/",
+          "slug": "mesh-hub-install"
+        },
+        {
+          "id": "mesh.hub.uninstall",
+          "route": "/registry/capabilities/mesh-hub-uninstall/",
+          "slug": "mesh-hub-uninstall"
+        },
+        {
+          "id": "mesh.hub.update",
+          "route": "/registry/capabilities/mesh-hub-update/",
+          "slug": "mesh-hub-update"
         },
         {
           "id": "mesh.identity",

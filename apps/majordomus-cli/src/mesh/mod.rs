@@ -52,6 +52,7 @@ pub mod doctor;
 pub mod enrol;
 pub mod firewall;
 pub mod handover;
+pub(crate) mod hub_service;
 pub mod identity;
 pub mod journal;
 pub mod link;
