@@ -652,6 +652,7 @@ mod tests {
             remember_in(None, dir.path());
             remember_in(Some(blocker.join("checkout-roots")), dir.path());
         });
+        io::Write::flush(&mut logged.clone()).unwrap();
         let log = String::from_utf8(logged.0.lock().unwrap().clone()).unwrap();
         assert!(log.contains("the host index was not updated"), "{log}");
         assert!(log.contains(&blocker.display().to_string()), "{log}");

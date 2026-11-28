@@ -1463,8 +1463,14 @@ pub fn host_runtimes() -> HostRuntimes {
         host::index_path(),
         host::read_process_table(),
         node,
-        |exe| host::executable_version(exe, host::VERSION_TIMEOUT),
+        asked_version,
     )
+}
+
+/// The version the executable at `exe` reports when asked, given
+/// [`host::VERSION_TIMEOUT`]: how [`host_runtimes`] asks a runtime too old to lease one.
+fn asked_version(exe: &Path) -> Option<String> {
+    host::executable_version(exe, host::VERSION_TIMEOUT)
 }
 
 /// [`host_runtimes`] from an index path, a reading of the process table and a node id
@@ -2671,6 +2677,12 @@ mod tests {
             rb.live && rb.version.is_none() && rb.version_source.is_none(),
             "{rb:?}"
         );
+    }
+
+    /// The host's own reading asks an executable that cannot be run for nothing.
+    #[test]
+    fn the_host_asks_an_executable_its_version() {
+        assert_eq!(asked_version(Path::new("/nonexistent/majordomus")), None);
     }
 
     /// The port is the last colon's number in the authority, and an address with none, or
