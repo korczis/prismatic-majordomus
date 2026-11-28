@@ -31,7 +31,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3167` | shares test/cases/340_a_brief_is_kept_as_received.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I3763; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4255; they may not run concurrently |
-| WARN | `scope_conflict` | `I3167` | shares share/allow with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares docs/SCHEMAS.md with I4263; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4267; they may not run concurrently |
@@ -45,3 +44,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I3167` | shares share/allow with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4597; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4622; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4668; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4669; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4671; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/allow with I4674; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares share/kinds.yaml with I4791; they may not run concurrently |
+| WARN | `scope_conflict` | `I3167` | shares docs/SCHEMAS.md with I4792; they may not run concurrently |

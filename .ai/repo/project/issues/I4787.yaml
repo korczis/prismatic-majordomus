@@ -1,0 +1,40 @@
+id: I4787
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "A plan declares its requirement sources, and plan validate names every requirement no issue traces and every trace no source holds"
+slug: every-requirement-of-a-declared-source-is-traced
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "project.yaml (or the policy's `plan.requirements`) declares requirement sources: a repository path (a file or a glob) and an identifier pattern (for example `REQ-[0-9]+` or `^#+ (R[0-9.]+)`), optionally a label. plan validate extracts the identifiers of every source and judges them against the issues' `traces`: `requirement_untraced` for an identifier no live issue traces (a CANCELLED issue does not count), `trace_unknown_requirement` for a trace that matches a source's pattern and is in none of its identifiers, and a coverage line (traced of declared, per source). Advisory by default and blocking when the source says `coverage: required`. `plan show <requirement id>` lists the issues that trace it."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), the specification's requirements were traced from issues, and the tool could say nothing about requirements that no issue traced; the repository wrote its own test to find them. Traceability that is checked in one direction only reads as complete while it is not."
+current_state: "Measured at origin/master 46775282570. share/allow/issue.txt admits `traces`; lib/plan.sh:400-402 projects an issue's traces into its forge body as written; nothing declares a requirement source, extracts identifiers from one, or compares the two directions. I4261 (traces and due_on) carries case test/cases/4261_issues_trace_outward.sh on master and is not yet recorded DONE."
+desired_state: "The source declaration is in the project schema and docs/PLANNING.md; plan validate reports both findings and the coverage line in text and JSON; the identifiers are cached by the source file's blob id so validate stays inside its budget; docs/PLAN_STATUS.md shows the coverage per source; a fixture with a three-requirement specification and two traced requirements reports the third, and a trace to a fourth that the specification lacks."
+scope:
+  - ".ai/repo/project/issues/I4787.yaml"
+  - "lib/plan.sh"
+  - "lib/project.sh"
+  - "lib/project.awk"
+  - "share/allow/project.txt"
+  - "share/schemas/majordomus/project/project.v1.schema.json"
+  - "docs/PLANNING.md"
+  - "test/cases/4787_every_requirement_is_traced.sh"
+non_scope:
+  - "Reading a requirement source over the network (an external tracker's requirement list): a source is a file in the repository; a tracker export committed to the repository is one"
+  - "Projecting traces to the forge, which I4261 did"
+depends_on:
+  - "I4261"
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#every-requirement-is-traced"
+acceptance_criteria:
+  - "A source with R1, R2 and R3 and issues tracing R1 and R2 reports requirement_untraced for R3 and coverage 2/3"
+  - "An issue tracing R4 is reported trace_unknown_requirement naming the source"
+  - "A trace to a cancelled issue does not count as coverage"
+  - "With `coverage: required`, plan validate exits 10 on the untraced requirement; without it, exits 0 and warns"
+validation:
+  - "bash test/run.sh 4787_every_requirement_is_traced"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_4787"
+risk: "Low. A pattern that matches prose by accident reports false requirements; the finding names the line it read so the pattern can be narrowed."
+created_at: 2026-11-25
+updated_at: 2026-11-25

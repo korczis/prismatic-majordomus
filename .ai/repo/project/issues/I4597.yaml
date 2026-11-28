@@ -1,0 +1,54 @@
+id: I4597
+milestone: a-second-adopter-is-served
+title: "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not"
+slug: a-recomputed-line-is-the-landings-to-write
+priority: p2
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "A repository declares in its policy the lines its own tooling recomputes on every change: a path glob, a whole-line pattern, and the writer that produces the line for a given tree, as an executable with an argument list (never a command string). The declaration is read from master's policy only, as allocates_at already reads master's (relation.rs:226). The relation to master treats a conflict whose every conflicting hunk, on both sides, consists of lines matching the pattern as the refresh's: the executor's refresh (drain.rs refresh_branch) merges master in, runs the writer on the merged tree, stages the file it rewrote, and the derive follows. A hunk that does not match keeps the whole path authored. Each open pull request's ChangeShape records whether its change of such a path touches only matching lines, and classify::overlaps reports two pull requests that share a path only through such lines as OverlapKind::Recomputed, which the queue's contention count leaves out."
+why: "Observed on 2026-11-15 in a client adopter (a service repository, not named here by policy). Its validator keeps a stamp line in hand-written files that is recomputed from a digest of watched paths, so every pull request that touches a watched path rewrites it. Measured with `git merge-tree --write-tree` over all 21 pairs of its seven open pull requests: 15 pairs conflicted, and in 12 of them every conflicting hunk was that stamp line or a file generated from it; 3 had a real content conflict. Each landing would leave the other open pull requests conflicting, repaired by hand. The tool already knows this shape for its own version line: the code under ADR 0134 (status proposed) clears a conflict on the manifest's version line alone because every feature branch conflicted on it (#807, #821, #827, #829). A stamp line is the same problem with a repository-defined writer. Observed again on 2026-11-25 in an adopter repository: many of its pull requests conflicted only inside marker-bounded regions that the adopter's own generator rewrites (facts in a README, and a capability matrix of path:line citations). Such a region is many lines between a begin and an end marker, not one line matching a pattern, so the declaration needs extending from single lines to declared marker-bounded regions with a named generator."
+current_state: "Measured at origin/master 3fcaafac355. integration/relation.rs:217-222 drops conflicts on paths master's .gitattributes marks merge=derived (derived_paths, :73); :225-229 clears a conflict on the manifest alone when master's policy allocates at landing and allocate::version_only_conflict (allocate.rs:186) proves the version line is the only difference. Every other conflicting path makes the relation Conflicting (:237), whose disposition (model.rs:384-385) says a person resolves it. A file that is hand-written except for one recomputed line cannot be marked merge=derived without making its prose derived too. classify::overlaps (classify.rs:631) is a pure function of authored paths and ChangeShapes, so such a file is an OverlapKind::Authored overlap (model.rs:1323). Risk ignores Authored overlaps (classify.rs:605), but the queue's contention counts every overlap (integration/mod.rs:400-404), so the stamp line ranks a pull request as contended."
+desired_state: "A master policy that declares `integration.recomputed_lines` (path glob, anchored whole-line pattern, writer argv; each typed, refused when malformed) makes a conflict whose every conflicting hunk on both sides matches a refresh case: `prs status` reports needs_refresh, not conflicting, and the refresh writes the line by running the writer on the merged tree. Combined with a version-line conflict under landing allocation, both are cleared together. A pattern declared only on the head branch changes nothing. Two pull requests whose only shared path changes are matching lines overlap with kind recomputed, which contention does not count. A repository that declares nothing is judged exactly as today."
+scope:
+  - ".ai/repo/project/issues/I4597.yaml"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/INTEGRATION.md"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "test/cases/4597_a_recomputed_line_is_the_landings_to_write.sh"
+  - "site/content/plan/I4597.md"
+non_scope:
+  - "Whole files the repository regenerates: already merge=derived (relation.rs:217)"
+  - "allocate::version_only_conflict and the version allocation itself: unchanged, only composed with"
+  - "Choosing a writer for an adopter: the writer is the repository's own, never inferred"
+  - "Resolving prose conflicts in the same file: they stay a person's"
+  - "Running a program from a typed specification in general: I4486"
+depends_on: []
+acceptance_criteria:
+  - "Case 4597, in a fixture whose master policy declares one recomputed line in README.md with a writer that prints a digest of a watched directory: two branches each change the watched directory and rewrite the line; after the first lands, `prs status --format json` reports the second needs_refresh, not conflicting"
+  - "Case 4597: the executor's refresh of the second branch leaves README.md with exactly the line the writer prints on the merged tree and no conflict markers, and the derive runs after it"
+  - "Case 4597: when README.md also carries a conflicting prose hunk, the second is conflicting on README.md and the refresh writes nothing"
+  - "Case 4597: when the declaration exists only on the second branch's policy, the second is conflicting, as without one"
+  - "Case 4597: a conflict on both the recomputed line and, under landing allocation, the version line alone is cleared by the one refresh"
+  - "Case 4597: `prs explain` of the two open branches before either lands reports their README.md overlap as kind recomputed, and their contention as 0 when that is the only shared path"
+  - "Case 4597: a recomputed_lines entry with no writer, an empty pattern or a pattern that does not compile is refused by `majordomus doctor` and the schema, naming the key"
+  - "Before the change, case 4597 fails at its first assertion"
+  - "Case 4597: a declared marker-bounded region (its begin and end marker lines, and the generator that rewrites it named as an argv) is treated as a declared line is: a conflict whose every conflicting hunk on both sides lies inside the region is the refresh's, the refresh runs the named generator on the merged tree, and a hunk outside the region keeps the path authored"
+validation:
+  - "bash test/run.sh 4597_a_recomputed_line_is_the_landings_to_write"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::relation integration::classify integration::drain policy"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+risk: "A pattern that matched too much would hand a person's edit to a writer. The pattern is anchored to whole lines, both sides of every hunk must match, a non-matching hunk keeps the whole path authored, and only master's policy can declare one."
+created_at: 2026-11-15
+updated_at: 2026-11-25

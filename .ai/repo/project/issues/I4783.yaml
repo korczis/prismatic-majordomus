@@ -1,0 +1,33 @@
+id: I4783
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "An enforcement entry with `args: []` is proved wired by a hook line that invokes its path alone"
+slug: a-path-only-invocation-is-wired
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "mj_validate_wiring matches a hook line that invokes the entry's program with no argument: when the entry declares no arguments, the pattern is the program followed by end of line, a shell separator (`;`, `&&`, `||`, `|`, `)`) or whitespace, never 'program, whitespace, first argument'. The same fix reaches the swallowed-exit-code check and the remedy text, which today print a trailing space and an empty argument."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), an enforcement entry for a repository script declared `args: []` and its hook ran the script by path alone. doctor reported it unwired on every run, and it passed only after a dummy argument was added to both the entry and the hook: a workaround that teaches adopters to add meaningless arguments."
+current_state: "Measured at origin/master 46775282570. lib/doctor.sh:246 sets arg0 to the first argument or, for `args: []`, to the empty string; lib/doctor.sh:279 then greps the hook for `${prog}[[:space:]]+$arg0([[:space:]]|$)`, which needs at least one whitespace character after the program and then a second one or the end of the line, so `scripts/gate` at the end of a line, or followed by `|| exit $?` with one space, never matches. The same pattern is used for the swallowed-exit check and the remedies (lib/doctor.sh:284-291)."
+desired_state: "One function builds the invocation pattern for an entry from its program and its declared arguments; every check of the git-hook branch uses it; a case holds the four shapes (path alone at end of line, path alone followed by `|| exit $?`, path with its first argument, and a line that only mentions the path in a comment, which stays unwired)."
+scope:
+  - ".ai/repo/project/issues/I4783.yaml"
+  - "lib/doctor.sh"
+  - "test/cases/4783_a_path_only_invocation_is_wired.sh"
+non_scope:
+  - "Hook phases, costs and budgets (I4671)"
+  - "Shipping hooks in the skeleton (I4784)"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-projects-proofs-are-registered"
+acceptance_criteria:
+  - "An entry `{path: scripts/gate, args: [], wired_by: git-hook:pre-push}` with a hook line `scripts/gate` is reported wired"
+  - "The same with `scripts/gate || exit $?` is reported wired, and with `scripts/gate || true` reported as swallowing the exit code"
+  - "A hook whose only mention is `# scripts/gate` is reported unwired"
+  - "The case fails against lib/doctor.sh as it is at 46775282570"
+validation:
+  - "bash test/run.sh 4783_a_path_only_invocation_is_wired"
+evidence_required:
+  - "case_4783"
+risk: "Low. A wider pattern could call a comment wired; the comment shape is one of the case's four."
+created_at: 2026-11-25
+updated_at: 2026-11-25

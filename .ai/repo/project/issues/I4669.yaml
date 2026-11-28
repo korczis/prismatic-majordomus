@@ -1,0 +1,42 @@
+id: I4669
+milestone: M002
+title: "An owner's answer is a typed, committed record with its provenance, so a session that receives it relayed cites it by id and a validator proves where it came from"
+slug: an-owner-answer-carries-its-provenance
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "An owner-answer record kind (majordomus.owner-answer/v1) holds one question put to the repository's owner and the answer. Its fields are an id, the channel it was asked through (a provider's question tool, a terminal prompt, a forge comment), the asking session's id, the time it was asked and the time it was answered, the question and the answer verbatim, the options offered when the channel offered any, and the sessions it was relayed through (relayed_by, relayed_to, each with its time). `majordomus answer record` writes one record from the asking session. The session id and the times are computed, never typed. A record whose text a policy marks private is committed as its digest, with the text kept under .ai/local. `majordomus answer relay <id> --to <session>` appends one relay hop. `majordomus answer show <id>` prints it for the receiving session to read. A rule, decision, issue or ADR cites the answer as `owner-answer:<id>` and does not retype it. A validator, run by doctor and by plan validate, refuses a citation that does not resolve. It also refuses a quoted answer that differs from the record's verbatim text, and a relay hop whose receiving session is not one the hop's sender could reach."
+why: "Observed on 2026-11-21 and 2026-11-22 during a long run with many sessions in an adopter repository. The lead session asked the owner through its provider's question tool and passed the verbatim answer to a subagent. The subagent wrote the answer into a rule file and a decision. The provider's harness flagged the subagent twice for possible instruction poisoning, because the text it acted on arrived in a message from another agent and nothing in any record proved that the owner had said it. The same gap is in this repository's own plan. I4665's current_state retypes an owner's answer by hand, with the asking session's id, the question and the answer in prose, and the note that a coordinator relayed it. No reader can check that prose, and the next record that needs the answer has to retype it again. Observed again on 2026-11-25 in an adopter repository: the session recorded every answer the owner gave through `majordomus decision add`, with the question and the answer verbatim, the session id and the time. That store is under .ai/local and is never committed, so no other session can cite those answers and no validator can check them, which is the gap this issue names."
+current_state: "Measured at origin/master d02c59d447c on 2026-11-22. lib/question.sh keeps open questions as single lines of .ai/local/state/open-questions.md: the task id, the question and, once resolved, the answer and a date. Questions are local and never committed, and a line has no channel, asking session, relay or verbatim option list. lib/decision.sh appends free text to .ai/local/state/decisions.md with --why, --rejected and --evidence strings. The milestone M002 attributes each durable record to the session that wrote it (mj_record_attribution, ADR 0164). It names who wrote the record, not who the record quotes. I4665 (open) puts typed coordination records in the mesh journal, authored by the journal's session key, with expiry and staleness. Those are a coordination channel, and an owner's answer is a durable fact that outlives the sessions that relayed it. No record kind and no validator exists for an owner's answer."
+desired_state: "A session that acts on an owner's answer it did not ask for itself cites an id, and `answer show` and the validator prove from committed records who asked, through which channel, when, what the owner said, and which sessions passed it on. Retyping the answer is unnecessary and is refused when it differs."
+scope:
+  - "share/schemas/majordomus/owner-answer/owner-answer.v1.schema.json"
+  - "share/allow/owner-answer.txt"
+  - "lib/answer.sh"
+  - "lib/commands.sh"
+  - "lib/doctor.sh"
+  - "lib/project.awk"
+  - "docs/CLI.md"
+  - "test/cases/4669_an_owner_answer_carries_its_provenance.sh"
+  - ".ai/repo/project/issues/I4669.yaml"
+  - "site/content/plan/I4669.md"
+non_scope:
+  - "Asking the owner: the provider's question tool or the terminal asks, and this records what was asked and answered"
+  - "Typed coordination records in the mesh journal: I4665"
+  - "Attributing a record to the session that wrote it: the other issues of M002"
+  - "Rewriting the existing prose answers in issue records: a later change cites them once the kind exists"
+depends_on: []
+acceptance_criteria:
+  - "Case 4669: a fixture session records an answer with channel question-tool, a question, two offered options and the chosen answer. The record carries the session id and both times without the caller typing them, and `answer show` prints the question and answer byte for byte"
+  - "`answer relay` from the asking session to a second fixture session appends one hop with both sessions and the time, and the receiving session's `answer show` lists the hop"
+  - "A rule file citing owner-answer:<id> passes the validator. A citation to an id that does not exist is refused, and a quoted answer that differs from the record by one word is refused. Both refusals name the record and the citing file"
+  - "A record whose text the policy marks private is committed with its digest only, `answer show` in the checkout that holds the text prints it, and in a fresh clone it prints the digest and says the text is local"
+  - "Negative control: with the validator reverted to master, the case finds the unresolved citation accepted"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 4669_an_owner_answer_carries_its_provenance"
+evidence_required:
+  - "an_owner_answer_carries_its_provenance"
+serves: []
+created_at: 2026-11-22
+updated_at: 2026-11-25

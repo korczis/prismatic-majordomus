@@ -25,7 +25,7 @@ use std::net::IpAddr;
 use std::process::{Command, Stdio};
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use super::config::TailscaleConfig;
 use super::provider::{
@@ -210,41 +210,22 @@ fn cli_missing(command: &str) -> bool {
 /// The output of `<command> status --json`, or why it could not be read. Bounded by
 /// [`STATUS_TIMEOUT`]: a CLI that hangs is killed and the reading counts as failed.
 fn read_status(command: &str) -> Result<String, String> {
-    // a CLI written a moment ago can be busy while a forked child still holds it (ETXTBSY)
-    let mut child = crate::process::retrying_busy(|| {
-        Command::new(command)
-            .args(["status", "--json"])
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-    })
+    // a group of its own, ended with whatever it started at the bound, its output read while
+    // it runs (a large tailnet's answer is longer than a pipe holds); a CLI written a moment
+    // ago is waited for while a forked child still holds it (ETXTBSY)
+    let out = crate::process::run_bounded(
+        Command::new(command).args(["status", "--json"]),
+        STATUS_TIMEOUT,
+        Duration::from_millis(50),
+    )
     .map_err(|e| format!("`{command} status --json` could not run: {e}"))?;
-    let started = Instant::now();
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => break,
-            Ok(None) if started.elapsed() < STATUS_TIMEOUT => {
-                std::thread::sleep(Duration::from_millis(50))
-            }
-            // still running at the bound, or no longer one this process can wait on: either
-            // way it gave no answer in time, and it is killed
-            _ => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(format!(
-                    "`{command} status --json` did not answer within {}s",
-                    STATUS_TIMEOUT.as_secs()
-                ));
-            }
-        }
-    }
-    // it has exited, and its two pipes are this process's own: reading them to their end
-    // cannot fail
-    let out = child
-        .wait_with_output()
-        .expect("an exited child's own pipes read to their end");
-    if !out.status.success() {
+    let Some(status) = out.status else {
+        return Err(format!(
+            "`{command} status --json` did not answer within {}s",
+            STATUS_TIMEOUT.as_secs()
+        ));
+    };
+    if !status.success() {
         return Err(format!(
             "`{command} status --json` failed: {}",
             String::from_utf8_lossy(&out.stderr).trim()
@@ -319,6 +300,7 @@ pub fn endpoints(peers: &[IpAddr], port: u16) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Instant;
 
     fn context() -> (ProviderContext, std::sync::mpsc::Receiver<Observation>) {
         let (tx, rx) = crate::mesh::provider::ObservationSender::bounded(64);
@@ -464,6 +446,22 @@ mod tests {
             why.starts_with("`/nonexistent/majordomus-no-tailscale status --json` could not run"),
             "{why}"
         );
+    }
+
+    /// A large tailnet's answer, longer than a pipe holds, is read while the CLI writes it:
+    /// the reading succeeds with all of it instead of failing at the timeout.
+    #[test]
+    fn a_status_longer_than_a_pipe_is_read_whole_before_the_timeout() {
+        let dir = tempfile::tempdir().unwrap();
+        let cli = stand_in(dir.path(), "head -c 1048576 /dev/zero | tr '\\0' x");
+        let started = Instant::now();
+        let out = read_status(&cli).expect("the long answer is read");
+        assert!(
+            started.elapsed() < STATUS_TIMEOUT,
+            "the answer waited out the timeout: {:?}",
+            started.elapsed()
+        );
+        assert_eq!(out.len(), 1_048_576, "all of the answer is read");
     }
 
     /// A CLI that never answers is killed once the timeout passes, and the reading counts as

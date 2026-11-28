@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0
+# Generator: majordomus-cli 1.3.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0
-version: "1.0.0"
+generator: majordomus-cli 1.3.0
+version: "1.3.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -22141,6 +22141,36 @@ cli:
               positional: false
               help: "Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)"
               value_name: REV
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: merge_title
+              long: merge-title
+              positional: false
+              help: "With --at: read that commit as the merge into the trunk of a pull request with this title, as the forge's merge commit will name it (I4634)"
+              value_name: TITLE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: merge_branch
+              long: merge-branch
+              positional: false
+              help: "With --at: the anticipated merge's head branch, without its owner"
+              value_name: BRANCH
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: merge_number
+              long: merge-number
+              positional: false
+              help: "With --at: the anticipated merge's pull request number"
+              value_name: N
               takes_value: true
               required: false
               global: false

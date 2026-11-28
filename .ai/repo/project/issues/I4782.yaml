@@ -1,0 +1,38 @@
+id: I4782
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "Every project rule reaches a declared principle and every principle is refined by a rule: a generic coverage check over the rule dependency graph"
+slug: every-rule-reaches-a-principle
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Let a repository declare which rules are its principles (policy `rules.principles`, a list of rule ids or a front-matter marker `x-majordomus: {principle: true}`), and have doctor report two findings over the resolved `depends_on` graph: a project rule whose dependency chain reaches no principle (`rule_without_principle`), and a principle no rule depends on and that names no proof of its own (`principle_without_rule`). Advisory by default, blocking when the policy says so; a repository that declares no principles is told the check is off, never passed silently."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), the owner's principles and the project rules that implement them were written separately, and nothing could say which rules served no principle or which principle no rule enforced; the repository wrote its own test for it. The rule graph already carries `depends_on` with exact versions, so the answer is a derivation the tool can make for everyone."
+current_state: "Measured at origin/master 46775282570. Rules resolve `depends_on` deterministically and refuse a missing dependency or a cycle (.ai/README.md, Rules); no rule or policy key marks a rule as a principle, and no command reports a rule's reach to any root or a root's refinement by any rule."
+desired_state: "The policy key and the marker are declared in share/schemas/majordomus/policy and the rule schema; doctor reports both findings with the rule ids and the chain it walked; `rules list --principles` shows each principle with the rules that refine it; docs/DOCTRINE.md documents principles; the skeleton's rules README shows how to declare one."
+scope:
+  - ".ai/repo/project/issues/I4782.yaml"
+  - "lib/rules.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/capability/builtin/rules.rs"
+  - "share/schemas/majordomus/rule/rule.v1.schema.json"
+  - "share/skeleton/ai/repo/rules/README.md"
+  - "docs/DOCTRINE.md"
+  - "test/cases/4782_every_rule_reaches_a_principle.sh"
+non_scope:
+  - "Declaring this repository's own principles: the owner's act, recorded as a decision when made"
+  - "Gated mode itself (I4781)"
+depends_on:
+  - "I4781"
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#a-projects-proofs-are-registered"
+acceptance_criteria:
+  - "A fixture with principle P, rule A depending on P and rule B depending on nothing reports B as rule_without_principle and nothing for A"
+  - "A second principle Q that no rule depends on and that names no proof is reported principle_without_rule"
+  - "A fixture that declares no principle prints that the check is off and exits as before"
+validation:
+  - "bash test/run.sh 4782_every_rule_reaches_a_principle"
+evidence_required:
+  - "case_4782"
+risk: "Low. Advisory by default; it reads a graph the loader already resolves."
+created_at: 2026-11-25
+updated_at: 2026-11-25

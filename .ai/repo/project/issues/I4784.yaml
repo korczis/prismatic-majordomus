@@ -1,0 +1,41 @@
+id: I4784
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "init offers versioned hooks: tracked `.githooks/` with the two tool lines and a slot for repository gates, `core.hooksPath` set for the clone, and every line an enforcement entry doctor proves"
+slug: init-offers-versioned-hooks
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "`majordomus init --hooks versioned` (and the same choice in `majordomus update` for a layer that already exists) writes `.githooks/pre-commit` and `.githooks/pre-push` as dispatchers that run the tool's line and then every executable of `<hook>.d/`, sets `core.hooksPath .githooks` in the clone (and says how each new clone sets it), and adds an enforcement entry to the policy for each tool line. A repository gate added as `.githooks/pre-push.d/<name>` is declared with `majordomus hooks add <hook> <path> [args...]`, which writes the file and its enforcement entry together, so the gate (for example a pre-push 'the whole solution is tested locally end to end') is proved wired by doctor from its first commit. doctor reports a clone whose `core.hooksPath` is not the tracked directory the policy declares."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), the working recipe was assembled by hand: versioned hooks under core.hooksPath, the two tool lines, and enforcement entries for repository scripts such as a pre-push end-to-end gate, each proved by doctor. The skeleton prints two lines to add and installs nothing, so every adopter rebuilds the same recipe and a new clone silently runs no hook until somebody sets core.hooksPath."
+current_state: "Measured at origin/master 46775282570. lib/init.sh's mj_init_hook_advice prints the two lines (`doctor` on pre-commit, `finish --check` on pre-push) and installs nothing, also when the hooks directory is tracked; share/skeleton/policy.yaml declares the two enforcement entries doctor-on-commit and finish-on-push and nothing for a repository's own gate; doctor's wiring check (lib/doctor.sh mj_validate_wiring) already reads core.hooksPath and the <hook>.d/ dispatcher."
+desired_state: "The versioned mode is a declared choice of init and update (the default stays advice-only); the dispatchers and the `hooks add` command come from one template under share/skeleton/; doctor proves every entry, including a path-only one (I4783), and names an unset core.hooksPath with the command that sets it; docs/ADOPTION.md shows the recipe end to end; a case runs init in a fresh repository, adds a pre-push gate and proves that a failing gate refuses a push."
+scope:
+  - ".ai/repo/project/issues/I4784.yaml"
+  - "lib/init.sh"
+  - "lib/update.sh"
+  - "lib/doctor.sh"
+  - "share/skeleton/policy.yaml"
+  - "share/skeleton/githooks/pre-commit"
+  - "share/skeleton/githooks/pre-push"
+  - "docs/ADOPTION.md"
+  - "test/cases/4784_init_offers_versioned_hooks.sh"
+non_scope:
+  - "Hook phases, costs and budgets (I4671), which this issue's dispatchers leave room for"
+  - "The commit-message guard (I4262)"
+  - "Changing this repository's own .githooks"
+depends_on:
+  - "I4783"
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#the-skeleton-ships-versioned-hooks-and-a-ratchet"
+acceptance_criteria:
+  - "init --hooks versioned in a fresh repository leaves .githooks/pre-commit and .githooks/pre-push executable and tracked-ready, core.hooksPath set, and doctor reporting both entries wired"
+  - "`hooks add pre-push scripts/e2e-gate` writes the dispatcher entry and the enforcement entry; doctor proves it wired; a gate that exits 1 refuses `git push` to a local bare remote"
+  - "A second clone without core.hooksPath set is reported by doctor with the command that sets it"
+  - "init without the option behaves as at 46775282570"
+validation:
+  - "bash test/run.sh 4784_init_offers_versioned_hooks"
+evidence_required:
+  - "case_4784"
+risk: "Medium. Writing hooks into a repository is a change every contributor meets; the mode is opt-in and the dispatcher runs nothing the policy does not declare."
+created_at: 2026-11-25
+updated_at: 2026-11-25

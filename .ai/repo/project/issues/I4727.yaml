@@ -1,0 +1,39 @@
+id: I4727
+milestone: fabric-local-pilot
+title: "Every capability call is authorised against the caller's own context, not only its OS user (S04, gate G4)"
+slug: fabric-s04-scoped-authority
+priority: p1
+profile: implementation
+objective: "Bind each authenticated IPC peer to a validated root, checkout identity, session and scoped authorisation, and check caller, context, capability effect and ownership on every call, so that a client of repository A cannot read or write repository B by guessing an id, forging a frame field, swapping a symlinked root or replaying a detached session handle."
+why: "Corrected DAG: S04 follows P02, P04 and P05 and precedes P06 and P08. The owner decided on 2026-11-24 that the local trust boundary is one OS user with every request authorised against the context it names. The P00 audit found that a loopback caller today reaches every capability of every checkout (http/router.rs, mcp/surface.rs, capability/model.rs); PR #3124 (branch test/fabric-s04-cross-context-baseline) pins that behaviour as G4's legacy baseline."
+current_state: "Observed 2026-11-25: PR #3124 adds apps/majordomus-cli/tests/fabric_cross_context.rs, two cases in which a client of checkout A moves an issue in checkout B over HTTP and over MCP; open, as a draft."
+desired_state: "The two baseline cases of PR #3124 invert: the cross-context write is refused with a stable reason and redacted host-side evidence, and S04's security matrix passes."
+scope:
+  - "apps/majordomus-cli/src/fabric"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/mcp/surface.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/tests/fabric_cross_context.rs"
+  - "docs/MCP.md"
+non_scope:
+  - "Cross-host admission (S06, gate G6)"
+  - "Arbitrary cross-context delegation; any delegation is a separate typed decision with audit"
+  - "A per-frontend tool-name allowlist: rights come from the capability's typed effect and the repository's policy"
+depends_on:
+  - "I4723"
+  - "I4725"
+  - "I4726"
+traces:
+  - "https://github.com/korczis/prismatic-majordomus/pull/3124"
+acceptance_criteria:
+  - "A client of A calling B's capabilities by a guessed id is refused a write always, and a read unless an existing policy grants it"
+  - "A forged uid, branch, root, checkout id or context id in a frame loses to the identity the host derived"
+  - "A session handle replayed after detach, and a root swapped after registration, are refused"
+  - "The fabric_cross_context baseline cases of PR #3124 assert the refusal"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --test fabric_cross_context"
+evidence_required:
+  - "scoped_authority_negative_tests"
+created_at: 2026-11-25
+updated_at: 2026-11-25

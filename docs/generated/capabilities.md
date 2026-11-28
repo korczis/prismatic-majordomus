@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -44,7 +44,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `layout` | Layer layout | behaviorally_verified | 1 | [`modules/layout.md`](modules/layout.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 31 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 33 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -211,6 +211,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.nodes` | `mesh` | query | experimental | `majordomus_mesh_nodes` | — | `GET /api/v1/mesh/nodes` | — | — | required |
 | `mesh.peer` | `mesh` | query | experimental | `majordomus_mesh_peer` | — | `GET /api/v1/mesh/peer` | — | — | required |
 | `mesh.peers` | `mesh` | query | experimental | `majordomus_mesh_peers` | — | `GET /api/v1/mesh/peers` | — | — | required |
+| `mesh.record.write` | `mesh` | command | experimental | `majordomus_mesh_record_write` | — | `POST /api/v1/mesh/records` | — | — | waived (transient_state) |
+| `mesh.records` | `mesh` | query | experimental | `majordomus_mesh_records` | — | `GET /api/v1/mesh/records` | — | — | required |
 | `mesh.register` | `mesh` | command | experimental | `majordomus_mesh_register` | — | `POST /api/v1/mesh/register` | — | — | required |
 | `mesh.release` | `mesh` | command | experimental | `majordomus_mesh_release` | — | `POST /api/v1/mesh/claims/release` | — | — | waived (transient_state) |
 | `mesh.review.answer` | `mesh` | command | experimental | `majordomus_mesh_review_answer` | — | `POST /api/v1/mesh/reviews/answer` | — | — | waived (transient_state) |

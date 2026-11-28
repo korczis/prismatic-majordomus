@@ -1,0 +1,49 @@
+id: I4618
+milestone: adopter-upgrades
+title: "The executable resolver borrows a same-generation executable another worktree built, before it refuses"
+slug: the-resolver-borrows-a-sibling-executable
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Before mj_rust_resolve refuses with exit 12, it asks the other worktrees of this checkout, and answers through an executable one of them already built when that executable is of this tree's generation. It says which worktree on stderr, builds nothing, and names every worktree it judged in the refusal when none fits."
+why: "On 2026-11-15 a change to one shell file (lib/check.sh, I4598) could not be committed: the commit hook found no executable in its worktree, and the installed release was of another generation. Other worktrees of the same checkout held current executables of the same crate. The only route the refusal named was `just build`, and it cost an 18-minute cold build and 3.4 GiB below the 35 GiB floor. A peer session had borrowed such an executable by hand through MAJORDOMUS_BIN the day before (evolve principle 39). The shared ~/.cache/majordomus-master-bin held 13 builds, all 2-5 weeks old and none of that day's crate. Neighbours: I3180 (a stale checkout starts one background build, cancelled by ADR 0222), I2059 (a rebuild never replaces an executable a live lease names), I2848 (run-plan's gates inherit MAJORDOMUS_BIN on generation) and I3957 (no entry path or gate builds)."
+current_state: "Measured at origin/master 3fcaafac355: mj_rust_resolve (lib/rust_bin.sh) answers through MAJORDOMUS_BIN, the tree's own executable when current, or the installed release when mj_rust_same_generation says it is of this tree's generation. Otherwise it refuses with exit 12, naming `just build`. It never looks at another worktree."
+desired_state: "After the installed release, mj_rust_resolve asks mj_rust_sibling. That function walks `git worktree list` and takes the first other worktree whose executable (apps/majordomus-cli/target/<profile>/majordomus) exists, is not a launcher, and is not older than its own sources (mj_rust_stale). The worktree's crate must have no uncommitted or untracked change, and the commit it checks out must carry this tree's crate inputs unchanged (mj_rust_same_generation). The resolver prints that executable and names the worktree on stderr. When none fits, the refusal lists each worktree that held an executable with the reason it was not borrowed, or says that none held one. Under a shared target directory no worktree is asked, and the refusal says why. Nothing is built or copied, and the served copies of I2059 are not touched."
+scope:
+  - "lib/rust_bin.sh"
+  - "test/lib/rust_bin.functions.sh"
+  - "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh"
+  - ".ai/repo/project/issues/I4618.yaml"
+non_scope:
+  - "Building anything (ADR 0224)"
+  - "The shared master-build cache and its freshness"
+  - "Removing the race between this check and the exec, which the tree's own executable shares"
+acceptance_criteria:
+  - "A current executable of the same crate in another worktree is borrowed, and the worktree is named on stderr"
+  - "An executable whose worktree has uncommitted crate changes is not borrowed, and the refusal names that reason"
+  - "An executable older than its own sources is not borrowed, with its reason"
+  - "An executable whose branch carries another crate is not borrowed, with its reason"
+  - "With no executable in any other worktree, the refusal says so"
+  - "Under CARGO_TARGET_DIR no worktree is asked, and the refusal says why"
+  - "No step builds"
+  - "Negative: the case fails against lib/rust_bin.sh before this change"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4618_the_resolver_borrows_a_sibling_executable 3248_a_pre_push_gate_does_not_wait_on_another_build 33_stale_executable 4381_the_structure_job_fits_in_half_its_bound"
+evidence_required:
+  - "the_resolver_borrows_a_sibling_executable"
+depends_on: []
+serves: []
+created_at: 2026-11-15
+started_at: 2026-11-26T14:56:38Z
+started_event: sha256:580fbed2d96b108d8bca17fd410aeb009d038caa6496b5a1550d38eed239c148
+updated_at: 2026-11-26T14:57:28Z
+completed_at: 2026-11-26T14:57:28Z
+completed_event: sha256:a1801d7f4861558cc30ce44a6eeec04804bba1e91741daa3573cb6af6a448f4e
+evidence:
+  - covers: "the_resolver_borrows_a_sibling_executable"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4618_the_resolver_borrows_a_sibling_executable 3248_a_pre_push_gate_does_not_wait_on_another_build 33_stale_executable 4381_the_structure_job_fits_in_half_its_bound"
+    result: "delivered by ceee23bb57a on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 3248_a_pre_push_gate_does_not_wait_on_another_build, 4381_the_structure_job_fits_in_half_its_bound ok in suite-shard (1) job 138971458450; 4618_the_resolver_borrows_a_sibling_executable ok in suite-shard (2) job 138971458506; 33_stale_executable ok in suite-shard (4) job 138971458386"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:57:10Z

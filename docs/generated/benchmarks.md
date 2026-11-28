@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0 -->
+     Generator: majordomus-cli 1.3.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 231 | 186 | 0 | 45 |
-| http | 219 | 184 | 0 | 35 |
-| mcp | 215 | 181 | 0 | 34 |
+| direct | 233 | 187 | 0 | 46 |
+| http | 221 | 185 | 0 | 36 |
+| mcp | 217 | 182 | 0 | 35 |
 | system | 14 | 14 | 0 | 0 |
-| total | 679 | 565 | 0 | 114 |
+| total | 685 | 568 | 0 | 117 |
 
 ## Capabilities
 
@@ -154,6 +154,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.nodes` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.peer` | mesh | query | — | covered | covered | covered | `unknown` |
 | `mesh.peers` | mesh | query | — | covered | covered | covered | `summary`, `full` |
+| `mesh.record.write` | mesh | command | — | waived | waived | waived | — |
+| `mesh.records` | mesh | query | — | covered | covered | covered | `every-record`, `live-decisions` |
 | `mesh.register` | mesh | command | — | covered | covered | covered | `refused` |
 | `mesh.release` | mesh | command | — | waived | waived | waived | — |
 | `mesh.review.answer` | mesh | command | — | waived | waived | waived | — |

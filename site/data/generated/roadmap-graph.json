@@ -333,7 +333,7 @@
       "id": "a-session-proceeds",
       "kind": "milestone",
       "label": "a-session-proceeds",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/a-session-proceeds/",
       "external": false,
       "summary": "A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on"
@@ -411,6 +411,15 @@
       "summary": "Repository automation is typed capabilities that Rhai orchestrates, and domain-logic shell only shrinks"
     },
     {
+      "id": "the-host-knows-its-runtimes",
+      "kind": "milestone",
+      "label": "the-host-knows-its-runtimes",
+      "status": "PLANNED",
+      "route": "/plan/the-host-knows-its-runtimes/",
+      "external": false,
+      "summary": "A host knows every Majordomus runtime it runs, with no project open"
+    },
+    {
       "id": "an-authorised-node-connects-from-anywhere",
       "kind": "milestone",
       "label": "an-authorised-node-connects-from-anywhere",
@@ -418,6 +427,15 @@
       "route": "/plan/an-authorised-node-connects-from-anywhere/",
       "external": false,
       "summary": "An authorised node reaches another across LAN, tailnet or NAT, and says how"
+    },
+    {
+      "id": "fabric-is-decided-and-the-legacy-is-measured",
+      "kind": "milestone",
+      "label": "fabric-is-decided-and-the-legacy-is-measured",
+      "status": "ACTIVE",
+      "route": "/plan/fabric-is-decided-and-the-legacy-is-measured/",
+      "external": false,
+      "summary": "Majordomus Fabric is decided and the legacy runtime is measured before anything changes it (gates G0 and G1)"
     },
     {
       "id": "the-mesh-is-operated-from-any-device",
@@ -720,7 +738,7 @@
       "id": "one-kit-on-every-surface",
       "kind": "milestone",
       "label": "one-kit-on-every-surface",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/one-kit-on-every-surface/",
       "external": false,
       "summary": "Code, charts, controls, embeds and shell blocks are one kit on every surface, declared in the design book and held there by a gate"
@@ -729,7 +747,7 @@
       "id": "landing-survives-any-session",
       "kind": "milestone",
       "label": "landing-survives-any-session",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/landing-survives-any-session/",
       "external": false,
       "summary": "Landing green work survives any session, any restart and any machine"
@@ -801,10 +819,19 @@
       "id": "a-profile-is-resolved-once-and-enforced",
       "kind": "milestone",
       "label": "a-profile-is-resolved-once-and-enforced",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/a-profile-is-resolved-once-and-enforced/",
       "external": false,
       "summary": "A profile is resolved once, explains every field, and refuses at the executor what it does not grant"
+    },
+    {
+      "id": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+      "kind": "milestone",
+      "label": "a-downstream-adopters-findings-are-fixed-in-the-tool",
+      "status": "PLANNED",
+      "route": "/plan/a-downstream-adopters-findings-are-fixed-in-the-tool/",
+      "external": false,
+      "summary": "What a downstream adopter met on 1.2.0 is fixed in the tool: truthful advisors, registered proofs, versioned hooks, an honest plan and doctor"
     },
     {
       "id": "runtime-adapters",
@@ -870,15 +897,6 @@
       "summary": "The runtime says what is progressing, waiting or stalled, and repairs only what is safe"
     },
     {
-      "id": "the-host-knows-its-runtimes",
-      "kind": "milestone",
-      "label": "the-host-knows-its-runtimes",
-      "status": "BLOCKED",
-      "route": "/plan/the-host-knows-its-runtimes/",
-      "external": false,
-      "summary": "A host knows every Majordomus runtime it runs, with no project open"
-    },
-    {
       "id": "mesh-connectivity",
       "kind": "milestone",
       "label": "mesh-connectivity",
@@ -904,6 +922,15 @@
       "route": "/plan/the-hub-is-reached-from-any-device/",
       "external": false,
       "summary": "The hub is reached privately from any of the owner's devices, and a public ingress is configuration"
+    },
+    {
+      "id": "fabric-local-pilot",
+      "kind": "milestone",
+      "label": "fabric-local-pilot",
+      "status": "BLOCKED",
+      "route": "/plan/fabric-local-pilot/",
+      "external": false,
+      "summary": "One opt-in host agent serves 2 repositories, 10 worktrees and 20 MCP sessions on one host, with standalone fallback (gates G2-G5)"
     },
     {
       "id": "delivery-flow-is-measured",
@@ -1101,16 +1128,6 @@
       "kind": "unblocks"
     },
     {
-      "source": "runtime-lifecycle",
-      "target": "the-host-knows-its-runtimes",
-      "kind": "unblocks"
-    },
-    {
-      "source": "safe-self-update",
-      "target": "the-host-knows-its-runtimes",
-      "kind": "unblocks"
-    },
-    {
       "source": "runtime-trust",
       "target": "mesh-connectivity",
       "kind": "unblocks"
@@ -1133,6 +1150,11 @@
     {
       "source": "safe-self-update",
       "target": "the-hub-is-reached-from-any-device",
+      "kind": "unblocks"
+    },
+    {
+      "source": "fabric-is-decided-and-the-legacy-is-measured",
+      "target": "fabric-local-pilot",
       "kind": "unblocks"
     },
     {

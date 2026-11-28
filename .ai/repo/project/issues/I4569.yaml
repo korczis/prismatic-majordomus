@@ -1,0 +1,43 @@
+id: I4569
+milestone: ci-critical-path
+title: "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick"
+slug: a-yielded-run-resumes-when-the-path-clears
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Every run of the release path asks `scripts/ci/release-path resume --self \"$GITHUB_RUN_ID\"` when it ends, from a final aggregate job of its own. That job needs every other job, carries a job-level `if: always()`, and holds the permissions resume needs, as validate.yml's `ci` job already does for runs that are not a pull request's. pages.yml and release.yml gain such a job. validate.yml's resume also runs for the record pull request's own run. A yielded pull-request validate then starts again when the run that held the path ends, and the schedule stays as the backstop. A workflow_run trigger in release-path.yml is not the mechanism: release.yml dispatches the path's pages and record-validate runs with the job's GITHUB_TOKEN, and GitHub starts no workflow from events that token causes, so their completion would start nothing."
+why: "On 2026-11-09 three pull requests (#2993, #2994, #2995) and train 29 (#2992) yielded to the release path: the v1.0.1 record's validate, then two master pages deploys. Each time the path cleared and nothing resumed them, so the landing seat ran `scripts/ci/release-path resume` by hand, twice. The schedule `7,22,37,52 * * * *` is the only resume trigger outside a master validate's last job, and GitHub ran it at 19:13Z and next at 02:16Z, seven hours apart (it throttles schedules; the 2026-11-01 CI measurement found 3-6 h gaps). A yield that is resumed by a cron GitHub skips for hours costs more runner time than it saved. Measured again on 2026-11-15. #3038's validate (run 43758068496) yielded at 20:40:26Z to the pages run 43751654556, which was workflow_dispatch by github-actions[bot] and ended at 20:49:45Z. At 22:25Z the yielded run was still cancelled while validates started from 21:33Z ran without yielding: master had not moved since 20:00Z, and the schedule had not fired. The last 30 scheduled runs of release-path.yml (2026-11-08 05:50Z to 2026-11-15 19:59Z) were 3.65 to 10.51 h apart, median 6.54 h, against a declared 15 minutes. The repository's own workflow_run consumer (telemetry.yml, on validate) has no run after any of the three bot-dispatched record validates of v1.0.0, v1.0.1 and v1.0.2. That is an inference from missing runs, consistent with GitHub's rule on GITHUB_TOKEN events."
+current_state: "At origin/master 3fcaafac355: release-path.yml triggers on a v* tag push (preempt), a schedule (:19, '7,22,37,52 * * * *') and workflow_dispatch (resume). validate.yml resumes in its `ci` job (:2179-2181: needs every job, `if: always()`; workflow permissions grant actions and pull-requests write) at the end of every run that is not a pull_request event (:2239-2244). That excludes the record pull request's own run, which release-path.yaml:42-43 counts as part of the path (:2241, `github.event_name != 'pull_request'`). pages.yml has no job that runs on every run: deploy (:499-501) is skipped on cancel or a failed rustdoc. Its permissions are contents write, pages read and actions read (:110-120), so nothing grants actions write or pull-requests write. release.yml ends in three parallel jobs (image :425, live :554, smoke :583) and grants contents read at workflow level. release.yml dispatches the record validate and pages with GH_TOKEN: github.token (:382-385, :410-412). The model promises that 'the longest a yielded run waits after the path clears is one tick' (release-path.yaml:24-26), and repeats 'within one tick' at :63. The comments at release-path.yml:8-9 and validate.yml:2236-2239 present the schedule as a resume trigger. Measured again on 2026-11-22 by openttd-80 (12:14Z), on #3104: validate 45003660775 yielded at 08:40Z; release deploy 45003059766 succeeded at 09:28Z; the ci:yielded label was still on at 12:14Z and no new validate had started. release-path.yml's schedule is '7,22,37,52 * * * *', but its last scheduled runs started at 08:07Z, 01:09Z, 21:03Z (the day before), 15:33Z, 07:25Z, 00:19Z and 18:46Z, gaps of 1-8 h. The last release-path run, 45005867677, was a push at 09:05Z, before the deploy ended, so no resume ran after the path cleared. The same held on #3090, #3092 and #3103. The reporter's proposal: state that a cron schedule is not a bound, so the aggregate resume job at the end of the path's last run is the promise, and have the brief or the monitor name a pull request held ci:yielded more than N minutes after the path clears (I4360 covers queued runs, not yielded ones)."
+desired_state: "The end of every run of the release path resumes the yielded runs at once. pages.yml and release.yml each end in an aggregate resume job, and validate.yml's resume step also runs for a pull request whose head branch starts with the model's record_branch_prefix. The schedule stays as a backstop, and resume stays a no-op while the path is busy. The model and the workflow comments state the bound as 'when the last run of the path ends', not one tick."
+scope:
+  - ".ai/repo/project/issues/I4569.yaml"
+  - ".github/workflows/pages.yml"
+  - ".github/workflows/release.yml"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/release-path.yml"
+  - ".ai/repo/ci/release-path.yaml"
+  - "docs/CI.md"
+  - "test/cases/3027_the_release_path_goes_first.sh"
+non_scope:
+  - "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)"
+  - "Which runs yield, and preemption on a tag push: I2710"
+  - "A train's top going first, and resume never re-running a held member: I4353"
+  - "Stopping stuck or superseded runs: I3903"
+  - "A workflow_run trigger: it does not fire for runs started by GITHUB_TOKEN"
+  - "release-path.yml beyond its header comment: its schedule stays as the backstop"
+depends_on: []
+acceptance_criteria:
+  - "pages.yml and release.yml each gain one final job that lists every other job of its workflow in `needs`, has job-level `if: always()`, checks out the repository, declares job-level permissions actions write, pull-requests write and contents read, has a timeout of at most 10 minutes, and runs `scripts/ci/release-path resume --self \"$GITHUB_RUN_ID\"`"
+  - "validate.yml's resume step runs when the event is not a pull request's or when the pull request's head branch starts with the model's record_branch_prefix (release/record-)"
+  - "Case 3027 (test/cases/3027_the_release_path_goes_first.sh) refuses a workflow named under release_path in the model whose final resume job lacks any of these: a job in `needs`, the job-level `if: always()`, the permissions (granted at job level, or for validate.yml at workflow level, as its `ci` job has them today), or the resume call. It also refuses validate.yml's step without the record-branch condition"
+  - "The model's rule 3 (release-path.yaml:24-26), its trigger comment (:63) and the comments at release-path.yml:8-9 and validate.yml:2236-2239 no longer claim one schedule tick as the bound, and case 3027 refuses the old sentence"
+  - "After the change lands, the first release records a yielded pull request's run id, the end time of the path's last run and the start time of the resumed attempt, within 15 minutes of each other"
+validation:
+  - "actionlint .github/workflows/pages.yml .github/workflows/release.yml .github/workflows/validate.yml .github/workflows/release-path.yml"
+  - "bash test/run.sh 3027_the_release_path_goes_first"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10
+updated_at: 2026-11-22

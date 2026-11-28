@@ -1,0 +1,46 @@
+id: I4592
+milestone: ci-critical-path
+title: "The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes"
+slug: the-projection-checkout-is-blobless
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The actions/checkout of the apply job in .github/workflows/github.yml keeps `fetch-depth: 0` and takes `filter: blob:none`, bounded at `timeout-minutes: 10` (below the job's 60), so the projection is applied after every landing without a rerun; a case holds the workflow to it."
+why: "The apply checkout fetched every blob of the whole history and was bounded at 5 minutes. On origin/master dff91f0a480 that step failed with \"The action 'Run actions/checkout@v4' has timed out after 5 minutes\" on master pushes 6f8e104 (run 43338034433, attempts 1 and 2), aca34e6 (43626240578, attempts 1 and 2), c992617 (43657141312, attempt 1) and 04db703 (43673907137, attempt 1); each needed `gh run rerun --failed`. While apply has not run, every open pull request's github-check fails with \"record(s) never-created\", so one slow fetch on the trunk turns every head red. The history is kept because the gate reads the age of a landing from it, but what the job reads of it is commits and trees, not old blobs. I3241 (PR #2974, open) makes validate.yml's checkouts blobless and measured the difference in validate run 42367964807: 18 s for a blobless full-history checkout against 159-347 s for full ones; its scope is validate.yml only and its gate model declares github-projection's history_reads as [heads], not blobs."
+current_state: "Measured at origin/master dff91f0a480: .github/workflows/github.yml, job apply, lines 56-63: `actions/checkout@v4`, `timeout-minutes: 5`, `ref: <default branch>`, `fetch-depth: 0`, no `filter`. scripts/ci/step-bound-check judges validate.yml and pages.yml only, and .ai/repo/ci/github.yaml declares no checkout, so no CI declaration bounds this step. Reads of history by the job's steps: scripts/github-sync --check/--apply runs `git log --first-parent --diff-merges=first-parent --diff-filter=A --name-only` over the issue and milestone directories (commits and trees; inexact rename detection would fetch a blob pair on demand only for a commit that deletes and adds a record); scripts/ci/github-check runs `git rev-list --min-age`, `git merge-base`, `git diff --name-only <ref>`, `git cat-file -e <ref>:<path>` and `git archive <ref> -- .ai bin lib share scripts/github-sync`, the last reading the blobs of an older commit, of which only those that differ from HEAD are not already present. The --prs path (git show of pull request heads) and mj_pj_m_released_in (git log -S) are not reached by this workflow."
+desired_state: "The apply checkout is `fetch-depth: 0` with `filter: blob:none` and `timeout-minutes: 10`; a blob of an older commit is fetched on demand through the credentials actions/checkout leaves configured; the step comment says why. Case 4592 fails on master's workflow and passes on this one."
+scope:
+  - ".github/workflows/github.yml"
+  - "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
+  - ".ai/repo/project/issues/I4592.yaml"
+non_scope:
+  - "The checkouts of validate.yml and their gate model (I3241)"
+  - "Extending scripts/ci/step-bound-check to github.yml; this issue's case holds the one step"
+  - "A budget on checkout time and repository size (I4349) and the growth of the history (I4351)"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "The apply job's actions/checkout has `fetch-depth: 0`, `filter: blob:none` and a `timeout-minutes` of at most 10, below the job's"
+  - "Negative: case 4592 fails on origin/master's github.yml (filter None) and refuses the workflow with the filter removed, the bound at 11, the bound removed or a shallow checkout"
+  - "Case 1097 still holds the workflow to .ai/repo/ci/github.yaml"
+  - "The next github-projection runs on master pass their checkout without a rerun"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4592_the_projection_apply_checkout_is_blobless_and_bounded 1097_the_projection_is_applied_at_landing"
+  - "scripts/ci/step-bound-check .github/workflows/github.yml"
+  - "actionlint .github/workflows/github.yml"
+evidence_required:
+  - "the_projection_apply_checkout_is_blobless_and_bounded"
+created_at: 2026-11-15
+started_at: 2026-11-26T14:49:48Z
+started_event: sha256:09e6aba8b753284311c96ba1e18e5b19d762698b3f80b741d541e85bc312c0f3
+updated_at: 2026-11-26T14:50:56Z
+completed_at: 2026-11-26T14:50:56Z
+completed_event: sha256:3daef9c05112e11dc5c77d981abfc5f3174c211b7cd520ae7e3341add48aec2e
+evidence:
+  - covers: "the_projection_apply_checkout_is_blobless_and_bounded"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4592_the_projection_apply_checkout_is_blobless_and_bounded 1097_the_projection_is_applied_at_landing"
+    result: "delivered by d634aa253f0 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 4592_the_projection_apply_checkout_is_blobless_and_bounded ok in suite-shard (2) job 138971458506; 1097_the_projection_is_applied_at_landing ok in suite-shard (3) job 138971458403; actionlint .github/workflows/github.yml exit 0; github-projection runs 45538902021 and 45648952639 on master at 46775282570 concluded success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:50:33Z

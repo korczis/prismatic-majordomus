@@ -1,0 +1,38 @@
+id: I4793
+milestone: a-downstream-adopters-findings-are-fixed-in-the-tool
+title: "doctor keeps its 20 s budget in a small adopter on a busy workstation: it reports time per section, and a section whose cost grows with the machine rather than the repository is bounded"
+slug: doctor-keeps-its-budget-in-a-small-repository
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Measure where doctor's time goes in a small adopting repository on a machine that holds many other checkouts and servers: doctor reports each section's wall time (text with `--timings`, always in JSON), the budget breach names the three slowest sections, and every section whose cost scales with the machine (sibling worktrees, other repositories' servers and leases, the mesh, the peer board, process scans, the git object store of a shared clone) is bounded by a declared limit or a cache keyed by what it read. Then fix the sections the measurement names until the fixture adopter runs doctor within the skeleton's 20 s budget, and record the measurement beside the budget as the skeleton asks."
+why: "In a downstream supervised repository on 1.2.0 (2026-11-25), a small repository, doctor took 90 to 104 s against the 20 s budget the skeleton gives it, on a workstation where dozens of other checkouts and servers were running. A gate that costs five times its budget is skipped or backgrounded by the people it serves, and the WARN it prints does not say where the time went."
+current_state: "Measured at origin/master 46775282570. share/skeleton/policy.yaml:179 sets benchmark.budget.doctor_ms to 20000 from a 2026-09-12 measurement in a disposable fixture repository; this repository sets 100000 (.ai/repo/policy.yaml:244); doctor reports its own wall time against the budget as INFO or WARN with no per-section breakdown; I2993 and I2995 removed two machine-wide costs for this repository; I3299 plans per-operation overhead budgets for an adopting fixture; the commit hook already drops one per-worktree reading under MAJORDOMUS_DOCTOR_CONTEXT=commit."
+desired_state: "Per-section timings exist in doctor's JSON and behind --timings; the benchmark fixture for doctor runs with a populated machine (a declared number of sibling checkouts and a running server per checkout) as well as an empty one; the slowest machine-scaled sections are bounded or cached; the skeleton budget is re-derived from the new measurement with the run written beside it; docs/PERFORMANCE.md records both measurements."
+scope:
+  - ".ai/repo/project/issues/I4793.yaml"
+  - "lib/doctor.sh"
+  - "lib/bench.sh"
+  - "share/skeleton/policy.yaml"
+  - "docs/PERFORMANCE.md"
+  - "test/cases/4793_doctor_keeps_its_budget_in_a_small_repository.sh"
+non_scope:
+  - "This repository's own doctor budget (100 s), which its own corpus justifies"
+  - "Per-operation overhead budgets across every command (I3299)"
+  - "Dropping a check to save time: a section is bounded or cached, never removed for cost"
+depends_on: []
+serves:
+  - "a-downstream-adopter-is-told-the-truth-and-keeps-its-proofs#doctor-keeps-its-budget-in-a-small-repository"
+acceptance_criteria:
+  - "doctor --json carries a timings object with one entry per section, and the entries sum to within 5 percent of the reported wall time"
+  - "A budget breach prints the three slowest sections with their times"
+  - "In the populated-machine fixture, doctor in a small adopter runs within the skeleton budget, and the case records the measured time"
+  - "Every section the measurement named as machine-scaled declares its bound or its cache key in its comment and in docs/PERFORMANCE.md"
+validation:
+  - "bash test/run.sh 4793_doctor_keeps_its_budget_in_a_small_repository"
+  - "bin/majordomus bench doctor"
+evidence_required:
+  - "case_4793"
+risk: "Medium. A cache can hide a finding that changed; each cache is keyed by the inputs it read and the case changes one input and sees the finding move."
+created_at: 2026-11-25
+updated_at: 2026-11-25

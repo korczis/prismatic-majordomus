@@ -1,0 +1,46 @@
+id: I4598
+milestone: adopter-upgrades
+title: "A refusal for a path outside the scope names the remedies that exist"
+slug: the-scope-refusal-names-its-remedies
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When check or a completed finish refuses a path outside the task's scope, one INFO line names the two ways out: mark a generated file merge=derived in .gitattributes, which the scope admits beside the change that produced it (I2114), or close the task partial and start it again with the wider scope, noting that in-place widening is planned (I4260); the line names no command that does not exist yet."
+why: "On 2026-11-15 an adopter (sonic-playground, Majordomus v1.0.1) had three completed finishes refused for files its own gates regenerate: static/css/app.css, static/data/i18n.json, and a runner fix under test/. Each time the only route the worker knew was finish --outcome partial plus a new start, which costs a task id and a note. The derived admission that I2114 delivered (ed8afb07512) was one .gitattributes line away. Nothing in the refusal said so, and the repository declared nothing derived. The same route was taken in Kompendium on 2026-11-10 (evolve principle 20) and by the 0.19.0 release branch on 2026-10-09 (I2114's why)."
+current_state: "Measured at origin/master 3fcaafac355: lib/check.sh prints 'FAIL scope <path> — outside claimed scope (<scope>)' with a reproduce of git status and the branch's file list. It names no remedy, and the derived admission is documented only in the comment above the loop."
+desired_state: "A refusal at check or at a completed finish adds one INFO scope line after the failures. The line says a generated file is admitted beside its change once .gitattributes marks it merge=derived, and that grown work is closed partial and started again with the wider scope, in-place widening being planned (I4260). Its reproduce is `git check-attr merge -- <path>; majordomus finish --outcome partial`. A passing check prints no remedy, and neither does a non-completed finish, where scope only warns."
+scope:
+  - "lib/check.sh"
+  - "test/cases/4598_the_scope_refusal_names_its_remedies.sh"
+  - ".ai/repo/project/issues/I4598.yaml"
+non_scope:
+  - "Admitting derived paths, which I2114 delivered"
+  - "Widening a running task's scope, which is I4260; its command is not settled (#2598 scope widen, #2612 start --widen), and once one lands this line names it instead of partial plus start"
+  - "Declaring an adopter's derived files; each repository writes its own .gitattributes (sonic-playground 11032e71)"
+acceptance_criteria:
+  - "A task with a path outside its scope fails check with the FAIL line as before, plus one INFO scope line naming merge=derived in .gitattributes and finish --outcome partial with a new start"
+  - "Once .gitattributes marks that path merge=derived, it is no longer refused"
+  - "A check whose every path is in scope prints no remedy"
+  - "finish --outcome partial warns about the path and prints no remedy"
+  - "Negative: the case fails against lib/check.sh before this change"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4598_the_scope_refusal_names_its_remedies"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 2988_a_scope_admits_what_its_derive_wrote 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward 108c_scope_after_a_dirty_start 04_start_check"
+evidence_required:
+  - "the_scope_refusal_names_its_remedies"
+depends_on: []
+serves: []
+created_at: 2026-11-15
+started_at: 2026-11-26T14:53:26Z
+started_event: sha256:3b77cb43d3a6897929a41a820a53241a82eb9a25436a27753595baded160c57e
+updated_at: 2026-11-26T14:54:33Z
+completed_at: 2026-11-26T14:54:33Z
+completed_event: sha256:655ad5e50262d6d1dcac33839989867cf00ad7f5d047317538d353eb4e8beecb
+evidence:
+  - covers: "the_scope_refusal_names_its_remedies"
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4598_the_scope_refusal_names_its_remedies 2988_a_scope_admits_what_its_derive_wrote 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward 108c_scope_after_a_dirty_start 04_start_check"
+    result: "delivered by a00a29f3ca9 on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: 04_start_check ok in suite-shard (2) job 138971458506; 2988_a_scope_admits_what_its_derive_wrote, 108b_scope_after_trunk_fast_forward, 108c_scope_after_a_dirty_start ok in suite-shard (3) job 138971458403; 4598_the_scope_refusal_names_its_remedies, 108_scope_after_trunk_merge ok in suite-shard (4) job 138971458386"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T14:54:12Z

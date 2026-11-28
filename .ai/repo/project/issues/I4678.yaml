@@ -1,0 +1,31 @@
+id: I4678
+milestone: the-mesh-works-out-of-the-box
+title: "The tailscale provider finds the macOS app's bundled CLI and probes again on every interval, not only at server start"
+slug: the-tailscale-provider-finds-the-bundled-cli
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "On macOS the tailscale provider also probes the CLI inside the Tailscale app bundle, and runs it by exec rather than through a symlink. The provider probes again on each discovery interval, so a tailnet that comes up after the server started is found without a restart."
+why: "Reported by korczis-github-io-91 on 2026-11-22: the hub's tailscale provider read `stopped` on a MacBook. The macOS app keeps its CLI inside the bundle, and a symlink to it aborts ('bundleIdentifier is unknown to the registry'). A wrapper at /opt/homebrew/bin/tailscale that execs the bundle binary works. The provider re-probes only at server start, so a fix on the machine is not seen until the hub restarts."
+current_state: "Observed 2026-11-22 as above. apps/majordomus-cli/src/mesh/tailscale.rs holds the provider (id 'tailscale'); I2410 made a trusted machine on the tailnet discoverable through Tailscale."
+desired_state: "A Mac with the Tailscale app and no CLI on PATH is discovered through the bundle's CLI; a provider that read stopped reads running at the next interval after the tailnet comes up."
+scope:
+  - ".ai/repo/project/issues/I4678.yaml"
+  - "apps/majordomus-cli/src/mesh/tailscale.rs"
+  - "apps/majordomus-cli/src/mesh/provider.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Installing or configuring Tailscale"
+  - "Other discovery means (multicast, broadcast, rendezvous)"
+depends_on: []
+acceptance_criteria:
+  - "A unit test with a fixture app-bundle path and no tailscale on PATH finds the bundled CLI and runs it by exec"
+  - "A unit test in which the fixture CLI first fails and then answers shows the provider stopped, then running at the next interval, without a restart"
+  - "Negative control: both tests fail against master"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::tailscale"
+evidence_required:
+  - "tailscale_provider_unit_tests"
+serves: []
+created_at: 2026-11-22

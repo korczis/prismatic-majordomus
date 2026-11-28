@@ -1,0 +1,61 @@
+id: I4665
+milestone: peer-blackboard
+title: "Typed coordination records live in the mesh journal: written, revised by compare-and-swap, superseded, and read on the blackboard"
+slug: typed-records-live-in-the-mesh-journal
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A session writes a typed coordination record (observation, hypothesis, plan, decision, blocker, handoff, outcome) into the mesh journal as a new event kind, record_written. The record carries a task, a scope, a status, sources with their versions, an optional expiry, a revision and links to the record it supersedes. Its author is the journal's own `<stream>/<session>` key, never a name the caller supplies. Only the author's session revises a record, and only at the current revision (compare-and-swap); another session supersedes it with a new record and never overwrites it. A record's scope must lie inside a live claim of the writing session. A handoff without objective, current state, evidence, blockers and next action is refused. A retry with the same idempotency key and content is answered with the first write. The fold carries every record with its history, its derived evidence state (asserted unless a source is retrievable), its staleness (expired lease, dead or closed author) and the conflicts between live decisions and plans on overlapping scope; mesh.state, the new mesh.records and blackboard.snapshot read it."
+why: "The owner decided on 2026-11-20 that typed coordination records for agents live in the Majordomus mesh journal, the canonical coordination mechanism, rather than in a second blackboard elsewhere (decision relayed to the worker session by the OpenTTD panel session that delegated this issue). The milestone peer-blackboard admitted a peer message kind to the journal only once reviews and handovers were shown not to carry what peers send each other: neither carries a revision, a typed kind, an evidence state or a supersession link, so a plan revised by its author and a decision superseded by another session cannot be told apart from two unrelated texts."
+current_state: "Measured at origin/master 8df53bc26e9 on 2026-11-20. apps/majordomus-cli/src/mesh/journal.rs EventBody has twelve kinds (sessions, beats, claims, handovers, reviews, build-cache offers) and none of them is a typed record with a revision. apps/majordomus-cli/src/mesh/state.rs folds sessions, claims, handovers and reviews into CooperationState. blackboard.snapshot joins the board, mesh.state and the monitor and shows no record. On 2026-11-20 the version-surface gate (scripts/ci/version-matches-surface) refused PR #3101 at b127de10b34: the two new capabilities, mesh.record.write and mesh.records, add to the public contract, so it requires a minor release, 1.1.0 -> 1.2.0. The owner was asked through AskUserQuestion in session 2845686e-0ccb-4c11-a008-3c46a644c866 on 2026-11-20 (the coordinator relayed the answer to this worker at about 09:00Z). The question was: 'prismatic-majordomus PR #3101 (typed blackboard records in the mesh journal, I4665) passes 46/47 pre-push gates; the only failure is version-surface: its two new capabilities (mesh.record.write, mesh.records) require a minor release 1.1.0 -> 1.2.0. Last time (I4324) you were asked before such a declaration. Declare 1.2.0 on this branch (majordomus release bump + derive) so #3101 can enter the lander queue?' The owner answered: 'Declare 1.2.0 (Recommended)'. PR #3101 therefore carries `majordomus release bump` 1.1.0 -> 1.2.0, and the release seat owes v1.2.0 once it lands."
+desired_state: "record_written is a known kind relayed opaquely by older runtimes; mesh.record.write refuses an out-of-scope, unowned, stale, malformed or evidence-less write with its reason and the current revision; mesh.records and blackboard.snapshot list every record with its revisions, evidence state, staleness and conflicts; the journal reloaded from disk folds to the same records."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/records.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/mod.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/mesh/page.rs"
+  - "apps/majordomus-cli/src/monitor/mesh.rs"
+  - "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+  - "docs/MESH.md"
+  - "docs/MONITOR.md"
+  - "docs/BLACKBOARD.md"
+  - ".ai/repo/ci/mesh-event-fields.yaml"
+  - "test/cases/620_mcp_tools_are_invoked_and_answer.sh"
+  - ".ai/repo/project/issues/I4665.yaml"
+non_scope:
+  - "A second store, broker or message channel beside the journal"
+  - "A command-line write subcommand (majordomus mesh record ...) with its docs/CLI.md section, fixture and cases: the capability is served over MCP and HTTP, and the records are read on the command line through mesh state and blackboard"
+  - "A UI screen for records"
+acceptance_criteria:
+  - "Two sessions writing decisions on overlapping scope for one task are both kept and reported as a conflict"
+  - "A revision by a session other than the author is refused (not_own) and, written by a forging peer anyway, ignored by the fold"
+  - "A revision at a stale revision is refused with the current one; a superseding record links both ways and keeps the old record and its history"
+  - "A record past its expiry, or of a closed or dead session, is reported stale and not deleted"
+  - "A record outside the writing session's claimed scope is refused; a handoff missing evidence is refused"
+  - "A retry with the same idempotency key and content answers the first write; the same key with other content is refused"
+  - "The journal reopened from its file folds to the same records"
+validation:
+  - "cargo test --lib mesh::records"
+  - "cargo test --lib mesh::state"
+evidence_required:
+  - "records_unit_tests"
+depends_on: []
+serves:
+  - the-peer-blackboard-is-one-reality#one-projection
+created_at: 2026-11-20
+started_at: 2026-11-26T14:59:50Z
+started_event: sha256:646a38805e7351cdb47d28105853727c52ff9e191b4696336e17482849da4f66
+updated_at: 2026-11-26T15:00:31Z
+completed_at: 2026-11-26T15:00:31Z
+completed_event: sha256:ea6533abd4d2c02c19c9173bdcb8f76bb8d033e38bbe1f86057e0efc82b96361
+evidence:
+  - covers: "records_unit_tests"
+    type: ci
+    command: "cargo test --lib mesh::records && cargo test --lib mesh::state"
+    result: "delivered through #3101 (d02c59d447c) on master; at origin/master 46775282570, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002: mesh::records 19 and mesh::state 18 lib tests ok 0 failed (rust (2) job 138952668919; rust (1) job 138952668994 ran them as well)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/45538902002"
+    commit: 46775282570cd1f5c217fb354d1852709c9e1f95
+    recorded_at: 2026-11-26T15:00:17Z

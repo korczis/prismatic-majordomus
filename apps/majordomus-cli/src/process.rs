@@ -1,4 +1,4 @@
-//! Starting a program whose file was written a moment ago.
+//! Starting the programs this process runs, and ending them with everything they started.
 //!
 //! Linux refuses to execute a file that any process holds open for writing (ETXTBSY). A
 //! program this process has just written is held so by every child forked while the write
@@ -7,9 +7,22 @@
 //! 39049547899). Writing a copy and renaming it into place does not close the window, since
 //! the inherited descriptor holds the inode; waiting does, because the holder lets go as
 //! soon as it execs.
+//!
+//! A program run under a time bound is the leader of a process group of its own
+//! ([`spawn_group`]), and the bound ends the group, not the program alone ([`wait_group`]).
+//! Killing only the child left what it had started behind: a `git fetch` killed at its bound
+//! left its `git-remote-https` running with no parent, and that orphan, still holding the
+//! output pipe, held the caller's reader too, so the bound did not bound the call either.
+//! The groups this process leads are also ended when it dies of a signal
+//! ([`kill_registered_groups`]).
+//!
+//! The identity of this boot ([`boot_id`]) and whether a pid is alive
+//! ([`crate::lease::alive`]) tell a lock file whose owner is gone from one that is held.
 
-use std::io;
-use std::time::Duration;
+use std::io::{self, Read};
+use std::process::{Child, Command, ExitStatus, Stdio};
+use std::sync::mpsc;
+use std::time::{Duration, Instant};
 
 /// How often a busy program is asked again, and how long apart: five seconds in all, far
 /// longer than a forked child takes to reach its exec.
@@ -32,10 +45,305 @@ pub(crate) fn retrying_busy<T>(mut start: impl FnMut() -> io::Result<T>) -> io::
     }
 }
 
+/// Start `cmd` as the leader of a process group of its own, recorded until the returned
+/// [`Group`] is dropped so that a signal that ends this process ends the group too. A program
+/// whose file is still open for writing somewhere is waited for rather than refused
+/// ([`retrying_busy`]).
+///
+/// The price of a group of its own is that a Ctrl-C at the terminal no longer reaches the
+/// child; [`kill_registered_groups`] is what pays it back.
+pub(crate) fn spawn_group(cmd: &mut Command) -> io::Result<(Child, Group)> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        cmd.process_group(0);
+    }
+    let child = retrying_busy(|| cmd.spawn())?;
+    let group = groups::register(child.id());
+    Ok((child, group))
+}
+
+/// End the group `child` leads — the child and everything it started — and reap the child.
+///
+/// Called on a child [`spawn_group`] started. The group's id is the leader's pid, and the
+/// kernel does not hand that id to a new process while any member of the group lives, so the
+/// signal reaches this group or nobody, even once the leader is reaped.
+pub(crate) fn kill_group(child: &mut Child) {
+    // A pid always fits a pid_t: the kernel hands out none larger.
+    // SAFETY: killpg(2) on a group this process created; an id with no group left answers
+    // ESRCH, which is ignored.
+    #[cfg(unix)]
+    unsafe {
+        libc::killpg(child.id() as libc::pid_t, libc::SIGKILL)
+    };
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+/// Wait for `child`, started by [`spawn_group`], at most `limit`, asking every `poll`. On
+/// expiry its whole group is ended and the child reaped ([`kill_group`]), and `None` says it
+/// never finished. A wait that cannot say whether the child has exited is treated as the
+/// bound: the group is ended all the same, so nothing it started outlives the answer.
+pub(crate) fn wait_group(child: &mut Child, limit: Duration, poll: Duration) -> Option<ExitStatus> {
+    let deadline = Instant::now() + limit;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return Some(status),
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(poll),
+            _ => {
+                kill_group(child);
+                return None;
+            }
+        }
+    }
+}
+
+/// What a run bounded by [`run_bounded`] left: its exit status, or `None` when the bound
+/// ended it, and everything it wrote on each pipe until then.
+#[derive(Debug)]
+pub(crate) struct Bounded {
+    /// The exit status, when the program exited and both its pipes reached their end within
+    /// the bound; `None` when the bound ended it, or ended a program it left holding a pipe.
+    pub status: Option<ExitStatus>,
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>,
+}
+
+/// Run `cmd` with no stdin and both outputs captured, at most `limit`, asking every `poll`
+/// whether it has exited: the one bounded run that every runner reading a program's output
+/// shares.
+///
+/// Both pipes are drained on threads of their own while the program is waited for. Reading
+/// them only once it had exited held a program that wrote more than a pipe buffer (64 KiB on
+/// macOS and Linux) blocked on its write until the bound killed it: a call that would have
+/// answered was reported as having timed out, and spent its whole budget doing so (`gh run
+/// list` in the monitor, `tailscale status --json` on a large tailnet).
+///
+/// The program leads a group of its own ([`spawn_group`]). At the bound the group is ended
+/// and the child reaped. A program that exits but leaves a member of its group holding a
+/// pipe is given what is left of the bound for that pipe to close, and then its group is
+/// ended too, so no reader outlives the bound. A wait that cannot say whether the program
+/// has exited is treated as the bound. Only a program that cannot be started is an error.
+pub(crate) fn run_bounded(
+    cmd: &mut Command,
+    limit: Duration,
+    poll: Duration,
+) -> io::Result<Bounded> {
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let (mut child, _group) = spawn_group(cmd)?;
+    let deadline = Instant::now() + limit;
+    let out = drain(child.stdout.take().expect("stdout is piped above"));
+    let err = drain(child.stderr.take().expect("stderr is piped above"));
+    let mut status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break Some(status),
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(poll),
+            // still running at the bound, or not able to say: the bound decides either way
+            _ => {
+                kill_group(&mut child);
+                break None;
+            }
+        }
+    };
+    let (stdout, out_open) = drained(out, deadline, &mut child);
+    let (stderr, err_open) = drained(err, deadline, &mut child);
+    if out_open || err_open {
+        status = None;
+    }
+    Ok(Bounded {
+        status,
+        stdout,
+        stderr,
+    })
+}
+
+/// Read `pipe` to its end on a thread of its own; what was read arrives on the receiver.
+fn drain(mut pipe: impl Read + Send + 'static) -> mpsc::Receiver<Vec<u8>> {
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let _ = pipe.read_to_end(&mut bytes);
+        let _ = tx.send(bytes);
+    });
+    rx
+}
+
+/// What a drain read, waited for until `deadline`. Past it the group `child` leads is ended,
+/// which closes the pipe its remaining members held, and the drain then reaches its end; the
+/// flag says the pipe was still open at the deadline. A pipe still open means a member of the
+/// group lives, so the group's id still names this group when it is signalled.
+fn drained(rx: mpsc::Receiver<Vec<u8>>, deadline: Instant, child: &mut Child) -> (Vec<u8>, bool) {
+    let left = deadline.saturating_duration_since(Instant::now());
+    if let Ok(bytes) = rx.recv_timeout(left) {
+        return (bytes, false);
+    }
+    kill_group(child);
+    (rx.recv().unwrap_or_default(), true)
+}
+
+/// End every group this process leads and still holds a [`Group`] for. Async-signal-safe:
+/// what a signal handler that ends the process calls before it goes.
+pub(crate) fn kill_registered_groups() {
+    groups::kill_all();
+}
+
+/// A group [`spawn_group`] started, recorded for [`kill_registered_groups`]; dropping it
+/// forgets the group.
+pub(crate) use groups::Group;
+
+/// The process groups this process started and has not let go of, ended with the process
+/// when it dies of `SIGINT`, `SIGTERM` or `SIGHUP`.
+///
+/// The handler is installed for a signal only while that signal's disposition is still the
+/// default: a server's ordered stop ([`crate::lease`]) installs handlers of its own and ends
+/// the groups itself, and a signal a caller ignores (`nohup`) stays ignored. The handler does
+/// only what is safe inside a signal handler: `killpg` each recorded group, restore the
+/// default disposition, and raise the signal again so that the exit status still says which
+/// signal it was.
+#[cfg(unix)]
+mod groups {
+    use std::sync::atomic::{AtomicI32, Ordering};
+    use std::sync::Once;
+
+    pub const SLOTS: usize = 64;
+    static LIVE: [AtomicI32; SLOTS] = [const { AtomicI32::new(0) }; SLOTS];
+    static INSTALL: Once = Once::new();
+
+    /// A recorded group; dropping it forgets the group.
+    #[derive(Debug)]
+    pub struct Group(Option<usize>);
+
+    /// Record `pgid` until the returned value is dropped. More groups at once than there
+    /// are slots is not an error: the surplus is simply not ended on a signal.
+    pub fn register(pgid: u32) -> Group {
+        INSTALL.call_once(|| {
+            for signal in [libc::SIGTERM, libc::SIGINT, libc::SIGHUP] {
+                install_if_default(signal);
+            }
+        });
+        let Ok(pgid) = i32::try_from(pgid) else {
+            return Group(None);
+        };
+        for (i, slot) in LIVE.iter().enumerate() {
+            if slot
+                .compare_exchange(0, pgid, Ordering::SeqCst, Ordering::SeqCst)
+                .is_ok()
+            {
+                return Group(Some(i));
+            }
+        }
+        Group(None)
+    }
+
+    /// Take `signal` only when nobody else has: its disposition is still the default.
+    fn install_if_default(signal: libc::c_int) {
+        if disposition(signal) == Some(libc::SIG_DFL) {
+            let handler = on_signal as extern "C" fn(libc::c_int) as libc::sighandler_t;
+            // SAFETY: installing a handler that only calls async-signal-safe functions
+            unsafe { libc::signal(signal, handler) };
+        }
+    }
+
+    /// The current disposition of `signal`, read without changing it.
+    pub fn disposition(signal: libc::c_int) -> Option<libc::sighandler_t> {
+        // SAFETY: sigaction(2) with no new action only reads the current one into `old`,
+        // a zeroed sigaction owned by this frame.
+        unsafe {
+            let mut old: libc::sigaction = std::mem::zeroed();
+            (libc::sigaction(signal, std::ptr::null(), &mut old) == 0).then_some(old.sa_sigaction)
+        }
+    }
+
+    impl Drop for Group {
+        fn drop(&mut self) {
+            if let Some(i) = self.0 {
+                LIVE[i].store(0, Ordering::SeqCst);
+            }
+        }
+    }
+
+    /// `killpg` every recorded group: loads and a system call, async-signal-safe.
+    pub fn kill_all() {
+        for slot in &LIVE {
+            let pgid = slot.load(Ordering::SeqCst);
+            if pgid > 0 {
+                // SAFETY: killpg is async-signal-safe; the group is one this process started
+                unsafe { libc::killpg(pgid, libc::SIGKILL) };
+            }
+        }
+    }
+
+    pub extern "C" fn on_signal(signal: libc::c_int) {
+        kill_all();
+        // SAFETY: restoring the default disposition and re-raising are async-signal-safe
+        unsafe {
+            libc::signal(signal, libc::SIG_DFL);
+            libc::raise(signal);
+        }
+    }
+
+    /// Whether `pgid` is recorded now.
+    #[cfg(test)]
+    pub fn recorded(pgid: u32) -> bool {
+        i32::try_from(pgid).is_ok_and(|p| LIVE.iter().any(|s| s.load(Ordering::SeqCst) == p))
+    }
+}
+
+#[cfg(not(unix))]
+mod groups {
+    #[derive(Debug)]
+    pub struct Group;
+
+    pub fn register(_: u32) -> Group {
+        Group
+    }
+
+    pub fn kill_all() {}
+}
+
+/// This boot of this machine, as the system names it: Linux's `boot_id`, the time macOS
+/// booted at, `None` where neither is there. A lock written under another boot was written
+/// by a process that cannot be running now, whatever its pid has since come to name.
+pub(crate) fn boot_id() -> Option<String> {
+    #[cfg(target_os = "linux")]
+    {
+        std::fs::read_to_string("/proc/sys/kernel/random/boot_id")
+            .ok()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let mut tv = libc::timeval {
+            tv_sec: 0,
+            tv_usec: 0,
+        };
+        let mut len = std::mem::size_of::<libc::timeval>();
+        // SAFETY: the name is a NUL-terminated literal; `tv` is a timeval of the size passed
+        // in `len`, which is what kern.boottime answers with; no new value is set.
+        let rc = unsafe {
+            libc::sysctlbyname(
+                c"kern.boottime".as_ptr(),
+                (&mut tv as *mut libc::timeval).cast(),
+                &mut len,
+                std::ptr::null_mut(),
+                0,
+            )
+        };
+        (rc == 0 && tv.tv_sec > 0).then(|| format!("{}.{:06}", tv.tv_sec, tv.tv_usec))
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::process::Command;
+    use std::process::Stdio;
 
     /// A program that cannot be started for another reason is answered at once, with that
     /// reason: only a busy file is waited for.
@@ -106,5 +414,355 @@ mod tests {
         assert!(out.status.success(), "{out:?}");
         assert_eq!(String::from_utf8_lossy(&out.stdout), "ran\n");
         assert!(attempts > 1, "the busy tool was asked only once");
+    }
+
+    /// A program that starts a program of its own, which records its pid in `pids` and then
+    /// waits: the shape of `git fetch` and its `git-remote-https`.
+    #[cfg(unix)]
+    fn parent_of_a_sleeper(pids: &std::path::Path) -> Command {
+        let mut cmd = Command::new("sh");
+        cmd.arg("-c")
+            .arg("sleep 30 & echo $! > \"$1\"; wait")
+            .arg("sh")
+            .arg(pids)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
+        cmd
+    }
+
+    /// The pid `parent_of_a_sleeper` wrote, once it is there.
+    #[cfg(unix)]
+    fn sleeper(pids: &std::path::Path) -> u32 {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            if let Some(pid) = std::fs::read_to_string(pids)
+                .ok()
+                .and_then(|s| s.trim().parse().ok())
+            {
+                return pid;
+            }
+            assert!(Instant::now() < deadline, "the sleeper never started");
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    }
+
+    /// Whether `pid` is gone within a few seconds: a killed orphan is reaped by init, and
+    /// until then it still answers signal 0.
+    #[cfg(unix)]
+    fn gone_soon(pid: u32) -> bool {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Instant::now() < deadline {
+            if !crate::lease::alive(pid) {
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(25));
+        }
+        false
+    }
+
+    /// The bound ends the whole group: the program and the program it started are gone, the
+    /// child is reaped, and the pipe the grandchild held reaches its end at once — the caller
+    /// that reads it is not held for the grandchild's thirty seconds.
+    #[cfg(unix)]
+    #[test]
+    fn a_bound_ends_the_program_and_everything_it_started() {
+        use std::io::Read;
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let (mut child, group) = spawn_group(&mut parent_of_a_sleeper(&pids)).unwrap();
+        assert!(
+            groups::recorded(child.id()),
+            "the group is recorded while held"
+        );
+        let grandchild = sleeper(&pids);
+        let started = Instant::now();
+        let waited = wait_group(
+            &mut child,
+            Duration::from_millis(200),
+            Duration::from_millis(10),
+        );
+        assert_eq!(waited, None, "the program did not finish within its bound");
+        let mut out = Vec::new();
+        child.stdout.take().unwrap().read_to_end(&mut out).unwrap();
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the reader was held by an orphan: {:?}",
+            started.elapsed()
+        );
+        assert!(
+            gone_soon(grandchild),
+            "the grandchild {grandchild} survived its group"
+        );
+        let pgid = child.id();
+        drop(group);
+        assert!(!groups::recorded(pgid), "a dropped group is forgotten");
+    }
+
+    /// A program that ends within its bound is answered with its status, and nothing is
+    /// killed.
+    #[cfg(unix)]
+    #[test]
+    fn a_program_within_its_bound_is_answered_with_its_status() {
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", "exit 3"]);
+        let (mut child, _group) = spawn_group(&mut cmd).unwrap();
+        let status = wait_group(
+            &mut child,
+            Duration::from_secs(10),
+            Duration::from_millis(10),
+        )
+        .expect("it finished");
+        assert_eq!(status.code(), Some(3));
+    }
+
+    /// Two mebibytes: far more than a pipe holds (64 KiB on macOS and Linux).
+    const MUCH: usize = 2 * 1024 * 1024;
+
+    /// A program that writes far more than a pipe holds, on both pipes, and exits is
+    /// answered at once with its status and all of what it wrote: its writes are read while
+    /// it runs, so it is never held on a full pipe until the bound.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_reads_a_large_output_while_it_runs() {
+        let mut cmd = Command::new("sh");
+        cmd.args([
+            "-c",
+            "head -c \"$1\" /dev/zero; head -c \"$1\" /dev/zero >&2; exit 4",
+            "sh",
+            &MUCH.to_string(),
+        ]);
+        let started = Instant::now();
+        let run = run_bounded(&mut cmd, Duration::from_secs(20), Duration::from_millis(10))
+            .expect("sh runs");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the run was held on a full pipe: {:?}",
+            started.elapsed()
+        );
+        assert_eq!(run.status.and_then(|s| s.code()), Some(4));
+        assert_eq!(run.stdout.len(), MUCH, "all of stdout is read");
+        assert_eq!(run.stderr.len(), MUCH, "all of stderr is read");
+    }
+
+    /// A program that writes far more than a pipe holds and then never finishes is ended
+    /// with everything it started at its bound, and what it wrote until then is answered.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_that_never_finishes_ends_at_its_bound_with_its_output() {
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let mut cmd = Command::new("sh");
+        cmd.args([
+            "-c",
+            "head -c \"$2\" /dev/zero; sleep 30 & echo $! > \"$1\"; wait",
+            "sh",
+        ])
+        .arg(&pids)
+        .arg(MUCH.to_string());
+        let started = Instant::now();
+        let run = run_bounded(
+            &mut cmd,
+            Duration::from_millis(1500),
+            Duration::from_millis(10),
+        )
+        .expect("sh runs");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the bound did not bound the run: {:?}",
+            started.elapsed()
+        );
+        assert!(run.status.is_none(), "it did not finish within its bound");
+        assert_eq!(
+            run.stdout.len(),
+            MUCH,
+            "what it wrote before it hung is answered"
+        );
+        let sleeper = sleeper(&pids);
+        assert!(
+            gone_soon(sleeper),
+            "the program it started, {sleeper}, outlived the bound"
+        );
+    }
+
+    /// A program that exits at once but leaves a program of its own holding the pipe is not
+    /// answered as finished: the bound ends what it left, and the reader is released then
+    /// rather than held for the leftover's thirty seconds.
+    #[cfg(unix)]
+    #[test]
+    fn a_bounded_run_ends_what_its_program_left_holding_a_pipe() {
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", "sleep 30 & echo $! > \"$1\"; echo left", "sh"])
+            .arg(&pids);
+        let started = Instant::now();
+        let run = run_bounded(
+            &mut cmd,
+            Duration::from_millis(500),
+            Duration::from_millis(10),
+        )
+        .expect("sh runs");
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "the reader was held by what the program left: {:?}",
+            started.elapsed()
+        );
+        assert!(
+            run.status.is_none(),
+            "a pipe still held at the bound is not an answer"
+        );
+        assert_eq!(String::from_utf8_lossy(&run.stdout), "left\n");
+        let sleeper = sleeper(&pids);
+        assert!(
+            gone_soon(sleeper),
+            "the leftover {sleeper} outlived the bound"
+        );
+    }
+
+    /// A program that cannot be started is the run's error.
+    #[test]
+    fn a_bounded_run_of_a_program_that_cannot_start_is_its_error() {
+        let e = run_bounded(
+            &mut Command::new("/nonexistent/majordomus-no-such-tool"),
+            Duration::from_secs(1),
+            Duration::from_millis(10),
+        )
+        .expect_err("an absent program does not start");
+        assert_eq!(e.kind(), io::ErrorKind::NotFound);
+    }
+
+    /// Killing a group ends a program that never finishes and the program it started.
+    #[cfg(unix)]
+    #[test]
+    fn killing_a_group_ends_a_program_that_never_finishes() {
+        use std::os::unix::process::ExitStatusExt;
+        let dir = tempfile::tempdir().unwrap();
+        let pids = dir.path().join("pids");
+        let (mut child, _group) = spawn_group(&mut parent_of_a_sleeper(&pids)).unwrap();
+        let grandchild = sleeper(&pids);
+        // only this test's own group: the slots are the process's, and a concurrent test's
+        // groups must not be ended by this one
+        kill_group(&mut child);
+        assert_eq!(child.wait().unwrap().signal(), Some(libc::SIGKILL));
+        assert!(
+            gone_soon(grandchild),
+            "the grandchild {grandchild} survived"
+        );
+    }
+
+    /// A program that cannot start is the start's error, and no group is recorded.
+    #[test]
+    fn a_program_that_cannot_start_records_no_group() {
+        let e = spawn_group(&mut Command::new("/nonexistent/majordomus-no-such-tool"))
+            .expect_err("an absent program does not start");
+        assert_eq!(e.kind(), io::ErrorKind::NotFound);
+    }
+
+    /// The variable that makes a run of this test binary the signal-handler child below.
+    #[cfg(unix)]
+    const HANDLER_CHILD: &str = "MAJORDOMUS_PROCESS_TEST_HANDLER";
+
+    /// The handler ends every group the process leads, restores the signal's default and
+    /// raises it again; and the table of groups holds no more than its slots. Run here for `SIGWINCH`, whose default is to be ignored, so the
+    /// process lives on after its handler and can say what the handler did — in a process of
+    /// its own, because the handler ends every group the process holds.
+    #[cfg(unix)]
+    #[test]
+    fn the_handler_ends_the_groups_and_raises_the_signal_again() {
+        if let Some(dir) = std::env::var_os(HANDLER_CHILD) {
+            let pids = std::path::Path::new(&dir).join("pids");
+            let (mut child, group) = spawn_group(&mut parent_of_a_sleeper(&pids)).unwrap();
+            let grandchild = sleeper(&pids);
+            groups::on_signal(libc::SIGWINCH);
+            assert_eq!(groups::disposition(libc::SIGWINCH), Some(libc::SIG_DFL));
+            assert!(gone_soon(grandchild), "the handler left {grandchild}");
+            let _ = child.wait();
+            drop(group);
+            // A group id no pid can have is not recorded, and a full table records no more:
+            // the surplus is simply not ended on a signal. Here, where no other test holds a
+            // slot; the ids are ones no process has, so nothing is ever signalled.
+            drop(groups::register(u32::MAX));
+            assert!(!groups::recorded(u32::MAX));
+            let mut held = Vec::new();
+            for id in 2_000_000_000u32.. {
+                held.push(groups::register(id));
+                if !groups::recorded(id) {
+                    break;
+                }
+            }
+            assert_eq!(
+                held.len(),
+                groups::SLOTS + 1,
+                "the table holds its slots and no more"
+            );
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let out = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "process::tests::the_handler_ends_the_groups_and_raises_the_signal_again",
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(HANDLER_CHILD, dir.path())
+            .output()
+            .expect("the child process runs");
+        assert!(out.status.success(), "{out:?}");
+    }
+
+    /// The boot is named, and named the same way twice.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn this_boot_has_one_name() {
+        let boot = boot_id().expect("the system names its boot");
+        assert!(!boot.is_empty());
+        assert_eq!(boot_id().as_deref(), Some(boot.as_str()));
+    }
+
+    /// The variable that makes a run of this test binary the child process below.
+    #[cfg(unix)]
+    const CHILD: &str = "MAJORDOMUS_PROCESS_TEST_CHILD";
+
+    /// A process that dies of `SIGTERM` ends the groups it leads before it goes, and still
+    /// dies of the signal; a signal it was told to ignore stays ignored, because the handler is
+    /// installed only over a default disposition. In a process of its own, because a signal
+    /// and the slots are the process's.
+    #[cfg(unix)]
+    #[test]
+    fn a_process_ended_by_a_signal_ends_its_groups_first() {
+        use std::os::unix::process::ExitStatusExt;
+        if let Some(dir) = std::env::var_os(CHILD) {
+            // SAFETY: setting a standard disposition before any thread of this test waits on it
+            unsafe { libc::signal(libc::SIGHUP, libc::SIG_IGN) };
+            let pids = std::path::Path::new(&dir).join("pids");
+            let (_child, _group) = spawn_group(&mut parent_of_a_sleeper(&pids)).unwrap();
+            sleeper(&pids);
+            assert_eq!(groups::disposition(libc::SIGHUP), Some(libc::SIG_IGN));
+            assert_ne!(groups::disposition(libc::SIGTERM), Some(libc::SIG_DFL));
+            // SAFETY: raising a signal in this process, whose handler is the one under test
+            unsafe { libc::raise(libc::SIGTERM) };
+            unreachable!("the signal ends the process");
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let out = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "process::tests::a_process_ended_by_a_signal_ends_its_groups_first",
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(CHILD, dir.path())
+            .output()
+            .expect("the child process runs");
+        assert_eq!(out.status.signal(), Some(libc::SIGTERM), "{out:?}");
+        let grandchild = sleeper(&dir.path().join("pids"));
+        assert!(
+            gone_soon(grandchild),
+            "the grandchild {grandchild} outlived the process"
+        );
     }
 }
