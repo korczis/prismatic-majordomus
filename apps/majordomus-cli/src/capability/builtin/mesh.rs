@@ -2463,6 +2463,34 @@ mod tests {
         (repo, ctx)
     }
 
+    /// `mesh.who` refuses a subject of no form it reads, naming the forms, and answers one it
+    /// reads with the subject as asked, trimmed.
+    #[test]
+    fn who_refuses_a_subject_of_no_form_and_answers_one_it_reads() {
+        let (_repo, ctx) = context(false);
+        let refused = mesh_who(
+            &ctx,
+            WhoInput {
+                subject: "lundra:".into(),
+            },
+        );
+        let Err(CapabilityError::InvalidInput(why)) = refused else {
+            panic!("a subject of no form was not refused");
+        };
+        assert!(why.contains("host:pid") && why.contains("path"), "{why}");
+        let answer = mesh_who(
+            &ctx,
+            WhoInput {
+                subject: " I1 ".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            (answer.subject.as_str(), answer.kind.as_str()),
+            ("I1", "issue")
+        );
+    }
+
     #[test]
     fn an_ensure_of_npm_or_mix_without_its_install_command_is_refused_by_name() {
         let (_repo, ctx) = context(false);

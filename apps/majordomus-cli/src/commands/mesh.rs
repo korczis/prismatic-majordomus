@@ -2900,6 +2900,51 @@ mod tests {
         assert!(none.contains("nothing here is cacheable"), "{none}");
     }
 
+    /// A known leftover is printed with every owner (its name, address and basis), its
+    /// chain, and each source as used or consulted; an unknown answer says what is missing.
+    #[test]
+    fn a_who_answer_names_its_owners_chain_evidence_and_what_is_missing() {
+        let v = json!({
+            "subject": "lundra:30", "kind": "pid", "host": "lundra",
+            "known": true, "leftover": true,
+            "owners": [
+                { "session": "claude-code-s1", "peer": "p2", "issue": "I3956", "name": "mj-39",
+                  "address": { "provider": "claude-code", "host": "mac", "pid": 20,
+                               "session": "s1", "socket": "/tmp/cc-socks/20.sock" },
+                  "basis": ["run record 083ddafbbc (its tag) names its owner"] },
+                { "basis": [] },
+            ],
+            "chain": [
+                { "pid": 30, "ppid": 1, "pgid": 7, "command": "rustc --crate-name x" },
+                { "pid": 7, "ppid": 1, "pgid": 7 },
+            ],
+            "evidence": [
+                { "source": "process", "used": true, "detail": "pid 30" },
+                { "source": "board", "used": false, "detail": "not read: off" },
+            ],
+            "missing": ["peer: no board row"],
+        });
+        let text = render_who(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "pid lundra:30 on lundra: known, a leftover",
+                "owner      claude-code-s1  peer p2  issue I3956  name mj-39",
+                "address    claude-code pid 20 on mac, /tmp/cc-socks/20.sock",
+                "  because  run record 083ddafbbc (its tag) names its owner",
+                "owner      -  peer -  issue -",
+                "process    30 <- 1  group 7  rustc --crate-name x",
+                "process    7 <- 1  group 7  ",
+                "used     process      pid 30",
+                "consulted board        not read: off",
+                "missing    peer: no board row",
+            ]
+        );
+        let unknown = render_who(&json!({ "subject": "I1", "kind": "issue", "host": "mac" }));
+        assert_eq!(unknown, "issue I1 on mac: unknown\n");
+    }
+
     #[test]
     fn a_provision_answer_reads_its_edits_and_what_the_apply_did() {
         let v = json!({

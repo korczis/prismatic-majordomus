@@ -231,7 +231,7 @@ fn checkout(args: &OffloadArgs) -> std::path::PathBuf {
         .repo
         .repo
         .clone()
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| ".".into()));
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or(std::path::PathBuf::from(".")));
     std::process::Command::new("git")
         .arg("-C")
         .arg(&start)
@@ -621,5 +621,30 @@ mod tests {
         assert!(ok.success());
         let found = checkout(&parse(&repo.join("sub")));
         assert_eq!(found.canonicalize().unwrap(), repo, "the repository's root");
+    }
+
+    /// Without `--repo` the call stands in the current directory: the repository this test
+    /// runs in, as git names its top.
+    #[test]
+    fn without_a_repo_the_callers_checkout_is_the_current_directorys() {
+        use clap::Parser;
+        let cli = crate::cli::Cli::try_parse_from(["majordomus", "offload", "hosts"]).unwrap();
+        let crate::cli::Command::Offload(args) = cli.command else {
+            panic!("expected offload");
+        };
+        assert!(args.repo.repo.is_none());
+        let here = std::env::current_dir().unwrap();
+        let top = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&here)
+            .args(["rev-parse", "--show-toplevel"])
+            .output()
+            .unwrap();
+        let want = if top.status.success() {
+            std::path::PathBuf::from(String::from_utf8_lossy(&top.stdout).trim())
+        } else {
+            here
+        };
+        assert_eq!(checkout(&args), want);
     }
 }

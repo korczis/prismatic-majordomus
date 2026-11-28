@@ -160,8 +160,7 @@ impl Remote {
         let held = child.stdin.take();
         let out = child.wait_with_output();
         drop(held);
-        let out = out?;
-        Ok(RemoteOutput {
+        out.map(|out| RemoteOutput {
             code: out.status.code(),
             stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
             stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
@@ -404,6 +403,22 @@ mod tests {
         ));
         let e = Holder::start(&binary).err().expect("bytes are not a pid");
         assert_eq!(e.kind(), std::io::ErrorKind::InvalidData);
+    }
+
+    /// A held run reports what its script printed and how it ended; a host that cannot be
+    /// reached is an error.
+    #[test]
+    fn a_held_run_reports_its_script_as_it_ended() {
+        let out = Remote::local()
+            .run_held("printf '%s' \"$1\"; echo said >&2; exit 3", &["out"])
+            .unwrap();
+        assert_eq!(
+            (out.code, out.stdout.as_str(), out.stderr.as_str()),
+            (Some(3), "out", "said\n")
+        );
+        let tmp = tempfile::tempdir().unwrap();
+        let gone = Remote::through(&tmp.path().join("no-such-ssh"));
+        assert!(gone.run_held("true", &[]).is_err());
     }
 
     /// A holder whose standard input was never piped still ends with its owner.
