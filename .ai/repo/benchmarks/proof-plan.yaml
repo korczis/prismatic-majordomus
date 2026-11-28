@@ -1,0 +1,67 @@
+# The proof plan: the six tests that are to settle what Majordomus is worth (T1 to T6 of the
+# owner's report of 2026-10-19), registered before any of their records exists.
+#
+# economics::proof::load validates this file fail-closed (docs/ECONOMICS.md, "The proof plan").
+# Each test names the planned claim of docs/CLAIMS.yaml it settles, the dimension it measures,
+# the words a result would be stated in, and its instrument with the issues that build it.
+#
+# No test carries a protocol yet. Each experiment milestone registers its own protocol here
+# (I3360 for T1, I3370 for T2, I3383 for T3, I3388 for T4, I3391 for T5, I3398 for T6), each
+# frozen by its own digest, so registering one never stales another test's records. Until a
+# test has a protocol, no record counts toward it and its row reads not_run.
+schema: proof-plan/v1
+tests:
+  - id: t1-external-onboarding
+    title: External onboarding
+    question: "Does a coding agent adopt Majordomus in a repository not built around it, from the published installer to an accepted finish, and what does the adoption cost that repository?"
+    settles: [proof-t1-external-onboarding]
+    dimension: onboarding
+    value_words: ["less effort"]
+    instrument:
+      status: planned
+      issues: [I3353, I3359, I3360, I3361, I3362, I3363, I3364, I3365, I3299]
+  - id: t2-ab-workflow
+    title: The same agents with and without Majordomus
+    question: "On a corpus of comparable tasks registered and stratified before any run, do the same agents with Majordomus reach more accepted results than without it?"
+    settles: [proof-t2-ab-workflow]
+    dimension: accepted_results
+    value_words: ["more reliable", "pays for itself"]
+    instrument:
+      status: planned
+      issues: [I3366, I3367, I3368, I3369, I3370, I3371, I3372, I3374, I3375, I3133]
+  - id: t3-delivery-economics
+    title: Delivery economics
+    question: "Over a delivery window declared before it opens, what wall time, human interventions, CI reruns and spend does each task of this repository take, and how much of each is not observed?"
+    settles: [proof-t3-delivery-economics]
+    dimension: human_interventions
+    value_words: ["fewer interventions", "less human effort", "fewer reruns", "cheaper", "saves time"]
+    instrument:
+      status: planned
+      issues: [I3353, I3376, I3377, I3378, I3379, I3380, I3381, I3382, I3383, I3384]
+  - id: t4-mesh-value
+    title: The mesh against one agent
+    question: "On the same batch tasks, do coordinated workers on the mesh reach an accepted integrated tree in less wall time than one agent, without a lower accepted share than a margin registered in advance allows?"
+    settles: [proof-t4-mesh-value]
+    dimension: wall_time
+    value_words: ["faster", "speeds up", "speed-up"]
+    instrument:
+      status: planned
+      issues: [I3385, I3386, I3387, I3388, I3389, I3298]
+  - id: t5-resilience
+    title: Recovery from injected faults
+    question: "When a worker is killed mid-task, a connection is cut while a claim or handover is in flight, or two workers take the same work, does the work resume to an accepted finish with no commit lost and no completion duplicated?"
+    settles: [proof-t5-resilience]
+    dimension: recovery
+    value_words: ["recovers without loss"]
+    instrument:
+      status: planned
+      issues: [I3353, I3390, I3391, I3392, I3393, I3394]
+  - id: t6-first-intent
+    title: A newcomer's first verified intent
+    question: "Does a developer who has not contributed to Majordomus reach a first verified intent in a repository of their own, with only the public site and no help?"
+    settles: [proof-t6-first-intent]
+    dimension: onboarding
+    value_words: ["unaided"]
+    instrument:
+      status: planned
+      issues: [I3353, I3395, I3396, I3397, I3398, I3399]

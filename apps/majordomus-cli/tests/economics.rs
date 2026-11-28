@@ -1935,6 +1935,238 @@ mod proof_plan {
         );
         assert!(c.reason().unwrap().contains("\"soon\" is not a time"));
     }
+
+    /// The six proof tests of the owner's report, T1 to T6, in the order the plan registers
+    /// them (I3352).
+    const PROOF_TESTS: [&str; 6] = [
+        "t1-external-onboarding",
+        "t2-ab-workflow",
+        "t3-delivery-economics",
+        "t4-mesh-value",
+        "t5-resilience",
+        "t6-first-intent",
+    ];
+
+    const ISSUES: &str = ".ai/repo/project/issues";
+
+    /// The repository this crate lives in.
+    fn tracked_root() -> std::path::PathBuf {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+    }
+
+    /// `text` as a space-padded run of lower-case words, so a value word matches only whole.
+    fn words_of(text: &str) -> String {
+        let spaced: String = text
+            .to_lowercase()
+            .chars()
+            .map(|c| {
+                if c.is_alphanumeric() || c == '-' {
+                    c
+                } else {
+                    ' '
+                }
+            })
+            .collect();
+        format!(
+            " {} ",
+            spaced.split_whitespace().collect::<Vec<_>>().join(" ")
+        )
+    }
+
+    /// What stops the plan under `root` from being the registration I3352 asks for, one line
+    /// each: any finding of `proof::load`; tests other than the six; a protocol; a test that
+    /// settles other than one claim; a settled claim that is not planned, whose sentence
+    /// names a figure (a digit) or carries a value word of the plan; and a planned instrument
+    /// that names no issue the plan's records hold.
+    fn registration_findings(root: &std::path::Path) -> Vec<String> {
+        let plan = match proof::load(root) {
+            Ok(plan) => plan,
+            Err(findings) => {
+                return findings
+                    .into_iter()
+                    .map(|f| format!("{}: {}", f.kind, f.detail))
+                    .collect()
+            }
+        };
+        let mut out = Vec::new();
+        let ids: Vec<&str> = plan.tests.iter().map(|t| t.id.as_str()).collect();
+        if ids != PROOF_TESTS {
+            out.push(format!(
+                "the plan registers {ids:?}, not the six tests T1 to T6"
+            ));
+        }
+        let text = std::fs::read_to_string(root.join("docs/CLAIMS.yaml")).unwrap_or_default();
+        let matrix = yaml::parse_mapping(&text).unwrap_or_default();
+        let claims: Vec<Value> = matrix
+            .get("claims")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let field = |c: &Value, k: &str| c.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+        let value_words: Vec<String> = plan
+            .tests
+            .iter()
+            .flat_map(|t| t.value_words.iter().map(|w| words_of(w)))
+            .collect();
+        for test in &plan.tests {
+            let id = &test.id;
+            if test.protocol.is_some() {
+                out.push(format!(
+                    "test {id} carries a protocol before its experiment registers one"
+                ));
+            }
+            if test.settles.len() != 1 {
+                out.push(format!(
+                    "test {id} settles {:?}, not one claim",
+                    test.settles
+                ));
+            }
+            for settled in &test.settles {
+                let Some(claim) = claims.iter().find(|c| field(c, "id") == *settled) else {
+                    continue; // proof::load refuses a claim the matrix does not declare
+                };
+                if field(claim, "status") != "planned" {
+                    out.push(format!(
+                        "claim {settled} is {}, not planned",
+                        field(claim, "status")
+                    ));
+                }
+                let sentence = field(claim, "claim");
+                if sentence.chars().any(|c| c.is_ascii_digit()) {
+                    out.push(format!("claim {settled} names a figure: {sentence}"));
+                }
+                let spoken = words_of(&sentence);
+                for word in value_words.iter().filter(|w| spoken.contains(w.as_str())) {
+                    out.push(format!(
+                        "claim {settled} asserts an advantage: {:?}",
+                        word.trim()
+                    ));
+                }
+            }
+            if test.instrument.status == "planned" {
+                let known = test
+                    .instrument
+                    .issues
+                    .iter()
+                    .filter(|i| root.join(ISSUES).join(format!("{i}.yaml")).is_file())
+                    .count();
+                if known == 0 {
+                    out.push(format!(
+                        "test {id}: its planned instrument names no existing issue"
+                    ));
+                }
+            }
+        }
+        out
+    }
+
+    /// The tracked plan is the registration: six tests named for T1 to T6, no finding of the
+    /// validator, no protocol, each settling one planned claim whose sentence names no figure
+    /// and carries no value word, each planned instrument naming issues the plan holds. Each
+    /// way of breaking that, applied to a copy of the tracked files, is refused by name.
+    #[test]
+    fn test_tracked_proof_plan_has_six_tests() {
+        let root = tracked_root();
+        let plan = proof::load(&root).unwrap_or_else(|e| panic!("findings: {e:?}"));
+        assert_eq!(plan.tests.len(), 6);
+        let ids: Vec<&str> = plan.tests.iter().map(|t| t.id.as_str()).collect();
+        assert_eq!(ids, PROOF_TESTS);
+        assert!(plan.tests.iter().all(|t| t.protocol.is_none()));
+        assert_eq!(registration_findings(&root), Vec::<String>::new());
+
+        // a copy of the tracked plan, claims and the issues its instruments name
+        let read = |rel: &str| std::fs::read_to_string(root.join(rel)).unwrap();
+        let tracked_plan = yaml::parse_mapping(&read(proof::PLAN)).unwrap();
+        let tracked_claims = read("docs/CLAIMS.yaml");
+        let f = Fixture::plain_dir();
+        f.write(proof::PLAN, &read(proof::PLAN));
+        f.write("docs/CLAIMS.yaml", &tracked_claims);
+        for issue in plan.tests.iter().flat_map(|t| &t.instrument.issues) {
+            let rel = format!("{ISSUES}/{issue}.yaml");
+            f.write(&rel, &read(&rel));
+        }
+        assert_eq!(registration_findings(&f.root()), Vec::<String>::new());
+
+        let with_plan = |edit: &dyn Fn(&mut Value)| {
+            let mut p = Value::Object(tracked_plan.clone());
+            edit(&mut p);
+            f.write(proof::PLAN, &yaml::render(&p));
+            let found = registration_findings(&f.root());
+            f.write(proof::PLAN, &read(proof::PLAN));
+            found
+        };
+        let with_claim = |from: &str, to: &str| {
+            assert!(tracked_claims.contains(from), "{from}");
+            f.write("docs/CLAIMS.yaml", &tracked_claims.replacen(from, to, 1));
+            let found = registration_findings(&f.root());
+            f.write("docs/CLAIMS.yaml", &tracked_claims);
+            found
+        };
+        let refused = |found: Vec<String>, words: &str| {
+            assert!(
+                found.iter().any(|x| x.contains(words)),
+                "expected a finding containing {words:?}, found {found:?}"
+            );
+        };
+
+        // five tests are not the six
+        refused(
+            with_plan(&|p| {
+                p["tests"].as_array_mut().unwrap().pop();
+            }),
+            "not the six tests T1 to T6",
+        );
+        // a test registered with a protocol, even a valid one, is not this registration
+        refused(
+            with_plan(&|p| {
+                let mut protocol = json!({
+                    "version": 1, "registered_at": "2026-10-20T00:00:00Z",
+                    "changes": [{ "version": 1, "why": "First." }],
+                    "decision": {
+                        "kind": "trials", "fields": [{ "name": "seconds", "class": "observed" }],
+                        "min_trials": 1, "min_successes": 1, "all_must_pass": true,
+                    },
+                });
+                protocol["registered_digest"] = json!(proof::protocol_digest(&protocol));
+                p["tests"][0]["protocol"] = protocol;
+            }),
+            "test t1-external-onboarding carries a protocol",
+        );
+        // a test that settles two claims
+        refused(
+            with_plan(&|p| {
+                p["tests"][1]["settles"] =
+                    json!(["proof-t2-ab-workflow", "proof-t3-delivery-economics"]);
+            }),
+            "test t2-ab-workflow settles",
+        );
+        // a planned instrument whose issues the plan does not hold
+        refused(
+            with_plan(&|p| p["tests"][4]["instrument"]["issues"] = json!(["I0000"])),
+            "test t5-resilience: its planned instrument names no existing issue",
+        );
+        // a claim sentence that names a figure, or carries a declared value word
+        let t2 = "A proof test will compare the accepted results";
+        refused(
+            with_claim(t2, "A proof test will compare 30 accepted results"),
+            "claim proof-t2-ab-workflow names a figure",
+        );
+        refused(
+            with_claim(t2, "A proof test will show faster accepted results"),
+            "claim proof-t2-ab-workflow asserts an advantage: \"faster\"",
+        );
+        // a settled claim that is not planned
+        let t6 = "with only the public site\n    source: docs/ECONOMICS.md\n    implementation: '-'\n    test: '-'\n    status: planned";
+        refused(
+            with_claim(t6, &t6.replace("status: planned", "status: advisory")),
+            "claim proof-t6-first-intent is advisory, not planned",
+        );
+        // and the validator's own findings come first: a claim the matrix lacks
+        refused(
+            with_claim("id: proof-t4-mesh-value", "id: proof-t4-renamed"),
+            "claim_unknown",
+        );
+    }
 }
 
 // ---------------------------------------------------------------- each task's delivery economics (I3376)

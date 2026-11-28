@@ -767,6 +767,60 @@ claims:
     responsibility: none      # planned until the publication rule is met; economics check refuses guaranteed before then
     note: The benchmark, its runner and its calculator exist; what is missing is enough evidence. The generated report states what the recorded runs show and why no claim follows yet.
 
+  - id: proof-t1-external-onboarding
+    claim: A proof test will record whether a coding agent adopts Majordomus in a repository not built around it, from the published installer to an accepted finish, and what the adoption costs that repository
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; settled by proof test t1-external-onboarding, which has no protocol yet
+    note: Settled by test t1-external-onboarding of .ai/repo/benchmarks/proof-plan.yaml. The test is registered before its protocol, so no record counts toward it and it reads not_run; its trials protocol and selection floors are registered by I3360.
+
+  - id: proof-t2-ab-workflow
+    claim: A proof test will compare the accepted results of the same agents with and without Majordomus over a corpus of tasks registered before its first run
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; settled by proof test t2-ab-workflow, which has no protocol yet
+    note: Settled by test t2-ab-workflow of .ai/repo/benchmarks/proof-plan.yaml. The test is registered before its protocol, so no record counts toward it and it reads not_run; its paired protocol names the corpus suite's registration block, registered by I3370, and acceptance is measured as I3133 defines it.
+
+  - id: proof-t3-delivery-economics
+    claim: A proof test will state each task's wall time, human interventions, CI reruns and spend over a delivery window declared before it opens, with every field it cannot observe named as not observed
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; settled by proof test t3-delivery-economics, which has no protocol yet
+    note: Settled by test t3-delivery-economics of .ai/repo/benchmarks/proof-plan.yaml. The test is registered before its protocol, so no record counts toward it and it reads not_run; its window protocol is registered by I3383.
+
+  - id: proof-t4-mesh-value
+    claim: A proof test will compare the wall time of coordinated workers on the mesh with that of one agent on the same tasks, with the accepted share held to a margin registered in advance
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; settled by proof test t4-mesh-value, which has no protocol yet
+    note: Settled by test t4-mesh-value of .ai/repo/benchmarks/proof-plan.yaml. The test is registered before its protocol, so no record counts toward it and it reads not_run; its paired protocol names the mesh suite's registration block, registered by I3388, and the topology arm is declared as I3298 declares it.
+
+  - id: proof-t5-resilience
+    claim: A proof test will inject worker, connection and conflict faults into work in progress and record whether the work resumes to an accepted finish with no commit lost and no completion duplicated
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; settled by proof test t5-resilience, which has no protocol yet
+    note: Settled by test t5-resilience of .ai/repo/benchmarks/proof-plan.yaml. The test is registered before its protocol, so no record counts toward it and it reads not_run; its trials protocol and fault kinds are registered by I3391.
+
+  - id: proof-t6-first-intent
+    claim: A proof test will record whether a developer who has not contributed to Majordomus reaches a first verified intent in a repository of their own with only the public site
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned; settled by proof test t6-first-intent, which has no protocol yet
+    note: Settled by test t6-first-intent of .ai/repo/benchmarks/proof-plan.yaml. The test is registered before its protocol, so no record counts toward it and it reads not_run; who counts as a newcomer and how many trials decide are registered by I3398.
+
   - id: cost-per-outcome
     claim: Cost per accepted outcome will be reported from measured data only
     source: docs/DESIGN.md

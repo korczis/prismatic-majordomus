@@ -9,14 +9,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-proof-tests-are-registered-before-they-run](https://majordomus.dev/plan/the-proof-tests-are-registered-before-they-run/) | ACTIVE | 1/3 | 2 | 0 | 0 | 0 | 0 | A validated proof plan names the six tests. Each protocol is frozen by its own digest; a paired protocol references its suite's registration block by digest. One typed trial record serves T1, T3, T5 and T6, refuses what its protocol does not declare and redacts what its publication basis does not permit. |
+| [the-proof-tests-are-registered-before-they-run](https://majordomus.dev/plan/the-proof-tests-are-registered-before-they-run/) | ACTIVE | 1/3 | 1 | 0 | 1 | 0 | 0 | A validated proof plan names the six tests. Each protocol is frozen by its own digest; a paired protocol references its suite's registration block by digest. One typed trial record serves T1, T3, T5 and T6, refuses what its protocol does not declare and redacts what its publication basis does not permit. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I3351](https://majordomus.dev/plan/i3351/) | DONE | 0 | — | A proof plan is a validated record in which each protocol is frozen by its own digest, so registering one test never stales another's records |
-| [I3352](https://majordomus.dev/plan/i3352/) | READY | 1 | I3351 | The six proof tests are registered, each with the claim it settles and its instrument, and none carries a protocol yet |
+| [I3352](https://majordomus.dev/plan/i3352/) | ACTIVE | 1 | I3351 | The six proof tests are registered, each with the claim it settles and its instrument, and none carries a protocol yet |
 | [I3353](https://majordomus.dev/plan/i3353/) | READY | 1 | I3351 | A trial is a typed record that carries its protocol's digest, refuses what the protocol does not declare, and redacts what its publication basis does not permit |
 
 ## Findings
