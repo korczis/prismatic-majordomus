@@ -26,9 +26,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3835; they may not run concurrently |
-| WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares .githooks/pre-push with I4008; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4306; they may not run concurrently |

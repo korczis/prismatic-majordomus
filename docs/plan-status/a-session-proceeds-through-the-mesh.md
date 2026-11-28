@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-session-proceeds-through-the-mesh](https://majordomus.dev/plan/a-session-proceeds-through-the-mesh/) | PLANNED | 0/18 | 11 | 7 | 0 | 0 | 0 | A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot. |
+| [a-session-proceeds-through-the-mesh](https://majordomus.dev/plan/a-session-proceeds-through-the-mesh/) | ACTIVE | 1/18 | 10 | 7 | 0 | 0 | 0 | A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot. |
 
 ## Issues
 
@@ -17,7 +17,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|---|
 | [I4000](https://majordomus.dev/plan/i4000/) | READY | 0 | — | A repeated executions.start with the same key answers one execution |
 | [I4001](https://majordomus.dev/plan/i4001/) | BLOCKED | 1 | I4000 | The execution state machine has Authorizing, Claimed, Verifying, Refused and UnknownOutcome |
-| [I4002](https://majordomus.dev/plan/i4002/) | READY | 0 | — | Worktree.create is a typed writing capability |
+| [I4002](https://majordomus.dev/plan/i4002/) | DONE | 0 | — | Worktree.create is a typed writing capability |
 | [I4003](https://majordomus.dev/plan/i4003/) | BLOCKED | 2 | I4000, I4001, I4002, I4004 | Devtask.implement runs readiness, preflight, claim, worktree and one execution |
 | [I4004](https://majordomus.dev/plan/i4004/) | BLOCKED | 1 | I4000 | The executor takes the issue's mesh claim in the handler and releases it when the run ends |
 | [I4005](https://majordomus.dev/plan/i4005/) | BLOCKED | 3 | I4003 | Proceed.step answers one idempotent work order |
@@ -38,52 +38,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I4000` | shares apps/majordomus-cli/src/capability/builtin/executions.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I4000` | shares apps/majordomus-cli/src/capability/builtin/executions.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I4000` | shares apps/majordomus-cli/src/capability/builtin/executions.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I4000` | shares apps/majordomus-cli/src/capability/builtin/executions.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4000` | shares apps/majordomus-cli/src/execution/store.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4000` | shares apps/majordomus-cli/src/execution/store.rs with I4622; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4006; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4291; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4297; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4327; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4329; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4330; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/worktree with I4333; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4343; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4346; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4349; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4417; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/worktree with I4418; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4460; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4464; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4466; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4481; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4486; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4581; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4583; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4599; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4622; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4632; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4634; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4674; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/worktree with I4684; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4740; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4753; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4778; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4780; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4781; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4791; they may not run concurrently |
-| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/commands with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4291; they may not run concurrently |
@@ -117,7 +76,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4668; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4674; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4675; they may not run concurrently |
-| WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4740; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares .ai/repo/policy.yaml with I4741; they may not run concurrently |

@@ -30744,6 +30744,7 @@
             "Nothing that was removed is reachable as a fallback path",
             "The built site and the running interface show the same content as before the removal, except where the derivation is more complete"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "Several surfaces assemble their own lists. Which ones exactly is a reconnaissance result, not an assumption.",
           "depends_on": [
@@ -30768,7 +30769,7 @@
             "apps/majordomus-cli/src/cockpit/mod.rs"
           ],
           "slug": "remove-duplicate-inventories",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-11-28",
           "validation": [
             "bash test/run.sh",
             "majordomus generate --check"
@@ -30847,7 +30848,7 @@
             "I1024",
             "I1026",
             "I1027",
-            "I1028",
+            "I1117",
             "I1029"
           ],
           "desired_state": "Accepted with evidence against every criterion, with the coverage baseline and the limitations written where they will be found.",
@@ -30870,7 +30871,7 @@
             ".ai/repo/project"
           ],
           "slug": "capability-graph-acceptance",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-11-28",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor",
@@ -42069,6 +42070,8 @@
             "scripts/pages verify names what the site serves and, when GitHub's own deployment is queued, that it is queued and since when",
             "A case breaks the wait with a site that never changes and proves each of the three signals"
           ],
+          "completed_at": "2026-11-28T10:48:26Z",
+          "completed_event": "sha256:f701b25b0c7e751d655b8955090c6c461291ec0408ffad203f70bf7299d814a2",
           "created_at": "2026-10-13",
           "evidence_required": [
             "not_served_is_visible_case",
@@ -42091,7 +42094,9 @@
             ".ai/repo/project/issues/I2661.yaml"
           ],
           "slug": "a-publication-that-did-not-arrive-is-a-finding",
-          "updated_at": "2026-10-13",
+          "started_at": "2026-11-28T10:47:00Z",
+          "started_event": "sha256:60623c99faec91b27ff7317572ce4711ad0ac52dedbe8f0880bd81951d28d9a1",
+          "updated_at": "2026-11-28T10:48:26Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/shell-lint",
@@ -48216,11 +48221,11 @@
             "/proceed is generated for every provider from one declaration",
             "The skill restates no rule, workflow step or issue, and a case refuses one that does"
           ],
+          "completed_at": "2026-11-28T10:54:18Z",
+          "completed_event": "sha256:92f94be41183903065c7ef1d8e272788490a84d295472b9157867fe398aa1d7f",
           "created_at": "2026-10-18",
           "current_state": "No proceed skill exists.",
-          "depends_on": [
-            "I2974"
-          ],
+          "depends_on": [],
           "desired_state": "The skill is generated, named in the skill catalogue, and a case refuses a proceed skill that restates a rule or a workflow step.",
           "evidence_required": [
             "case_the_proceed_skill_names_only_the_command"
@@ -48237,7 +48242,9 @@
             "a-session-proceeds#a-session-is-told-what-to-take"
           ],
           "slug": "proceed-is-a-generated-skill",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-11-28T10:53:16Z",
+          "started_event": "sha256:5a05f4a8274f87bb48d2a534b98f195a175a339a3b518dac9570d86a240b448d",
+          "updated_at": "2026-11-28T10:54:18Z",
           "validation": [
             "majordomus plan validate"
           ],
@@ -48455,6 +48462,8 @@
             "A reconnect with the last cursor repeats nothing; a refused cursor resynchronises",
             "A slow client is told it lagged and never holds an unbounded queue"
           ],
+          "completed_at": "2026-11-28T10:49:52Z",
+          "completed_event": "sha256:6ece99ec7a7527cb98463c12ad0664a6e2c05315a3925c373d2215337430e434",
           "created_at": "2026-10-18",
           "current_state": "No change notification exists in the board, the journal or the monitor; /events is wired to the execution store.",
           "depends_on": [
@@ -48487,7 +48496,9 @@
             "the-peer-blackboard-is-one-reality#pushed-live"
           ],
           "slug": "the-blackboard-is-pushed",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-11-28T10:48:58Z",
+          "started_event": "sha256:09fe1177bef929ca5bda4a607b3dbe94f4a6b1785f452a39bbd235440f0760d8",
+          "updated_at": "2026-11-28T10:49:52Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3381_the_blackboard_is_pushed"
@@ -48508,6 +48519,8 @@
             "socket.js resumes a blackboard channel with the last cursor and epoch, and reports stream.resync to the page",
             "The monitor page adds a pushed signal without polling, and polls with a label only when the channel is refused"
           ],
+          "completed_at": "2026-11-28T10:51:39Z",
+          "completed_event": "sha256:a376a30efdea8bb09cea1147a9b386c28e8a1d8de0fa2fa0a735fbd660b0ec58",
           "created_at": "2026-10-18",
           "current_state": "socket.js follows executions only, with a numeric sequence cursor; monitor.js polls /api/v1/monitor every five seconds while visible.",
           "depends_on": [
@@ -48535,7 +48548,9 @@
             "the-peer-blackboard-is-one-reality#the-client-follows"
           ],
           "slug": "the-monitor-is-pushed",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-11-28T10:50:26Z",
+          "started_event": "sha256:d8270e9a093c40f5a84049944b01a866ab66987f217cebbc0d6e7c324a487c50",
+          "updated_at": "2026-11-28T10:51:39Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3382_the_monitor_is_pushed"
@@ -49143,6 +49158,7 @@
           "acceptance_criteria": [
             "A code block on /ui/idd is highlighted"
           ],
+          "cancelled": true,
           "created_at": "2026-10-18",
           "current_state": "No highlighting.",
           "depends_on": [],
@@ -49164,7 +49180,7 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "code-has-one-highlighter",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-28",
           "validation": [
             "majordomus plan validate",
             "scripts/ui audit --only /ui/idd"
@@ -50015,6 +50031,8 @@
         "route": "/cockpit/objects/issue/i3071",
         "source": ".ai/repo/project/issues/I3071.yaml",
         "facts": {
+          "completed_at": "2026-11-28T10:33:07Z",
+          "completed_event": "sha256:ba8713a959f9bea70c38c3028aacea46b34114dc511a3794c645b7e9b91d0566",
           "created_at": "2026-10-19",
           "current_state": "/ui/delivery shows integration and deployment facts and no release debt.",
           "depends_on": [
@@ -50040,7 +50058,9 @@
             "a-version-follows-every-session#shown"
           ],
           "slug": "the-delivery-screen-shows-the-release-debt",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-11-28T10:32:20Z",
+          "started_event": "sha256:3ce86eb4c43e62f8b34de369fb86fd74daf52660aec6419bbddb127d87732e67",
+          "updated_at": "2026-11-28T10:33:07Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3471_the_delivery_screen_shows_what_waits_for_a_release"
@@ -50262,6 +50282,8 @@
             "Case 3470 shows a fresh clone of the origin answering landed_at commit with an at-most wait no shorter than the commit's age, while the clone it came from answers by its reflog",
             "Case 3470 shows a version decided over a committed registry at the trunk, equal to release version's next"
           ],
+          "completed_at": "2026-11-28T10:34:38Z",
+          "completed_event": "sha256:0cb22e48fd2088d9be840037abd92d2549920d4c0485a9e876fa662136aac7cd",
           "created_at": "2026-10-19",
           "depends_on": [
             "I3070"
@@ -50285,7 +50307,9 @@
             "a-version-follows-every-session#measured"
           ],
           "slug": "a-landing-is-dated-by-the-forge",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-11-28T10:33:25Z",
+          "started_event": "sha256:18821549a64d09b0bd3ba8f7408a5adf114e8be176c4d793d07a2436bd6c8c05",
+          "updated_at": "2026-11-28T10:34:38Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3470_the_release_follows_the_work"
@@ -64993,6 +65017,8 @@
             "Negative: a publication whose paths differ in more than case passes the check",
             "The snapshot archive of the change extracts on a case-insensitive filesystem with no 'file exists' error"
           ],
+          "completed_at": "2026-11-28T10:28:21Z",
+          "completed_event": "sha256:73486b35845d1820e7024accdf4a80e73cb1a718951f72ff3b989f4e02408544",
           "depends_on": [],
           "evidence_required": [
             "test_no_two_published_paths_differ_only_in_case"
@@ -65013,6 +65039,9 @@
             "test/cases/3720_no_two_published_paths_differ_only_in_case.sh"
           ],
           "slug": "no-two-published-paths-differ-only-in-case",
+          "started_at": "2026-11-28T10:27:05Z",
+          "started_event": "sha256:4aa54244949d86c9e4d9d3168805ebb4a9df84b5bccd46e441b3f7076c41b135",
+          "updated_at": "2026-11-28T10:28:21Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
             "bash test/run.sh 3720_no_two_published_paths_differ_only_in_case 09_site_mobile_first",
@@ -65723,6 +65752,8 @@
             "On the rendered /roadmap/, every edge is listed under its source as 'unblocks -> target' and under its target as 'source unblocks -> this'",
             "Negative: no edge listed in the text fallback carries the kind requires, so the inverted reading appears nowhere"
           ],
+          "completed_at": "2026-11-28T10:30:23Z",
+          "completed_event": "sha256:7dd5f98a1a0577a0a1c19e14e9dc2c61433d700a0605060c38038b0ab836e733",
           "depends_on": [],
           "evidence_required": [
             "test_the_graph_text_reads_each_edge_its_way"
@@ -65741,6 +65772,9 @@
             "test/cases/3723_the_graph_text_reads_each_edge_its_way.sh"
           ],
           "slug": "the-graph-text-reads-each-edge-its-way",
+          "started_at": "2026-11-28T10:29:31Z",
+          "started_event": "sha256:10639a3c23d501a56164a10a970c9c5938251b48f08a330d93b7c7ae4713020f",
+          "updated_at": "2026-11-28T10:30:23Z",
           "validation": [
             "bash test/run.sh 3723_the_graph_text_reads_each_edge_its_way 12_site_build",
             "majordomus plan validate"
@@ -65763,6 +65797,8 @@
             "Negative: the rendered page carries none of the withdrawn sentences ('depends on the ones before it', 'no progress bar', 'would be a lie')",
             "The Czech memory holds a translation for each new sentence, and no new segment carries a number or a date in its key"
           ],
+          "completed_at": "2026-11-28T10:31:47Z",
+          "completed_event": "sha256:9c514991bf16595fa5bbeb3fd89aa3a34c804ea113ff596c0e9199204f4fe3fe",
           "depends_on": [],
           "evidence_required": [
             "test_the_roadmap_says_what_the_plan_holds"
@@ -65782,6 +65818,9 @@
             "test/cases/3724_the_roadmap_says_what_the_plan_holds.sh"
           ],
           "slug": "the-roadmap-says-what-the-plan-holds",
+          "started_at": "2026-11-28T10:30:39Z",
+          "started_event": "sha256:e4750241caaccf68f5ce48a00832d32a920d1d26d3c7b0a054685986435259ef",
+          "updated_at": "2026-11-28T10:31:47Z",
           "validation": [
             "bash test/run.sh 3724_the_roadmap_says_what_the_plan_holds 3103_the_roadmap_draws_every_milestone",
             "scripts/site-build && scripts/site-check",
@@ -66121,6 +66160,8 @@
             "The built homepage carries one capability <option> and the picker still lists every capability after it is opened",
             "Every copy of the homepage built from the branch is under html_bytes"
           ],
+          "completed_at": "2026-11-28T10:26:36Z",
+          "completed_event": "sha256:0057c4acf05e54e1f18d6f0f00e25e4c9a2b53fb59146a3d57c6b6e5b7169eca",
           "depends_on": [],
           "evidence_required": [
             "every_languages_homepage_is_held_to_its_budget"
@@ -66143,6 +66184,9 @@
             ".ai/repo/project/issues/I3759.yaml"
           ],
           "slug": "every-languages-homepage-is-held-to-its-budget",
+          "started_at": "2026-11-28T10:25:25Z",
+          "started_event": "sha256:250270bd6d81049541058913cd06544443010e87fad1685028109cad8aa059bb",
+          "updated_at": "2026-11-28T10:26:36Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3732_every_languages_homepage_is_held_to_its_budget",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative",
@@ -67326,6 +67370,8 @@
             "A process id reused by a different process (another start time) does not keep the session open",
             "A session opened without a client process behaves exactly as before"
           ],
+          "completed_at": "2026-11-28T10:39:33Z",
+          "completed_event": "sha256:9f9b01ccd30dbcd80adf298be52836e816d2cc4fed5c700885e0f8d1b2af2e36",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -67357,7 +67403,9 @@
             "site/i18n/cs/memory"
           ],
           "slug": "a-gone-clients-mesh-session-is-closed",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-11-28T10:38:49Z",
+          "started_event": "sha256:a5895f369ab61e916eb9d724da1e8279e191a2127d7a9d5d74106cf7412f1c3e",
+          "updated_at": "2026-11-28T10:39:33Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::cooperation",
@@ -68314,6 +68362,8 @@
         "route": "/cockpit/objects/issue/i3841",
         "source": ".ai/repo/project/issues/I3841.yaml",
         "facts": {
+          "completed_at": "2026-11-28T10:41:50Z",
+          "completed_event": "sha256:c023cbe35beabf5565fdd9b2c2f351fec6606aac3e81032f1ad08e25375cdc0a",
           "created_at": "2026-10-21",
           "current_state": "/plan/dag/ and /plan/ draw plan.mermaid, the graph of every issue; /plan/dag/ also prints every issue edge and every wave in full.",
           "depends_on": [],
@@ -68342,7 +68392,9 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "the-plan-graph-is-drawn-by-milestone",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-11-28T10:40:27Z",
+          "started_event": "sha256:9073bf3668ba3d1e5871dfb3644a08d84dd2f35e24edc29563048e7396d1cfc6",
+          "updated_at": "2026-11-28T10:41:50Z",
           "validation": [
             "bash test/run.sh 3860_the_plan_graph_is_drawn_by_milestone"
           ]
@@ -68361,6 +68413,8 @@
             "executions.list, executions.get, executions.events and executions.demonstrate answer a remote caller 403 and this machine as before",
             "/cockpit/executions and its subpaths answer a remote caller 403"
           ],
+          "completed_at": "2026-11-28T10:35:47Z",
+          "completed_event": "sha256:75c00ee02efde7773df8647c9814b6b29c4cbb0541a25f9f121932ca9a427731",
           "created_at": "2026-10-21",
           "current_state": "Router::websocket refuses only a rebound browser page; the executions read capabilities admit every remote caller (ADR 0126); /cockpit/executions answers anyone.",
           "depends_on": [
@@ -68388,7 +68442,9 @@
             "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
           ],
           "slug": "a-remote-caller-never-sees-the-executions",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-11-28T10:35:04Z",
+          "started_event": "sha256:ec5f8645a6d0ba8b0493cbed1e57e337e95317eeee07417aa36ee7f22e0eeeb0",
+          "updated_at": "2026-11-28T10:35:47Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3861_a_remote_caller_never_sees_the_executions",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::router"
@@ -70414,6 +70470,8 @@
             "The caller's own sentence (you have not announced anything) precedes the board line in the initialize instructions",
             "A small board still names every claim, as before"
           ],
+          "completed_at": "2026-11-28T10:44:07Z",
+          "completed_event": "sha256:78322eab1329778b1f4a6e876d3bfd79a997695e8a9c735912bfc610ceb754b4",
           "created_at": "2026-10-22",
           "current_state": "apps/majordomus-cli/src/mcp/protocol.rs pushes board.summary() with every claim's whole intent before the caller-specific sentences; PeerBoard::summary has no bound.",
           "depends_on": [],
@@ -70434,7 +70492,9 @@
             "apps/majordomus-cli/src/mcp/protocol.rs"
           ],
           "slug": "the-initialize-board-line-is-bounded",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-11-28T10:42:30Z",
+          "started_event": "sha256:309cb32d86a14d4b16fd9e57cdaa620e864880d31965e2417f23fcab9cf70aac",
+          "updated_at": "2026-11-28T10:44:07Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- peers::tests protocol::tests",
             "bin/majordomus plan validate"
@@ -70455,6 +70515,8 @@
             "view full lists every covered checkout and counts none away",
             "brief and the cockpit report every covered checkout, and the cockpit says how many it does not list"
           ],
+          "completed_at": "2026-11-28T10:45:51Z",
+          "completed_event": "sha256:eaddd0ce5ee857544b1638821eca2bbd6cc5e97bd34d9d7eec5d78287520ef81",
           "created_at": "2026-10-22",
           "current_state": "peers.list lists one BoardView per registered checkout whatever its standing; brief and the cockpit count checkouts as boards.len().",
           "depends_on": [],
@@ -70478,7 +70540,9 @@
             "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
           ],
           "slug": "the-board-answers-a-summary",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-11-28T10:44:50Z",
+          "started_event": "sha256:97085ac1b36aa8a6b510874d79dc6f6298df5ee3fe31ffb44874ba042cae7243",
+          "updated_at": "2026-11-28T10:45:51Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- peers:: brief::tests cockpit::pages::tests::the_peers_page",
             "bash test/run.sh 250_the_board_is_repository_wide 343_the_cockpit_shows_who_else_is_here",
@@ -71199,6 +71263,8 @@
         "route": "/cockpit/objects/issue/i3992",
         "source": ".ai/repo/project/issues/I3992.yaml",
         "facts": {
+          "completed_at": "2026-11-28T10:38:14Z",
+          "completed_event": "sha256:57f7a885e0d07ede82a97b2a8711b3457cbce84dac30d792f87db37c6f01410b",
           "created_at": "2026-10-23",
           "depends_on": [
             "I3990"
@@ -71229,7 +71295,9 @@
             ".ai/repo/project/issues/I3992.yaml"
           ],
           "slug": "a-session-waiting-on-a-person-says-so",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-11-28T10:36:32Z",
+          "started_event": "sha256:0519089e42c527ada23a290100c707f7377538095f7af8523ee36b5bc22ca10f",
+          "updated_at": "2026-11-28T10:38:14Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::mesh peers:: mesh::cooperation mesh::journal commands::mesh",
             "bash test/run.sh 3992_a_session_waiting_on_a_person_says_so 3990_a_claim_lapses_when_its_session_stops_progressing",
@@ -71544,6 +71612,8 @@
             "It wraps WorktreeService's ensure (apps/majordomus-cli/src/worktree), the path `majordomus worktree create` takes, and adds no second implementation of worktree creation",
             "Its declaration projects to the command, the MCP tool and the skill from one definition"
           ],
+          "completed_at": "2026-11-28T10:24:39Z",
+          "completed_event": "sha256:5a77e5e179df66aa031aa98f10aff1d676f34a9a3d82fa5c933fc3cab26046d4",
           "created_at": "2026-10-23",
           "current_state": "Built on #2522: worktree.create is a typed writing capability that plans and applies the canonical <repository>-wt/<branch> path (case 4002).",
           "desired_state": "The acceptance criteria below hold and case 4002 proves them.",
@@ -71566,7 +71636,9 @@
             "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
           ],
           "slug": "worktree-create-is-a-typed-writing-capability",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-11-28T10:23:38Z",
+          "started_event": "sha256:e960742be54f62afb3efe47064e4fdb6de840ddf4d715c9a4200c0ef1a9cf38d",
+          "updated_at": "2026-11-28T10:24:39Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4002_a_worktree_is_created_by_one_capability"
           ],
@@ -72000,6 +72072,7 @@
           "acceptance_criteria": [
             "Two Contexts read through the shared caches in one process each get their own snapshot and cursor"
           ],
+          "cancelled": true,
           "created_at": "2026-10-23",
           "current_state": "BOARD and PAGE are statics keyed without the Context's identity.",
           "depends_on": [
@@ -72020,7 +72093,7 @@
           ],
           "serves": [],
           "slug": "the-follow-caches-are-keyed-by-their-repository",
-          "updated_at": "2026-10-23",
+          "updated_at": "2026-11-28",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::follow::tests"
           ]
@@ -83364,6 +83437,7 @@
             "A repository with no declared pattern still receives I<nnnn>",
             "Negative control: the case fails against master, where the allocation returns I0001"
           ],
+          "cancelled": true,
           "created_at": "2026-11-22",
           "current_state": "Observed as above. apps/majordomus-cli/src/capability/builtin/allocate.rs holds plan.allocate (I3040). The nearest records, I4357 and I4616, cover I<nnnn> only.",
           "depends_on": [],
@@ -83386,6 +83460,7 @@
           ],
           "serves": [],
           "slug": "allocate-reads-the-declared-id-pattern",
+          "updated_at": "2026-11-28",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 4679_allocate_reads_the_declared_id_pattern"
@@ -140419,12 +140494,12 @@
       },
       {
         "source": "majordomus://issue/I1030",
-        "target": "majordomus://issue/I1028",
+        "target": "majordomus://issue/I1029",
         "kind": "depends_on"
       },
       {
         "source": "majordomus://issue/I1030",
-        "target": "majordomus://issue/I1029",
+        "target": "majordomus://issue/I1117",
         "kind": "depends_on"
       },
       {
@@ -145281,11 +145356,6 @@
         "source": "majordomus://issue/I2975",
         "target": "kind:issue",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://issue/I2975",
-        "target": "majordomus://issue/I2974",
-        "kind": "depends_on"
       },
       {
         "source": "majordomus://issue/I2975",
@@ -169385,7 +169455,7 @@
     ],
     "metadata": {
       "nodes": 4602,
-      "edges": 10364,
+      "edges": 10363,
       "acyclic": false,
       "truncated": false
     }

@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [surfaces-never-disagree](https://majordomus.dev/plan/surfaces-never-disagree/) | ACTIVE | 12/26 | 14 | 0 | 0 | 0 | 0 | A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped. |
+| [surfaces-never-disagree](https://majordomus.dev/plan/surfaces-never-disagree/) | ACTIVE | 13/26 | 13 | 0 | 0 | 0 | 0 | A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped. |
 
 ## Issues
 
@@ -28,7 +28,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3009](https://majordomus.dev/plan/i3009/) | DONE | 0 | — | No record's prose and no board announcement holds a template delimiter |
 | [I3010](https://majordomus.dev/plan/i3010/) | DONE | 0 | — | The mesh manual says the edit guard is not wired, and how to wire it by hand |
 | [I3318](https://majordomus.dev/plan/i3318/) | READY | 0 | — | Every decision and curated note is read on /ui, with the records it names and the records that name it |
-| [I3447](https://majordomus.dev/plan/i3447/) | READY | 0 | — | No two published paths differ only in case, and a publication that holds two is refused before it is built |
+| [I3447](https://majordomus.dev/plan/i3447/) | DONE | 0 | — | No two published paths differ only in case, and a publication that holds two is refused before it is built |
 | [I3607](https://majordomus.dev/plan/i3607/) | READY | 0 | — | mesh state answers in JSON on the command line, and its view is chosen the same way on every surface |
 | [I3609](https://majordomus.dev/plan/i3609/) | READY | 0 | — | A claim replayed after a re-attach keeps the time it was made, and an announce answers with the claim it made |
 | [I3752](https://majordomus.dev/plan/i3752/) | READY | 0 | — | The UI is one of the product's surfaces, so every count of the interfaces agrees |
@@ -66,13 +66,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2842` | shares docs/GITHUB_PAGES_ARCHITECTURE.md with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares docs/GITHUB_PAGES_ARCHITECTURE.md with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares docs/GITHUB_PAGES_ARCHITECTURE.md with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2842` | shares docs/GITHUB_PAGES_ARCHITECTURE.md with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares apps/majordomus-cli/src/capability/builtin/served.rs with I3040; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares .github/workflows/pages.yml with I3120; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares scripts/pages with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares apps/majordomus-cli/src/capability/builtin/served.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares scripts/pages with I3799; they may not run concurrently |
-| WARN | `scope_conflict` | `I2842` | shares apps/majordomus-cli/src/capability/builtin/served.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares apps/majordomus-cli/src/capability/builtin/served.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares docs/GITHUB_PAGES_ARCHITECTURE.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares apps/majordomus-cli/src/capability/builtin/served.rs with I4327; they may not run concurrently |
@@ -88,16 +86,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2842` | shares scripts/pages with I4718; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3400; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I3447; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3607; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I3750; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I3751; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3752; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3753; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares apps/majordomus-cli/src/ui/mod.rs with I3756; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3757; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I3759; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3760; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3762; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3763; they may not run concurrently |
@@ -110,17 +104,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3772; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3775; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3930; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3938; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares apps/majordomus-cli/src/ui/mod.rs with I3941; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3942; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I3961; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3974; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4000; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4008; they may not run concurrently |
@@ -209,7 +200,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4675; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4676; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4677; they may not run concurrently |
-| WARN | `scope_conflict` | `I3318` | shares test/cases with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4681; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4682; they may not run concurrently |
@@ -235,24 +225,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares test/cases/3720_no_two_published_paths_differ_only_in_case.sh with I3448; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares test/cases/3720_no_two_published_paths_differ_only_in_case.sh with I3607; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares scripts/site-check with I3841; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares apps/majordomus-cli/src/ui/view.rs with I4327; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares apps/majordomus-cli/src/ui/view.rs with I4483; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares apps/majordomus-cli/src/ui/view.rs with I4485; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares apps/majordomus-cli/src/ui/view.rs with I4494; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares apps/majordomus-cli/src/ui/view.rs with I4495; they may not run concurrently |
-| WARN | `scope_conflict` | `I3447` | shares scripts/site-check with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares docs/MESH.md with I3608; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I3609; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares test/cases with I3750; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares test/cases with I3751; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3752; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3753; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3756; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3757; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares test/cases with I3759; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3760; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I3762; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3763; they may not run concurrently |
@@ -265,19 +243,15 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3772; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3775; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/commands/mesh.rs with I3835; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares test/cases with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3930; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3938; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I3941; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3942; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I3961; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I3974; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4000; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4008; they may not run concurrently |
@@ -373,7 +347,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4676; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4677; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares docs/MESH.md with I4678; they may not run concurrently |
-| WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4680; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4681; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4682; they may not run concurrently |
@@ -400,9 +373,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4807; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3609` | shares apps/majordomus-cli/src/peers.rs with I3960; they may not run concurrently |
-| WARN | `scope_conflict` | `I3609` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I3961; they may not run concurrently |
-| WARN | `scope_conflict` | `I3609` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3609` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3609` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3609` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4468; they may not run concurrently |
@@ -412,8 +382,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3752` | shares docs/generated/graph.json with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3752` | shares docs/generated/graph.json with I3762; they may not run concurrently |
 | WARN | `scope_conflict` | `I3752` | shares docs/generated/graph.json with I3763; they may not run concurrently |
-| WARN | `scope_conflict` | `I3752` | shares site/data/registry/product.json with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3752` | shares docs/generated/graph.json with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3752` | shares docs/generated/graph.json with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3767` | shares apps/majordomus-cli/src/ui/navbar.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I4322` | shares apps/majordomus-cli/src/intent.rs with I4325; they may not run concurrently |

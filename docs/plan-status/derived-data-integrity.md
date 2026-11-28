@@ -43,13 +43,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2919; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3005; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3373; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4513; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4586; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4588; they may not run concurrently |
-| WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares scripts/ci/derived-attributes-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4586` | shares scripts/derive with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4586` | shares apps/majordomus-cli/src/graph.rs with I4791; they may not run concurrently |

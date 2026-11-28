@@ -14,8 +14,7 @@ desired_state: "The skill is generated, named in the skill catalogue, and a case
 scope:
   - ".ai/repo/skills/proceed"
   - "test/cases/3369_the_proceed_skill_names_only_the_command.sh"
-depends_on:
-  - "I2974"
+depends_on: []
 acceptance_criteria:
   - "/proceed is generated for every provider from one declaration"
   - "The skill restates no rule, workflow step or issue, and a case refuses one that does"
@@ -24,4 +23,16 @@ validation:
 evidence_required:
   - "case_the_proceed_skill_names_only_the_command"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-11-28T10:54:18Z
+started_at: 2026-11-28T10:53:16Z
+started_event: sha256:5a05f4a8274f87bb48d2a534b98f195a175a339a3b518dac9570d86a240b448d
+completed_at: 2026-11-28T10:54:18Z
+completed_event: sha256:92f94be41183903065c7ef1d8e272788490a84d295472b9157867fe398aa1d7f
+evidence:
+  - covers: "case_the_proceed_skill_names_only_the_command"
+    type: ci
+    command: "bash test/run.sh 3369_the_proceed_skill_names_only_the_command"
+    result: "delivered by 7602a4b3ec3, reworked for proceed.step by e740f960faa and 8d77a8731d4 (landed in 4795a79d954, train P #2855) on master; at origin/master 649e41282d4, validate run https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147: 3369_the_proceed_skill_names_only_the_command ok in suite-shard (4) job 140602357783 (every provider's /proceed is generated from proceed.rs and restates no rule, workflow or issue); its dependency on I2974, cancelled 2026-11-02 when proceed take was retired, is dropped as plan validate's cancelled_dependency remedy suggests"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T10:54:00Z

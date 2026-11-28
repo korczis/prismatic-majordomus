@@ -22,4 +22,6 @@ evidence_required:
   - suite
 risk: "A key that is too narrow defeats the share the caches exist for; key by the Context, not by the caller."
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-11-28
+cancelled: true
+completion: "Cancelled 2026-11-28 as a duplicate of I4241, which is kept and DONE: I4241 keyed the follower's shared BOARD and PAGE caches by the server's epoch (apps/majordomus-cli/src/http/follow.rs: Follower::snapshot keys BOARD by `epoch(ctx)|checkouts`, page_key prefixes `epoch(ctx)`), which is this issue's objective, and its test http::follow::tests::a_shared_read_is_never_handed_to_another_server reads two contexts in one process; it passed in rust (2) job 140601122685 of master validate run 46027019147 at 649e41282d4. This record could not be recorded done because it stays BLOCKED on I4154 (an unrelated test-timing fix)."

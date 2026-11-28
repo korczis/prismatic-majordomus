@@ -9,16 +9,16 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [peer-blackboard](https://majordomus.dev/plan/peer-blackboard/) | ACTIVE | 2/10 | 1 | 7 | 0 | 0 | 0 | One capability computes the blackboard from the records that exist; a change of the board or the journal is pushed over one WebSocket to every page that follows it, with the monitor's cursor for resume; /ui, /cockpit and the home page read the same frames; the published site carries a public-safe snapshot labelled as one. |
+| [peer-blackboard](https://majordomus.dev/plan/peer-blackboard/) | ACTIVE | 4/10 | 1 | 5 | 0 | 0 | 0 | One capability computes the blackboard from the records that exist; a change of the board or the journal is pushed over one WebSocket to every page that follows it, with the monitor's cursor for resume; /ui, /cockpit and the home page read the same frames; the published site carries a public-safe snapshot labelled as one. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I2980](https://majordomus.dev/plan/i2980/) | DONE | 0 | — | The blackboard is one projection answered on every interface |
-| [I2981](https://majordomus.dev/plan/i2981/) | READY | 1 | I2980 | A board or journal change is pushed over one WebSocket |
-| [I2982](https://majordomus.dev/plan/i2982/) | BLOCKED | 2 | I2981 | The monitor page is pushed over the live channel, and says when it polls |
-| [I2983](https://majordomus.dev/plan/i2983/) | BLOCKED | 3 | I2982 | /ui/peers shows the blackboard and is read again when it changes |
+| [I2981](https://majordomus.dev/plan/i2981/) | DONE | 1 | I2980 | A board or journal change is pushed over one WebSocket |
+| [I2982](https://majordomus.dev/plan/i2982/) | DONE | 2 | I2981 | The monitor page is pushed over the live channel, and says when it polls |
+| [I2983](https://majordomus.dev/plan/i2983/) | READY | 3 | I2982 | /ui/peers shows the blackboard and is read again when it changes |
 | [I2984](https://majordomus.dev/plan/i2984/) | BLOCKED | 4 | I2983 | The published site shows a public-safe blackboard, labelled as the snapshot it is |
 | [I2985](https://majordomus.dev/plan/i2985/) | BLOCKED | 4 | I2983 | The Observatory's cooperation scene draws the blackboard, not a second join of the journal |
 | [I2998](https://majordomus.dev/plan/i2998/) | BLOCKED | 4 | I2983 | /cockpit/peers renders the blackboard and follows it live |
@@ -30,11 +30,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/capability/builtin/blackboard.rs with I3016; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/peers.rs with I3072; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/http/router.rs with I3176; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/http/events.rs with I3288; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares test/cases/3381_the_blackboard_is_pushed.sh with I3825; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares test/cases/3381_the_blackboard_is_pushed.sh with I3837; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/peers.rs with I3992; they may not run concurrently |
-| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/mesh/journal.rs with I3994; they may not run concurrently |
+| WARN | `scope_conflict` | `I2983` | shares share/ui/ui.js with I3220; they may not run concurrently |
