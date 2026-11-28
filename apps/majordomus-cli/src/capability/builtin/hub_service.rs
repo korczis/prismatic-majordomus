@@ -120,7 +120,11 @@ fn now() -> u64 {
 /// Whether a process of this id lives: signal 0 reaches it, or it exists under another user.
 pub(crate) fn alive(pid: u32) -> bool {
     // pid 0 would ask the whole process group
-    let Ok(pid) = libc::pid_t::try_from(pid).map_err(|_| ()).and_then(|p| if p > 0 { Ok(p) } else { Err(()) }) else {
+    let Ok(pid) =
+        libc::pid_t::try_from(pid)
+            .map_err(|_| ())
+            .and_then(|p| if p > 0 { Ok(p) } else { Err(()) })
+    else {
         return false;
     };
     // SAFETY: kill with signal 0 sends nothing; it only asks whether the process exists.
@@ -235,8 +239,17 @@ pub(crate) fn mesh_hub(
     ctx: &Context,
     input: HubStatusInput,
 ) -> Result<HubStatusReport, CapabilityError> {
-    let b = build(ctx, &HubInput { port: input.port, root: input.root, ..HubInput::default() });
-    Ok(with_host(&b, |h| hub_service::status(h, &b.spec, b.declared, &b.base)))
+    let b = build(
+        ctx,
+        &HubInput {
+            port: input.port,
+            root: input.root,
+            ..HubInput::default()
+        },
+    );
+    Ok(with_host(&b, |h| {
+        hub_service::status(h, &b.spec, b.declared, &b.base)
+    }))
 }
 
 pub(crate) fn mesh_hub_install(
@@ -244,7 +257,9 @@ pub(crate) fn mesh_hub_install(
     input: HubInput,
 ) -> Result<HubServiceReport, CapabilityError> {
     let b = build(ctx, &input);
-    Ok(with_host(&b, |h| hub_service::install(h, &b.spec, b.declared, b.asked, input.apply)))
+    Ok(with_host(&b, |h| {
+        hub_service::install(h, &b.spec, b.declared, b.asked, input.apply)
+    }))
 }
 
 pub(crate) fn mesh_hub_uninstall(
@@ -252,7 +267,9 @@ pub(crate) fn mesh_hub_uninstall(
     input: HubInput,
 ) -> Result<HubServiceReport, CapabilityError> {
     let b = build(ctx, &input);
-    Ok(with_host(&b, |h| hub_service::uninstall(h, &b.spec, input.apply)))
+    Ok(with_host(&b, |h| {
+        hub_service::uninstall(h, &b.spec, input.apply)
+    }))
 }
 
 pub(crate) fn mesh_hub_update(
@@ -260,7 +277,9 @@ pub(crate) fn mesh_hub_update(
     input: HubInput,
 ) -> Result<HubUpdateReport, CapabilityError> {
     let b = build(ctx, &input);
-    Ok(with_host(&b, |h| hub_service::update(h, &b.spec, &b.base, input.apply, input.retry)))
+    Ok(with_host(&b, |h| {
+        hub_service::update(h, &b.spec, &b.base, input.apply, input.retry)
+    }))
 }
 
 /// Whether `path` is under `root`: a staging report names no path outside it.
@@ -296,16 +315,31 @@ mod tests {
         assert!(!alive(999_999_999));
         assert_eq!(release_base(Some("a".into()), Some("b".into())), "a");
         assert_eq!(release_base(None, Some("b".into())), "b");
-        assert_eq!(release_base(None, Some(String::new())), hub_service::RELEASE_BASE);
+        assert_eq!(
+            release_base(None, Some(String::new())),
+            hub_service::RELEASE_BASE
+        );
     }
 
     #[test]
     fn the_executable_is_the_asked_then_the_launcher_then_this_one() {
         let exe = Some(PathBuf::from("/x/majordomus-cli"));
-        assert_eq!(executable_for(Some("/a"), Some("/l".into()), exe.clone()), PathBuf::from("/a"));
-        assert_eq!(executable_for(None, Some("/l".into()), exe.clone()), PathBuf::from("/l"));
-        assert_eq!(executable_for(None, Some(String::new()), exe.clone()), PathBuf::from("/x/majordomus-cli"));
-        assert_eq!(executable_for(None, None, None), PathBuf::from("majordomus"));
+        assert_eq!(
+            executable_for(Some("/a"), Some("/l".into()), exe.clone()),
+            PathBuf::from("/a")
+        );
+        assert_eq!(
+            executable_for(None, Some("/l".into()), exe.clone()),
+            PathBuf::from("/l")
+        );
+        assert_eq!(
+            executable_for(None, Some(String::new()), exe.clone()),
+            PathBuf::from("/x/majordomus-cli")
+        );
+        assert_eq!(
+            executable_for(None, None, None),
+            PathBuf::from("majordomus")
+        );
     }
 
     #[test]
@@ -318,7 +352,10 @@ mod tests {
         let here = [Ipv4Addr::new(192, 168, 7, 10)];
         assert_eq!(port_for(None, Some(&config), &here), (8799, true));
         assert_eq!(port_for(Some(8791), Some(&config), &here), (8791, false));
-        assert_eq!(port_for(None, Some(&config), &[Ipv4Addr::new(10, 0, 0, 1)]), (8791, false));
+        assert_eq!(
+            port_for(None, Some(&config), &[Ipv4Addr::new(10, 0, 0, 1)]),
+            (8791, false)
+        );
         assert_eq!(port_for(None, None, &here), (8791, false));
     }
 
@@ -340,7 +377,10 @@ mod tests {
         assert!(!installed.ok && installed.refusal.is_some());
         let status = mesh_hub(
             &ctx,
-            HubStatusInput { port: Some(8791), root: Some(root.path().display().to_string()) },
+            HubStatusInput {
+                port: Some(8791),
+                root: Some(root.path().display().to_string()),
+            },
         )
         .unwrap();
         assert!(!status.ok);
@@ -350,7 +390,13 @@ mod tests {
         let updated = mesh_hub_update(&ctx, input(false)).unwrap();
         assert_eq!(updated.mode, "plan");
         assert!(!updated.ok);
-        assert_eq!(HubInput::benchmark_cases(&CaseContext { index: &ctx.index }).len(), 1);
-        assert_eq!(HubStatusInput::benchmark_cases(&CaseContext { index: &ctx.index }).len(), 1);
+        assert_eq!(
+            HubInput::benchmark_cases(&CaseContext { index: &ctx.index }).len(),
+            1
+        );
+        assert_eq!(
+            HubStatusInput::benchmark_cases(&CaseContext { index: &ctx.index }).len(),
+            1
+        );
     }
 }

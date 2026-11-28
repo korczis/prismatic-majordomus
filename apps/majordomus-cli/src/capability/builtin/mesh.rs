@@ -20,7 +20,6 @@ use super::cache_provision::{provision, ProvisionInput, ProvisionReport};
 use super::hub_service::{
     mesh_hub, mesh_hub_install, mesh_hub_uninstall, mesh_hub_update, HubInput, HubStatusInput,
 };
-use crate::mesh::hub_service::{HubServiceReport, HubStatusReport, HubUpdateReport};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
@@ -33,6 +32,7 @@ use crate::mesh::cooperation::{
     Written,
 };
 use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
+use crate::mesh::hub_service::{HubServiceReport, HubStatusReport, HubUpdateReport};
 use crate::mesh::journal::{
     blocked_reason, ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId,
     StreamLiveness,

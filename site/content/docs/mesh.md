@@ -946,8 +946,9 @@ ever. Install refuses a checkout on a branch, a machine the declaration does not
 hub, and an executable that is not the installer's launcher (a hub run from a cargo build or a
 copied binary would not follow the release; `--executable` names one on purpose):
 
+<!-- majordomus:unrun it installs a service on the host it runs on; case 4783 runs install, its status and uninstall against a stub service manager in a home of its own -->
 ```bash
-git -C ~/dev/prismatic-majordomus worktree add --detach ~/dev/prismatic-majordomus-hub v1.3.0
+git -C ~/dev/prismatic-majordomus worktree add --detach ~/dev/prismatic-majordomus-hub v1.4.0
 cd ~/dev/prismatic-majordomus-hub
 majordomus mesh hub install            # the plan: every unit missing or drifted, every command owed
 majordomus mesh hub install --apply    # write and load them; a second --apply does nothing

@@ -15,6 +15,7 @@
 #   3. `mesh hub` reads every unit back as rendered and loaded, and fails because no hub
 #      answers on the declared port;
 #   4. a checkout on a branch is refused, because a hub serves a dedicated checkout;
+#      and the MCP tool majordomus_mesh_hub answers the same report;
 #   5. `mesh hub update` with no release origin and no hub plans nothing it cannot read and
 #      exits 10;
 #   6. `mesh hub uninstall --apply` stops the units through the manager and removes them.
@@ -149,6 +150,20 @@ jq -e '.checks[] | select(.name == "answering") | .level == "fail"' "$T/status.j
   || { echo    "    status says a hub answers on 18791:"; jq '.checks' "$T/status.json"; exit 1; }
 hub > "$T/status.txt" 2>/dev/null || true
 expect_grep '^pass  unit:' "$T/status.txt"
+
+# the MCP tool answers the same report, over a staging home so it asks no service manager
+req() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }
+{
+  req 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4783","version":"0"}}'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  req 2 tools/call "{\"name\":\"majordomus_mesh_hub\",\"arguments\":{\"root\":\"$T/mcp-home\"}}"
+} > "$T/mcp.in"
+rc=0; ( cd "$R" && "$RB" mcp --standalone < "$T/mcp.in" ) > "$T/mcp.out" 2> "$T/mcp.err" || rc=$?
+[ "$rc" = 0 ] || { echo "    the MCP server exited $rc"; cat "$T/mcp.err"; exit 1; }
+sed -n 2p "$T/mcp.out" | jq -e '.id == 2 and (.result.isError // false | not)' >/dev/null \
+  || { echo "    majordomus_mesh_hub did not answer:"; cat "$T/mcp.out"; exit 1; }
+sed -n 2p "$T/mcp.out" | jq -r '.result.content[0].text' | jq -e '.port == 18791 and (.checks | length > 3) and (.units | length >= 2)' >/dev/null \
+  || { echo "    the MCP answer is not the hub report:"; sed -n 2p "$T/mcp.out"; exit 1; }
 
 # the build is no installer launcher: unnamed, it is refused, because its hub would not
 # follow the release

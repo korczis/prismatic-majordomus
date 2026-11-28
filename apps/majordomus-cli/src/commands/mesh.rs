@@ -26,8 +26,8 @@ use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
     MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshBuildCacheEnvArgs, MeshCommand,
-    MeshFirewallCommand, MeshHandoverCommand, MeshHubCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand,
-    OutputFormat,
+    MeshFirewallCommand, MeshHandoverCommand, MeshHubCommand, MeshQueryArgs, MeshReviewCommand,
+    MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 

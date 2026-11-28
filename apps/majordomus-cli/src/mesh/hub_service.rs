@@ -50,7 +50,8 @@ const ANSWER_WITHIN: Duration = Duration::from_secs(90);
 /// How often a restarted hub is asked within [`ANSWER_WITHIN`].
 const ASK_EVERY: Duration = Duration::from_secs(3);
 /// The first line of every file this module writes: what distinguishes it from a hand-made one.
-const WRITTEN_BY: &str = "written by majordomus mesh hub install (I4816); rewritten by it, never by hand";
+const WRITTEN_BY: &str =
+    "written by majordomus mesh hub install (I4816); rewritten by it, never by hand";
 
 /// The service manager of a host.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -295,7 +296,10 @@ fn systemd_environment(spec: &Spec) -> String {
 }
 
 fn exec_line(argv: &[String]) -> String {
-    argv.iter().map(|a| systemd_word(a)).collect::<Vec<_>>().join(" ")
+    argv.iter()
+        .map(|a| systemd_word(a))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn systemd_hub(spec: &Spec) -> String {
@@ -458,13 +462,21 @@ pub(crate) fn launchd_disabled(print_disabled: &str, label: &str) -> bool {
 /// Whether `systemctl is-enabled` answers a unit the manager will start: an enabled one, or
 /// a static one, which has no `[Install]` because its timer starts it.
 pub(crate) fn systemd_enabled(answer: &str) -> bool {
-    matches!(answer.trim(), "enabled" | "enabled-runtime" | "static" | "linked")
+    matches!(
+        answer.trim(),
+        "enabled" | "enabled-runtime" | "static" | "linked"
+    )
 }
 
 fn views(host: &Host<'_>, rendered: &[Rendered]) -> Vec<UnitView> {
     let disabled = match (host.staging, host.manager) {
         (false, Manager::Launchd) => {
-            (host.exec)(&argv(&["launchctl", "print-disabled", &format!("gui/{}", host.uid)])).1
+            (host.exec)(&argv(&[
+                "launchctl",
+                "print-disabled",
+                &format!("gui/{}", host.uid),
+            ]))
+            .1
         }
         _ => String::new(),
     };
@@ -481,7 +493,11 @@ fn views(host: &Host<'_>, rendered: &[Rendered]) -> Vec<UnitView> {
                             "print",
                             &format!("gui/{}/{}", host.uid, r.name),
                         ]));
-                        (ok, !launchd_disabled(&disabled, r.name), ok && launchd_running(&out))
+                        (
+                            ok,
+                            !launchd_disabled(&disabled, r.name),
+                            ok && launchd_running(&out),
+                        )
                     }
                     Manager::SystemdUser => {
                         let (_, e) =
@@ -559,7 +575,12 @@ fn carry_out(host: &Host<'_>, acts: Vec<Act>, apply: bool) -> (Vec<Step>, bool) 
     for act in acts {
         let line = act.line();
         if !apply || !held || (host.staging && act.runs()) {
-            steps.push(Step { line, ran: false, ok: None, output: String::new() });
+            steps.push(Step {
+                line,
+                ran: false,
+                ok: None,
+                output: String::new(),
+            });
             continue;
         }
         let (ok, output) = match &act {
@@ -586,7 +607,12 @@ fn carry_out(host: &Host<'_>, acts: Vec<Act>, apply: bool) -> (Vec<Step>, bool) 
             }
         };
         held &= ok;
-        steps.push(Step { line, ran: true, ok: Some(ok), output: output.trim().to_string() });
+        steps.push(Step {
+            line,
+            ran: true,
+            ok: Some(ok),
+            output: output.trim().to_string(),
+        });
     }
     (steps, held)
 }
@@ -653,7 +679,9 @@ pub(crate) fn refusal(
     executable_asked: bool,
 ) -> Option<String> {
     if spec.manager == Manager::Unsupported {
-        return Some("this platform has neither launchd nor systemd: no hub service is written here".into());
+        return Some(
+            "this platform has neither launchd nor systemd: no hub service is written here".into(),
+        );
     }
     if !declared_hub {
         return Some(format!(
@@ -815,8 +843,16 @@ pub(crate) fn uninstall(host: &Host<'_>, spec: &Spec, apply: bool) -> HubService
                 "bootout",
                 &format!("gui/{}/{}", host.uid, r.name),
             ]))),
-            Manager::SystemdUser if r.role != UnitRole::Update && (found.loaded || found.active) => {
-                acts.push(Act::Run(argv(&["systemctl", "--user", "disable", "--now", r.name])))
+            Manager::SystemdUser
+                if r.role != UnitRole::Update && (found.loaded || found.active) =>
+            {
+                acts.push(Act::Run(argv(&[
+                    "systemctl",
+                    "--user",
+                    "disable",
+                    "--now",
+                    r.name,
+                ])))
             }
             _ => {}
         }
@@ -826,7 +862,9 @@ pub(crate) fn uninstall(host: &Host<'_>, spec: &Spec, apply: bool) -> HubService
             acts.push(Act::Remove(r.path.clone()));
         }
     }
-    if host.manager == Manager::SystemdUser && out.units.iter().any(|u| u.state != FileState::Missing) {
+    if host.manager == Manager::SystemdUser
+        && out.units.iter().any(|u| u.state != FileState::Missing)
+    {
         acts.push(Act::Run(argv(&["systemctl", "--user", "daemon-reload"])));
     }
     let (steps, held) = carry_out(host, acts, apply);
@@ -838,9 +876,14 @@ pub(crate) fn uninstall(host: &Host<'_>, spec: &Spec, apply: bool) -> HubService
 /// The version an executable says it is: the last word of `--version`.
 pub(crate) fn version_of(host: &Host<'_>, executable: &Path) -> Option<String> {
     let (ok, out) = (host.exec)(&[executable.display().to_string(), "--version".into()]);
-    ok.then(|| out.lines().rev().find(|l| !l.trim().is_empty()).map(str::to_string))
-        .flatten()
-        .and_then(|l| l.split_whitespace().last().map(str::to_string))
+    ok.then(|| {
+        out.lines()
+            .rev()
+            .find(|l| !l.trim().is_empty())
+            .map(str::to_string)
+    })
+    .flatten()
+    .and_then(|l| l.split_whitespace().last().map(str::to_string))
 }
 
 /// The version the release origin publishes as the latest.
@@ -849,7 +892,11 @@ pub(crate) fn published(host: &Host<'_>, base: &str) -> Option<String> {
     let (ok, body) = (host.exec)(&argv(&["curl", "-fsS", "-m", "20", &url]));
     ok.then(|| serde_json::from_str::<Value>(&body).ok())
         .flatten()
-        .and_then(|v| v["version"].as_str().map(|s| s.trim_start_matches('v').to_string()))
+        .and_then(|v| {
+            v["version"]
+                .as_str()
+                .map(|s| s.trim_start_matches('v').to_string())
+        })
 }
 
 /// The release the hub's checkout is detached at: its exact tag, without the `v`.
@@ -925,7 +972,12 @@ pub(crate) fn ask_hub(host: &Host<'_>, port: u16) -> HubAnswer {
         .and_then(|b| serde_json::from_str::<Value>(&b).ok())
         .map(|v| linked_runtimes(&v))
         .unwrap_or_default();
-    HubAnswer { answering: true, version: Some(version), attached, linked }
+    HubAnswer {
+        answering: true,
+        version: Some(version),
+        attached,
+        linked,
+    }
 }
 
 /// The connected peers of a `mesh.cooperation` answer.
@@ -1003,14 +1055,20 @@ pub(crate) fn decide(v: &Versions<'_>, failed: &[String]) -> Decision {
     use std::cmp::Ordering::Greater;
     let cmp = crate::order::version_cmp;
     let Some(installed) = v.installed else {
-        return Decision::Unknown { reason: "the executable did not say its version".into() };
+        return Decision::Unknown {
+            reason: "the executable did not say its version".into(),
+        };
     };
     if let Some(p) = v.published {
         if cmp(p, installed) == Greater {
             return if failed.iter().any(|f| f == p) {
-                Decision::Failed { version: p.to_string() }
+                Decision::Failed {
+                    version: p.to_string(),
+                }
             } else {
-                Decision::Install { version: p.to_string() }
+                Decision::Install {
+                    version: p.to_string(),
+                }
             };
         }
     }
@@ -1020,18 +1078,28 @@ pub(crate) fn decide(v: &Versions<'_>, failed: &[String]) -> Decision {
     let hub_behind = match v.served {
         Some(s) => cmp(installed, s) == Greater,
         None if checkout_behind => true,
-        None => return Decision::Unknown { reason: "the hub does not answer on its port".into() },
+        None => {
+            return Decision::Unknown {
+                reason: "the hub does not answer on its port".into(),
+            }
+        }
     };
     if !hub_behind && !checkout_behind {
         return Decision::Current;
     }
     if failed.iter().any(|f| f == installed) {
-        return Decision::Failed { version: installed.to_string() };
+        return Decision::Failed {
+            version: installed.to_string(),
+        };
     }
     if v.attached > 0 && !v.deferred_too_long {
-        return Decision::Deferred { attached: v.attached };
+        return Decision::Deferred {
+            attached: v.attached,
+        };
     }
-    Decision::Activate { version: installed.to_string() }
+    Decision::Activate {
+        version: installed.to_string(),
+    }
 }
 
 /// What the update remembers between runs.
@@ -1082,7 +1150,11 @@ fn take_lock(host: &Host<'_>, home: &Path) -> Result<(), String> {
     let path = lock_path(home);
     let _ = std::fs::create_dir_all(path.parent().unwrap_or(Path::new("")));
     for _ in 0..2 {
-        match std::fs::OpenOptions::new().write(true).create_new(true).open(&path) {
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
             Ok(mut f) => {
                 use std::io::Write;
                 let _ = writeln!(f, "{}", host.pid);
@@ -1118,7 +1190,10 @@ fn rotate(log: &Path) -> Option<Step> {
     }
     let old = log.with_extension("log.1");
     let done = std::fs::copy(log, &old).and_then(|_| {
-        std::fs::OpenOptions::new().write(true).open(log).and_then(|f| f.set_len(0))
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(log)
+            .and_then(|f| f.set_len(0))
     });
     Some(Step {
         line: format!("rotate {} ({size} bytes)", log.display()),
@@ -1160,7 +1235,12 @@ pub(crate) struct HubUpdateReport {
 /// Restart the hub through its manager.
 fn restart(host: &Host<'_>) -> Vec<String> {
     match host.manager {
-        Manager::Launchd => argv(&["launchctl", "kickstart", "-k", &format!("gui/{}/{HUB_LABEL}", host.uid)]),
+        Manager::Launchd => argv(&[
+            "launchctl",
+            "kickstart",
+            "-k",
+            &format!("gui/{}/{HUB_LABEL}", host.uid),
+        ]),
         _ => argv(&["systemctl", "--user", "restart", HUB_UNIT]),
     }
 }
@@ -1227,9 +1307,15 @@ impl Run<'_, '_> {
     /// it put an older release back.
     fn installer(&mut self, version: &str, force: bool) -> bool {
         let home = &self.spec.home;
-        let script = home.join(".local/state/majordomus/install.sh").display().to_string();
+        let script = home
+            .join(".local/state/majordomus/install.sh")
+            .display()
+            .to_string();
         let url = format!("{}/install.sh", self.base.trim_end_matches('/'));
-        if !self.run(argv(&["curl", "-fsSL", "-m", "120", "-o", &script, &url])).0 {
+        if !self
+            .run(argv(&["curl", "-fsSL", "-m", "120", "-o", &script, &url]))
+            .0
+        {
             return false;
         }
         let dir = self
@@ -1242,7 +1328,14 @@ impl Run<'_, '_> {
         if self.base != RELEASE_BASE {
             words.push(format!("MAJORDOMUS_RELEASE_BASE_URL={}", self.base));
         }
-        words.extend(argv(&["sh", &script, "--version", version, "--install-dir", &dir]));
+        words.extend(argv(&[
+            "sh",
+            &script,
+            "--version",
+            version,
+            "--install-dir",
+            &dir,
+        ]));
         if force {
             words.push("--force".into());
         }
@@ -1253,7 +1346,13 @@ impl Run<'_, '_> {
 /// `mesh hub update`: ask the release origin, the executable, the checkout and the hub for
 /// their versions, decide, and with `apply` carry the decision out and record it. One update
 /// runs at a time per home; a second one says so and does nothing.
-pub(crate) fn update(host: &Host<'_>, spec: &Spec, base: &str, apply: bool, retry: bool) -> HubUpdateReport {
+pub(crate) fn update(
+    host: &Host<'_>,
+    spec: &Spec,
+    base: &str,
+    apply: bool,
+    retry: bool,
+) -> HubUpdateReport {
     let mut state = read_state(&spec.home);
     if retry {
         state.failed.clear();
@@ -1304,39 +1403,76 @@ pub(crate) fn update(host: &Host<'_>, spec: &Spec, base: &str, apply: bool, retr
         out.detail = why;
         return out;
     }
-    let mut run = Run { host, spec, base, steps: Vec::new() };
+    let mut run = Run {
+        host,
+        spec,
+        base,
+        steps: Vec::new(),
+    };
     for role in [UnitRole::Hub, UnitRole::Update] {
         if spec.manager == Manager::Launchd {
             run.steps.extend(rotate(&spec.log(role)));
         }
     }
     let mut decision = first;
-    let (result, detail) = loop {
-        match decision.clone() {
-            Decision::Current => break ("current", format!("the hub serves {}", served_v.clone().unwrap_or_default())),
-            Decision::Unknown { reason } => break ("unknown", reason),
-            Decision::Failed { version } => break ("skipped", format!("{version} failed here before; waiting for a newer release (or --retry)")),
-            Decision::Deferred { attached } => break ("deferred", format!("{attached} session(s) attached to the hub")),
-            Decision::Install { version } => {
-                if !run.installer(&version, false) {
-                    break ("failed", format!("the installer did not install {version}"));
+    let (result, detail) =
+        loop {
+            match decision.clone() {
+                Decision::Current => {
+                    break (
+                        "current",
+                        format!("the hub serves {}", served_v.clone().unwrap_or_default()),
+                    )
                 }
-                let now_v = version_of(host, &spec.executable);
-                if now_v.as_deref() != Some(version.as_str()) {
-                    break ("failed", format!("after the installer the executable is {}", now_v.unwrap_or_else(|| "silent".into())));
+                Decision::Unknown { reason } => break ("unknown", reason),
+                Decision::Failed { version } => break (
+                    "skipped",
+                    format!(
+                        "{version} failed here before; waiting for a newer release (or --retry)"
+                    ),
+                ),
+                Decision::Deferred { attached } => {
+                    break (
+                        "deferred",
+                        format!("{attached} session(s) attached to the hub"),
+                    )
                 }
-                decision = decide(&Versions { installed: Some(&version), ..versions.clone() }, &state.failed);
+                Decision::Install { version } => {
+                    if !run.installer(&version, false) {
+                        break ("failed", format!("the installer did not install {version}"));
+                    }
+                    let now_v = version_of(host, &spec.executable);
+                    if now_v.as_deref() != Some(version.as_str()) {
+                        break (
+                            "failed",
+                            format!(
+                                "after the installer the executable is {}",
+                                now_v.unwrap_or_else(|| "silent".into())
+                            ),
+                        );
+                    }
+                    decision = decide(
+                        &Versions {
+                            installed: Some(&version),
+                            ..versions.clone()
+                        },
+                        &state.failed,
+                    );
+                }
+                Decision::Activate { version } => {
+                    break activate(&mut run, &version, served_v.as_deref(), &mut state);
+                }
             }
-            Decision::Activate { version } => {
-                break activate(&mut run, &version, served_v.as_deref(), &mut state);
-            }
-        }
-    };
+        };
     state.deferred_since = match result {
         "deferred" => state.deferred_since.or(Some(now)),
         _ => None,
     };
-    state.last = Some(UpdateRun { at: now, result: result.to_string(), detail: detail.clone() });
+    state.last = Some(UpdateRun {
+        at: now,
+        result: result.to_string(),
+        detail: detail.clone(),
+    });
     let recorded = write_state(&spec.home, &state);
     if let Err(e) = &recorded {
         run.steps.push(Step {
@@ -1349,7 +1485,16 @@ pub(crate) fn update(host: &Host<'_>, spec: &Spec, base: &str, apply: bool, retr
     // a release may render its units differently: the new executable writes them again
     if result == "updated" {
         let mut words = vec![spec.executable.display().to_string()];
-        words.extend(argv(&["mesh", "hub", "install", "--apply", "--port", &spec.port.to_string(), "--repo", &spec.repo.display().to_string()]));
+        words.extend(argv(&[
+            "mesh",
+            "hub",
+            "install",
+            "--apply",
+            "--port",
+            &spec.port.to_string(),
+            "--repo",
+            &spec.repo.display().to_string(),
+        ]));
         run.run(words);
     }
     let _ = std::fs::remove_file(lock_path(&spec.home));
@@ -1374,7 +1519,10 @@ fn activate(
     let port = run.spec.port;
     let (_, dirty) = run.git(&["status", "--porcelain", "--untracked-files=no"]);
     if !dirty.trim().is_empty() {
-        return ("failed", format!("{repo} has uncommitted changes; the hub is not moved"));
+        return (
+            "failed",
+            format!("{repo} has uncommitted changes; the hub is not moved"),
+        );
     }
     let (ok, head) = run.git(&["rev-parse", "HEAD"]);
     if !ok {
@@ -1385,15 +1533,27 @@ fn activate(
     run.git(&["fetch", "--quiet", "--tags", "origin"]);
     let tag = format!("v{version}");
     if !run.git(&["checkout", "--quiet", "--detach", &tag]).0 {
-        return ("failed", format!("{repo} has no tag {tag}; the hub is not moved"));
+        return (
+            "failed",
+            format!("{repo} has no tag {tag}; the hub is not moved"),
+        );
     }
     if !run.run(restart(run.host)).0 {
         run.git(&["checkout", "--quiet", "--detach", &head]);
-        return ("failed", "the service manager did not restart the hub; the checkout is back".into());
+        return (
+            "failed",
+            "the service manager did not restart the hub; the checkout is back".into(),
+        );
     }
     match answers_with(run.host, port, version, previous) {
         Answer::New => {
-            return ("updated", format!("the hub moved from {} to {version}", previous.unwrap_or("nothing")));
+            return (
+                "updated",
+                format!(
+                    "the hub moved from {} to {version}",
+                    previous.unwrap_or("nothing")
+                ),
+            );
         }
         Answer::Old => {
             run.git(&["checkout", "--quiet", "--detach", &head]);
@@ -1416,7 +1576,10 @@ fn activate(
     if !run.installer(p, true) {
         // the launcher still runs the new release: the checkout stays at its tag, to match
         run.run(restart(run.host));
-        return ("failed", format!("the hub did not answer with {version}, and {p} could not be installed again"));
+        return (
+            "failed",
+            format!("the hub did not answer with {version}, and {p} could not be installed again"),
+        );
     }
     run.git(&["checkout", "--quiet", "--detach", &head]);
     run.run(restart(run.host));
@@ -1426,7 +1589,11 @@ fn activate(
         format!(
             "the hub did not answer with {version} within {}s; {}",
             ANSWER_WITHIN.as_secs(),
-            if back { format!("it serves {p} again") } else { "and it does not answer with the previous release either".into() }
+            if back {
+                format!("it serves {p} again")
+            } else {
+                "and it does not answer with the previous release either".into()
+            }
         ),
     )
 }
@@ -1485,18 +1652,36 @@ pub(crate) struct HubStatusReport {
 }
 
 fn check(name: &str, level: Level, detail: String, remedy: Option<String>) -> HubCheck {
-    HubCheck { name: name.into(), level, detail, remedy }
+    HubCheck {
+        name: name.into(),
+        level,
+        detail,
+        remedy,
+    }
 }
 
 /// `mesh hub status`: the units, the manager, the hub, the versions, the update's last run
 /// and the fleet's versions, each a check.
-pub(crate) fn status(host: &Host<'_>, spec: &Spec, declared_hub: bool, base: &str) -> HubStatusReport {
+pub(crate) fn status(
+    host: &Host<'_>,
+    spec: &Spec,
+    declared_hub: bool,
+    base: &str,
+) -> HubStatusReport {
     use std::cmp::Ordering::Less;
     let cmp = crate::order::version_cmp;
     let rendered = render(spec);
     let units = views(host, &rendered);
-    let hub = if host.staging { HubAnswer::default() } else { ask_hub(host, spec.port) };
-    let published_v = if host.staging { None } else { published(host, base) };
+    let hub = if host.staging {
+        HubAnswer::default()
+    } else {
+        ask_hub(host, spec.port)
+    };
+    let published_v = if host.staging {
+        None
+    } else {
+        published(host, base)
+    };
     let installed_v = version_of(host, &spec.executable);
     let update = read_state(&spec.home);
     let now = (host.now)();
@@ -1505,70 +1690,195 @@ pub(crate) fn status(host: &Host<'_>, spec: &Spec, declared_hub: bool, base: &st
     let mut checks = Vec::new();
 
     checks.push(if spec.manager == Manager::Unsupported {
-        check("manager", Level::Fail, "neither launchd nor systemd runs here".into(), None)
+        check(
+            "manager",
+            Level::Fail,
+            "neither launchd nor systemd runs here".into(),
+            None,
+        )
     } else {
-        check("manager", Level::Pass, format!("{:?}", spec.manager).to_lowercase(), None)
+        check(
+            "manager",
+            Level::Pass,
+            format!("{:?}", spec.manager).to_lowercase(),
+            None,
+        )
     });
     checks.push(if declared_hub {
-        check("declared", Level::Pass, format!("an address of this machine is a declared hub on port {}", spec.port), None)
+        check(
+            "declared",
+            Level::Pass,
+            format!(
+                "an address of this machine is a declared hub on port {}",
+                spec.port
+            ),
+            None,
+        )
     } else {
-        check("declared", Level::Warn, "no address of this machine is under rendezvous.endpoints".into(), None)
+        check(
+            "declared",
+            Level::Warn,
+            "no address of this machine is under rendezvous.endpoints".into(),
+            None,
+        )
     });
     checks.push(if is_launcher(&spec.executable) {
-        check("launcher", Level::Pass, format!("{} is the installer's launcher", spec.executable.display()), None)
+        check(
+            "launcher",
+            Level::Pass,
+            format!("{} is the installer's launcher", spec.executable.display()),
+            None,
+        )
     } else {
-        check("launcher", Level::Warn, format!("{} is not the installer's launcher: the units would not follow the release", spec.executable.display()), None)
+        check(
+            "launcher",
+            Level::Warn,
+            format!(
+                "{} is not the installer's launcher: the units would not follow the release",
+                spec.executable.display()
+            ),
+            None,
+        )
     });
     for u in &units {
         let name = format!("unit:{}", u.name);
         checks.push(match (u.state, u.loaded && u.enabled) {
-            (FileState::Current, true) => check(&name, Level::Pass, format!("{} as rendered, loaded", u.path), None),
-            (FileState::Current, false) => check(&name, Level::Fail, format!("{} as rendered, not loaded or disabled", u.path), Some(install.clone())),
-            (FileState::Drifted, _) => check(&name, Level::Fail, format!("{} differs from what install renders", u.path), Some(install.clone())),
-            (FileState::Missing, _) => check(&name, Level::Fail, format!("{} is missing", u.path), Some(install.clone())),
+            (FileState::Current, true) => check(
+                &name,
+                Level::Pass,
+                format!("{} as rendered, loaded", u.path),
+                None,
+            ),
+            (FileState::Current, false) => check(
+                &name,
+                Level::Fail,
+                format!("{} as rendered, not loaded or disabled", u.path),
+                Some(install.clone()),
+            ),
+            (FileState::Drifted, _) => check(
+                &name,
+                Level::Fail,
+                format!("{} differs from what install renders", u.path),
+                Some(install.clone()),
+            ),
+            (FileState::Missing, _) => check(
+                &name,
+                Level::Fail,
+                format!("{} is missing", u.path),
+                Some(install.clone()),
+            ),
         });
     }
     checks.push(match &hub.version {
-        Some(v) => check("answering", Level::Pass, format!("the hub answers on port {} serving {v}", spec.port), None),
-        None => check("answering", Level::Fail, format!("nothing answers on port {}", spec.port), Some(install.clone())),
+        Some(v) => check(
+            "answering",
+            Level::Pass,
+            format!("the hub answers on port {} serving {v}", spec.port),
+            None,
+        ),
+        None => check(
+            "answering",
+            Level::Fail,
+            format!("nothing answers on port {}", spec.port),
+            Some(install.clone()),
+        ),
     });
     if hub.answering {
         checks.push(if hub.linked.is_empty() {
-            check("linked", Level::Fail, "the hub is linked with no runtime".into(), Some("majordomus mesh doctor".into()))
+            check(
+                "linked",
+                Level::Fail,
+                "the hub is linked with no runtime".into(),
+                Some("majordomus mesh doctor".into()),
+            )
         } else {
-            check("linked", Level::Pass, format!("linked with {} runtime(s)", hub.linked.len()), None)
+            check(
+                "linked",
+                Level::Pass,
+                format!("linked with {} runtime(s)", hub.linked.len()),
+                None,
+            )
         });
     }
     let fresh = update
         .last
         .as_ref()
         .is_some_and(|r| now.saturating_sub(r.at) <= 2 * UPDATE_INTERVAL_SECONDS);
-    let last_result = update.last.as_ref().map(|r| r.result.as_str()).unwrap_or("");
+    let last_result = update
+        .last
+        .as_ref()
+        .map(|r| r.result.as_str())
+        .unwrap_or("");
     let update_cmd = format!("majordomus mesh hub update --apply --repo {repo}");
     checks.push(match (&published_v, &hub.version) {
-        (None, _) => check("current", Level::Warn, "the published release could not be read".into(), None),
-        (Some(p), Some(s)) if cmp(s, p) == Less && fresh && last_result == "deferred" => {
-            check("current", Level::Warn, format!("the hub serves {s}, {p} is published; the restart waits for attached sessions"), None)
-        }
+        (None, _) => check(
+            "current",
+            Level::Warn,
+            "the published release could not be read".into(),
+            None,
+        ),
+        (Some(p), Some(s)) if cmp(s, p) == Less && fresh && last_result == "deferred" => check(
+            "current",
+            Level::Warn,
+            format!(
+                "the hub serves {s}, {p} is published; the restart waits for attached sessions"
+            ),
+            None,
+        ),
         (Some(p), Some(s)) if cmp(s, p) == Less => check(
             "current",
             Level::Fail,
-            format!("the hub serves {s}, {p} is published, and the last update ended {}", if last_result.is_empty() { "never" } else { last_result }),
+            format!(
+                "the hub serves {s}, {p} is published, and the last update ended {}",
+                if last_result.is_empty() {
+                    "never"
+                } else {
+                    last_result
+                }
+            ),
             Some(update_cmd.clone()),
         ),
-        (Some(p), _) => check("current", Level::Pass, format!("{p} is published, installed {}", installed_v.clone().unwrap_or_default()), None),
+        (Some(p), _) => check(
+            "current",
+            Level::Pass,
+            format!(
+                "{p} is published, installed {}",
+                installed_v.clone().unwrap_or_default()
+            ),
+            None,
+        ),
     });
     checks.push(match &update.last {
-        Some(r) if !fresh => check("update", Level::Fail, format!("last run {}s ago: {}", now.saturating_sub(r.at), r.result), Some(install.clone())),
+        Some(r) if !fresh => check(
+            "update",
+            Level::Fail,
+            format!("last run {}s ago: {}", now.saturating_sub(r.at), r.result),
+            Some(install.clone()),
+        ),
         Some(r) => {
             let level = match r.result.as_str() {
                 "current" | "updated" | "deferred" | "busy" => Level::Pass,
                 "skipped" => Level::Warn,
                 _ => Level::Fail,
             };
-            check("update", level, format!("last run {}s ago: {} ({})", now.saturating_sub(r.at), r.result, r.detail), (level == Level::Fail).then(|| update_cmd.clone()))
+            check(
+                "update",
+                level,
+                format!(
+                    "last run {}s ago: {} ({})",
+                    now.saturating_sub(r.at),
+                    r.result,
+                    r.detail
+                ),
+                (level == Level::Fail).then(|| update_cmd.clone()),
+            )
         }
-        None => check("update", Level::Fail, "the update never ran here".into(), Some(install.clone())),
+        None => check(
+            "update",
+            Level::Fail,
+            "the update never ran here".into(),
+            Some(install.clone()),
+        ),
     });
     if !update.failed.is_empty() {
         checks.push(check(
@@ -1586,9 +1896,19 @@ pub(crate) fn status(host: &Host<'_>, spec: &Spec, declared_hub: bool, base: &st
             .map(|l| format!("{} {}", l.machine, l.version))
             .collect();
         checks.push(if behind.is_empty() {
-            check("fleet", Level::Pass, format!("every linked runtime runs {p} or newer"), None)
+            check(
+                "fleet",
+                Level::Pass,
+                format!("every linked runtime runs {p} or newer"),
+                None,
+            )
         } else {
-            check("fleet", Level::Warn, format!("behind {p}: {}", behind.join(", ")), None)
+            check(
+                "fleet",
+                Level::Warn,
+                format!("behind {p}: {}", behind.join(", ")),
+                None,
+            )
         });
     }
     let ok = checks.iter().all(|c| c.level != Level::Fail);
@@ -1608,9 +1928,25 @@ pub(crate) fn status(host: &Host<'_>, spec: &Spec, declared_hub: bool, base: &st
 
 /// The text of a hub report, whichever of the four it is.
 pub(crate) fn render_text(v: &Value) -> String {
-    let s = |v: &Value, k: &str| v[k].as_str().map(str::to_string).unwrap_or_else(|| v[k].to_string());
+    let s = |v: &Value, k: &str| {
+        v[k].as_str()
+            .map(str::to_string)
+            .unwrap_or_else(|| v[k].to_string())
+    };
     let mut out = String::new();
-    for k in ["mode", "manager", "repo", "executable", "port", "published", "installed", "served", "checkout", "result", "detail"] {
+    for k in [
+        "mode",
+        "manager",
+        "repo",
+        "executable",
+        "port",
+        "published",
+        "installed",
+        "served",
+        "checkout",
+        "result",
+        "detail",
+    ] {
         if !v[k].is_null() && v[k] != "" {
             out.push_str(&format!("{k:<11} {}\n", s(v, k)));
         }
@@ -1637,7 +1973,12 @@ pub(crate) fn render_text(v: &Value) -> String {
         out.push_str(&format!("{verdict:<11} {}\n", s(st, "line")));
     }
     for c in v["checks"].as_array().into_iter().flatten() {
-        out.push_str(&format!("{:<5} {:<28} {}\n", s(c, "level"), s(c, "name"), s(c, "detail")));
+        out.push_str(&format!(
+            "{:<5} {:<28} {}\n",
+            s(c, "level"),
+            s(c, "name"),
+            s(c, "detail")
+        ));
         if let Some(r) = c["remedy"].as_str() {
             out.push_str(&format!("      remedy: {r}\n"));
         }

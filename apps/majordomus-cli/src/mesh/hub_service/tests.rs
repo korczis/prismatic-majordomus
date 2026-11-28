@@ -31,7 +31,9 @@ impl Fake {
     }
 
     fn answer(&self, prefix: &str, ok: bool, out: &str) -> &Self {
-        self.answers.borrow_mut().push((prefix.to_string(), ok, out.to_string()));
+        self.answers
+            .borrow_mut()
+            .push((prefix.to_string(), ok, out.to_string()));
         self
     }
 
@@ -133,17 +135,21 @@ macro_rules! with_fake {
 /// A spec under `home` whose executable is a launcher there.
 fn spec(manager: Manager, home: &Path) -> Spec {
     let executable = home.join(".local/bin/majordomus");
-    write_file(&executable, &format!("#!/bin/sh\n# {LAUNCHER_MARK}. Reinstalling rewrites it.\n")).unwrap();
+    write_file(
+        &executable,
+        &format!("#!/bin/sh\n# {LAUNCHER_MARK}. Reinstalling rewrites it.\n"),
+    )
+    .unwrap();
     Spec {
         manager,
         home: home.to_path_buf(),
         executable,
-        repo: PathBuf::from("/home/o/dev/hub repo"),
+        repo: PathBuf::from("/srv/mj/hub repo"),
         port: 8791,
     }
 }
 
-const GIT: &str = "git -C /home/o/dev/hub repo";
+const GIT: &str = "git -C /srv/mj/hub repo";
 
 #[test]
 fn the_manager_follows_the_platform() {
@@ -159,14 +165,23 @@ fn launchd_renders_a_kept_alive_hub_and_an_hourly_update() {
     let units = render(&s);
     assert_eq!(units.len(), 2);
     let hub = &units[0];
-    assert_eq!(hub.path, home.path().join("Library/LaunchAgents/dev.majordomus.hub.plist"));
+    assert_eq!(
+        hub.path,
+        home.path()
+            .join("Library/LaunchAgents/dev.majordomus.hub.plist")
+    );
     assert!(hub.content.contains("<key>KeepAlive</key>\n  <true/>"));
     assert!(hub.content.contains("<string>serve</string>"));
-    assert!(hub.content.contains("<string>/home/o/dev/hub repo</string>"));
-    assert!(hub.content.contains("<string>--idle</string>\n    <string>0</string>"));
+    assert!(hub.content.contains("<string>/srv/mj/hub repo</string>"));
+    assert!(hub
+        .content
+        .contains("<string>--idle</string>\n    <string>0</string>"));
     assert!(hub.content.contains("Library/Logs/majordomus-hub.log"));
     assert!(hub.content.contains(WRITTEN_BY));
-    assert!(!hub.content.contains("Background"), "a hub is not throttled as background work");
+    assert!(
+        !hub.content.contains("Background"),
+        "a hub is not throttled as background work"
+    );
     let update = &units[1];
     assert_eq!(update.role, UnitRole::Update);
     assert!(update.content.contains("<integer>3600</integer>"));
@@ -181,20 +196,32 @@ fn launchd_renders_a_kept_alive_hub_and_an_hourly_update() {
 fn systemd_renders_a_hub_that_never_gives_up_and_an_hourly_timer() {
     let home = tempfile::tempdir().unwrap();
     let mut s = spec(Manager::SystemdUser, home.path());
-    s.repo = PathBuf::from("/home/o/dev/hub 100%");
+    s.repo = PathBuf::from("/srv/mj/hub 100%");
     let units = render(&s);
-    assert_eq!(units.iter().map(|u| u.name).collect::<Vec<_>>(), [HUB_UNIT, UPDATE_UNIT, UPDATE_TIMER]);
+    assert_eq!(
+        units.iter().map(|u| u.name).collect::<Vec<_>>(),
+        [HUB_UNIT, UPDATE_UNIT, UPDATE_TIMER]
+    );
     let hub = &units[0].content;
     assert!(hub.contains("Restart=always") && hub.contains("StartLimitIntervalSec=0"));
-    assert!(hub.contains("serve --repo \"/home/o/dev/hub 100%%\""), "{hub}");
-    assert!(hub.contains("WorkingDirectory=/home/o/dev/hub 100%%\n"), "{hub}");
-    assert!(hub.contains("Description=Majordomus mesh hub of /home/o/dev/hub 100%%\n"));
+    assert!(hub.contains("serve --repo \"/srv/mj/hub 100%%\""), "{hub}");
+    assert!(
+        hub.contains("WorkingDirectory=/srv/mj/hub 100%%\n"),
+        "{hub}"
+    );
+    assert!(hub.contains("Description=Majordomus mesh hub of /srv/mj/hub 100%%\n"));
     assert!(hub.contains("Environment=\"PATH="));
-    assert!(!hub.contains("network-online"), "the user manager has no network-online.target");
+    assert!(
+        !hub.contains("network-online"),
+        "the user manager has no network-online.target"
+    );
     assert!(hub.contains("WantedBy=default.target"));
     assert!(units[1].content.contains("Type=oneshot"));
     assert!(units[1].content.contains("mesh hub update --apply"));
-    assert!(units[2].content.contains("OnCalendar=hourly") && units[2].content.contains("Persistent=true"));
+    assert!(
+        units[2].content.contains("OnCalendar=hourly")
+            && units[2].content.contains("Persistent=true")
+    );
     assert!(render(&spec(Manager::Unsupported, home.path())).is_empty());
     assert_eq!(systemd_word("50%$x"), "50%%$$x");
     assert_eq!(systemd_word(""), "\"\"");
@@ -234,7 +261,8 @@ fn install_on_launchd_writes_loads_and_a_second_install_does_nothing() {
     let home = tempfile::tempdir().unwrap();
     let s = spec(Manager::Launchd, home.path());
     let fake = Fake::new();
-    fake.answer(GIT, false, "").answer("launchctl print", false, "");
+    fake.answer(GIT, false, "")
+        .answer("launchctl print", false, "");
     with_fake!(fake, Manager::Launchd, false, h);
     let planned = install(&h, &s, true, false, false);
     assert!(planned.ok && planned.mode == "plan");
@@ -247,15 +275,23 @@ fn install_on_launchd_writes_loads_and_a_second_install_does_nothing() {
     assert!(fake.called("launchctl bootstrap gui/501"));
     assert!(!fake.called("launchctl enable"), "nothing was disabled");
     assert!(applied.notes.iter().any(|n| n.contains("firewall")));
-    assert!(home.path().join("Library/LaunchAgents/dev.majordomus.hub.plist").exists());
+    assert!(home
+        .path()
+        .join("Library/LaunchAgents/dev.majordomus.hub.plist")
+        .exists());
 
     // now loaded and running, and every file current: nothing is owed
     let fake2 = Fake::new();
-    fake2.answer(GIT, false, "").answer("launchctl print gui", true, "\tstate = running\n");
+    fake2
+        .answer(GIT, false, "")
+        .answer("launchctl print gui", true, "\tstate = running\n");
     with_fake!(fake2, Manager::Launchd, false, h2);
     let again = install(&h2, &s, true, false, true);
     assert!(again.ok && again.steps.is_empty(), "{:?}", again.steps);
-    assert!(again.units.iter().all(|u| u.state == FileState::Current && u.loaded && u.enabled && u.active));
+    assert!(again
+        .units
+        .iter()
+        .all(|u| u.state == FileState::Current && u.loaded && u.enabled && u.active));
 }
 
 #[test]
@@ -267,7 +303,11 @@ fn a_disabled_agent_is_enabled_and_a_held_back_hub_is_kicked() {
     }
     let fake = Fake::new();
     fake.answer(GIT, false, "")
-        .answer("launchctl print-disabled", true, "\"dev.majordomus.hub\" => disabled\n")
+        .answer(
+            "launchctl print-disabled",
+            true,
+            "\"dev.majordomus.hub\" => disabled\n",
+        )
         .answer("launchctl print gui", true, "state = waiting");
     with_fake!(fake, Manager::Launchd, false, h);
     let r = install(&h, &s, true, false, true);
@@ -285,7 +325,8 @@ fn a_drifted_loaded_agent_is_booted_out_and_bootstrapped_until_launchd_lets_it()
     let hub = &render(&s)[0];
     write_file(&hub.path, "hand made").unwrap();
     let fake = Fake::new();
-    fake.answer(GIT, false, "").answer("launchctl print gui", true, "state = running");
+    fake.answer(GIT, false, "")
+        .answer("launchctl print gui", true, "state = running");
     // the first two bootstraps meet a job launchd has not let go of yet
     let tries = RefCell::new(0);
     let exec = |a: &[String]| {
@@ -344,10 +385,19 @@ fn install_on_systemd_reloads_enables_and_starts_and_notes_lingering() {
 
     // the update service is static, and that is loaded: a second install owes nothing
     let fake2 = Fake::new();
-    fake2.answer(GIT, false, "")
-        .answer("systemctl --user is-enabled majordomus-hub-update.service", true, "static\n")
+    fake2
+        .answer(GIT, false, "")
+        .answer(
+            "systemctl --user is-enabled majordomus-hub-update.service",
+            true,
+            "static\n",
+        )
         .answer("systemctl --user is-enabled", true, "enabled\n")
-        .answer("systemctl --user is-active majordomus-hub-update.service", false, "inactive\n")
+        .answer(
+            "systemctl --user is-active majordomus-hub-update.service",
+            false,
+            "inactive\n",
+        )
         .answer("systemctl --user is-active", true, "active\n")
         .answer("loginctl", true, "yes\n");
     with_fake!(fake2, Manager::SystemdUser, false, h2);
@@ -356,7 +406,11 @@ fn install_on_systemd_reloads_enables_and_starts_and_notes_lingering() {
     assert!(again.units.iter().all(|u| u.loaded && u.enabled));
 
     // a drifted unit of an active, enabled hub is restarted, not started
-    std::fs::write(home.path().join(".config/systemd/user").join(HUB_UNIT), "old").unwrap();
+    std::fs::write(
+        home.path().join(".config/systemd/user").join(HUB_UNIT),
+        "old",
+    )
+    .unwrap();
     let r2 = install(&h2, &s, true, false, true);
     assert!(r2.ok && r2.notes.len() == 1);
     assert!(fake2.called("systemctl --user restart majordomus-hub.service"));
@@ -369,7 +423,11 @@ fn a_failed_step_stops_the_rest_and_fails_the_install() {
     let s = spec(Manager::Launchd, home.path());
     let fake = Fake::new();
     fake.answer(GIT, false, "")
-        .answer("launchctl print-disabled", true, "\"dev.majordomus.hub\" => disabled")
+        .answer(
+            "launchctl print-disabled",
+            true,
+            "\"dev.majordomus.hub\" => disabled",
+        )
         .answer("launchctl print gui", false, "")
         .answer("launchctl enable", false, "denied");
     with_fake!(fake, Manager::Launchd, false, h);
@@ -386,14 +444,30 @@ fn install_refuses_what_must_not_be_a_hub() {
     let home = tempfile::tempdir().unwrap();
     let fake = Fake::new();
     with_fake!(fake, Manager::Launchd, false, h);
-    let r = install(&h, &spec(Manager::Unsupported, home.path()), true, false, true);
-    assert!(!r.ok && r.refusal.as_deref().unwrap().contains("neither launchd nor systemd"));
+    let r = install(
+        &h,
+        &spec(Manager::Unsupported, home.path()),
+        true,
+        false,
+        true,
+    );
+    assert!(
+        !r.ok
+            && r.refusal
+                .as_deref()
+                .unwrap()
+                .contains("neither launchd nor systemd")
+    );
     let r = install(&h, &spec(Manager::Launchd, home.path()), false, false, true);
     assert!(r.refusal.as_deref().unwrap().contains("not a declared hub"));
     let mut s = spec(Manager::Launchd, home.path());
     s.executable = home.path().join("target/debug/majordomus");
     let r = install(&h, &s, true, false, true);
-    assert!(r.refusal.as_deref().unwrap().contains("not the installer's launcher"));
+    assert!(r
+        .refusal
+        .as_deref()
+        .unwrap()
+        .contains("not the installer's launcher"));
     // named on purpose, it is the operator's choice; and `git symbolic-ref` succeeds: a branch
     let r = install(&h, &s, true, true, true);
     assert!(r.refusal.as_deref().unwrap().contains("is on a branch"));
@@ -410,12 +484,24 @@ fn a_staging_root_writes_files_and_runs_nothing() {
     let s = spec(Manager::SystemdUser, home.path());
     let r = install(&h, &s, true, false, true);
     assert!(r.ok && r.mode == "staging" && r.notes.is_empty());
-    assert!(home.path().join(".config/systemd/user").join(UPDATE_TIMER).exists());
-    assert!(r.steps.iter().filter(|st| st.line.starts_with("systemctl")).all(|st| !st.ran));
+    assert!(home
+        .path()
+        .join(".config/systemd/user")
+        .join(UPDATE_TIMER)
+        .exists());
+    assert!(r
+        .steps
+        .iter()
+        .filter(|st| st.line.starts_with("systemctl"))
+        .all(|st| !st.ran));
     assert!(!fake.called("systemctl"));
     let gone = uninstall(&h, &s, true);
     assert!(gone.ok);
-    assert!(!home.path().join(".config/systemd/user").join(HUB_UNIT).exists());
+    assert!(!home
+        .path()
+        .join(".config/systemd/user")
+        .join(HUB_UNIT)
+        .exists());
 }
 
 #[test]
@@ -467,8 +553,20 @@ fn uninstall_stops_and_removes_what_install_wrote() {
     assert_eq!(fake.calls.borrow().len(), 3);
 }
 
-fn v<'a>(published: Option<&'a str>, installed: Option<&'a str>, served: Option<&'a str>, checkout: Option<&'a str>) -> Versions<'a> {
-    Versions { published, installed, served, checkout, attached: 0, deferred_too_long: false }
+fn v<'a>(
+    published: Option<&'a str>,
+    installed: Option<&'a str>,
+    served: Option<&'a str>,
+    checkout: Option<&'a str>,
+) -> Versions<'a> {
+    Versions {
+        published,
+        installed,
+        served,
+        checkout,
+        attached: 0,
+        deferred_too_long: false,
+    }
 }
 
 #[test]
@@ -476,23 +574,64 @@ fn the_decision_is_a_function_of_the_versions() {
     let none: Vec<String> = Vec::new();
     let failed = vec!["1.4.0".to_string()];
     let at = Some("1.3.0");
-    assert!(matches!(decide(&v(at, None, at, at), &none), Decision::Unknown { .. }));
-    assert_eq!(decide(&v(at, Some("1.2.0"), Some("1.2.0"), Some("1.2.0")), &none), Decision::Install { version: "1.3.0".into() });
-    assert_eq!(decide(&v(Some("1.4.0"), at, at, at), &failed), Decision::Failed { version: "1.4.0".into() });
-    assert!(matches!(decide(&v(at, at, None, at), &none), Decision::Unknown { .. }));
+    assert!(matches!(
+        decide(&v(at, None, at, at), &none),
+        Decision::Unknown { .. }
+    ));
+    assert_eq!(
+        decide(&v(at, Some("1.2.0"), Some("1.2.0"), Some("1.2.0")), &none),
+        Decision::Install {
+            version: "1.3.0".into()
+        }
+    );
+    assert_eq!(
+        decide(&v(Some("1.4.0"), at, at, at), &failed),
+        Decision::Failed {
+            version: "1.4.0".into()
+        }
+    );
+    assert!(matches!(
+        decide(&v(at, at, None, at), &none),
+        Decision::Unknown { .. }
+    ));
     assert_eq!(decide(&v(at, at, at, at), &none), Decision::Current);
     assert_eq!(decide(&v(None, at, at, at), &none), Decision::Current);
     // the hub restarted onto the new executable on its old checkout: the checkout moves
-    assert_eq!(decide(&v(at, at, at, Some("1.2.0")), &none), Decision::Activate { version: "1.3.0".into() });
+    assert_eq!(
+        decide(&v(at, at, at, Some("1.2.0")), &none),
+        Decision::Activate {
+            version: "1.3.0".into()
+        }
+    );
     // a checkout at no tag is behind, and a hub that does not answer is restarted onto it
-    assert_eq!(decide(&v(at, at, at, None), &none), Decision::Activate { version: "1.3.0".into() });
-    assert_eq!(decide(&v(at, at, None, Some("1.2.0")), &none), Decision::Activate { version: "1.3.0".into() });
-    assert_eq!(decide(&v(None, Some("1.4.0"), at, at), &failed), Decision::Failed { version: "1.4.0".into() });
+    assert_eq!(
+        decide(&v(at, at, at, None), &none),
+        Decision::Activate {
+            version: "1.3.0".into()
+        }
+    );
+    assert_eq!(
+        decide(&v(at, at, None, Some("1.2.0")), &none),
+        Decision::Activate {
+            version: "1.3.0".into()
+        }
+    );
+    assert_eq!(
+        decide(&v(None, Some("1.4.0"), at, at), &failed),
+        Decision::Failed {
+            version: "1.4.0".into()
+        }
+    );
     let mut busy = v(None, at, Some("1.2.0"), Some("1.2.0"));
     busy.attached = 2;
     assert_eq!(decide(&busy, &none), Decision::Deferred { attached: 2 });
     busy.deferred_too_long = true;
-    assert_eq!(decide(&busy, &none), Decision::Activate { version: "1.3.0".into() });
+    assert_eq!(
+        decide(&busy, &none),
+        Decision::Activate {
+            version: "1.3.0".into()
+        }
+    );
 }
 
 fn latest(v: &str) -> String {
@@ -519,7 +658,12 @@ fn an_update_installs_moves_the_checkout_restarts_rerenders_and_records_it() {
     with_fake!(fake, Manager::Launchd, false, h);
 
     let planned = update(&h, &s, RELEASE_BASE, false, false);
-    assert_eq!(planned.decision, Decision::Install { version: "1.3.0".into() });
+    assert_eq!(
+        planned.decision,
+        Decision::Install {
+            version: "1.3.0".into()
+        }
+    );
     assert!(planned.ok && planned.steps.is_empty() && planned.result == "planned");
     assert_eq!(planned.checkout.as_deref(), Some("1.2.0"));
 
@@ -530,7 +674,7 @@ fn an_update_installs_moves_the_checkout_restarts_rerenders_and_records_it() {
     assert!(fake.called(&format!("--version 1.3.0 --install-dir {dir}")));
     assert!(fake.called(&format!("{GIT} checkout --quiet --detach v1.3.0")));
     assert!(fake.called("launchctl kickstart -k gui/501/dev.majordomus.hub"));
-    assert!(fake.called("mesh hub install --apply --port 8791 --repo /home/o/dev/hub repo"));
+    assert!(fake.called("mesh hub install --apply --port 8791 --repo /srv/mj/hub repo"));
     assert!(!fake.called("MAJORDOMUS_RELEASE_BASE_URL"));
     assert!(!fake.called("--force"));
     let state = read_state(home.path());
@@ -544,7 +688,8 @@ fn a_hub_that_answers_nothing_after_the_restart_is_rolled_back_and_its_version_r
     let home = tempfile::tempdir().unwrap();
     let s = spec(Manager::SystemdUser, home.path());
     let fake = behind();
-    fake.installed("1.3.0").restarts_onto(&[None, Some("1.2.0")]);
+    fake.installed("1.3.0")
+        .restarts_onto(&[None, Some("1.2.0")]);
     with_fake!(fake, Manager::SystemdUser, false, h);
     let r = update(&h, &s, "http://127.0.0.1:9", true, false);
     assert_eq!(r.result, "rolled_back", "{r:?}");
@@ -558,9 +703,15 @@ fn a_hub_that_answers_nothing_after_the_restart_is_rolled_back_and_its_version_r
     assert!(state.last.unwrap().detail.contains("serves 1.2.0 again"));
     // the next run skips the failed version, and --retry tries it again
     fake.installed("1.3.0");
-    assert_eq!(update(&h, &s, "http://127.0.0.1:9", true, false).result, "skipped");
+    assert_eq!(
+        update(&h, &s, "http://127.0.0.1:9", true, false).result,
+        "skipped"
+    );
     fake.restarts_onto(&[Some("1.3.0")]);
-    assert_eq!(update(&h, &s, "http://127.0.0.1:9", true, true).result, "updated");
+    assert_eq!(
+        update(&h, &s, "http://127.0.0.1:9", true, true).result,
+        "updated"
+    );
 }
 
 #[test]
@@ -574,7 +725,10 @@ fn a_rollback_that_cannot_reinstall_keeps_the_checkout_with_the_executable() {
     let r = update(&h, &s, RELEASE_BASE, true, false);
     assert_eq!(r.result, "failed");
     assert!(r.detail.contains("could not be installed again"));
-    assert!(!fake.called("--detach abc"), "the checkout stays at the new tag");
+    assert!(
+        !fake.called("--detach abc"),
+        "the checkout stays at the new tag"
+    );
 
     // with the previous release back and still no answer, the report says so
     let home = tempfile::tempdir().unwrap();
@@ -601,7 +755,12 @@ fn a_rollback_that_cannot_reinstall_keeps_the_checkout_with_the_executable() {
 fn a_restart_that_does_not_take_blames_no_release() {
     for (name, restart_ok, after, needle) in [
         ("refused", false, None, "did not restart"),
-        ("old answer", true, Some("1.2.0"), "another process serves it"),
+        (
+            "old answer",
+            true,
+            Some("1.2.0"),
+            "another process serves it",
+        ),
     ] {
         let home = tempfile::tempdir().unwrap();
         let s = spec(Manager::Launchd, home.path());
@@ -686,7 +845,10 @@ fn an_update_reports_current_deferred_unknown_busy_and_a_failed_installer() {
     write_file(&lock_path(home.path()), "8\n").unwrap();
     assert_ne!(update(&h, &s, RELEASE_BASE, true, false).result, "busy");
 
-    for (fails, needle) in [("curl -fsSL", "did not install"), ("env sh", "did not install")] {
+    for (fails, needle) in [
+        ("curl -fsSL", "did not install"),
+        ("env sh", "did not install"),
+    ] {
         let fake = behind();
         fake.answer(fails, false, "");
         with_fake!(fake, Manager::Launchd, false, h);
@@ -723,14 +885,24 @@ fn an_update_rotates_a_log_past_its_bound_and_says_when_it_cannot_record() {
     let f = std::fs::File::create(&log).unwrap();
     f.set_len(LOG_BOUND + 1).unwrap();
     let fake = Fake::new();
-    fake.serving(Some("1.3.0"))
-        .installed("1.3.0")
-        .answer(&format!("{GIT} describe"), true, "v1.3.0\n");
+    fake.serving(Some("1.3.0")).installed("1.3.0").answer(
+        &format!("{GIT} describe"),
+        true,
+        "v1.3.0\n",
+    );
     with_fake!(fake, Manager::Launchd, false, h);
     let r = update(&h, &s, RELEASE_BASE, true, false);
-    assert!(r.steps.iter().any(|st| st.line.starts_with("rotate ") && st.ok == Some(true)));
+    assert!(r
+        .steps
+        .iter()
+        .any(|st| st.line.starts_with("rotate ") && st.ok == Some(true)));
     assert_eq!(std::fs::metadata(&log).unwrap().len(), 0);
-    assert_eq!(std::fs::metadata(log.with_extension("log.1")).unwrap().len(), LOG_BOUND + 1);
+    assert_eq!(
+        std::fs::metadata(log.with_extension("log.1"))
+            .unwrap()
+            .len(),
+        LOG_BOUND + 1
+    );
     assert!(rotate(&home.path().join("absent.log")).is_none());
 
     // the state file is a directory: the run cannot be recorded, and fails for it
@@ -738,7 +910,12 @@ fn an_update_rotates_a_log_past_its_bound_and_says_when_it_cannot_record() {
     let _ = std::fs::remove_file(&state);
     std::fs::create_dir_all(state.join("in-the-way")).unwrap();
     let r = update(&h, &s, RELEASE_BASE, true, false);
-    assert!(r.steps.iter().any(|st| st.line.starts_with("record ") && st.ok == Some(false)), "{r:?}");
+    assert!(
+        r.steps
+            .iter()
+            .any(|st| st.line.starts_with("record ") && st.ok == Some(false)),
+        "{r:?}"
+    );
     assert!(!r.ok);
 }
 
@@ -750,7 +927,11 @@ fn status_checks_units_hub_versions_update_and_fleet() {
         write_file(&r.path, &r.content).unwrap();
     }
     let run = |at, result: &str| UpdateState {
-        last: Some(UpdateRun { at, result: result.into(), detail: "d".into() }),
+        last: Some(UpdateRun {
+            at,
+            result: result.into(),
+            detail: "d".into(),
+        }),
         ..UpdateState::default()
     };
     write_state(home.path(), &run(999_000, "current")).unwrap();
@@ -763,7 +944,8 @@ fn status_checks_units_hub_versions_update_and_fleet() {
     with_fake!(fake, Manager::Launchd, false, h);
     let r = status(&h, &s, true, RELEASE_BASE);
     assert!(r.ok, "{:?}", r.checks);
-    let level = |r: &HubStatusReport, n: &str| r.checks.iter().find(|c| c.name == n).map(|c| c.level);
+    let level =
+        |r: &HubStatusReport, n: &str| r.checks.iter().find(|c| c.name == n).map(|c| c.level);
     assert_eq!(level(&r, "fleet"), Some(Level::Warn));
     assert_eq!(level(&r, "current"), Some(Level::Pass));
     assert_eq!(level(&r, "launcher"), Some(Level::Pass));
@@ -779,7 +961,10 @@ fn status_checks_units_hub_versions_update_and_fleet() {
         .answer("curl -fsS -m", true, &latest("1.3.0"));
     with_fake!(fake, Manager::Launchd, false, h);
     write_state(home.path(), &run(999_000, "deferred")).unwrap();
-    assert_eq!(level(&status(&h, &s, true, RELEASE_BASE), "current"), Some(Level::Warn));
+    assert_eq!(
+        level(&status(&h, &s, true, RELEASE_BASE), "current"),
+        Some(Level::Warn)
+    );
     write_state(home.path(), &run(999_000, "failed")).unwrap();
     let r = status(&h, &s, true, RELEASE_BASE);
     assert!(!r.ok);
@@ -792,7 +977,10 @@ fn status_checks_units_hub_versions_update_and_fleet() {
     assert_eq!(level(&r, "update"), Some(Level::Warn));
     assert_eq!(level(&r, "failed_versions"), Some(Level::Warn));
     write_state(home.path(), &run(1, "current")).unwrap();
-    assert_eq!(level(&status(&h, &s, true, RELEASE_BASE), "update"), Some(Level::Fail));
+    assert_eq!(
+        level(&status(&h, &s, true, RELEASE_BASE), "update"),
+        Some(Level::Fail)
+    );
 }
 
 #[test]
@@ -821,9 +1009,21 @@ fn status_names_every_missing_piece() {
     let s = spec(Manager::Launchd, home.path());
     let fake = Fake::new();
     with_fake!(fake, Manager::Unsupported, true, h);
-    let r = status(&h, &spec(Manager::Unsupported, home.path()), true, RELEASE_BASE);
+    let r = status(
+        &h,
+        &spec(Manager::Unsupported, home.path()),
+        true,
+        RELEASE_BASE,
+    );
     assert_eq!(r.checks[0].level, Level::Fail);
-    assert_eq!(r.checks.iter().find(|c| c.name == "answering").unwrap().level, Level::Fail);
+    assert_eq!(
+        r.checks
+            .iter()
+            .find(|c| c.name == "answering")
+            .unwrap()
+            .level,
+        Level::Fail
+    );
     std::fs::write(&hub.path, "drifted").unwrap();
     let fake = Fake::new();
     with_fake!(fake, Manager::Launchd, true, h);
@@ -832,7 +1032,10 @@ fn status_names_every_missing_piece() {
     // current but not loaded
     write_file(&hub.path, &hub.content).unwrap();
     let r = status(&h, &s, true, RELEASE_BASE);
-    assert!(r.checks.iter().any(|c| c.detail.contains("not loaded or disabled")));
+    assert!(r
+        .checks
+        .iter()
+        .any(|c| c.detail.contains("not loaded or disabled")));
     assert!(render_text(&serde_json::to_value(&r).unwrap()).contains("remedy"));
 }
 
