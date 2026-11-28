@@ -181,7 +181,7 @@ esac
 
 # ---------------------------------------------------------------- what the commit declares
 crate="$(g show "$C:$MANIFEST" 2>/dev/null | awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}')"
-printf 'v%s\n' "$crate" | grep -Eq "$VERSION_ERE" || die 12 "$MANIFEST at $short declares no version ('$crate')"
+grep -Eq "$VERSION_ERE" <<<"v$crate" || die 12 "$MANIFEST at $short declares no version ('$crate')"
 case "$crate" in *-*)
   say "the tree declares the pre-release $crate; a dev release is cut only from a final version"
   decided none; exit 0 ;;
