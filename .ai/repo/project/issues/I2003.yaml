@@ -30,4 +30,16 @@ validation:
 evidence_required:
   - resolve_reports_intent_drift
 created_at: 2026-10-07
-updated_at: 2026-10-07
+updated_at: 2026-11-28T07:08:03Z
+started_at: 2026-11-28T07:06:01Z
+started_event: sha256:9447f4b23a920a6e9e1a7e3c4c469d4a2540bf31ef3ccea446352dd4389b9cc4
+completed_at: 2026-11-28T07:08:03Z
+completed_event: sha256:b27186840520f80f48ccd182ebe1963b41d02056772b227fafff918b2225b6b1
+evidence:
+  - covers: "resolve_reports_intent_drift"
+    type: test
+    command: "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved; bash test/run.sh 05_handover (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: case 961 ok (unchanged, plan_changed after a criterion edit and after a critique edit, evidence_moved; a forged pin refused; a checkpoint and an unbound handover carry no pin); case 05_handover ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:07:02Z

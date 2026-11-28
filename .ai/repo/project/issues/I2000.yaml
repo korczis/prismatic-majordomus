@@ -24,7 +24,8 @@ scope:
   - .ai/repo/rules/project/an-intent-outlives-its-sessions.v3.md
   - .ai/repo/project
   - docs
-depends_on: []
+depends_on:
+  - I1902
 acceptance_criteria:
   - An issue, an intent id and paths each resolve to the criteria served, a plan_revision that changes when the intent, the links or the critique change and at no other time, and an evidence_standing that changes when a served criterion's evidence state does
   - ADR 0111 records the decision and rule project.an-intent-outlives-its-sessions v3 states that a name a worker declared and a hash compared on read are not intent state
@@ -40,4 +41,37 @@ evidence_required:
   - an_exemption_is_a_declared_class_with_a_reason
   - plan_revision_moves_only_with_the_plan
 created_at: 2026-10-07
-updated_at: 2026-10-07
+updated_at: 2026-11-28T06:59:26Z
+started_at: 2026-11-28T06:57:58Z
+started_event: sha256:097163c514452fb55b864ebeff704dda40ff88511c50c60bd34d44cc8e441ade
+completed_at: 2026-11-28T06:59:26Z
+completed_event: sha256:834cc879366e406efddba1253c129adde36d02e69f40fa3d4e5ccc5a1b83b1e3
+evidence:
+  - covers: "binding_resolves_issue_intent_and_paths"
+    type: test
+    command: "cargo test --test intent_binding (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent_binding.rs binding_resolves_issue_intent_and_paths ok (an issue, an intent and paths resolve to the same intent, criteria and pins; every surface answers the same value); ADR 0111 and rule project.an-intent-outlives-its-sessions v3 are on master"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:58:25Z
+  - covers: "ambiguous_paths_are_refused"
+    type: test
+    command: "cargo test --test intent_binding (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent_binding.rs ambiguous_paths_are_refused ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:58:43Z
+  - covers: "an_exemption_is_a_declared_class_with_a_reason"
+    type: test
+    command: "cargo test --test intent_binding; cargo test --lib intent_binding (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent_binding.rs an_exemption_is_a_declared_class_with_a_reason ok; intent_binding::tests::every_fault_of_an_exemption_is_named_at_once and an_exemption_beside_named_work_is_refused_even_when_declared ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:58:57Z
+  - covers: "plan_revision_moves_only_with_the_plan"
+    type: test
+    command: "cargo test --test intent_binding (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: binding_resolves_issue_intent_and_paths asserts plan_revision unchanged by a note and by identical content, changed by a critique edit and by a criterion edit (tests/intent_binding.rs:170-243); intent_binding::tests::drift_names_the_plan_before_the_evidence ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:59:11Z

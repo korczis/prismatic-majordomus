@@ -5,22 +5,30 @@ slug: conflicting-evidence-is-kept
 priority: p2
 profile: implementation
 objective: "When two current pieces of evidence for one criterion disagree (a passing test and a failing claim, two observations), the criterion keeps both with their sources and reads unknown with reason `conflicting`; nothing averages or drops one."
-why: "2026-10-08 and 2026-10-11: contradicting evidence must be preserved; the vocabulary constraint (do not extend public states unless needed) is kept by the proposed ADR on conflicting evidence. It builds on I2822 (satisfaction is explained), a local revival in flight and not on master or origin; record it as depends_on once I2822's record lands. Proposed in ADR 0193 (Conflicting evidence keeps the verdict vocabulary: the criterion reads unknown and cites both sides) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c221#2."
+why: "2026-10-08 and 2026-10-11: contradicting evidence must be preserved; the vocabulary constraint (do not extend public states unless needed) is kept by the proposed ADR on conflicting evidence. It builds on I2822 (satisfaction is explained), a local revival in flight and not on master or origin; record it as depends_on once I2822's record lands. Proposed in ADR 0193 (Conflicting evidence keeps the verdict vocabulary: the criterion reads unknown and cites both sides) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c221#2. 2026-11-28, critique of intent-lifecycle (findings i3258-misplaced-on-the-critical-path, i3258-surfaces-and-schema-unscoped, i3258-may-weaken-closed-work-gate): I2822 has no record on master (its record lives only on the unmerged revival commit 12af0520104), so no depends_on can name it; the scope now names every surface and the schema the desired state reaches, and closed work the evidence contradicts stays refused. intent-planning and intent-bound-work no longer wait on this milestone as a whole, so this issue holds only intent-lifecycle itself."
 current_state: "IntentVerdictState is satisfied, unsatisfied, unknown; a criterion carries one evidence ref; the gap schema already has `conflicting` for a worker's observation."
 desired_state: "Conflict is a reason on unknown, served on CLI, HTTP, MCP and /ui identically."
 scope:
   - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/cockpit/intents.rs"
   - "apps/majordomus-cli/tests/intent.rs"
+  - "share/schemas/majordomus/intent"
   - "docs/CONCEPTS.md"
 serves:
   - "intent-lifecycle#stage-is-derived"
 acceptance_criteria:
   - "A criterion with one passing and one failing current source reads unknown naming both"
   - "The public verdict vocabulary is unchanged (schema test)"
+  - "A criterion may name more than one evidence source, declared in the intent schema, so one passing and one failing source can be read at all"
+  - "Closed work whose criterion has a failing current run is still refused as closed_work_contradicted by intent realization (exit 10), whatever another source says (ADR 0075)"
 validation:
   - "majordomus plan validate"
   - "majordomus intent validate"
+  - "cargo test --test intent"
+  - "cargo test --test intent_realization"
 evidence_required:
   - "test_conflicting_evidence_is_kept"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-11-28

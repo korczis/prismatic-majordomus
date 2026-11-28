@@ -16838,6 +16838,18 @@
         }
       },
       {
+        "id": "majordomus://critique/intent-lifecycle",
+        "kind": "critique",
+        "label": "intent-lifecycle",
+        "summary": "intent-lifecycle",
+        "route": "/cockpit/objects/critique/intent-lifecycle",
+        "source": ".ai/repo/project/critiques/intent-lifecycle.yaml",
+        "facts": {
+          "intent": "intent-lifecycle",
+          "reviewed_at": "649e41282d4"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-planning",
         "kind": "critique",
         "label": "intent-planning",
@@ -34314,13 +34326,16 @@
             "The command line, HTTP and MCP answer the same derived intents",
             "intent validate exits 10 naming the finding on an invalid model, and the intent-check gate runs it"
           ],
+          "completed_at": "2026-11-28T06:48:34Z",
+          "completed_event": "sha256:c8b7681c0fb2bb805fa08b8023cd042792c9737e52dfff80d45fe9a765cddbc5",
           "created_at": "2026-09-15",
           "current_state": "No intent kind, capability or gate exists on master.",
           "depends_on": [],
           "desired_state": "An intent's stage follows the plan and its satisfaction follows recorded evidence, answered identically on the command line, HTTP and MCP, and an invalid intent model fails a gate.",
           "evidence_required": [
             "intent_stage_is_derived",
-            "intent_surfaces_agree"
+            "intent_surfaces_agree",
+            "intent_check_gate_runs_validate"
           ],
           "milestone": "intent-lifecycle",
           "parallel_safe": true,
@@ -34339,7 +34354,9 @@
             "intent-lifecycle#model-is-gated"
           ],
           "slug": "an-intent-is-a-typed-record",
-          "updated_at": "2026-09-15",
+          "started_at": "2026-11-28T06:46:34Z",
+          "started_event": "sha256:a5bc26d4537629def68ce0fbbab23f1143a7831c396ffc6fb1a13863c4e46327",
+          "updated_at": "2026-11-28T06:48:34Z",
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
@@ -34361,6 +34378,8 @@
             "An issue under an intent's milestone that serves nothing fails as issue_without_purpose",
             "An issue under no intent's milestone reports origin maintenance and no finding"
           ],
+          "completed_at": "2026-11-28T06:55:19Z",
+          "completed_event": "sha256:39b28bf66f46ccd07e580b6f0a52559490fdc9f317f39269be987a48085a91c8",
           "created_at": "2026-09-15",
           "current_state": "Issues carry no link to an intent criterion.",
           "depends_on": [
@@ -34386,7 +34405,9 @@
             "intent-planning#work-has-a-purpose"
           ],
           "slug": "an-issue-names-the-criterion-it-serves",
-          "updated_at": "2026-09-15",
+          "started_at": "2026-11-28T06:54:01Z",
+          "started_event": "sha256:e3f083f6db580ac15dd65327c1a250b23c29726520dc9b8ce50331d60d89a396",
+          "updated_at": "2026-11-28T06:55:19Z",
           "validation": [
             "cargo test --lib intent_plan",
             "cargo test --test intent_plan"
@@ -34407,6 +34428,8 @@
             "A condition asserted with no observation fails as condition_without_observation",
             "Started work on an intent with no critique fails as executing_without_critique, and with an open blocking finding as executing_with_open_blocker"
           ],
+          "completed_at": "2026-11-28T06:57:06Z",
+          "completed_event": "sha256:1a75cc457e66ac9b0313bdc72ef0b8425137cba7cd963cedeeeb5c5abb32ecb8",
           "created_at": "2026-09-15",
           "current_state": "No gap or critique record exists.",
           "depends_on": [
@@ -34435,7 +34458,9 @@
             "intent-planning#critique-precedes-execution"
           ],
           "slug": "the-gap-and-the-critique-are-records",
-          "updated_at": "2026-09-15",
+          "started_at": "2026-11-28T06:55:59Z",
+          "started_event": "sha256:de92f4c9737455ac1b23fb7865c63c7210a8c1f2858420aa35b9e5af7224bd06",
+          "updated_at": "2026-11-28T06:57:06Z",
           "validation": [
             "cargo test --lib intent_review",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
@@ -34456,6 +34481,8 @@
             "Each link is declared, observed, derived or inferred from one mapping, and the strongest per issue is kept",
             "An intent whose milestones are all DONE while a criterion's recorded run fails exits 10 naming the criterion, and a repair clears it"
           ],
+          "completed_at": "2026-11-28T06:51:29Z",
+          "completed_event": "sha256:309e7a5549a97cbab47112d5264dfb514548ed651b6afc206e6f108a10bbeee8",
           "created_at": "2026-09-17",
           "current_state": "No capability says which task, episode, provider or handover realises an intent; a closed episode forgets its provider; verifying intents are silent.",
           "depends_on": [
@@ -34480,7 +34507,9 @@
             "intent-lifecycle#lineage-survives-providers"
           ],
           "slug": "intent-realization",
-          "updated_at": "2026-09-17",
+          "started_at": "2026-11-28T06:50:04Z",
+          "started_event": "sha256:52bbd338ae767e2b8bfda39b4653a4f94d4f634673565dae461586fab1ab34d7",
+          "updated_at": "2026-11-28T06:51:29Z",
           "validation": [
             "cargo test --test intent_realization",
             "bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality"
@@ -36494,9 +36523,13 @@
         "route": "/cockpit/objects/issue/i2000",
         "source": ".ai/repo/project/issues/I2000.yaml",
         "facts": {
+          "completed_at": "2026-11-28T06:59:26Z",
+          "completed_event": "sha256:834cc879366e406efddba1253c129adde36d02e69f40fa3d4e5ccc5a1b83b1e3",
           "created_at": "2026-10-07",
           "current_state": "Intents::preflight takes an issue or paths. No exemption class exists. No revision of an intent, its links or its critique is computed.",
-          "depends_on": [],
+          "depends_on": [
+            "I1902"
+          ],
           "desired_state": "intents.binding answers the same value on every surface; ambiguity, an unknown or retired intent, an undeclared exemption class and a missing reason are refusals with a cause.",
           "evidence_required": [
             "binding_resolves_issue_intent_and_paths",
@@ -36526,7 +36559,9 @@
             "intent-bound-work#exemption-is-typed"
           ],
           "slug": "a-binding-is-derived-once",
-          "updated_at": "2026-10-07",
+          "started_at": "2026-11-28T06:57:58Z",
+          "started_event": "sha256:097163c514452fb55b864ebeff704dda40ff88511c50c60bd34d44cc8e441ade",
+          "updated_at": "2026-11-28T06:59:26Z",
           "validation": [
             "cargo test --lib intent_binding",
             "cargo test --test intent_binding"
@@ -36541,6 +36576,8 @@
         "route": "/cockpit/objects/issue/i2001",
         "source": ".ai/repo/project/issues/I2001.yaml",
         "facts": {
+          "completed_at": "2026-11-28T07:02:57Z",
+          "completed_event": "sha256:5eb815d9ea036b1ecb05195048e0dfb35e28ac235d6a77d24b239856ce87b689",
           "created_at": "2026-10-07",
           "current_state": "start takes a description, a scope, requires, a profile and an owner, and reads no intent.",
           "depends_on": [
@@ -36578,12 +36615,13 @@
             "intent-bound-work#start-is-gated"
           ],
           "slug": "start-asks-what-the-task-serves",
-          "updated_at": "2026-10-30",
+          "started_at": "2026-11-28T07:01:05Z",
+          "started_event": "sha256:581bb6ed3522c0d8cd735ef21625c4031c14110740b068bcc0cebf678108a9da",
+          "updated_at": "2026-11-28T07:02:57Z",
           "validation": [
             "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
             "bash test/run.sh 04_start_check"
-          ],
-          "why": "Until start asks, the binding is a query nobody is obliged to make and work on an uncritiqued intent begins unrefused."
+          ]
         }
       },
       {
@@ -36600,6 +36638,8 @@
             "An unreadable binding is reported as unknown, never as no intent",
             "The section follows PROFILE, has the JSON section id intent, and under budget loses its gap conditions before anything else and is never dropped whole"
           ],
+          "completed_at": "2026-11-28T07:05:17Z",
+          "completed_event": "sha256:046a11c1b7ebb15f7455ddf5aecdb9ba869a92d3934abf617510c4c576ea19a2",
           "created_at": "2026-10-07",
           "current_state": "majordomus context has no intent section; intent preflight renders the same facts for a reader who asks.",
           "depends_on": [
@@ -36622,7 +36662,9 @@
             "intent-bound-work#worker-is-briefed"
           ],
           "slug": "context-briefs-from-the-binding",
-          "updated_at": "2026-10-07",
+          "started_at": "2026-11-28T07:03:56Z",
+          "started_event": "sha256:d0e930716086c4567ea8c656eefbbefc946656c8f57b19d0580afe8dd87eb4a4",
+          "updated_at": "2026-11-28T07:05:17Z",
           "validation": [
             "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
             "bash test/run.sh 23_context"
@@ -36645,6 +36687,8 @@
             "The front matter carries plan_revision and evidence_standing as two keys, a body that forges either is refused like every other computed key, and a checkpoint carries neither",
             "An ordinary commit that changes no intent, link or critique leaves plan_revision unchanged"
           ],
+          "completed_at": "2026-11-28T07:08:03Z",
+          "completed_event": "sha256:b27186840520f80f48ccd182ebe1963b41d02056772b227fafff918b2225b6b1",
           "created_at": "2026-10-07",
           "current_state": "A handover's front matter carries the task, the branch and the head. --resolve prints Match, Git state, Freshness and Divergence.",
           "depends_on": [
@@ -36668,7 +36712,9 @@
             "intent-bound-work#resume-detects-drift"
           ],
           "slug": "a-handover-pins-the-binding",
-          "updated_at": "2026-10-07",
+          "started_at": "2026-11-28T07:06:01Z",
+          "started_event": "sha256:9447f4b23a920a6e9e1a7e3c4c469d4a2540bf31ef3ccea446352dd4389b9cc4",
+          "updated_at": "2026-11-28T07:08:03Z",
           "validation": [
             "bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved",
             "bash test/run.sh 05_handover"
@@ -36689,6 +36735,8 @@
             "The plan.transition capability refuses the same start over HTTP and MCP",
             "With the policy key absent, cases 133 and 582 pass unchanged"
           ],
+          "completed_at": "2026-11-28T07:00:37Z",
+          "completed_event": "sha256:b73f5cc339a2422949719e0f47b064f1b40f5b95ad9641bf0953f6082624081d",
           "created_at": "2026-10-07",
           "current_state": "plan::check refuses a start only when the issue is not READY; the shell engine does the same, and cases 133 and 582 hold the two equal.",
           "depends_on": [
@@ -36713,7 +36761,9 @@
             "intent-bound-work#start-is-gated"
           ],
           "slug": "plan-start-asks-the-binding",
-          "updated_at": "2026-10-07",
+          "started_at": "2026-11-28T06:59:55Z",
+          "started_event": "sha256:9aa8ea6cef177ef1baaf9768ca0eae0d75a86967dc033bd7e35ca859c156e1d4",
+          "updated_at": "2026-11-28T07:00:37Z",
           "validation": [
             "bash test/run.sh 962_plan_start_asks_the_binding_in_both_engines",
             "bash test/run.sh 133_plan_transition",
@@ -57558,7 +57608,9 @@
         "facts": {
           "acceptance_criteria": [
             "A criterion with one passing and one failing current source reads unknown naming both",
-            "The public verdict vocabulary is unchanged (schema test)"
+            "The public verdict vocabulary is unchanged (schema test)",
+            "A criterion may name more than one evidence source, declared in the intent schema, so one passing and one failing source can be read at all",
+            "Closed work whose criterion has a failing current run is still refused as closed_work_contradicted by intent realization (exit 10), whatever another source says (ADR 0075)"
           ],
           "created_at": "2026-10-18",
           "current_state": "IntentVerdictState is satisfied, unsatisfied, unknown; a criterion carries one evidence ref; the gap schema already has `conflicting` for a worker's observation.",
@@ -57571,17 +57623,23 @@
           "profile": "implementation",
           "scope": [
             "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/cockpit/intents.rs",
             "apps/majordomus-cli/tests/intent.rs",
+            "share/schemas/majordomus/intent",
             "docs/CONCEPTS.md"
           ],
           "serves": [
             "intent-lifecycle#stage-is-derived"
           ],
           "slug": "conflicting-evidence-is-kept",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-28",
           "validation": [
             "majordomus plan validate",
-            "majordomus intent validate"
+            "majordomus intent validate",
+            "cargo test --test intent",
+            "cargo test --test intent_realization"
           ]
         }
       },
@@ -85362,6 +85420,141 @@
         }
       },
       {
+        "id": "majordomus://issue/I4812",
+        "kind": "issue",
+        "label": "I4812",
+        "summary": "The Cockpit's JavaScript is measured by a coverage run, and a gate refuses a changed line no test ran",
+        "route": "/cockpit/objects/issue/i4812",
+        "source": ".ai/repo/project/issues/I4812.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A cockpit lane run produces a per-file, per-line coverage report of share/cockpit/*.js from the browser suite",
+            "A change adding a line under share/cockpit/ that no test runs fails the gate naming the file and line",
+            "An exemption is honoured only with a written reason and is listed in every run's output",
+            "The gate is shown failing on a fixture build it must refuse before it is shown passing on master"
+          ],
+          "created_at": "2026-11-28",
+          "current_state": "On master 649e41282d4 the cockpit job runs the Cockpit's browser checks and no coverage of share/cockpit/*.js is collected, reported or gated.",
+          "depends_on": [],
+          "evidence_required": [
+            "cockpit_coverage_gate_refuses_an_unrun_line"
+          ],
+          "milestone": "intent-lifecycle",
+          "non_scope": [
+            "Coverage of the Rust crate, which the coverage job already measures",
+            "Coverage of the public site's scripts"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/cockpit",
+            "scripts/ci",
+            ".ai/repo/ci/gates.yaml",
+            ".github/workflows/validate.yml",
+            "test/cases",
+            "docs/COCKPIT.md"
+          ],
+          "serves": [
+            "intent-lifecycle#surfaces-agree"
+          ],
+          "slug": "the-cockpit-javascript-coverage-is-gated",
+          "updated_at": "2026-11-28",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4813",
+        "kind": "issue",
+        "label": "I4813",
+        "summary": "A GitHub milestone is closed only when the intents it serves are satisfied, and the drift check agrees",
+        "route": "/cockpit/objects/issue/i4813",
+        "source": ".ai/repo/project/issues/I4813.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A DONE milestone whose intent reads unsatisfied or unknown is wanted open, by github-sync and github-check alike, and its description names the intent and the unmet criterion",
+            "A DONE milestone whose intents all read satisfied, or which no intent names, is wanted closed as today",
+            "github-check reports no drift for a milestone github-sync just projected under either rule",
+            "The claim intent-closes-github-milestones is guaranteed by the case that proves the three criteria above"
+          ],
+          "created_at": "2026-11-28",
+          "depends_on": [],
+          "evidence_required": [
+            "closure_waits_for_satisfied_intents",
+            "closure_and_drift_check_agree"
+          ],
+          "milestone": "intent-lifecycle",
+          "non_scope": [
+            "Deciding satisfaction: that stays with the intent engine (ADR 0107)",
+            "Making a command criterion derivable (I3255)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            "scripts/ci/github-check",
+            ".ai/repo/ci/github.yaml",
+            "test/cases",
+            "docs/CLAIMS.yaml"
+          ],
+          "serves": [
+            "intent-lifecycle#stage-is-derived"
+          ],
+          "slug": "a-github-milestone-closes-on-its-intents",
+          "updated_at": "2026-11-28",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4814",
+        "kind": "issue",
+        "label": "I4814",
+        "summary": "start --issue carries the issue's evidence_required and the obligations its paths imply into the task's requires",
+        "route": "/cockpit/objects/issue/i4814",
+        "source": ".ai/repo/project/issues/I4814.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "start --issue writes the issue's evidence_required and the obligations its paths imply into the task's requires, merged with --requires and with no duplicate",
+            "check and finish hold those tokens exactly as they hold a hand-typed --requires",
+            "Case 960 fails before the change, on a task started with --issue whose requires is empty"
+          ],
+          "created_at": "2026-11-28",
+          "depends_on": [
+            "I2001"
+          ],
+          "evidence_required": [
+            "start_issue_carries_what_the_issue_owes"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Refusing a finish on unmet criteria (milestone a-finish-reads-the-criteria-its-work-serves)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/intent_binding.sh",
+            "test/cases/960_a_task_starts_bound_to_what_it_serves.sh",
+            "docs/CLI.md"
+          ],
+          "serves": [],
+          "slug": "start-issue-carries-what-the-issue-owes",
+          "updated_at": "2026-11-28",
+          "validation": [
+            "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves",
+            "bash test/run.sh 04_start_check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -93133,9 +93326,7 @@
             "The command line, HTTP and MCP answer the same binding"
           ],
           "created_at": "2026-10-07",
-          "depends_on": [
-            "intent-planning"
-          ],
+          "depends_on": [],
           "desired_state": "One derivation, `Intents::binding`, answered by `intents.binding` on every surface and asked by start, context and handover.",
           "evidence_required": [],
           "non_scope": [
@@ -93258,7 +93449,9 @@
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
-            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence",
+            "cargo test --test intent_realization",
+            "bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality"
           ]
         }
       },
@@ -93277,9 +93470,7 @@
             "Execution on an intent whose plan has no critique, or an open blocking finding, fails intent validate"
           ],
           "created_at": "2026-09-15",
-          "depends_on": [
-            "intent-lifecycle"
-          ],
+          "depends_on": [],
           "desired_state": "intent validate reports the coverage of every criterion, the purpose of every issue, and the findings of the gap and critique records, and exits non-zero when the plan does not carry the intent.",
           "evidence_required": [],
           "non_scope": [
@@ -135248,6 +135439,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/intent-lifecycle",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-planning",
         "target": "kind:critique",
         "kind": "is_a"
@@ -142181,6 +142377,11 @@
         "source": "majordomus://issue/I2000",
         "target": "kind:issue",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2000",
+        "target": "majordomus://issue/I1902",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://issue/I2000",
@@ -156418,6 +156619,41 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4812",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4812",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4813",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4813",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4814",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4814",
+        "target": "majordomus://issue/I2001",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4814",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -157988,11 +158224,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://milestone/intent-bound-work",
-        "target": "majordomus://milestone/intent-planning",
-        "kind": "depends_on"
-      },
-      {
         "source": "majordomus://milestone/intent-intake",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -158011,11 +158242,6 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "kind:milestone",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://milestone/intent-planning",
-        "target": "majordomus://milestone/intent-lifecycle",
-        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/knowledge-acts-on-what-it-learns",
@@ -169384,8 +169610,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4602,
-      "edges": 10364,
+      "nodes": 4606,
+      "edges": 10371,
       "acyclic": false,
       "truncated": false
     }

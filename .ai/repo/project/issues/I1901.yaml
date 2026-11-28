@@ -30,4 +30,23 @@ evidence_required:
   - coverage_refuses_an_uncovered_criterion
   - every_issue_has_an_origin
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-11-28T06:55:19Z
+started_at: 2026-11-28T06:54:01Z
+started_event: sha256:e3f083f6db580ac15dd65327c1a250b23c29726520dc9b8ce50331d60d89a396
+completed_at: 2026-11-28T06:55:19Z
+completed_event: sha256:39b28bf66f46ccd07e580b6f0a52559490fdc9f317f39269be987a48085a91c8
+evidence:
+  - covers: "coverage_refuses_an_uncovered_criterion"
+    type: test
+    command: "cargo test --lib intent_plan; cargo test --test intent_plan (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: intent_plan::tests::a_criterion_nothing_serves_is_uncovered_and_refused ok; tests/intent_plan.rs a_criterion_no_work_serves_is_refused_once_the_intent_has_work ok (4 passed); lib unit tests 4679 passed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:54:39Z
+  - covers: "every_issue_has_an_origin"
+    type: test
+    command: "cargo test --lib intent_plan; cargo test --test intent_plan (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: intent_plan::tests::work_under_an_intent_that_serves_nothing_has_no_purpose ok and work_under_no_intent_is_maintenance_and_not_a_finding ok; tests/intent_plan.rs work_under_an_intent_answers_why_it_exists_or_is_refused ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:54:58Z

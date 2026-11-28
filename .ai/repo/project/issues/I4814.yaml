@@ -1,0 +1,32 @@
+id: I4814
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "start --issue carries the issue's evidence_required and the obligations its paths imply into the task's requires"
+slug: start-issue-carries-what-the-issue-owes
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "When a task starts with --issue, write the issue's evidence_required and the obligations its paths imply into the task's requires, so check and finish hold them without a hand-typed --requires; case 960 proves it, for the bounded task/coordination row of milestone a-bounded-task-is-carried-to-accepted-work."
+why: "The row 'bounded task/coordination: exists-unwired' of milestone a-bounded-task-is-carried-to-accepted-work found that start --issue takes neither the issue's evidence_required nor the obligations its paths imply. Commit 984034fbc2b (2026-10-30) wrote that gap into I2001 as an extra acceptance criterion, after I2001's binding work had landed (4f4136ea60b). On 2026-11-28 it moved here, because it is the row's work, not the binding's: as a criterion of I2001 it kept I2001, and through it I2002, I2003 and milestone intent-bound-work, from being recorded on the evidence they have."
+current_state: "On master 649e41282d4, lib/start.sh writes requires only from --requires, and neither lib/start.sh nor lib/intent_binding.sh reads an issue's evidence_required. Case 960 names evidence_required only in its fixture records."
+desired_state: "start --issue I<n> writes requires from the issue's evidence_required plus the obligations share/obligations.yaml derives from the issue's scope, merged with any --requires; check and finish hold them; the task record and task.started carry them."
+scope:
+  - "lib/start.sh"
+  - "lib/intent_binding.sh"
+  - "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+  - "docs/CLI.md"
+non_scope:
+  - "Refusing a finish on unmet criteria (milestone a-finish-reads-the-criteria-its-work-serves)"
+depends_on:
+  - I2001
+acceptance_criteria:
+  - "start --issue writes the issue's evidence_required and the obligations its paths imply into the task's requires, merged with --requires and with no duplicate"
+  - "check and finish hold those tokens exactly as they hold a hand-typed --requires"
+  - "Case 960 fails before the change, on a task started with --issue whose requires is empty"
+validation:
+  - "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves"
+  - "bash test/run.sh 04_start_check"
+evidence_required:
+  - "start_issue_carries_what_the_issue_owes"
+created_at: 2026-11-28
+updated_at: 2026-11-28

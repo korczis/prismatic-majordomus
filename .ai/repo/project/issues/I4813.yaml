@@ -1,0 +1,36 @@
+id: I4813
+milestone: intent-lifecycle
+title: "A GitHub milestone is closed only when the intents it serves are satisfied, and the drift check agrees"
+slug: a-github-milestone-closes-on-its-intents
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "intent-lifecycle#stage-is-derived"
+objective: "Deliver slice 5 of milestone intent-lifecycle: the GitHub projection of a milestone carries the intents it serves, and the projection closes a milestone only when its derived status is DONE and every intent naming it reads satisfied; scripts/ci/github-check derives the same wanted state, so the closure rule and the drift check cannot contradict each other."
+why: "The critique of intent-lifecycle (findings slice-5-undelivered-and-unplanned and closure-gate-vs-github-check, 2026-11-28): scripts/github-sync closes a GitHub milestone from its derived status alone (want=closed for DONE or CANCELLED) and reads no intent, the claim intent-closes-github-milestones is planned with no implementation, and no issue carried the slice. A closure rule designed apart from github-check would keep a DONE milestone open on GitHub while github-check fails on the remote disagreeing with the derived state."
+current_state: "On master 649e41282d4 scripts/github-sync derives want=closed from the milestone's derived status only; no milestone description names its intents; docs/CLAIMS.yaml intent-closes-github-milestones is planned."
+desired_state: "github-sync and github-check derive one wanted state per milestone from its status and the verdicts of the intents naming it; a DONE milestone whose intent is unsatisfied or unknown stays open with a description naming the intent and the criterion; the claim is guaranteed by a case."
+scope:
+  - "scripts/github-sync"
+  - "scripts/ci/github-check"
+  - ".ai/repo/ci/github.yaml"
+  - "test/cases"
+  - "docs/CLAIMS.yaml"
+non_scope:
+  - "Deciding satisfaction: that stays with the intent engine (ADR 0107)"
+  - "Making a command criterion derivable (I3255)"
+depends_on: []
+acceptance_criteria:
+  - "A DONE milestone whose intent reads unsatisfied or unknown is wanted open, by github-sync and github-check alike, and its description names the intent and the unmet criterion"
+  - "A DONE milestone whose intents all read satisfied, or which no intent names, is wanted closed as today"
+  - "github-check reports no drift for a milestone github-sync just projected under either rule"
+  - "The claim intent-closes-github-milestones is guaranteed by the case that proves the three criteria above"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "closure_waits_for_satisfied_intents"
+  - "closure_and_drift_check_agree"
+created_at: 2026-11-28
+updated_at: 2026-11-28

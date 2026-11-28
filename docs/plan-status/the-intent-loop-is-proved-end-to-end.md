@@ -16,7 +16,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I3260](https://majordomus.dev/plan/i3260/) | BLOCKED | 3 | I3252, I3247, I3255 | One intent is carried in a disposable repository from a sentence through a failing criterion to a satisfied verdict, across two providers and a handover |
-| [I3261](https://majordomus.dev/plan/i3261/) | BLOCKED | 2 | I3259, I2001 | Every bypass of the intent loop is tried by a test and is refused or exempted by policy, never passed |
+| [I3261](https://majordomus.dev/plan/i3261/) | BLOCKED | 5 | I3259, I2001 | Every bypass of the intent loop is tried by a test and is refused or exempted by policy, never passed |
 | [I4482](https://majordomus.dev/plan/i4482/) | BLOCKED | 4 | I4480, I3256, I3257, I3260 | The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart |
 
 ## Findings

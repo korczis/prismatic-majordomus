@@ -30,8 +30,13 @@ validation:
   - cargo test --test intent_plan
   - bash test/run.sh 386_a_plan_is_held_to_its_intent
 evidence_required: []
-depends_on:
-  - intent-lifecycle
+# 2026-11-28: was [intent-lifecycle]. The work here needs the intent kind (I1900), which
+# I1901's own depends_on names; it needs neither conflicting evidence (I3258), the Cockpit
+# coverage gate (I4812) nor the GitHub closure gate (I4813), which keep intent-lifecycle open.
+# The milestone edge held delivered work behind unrelated follow-ups (critique of
+# intent-lifecycle, finding i3258-misplaced-on-the-critical-path), so the order is carried by
+# the issue edge alone.
+depends_on: []
 risks:
   - "Refusing an uncovered criterion makes an intent declared ahead of its issues invalid; the intent and the issues that serve it must land together."
 created_at: 2026-09-15

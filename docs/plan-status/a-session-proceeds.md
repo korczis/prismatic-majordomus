@@ -44,6 +44,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3251; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3258; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3267; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3304; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3307; they may not run concurrently |
@@ -105,5 +106,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4781; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4791; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4808; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4679; they may not run concurrently |
 | WARN | `scope_conflict` | `I4675` | shares apps/majordomus-cli/src/capability/builtin/allocate.rs with I4808; they may not run concurrently |
+| WARN | `scope_conflict` | `I4675` | shares test/cases/4675_mesh_allocate_answers_when_the_capability_does.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4675` | shares test/cases/4675_mesh_allocate_answers_when_the_capability_does.sh with I4813; they may not run concurrently |

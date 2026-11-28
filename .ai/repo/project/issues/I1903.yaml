@@ -29,4 +29,23 @@ evidence_required:
   - intent_lineage_joined
   - closed_work_contradicted_refused
 created_at: 2026-09-17
-updated_at: 2026-09-17
+updated_at: 2026-11-28T06:51:29Z
+started_at: 2026-11-28T06:50:04Z
+started_event: sha256:52bbd338ae767e2b8bfda39b4653a4f94d4f634673565dae461586fab1ab34d7
+completed_at: 2026-11-28T06:51:29Z
+completed_event: sha256:309e7a5549a97cbab47112d5264dfb514548ed651b6afc206e6f108a10bbeee8
+evidence:
+  - covers: "intent_lineage_joined"
+    type: test
+    command: "cargo test --test intent_realization; bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: tests/intent_realization.rs 7 passed (one_task_carried_by_two_providers_across_a_handover_realises_one_intent, each_link_says_how_it_is_known_and_the_strongest_wins, every_record_the_checkout_holds_is_gathered_with_how_it_links); case 388 ok in suite shard"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:50:56Z
+  - covers: "closed_work_contradicted_refused"
+    type: test
+    command: "cargo test --test intent_realization; bin/majordomus-cli intent realization (gate intent-realization) (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: closed_work_reality_contradicts_is_named_on_every_surface_and_exits_10 ok; job rust (3) ran '==> intent-realization: bin/majordomus-cli intent realization' ok; case 388 ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:51:13Z

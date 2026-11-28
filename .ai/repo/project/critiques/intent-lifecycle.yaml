@@ -1,0 +1,141 @@
+intent: intent-lifecycle
+reviewed_at: 649e41282d4
+reviewed_by: "claude-code Plan subagent (read-only, fresh context, same model family as the author) dispatched by session 2e285d37 (roadmap lane of the landing seat) over the intent, milestone and issue records of intent-lifecycle (I1900, I1903, I3258) on origin/master 649e41282d4, read against ADRs 0070, 0073, 0075, 0107 and 0193, the intent engine, cases 367 and 388, gates.yaml, docs/CLAIMS.yaml and scripts/github-sync; resolved by the dispatching session as the plan author. The reviewer ran nothing. Its disposition: revise; 17 findings, 3 of them blocking. All 3 blocking findings are planned (I3258 amended and the downstream milestone edges replaced by issue edges; slices 4 and 5 planned as I4812 and I4813); of the 14 non-blocking, 6 are planned and 8 are left open, 3 of those for the owner (which standard proposed ADRs carry, and whether model-is-gated keeps a command criterion the ledger cannot derive). The advisor the reasoning plan selected (chatgpt) answered auth_failed; the decision rests on local evidence."
+findings:
+  - id: i3258-misplaced-on-the-critical-path
+    class: unnecessary_work
+    subject: I3258
+    finding: "I3258 rests on I2822, of which no record exists on master, and on ADR 0193 (proposed); the dependency is written only in its why, so it reads READY in wave 0, and it counts toward the milestone's required issues, so intent-planning, intent-bound-work and a-finish-reads-the-criteria-its-work-serves all waited on a p2 issue added on 2026-10-18."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3258
+      because: "I3258's why now says I2822's record lives only on the unmerged commit 12af0520104, so no depends_on can name it. intent-planning and intent-bound-work no longer depend on intent-lifecycle as a whole; the order they need is carried by the issue edges I1901 -> I1900 and I2000 -> I1902 (both milestone records say why). I3258 stays here and holds only this milestone open, which is true: it is unbuilt."
+  - id: slice-5-undelivered-and-unplanned
+    class: missed_requirement
+    subject: milestone:intent-lifecycle
+    finding: "No issue delivers slice 5 and it is not on the tree: scripts/github-sync closes a milestone from its derived status alone and reads no intent, and the claim intent-closes-github-milestones is planned with no implementation (docs/CLAIMS.yaml). A DONE milestone would contradict its own acceptance criterion."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4813
+      because: "I4813 plans slice 5 in this milestone, serving stage-is-derived: a GitHub milestone reading closed is a satisfaction read from a finished milestone, which the intent's statement forbids."
+  - id: slice-4-coverage-gate-absent
+    class: missed_requirement
+    subject: milestone:intent-lifecycle
+    finding: "The Cockpit intent view is delivered (cockpit/intents.rs, claim intent-cockpit-pages guaranteed), but no gate measures or enforces the Cockpit's JavaScript coverage: the only Cockpit gates are cockpit-assets, cockpit-projection and cockpit-probe. No issue covers it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4812
+      because: "I4812 plans the coverage run and the gate for share/cockpit/*.js in this milestone, serving surfaces-agree (the Cockpit is one of the surfaces that must answer the same intents)."
+  - id: slice-2-delivered-without-an-issue
+    class: missed_requirement
+    subject: milestone:intent-lifecycle
+    finding: "Slice 2 is on the tree (commit d8580ff6950 brought ADR 0107 and case 895; the separate verdict is in intent.rs), but no issue of this milestone records it, so nothing in the plan carries its evidence."
+    blocking: false
+    resolution:
+      state: open
+  - id: slice-3-owned-by-a-downstream-milestone
+    class: unproven_assumption
+    subject: milestone:intent-lifecycle
+    finding: "Slice 3 has no issue here; its substance was delivered by intent-bound-work (lib/start.sh asks the binding, case 960 guarantees intent-in-session-context, devtask asks intents.preflight), while the devcontext compiler never calls preflight and its intent is free text. The slice's ownership is inverted."
+    blocking: false
+    resolution:
+      state: open
+  - id: acceptance-omits-realization-and-conflict
+    class: insufficient_work
+    subject: milestone:intent-lifecycle
+    finding: "Neither I1903 (lineage-survives-providers) nor I3258 matches any of slices 1-5, and the milestone's validation list omitted case 388 and cargo test --test intent_realization, which I1903 names."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I1903
+      because: "The milestone's validation now names cargo test --test intent_realization and case 388, which I1903's done record cites; the slice list itself is the milestone's acceptance text and is left as written."
+  - id: command-criterion-can-never-be-met
+    class: unproven_assumption
+    subject: intent-lifecycle#model-is-gated
+    finding: "A command criterion always reads not_derivable and unmet (intent.rs), so all_met is never true, the stage stops at verifying once the milestone is DONE and the verdict is at best unknown. The fix is I3255 in command-and-deployment-criteria-are-judged, which the intent does not name and I3255 serves nothing."
+    blocking: false
+    resolution:
+      state: open
+  - id: model-is-gated-ref-proves-the-wrong-thing
+    class: unproven_assumption
+    subject: intent-lifecycle#model-is-gated
+    finding: "The criterion says the intent-check gate runs on a change to the model or the engine; intent validate exiting 0 shows the model is valid today, not that the gate is wired (gates.yaml intent-check). Only a CI-wiring test would prove it."
+    blocking: false
+    resolution:
+      state: open
+  - id: surfaces-agree-ref-skips-http
+    class: unproven_assumption
+    subject: intent-lifecycle#surfaces-agree
+    finding: "Case 367 compares the command line with MCP and checks the non-zero exit, but never calls HTTP; HTTP parity is tested only in apps/majordomus-cli/tests/intent.rs, which is not this criterion's ref."
+    blocking: false
+    resolution:
+      state: open
+  - id: stage-is-derived-ref-partial
+    class: unproven_assumption
+    subject: intent-lifecycle#stage-is-derived
+    finding: "The ref apps/majordomus-cli/tests/intent.rs checks satisfaction from evidence well but asserts the stage only as planned and declared; the test that the stage follows the milestones is a library unit test in intent.rs, plus case 367."
+    blocking: false
+    resolution:
+      state: open
+  - id: i1900-evidence-misses-the-gate
+    class: insufficient_work
+    subject: I1900
+    finding: "I1900's third acceptance criterion (validate exits 10 and the intent-check gate runs it) had no evidence_required token, and its objective named intent.* capabilities where the registry ids are intents.*."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I1900
+      because: "I1900 now requires intent_check_gate_runs_validate and names intents.list, intents.record, intents.validate and intents.preflight."
+  - id: i3258-surfaces-and-schema-unscoped
+    class: surface_missing
+    subject: I3258
+    finding: "I3258's desired state reaches CLI, HTTP, MCP and /ui, but its scope omitted the intents capability, the Cockpit intent page, intent_realization.rs and the intent schema, and a criterion carries one ref today, so two sources need a schema change nobody planned; its validation omitted cargo test --test intent."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3258
+      because: "I3258's scope now names those four paths, an acceptance criterion requires the schema to declare more than one source, and its validation names cargo test --test intent and --test intent_realization."
+  - id: i3258-may-weaken-closed-work-gate
+    class: regression_risk
+    subject: I3258
+    finding: "A failing current run makes closed work closed_work_contradicted and intent realization exits 10; if a failing test plus a passing source becomes unknown, that refusal could silently go away, against ADR 0075."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3258
+      because: "I3258 gains the acceptance criterion that closed work whose criterion has a failing current run is still refused as closed_work_contradicted, whatever another source says."
+  - id: done-turns-staleness-into-refusal
+    class: regression_risk
+    subject: milestone:intent-lifecycle
+    finding: "Once the milestone is DONE, the intent-realization gate refuses any criterion whose recorded run is failing or not current, so every edit to the serving scope fails intent realization on a checkout with an older ledger run until a run is re-recorded; on a runner with no ledger it is only a closed_work_unproven warning. Neither behaviour has been shown for this intent."
+    blocking: false
+    resolution:
+      state: open
+  - id: closure-gate-vs-github-check
+    class: regression_risk
+    subject: milestone:intent-lifecycle
+    finding: "Slice 5 as written would keep a DONE milestone open on GitHub while its intents are unsatisfied (including this one, indefinitely, because of model-is-gated), while scripts/ci/github-check fails when the remote disagrees with the derived state; the two would contradict each other unless designed together."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4813
+      because: "I4813 makes github-sync and github-check derive one wanted state from status and intent verdicts, with an acceptance criterion that github-check reports no drift for a milestone github-sync just projected."
+  - id: restamp-runs-intent-check
+    class: delivery_verification
+    subject: I1900
+    finding: "I1900 was reset from DONE by f044ae64206 because the lander ran only the structure job and intent-check failed on master with executing_without_critique; re-recording I1900 and I1903 needs runs at the current tree, and the change must pass intent-check and intent-realization in the rust lane."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I1900
+      because: "I1900's and I1903's done records cite master validate 46027019147 at 649e41282d4, the commit this critique reviewed, and the pull request carrying them runs the rust lane, where intent-check and intent-realization run."
+  - id: governance-on-proposed-adrs
+    class: unproven_assumption
+    subject: milestone:intent-lifecycle
+    finding: "Every ADR this intent's governance and its issues cite (0070, 0073, 0075, 0107) is proposed; treating I3258's ADR 0193 as carrying no authority until accepted holds this plan to a standard its own foundations do not meet. The author should state which standard applies."
+    blocking: false
+    resolution:
+      state: open

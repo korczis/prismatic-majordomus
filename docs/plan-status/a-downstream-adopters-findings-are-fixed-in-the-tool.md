@@ -35,16 +35,34 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I4778` | shares test/cases/4778_an_advisor_answers_before_it_is_available.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4778` | shares test/cases/4778_an_advisor_answers_before_it_is_available.sh with I4813; they may not run concurrently |
+| WARN | `scope_conflict` | `I4780` | shares test/cases/4780_a_credential_is_probed_not_read.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4780` | shares test/cases/4780_a_credential_is_probed_not_read.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares lib/doctor.sh with I4783; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares share/skeleton/policy.yaml with I4788; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares share/skeleton/policy.yaml with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares lib/doctor.sh with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I4781` | shares lib/doctor.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4781` | shares scripts/ci/rule-proof-check with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4781` | shares test/cases/4781_a_gated_project_rule_is_in_the_registry.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4783` | shares lib/doctor.sh with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I4783` | shares lib/doctor.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4783` | shares test/cases/4783_a_path_only_invocation_is_wired.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4783` | shares test/cases/4783_a_path_only_invocation_is_wired.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4788` | shares share/skeleton/policy.yaml with I4789; they may not run concurrently |
 | WARN | `scope_conflict` | `I4788` | shares lib/plan.sh with I4792; they may not run concurrently |
 | WARN | `scope_conflict` | `I4788` | shares share/skeleton/policy.yaml with I4793; they may not run concurrently |
+| WARN | `scope_conflict` | `I4788` | shares test/cases/4788_a_plan_change_says_what_it_reopens.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4788` | shares test/cases/4788_a_plan_change_says_what_it_reopens.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4789` | shares share/skeleton/policy.yaml with I4793; they may not run concurrently |
 | WARN | `scope_conflict` | `I4789` | shares lib/finish.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4789` | shares test/cases/4789_an_owners_commit_is_not_the_agents_scope.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4789` | shares test/cases/4789_an_owners_commit_is_not_the_agents_scope.sh with I4813; they may not run concurrently |
+| WARN | `scope_conflict` | `I4791` | shares test/cases/4791_every_mention_is_a_link_both_ways.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4791` | shares test/cases/4791_every_mention_is_a_link_both_ways.sh with I4813; they may not run concurrently |
+| WARN | `scope_conflict` | `I4792` | shares test/cases/4792_optional_plan_fields_are_a_stated_contract.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4792` | shares test/cases/4792_optional_plan_fields_are_a_stated_contract.sh with I4813; they may not run concurrently |
 | WARN | `scope_conflict` | `I4793` | shares lib/doctor.sh with I4805; they may not run concurrently |
+| WARN | `scope_conflict` | `I4793` | shares test/cases/4793_doctor_keeps_its_budget_in_a_small_repository.sh with I4812; they may not run concurrently |
+| WARN | `scope_conflict` | `I4793` | shares test/cases/4793_doctor_keeps_its_budget_in_a_small_repository.sh with I4813; they may not run concurrently |

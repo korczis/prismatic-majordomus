@@ -18,7 +18,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3147](https://majordomus.dev/plan/i3147/) | BLOCKED | 0 | — | The effective governance has one digest, computed by one function and shown by the preflight |
 | [I3148](https://majordomus.dev/plan/i3148/) | BLOCKED | 3 | I3147, I3142 | An episode records the governance digest and the briefing digest it was handed at start |
 | [I3149](https://majordomus.dev/plan/i3149/) | BLOCKED | 4 | I3148 | A governance change during a session is told at the session's next brief or check |
-| [I3150](https://majordomus.dev/plan/i3150/) | BLOCKED | 3 | I3147, I2003 | A handover carries the governance digest it was written under, and resolving it says when governance moved |
+| [I3150](https://majordomus.dev/plan/i3150/) | BLOCKED | 6 | I3147, I2003 | A handover carries the governance digest it was written under, and resolving it says when governance moved |
 | [I3151](https://majordomus.dev/plan/i3151/) | BLOCKED | 1 | I3147 | Every entry surface reports the same governance digest for one checkout |
 | [I3152](https://majordomus.dev/plan/i3152/) | BLOCKED | 0 | — | Every known route around the preflight and the edit guard is a case or a stated limit |
 | [I3153](https://majordomus.dev/plan/i3153/) | BLOCKED | 0 | — | Task start says how far its base is behind the remote's master as last fetched, and stops only on a diverged local master, with the next step |

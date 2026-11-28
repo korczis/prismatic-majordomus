@@ -9,17 +9,17 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [intent-bound-work](https://majordomus.dev/plan/intent-bound-work/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | `start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift. |
+| [intent-bound-work](https://majordomus.dev/plan/intent-bound-work/) | DONE | 5/5 | 0 | 0 | 0 | 0 | 0 | `start` names an issue, an intent or a declared exemption, asks the binding capability what the task serves, and refuses a refused binding where the policy requires binding. The task record carries what was named and the revision it resolved at. `context` briefs the worker from the binding, `handover` pins the revision, and `handover --resolve` reports drift. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I2000](https://majordomus.dev/plan/i2000/) | BLOCKED | 0 | — | What a piece of work serves is one derivation, with a revision |
-| [I2001](https://majordomus.dev/plan/i2001/) | BLOCKED | 1 | I2000 | start asks what the task serves and refuses a refused binding where the policy requires it |
-| [I2002](https://majordomus.dev/plan/i2002/) | BLOCKED | 2 | I2001 | The context of a bound task says what the intent asks of this work |
-| [I2003](https://majordomus.dev/plan/i2003/) | BLOCKED | 2 | I2001 | A handover pins the binding it was written under, and resolving it reports drift |
-| [I2004](https://majordomus.dev/plan/i2004/) | BLOCKED | 1 | I2000 | plan start refuses an issue whose binding is refused, in both engines |
+| [I2000](https://majordomus.dev/plan/i2000/) | DONE | 3 | I1902 | What a piece of work serves is one derivation, with a revision |
+| [I2001](https://majordomus.dev/plan/i2001/) | DONE | 4 | I2000 | start asks what the task serves and refuses a refused binding where the policy requires it |
+| [I2002](https://majordomus.dev/plan/i2002/) | DONE | 5 | I2001 | The context of a bound task says what the intent asks of this work |
+| [I2003](https://majordomus.dev/plan/i2003/) | DONE | 5 | I2001 | A handover pins the binding it was written under, and resolving it reports drift |
+| [I2004](https://majordomus.dev/plan/i2004/) | DONE | 4 | I2000 | plan start refuses an issue whose binding is refused, in both engines |
 
 ## Findings
 

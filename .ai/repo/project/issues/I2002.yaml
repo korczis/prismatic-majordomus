@@ -28,4 +28,16 @@ validation:
 evidence_required:
   - context_carries_the_intent_section
 created_at: 2026-10-07
-updated_at: 2026-10-07
+updated_at: 2026-11-28T07:05:17Z
+started_at: 2026-11-28T07:03:56Z
+started_event: sha256:d0e930716086c4567ea8c656eefbbefc946656c8f57b19d0580afe8dd87eb4a4
+completed_at: 2026-11-28T07:05:17Z
+completed_event: sha256:046a11c1b7ebb15f7455ddf5aecdb9ba869a92d3934abf617510c4c576ea19a2
+evidence:
+  - covers: "context_carries_the_intent_section"
+    type: test
+    command: "bash test/run.sh 960_a_task_starts_bound_to_what_it_serves; bash test/run.sh 23_context (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: case 960 ok (context of the bound task names statement, invariant, served criterion with its evidence state and the critique; the exempt task names class and reason; an unreadable binding reads unknown); case 23_context ok"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T07:04:54Z

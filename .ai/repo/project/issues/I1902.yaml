@@ -33,4 +33,23 @@ evidence_required:
   - an_incomplete_gap_is_refused
   - execution_waits_for_the_critique
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-11-28T06:57:06Z
+started_at: 2026-11-28T06:55:59Z
+started_event: sha256:de92f4c9737455ac1b23fb7865c63c7210a8c1f2858420aa35b9e5af7224bd06
+completed_at: 2026-11-28T06:57:06Z
+completed_event: sha256:1a75cc457e66ac9b0313bdc72ef0b8425137cba7cd963cedeeeb5c5abb32ecb8
+evidence:
+  - covers: "an_incomplete_gap_is_refused"
+    type: test
+    command: "cargo test --lib intent_review; bash test/run.sh 386_a_plan_is_held_to_its_intent (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: intent_review::tests::a_gap_must_answer_every_criterion_and_cite_what_it_saw ok (gap_criterion_unanswered, condition_without_observation); case 386 ok in suite shard"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:56:36Z
+  - covers: "execution_waits_for_the_critique"
+    type: test
+    command: "cargo test --lib intent_review; cargo test --test intent_plan; bash test/run.sh 386_a_plan_is_held_to_its_intent (CI)"
+    result: "master validate 46027019147 at 649e41282d4 green: intent_review::tests::started_work_without_a_critique_is_refused_and_planned_work_is_warned ok and an_open_blocking_finding_refuses_execution_but_not_planning ok; tests/intent_plan.rs a_gap_must_answer_every_criterion_and_a_plan_is_critiqued_before_it_runs ok; case 386 ok; on master f044ae64206 shows the refusal acting on I1900"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/46027019147"
+    commit: 649e41282d4ffd28c830670f4ddf1eae5e60603d
+    recorded_at: 2026-11-28T06:56:50Z
