@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | ACTIVE | 2/6 | 3 | 1 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
+| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | ACTIVE | 2/6 | 2 | 1 | 1 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
 
 ## Issues
 
@@ -23,7 +23,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2977](https://majordomus.dev/plan/i2977/) | CANCELLED | 3 | I2974 | A session whose work stopped is resumed, never duplicated |
 | [I2978](https://majordomus.dev/plan/i2978/) | READY | 1 | I2972 | The UI shows what proceeding chose, what it refused and why |
 | [I2979](https://majordomus.dev/plan/i2979/) | CANCELLED | 3 | I2974 | A finished task hands its head and receipt to the landing seat |
-| [I3040](https://majordomus.dev/plan/i3040/) | READY | 0 | — | An id is taken by one atomic claim |
+| [I3040](https://majordomus.dev/plan/i3040/) | ACTIVE | 0 | — | An id is taken by one atomic claim |
 | [I4675](https://majordomus.dev/plan/i4675/) | READY | 0 | — | `majordomus mesh allocate` hands out an id whenever the plan.allocate capability over HTTP does, and never fails with os error 35 while serve status says ready |
 
 ## Findings
