@@ -3666,7 +3666,7 @@
       "variants": []
     },
     {
-      "description": "One check and how it ended.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisCheckState, Document};\nlet r = check(&[Document::new(\"s.md\", \"# not an analysis\\n\")]);\nlet bundle = r.checks.iter().find(|c| c.check == \"bundle\").unwrap();\nassert_eq!(bundle.state, AnalysisCheckState::Failed);\n```",
+      "description": "One check and how it ended.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisCheck, AnalysisCheckState, Document};\nlet r = check(&[Document::new(\"s.md\", \"# not an analysis\\n\")]);\nlet bundle: &AnalysisCheck = r.checks.iter().find(|c| c.check == \"bundle\").unwrap();\nassert_eq!(bundle.state, AnalysisCheckState::Failed);\n```",
       "home": "reasoning",
       "is_enum": false,
       "name": "AnalysisCheck",
@@ -3758,7 +3758,7 @@
       "variants": []
     },
     {
-      "description": "One document and the role it declares.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, Document};\nlet r = check(&[Document::new(\"q.md\", \"---\\nanalysis:\\n  id: a\\n  pass: question\\n---\\n# Q1 why?\\n\")]);\nassert_eq!(r.documents[0].pass.as_deref(), Some(\"question\"));\n```",
+      "description": "One document and the role it declares.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisDocument, Document};\nlet r = check(&[Document::new(\"q.md\", \"---\\nanalysis:\\n  id: a\\n  pass: question\\n---\\n# Q1 why?\\n\")]);\nlet d: &AnalysisDocument = &r.documents[0];\nassert_eq!(d.pass.as_deref(), Some(\"question\"));\n```",
       "home": "reasoning",
       "is_enum": false,
       "name": "AnalysisDocument",
@@ -3794,7 +3794,7 @@
       "variants": []
     },
     {
-      "description": "One defect: the check that found it, where, the id it concerns and what is wrong.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, Document};\nlet r = check(&[Document::new(\"s.md\", \"# not an analysis\\n\")]);\nassert_eq!((r.findings[0].check.as_str(), r.findings[0].file.as_str()), (\"bundle\", \"s.md\"));\n```",
+      "description": "One defect: the check that found it, where, the id it concerns and what is wrong.\n\n```\nuse majordomus_cli::reasoning::analysis::{check, AnalysisFinding, Document};\nlet r = check(&[Document::new(\"s.md\", \"# not an analysis\\n\")]);\nlet f: &AnalysisFinding = &r.findings[0];\nassert_eq!((f.check.as_str(), f.file.as_str()), (\"bundle\", \"s.md\"));\n```",
       "home": "reasoning",
       "is_enum": false,
       "name": "AnalysisFinding",
