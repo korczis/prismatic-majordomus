@@ -1,7 +1,7 @@
 //! The `commit` module: what this repository holds a commit to, what the working tree
 //! would commit, and which scope the history gives a set of paths.
 //!
-//! Three read-only capabilities over [`crate::commit`]. Nothing here decides anything: the
+//! Five read-only capabilities over [`crate::commit`]. Nothing here decides anything: the
 //! grammar, the policy, the judge and the planner are the domain's, and this module is the
 //! declaration that carries them onto the surfaces — the MCP tool, the HTTP route, the
 //! OpenAPI operation, the Cockpit payload and the generated reference — without any of them
@@ -90,7 +90,7 @@ pub struct ScopesReport {
 
 pub(super) fn scopes(ctx: &Context, _: Empty) -> Result<ScopesReport, CapabilityError> {
     Ok(ScopesReport {
-        vocabulary: commit::scopes::derive(&root(ctx)),
+        vocabulary: commit::scopes::derive_with(&root(ctx), &policy(ctx).grammar),
         sample: commit::scopes::SAMPLE,
     })
 }
@@ -118,7 +118,7 @@ pub(super) fn plan(ctx: &Context, _: Empty) -> Result<CommitPlan, CapabilityErro
         None => (root.display().to_string(), root.display().to_string()),
     };
     let fingerprint = commit::PlanFingerprint::of(&repository, &worktree, &tree);
-    let vocabulary = commit::scopes::derive(&root);
+    let vocabulary = commit::scopes::derive_with(&root, &policy(ctx).grammar);
     let staged = tree.staged();
     let derived = commit::plan::derived_among(&root, &staged);
     let groups = commit::plan::group(&staged, &vocabulary, &derived);
@@ -214,14 +214,15 @@ pub(super) fn validate(
             "the message is empty; there is nothing to judge".into(),
         ));
     }
-    let vocabulary = commit::scopes::derive(&root(ctx));
+    let policy = policy(ctx);
+    let vocabulary = commit::scopes::derive_with(&root(ctx), &policy.grammar);
     let subject = commit::CommitSubject {
         text: input.message,
         scopes: (!vocabulary.scopes.is_empty()).then(|| vocabulary.words()),
         paths: input.paths,
         records: records(ctx),
     };
-    Ok(commit::judge(&subject, &policy(ctx)))
+    Ok(commit::judge(&subject, &policy))
 }
 
 // ---------------------------------------------------------------- commit.history
@@ -277,10 +278,10 @@ pub(super) fn history(
     let messages = commit::plan::messages_in(&root, &input.range).ok_or_else(|| {
         CapabilityError::InvalidInput(format!("git does not know the range '{}'", input.range))
     })?;
-    let vocabulary = commit::scopes::derive(&root);
+    let policy = policy(ctx);
+    let vocabulary = commit::scopes::derive_with(&root, &policy.grammar);
     let words = (!vocabulary.scopes.is_empty()).then(|| vocabulary.words());
     let records = records(ctx);
-    let policy = policy(ctx);
     let mut report = HistoryReport {
         range: input.range,
         total: messages.len(),
@@ -321,8 +322,36 @@ pub(super) fn history(
     Ok(report)
 }
 
+// ---------------------------------------------------------------- commit.reword
+
+impl BenchmarkCases for commit::reword::RewordInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // The disposable repository a case runs in has two commits, so the one range every
+        // such repository holds is its last commit.
+        vec![NamedCase::new(
+            "last-commit",
+            commit::reword::RewordInput {
+                range: "HEAD~1..HEAD".into(),
+                ..commit::reword::RewordInput::default()
+            },
+        )]
+    }
+}
+
+pub(super) fn reword(
+    ctx: &Context,
+    input: commit::reword::RewordInput,
+) -> Result<commit::reword::RewordPlan, CapabilityError> {
+    let root = root(ctx);
+    let policy = policy(ctx);
+    let vocabulary = commit::scopes::derive_with(&root, &policy.grammar);
+    let words = (!vocabulary.scopes.is_empty()).then(|| vocabulary.words());
+    commit::reword::plan(&root, &input, &policy, words, &records(ctx))
+        .map_err(CapabilityError::InvalidInput)
+}
+
 /// The module.
-/// The module: three read-only capabilities over the commit domain, plus the range judge.
+/// The module: four read-only capabilities over the commit domain, plus the range judge.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::commit::module;
@@ -403,6 +432,21 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["commit", "git", "governance"],
                 handler: history,
             },
+            capability! {
+                id: "commit.reword",
+                title: "Plan the replay of a published range with new messages",
+                description: "Supersede, don't rewrite: every first-parent commit of `<base>..<head>` with the message it would carry on a new branch (the new one where a revision is named, its own otherwise, stored as git would store it), each judged against the commit policy with that commit's own paths; every failing commit that only a kept second parent carries, which no rewording reaches; the problems that refuse the plan (a revision outside the range, a base that is not an ancestor); and, when it names the pull request it supersedes, the successor's body with `Supersedes #N` on its own first line and the old body without its own successor lines. Writes nothing: `majordomus commit reword --apply` replays a plan that passes onto a new branch with the same trees, authors and dates, and moves no ref that exists.",
+                input: commit::reword::RewordInput,
+                output: commit::reword::RewordPlan,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_commit_reword"),
+                    http: get("/api/v1/commit/reword"),
+                    cli: Some(CliExposure { path: vec!["commit".into(), "reword".into()] }),
+                },
+                tags: ["commit", "git", "governance"],
+                handler: reword,
+            },
         ],
     }
 }
@@ -438,6 +482,11 @@ mod tests {
                 "commit.history",
                 "majordomus_commit_history",
                 "/api/v1/commit/history",
+            ),
+            (
+                "commit.reword",
+                "majordomus_commit_reword",
+                "/api/v1/commit/reword",
             ),
         ];
         let ids: Vec<&str> = m

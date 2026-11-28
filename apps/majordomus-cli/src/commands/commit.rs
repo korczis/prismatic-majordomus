@@ -66,7 +66,189 @@ pub fn run(args: CommitArgs) -> Result<u8> {
                 EXIT_UNMET
             })
         }
+        CommitCommand::Reword {
+            range,
+            messages,
+            trunk,
+            supersedes,
+            url,
+            body,
+            apply,
+            branch,
+            body_out,
+        } => {
+            let mut map = serde_json::Map::new();
+            for m in &messages {
+                let (rev, file) = m.split_once('=').ok_or_else(|| Error::Protocol {
+                    reason: format!("--message takes <rev>=<file>, and '{m}' has no ="),
+                })?;
+                let path = std::path::Path::new(file);
+                let text = std::fs::read_to_string(path).map_err(|e| Error::io(path, e))?;
+                map.insert(rev.to_string(), Value::String(text));
+            }
+            let body = match body {
+                Some(file) => {
+                    let path = std::path::Path::new(&file);
+                    Some(std::fs::read_to_string(path).map_err(|e| Error::io(path, e))?)
+                }
+                None => None,
+            };
+            let input = json!({
+                "range": range, "messages": map, "trunk": trunk,
+                "supersedes": supersedes, "url": url, "body": body,
+            });
+            let v = execute(ctx, &["commit", "reword"], input)?;
+            if let (Some(file), Some(text)) = (&body_out, v["successor_body"].as_str()) {
+                let path = std::path::Path::new(file);
+                std::fs::write(path, text).map_err(|e| Error::io(path, e))?;
+            }
+            if args.format == OutputFormat::Json && !apply {
+                writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?;
+            } else {
+                render_reword(&mut out, &v)?;
+            }
+            if v["passed"].as_bool() != Some(true) {
+                return Ok(EXIT_UNMET);
+            }
+            if !apply {
+                return Ok(0);
+            }
+            let branch = branch.unwrap_or_default();
+            let plan: crate::commit::reword::RewordPlan =
+                serde_json::from_value(v).map_err(|e| Error::Protocol {
+                    reason: format!("the reword plan does not read back: {e}"),
+                })?;
+            let root = std::path::PathBuf::from(app.context.index.repository.root.as_str());
+            let done = crate::commit::reword::apply(&root, &plan, &branch)
+                .map_err(|reason| Error::Protocol { reason })?;
+            render_applied(&mut out, &done, supersedes, body_out.as_deref())?;
+            Ok(0)
+        }
     }
+}
+
+/// What the plan says: one line per commit, what refuses it, and the successor's body.
+fn render_reword(out: &mut impl Write, v: &Value) -> Result<()> {
+    let short = |s: &str| s.chars().take(9).collect::<String>();
+    writeln!(
+        out,
+        "range    {}..{}",
+        short(v["base"].as_str().unwrap_or("")),
+        short(v["head"].as_str().unwrap_or(""))
+    )
+    .map_err(Error::Transport)?;
+    for c in v["commits"].as_array().into_iter().flatten() {
+        let mark = match (c["reworded"].as_bool(), c["passed"].as_bool()) {
+            (_, Some(false)) => "FAIL",
+            (Some(true), _) => "new ",
+            _ => "kept",
+        };
+        writeln!(
+            out,
+            "{mark}     {}  {}",
+            short(c["commit"].as_str().unwrap_or("")),
+            c["message"]
+                .as_str()
+                .unwrap_or("")
+                .lines()
+                .next()
+                .unwrap_or("")
+        )
+        .map_err(Error::Transport)?;
+        for d in c["findings"].as_array().into_iter().flatten() {
+            writeln!(
+                out,
+                "           {:<8} {:<34} {}",
+                d["severity"].as_str().unwrap_or("?"),
+                d["code"].as_str().unwrap_or("?"),
+                d["message"].as_str().unwrap_or("")
+            )
+            .map_err(Error::Transport)?;
+        }
+    }
+    for c in v["unrewordable"].as_array().into_iter().flatten() {
+        writeln!(
+            out,
+            "behind   {}  {}  (carried by a kept parent)",
+            short(c["commit"].as_str().unwrap_or("")),
+            c["subject"].as_str().unwrap_or("")
+        )
+        .map_err(Error::Transport)?;
+    }
+    for p in v["problems"].as_array().into_iter().flatten() {
+        writeln!(out, "refused  {}", p.as_str().unwrap_or("")).map_err(Error::Transport)?;
+    }
+    if v["passed"].as_bool() == Some(true) {
+        writeln!(
+            out,
+            "ok       the plan passes; --apply --branch <new> replays it"
+        )
+        .map_err(Error::Transport)?;
+    }
+    Ok(())
+}
+
+/// What the replay made, and the remote half, which stays with the person.
+fn render_applied(
+    out: &mut impl Write,
+    done: &crate::commit::reword::Applied,
+    supersedes: Option<u64>,
+    body_out: Option<&str>,
+) -> Result<()> {
+    let w = |out: &mut dyn Write, line: String| writeln!(out, "{line}").map_err(Error::Transport);
+    w(
+        &mut *out,
+        format!(
+            "created  {} at {}",
+            done.branch,
+            &done.head[..12.min(done.head.len())]
+        ),
+    )?;
+    for (old, new) in &done.replayed {
+        w(
+            &mut *out,
+            format!(
+                "         {} -> {}",
+                &old[..9.min(old.len())],
+                &new[..9.min(new.len())]
+            ),
+        )?;
+    }
+    for d in &done.dropped {
+        w(
+            &mut *out,
+            format!("dropped  {d}: git commit-tree does not carry it over"),
+        )?;
+    }
+    w(
+        &mut *out,
+        "next     the old branch and its pull request are untouched; then:".into(),
+    )?;
+    w(
+        &mut *out,
+        format!("         git push -u origin {}", done.branch),
+    )?;
+    let body = body_out
+        .map(|f| format!(" --body-file {f}"))
+        .unwrap_or_default();
+    w(
+        &mut *out,
+        format!("         gh pr create --head {}{body}", done.branch),
+    )?;
+    if let Some(n) = supersedes {
+        w(
+            &mut *out,
+            format!(
+                "         gh pr merge {n} --disable-auto; gh pr ready {n} --undo   # the old #{n}"
+            ),
+        )?;
+        w(&mut *out, format!(
+            "         #{n} is held while the successor is open and `majordomus prs cleanup --apply` \
+             closes it once it lands; the marker counts only from an owner, member or \
+             collaborator on a branch of this repository"
+        ))?;
+    }
+    Ok(())
 }
 
 /// The message to judge: a file, a revision, or standard input.
@@ -340,6 +522,75 @@ fn pretty(v: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_reword_plan_renders_each_commit_what_refuses_it_and_whether_it_passes() {
+        let v = json!({
+            "base": "aaaaaaaaaaaa", "head": "bbbbbbbbbbbb",
+            "commits": [
+                {"commit": "c1c1c1c1c1c1", "reworded": true, "passed": true,
+                 "message": "Codechange: [B] A test\n", "findings": []},
+                {"commit": "c2c2c2c2c2c2", "reworded": false, "passed": false,
+                 "message": "Test: [X] y\n",
+                 "findings": [{"severity": "error", "code": "commit.unknown_word", "message": "'Test' is not a word"}]},
+                {"commit": "c3c3c3c3c3c3", "reworded": false, "passed": true,
+                 "message": "Fix: [C] z\n", "findings": []}
+            ],
+            "unrewordable": [{"commit": "d4d4d4d4d4d4", "subject": "Test: [S] side", "findings": []}],
+            "problems": ["1 commit(s) reach the branch through a merge's other parent"],
+            "passed": false
+        });
+        let mut buf: Vec<u8> = Vec::new();
+        render_reword(&mut buf, &v).unwrap();
+        let text = String::from_utf8(buf).unwrap();
+        assert!(text.contains("range    aaaaaaaaa..bbbbbbbbb"), "{text}");
+        assert!(
+            text.contains("new      c1c1c1c1c  Codechange: [B] A test"),
+            "{text}"
+        );
+        assert!(text.contains("FAIL     c2c2c2c2c  Test: [X] y"), "{text}");
+        assert!(text.contains("commit.unknown_word"), "{text}");
+        assert!(text.contains("kept     c3c3c3c3c  Fix: [C] z"), "{text}");
+        assert!(
+            text.contains("behind   d4d4d4d4d  Test: [S] side"),
+            "{text}"
+        );
+        assert!(text.contains("refused  1 commit(s)"), "{text}");
+        assert!(!text.contains("the plan passes"), "{text}");
+        let mut ok: Vec<u8> = Vec::new();
+        render_reword(&mut ok, &json!({"base": "a", "head": "b", "passed": true})).unwrap();
+        assert!(String::from_utf8(ok).unwrap().contains("the plan passes"));
+    }
+
+    #[test]
+    fn an_applied_replay_names_the_branch_what_it_dropped_and_the_remote_half() {
+        let done = crate::commit::reword::Applied {
+            branch: "fix/reworded".into(),
+            head: "0123456789abcdef".into(),
+            replayed: vec![("aaaaaaaaaaaa".into(), "bbbbbbbbbbbb".into())],
+            dropped: vec!["signature of aaaaaaaaaaaa".into()],
+        };
+        let mut buf: Vec<u8> = Vec::new();
+        render_applied(&mut buf, &done, Some(7), Some("succ.md")).unwrap();
+        let text = String::from_utf8(buf).unwrap();
+        for want in [
+            "created  fix/reworded at 0123456789ab",
+            "aaaaaaaaa -> bbbbbbbbb",
+            "dropped  signature of aaaaaaaaaaaa",
+            "git push -u origin fix/reworded",
+            "gh pr create --head fix/reworded --body-file succ.md",
+            "gh pr merge 7 --disable-auto; gh pr ready 7 --undo",
+            "prs cleanup --apply",
+        ] {
+            assert!(text.contains(want), "{want}\n{text}");
+        }
+        let mut bare: Vec<u8> = Vec::new();
+        render_applied(&mut bare, &done, None, None).unwrap();
+        let bare = String::from_utf8(bare).unwrap();
+        assert!(
+            bare.contains("gh pr create --head fix/reworded\n") && !bare.contains("gh pr merge")
+        );
+    }
 
     fn render(v: Value) -> String {
         let mut buf: Vec<u8> = Vec::new();

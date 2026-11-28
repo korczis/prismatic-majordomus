@@ -291,13 +291,60 @@
     },
     "commit": {
       "type": "object",
-      "description": "What a commit message is held to. The type vocabulary is not here: it is the changelog's own, and a second copy under this key is the duplication the commit subsystem exists to remove.",
+      "description": "What a commit message is held to. The conventional type vocabulary is not here: it is the changelog's own, and a second copy under this key is the duplication the commit subsystem exists to remove. A repository whose history follows another grammar declares it under `grammar` (docs/COMMIT.md).",
       "additionalProperties": false,
       "properties": {
+        "grammar": {
+          "description": "The grammar a header is written in: `conventional` (the default) or `keyword`, `<Word>( #<issue>|<hash>, ...)?: [<Component>] <Details>` with the repository's own words.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "style"
+          ],
+          "properties": {
+            "style": {
+              "description": "`conventional` or `keyword`.",
+              "enum": [
+                "conventional",
+                "keyword"
+              ]
+            },
+            "words": {
+              "description": "The keyword style's closed list of words, in the order a finding names them, each with the kind of change it records (a conventional type word, or `other`).",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "word",
+                  "kind"
+                ],
+                "properties": {
+                  "word": {
+                    "description": "The word as a header writes it.",
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9]+$"
+                  },
+                  "kind": {
+                    "description": "A change kind word (feat, fix, perf, refactor, docs, test, chore, ci, style, build, revert) or other.",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "component": {
+              "description": "`brackets` (the default): `[X] ` opening the details is the component, read as the scope and never judged; `none`: the details are the subject whole.",
+              "enum": [
+                "brackets",
+                "none"
+              ]
+            }
+          }
+        },
         "subject_max_chars": {
-          "description": "The widest a subject line may be, measured whole including the type and scope.",
+          "description": "The widest a subject line may be, measured whole including the type and scope; 0 is no limit. Absent: 72 for the conventional grammar, no limit for the keyword style.",
           "type": "integer",
-          "minimum": 20
+          "minimum": 0
         },
         "scope_unknown": {
           "description": "A scope outside the vocabulary the repository's own history yields.",
@@ -328,6 +375,51 @@
         },
         "breaking_unexplained": {
           "description": "A commit marked breaking with no body and no BREAKING CHANGE trailer.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "reference_required": {
+          "description": "A message that names no issue or milestone the layer holds (under the keyword style a header's #N counts). Default off.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "closing_keyword": {
+          "description": "A forge closing keyword (Closes #12) anywhere in the message. Default off; a repository that projects its plan onto a forge sets it to error.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "subject_trailing_period": {
+          "description": "A subject that ends in a full stop. Absent: error for the conventional grammar, off for the keyword style.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "non_ascii": {
+          "description": "A character outside printable ASCII (0x20 to 0x7F) on any stored line, a tab included. Absent: off for the conventional grammar, error for the keyword style.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "trailing_whitespace": {
+          "description": "A stored line that ends in whitespace, a carriage return included. Absent: off for the conventional grammar, error for the keyword style.",
           "enum": [
             "off",
             "info",
@@ -380,12 +472,20 @@
       "properties": {
         "allocation": {
           "type": "string",
-          "enum": ["off", "landing"],
+          "enum": [
+            "off",
+            "landing"
+          ],
           "description": "off: a pull request raises its own version. landing: the integration executor raises it when it lands the pull request, from the trunk's version."
         },
         "floor": {
           "type": "string",
-          "enum": ["none", "patch", "minor", "major"],
+          "enum": [
+            "none",
+            "patch",
+            "minor",
+            "major"
+          ],
           "description": "The least an eligible integration advances the version, whatever its measured impact."
         },
         "exempt": {
@@ -394,7 +494,11 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "description", "paths"],
+            "required": [
+              "id",
+              "description",
+              "paths"
+            ],
             "properties": {
               "id": {
                 "type": "string",
@@ -599,12 +703,12 @@
         "read_deadline_seconds": {
           "type": "integer",
           "minimum": 1,
-          "description": "How long the shared server lets a connection go without a request read in full on it — waiting for a head, kept alive between requests, or reading a body — before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
+          "description": "How long the shared server lets a connection go without a request read in full on it \u2014 waiting for a head, kept alive between requests, or reading a body \u2014 before it closes the connection and counts it in server.status. A connection whose request is being answered is never closed by it."
         },
         "idle_seconds": {
           "type": "integer",
           "minimum": 1,
-          "description": "How long a server started for a checkout no client owns — by `serve ensure` or by a shell entering the checkout — outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
+          "description": "How long a server started for a checkout no client owns \u2014 by `serve ensure` or by a shell entering the checkout \u2014 outlives its last peer before it stops by itself. Absent means 900. `--idle` on the command line overrides it."
         }
       }
     },
@@ -620,17 +724,26 @@
         },
         "visibility": {
           "type": "string",
-          "enum": ["public", "private"],
+          "enum": [
+            "public",
+            "private"
+          ],
           "description": "Declared, never fetched. A public tree never carries a licensed file of the kit, and a public tree that declares a kit and has a UI fails closed when nothing could judge it. MAJORDOMUS_VISIBILITY=public tightens a private declaration; nothing loosens one."
         },
         "publish": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
           "description": "Repository-relative directories a deploy publishes (the upload-pages-artifact path); the licence gate hashes their untracked files as well as every tracked file."
         },
         "evidence": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^~/\\S" },
+          "items": {
+            "type": "string",
+            "pattern": "^~/\\S"
+          },
           "description": "kit-evidence/v1 files on the owner's machine, each `~/`-relative and never absolute. CI reads MAJORDOMUS_KIT_EVIDENCE_<KIT>, base64 of the gzipped text, instead."
         },
         "exempt": {
@@ -639,10 +752,21 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["path", "because"],
+            "required": [
+              "path",
+              "because"
+            ],
             "properties": {
-              "path": { "type": "string", "minLength": 1, "description": "A repository-relative path or glob." },
-              "because": { "type": "string", "minLength": 1, "description": "Why the surface is not built on the kit." }
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "description": "A repository-relative path or glob."
+              },
+              "because": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why the surface is not built on the kit."
+              }
             }
           }
         }

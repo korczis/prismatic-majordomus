@@ -21,11 +21,14 @@
 //! One typed subject with four parts, each the only place its question is answered:
 //!
 //! - [`CommitHeader`] and [`CommitMessage`] — the grammar. The changelog and the validator read this
-//!   parse; there is no second regular expression anywhere.
+//!   parse; there is no second regular expression anywhere. [`CommitGrammar`] is the grammar a
+//!   repository declares: the conventional one unless it says otherwise.
 //! - [`CommitPolicy`] — what this repository holds a commit to, as data in `policy.yaml`.
 //! - [`judge`] — the verdict, as typed findings over the canonical [`crate::model::Diagnostic`].
 //! - [`plan`] and [`scopes`] — what is in the working tree, which scope the *history* gives
 //!   it, and how it divides into commits, fingerprinted against the tree it came from.
+//! - [`reword`] — a published range replayed onto a new branch with new messages, every one
+//!   judged first: supersede, never rewrite.
 //!
 //! Every surface is a projection of these: the capabilities in
 //! [`crate::capability::builtin::commit`] carry them to MCP and HTTP, the command line
@@ -43,13 +46,16 @@
 //! assert_eq!(CommitMessage::parse("docs: one line").render(), "docs: one line\n");
 //! ```
 
+pub mod grammar;
 pub mod header;
 pub mod message;
 pub mod plan;
 pub mod policy;
+pub mod reword;
 pub mod scopes;
 pub mod verdict;
 
+pub use grammar::CommitGrammar;
 pub use header::CommitHeader;
 pub use message::{CommitMessage, CommitTrailer};
 pub use plan::{ChangeStage, CommitGroup, CommitPlan, PlanFingerprint, WorkingTreeState};

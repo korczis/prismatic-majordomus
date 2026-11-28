@@ -52,8 +52,6 @@ use std::process::Command;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::CommitHeader;
-
 /// How many commits back the vocabulary is learned from.
 ///
 /// Bounded because the cost is linear in it and the value is not: a scope used ten times
@@ -160,6 +158,18 @@ fn prefixes(path: &str) -> Vec<String> {
 /// assert!(v.unavailable.is_some());
 /// ```
 pub fn derive(root: &Path) -> ScopeVocabulary {
+    derive_with(root, &super::grammar::CommitGrammar::Conventional)
+}
+
+/// Learn the vocabulary from the history, reading each subject in the repository's declared
+/// grammar: under the keyword style a header's `[Component]` is its scope, so a repository
+/// whose history is not conventional still has a vocabulary, learned from its components.
+/// ```
+/// use majordomus_cli::commit::{grammar::CommitGrammar, scopes::derive_with};
+/// let plain = tempfile::tempdir().expect("a temporary directory");
+/// assert!(derive_with(plain.path(), &CommitGrammar::Conventional).scopes.is_empty());
+/// ```
+pub fn derive_with(root: &Path, grammar: &super::grammar::CommitGrammar) -> ScopeVocabulary {
     // One `git log`, formatted so that a subject and the names it touched arrive together.
     // `%x00` separates the two, and a record separator git will not produce delimits the
     // commits, because a file name may contain anything a byte can be.
@@ -203,10 +213,10 @@ pub fn derive(root: &Path) -> ScopeVocabulary {
             continue;
         }
         sampled += 1;
-        let header = CommitHeader::parse(subject);
-        if !header.is_conventional() {
+        if grammar.defect(subject).is_some() {
             continue;
         }
+        let header = grammar.parse(subject);
         let Some(scope) = header.scope.filter(|s| !s.trim().is_empty()) else {
             continue;
         };
@@ -496,5 +506,52 @@ mod tests {
             "it says why rather than pretending"
         );
         assert!(!v.knows("anything"));
+    }
+
+    #[test]
+    fn a_keyword_history_teaches_its_components_and_a_conventional_reading_learns_nothing() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let git = |args: &[&str]| {
+            let ok = Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(["-c", "user.name=t", "-c", "user.email=t@example.org"])
+                .args(args)
+                .output()
+                .expect("git runs")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        for (i, (file, subject)) in [
+            ("src/pathfinder/a.cpp", "Fix #1: [YAPF] A loop"),
+            ("src/pathfinder/b.cpp", "Codechange: [YAPF] A rewrite"),
+            ("src/network/c.cpp", "Add: [Network] A packet"),
+            ("README.md", "Test: not a word of the grammar"),
+        ]
+        .iter()
+        .enumerate()
+        {
+            let path = dir.path().join(file);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, format!("{i}\n")).unwrap();
+            git(&["add", "-A"]);
+            git(&["commit", "-q", "-m", subject]);
+        }
+        let grammar: super::super::grammar::CommitGrammar = serde_json::from_value(
+            serde_json::json!({"style": "keyword", "words": [{"word": "Fix", "kind": "fix"}, {"word": "Codechange", "kind": "refactor"}, {"word": "Add", "kind": "feat"}]}),
+        )
+        .unwrap();
+        let v = derive_with(dir.path(), &grammar);
+        assert_eq!(v.words(), vec!["YAPF".to_string(), "Network".to_string()]);
+        assert!(
+            v.knows("YAPF") && !v.knows("Yapf"),
+            "components compare exactly"
+        );
+        assert!(
+            derive(dir.path()).scopes.is_empty(),
+            "no header there is conventional"
+        );
     }
 }
