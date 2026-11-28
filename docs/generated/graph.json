@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.19.1",
+  "generator": "majordomus-cli 0.20.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -30259,6 +30259,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2165",
+        "kind": "issue",
+        "label": "I2165",
+        "summary": "A released archive carries a provenance attestation the installer can check",
+        "route": "/cockpit/objects/issue/i2165",
+        "source": ".ai/repo/project/issues/I2165.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each archive of a release carries an attestation that gh attestation verify accepts for this repository",
+            "install.sh reports whether it verified provenance or only the checksum",
+            "docs/DISTRIBUTION.md names what each installation path verifies"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "install.sh verifies a checksum served beside the archive; provenance is not verifiable.",
+          "depends_on": [],
+          "evidence_required": [
+            "attested_release",
+            "installer_reports_verification_case"
+          ],
+          "milestone": "safe-self-update",
+          "objective": "Attest each release archive in the publish job, verify the attestation in install.sh when the tooling is present, and state in docs/DISTRIBUTION.md what each install path verifies.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "docs/DISTRIBUTION.md",
+            "test/cases/85_installer.sh"
+          ],
+          "slug": "releases-carry-provenance",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -31335,6 +31374,61 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/safe-self-update",
+        "kind": "milestone",
+        "label": "safe-self-update",
+        "summary": "Clients and servers of different versions meet safely, and a release's provenance can be checked",
+        "route": "/cockpit/objects/milestone/safe-self-update",
+        "source": ".ai/repo/project/milestones/safe-self-update.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A client of version N+1 beside a server of version N at another path ends with one server of N+1 and no lost session",
+            "A wire or lease or journal schema change without a version bump fails version-surface",
+            "Each release archive carries an attestation that verifies for this repository"
+          ],
+          "created_at": "2026-10-09",
+          "depends_on": [],
+          "evidence_required": [
+            "version_hand_off_test",
+            "wire_versions_gated",
+            "release_attestation"
+          ],
+          "non_scope": [
+            "A second installer or updater; install.sh stays the one path (pack M11).",
+            "A network fetch on entering a repository.",
+            "Restarting a client's server while it has work in flight; hand-off goes through I2127's session move."
+          ],
+          "order": 144,
+          "priority": "p2",
+          "risks": [
+            "A hand-off between versions depends on the old server ending its sessions (I2127); landing I2163 first would strand clients on the old server.",
+            "Attestation needs repository permissions in the publish job; the release workflow's permissions block changes with it."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/release",
+            "apps/majordomus-cli/src/mesh/protocol.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "scripts/ci/version-matches-surface",
+            ".github/workflows/release.yml",
+            "site/static/install.sh",
+            "test/fixtures",
+            "test/cases",
+            "docs/DISTRIBUTION.md",
+            "docs/MCP.md"
+          ],
+          "slug": "safe-self-update",
+          "updated_at": "2026-10-09",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test serve_lifecycle",
+            "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 743_release_version_answers_with_the_contract"
           ]
         }
       },
@@ -66258,6 +66352,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2165",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2165",
+        "target": "majordomus://milestone/safe-self-update",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -66416,6 +66520,11 @@
         "source": "majordomus://milestone/runtime-adapters",
         "target": "majordomus://milestone/foundation",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/safe-self-update",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/shared-policy",
@@ -75004,8 +75113,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2482,
-      "edges": 5430,
+      "nodes": 2484,
+      "edges": 5433,
       "acyclic": false,
       "truncated": false
     }

@@ -113,6 +113,9 @@ options:
 
 environment:
   MAJORDOMUS_VERSION, MAJORDOMUS_INSTALL_DIR, MAJORDOMUS_PREFIX — the same as the options
+  MAJORDOMUS_REQUIRE_PROVENANCE=1 — refuse to install unless the archive's provenance
+                        is verified (needs the GitHub CLI, signed in)
+  MAJORDOMUS_GH         the GitHub CLI to verify provenance with (default: gh)
   NO_COLOR, CI — plain output
 
 Documentation: $MJ_BASE_URL/docs/install/
@@ -493,6 +496,47 @@ verify_checksum() {
     "The download was discarded and nothing was installed. Try again; if it keeps failing, do not force it."
 }
 
+# --------------------------------------------------------------------------- provenance
+
+# The digest binds the archive to the metadata; it cannot say who built either, because both
+# come from the same publisher. Every release archive since provenance was introduced is
+# attested by the release workflow (GitHub artifact attestations), and an attestation is
+# found by the archive's digest. Where the GitHub CLI is installed and signed in it is asked
+# whether this archive was built by this repository's workflow; anywhere else the install
+# rests on the digest alone, and the closing report says which of the two was verified.
+# A release older than its attestations, or an archive that is not the one the workflow
+# built, is answered the same way by GitHub (no attestation for that digest), so a refusal
+# is not fatal by default — MAJORDOMUS_REQUIRE_PROVENANCE=1 makes it fatal.
+MJ_VERIFIED='checksum only'
+verify_provenance() {
+  file=$1
+  gh_cli="${MAJORDOMUS_GH:-gh}"
+  why=''
+  # A plain-HTTP origin is a local fixture (it needs MAJORDOMUS_INSECURE_BASE_URL=1): no
+  # attestation describes its archives, and asking GitHub about them would put a network
+  # call into every test of this installer. Naming a CLI explicitly still asks it.
+  if [ "$MJ_SECURE" = 0 ] && [ -z "${MAJORDOMUS_GH:-}" ]; then
+    why="the release origin is plain HTTP (a local fixture), which no attestation describes"
+  elif ! have "$gh_cli"; then
+    why="the GitHub CLI ($gh_cli) is not installed"
+  elif ! "$gh_cli" auth status >/dev/null 2>&1; then
+    why="the GitHub CLI is not signed in (gh auth login)"
+  elif "$gh_cli" attestation verify "$file" --repo "$MJ_REPOSITORY" >"$MJ_TMP/attestation.out" 2>&1; then
+    MJ_VERIFIED="provenance (built by github.com/$MJ_REPOSITORY) and checksum"
+    debug "attestation verified for $MJ_ARTIFACT"
+    return 0
+  else
+    why="gh attestation verify refused it: $(grep -v '^[[:space:]]*$' "$MJ_TMP/attestation.out" | tail -n 1)"
+  fi
+  if [ "${MAJORDOMUS_REQUIRE_PROVENANCE:-0}" = 1 ]; then
+    fail "the archive's provenance could not be verified" \
+      "artifact: $MJ_ARTIFACT" \
+      "reason:   $why" \
+      "MAJORDOMUS_REQUIRE_PROVENANCE=1 asks for verified provenance. Nothing was installed."
+  fi
+  MJ_VERIFIED="checksum only — provenance not verified: $why"
+}
+
 # --------------------------------------------------------------------------- archive
 
 # Every entry of the archive, before anything is written. Only ordinary files and
@@ -704,6 +748,8 @@ REPORT
 
   step "Verifying the digest ..."
   verify_checksum "$MJ_TMP/$MJ_ARTIFACT" "$MJ_SHA256"
+  step "Verifying the provenance ..."
+  verify_provenance "$MJ_TMP/$MJ_ARTIFACT"
   validate_archive "$MJ_TMP/$MJ_ARTIFACT" "$MJ_ROOT"
 
   mkdir -p "$MJ_PREFIX" || fail "cannot create the installation prefix" \
@@ -741,6 +787,7 @@ REPORT
 
   printf '\n%s%s v%s installed successfully.%s\n\n' "$mj_colour_on" "$MJ_BINARY" "$MJ_VERSION" "$mj_colour_off" >&2
   printf 'Binary:\n  %s\n\n' "$MJ_INSTALL_DIR/$MJ_BINARY" >&2
+  printf 'Verified:\n  %s\n\n' "$MJ_VERIFIED" >&2
   if path_hint; then
     printf 'Verify:\n  %s --version\n\nStart:\n  %s init\n' "$MJ_BINARY" "$MJ_BINARY" >&2
   else

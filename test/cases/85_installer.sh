@@ -9,7 +9,8 @@
 # still runs from (and removes it once nothing does), and — the half that matters — that every failure
 # leaves a working installation working: a wrong digest, no digest tool or a malformed digest,
 # a truncated download, an archive that escapes its own directory, an archive that carries a
-# link, a missing release, and a destination that cannot be written.
+# link, a missing release, and a destination that cannot be written. And the closing report
+# says what was verified: provenance through the GitHub CLI, or the checksum only (I2165).
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 command -v curl >/dev/null 2>&1 || skip "no curl"
@@ -276,6 +277,67 @@ out="$(env HOME="$T/clean" MAJORDOMUS_RELEASE_BASE_URL="$HTTP_BASE" MAJORDOMUS_I
 printf '%s\n' "$out" | grep -q "installed successfully" || { echo "    the clean install did not report success: $out"; exit 1; }
 [ "$("$T/clean/.local/bin/majordomus" version)" = "majordomus $VERSION" ] \
   || { echo "    the clean install did not report $VERSION"; exit 1; }
+
+# --- the closing report says what was verified: provenance, or the checksum only (I2165) -----
+# A plain-HTTP fixture is described by no attestation, so the default install above asks
+# nobody and says so. A named GitHub CLI is always asked: three stubs stand in for it — one
+# that verifies, one that refuses the way GitHub refuses a digest it holds no attestation
+# for, and one that is not signed in — and each one's call is recorded.
+printf '%s\n' "$out" | grep -q "checksum only — provenance not verified: the release origin is plain HTTP" \
+  || { echo "    the install did not say it verified the checksum only: $out"; exit 1; }
+GHS="$T/gh-stubs"; mkdir -p "$GHS"
+REPO="$(sed -n "s/^MJ_REPOSITORY='\\(.*\\)'\$/\\1/p" "$ROOT/site/static/install.sh")"
+[ -n "$REPO" ] || { echo "    the installer names no repository"; exit 1; }
+cat > "$GHS/gh-ok" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$GHS/calls"
+exit 0
+EOF
+cat > "$GHS/gh-refuses" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$GHS/calls"
+case "\$1" in auth) exit 0 ;; esac
+echo "Error: HTTP 404: Not Found (attestations for this digest)" >&2
+exit 1
+EOF
+cat > "$GHS/gh-signed-out" <<'EOF'
+#!/bin/sh
+case "$1" in auth) exit 1 ;; esac
+echo "the stub was asked to verify while signed out" >&2
+exit 7
+EOF
+chmod 0755 "$GHS"/gh-*
+prov_run() { # home gh [env...]
+  h="$1"; g="$2"; shift 2
+  rm -rf "$h"; mkdir -p "$h"
+  env HOME="$h" MAJORDOMUS_GH="$g" "$@" \
+      MAJORDOMUS_RELEASE_BASE_URL="$HTTP_BASE" MAJORDOMUS_INSECURE_BASE_URL=1 \
+      sh "$ROOT/site/static/install.sh" 2>&1
+}
+: > "$GHS/calls"
+out="$(prov_run "$T/prov-ok" "$GHS/gh-ok")" || { echo "    the install failed with a verifying CLI: $out"; exit 1; }
+printf '%s\n' "$out" | grep -qF "provenance (built by github.com/$REPO) and checksum" \
+  || { echo "    a verified attestation was not reported as provenance: $out"; exit 1; }
+grep -qE "^attestation verify .*/$name --repo $REPO$" "$GHS/calls" \
+  || { echo "    the CLI was not asked about the downloaded archive and this repository:"; cat "$GHS/calls"; exit 1; }
+out="$(prov_run "$T/prov-refused" "$GHS/gh-refuses")" || { echo "    a refused attestation failed the default install: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "checksum only — provenance not verified: gh attestation verify refused it: Error: HTTP 404" \
+  || { echo "    a refused attestation was not reported: $out"; exit 1; }
+out="$(prov_run "$T/prov-signed-out" "$GHS/gh-signed-out")" || { echo "    a signed-out CLI failed the install: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "checksum only — provenance not verified: the GitHub CLI is not signed in" \
+  || { echo "    a signed-out CLI was not reported: $out"; exit 1; }
+out="$(prov_run "$T/prov-absent" "$T/no-such-gh")" || { echo "    an absent CLI failed the install: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "provenance not verified: the GitHub CLI ($T/no-such-gh) is not installed" \
+  || { echo "    an absent CLI was not reported: $out"; exit 1; }
+# ... and asked to require it, an install whose provenance is not verified installs nothing
+out="$(prov_run "$T/prov-required" "$GHS/gh-refuses" MAJORDOMUS_REQUIRE_PROVENANCE=1)" && {
+  echo "    MAJORDOMUS_REQUIRE_PROVENANCE=1 installed an archive whose provenance was refused"; exit 1
+}
+printf '%s\n' "$out" | grep -q "the archive's provenance could not be verified" \
+  || { echo "    the required-provenance refusal did not say why: $out"; exit 1; }
+[ ! -e "$T/prov-required/.local/bin/majordomus" ] || { echo "    a refused install left a launcher"; exit 1; }
+out="$(prov_run "$T/prov-required-ok" "$GHS/gh-ok" MAJORDOMUS_REQUIRE_PROVENANCE=1)" \
+  || { echo "    MAJORDOMUS_REQUIRE_PROVENANCE=1 refused a verified archive: $out"; exit 1; }
 
 # --- nothing was left behind ------------------------------------------------------------------------------
 find "$HOMEDIR/.local/share/majordomus" -maxdepth 1 -name '.staging.*' | grep -q . \

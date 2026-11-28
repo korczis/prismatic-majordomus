@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.19.1 -->
+     Generator: majordomus-cli 0.20.0 -->
 
 ## Quick install
 
@@ -183,8 +183,13 @@ What is protected, and how:
 
 What remains trusted: GitHub Pages serving the metadata, GitHub Releases serving the
 artifacts, and the release pipeline that produced both. Checksums bind the artifact to the
-metadata; they do not, on their own, prove who wrote the metadata. Signed provenance is a
-recorded next step, not a claim made here — see `docs/DISTRIBUTION.md`.
+metadata; they do not, on their own, prove who wrote the metadata. That is what provenance
+is for: every release archive is attested by the release workflow, and where the GitHub CLI
+is installed and signed in the installer asks it whether this archive was built by this
+repository's workflow. The closing report says which it verified — `provenance (…) and
+checksum`, or `checksum only` with the reason. `MAJORDOMUS_REQUIRE_PROVENANCE=1` installs
+nothing short of verified provenance. By hand: `gh attestation verify <archive> --repo
+<repository>`. What each path verifies is in `docs/DISTRIBUTION.md`.
 
 ## Reading it before running it
 
