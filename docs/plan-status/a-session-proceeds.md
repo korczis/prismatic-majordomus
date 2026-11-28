@@ -50,6 +50,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3314; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh with I3318; they may not run concurrently |
+| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3442; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3443; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I3444; they may not run concurrently |
