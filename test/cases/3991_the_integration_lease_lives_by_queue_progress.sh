@@ -169,8 +169,10 @@ grep -q '"action":"merge_attempted"' "$TRAIL_A" && { echo "    A's trail records
 released_overtaken() { ( cd "$A" && XDG_STATE_HOME="$T/state-a" "$RB" mesh events --newest --limit 1000 --format json ) 2>/dev/null \
   | jq -e '[.events[] | select(.body.kind == "claim_released") | select((.body.reason // "") | test("another session was admitted"))] | length >= 1'; }
 poll 50 released_overtaken || { echo "    A's claim was not released as overtaken: $(claims)"; exit 1; }
-claims | jq -e --arg k "$KEY_A" '[.[] | select(.key == $k and .state == "released")] | length == 1' >/dev/null \
-  || { echo "    A's claim does not read released: $(claims)"; exit 1; }
+# the release is an event first and a folded state after it: the state is read again until it
+# follows, as the event was, rather than once (a single read lost the race on a loaded runner)
+a_released() { claims | jq -e --arg k "$KEY_A" '[.[] | select(.key == $k and .state == "released")] | length == 1'; }
+poll 50 a_released || { echo "    A's claim does not read released: $(claims)"; exit 1; }
 held_by_b >/dev/null || { echo "    B's claim did not stay held: $(claims)"; exit 1; }
 kill -TERM "$DRAIN_B"; wait "$DRAIN_B" 2>/dev/null || true
 echo "    A idled into suspension, B was admitted, A resumed overtaken and merged nothing"
