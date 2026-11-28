@@ -60,8 +60,8 @@ const OWNERS: &[(&str, usize, &str)] = &[
     ),
     (
         "src/capability/builtin/server.rs",
-        1,
-        "local_half of a checkout given by its path",
+        2,
+        "local_half of a checkout given by its path; checkout_of a serve or mcp process the host inventory found (I3184)",
     ),
     (
         "src/capability/builtin/brief.rs",
