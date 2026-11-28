@@ -15,10 +15,13 @@ use crate::error::{Error, Result};
 
 /// Run `majordomus runtimes`.
 pub fn run(args: RuntimesArgs) -> Result<u8> {
-    let inventory = host_runtimes();
     let stdout = std::io::stdout();
-    let mut out = stdout.lock();
-    write(&mut out, &inventory, args.format).map_err(Error::Transport)?;
+    emit(&mut stdout.lock(), &host_runtimes(), args.format)
+}
+
+/// Write the inventory to `out`: exit 0, or the transport error that stopped it.
+fn emit(out: &mut impl Write, inventory: &HostRuntimes, format: OutputFormat) -> Result<u8> {
+    write(out, inventory, format).map_err(Error::Transport)?;
     Ok(0)
 }
 
@@ -174,6 +177,87 @@ mod tests {
     /// Every runtime is one line, its reason beneath it, and what is not listed is counted.
     #[test]
     fn every_runtime_is_one_line() {
+        let inventory = full();
+        let text = render(&inventory, OutputFormat::Text);
+        assert!(
+            text.contains("index      /s/checkout-roots (3 root(s))"),
+            "{text}"
+        );
+        assert!(
+            text.contains("processes  1 serve/mcp process(es)"),
+            "{text}"
+        );
+        assert!(text.contains("STANDING"), "{text}");
+        let ready = text.lines().find(|l| l.ends_with(" /a")).unwrap();
+        assert!(
+            ready.starts_with("ready")
+                && ready.contains("8741")
+                && ready.contains("index,process_table"),
+            "{ready}"
+        );
+        let stale = text.lines().find(|l| l.ends_with(" /b")).unwrap();
+        assert!(
+            stale.starts_with("stale") && stale.contains(" no "),
+            "{stale}"
+        );
+        assert!(text.contains("the server does not answer"), "{text}");
+        assert!(text.contains("1 indexed checkout(s)"), "{text}");
+        assert!(text.contains("unplaced   pid 9"), "{text}");
+    }
+
+    /// A writer that accepts `left` writes and refuses every one after.
+    struct Refusing {
+        left: usize,
+    }
+
+    impl Write for Refusing {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            if self.left == 0 {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "closed",
+                ));
+            }
+            self.left -= 1;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// An output that closes at any point of the text is the transport error that stopped
+    /// it, never a partial answer called complete; an output that stays open is exit 0.
+    #[test]
+    fn an_output_that_closes_is_a_transport_error() {
+        let mut unreadable = full();
+        unreadable.index.problem = Some("cannot be read".into());
+        unreadable.process_table.problem = Some("no ps".into());
+        for inventory in [empty(), full(), unreadable] {
+            for format in [OutputFormat::Text, OutputFormat::Json] {
+                let mut open = Vec::new();
+                assert_eq!(emit(&mut open, &inventory, format).unwrap(), 0);
+                let mut refusals = 0;
+                for left in 0.. {
+                    match emit(&mut Refusing { left }, &inventory, format) {
+                        Err(Error::Transport(e)) => {
+                            assert_eq!(e.kind(), std::io::ErrorKind::BrokenPipe);
+                            refusals += 1;
+                        }
+                        Err(other) => panic!("not a transport error: {other}"),
+                        Ok(code) => {
+                            assert_eq!(code, 0);
+                            break;
+                        }
+                    }
+                }
+                assert!(refusals > 0, "the output was never refused");
+            }
+        }
+    }
+
+    /// An inventory with a line of every kind.
+    fn full() -> HostRuntimes {
         let mut inventory = empty();
         inventory.node = Some("n1".into());
         inventory.index = HostIndexView {
@@ -229,30 +313,6 @@ mod tests {
                 processes: Vec::new(),
             },
         ];
-        let text = render(&inventory, OutputFormat::Text);
-        assert!(
-            text.contains("index      /s/checkout-roots (3 root(s))"),
-            "{text}"
-        );
-        assert!(
-            text.contains("processes  1 serve/mcp process(es)"),
-            "{text}"
-        );
-        assert!(text.contains("STANDING"), "{text}");
-        let ready = text.lines().find(|l| l.ends_with(" /a")).unwrap();
-        assert!(
-            ready.starts_with("ready")
-                && ready.contains("8741")
-                && ready.contains("index,process_table"),
-            "{ready}"
-        );
-        let stale = text.lines().find(|l| l.ends_with(" /b")).unwrap();
-        assert!(
-            stale.starts_with("stale") && stale.contains(" no "),
-            "{stale}"
-        );
-        assert!(text.contains("the server does not answer"), "{text}");
-        assert!(text.contains("1 indexed checkout(s)"), "{text}");
-        assert!(text.contains("unplaced   pid 9"), "{text}");
+        inventory
     }
 }

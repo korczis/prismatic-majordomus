@@ -35,7 +35,7 @@
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::io::{self, Read};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
@@ -283,8 +283,9 @@ impl HostProcess {
 /// ```
 pub fn server_of(pid: u32, argv: &[&str]) -> Option<HostProcess> {
     let (executable, rest) = argv.split_first()?;
-    let name = Path::new(executable).file_name()?.to_str()?;
-    if !is_majordomus_executable(name) {
+    // a word of a `&str` command line is UTF-8, so its file name reads without loss
+    let name = Path::new(executable).file_name()?.to_string_lossy();
+    if !is_majordomus_executable(&name) {
         return None;
     }
     let subcommand = match rest.first() {
@@ -422,14 +423,21 @@ fn read_process_table_with(program: &str) -> Result<Vec<HostProcess>, String> {
 /// assert!(working_directories(&[]).is_empty());
 /// ```
 pub fn working_directories(pids: &[u32]) -> BTreeMap<u32, PathBuf> {
+    working_directories_from(pids, Path::new("/proc"), "lsof")
+}
+
+/// [`working_directories`], reading the `proc` file system mounted at `proc` when it has a
+/// `self/cwd`, else asking the `lsof` at `lsof`: the seam that lets each of the two ways be
+/// exercised on any system.
+fn working_directories_from(pids: &[u32], proc: &Path, lsof: &str) -> BTreeMap<u32, PathBuf> {
     if pids.is_empty() {
         return BTreeMap::new();
     }
-    if Path::new("/proc/self/cwd").exists() {
+    if proc.join("self").join("cwd").exists() {
         return pids
             .iter()
             .filter_map(|pid| {
-                fs::read_link(format!("/proc/{pid}/cwd"))
+                fs::read_link(proc.join(pid.to_string()).join("cwd"))
                     .ok()
                     .map(|cwd| (*pid, cwd))
             })
@@ -440,7 +448,7 @@ pub fn working_directories(pids: &[u32]) -> BTreeMap<u32, PathBuf> {
         .map(u32::to_string)
         .collect::<Vec<_>>()
         .join(",");
-    let Ok(out) = Command::new("lsof")
+    let Ok(out) = Command::new(lsof)
         .args(["-a", "-d", "cwd", "-Fn", "-p", &list])
         .stdin(Stdio::null())
         .stderr(Stdio::null())
@@ -505,8 +513,11 @@ pub fn executable_version(exe: &Path, timeout: Duration) -> Option<String> {
             }
         }
     };
-    let mut text = String::new();
-    child.stdout.take()?.read_to_string(&mut text).ok()?;
+    // output that is not UTF-8 is no version
+    let text = child
+        .stdout
+        .take()
+        .and_then(|stdout| io::read_to_string(stdout).ok())?;
     if !status.success() {
         return None;
     }
@@ -600,6 +611,20 @@ mod tests {
         }
     }
 
+    /// A writer whose every clone appends to one buffer: what a test reads the log from.
+    #[derive(Clone, Default)]
+    struct Logged(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+    impl io::Write for Logged {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
     /// A root that cannot be written into the index is a logged reason, never a failure of
     /// the server that tried; and an index whose directory cannot be made is an error from
     /// `remember_at`.
@@ -614,11 +639,201 @@ mod tests {
             "the root directory has no parent"
         );
         // and the writer a server calls never fails it: no state directory, or one that
-        // cannot be written, is a line in the log
-        remember_in(None, dir.path());
-        remember_in(Some(blocker.join("checkout-roots")), dir.path());
+        // cannot be written, is a line in the log at debug level. This test is the only one
+        // of the library that reaches that line, so no other thread caches its interest
+        // while the subscriber is being registered (see `crate::logging::with_scoped`).
+        let logged = Logged::default();
+        let writer = logged.clone();
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_writer(move || writer.clone())
+            .finish();
+        crate::logging::with_scoped(subscriber, || {
+            remember_in(None, dir.path());
+            remember_in(Some(blocker.join("checkout-roots")), dir.path());
+        });
+        let log = String::from_utf8(logged.0.lock().unwrap().clone()).unwrap();
+        assert!(log.contains("the host index was not updated"), "{log}");
+        assert!(log.contains(&blocker.display().to_string()), "{log}");
         let index = dir.path().join("state").join(INDEX_FILE);
         remember_in(Some(index.clone()), dir.path());
         assert_eq!(read_index(&index).unwrap(), vec![dir.path().to_path_buf()]);
+    }
+
+    /// An index whose temporary file cannot be written, or cannot be renamed into place, is
+    /// an error from `remember_at` that leaves no temporary file behind; a root no line can
+    /// hold is not written, and the roots around it are.
+    #[test]
+    fn an_index_written_in_place_or_not_at_all() {
+        let dir = tempfile::tempdir().unwrap();
+        // a directory where the temporary file would go: nothing can be written
+        let index = dir.path().join("blocked").join(INDEX_FILE);
+        let tmp = dir
+            .path()
+            .join("blocked")
+            .join(format!(".{INDEX_FILE}.{}", std::process::id()));
+        fs::create_dir_all(&tmp).unwrap();
+        assert!(remember_at(&index, dir.path()).is_err());
+        assert!(!index.exists());
+        // a directory where the index stands: written, then not renamed, then removed
+        let standing = dir.path().join("standing");
+        fs::create_dir_all(standing.join("occupied")).unwrap();
+        assert!(remember_at(&standing, dir.path()).is_err());
+        let left: Vec<_> = fs::read_dir(dir.path())
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .filter(|name| name.starts_with('.'))
+            .collect();
+        assert!(
+            left.is_empty(),
+            "a temporary file was left behind: {left:?}"
+        );
+        // a root with a line break in its name cannot be a line of the index
+        let index = dir.path().join("state").join(INDEX_FILE);
+        assert!(remember_at(&index, dir.path()).unwrap());
+        assert!(remember_at(&index, Path::new("/a\nb")).unwrap());
+        assert_eq!(read_index(&index).unwrap(), vec![dir.path().to_path_buf()]);
+    }
+
+    /// What a process works on, from its `--repo` and its working directory.
+    #[test]
+    fn a_process_works_on_its_repo_or_its_directory() {
+        let mut p = HostProcess {
+            pid: 1,
+            subcommand: Subcommand::Mcp,
+            executable: "/bin/majordomus".into(),
+            repo: Some("r".into()),
+            cwd: Some("/home/u".into()),
+        };
+        assert_eq!(p.works_on(), Some(PathBuf::from("/home/u/r")));
+        p.cwd = None;
+        assert_eq!(
+            p.works_on(),
+            Some(PathBuf::from("r")),
+            "a relative --repo, no cwd"
+        );
+        p.repo = Some("/abs".into());
+        assert_eq!(p.works_on(), Some(PathBuf::from("/abs")));
+        p.repo = None;
+        assert_eq!(p.works_on(), None);
+        p.cwd = Some("/w".into());
+        assert_eq!(p.works_on(), Some(PathBuf::from("/w")));
+    }
+
+    /// A command line is a server only when it is a Majordomus executable serving; its
+    /// `--repo` is read in both spellings, the last one winning.
+    #[test]
+    fn a_command_line_is_a_server_or_not() {
+        assert!(server_of(1, &[]).is_none(), "an empty command line");
+        assert!(
+            server_of(1, &["/"]).is_none(),
+            "an executable with no file name"
+        );
+        assert!(server_of(1, &["/opt/bin/majordomus"]).is_none());
+        assert!(server_of(1, &["/opt/bin/vim", "serve"]).is_none());
+        assert!(server_of(1, &["/opt/bin/majordomus", "plan"]).is_none());
+        for reader in [
+            "status",
+            "ensure",
+            "stop",
+            "--help",
+            "-h",
+            "--version",
+            "-V",
+        ] {
+            assert!(
+                server_of(1, &["/opt/bin/majordomus", "serve", reader]).is_none(),
+                "{reader}"
+            );
+        }
+        assert!(server_of(1, &["majordomus", "mcp", "--inspect"]).is_none());
+        let p = server_of(7, &["/t/majordomus-1-2", "mcp", "--repo=/r"]).unwrap();
+        assert_eq!(
+            (p.pid, p.subcommand, p.repo.as_deref()),
+            (7, Subcommand::Mcp, Some(Path::new("/r")))
+        );
+        let p = server_of(8, &["majordomus-cli", "serve", "--repo", "/a", "--repo=/b"]).unwrap();
+        assert_eq!(p.repo.as_deref(), Some(Path::new("/b")));
+        assert_eq!(p.executable, PathBuf::from("majordomus-cli"));
+        let p = server_of(9, &["majordomus", "serve", "--repo"]).unwrap();
+        assert!(p.repo.is_none(), "a --repo with no value names nothing");
+    }
+
+    /// A process table's rows: an id and a command line; anything else is not a row.
+    #[test]
+    fn a_process_table_has_rows_and_nothing_else() {
+        let table = "\n  1 /sbin/launchd\n 42 /opt/bin/majordomus serve --repo /r\n\
+                     43 /opt/bin/majordomus serve status\nnot a row\n-1 majordomus serve\n\
+                     44 majordomus mcp\n";
+        let found = parse_process_table(table);
+        let pids: Vec<u32> = found.iter().map(|p| p.pid).collect();
+        assert_eq!(pids, vec![42, 44]);
+        assert!(found.iter().all(|p| p.cwd.is_none()));
+    }
+
+    /// `lsof -Fn` lines: each name belongs to the process line before it, the first name
+    /// of each process wins, and a name before any process, or after an unreadable one,
+    /// belongs to none.
+    #[test]
+    fn lsof_names_belong_to_their_process() {
+        let cwds = parse_lsof_cwds("n/orphan\np42\nfcwd\nn/r\nn/second\npx\nn/lost\np43\nn/s\n");
+        assert_eq!(
+            cwds,
+            BTreeMap::from([(42, PathBuf::from("/r")), (43, PathBuf::from("/s"))])
+        );
+        assert!(parse_lsof_cwds("").is_empty());
+    }
+
+    /// Working directories come from a `proc` file system where there is one, else from
+    /// one `lsof` for every process; an `lsof` that cannot be run says nothing, and no
+    /// process asked is no question.
+    #[test]
+    fn working_directories_from_proc_or_from_lsof() {
+        use std::os::unix::fs::symlink;
+        let dir = tempfile::tempdir().unwrap();
+        let none = dir.path().join("no-proc");
+        assert!(working_directories_from(&[], &none, "/nonexistent/lsof").is_empty());
+        // a proc file system: a self/cwd that resolves says there is one, and <pid>/cwd is
+        // each answer, read as a link whether or not it resolves
+        let proc = dir.path().join("proc");
+        fs::create_dir_all(proc.join("self")).unwrap();
+        fs::create_dir_all(proc.join("42")).unwrap();
+        symlink(dir.path(), proc.join("self").join("cwd")).unwrap();
+        symlink("/w/42", proc.join("42").join("cwd")).unwrap();
+        assert_eq!(
+            working_directories_from(&[42, 43], &proc, "/nonexistent/lsof"),
+            BTreeMap::from([(42, PathBuf::from("/w/42"))])
+        );
+        // no proc: one lsof, asked for every process at once
+        let args = dir.path().join("lsof-args");
+        let lsof = script(
+            dir.path(),
+            "lsof",
+            &format!(
+                "echo \"$@\" > '{}'\nprintf 'p42\\nfcwd\\nn/l/42\\np43\\nfcwd\\nn/l/43\\n'",
+                args.display()
+            ),
+        );
+        assert_eq!(
+            working_directories_from(&[42, 43], &none, lsof.to_str().unwrap()),
+            BTreeMap::from([(42, PathBuf::from("/l/42")), (43, PathBuf::from("/l/43"))])
+        );
+        assert_eq!(
+            fs::read_to_string(&args).unwrap().trim(),
+            "-a -d cwd -Fn -p 42,43"
+        );
+        assert!(working_directories_from(&[42], &none, "/nonexistent/lsof").is_empty());
+    }
+
+    /// An executable that cannot be started, or whose answer is not text, gives no version.
+    #[test]
+    fn an_executable_that_cannot_answer_has_no_version() {
+        assert_eq!(
+            executable_version(Path::new("/nonexistent/majordomus"), VERSION_TIMEOUT),
+            None
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let binary = script(dir.path(), "binary", "printf 'majordomus \\377\\n'");
+        assert_eq!(executable_version(&binary, VERSION_TIMEOUT), None);
     }
 }

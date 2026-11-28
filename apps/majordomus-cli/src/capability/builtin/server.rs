@@ -1430,7 +1430,8 @@ fn checkout_of(p: &HostProcess) -> Option<PathBuf> {
 /// ```
 pub fn port_of(url: &str) -> Option<u16> {
     let rest = url.split_once("://").map_or(url, |(_, r)| r);
-    let authority = rest.split('/').next()?;
+    // `split` yields at least one piece, so there is always an authority to read
+    let authority = rest.split('/').next().unwrap_or(rest);
     let (_, port) = authority.rsplit_once(':')?;
     port.parse().ok()
 }
@@ -2669,6 +2670,81 @@ mod tests {
         assert!(
             rb.live && rb.version.is_none() && rb.version_source.is_none(),
             "{rb:?}"
+        );
+    }
+
+    /// The port is the last colon's number in the authority, and an address with none, or
+    /// with something else there, has no port.
+    #[test]
+    fn a_port_is_read_from_the_authority() {
+        assert_eq!(port_of("http://127.0.0.1:8741"), Some(8741));
+        assert_eq!(port_of("http://[::1]:9000/x/y"), Some(9000));
+        assert_eq!(port_of("127.0.0.1:7/"), Some(7), "no scheme");
+        assert_eq!(port_of("http://localhost"), None);
+        assert_eq!(
+            port_of("http://localhost/a:1"),
+            None,
+            "a colon in the path is no port"
+        );
+        assert_eq!(port_of("http://h:http"), None);
+        assert_eq!(port_of(""), None);
+    }
+
+    /// Two index rows that name one checkout (a path and a link to it) are one runtime,
+    /// found by the index once; and a lease too old to carry a version, of a runtime with a
+    /// process, asks the executable its lease records rather than the one the process
+    /// table names.
+    #[cfg(unix)]
+    #[test]
+    fn one_checkout_twice_in_the_index_and_its_leased_executable() {
+        use crate::synthetic::{Shape, SyntheticRepository};
+        let repo = SyntheticRepository::new(Shape::default()).unwrap();
+        let root = repo.root().canonicalize().unwrap();
+        let LeaseFile::Document(mut doc) = lease_of(DEAD, Some("http://127.0.0.1:1")) else {
+            unreachable!()
+        };
+        doc.version = None;
+        doc.executable = Some(lease::ExecutableIdentity {
+            path: "/opt/leased/majordomus".into(),
+            mtime: 1,
+            size: 1,
+        });
+        let path = lease::lease_file(&root, &local_half(&root));
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, serde_json::to_string(&doc).unwrap()).unwrap();
+
+        let state = tempfile::tempdir().unwrap();
+        let link = state.path().join("link");
+        std::os::unix::fs::symlink(&root, &link).unwrap();
+        let index = state.path().join(host::INDEX_FILE);
+        host::remember_at(&index, &root).unwrap();
+        host::remember_at(&index, &link).unwrap();
+        assert_eq!(host::read_index(&index).unwrap().len(), 2);
+        let process = HostProcess {
+            pid: DEAD,
+            subcommand: Subcommand::Serve,
+            executable: "/opt/listed/majordomus".into(),
+            repo: Some(root.clone()),
+            cwd: None,
+        };
+        let asked = std::sync::Mutex::new(Vec::new());
+        let inventory = host_runtimes_from(Some(index), Ok(vec![process]), None, |exe| {
+            asked.lock().unwrap().push(exe.to_path_buf());
+            Some("0.30.0".into())
+        });
+        assert_eq!(inventory.index.entries, 2);
+        assert_eq!(inventory.runtimes.len(), 1, "{:?}", inventory.runtimes);
+        let r = &inventory.runtimes[0];
+        assert_eq!(r.checkout, root);
+        assert_eq!(r.found_by, vec![FoundBy::Index, FoundBy::ProcessTable]);
+        assert!(!r.live, "{r:?}");
+        assert_eq!(
+            (r.version.as_deref(), r.version_source),
+            (Some("0.30.0"), Some(VersionSource::Executable))
+        );
+        assert_eq!(
+            *asked.lock().unwrap(),
+            vec![PathBuf::from("/opt/leased/majordomus")]
         );
     }
 
